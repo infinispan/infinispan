@@ -68,7 +68,8 @@ class BulkGetResponse(override val version: Byte, override val messageId: Long, 
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=").append("}").toString
+         .append(", count=").append(count)
+         .append("}").toString
    }
 }
 
@@ -82,7 +83,6 @@ class BulkGetKeysResponse(override val version: Byte, override val messageId: Lo
          .append(", messageId=").append(messageId)
          .append(", operation=").append(operation)
          .append(", status=").append(status)
-         .append(", data=")
          .append(", scope=").append(scope)
          .append("}").toString
    }
@@ -190,6 +190,20 @@ class AuthResponse(override val version: Byte, override val messageId: Long, ove
          .append(", messageId=").append(messageId)
          .append(", challenge=").append(Util.printArray(challenge, true))
          .append("}").toString
+   }
+}
+
+class SizeResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
+      override val topologyId: Int, val size: Long)
+      extends Response(version, messageId, cacheName, clientIntel, SizeResponse, Success, topologyId) {
+   override def toString = {
+      new StringBuilder().append("SizeResponse").append("{")
+            .append("version=").append(version)
+            .append(", messageId=").append(messageId)
+            .append(", operation=").append(operation)
+            .append(", status=").append(status)
+            .append(", size=").append(size)
+            .append("}").toString
    }
 }
 

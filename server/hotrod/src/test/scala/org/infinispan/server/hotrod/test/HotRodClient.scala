@@ -284,6 +284,13 @@ class HotRodClient(host: String, port: Int, val defaultCacheName: String, rspTim
       response
    }
 
+   def size(): TestSizeResponse = {
+      val op = new SizeOp(0xA0, protocolVersion, defaultCacheName, 1, 0)
+      val writeFuture = writeOp(op)
+      val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
+      handler.getResponse(op.id).asInstanceOf[TestSizeResponse]
+   }
+
 }
 
 private class ClientChannelInitializer(client: HotRodClient, rspTimeoutSeconds: Int, sslEngine: SSLEngine, protocolVersion: Byte) extends ChannelInitializer[Channel] {
@@ -325,7 +332,8 @@ private class Encoder(protocolVersion: Byte) extends MessageToByteEncoder[Object
             if (op.code != 0x13 && op.code != 0x15
                     && op.code != 0x17 && op.code != 0x19
                     && op.code != 0x1D && op.code != 0x1F
-                    && op.code != 0x21 && op.code != 0x23) { // if it's a key based op...
+                    && op.code != 0x21 && op.code != 0x23
+                    && op.code != 0x29) { // if it's a key based op...
                writeRangedBytes(op.key, buffer) // key length + key
                if (op.value != null) {
                   if (op.code != 0x0D) { // If it's not removeIfUnmodified...
@@ -563,6 +571,10 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
                      opCode, listenerId, isRetried, key, dataVersion)
                }
             }
+         case SizeResponse =>
+            val size = readUnsignedLong(buf)
+            new TestSizeResponse(op.version, id, op.cacheName, op.clientIntel,
+               size, op.topologyId, topologyChangeResponse)
          case ErrorResponse => {
             if (op == null)
                new TestErrorResponse(10, id, "", 0, status, 0,
@@ -847,6 +859,14 @@ class AuthOp(override val magic: Int,
       extends Op(magic, version, code, cacheName, null, 0, 0, null, 0, 0,
                  clientIntel, topologyId)
 
+class SizeOp(override val magic: Int,
+      override val version: Byte,
+      override val cacheName: String,
+      override val clientIntel: Byte,
+      override val topologyId: Int)
+      extends Op(magic, version, 0x29, cacheName, null, 0, 0, null, 0, 0,
+         clientIntel, topologyId)
+
 class TestResponse(override val version: Byte, override val messageId: Long,
                    override val cacheName: String, override val clientIntel: Short,
                    override val operation: OperationResponse,
@@ -964,6 +984,12 @@ class TestCustomEvent(override val version: Byte, override val messageId: Long,
         override val cacheName: String, override val operation: OperationResponse,
         val listenerId: Bytes, val isRetried: Boolean, val eventData: Bytes)
         extends TestResponse(version, messageId, cacheName, 0, operation, Success, 0, None)
+
+class TestSizeResponse(override val version: Byte, override val messageId: Long,
+      override val cacheName: String, override val clientIntel: Short,
+      val size: Long, override val topologyId: Int,
+      override val topologyResponse: Option[AbstractTestTopologyAwareResponse])
+      extends TestResponse(version, messageId, cacheName, clientIntel, SizeResponse, Success, topologyId, topologyResponse)
 
 case class ServerNode(host: String, port: Int)
 

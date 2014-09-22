@@ -25,8 +25,12 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
       for (i <- 0 until nodeCount) {
          val cm = TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration())
          cacheManagers.add(cm)
-         cm.defineConfiguration(cacheName, createCacheConfig.build())
       }
+      defineCaches(cacheName)
+   }
+
+   protected def defineCaches(cacheName: String): Unit = {
+      cacheManagers.foreach(cm => cm.defineConfiguration(cacheName, createCacheConfig.build()))
    }
 
    @BeforeClass(alwaysRun = true)
@@ -40,7 +44,11 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
          nextServerPort += 50
       }
 
-      hotRodClients = hotRodServers.map(s =>
+      hotRodClients = createClients(cacheName)
+   }
+
+   protected def createClients(cacheName: String): List[HotRodClient] = {
+      hotRodServers.map(s =>
          new HotRodClient("127.0.0.1", s.getPort, cacheName, 60, protocolVersion))
    }
 

@@ -9,7 +9,6 @@ import org.testng.Assert._
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.test.TestingUtil
 import test.AbstractTestTopologyAwareResponse
-import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod instances configured with replication.
@@ -153,6 +152,21 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
 
       checkTopologyReceived(resp.topologyResponse.get, servers, cacheName)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v8-"))
+   }
+
+   def testSize(m: Method): Unit = {
+      // Cache contents not cleared between methods to avoid deleting
+      // topology information, so just use a different cache
+      val cacheName = "repl-size"
+      defineCaches(cacheName)
+      val clients = createClients(cacheName)
+      val sizeStart = clients.head.size()
+      assertStatus(sizeStart, Success)
+      assertEquals(0, sizeStart.size)
+      for (i <- 0 until 20) clients.tail.head.assertPut(m, s"k-$i", s"v-$i")
+      val sizeEnd = clients.tail.head.size()
+      assertStatus(sizeEnd, Success)
+      assertEquals(20, sizeEnd.size)
    }
 
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
