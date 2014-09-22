@@ -1441,6 +1441,10 @@
                <target>1.7</target>
                <encoding>UTF-8</encoding>
                <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
+               <!-- Temporary fix for ISPN-4748. -->
+               <excludes>
+                  <exclude>**/package-info.java</exclude>
+               </excludes>
             </configuration>
          </plugin>
          <!-- eclipse project file generation -->

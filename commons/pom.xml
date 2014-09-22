@@ -63,7 +63,6 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.0</version>
             <configuration>
                <source>1.7</source>
                <target>1.7</target>
@@ -73,6 +72,10 @@
                <compilerArgument>-XDignore.symbol.file</compilerArgument>
                <!-- Forking is necessary to allow for the compiler args to be picked up. -->
                <fork>true</fork>
+               <!-- Temporary fix for ISPN-4748. -->
+               <excludes>
+                  <exclude>**/package-info.java</exclude>
+               </excludes>
             </configuration>
          </plugin>
          <plugin>
