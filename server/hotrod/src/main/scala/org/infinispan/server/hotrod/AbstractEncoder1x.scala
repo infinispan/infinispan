@@ -105,7 +105,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
             }
          }
          case g: BulkGetKeysResponse => {
-         	log.trace("About to respond to bulk get keys request")
+            log.trace("About to respond to bulk get keys request")
             if (g.status == Success) {
                val cache: Cache = server.getCacheInstance(g.cacheName, cacheManager, false)
                val keys = BulkUtil.getAllKeys(cache, g.scope)

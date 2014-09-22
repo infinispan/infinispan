@@ -492,6 +492,16 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
       assertTrue(Arrays.equals(query, resp.result))
    }
 
+   def testSize(m: Method): Unit = {
+      val sizeStart = client.size()
+      assertStatus(sizeStart, Success)
+      assertEquals(0, sizeStart.size)
+      for (i <- 0 until 20) client.assertPut(m, s"k-$i", s"v-$i")
+      val sizeEnd = client.size()
+      assertStatus(sizeEnd, Success)
+      assertEquals(20, sizeEnd.size)
+   }
+
 }
 
 class DummyQueryFacade extends QueryFacade {

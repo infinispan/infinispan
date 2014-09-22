@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod
 
+import java.lang.reflect.Method
+
 import org.testng.annotations.Test
 import test.HotRodTestingUtil._
 import test.AbstractTestTopologyAwareResponse
@@ -21,4 +23,7 @@ class HotRod12ReplicationTest extends HotRodReplicationTest {
       assertHashTopologyReceived(topoResp, servers, cacheName, 0, 1, currentServerTopologyId)
    }
 
+   override def testSize(m: Method): Unit = {
+      // No-op since size() is a Hot Rod 2.0 operation
+   }
 }

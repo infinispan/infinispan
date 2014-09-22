@@ -1,15 +1,14 @@
 package org.infinispan.server.hotrod
 
+import javax.net.ssl.SSLPeerUnverifiedException
+
 import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
-import io.netty.channel.ChannelHandlerContext
 import java.io.IOException
-import java.security.PrivilegedAction
-import javax.security.auth.Subject
-import javax.security.sasl.SaslServer
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, IGNORE_RETURN_VALUES}
+import org.infinispan.distexec.mapreduce._
 import org.infinispan.server.core.Operation._
 import org.infinispan.server.core._
 import org.infinispan.server.core.transport.ExtendedByteBuf._
@@ -23,14 +22,9 @@ import scala.annotation.switch
 import scala.collection.JavaConverters._
 import javax.security.sasl.Sasl
 import io.netty.channel.ChannelHandlerContext
-import io.netty.handler.codec.ReplayingDecoder
-import org.infinispan.server.core.PartialResponse
-import io.netty.util.concurrent.DefaultEventExecutorGroup
-import org.infinispan.commons.util.Util
 import javax.security.auth.Subject
 import java.security.PrivilegedAction
 import javax.security.sasl.SaslServer
-import org.infinispan.server.core.security.SaslUtils
 import io.netty.handler.ssl.SslHandler
 import java.util.ArrayList
 import java.security.Principal
@@ -80,6 +74,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x23 => (AuthRequest, true)
          case 0x25 => (AddClientListenerRequest, false)
          case 0x27 => (RemoveClientListenerRequest, false)
+         case 0x29 => (SizeRequest, true)
          case _ => throw new HotRodUnknownOperationException(
             "Unknown operation: " + streamOp, version, messageId)
       }
@@ -234,7 +229,9 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                   val sslHandler = ctx.pipeline.get("ssl").asInstanceOf[SslHandler]
                   try {
                      if (sslHandler != null) extraPrincipals.add(sslHandler.engine.getSession.getPeerPrincipal)
-                  } // Ignore any SSLPeerUnverifiedExceptions
+                  } catch { // Ignore any SSLPeerUnverifiedExceptions
+                     case e: SSLPeerUnverifiedException => // ignore
+                  }
                   decoder.subject = decoder.callbackHandler.getSubjectUserInfo(extraPrincipals).getSubject
                   val qop = decoder.saslServer.getNegotiatedProperty(Sasl.QOP).asInstanceOf[String];
                   if (qop != null && (qop.equalsIgnoreCase("auth-int") || qop.equalsIgnoreCase("auth-conf"))) {
@@ -251,6 +248,10 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                }
             }
          }
+         case SizeRequest =>
+            val size = calculateSize(cache)
+            new SizeResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+               h.topologyId, size)
       }
    }
 
@@ -324,6 +325,17 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                createSuccessResponse(h, null)
             else
                createNotExecutedResponse(h, null)
+      }
+   }
+
+   private def calculateSize(cache: Cache): Int = {
+      val mode = cache.getCacheConfiguration.clustering().cacheMode()
+      val invokeLocalSize = !mode.isClustered || mode.isReplicated
+      if (invokeLocalSize) cache.size()
+      else {
+         val task = new MapReduceTask[Bytes, Bytes, Bytes, Int](cache)
+               .mappedWith(new KeyCountMapper).reducedWith(new KeyCountReducer)
+         task.execute(new KeyCountCollator)
       }
    }
 
@@ -441,6 +453,24 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    def normalizeAuthorizationId(id: String): String = {
       val realm = id.indexOf('@')
       if (realm >= 0) id.substring(0, realm) else id
+   }
+
+   private class KeyCountMapper extends Mapper[Bytes, Bytes, Bytes, Int] {
+      override def map(key: Bytes, value: Bytes, collector: Collector[Bytes, Int]): Unit = {
+         collector.emit(key, 1)
+      }
+   }
+
+   private class KeyCountReducer extends Reducer[Bytes, Int] {
+      override def reduce(reducedKey: Bytes, iter: java.util.Iterator[Int]): Int = {
+         iter.asScala.foldLeft(0)((acc, c) => acc + c)
+      }
+   }
+
+   private class KeyCountCollator extends Collator[Bytes, Int, Int] {
+      override def collate(reducedResults: java.util.Map[Bytes, Int]): Int = {
+         reducedResults.asScala.foldLeft(0)((acc, kv) => acc + kv._2)
+      }
    }
 
 }

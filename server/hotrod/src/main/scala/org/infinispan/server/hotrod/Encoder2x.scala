@@ -255,6 +255,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                writeUnsignedInt(0, buf)
             }
          }
+         case s: SizeResponse => writeUnsignedLong(s.size, buf)
          case e: ErrorResponse => writeString(e.msg, buf)
          case _ => if (buf == null)
             throw new IllegalArgumentException("Response received is unknown: " + r)

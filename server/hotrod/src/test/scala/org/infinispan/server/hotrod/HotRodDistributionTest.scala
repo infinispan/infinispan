@@ -10,7 +10,6 @@ import test.HotRodClient
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
 import org.infinispan.server.hotrod.Constants._
 import org.infinispan.test.TestingUtil
-import org.infinispan.commons.equivalence.ByteArrayEquivalence
 
 /**
  * Tests Hot Rod logic when interacting with distributed caches, particularly logic to do with
@@ -99,4 +98,20 @@ class HotRodDistributionTest extends HotRodMultiNodeTest {
 
       assertSuccess(client1.get(k(m), 0), v(m, "v8-"))
    }
+
+   def testSize(m: Method): Unit = {
+      // Cache contents not cleared between methods to avoid deleting
+      // topology information, so just use a different cache
+      val cacheName = "dist-size"
+      defineCaches(cacheName)
+      val clients = createClients(cacheName)
+      val sizeStart = clients.head.size()
+      assertStatus(sizeStart, Success)
+      assertEquals(0, sizeStart.size)
+      for (i <- 0 until 20) clients.tail.head.assertPut(m, s"k-$i", s"v-$i")
+      val sizeEnd = clients.tail.head.size()
+      assertStatus(sizeEnd, Success)
+      assertEquals(20, sizeEnd.size)
+   }
+
 }

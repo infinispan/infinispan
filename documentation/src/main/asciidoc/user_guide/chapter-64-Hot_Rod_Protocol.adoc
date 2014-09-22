@@ -1021,6 +1021,7 @@ The following new request operation codes have been added:
 * +0x23+ = auth request
 * +0x25+ = add client remote event listener request
 * +0x27+ = remove client remote event listener request
+* +0x29+ = size request
 
 ====== Response Header
 
@@ -1030,6 +1031,7 @@ The following new response operation codes have been added:
 * +0x24+ = auth mech response
 * +0x26+ = add client remote event listener response
 * +0x28+ = remove client remote event listener response
+* +0x30+ = size response
 
 ===== Distribution-Aware Client Topology Change Header
 
@@ -1216,6 +1218,26 @@ Response format:
 | Header | variable | Response header
 |==============================================================================
 
+.Size
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Response header
+| Size | vInt | Size of the remote cache, which is calculated globally in the
+clustered set ups, and if present, takes cache store contents into account as
+well.
+|==============================================================================
 
 ====== Remote Events
 
