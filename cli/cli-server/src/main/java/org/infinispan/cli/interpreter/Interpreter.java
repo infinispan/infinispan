@@ -116,7 +116,7 @@ public class Interpreter {
       long timeBoundary = timeService.time() - sessionTimeout * 1000000l;
       for (Iterator<Session> i = sessions.values().iterator(); i.hasNext();) {
          Session session = i.next();
-         if (session.getTimestamp() < timeBoundary) {
+         if (timeBoundary - session.getTimestamp() > 0) {
             i.remove();
             if (log.isDebugEnabled()) {
                log.debugf("Removed expired interpreter session %s", session.getId());

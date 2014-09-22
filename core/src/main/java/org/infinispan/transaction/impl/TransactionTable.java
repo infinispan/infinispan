@@ -600,7 +600,7 @@ public class TransactionTable {
             while (txIterator.hasNext()) {
                Map.Entry<GlobalTransaction, Long> e = txIterator.next();
                long completedTime = e.getValue();
-               if (completedTime < minCompleteTimestamp) {
+               if (minCompleteTimestamp - completedTime > 0) {
                   // Need to update lastPrunedTxId *before* removing the tx from the map
                   // Don't need atomic operations, there can't be more than one thread updating lastPrunedTxId.
                   final long txId = e.getKey().getId();

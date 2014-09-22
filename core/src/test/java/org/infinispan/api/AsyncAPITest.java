@@ -19,7 +19,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
 
    private Cache<String, String> c;
 
-   private long startTime;
+   private Long startTime;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -332,7 +332,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
     * @param touchKey indicates if the poll for key existence should read the key and cause idle time to be reset
     */
    private void verifyEviction(final String key, final String expectedValue, final long expectedLifetime, final boolean touchKey) {
-      if (startTime == -1) {
+      if (startTime == null) {
          throw new IllegalStateException("markStartTime() must be called before verifyEviction(..)");
       }
 
@@ -355,7 +355,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
          long lowerBound = expectedLifetime - expectedLifetime / 4;
          assertTrue("Entry evicted too soon!", lowerBound <= waitTime);
       } finally {
-         startTime = -1;
+         startTime = null;
       }
    }
 }

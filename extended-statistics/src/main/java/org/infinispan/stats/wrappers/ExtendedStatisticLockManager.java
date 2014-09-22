@@ -134,7 +134,7 @@ public class ExtendedStatisticLockManager implements LockManager {
          if (locked) {
             lockInfoMap.putIfAbsent(key, lockInfo);
          } else {
-            lockInfo.updateStats(-1); //-1 == not locked
+            lockInfo.updateStats(null); //null == not locked
          }
       }
 
@@ -161,7 +161,7 @@ public class ExtendedStatisticLockManager implements LockManager {
          if (locked) {
             lockInfoMap.putIfAbsent(key, lockInfo);
          } else {
-            lockInfo.updateStats(-1); //-1 == not locked
+            lockInfo.updateStats(null); //null == not locked
          }
       }
 
@@ -187,8 +187,8 @@ public class ExtendedStatisticLockManager implements LockManager {
          local = ctx.isOriginLocal();
       }
 
-      public final void updateStats(long releaseTimeStamp) {
-         boolean locked = releaseTimeStamp != -1;
+      public final void updateStats(Long releaseTimeStamp) {
+         boolean locked = releaseTimeStamp != null;
          long holdTime = !locked ? 0 : timeService.timeDuration(lockTimeStamp, releaseTimeStamp, NANOSECONDS);
          cacheStatisticManager.add(LOCK_HOLD_TIME, holdTime, owner, local);
          if (lockWaiting != -1) {
