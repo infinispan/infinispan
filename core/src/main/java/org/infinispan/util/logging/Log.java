@@ -84,6 +84,7 @@ import static org.jboss.logging.Logger.Level.*;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @private
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {

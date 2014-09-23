@@ -23,7 +23,7 @@ public class MemcachedServerConfigurationBuilder extends ProtocolServerConfigura
    }
 
    /**
-    * Use {@link ProtocolServerConfigurationBuilder#defaultCacheName(String)) instead
+    * Use {@link ProtocolServerConfigurationBuilder#defaultCacheName(String)} instead
     */
    @Deprecated
    public MemcachedServerConfigurationBuilder cache(String cache) {
