@@ -203,8 +203,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public int size() {
       assertRemoteCacheManagerIsStarted();
-      StatsOperation op = operationsFactory.newStatsOperation();
-      return Integer.parseInt(op.execute().get(ServerStatistics.CURRENT_NR_OF_ENTRIES));
+      SizeOperation op = operationsFactory.newSizeOperation();
+      return op.execute();
    }
 
    @Override
