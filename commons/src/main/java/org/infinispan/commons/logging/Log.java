@@ -41,6 +41,7 @@ import org.jboss.logging.annotations.MessageLogger;
  *
  * @author Manik Surtani
  * @since 4.0
+ * @private
  */
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends BasicLogger {

@@ -17,7 +17,7 @@ public interface PrincipalRoleMapper {
     * return null if it does not recognize the principal.
     *
     * @param principal
-    * @return
+    * @return list of roles the principal belongs to
     */
    Set<String> principalToRoles(Principal principal);
 

@@ -1,5 +1,5 @@
 /**
- * Simple filesystem-based {@link CacheStore} implementation.
+ * Simple filesystem-based {@link org.infinispan.persistence.spi.CacheWriter} implementation.
  *
  * @public
  */

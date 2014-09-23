@@ -1,5 +1,5 @@
 /**
- * This package contains the {@link KeyAffinityService} interfaces which allow user code to determine mapping of keys onto nodes
+ * This package contains the {@link org.infinispan.affinity.KeyAffinityService} interfaces which allow user code to determine mapping of keys onto nodes
  *
  * @public
  */

@@ -1,5 +1,5 @@
 /**
- * {@link Cache}-specific listener annotations
+ * {@link org.infinispan.Cache}-specific listener annotations
  *
  * @public
  */
