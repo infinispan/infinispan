@@ -127,6 +127,10 @@ public class InboundTransferTask {
    public boolean requestSegments() {
       if (!isCancelled && isStarted.compareAndSet(false, true)) {
          Set<Integer> segmentsCopy = getSegments();
+         if (segmentsCopy.isEmpty()) {
+            log.debugf("Segments list is empty, skipping source %s", source);
+            return true;
+         }
          if (trace) {
             log.tracef("Requesting segments %s of cache %s from node %s", segmentsCopy, cacheName, source);
          }
