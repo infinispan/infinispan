@@ -21,9 +21,11 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -110,9 +112,9 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       cache.remove("key2");
 
       verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"),
-            eq("value2"), eq(true), isA(InvocationContext.class), argThat(matcher));
-      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), isNull(),
-            eq("value2"), eq(false), isA(InvocationContext.class), argThat(matcher));
+            any(Metadata.class), eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"), any(Metadata.class), eq(false),
+                                                   isA(InvocationContext.class), argThat(matcher));
    }
 
    public void testPutMap() throws Exception {
@@ -147,16 +149,18 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
 
       cache.put("key", "value2");
 
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value"),
-            eq(false), eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class), eq(true),
+                                                    isA(InvocationContext.class), argThat(matcher));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class),
+                                                    eq(false), isA(InvocationContext.class), argThat(matcher));
 
       cache.put("key", "value2");
 
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"),
-            eq(false), eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value2"), any(Metadata.class),
+                                                    eq(true), isA(InvocationContext.class), argThat(matcher));
 
-      verify(mockNotifier, times(2)).notifyCacheEntryModified(eq("key"), eq("value2"),
-            eq(false), eq(false), isA(InvocationContext.class), argThat(matcher));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value2"), any(Metadata.class),
+                                                    eq(false), isA(InvocationContext.class), argThat(matcher));
    }
 
    public void testReplaceNotification() throws Exception {
@@ -173,10 +177,10 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
 
       cache.replace("key", "value", "value2");
 
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value"),
-            eq(false), eq(true), isA(InvocationContext.class), argThat(matcher));
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"),
-            eq(false), eq(false), isA(InvocationContext.class), argThat(matcher));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class),
+            eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class),
+            eq(false), isA(InvocationContext.class), argThat(matcher));
    }
 
    public void testReplaceNoNotificationOnNoChange() throws Exception {
@@ -184,12 +188,10 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
 
       cache.replace("key", "value2", "value3");
 
-      verify(mockNotifier, never()).notifyCacheEntryModified(eq("key"), eq("value2"),
-            eq(false), eq(true), any(InvocationContext.class),
-            argThat(new SkipListenerFlagMatcher(false)));
-      verify(mockNotifier, never()).notifyCacheEntryModified(eq("key"), eq("value3"),
-            eq(false), eq(false), any(InvocationContext.class),
-            argThat(new SkipListenerFlagMatcher(false)));
+      verify(mockNotifier, never()).notifyCacheEntryModified(eq("key"), eq("value3"), eq("value3"), any(Metadata.class),
+            eq(true), any(InvocationContext.class), argThat(new SkipListenerFlagMatcher(false)));
+      verify(mockNotifier, never()).notifyCacheEntryModified(eq("key"), eq("value3"), eq("value3"), any(Metadata.class),
+            eq(false), any(InvocationContext.class), argThat(new SkipListenerFlagMatcher(false)));
    }
 
    public void testNonexistentVisit() throws Exception {
@@ -219,13 +221,13 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
             anyObject(), anyBoolean(), isA(InvocationContext.class),
             isA(PutMapCommand.class));
       verify(mockNotifier, atLeastOnce()).notifyCacheEntryModified(anyObject(),
-            anyObject(), eq(true), anyBoolean(), isA(InvocationContext.class),
+            anyObject(), anyObject(), any(Metadata.class), anyBoolean(), isA(InvocationContext.class),
             isA(PutMapCommand.class));
    }
 
    private void expectSingleEntryCreated(Object key, Object value,
          Matcher<FlagAffectedCommand> matcher) {
-      verify(mockNotifier).notifyCacheEntryCreated(eq(key), isNull(), eq(true),
+      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), eq(true),
             isA(InvocationContext.class), argThat(matcher));
       verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), eq(false),
             isA(InvocationContext.class), argThat(matcher));

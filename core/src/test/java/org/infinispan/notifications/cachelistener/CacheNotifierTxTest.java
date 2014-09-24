@@ -18,8 +18,10 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -83,7 +85,7 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
             anyObject(), anyBoolean(), isA(InvocationContext.class),
             any(PutKeyValueCommand.class));
       verify(mockNotifier, atLeastOnce()).notifyCacheEntryModified(anyObject(),
-            anyObject(), eq(true), anyBoolean(), isA(InvocationContext.class),
+            anyObject(), anyObject(), any(Metadata.class), eq(true), isA(InvocationContext.class),
             any(PutKeyValueCommand.class));
       reset(mockNotifier);
    }
@@ -92,19 +94,19 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       expectSingleEntryCreated(key, value, this.mockNotifier);
    }
 
-   private void expectSingleEntryOnlyPreCreated(Object key) {
-      expectSingleEntryOnlyPreCreated(key, this.mockNotifier);
+   private void expectSingleEntryOnlyPreCreated(Object key, Object value) {
+      expectSingleEntryOnlyPreCreated(key, value, this.mockNotifier);
    }
 
    static void expectSingleEntryCreated(Object key, Object value, CacheNotifier mockNotifier) {
-      verify(mockNotifier).notifyCacheEntryCreated(eq(key), isNull(), eq(true),
+      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), eq(true),
             isA(InvocationContext.class), isA(PutKeyValueCommand.class));
       verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), eq(false),
             isA(InvocationContext.class), isNull(FlagAffectedCommand.class));
    }
 
-   static void expectSingleEntryOnlyPreCreated(Object key, CacheNotifier mockNotifier) {
-      verify(mockNotifier).notifyCacheEntryCreated(eq(key), isNull(), eq(true),
+   static void expectSingleEntryOnlyPreCreated(Object key, Object value, CacheNotifier mockNotifier) {
+      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), eq(true),
             isA(InvocationContext.class), isA(PutKeyValueCommand.class));
    }
 
@@ -138,7 +140,7 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       tm.rollback();
 
       expectTransactionBoundaries(false);
-      expectSingleEntryOnlyPreCreated("key");
+      expectSingleEntryOnlyPreCreated("key", "value");
    }
 
    public void testTxOnlyModification() throws Exception {
@@ -148,10 +150,10 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       tm.commit();
 
       expectTransactionBoundaries(true);
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value"),
-            eq(false), eq(true), isA(InvocationContext.class), isA(PutKeyValueCommand.class));
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"),
-            eq(false), eq(false), isA(InvocationContext.class), ((FlagAffectedCommand) isNull()));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class),
+            eq(true), isA(InvocationContext.class), isA(PutKeyValueCommand.class));
+      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class),
+            eq(false), isA(InvocationContext.class), isNull(FlagAffectedCommand.class));
    }
 
    public void testTxRemoveData() throws Exception {
@@ -165,9 +167,9 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       tm.commit();
 
       expectTransactionBoundaries(true);
-      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"), eq("value2"),
+      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"), any(Metadata.class),
             eq(true), isA(InvocationContext.class), isA(RemoveCommand.class));
-      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), isNull(), eq("value2"),
-            eq(false), isA(InvocationContext.class), ((FlagAffectedCommand) isNull()));
+      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"), any(Metadata.class),
+            eq(false), isA(InvocationContext.class), isNull(FlagAffectedCommand.class));
    }
 }

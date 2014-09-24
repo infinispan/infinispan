@@ -15,6 +15,7 @@ import org.infinispan.test.TestingUtil
 import org.testng.annotations.Test
 import scala.collection.mutable.ListBuffer
 import org.infinispan.notifications.cachelistener.event.Event
+import org.infinispan.notifications.cachelistener.filter._
 
 /**
  * @author Galder Zamarreño
@@ -40,9 +41,9 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
       val server = HotRodTestingUtil.startHotRodServer(cacheManager, port)
       server.getClientListenerRegistry.setDefaultMarshaller(None)
       filters += new AcceptedKeyFilterFactory()
-      server.addKeyValueFilterFactory("accepted-key-filter-factory", filters.head, null)
+      server.addCacheEventFilterFactory("accepted-key-filter-factory", filters.head, null)
       converters += new AcceptedKeyValueConverterFactory()
-      server.addConverterFactory("accepted-keyvalue-converter-factory", converters.head, null)
+      server.addCacheEventConverterFactory("accepted-keyvalue-converter-factory", converters.head, null)
       server
    }
 
@@ -324,23 +325,25 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
 
 object AbstractHotRodClusterEventsTest {
 
-   class AcceptedKeyFilterFactory extends KeyValueFilterFactory with Serializable {
+   class AcceptedKeyFilterFactory extends CacheEventFilterFactory with Serializable {
       var staticKey: Option[Bytes] = _
-      override def getKeyValueFilter[K, V](params: Array[AnyRef]): KeyValueFilter[K, V] = {
-         new KeyValueFilter[Bytes, Bytes] with Serializable {
-            override def accept(key: Bytes, value: Bytes, metadata: Metadata): Boolean = {
+      override def getFilter[K, V](params: Array[AnyRef]): CacheEventFilter[K, V] = {
+         new CacheEventFilter[Bytes, Bytes] with Serializable {
+            override def accept(key: Bytes, prevValue: Bytes, prevMetadata: Metadata, value: Bytes, metadata: Metadata,
+                                eventType: EventType): Boolean = {
                val checkKey = staticKey.getOrElse(params.head.asInstanceOf[Bytes])
                util.Arrays.equals(checkKey, key)
             }
          }
-      }.asInstanceOf[KeyValueFilter[K, V]]
+      }.asInstanceOf[CacheEventFilter[K, V]]
    }
 
-   class AcceptedKeyValueConverterFactory extends ConverterFactory with Serializable {
+   class AcceptedKeyValueConverterFactory extends CacheEventConverterFactory with Serializable {
       var staticKey: Option[Bytes] = _
-      override def getConverter[K, V, C](params: Array[AnyRef]): Converter[K, V, C] = {
-         new Converter[Bytes, Bytes, Bytes] with Serializable {
-            override def convert(key: Bytes, value: Bytes, metadata: Metadata): Bytes = {
+      override def getConverter[K, V, C](params: Array[AnyRef]): CacheEventConverter[K, V, C] = {
+         new CacheEventConverter[Bytes, Bytes, Bytes] with Serializable {
+            override def convert(key: Bytes, prevValue: Bytes, prevMetadata: Metadata, value: Bytes, metadata: Metadata,
+                                 eventType: EventType): Bytes = {
                val keyLength = key.length.toByte
                val checkKey = staticKey.getOrElse(params.head.asInstanceOf[Bytes])
                if (value == null || !util.Arrays.equals(checkKey, key))
@@ -348,7 +351,7 @@ object AbstractHotRodClusterEventsTest {
                else
                   Array(keyLength) ++ key ++ Array(value.length.toByte) ++ value
             }
-         }.asInstanceOf[Converter[K, V, C]] // ugly but it works :|
+         }.asInstanceOf[CacheEventConverter[K, V, C]] // ugly but it works :|
       }
    }
 

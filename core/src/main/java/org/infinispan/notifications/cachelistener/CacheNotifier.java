@@ -6,6 +6,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.ClassLoaderAwareFilteringListenable;
 import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.notifications.FilteringListenable;
@@ -26,21 +27,19 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
    /**
     * Notifies all registered listeners of a CacheEntryCreated event.
     */
-   void notifyCacheEntryCreated(K key, V value, boolean pre,
-         InvocationContext ctx, FlagAffectedCommand command);
+   void notifyCacheEntryCreated(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryModified event.
     */
-   void notifyCacheEntryModified(K key, V value,
-         boolean created, boolean pre, InvocationContext ctx,
-         FlagAffectedCommand command);
+   void notifyCacheEntryModified(K key, V value, V previousValue, Metadata previousMetadata, boolean pre,
+                                 InvocationContext ctx, FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryRemoved event.
     */
-   void notifyCacheEntryRemoved(K key, V value, V oldValue,
-         boolean pre, InvocationContext ctx, FlagAffectedCommand command);
+   void notifyCacheEntryRemoved(K key, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx,
+                                FlagAffectedCommand command);
 
    /**
     * Notifies all registered listeners of a CacheEntryVisited event.

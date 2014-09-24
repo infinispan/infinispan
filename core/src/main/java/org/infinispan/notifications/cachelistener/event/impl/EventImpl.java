@@ -43,6 +43,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private K key;
    private GlobalTransaction transaction;
    private Metadata metadata;
+   private Metadata oldMetadata;
    private boolean originLocal = true; // by default events all originate locally
    private boolean transactionSuccessful;
    private Type type;
@@ -147,6 +148,14 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    public Metadata getMetadata() {
       return metadata;
+   }
+
+   public void setOldMetadata(Metadata metadata) {
+      this.oldMetadata = metadata;
+   }
+
+   public Metadata getOldMetadata() {
+      return oldMetadata;
    }
 
    @Override

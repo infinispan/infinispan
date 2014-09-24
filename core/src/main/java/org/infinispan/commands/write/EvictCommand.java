@@ -4,6 +4,7 @@ import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -37,13 +38,11 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    }
 
    @Override
-   public void notify(InvocationContext ctx, Object value, boolean isPre) {
-      if (!isPre) {
-         if (log.isTraceEnabled())
-            log.tracef("Notify eviction listeners for key=%", key);
-
-         notifier.notifyCacheEntryEvicted(key, value, ctx, this);
-      }
+   public void notify(InvocationContext ctx, Object value, Metadata previousMetadata) {
+      /**
+       * We don't notify in pre for evictions - the notification is done in
+       * {@link org.infinispan.interceptors.locking.ClusteringDependentLogic.AbstractClusteringDependentLogic#notifyCommitEntry(boolean, boolean, boolean, org.infinispan.container.entries.CacheEntry, org.infinispan.context.InvocationContext, org.infinispan.commands.FlagAffectedCommand, org.infinispan.container.entries.InternalCacheEntry)}
+        */
    }
 
    @Override

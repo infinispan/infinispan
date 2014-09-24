@@ -1,7 +1,5 @@
 package org.infinispan.filter;
 
-import org.infinispan.filter.KeyValueFilter;
-
 /**
  * @author Galder Zamarreño
  */

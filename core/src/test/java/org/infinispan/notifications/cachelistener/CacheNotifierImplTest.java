@@ -59,7 +59,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryCreated() {
-      n.notifyCacheEntryCreated("k", null, true, ctx, null);
+      n.notifyCacheEntryCreated("k", "v1", true, ctx, null);
       n.notifyCacheEntryCreated("k", "v1", false, ctx, null);
 
       assert cl.isReceivedPost();
@@ -76,8 +76,8 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryModified() {
-      n.notifyCacheEntryModified("k", "v1", false, true, ctx, null);
-      n.notifyCacheEntryModified("k", "v2", false, false, ctx, null);
+      n.notifyCacheEntryModified("k", "v2", "v1", null, true, ctx, null);
+      n.notifyCacheEntryModified("k", "v2", "v1", null, false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
@@ -86,35 +86,17 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       assert cl.getEvents().get(0).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
       assert ((CacheEntryModifiedEvent) cl.getEvents().get(0)).getKey().equals("k");
       assert ((CacheEntryModifiedEvent) cl.getEvents().get(0)).getValue().equals("v1");
-      assert ((CacheEntryModifiedEvent) cl.getEvents().get(0)).getKey().equals("k");
       assert !((CacheEntryModifiedEvent) cl.getEvents().get(0)).isCreated();
       assert cl.getEvents().get(1).getCache() == mockCache;
       assert cl.getEvents().get(1).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
       assert ((CacheEntryModifiedEvent) cl.getEvents().get(1)).getKey().equals("k");
       assert ((CacheEntryModifiedEvent) cl.getEvents().get(1)).getValue().equals("v2");
       assert !((CacheEntryModifiedEvent) cl.getEvents().get(1)).isCreated();
-
-      n.notifyCacheEntryModified("k2", null, true, true, ctx, null);
-      n.notifyCacheEntryModified("k2", "v", true, false, ctx, null);
-
-      assert cl.isReceivedPost();
-      assert cl.isReceivedPre();
-      assert cl.getInvocationCount() == 4;
-      assert cl.getEvents().get(2).getCache() == mockCache;
-      assert cl.getEvents().get(2).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
-      assert ((CacheEntryModifiedEvent) cl.getEvents().get(2)).getKey().equals("k2");
-      assert ((CacheEntryModifiedEvent) cl.getEvents().get(2)).getValue() == null;
-      assert ((CacheEntryModifiedEvent) cl.getEvents().get(2)).isCreated();
-      assert cl.getEvents().get(3).getCache() == mockCache;
-      assert cl.getEvents().get(3).getType() == Event.Type.CACHE_ENTRY_MODIFIED;
-      assert ((CacheEntryModifiedEvent) cl.getEvents().get(3)).getKey().equals("k2");
-      assert ((CacheEntryModifiedEvent) cl.getEvents().get(3)).getValue().equals("v");
-      assert ((CacheEntryModifiedEvent) cl.getEvents().get(3)).isCreated();
    }
 
    public void testNotifyCacheEntryRemoved() {
-      n.notifyCacheEntryRemoved("k", "v", "v", true, ctx, null);
-      n.notifyCacheEntryRemoved("k", null, "v", false, ctx, null);
+      n.notifyCacheEntryRemoved("k", "v", null, true, ctx, null);
+      n.notifyCacheEntryRemoved("k", "v", null, false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();

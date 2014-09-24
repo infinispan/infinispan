@@ -8,10 +8,11 @@ import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.junit.Assert;
 
 import java.io.Serializable;
@@ -220,16 +221,17 @@ public class EventLogListener<K> {
    }
 
    @NamedFactory(name = "static-filter-factory")
-   public static class StaticKeyValueFilterFactory implements KeyValueFilterFactory {
+   public static class StaticCacheEventFilterFactory implements CacheEventFilterFactory {
       @Override
-      public KeyValueFilter<Integer, String> getKeyValueFilter(final Object[] params) {
-         return new StaticKeyValueFilter();
+      public CacheEventFilter<Integer, String> getFilter(final Object[] params) {
+         return new StaticCacheEventFilter();
       }
 
-      static class StaticKeyValueFilter implements KeyValueFilter<Integer, String>, Serializable {
+      static class StaticCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
          final Integer staticKey = 2;
          @Override
-         public boolean accept(Integer key, String value, Metadata metadata) {
+         public boolean accept(Integer key, String previousValue, Metadata previousMetadata, String value,
+                               Metadata metadata, EventType eventType) {
             return staticKey.equals(key);
          }
       }
@@ -237,21 +239,22 @@ public class EventLogListener<K> {
    }
 
    @NamedFactory(name = "dynamic-filter-factory")
-   public static class DynamicKeyValueFilterFactory implements KeyValueFilterFactory {
+   public static class DynamicCacheEventFilterFactory implements CacheEventFilterFactory {
       @Override
-      public KeyValueFilter<Integer, String> getKeyValueFilter(final Object[] params) {
-         return new DynamicKeyValueFilter(params);
+      public CacheEventFilter<Integer, String> getFilter(final Object[] params) {
+         return new DynamicCacheEventFilter(params);
       }
 
-      static class DynamicKeyValueFilter implements KeyValueFilter<Integer, String>, Serializable {
+      static class DynamicCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
          private final Object[] params;
 
-         public DynamicKeyValueFilter(Object[] params) {
+         public DynamicCacheEventFilter(Object[] params) {
             this.params = params;
          }
 
          @Override
-         public boolean accept(Integer key, String value, Metadata metadata) {
+         public boolean accept(Integer key, String previousValue, Metadata previousMetadata, String value,
+                               Metadata metadata, EventType eventType) {
             return params[0].equals(key); // dynamic
          }
       }

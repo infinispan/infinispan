@@ -1,56 +1,23 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
-import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateProvider;
-import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.CheckPoint;
-import org.infinispan.transaction.TransactionMode;
-import org.mockito.AdditionalAnswers;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Mockito.anyBoolean;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.eq;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Base class to be used for cluster listener tests for both tx and nontx caches
@@ -134,22 +101,24 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
    @Test
    public void testMetadataFilterNotOwner() {
       final String keyToFilterOut = "filter-me";
-      testFilter(keyToFilterOut, new MagicKey(cache(1, CACHE_NAME), cache(2, CACHE_NAME)), 1000l, new LifespanFilter<Object, String>(100));
+      testFilter(keyToFilterOut, new MagicKey(cache(1, CACHE_NAME), cache(2, CACHE_NAME)), 1000l,
+                 new KeyValueFilterAsCacheEventFilter(new LifespanFilter<Object, String>(100)));
    }
 
    @Test
    public void testMetadataFilterLocalOnly() {
       final String keyToFilterOut = "filter-me";
-      testFilter(keyToFilterOut, new MagicKey(cache(0, CACHE_NAME)), 1000l, new LifespanFilter<Object, String>(100));
+      testFilter(keyToFilterOut, new MagicKey(cache(0, CACHE_NAME)), 1000l,
+                 new KeyValueFilterAsCacheEventFilter(new LifespanFilter<Object, String>(100)));
    }
 
    protected void testSimpleFilter(Object key) {
       final String keyToFilterOut = "filter-me";
-      testFilter(keyToFilterOut, key, null, new KeyFilterAsKeyValueFilter<Object, String>(
+      testFilter(keyToFilterOut, key, null, new KeyFilterAsCacheEventFilter<Object>(
             new CollectionKeyFilter(Collections.singleton(key), true)));
    }
 
-   protected void testFilter(Object keyToFilterOut, Object keyToUse, Long lifespan, KeyValueFilter<? super Object, ? super String> filter) {
+   protected void testFilter(Object keyToFilterOut, Object keyToUse, Long lifespan, CacheEventFilter<? super Object, ? super String> filter) {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
       ClusterListener clusterListener = listener();
@@ -225,7 +194,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
    }
 
    protected <C> void testConverter(Object key, String value, Object resultingValue, Long lifespan,
-                                    Converter<Object, ? super String, C> converter) {
+                                    CacheEventConverter<Object, ? super String, C> converter) {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
       ClusterListener clusterListener = listener();
@@ -283,7 +252,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
 
       ClusterListener clusterListener = listener();
-      cache0.addListener(clusterListener, new KeyFilterAsKeyValueFilter<Object, String>(
+      cache0.addListener(clusterListener, new KeyFilterAsCacheEventFilter<Object>(
             new CollectionKeyFilter<Object>(Collections.singleton(keyToFilter), true)), new StringTruncator(0, 3));
 
       log.info("Adding a new node ..");
@@ -408,5 +377,133 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
 
       assertEquals(clusterListener.hasIncludeState() ? 1 : 0, clusterListener.events.size());
+   }
+
+   @Test
+   public void testPreviousValueConverterEventRaisedLocalNode() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+
+      String previousValue = "myOldValue";
+      long previousExpiration = 10000000;
+      MagicKey key = new MagicKey(cache0);
+
+      cache0.put(key, previousValue, previousExpiration, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache0.addListener(clusterListener, null, new StringAppender());
+
+      String newValue = "myBrandSpankingNewValue";
+      long newExpiration = 314159;
+      verifySimpleModification(cache0, key, newValue, newExpiration, clusterListener,
+                               previousValue + previousExpiration + newValue + newExpiration);
+
+   }
+
+   @Test
+   public void testPreviousValueConverterEventRaisedNonOwnerNode() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(2, CACHE_NAME);
+
+      String previousValue = "myOldValue";
+      long previousExpiration = 10000000;
+      MagicKey key = new MagicKey(cache0, cache1);
+
+      cache0.put(key, previousValue, previousExpiration, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache2.addListener(clusterListener, null, new StringAppender());
+
+      String newValue = "myBrandSpankingNewValue";
+      long newExpiration = 314159;
+      verifySimpleModification(cache0, key, newValue, newExpiration, clusterListener,
+                               previousValue + previousExpiration + newValue + newExpiration);
+   }
+
+   @Test
+   public void testPreviousValueConverterEventRaisedBackupOwnerNode() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+
+      String previousValue = "myOldValue";
+      long previousExpiration = 10000000;
+      MagicKey key = new MagicKey(cache0, cache1);
+
+      cache0.put(key, previousValue, previousExpiration, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache1.addListener(clusterListener, null, new StringAppender());
+
+      String newValue = "myBrandSpankingNewValue";
+      long newExpiration = 314159265;
+      verifySimpleModification(cache0, key, newValue, newExpiration, clusterListener,
+                               previousValue + previousExpiration + newValue + newExpiration);
+   }
+   
+   @Test
+   public void testPreviousValueFilterEventRaisedLocalNode() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+
+      String previousValue = "myOldValue";
+      long previousExpiration = 10000000;
+      MagicKey key = new MagicKey(cache0, cache1);
+
+      cache0.put(key, previousValue, previousExpiration, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache1.addListener(clusterListener, new NewLifespanLargerFilter<Object, String>(), null);
+
+      // This event is ignored because lifespan is shorter
+      cache0.put(key, previousValue, previousExpiration - 100, TimeUnit.MILLISECONDS);
+
+      String newValue = "myBrandSpankingNewValue";
+      long newExpiration = 314159265;
+      verifySimpleModification(cache0, key, newValue, newExpiration, clusterListener, newValue);
+   }
+
+   @Test
+   public void testPreviousValueFilterEventRaisedNonOwnerNode() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(2, CACHE_NAME);
+
+      String previousValue = "myOldValue";
+      long previousExpiration = 10000000;
+      MagicKey key = new MagicKey(cache0, cache1);
+      // This event is ignored because no previous lifespan
+      cache0.put(key, previousValue, previousExpiration, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache2.addListener(clusterListener, new NewLifespanLargerFilter<Object, String>(), null);
+
+      // This event is ignored because lifespan is shorter
+      cache0.put(key, previousValue, previousExpiration - 100, TimeUnit.MILLISECONDS);
+
+      String newValue = "myBrandSpankingNewValue";
+      long newExpiration = 314159265;
+      verifySimpleModification(cache0, key, newValue, newExpiration, clusterListener, newValue);
+   }
+
+   @Test
+   public void testPreviousValueFilterEventRaisedBackupOwnerNode() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+
+      String previousValue = "myOldValue";
+      long previousExpiration = 10000000;
+      MagicKey key = new MagicKey(cache0, cache1);
+      // This event is ignored because no previous lifespan
+      cache0.put(key, previousValue, previousExpiration, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache1.addListener(clusterListener, new NewLifespanLargerFilter<Object, String>(), null);
+
+      // This event is ignored because lifespan is shorter
+      cache0.put(key, previousValue, previousExpiration - 100, TimeUnit.MILLISECONDS);
+
+      String newValue = "myBrandSpankingNewValue";
+      long newExpiration = 314159265;
+      verifySimpleModification(cache0, key, newValue, newExpiration, clusterListener, newValue);
    }
 }

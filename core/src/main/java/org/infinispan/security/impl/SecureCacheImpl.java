@@ -20,6 +20,8 @@
  import org.infinispan.manager.EmbeddedCacheManager;
  import org.infinispan.metadata.Metadata;
  import org.infinispan.filter.Converter;
+ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+ import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
  import org.infinispan.remoting.rpc.RpcManager;
  import org.infinispan.security.AuthorizationManager;
  import org.infinispan.security.AuthorizationPermission;
@@ -58,8 +60,8 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public <C> void addListener(Object listener, KeyValueFilter<? super K, ? super V> filter,
-                               Converter<? super K, ? super V, C> converter) {
+   public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
+                               CacheEventConverter<? super K, ? super V, C> converter) {
       authzManager.checkPermission(AuthorizationPermission.LISTEN);
       delegate.addListener(listener, filter, converter);
    }

@@ -12,9 +12,9 @@ import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverter
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
-import org.infinispan.client.hotrod.event.EventLogListener.DynamicKeyValueFilterFactory;
+import org.infinispan.client.hotrod.event.EventLogListener.DynamicCacheEventFilterFactory;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
-import org.infinispan.client.hotrod.event.EventLogListener.StaticKeyValueFilterFactory;
+import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -39,10 +39,10 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
    protected void setup() throws Exception {
       cacheFactory = new CompatibilityCacheFactory<Integer, String>(CacheMode.LOCAL).setup();
       HotRodServer hotrod = cacheFactory.getHotrodServer();
-      hotrod.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory(), null);
-      hotrod.addKeyValueFilterFactory("dynamic-filter-factory", new DynamicKeyValueFilterFactory(), null);
-      hotrod.addConverterFactory("static-converter-factory", new StaticConverterFactory(), null);
-      hotrod.addConverterFactory("dynamic-converter-factory", new DynamicConverterFactory(), null);
+      hotrod.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory(), null);
+      hotrod.addCacheEventFilterFactory("dynamic-filter-factory", new DynamicCacheEventFilterFactory(), null);
+      hotrod.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory(), null);
+      hotrod.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory(), null);
    }
 
    @AfterClass

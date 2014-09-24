@@ -3,6 +3,8 @@ package org.infinispan.notifications;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 
 /**
  * Interface that enhances {@link FilteringListenable} with the possibility of specifying the
@@ -29,7 +31,9 @@ public interface ClassLoaderAwareFilteringListenable<K, V> extends FilteringList
 
    /**
     * Adds a listener with the provided filter and converter and using a given classloader when invoked.  See
-    * {@link org.infinispan.notifications.FilteringListenable#addListener(Object, org.infinispan.filter.KeyValueFilter, org.infinispan.filter.Converter)}
+    * {@link org.infinispan.notifications.FilteringListenable#addListener(Object,
+    * org.infinispan.notifications.cachelistener.filter.CacheEventFilter,
+    * org.infinispan.notifications.cachelistener.filter.CacheEventConverter)}
     * for more details.
     * <p/>
     * @param listener must not be null.  The listener to callback on when an event is raised
@@ -39,6 +43,6 @@ public interface ClassLoaderAwareFilteringListenable<K, V> extends FilteringList
     * @param <C> The type that the converter returns.  The listener must handle this type in any methods that handle
     *            events being returned
     */
-   <C> void addListener(Object listener, KeyValueFilter<? super K, ? super V> filter,
-                    Converter<? super K, ? super V, C> converter, ClassLoader classLoader);
+   <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter,
+                    CacheEventConverter<? super K, ? super V, C> converter, ClassLoader classLoader);
 }

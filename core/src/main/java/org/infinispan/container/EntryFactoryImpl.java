@@ -1,5 +1,8 @@
 package org.infinispan.container;
 
+import org.infinispan.commands.write.DataWriteCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.metadata.Metadata;
@@ -269,7 +272,16 @@ public class EntryFactoryImpl implements EntryFactory {
          InvocationContext ctx, Object key, FlagAffectedCommand cmd, Metadata providedMetadata, boolean skipRead) {
       MVCCEntry mvccEntry;
       if (trace) log.trace("Creating new entry.");
-      notifier.notifyCacheEntryCreated(key, null, true, ctx, cmd);
+      Object newValue;
+      if (cmd instanceof PutKeyValueCommand) {
+         newValue = ((PutKeyValueCommand)cmd).getValue();
+      } else if (cmd instanceof PutMapCommand) {
+         newValue = ((PutMapCommand)cmd).getMap().get(key);
+      } else {
+         newValue = null;
+      }
+
+      notifier.notifyCacheEntryCreated(key, newValue, true, ctx, cmd);
       mvccEntry = createWrappedEntry(key, null, ctx, providedMetadata, true, false, skipRead);
       mvccEntry.setCreated(true);
       ctx.putLookedUpEntry(key, mvccEntry);

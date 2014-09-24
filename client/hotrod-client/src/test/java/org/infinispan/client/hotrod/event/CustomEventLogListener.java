@@ -9,6 +9,9 @@ import org.infinispan.filter.Converter;
 import org.infinispan.filter.ConverterFactory;
 import org.infinispan.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.junit.Assert;
 
 import java.io.Serializable;
@@ -121,28 +124,29 @@ public abstract class CustomEventLogListener {
    public static class DynamicCustomEventWithStateLogListener extends CustomEventLogListener {}
 
    @NamedFactory(name = "static-converter-factory")
-   public static class StaticConverterFactory implements ConverterFactory {
+   public static class StaticConverterFactory implements CacheEventConverterFactory {
       @Override
-      public Converter<Integer, String, CustomEvent> getConverter(Object[] params) {
+      public CacheEventConverter<Integer, String, CustomEvent> getConverter(Object[] params) {
          return new StaticConverter();
       }
 
-      static class StaticConverter implements Converter<Integer, String, CustomEvent>, Serializable {
+      static class StaticConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
          @Override
-         public CustomEvent convert(Integer key, String value, Metadata metadata) {
+         public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
+                                    Metadata metadata, EventType eventType) {
             return new CustomEvent(key, value);
          }
       }
    }
 
    @NamedFactory(name = "dynamic-converter-factory")
-   public static class DynamicConverterFactory implements ConverterFactory {
+   public static class DynamicConverterFactory implements CacheEventConverterFactory {
       @Override
-      public Converter<Integer, String, CustomEvent> getConverter(final Object[] params) {
+      public CacheEventConverter<Integer, String, CustomEvent> getConverter(final Object[] params) {
          return new DynamicConverter(params);
       }
 
-      static class DynamicConverter implements Converter<Integer, String, CustomEvent>, Serializable {
+      static class DynamicConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
          private final Object[] params;
 
          public DynamicConverter(Object[] params) {
@@ -150,7 +154,8 @@ public abstract class CustomEventLogListener {
          }
 
          @Override
-         public CustomEvent convert(Integer key, String value, Metadata metadata) {
+         public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
+                                    Metadata metadata, EventType eventType) {
             if (params[0].equals(key))
                return new CustomEvent(key, null);
 

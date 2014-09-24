@@ -8,6 +8,7 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -92,8 +93,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       return performRemove(e, ctx);
    }
 
-   protected void notify(InvocationContext ctx, Object value, boolean isPre) {
-      notifier.notifyCacheEntryRemoved(key, value, value, isPre, ctx, this);
+   protected void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata) {
+      notifier.notifyCacheEntryRemoved(key, removedValue, removedMetadata, true, ctx, this);
    }
 
    @Override
@@ -204,7 +205,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    private Object performRemove(CacheEntry e, InvocationContext ctx) {
       final Object removedValue = e.getValue();
-      notify(ctx, removedValue, true);
+      notify(ctx, removedValue, e.getMetadata());
 
       e.setRemoved(true);
       e.setValid(false);

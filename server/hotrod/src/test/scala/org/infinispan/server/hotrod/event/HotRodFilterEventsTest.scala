@@ -2,13 +2,13 @@ package org.infinispan.server.hotrod.event
 
 import java.lang.reflect.Method
 import java.util
-import org.infinispan.filter.{KeyValueFilterFactory, KeyValueFilter}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications.cachelistener.event.Event
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.{Bytes, HotRodServer, HotRodSingleNodeTest}
 import org.testng.annotations.Test
+import org.infinispan.notifications.cachelistener.filter._
 
 /**
  * @author Galder Zamarreño
@@ -19,8 +19,8 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
       val server = startHotRodServer(cacheManager)
       server.getClientListenerRegistry.setDefaultMarshaller(None)
-      server.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory(Array[Byte](1, 2, 3)), null)
-      server.addKeyValueFilterFactory("dynamic-filter-factory", new DynamicKeyValueFilterFactory(), null)
+      server.addCacheEventFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory(Array[Byte](1, 2, 3)), null)
+      server.addCacheEventFilterFactory("dynamic-filter-factory", new DynamicKeyValueFilterFactory(), null)
       server
    }
 
@@ -94,27 +94,29 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
       }
    }
 
-   class StaticKeyValueFilterFactory(staticKey: Bytes) extends KeyValueFilterFactory {
-      override def getKeyValueFilter[K, V](params: Array[AnyRef]): KeyValueFilter[K, V] = {
-         new KeyValueFilter[Bytes, Bytes] {
-            override def accept(key: Bytes, value: Bytes, metadata: Metadata): Boolean = {
+   class StaticKeyValueFilterFactory(staticKey: Bytes) extends CacheEventFilterFactory {
+      override def getFilter[K, V](params: Array[AnyRef]): CacheEventFilter[K, V] = {
+         new CacheEventFilter[Bytes, Bytes] {
+            override def accept(key: Bytes, prevValue: Bytes, prevMetadata: Metadata, value: Bytes, metadata: Metadata,
+                                eventType: EventType): Boolean = {
                if (util.Arrays.equals(key, staticKey)) true else false
             }
 
          }
-      }.asInstanceOf[KeyValueFilter[K, V]]
+      }.asInstanceOf[CacheEventFilter[K, V]]
    }
 
-   class DynamicKeyValueFilterFactory extends KeyValueFilterFactory {
-      override def getKeyValueFilter[K, V](params: Array[AnyRef]): KeyValueFilter[K, V] = {
-         new KeyValueFilter[Bytes, Bytes] {
-            override def accept(key: Bytes, value: Bytes, metadata: Metadata): Boolean = {
+   class DynamicKeyValueFilterFactory extends CacheEventFilterFactory {
+      override def getFilter[K, V](params: Array[AnyRef]): CacheEventFilter[K, V] = {
+         new CacheEventFilter[Bytes, Bytes] {
+            override def accept(key: Bytes, prevValue: Bytes, prevMetadata: Metadata, value: Bytes, metadata: Metadata,
+                                eventType: EventType): Boolean = {
                val acceptedKey = params.head.asInstanceOf[Bytes]
                if (util.Arrays.equals(key, acceptedKey)) true else false
             }
 
          }
-      }.asInstanceOf[KeyValueFilter[K, V]]
+      }.asInstanceOf[CacheEventFilter[K, V]]
    }
 
 }

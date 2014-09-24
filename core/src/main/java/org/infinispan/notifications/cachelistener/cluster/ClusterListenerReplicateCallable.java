@@ -11,6 +11,8 @@ import org.infinispan.marshall.core.Ids;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -41,12 +43,12 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
    private transient Address ourAddress;
 
    private final UUID identifier;
-   private final KeyValueFilter<K, V> filter;
-   private final Converter<K, V, ?> converter;
+   private final CacheEventFilter<K, V> filter;
+   private final CacheEventConverter<K, V, ?> converter;
    private final Address origin;
 
-   public ClusterListenerReplicateCallable(UUID identifier, Address origin, KeyValueFilter<K, V> filter,
-                                           Converter<K, V, ?> converter) {
+   public ClusterListenerReplicateCallable(UUID identifier, Address origin, CacheEventFilter<K, V> filter,
+                                           CacheEventConverter<K, V, ?> converter) {
       this.identifier = identifier;
       this.origin = origin;
       this.filter = filter;
@@ -129,7 +131,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
       @Override
       public ClusterListenerReplicateCallable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          return new ClusterListenerReplicateCallable((UUID)input.readObject(), (Address)input.readObject(),
-                                                     (KeyValueFilter)input.readObject(), (Converter)input.readObject());
+                                                     (CacheEventFilter)input.readObject(), (CacheEventConverter)input.readObject());
       }
 
       @Override

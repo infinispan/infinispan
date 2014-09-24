@@ -2,8 +2,8 @@ package org.infinispan.server.test.client.hotrod;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.filter.ConverterFactory;
-import org.infinispan.filter.KeyValueFilterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.server.test.category.HotRodClustered;
 import org.infinispan.server.test.category.HotRodLocal;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -51,12 +51,12 @@ public class HotRodRemoteCacheIT extends AbstractRemoteCacheIT {
 
     private static Archive<?> createArchive() {
         return ShrinkWrap.create(JavaArchive.class, "filter-converter.jar")
-                .addClasses(StaticKeyValueFilterFactory.class, DynamicKeyValueFilterFactory.class)
-                .addClasses(StaticConverterFactory.class, DynamicConverterFactory.class, CustomEvent.class)
-                .addAsServiceProvider(KeyValueFilterFactory.class,
-                        StaticKeyValueFilterFactory.class, DynamicKeyValueFilterFactory.class)
-                .addAsServiceProvider(ConverterFactory.class,
-                        StaticConverterFactory.class, DynamicConverterFactory.class);
+                .addClasses(StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class)
+                .addClasses(StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class, CustomEvent.class)
+                .addAsServiceProvider(CacheEventFilterFactory.class,
+                        StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class)
+                .addAsServiceProvider(CacheEventConverterFactory.class,
+                        StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class);
     }
 
     @Override
