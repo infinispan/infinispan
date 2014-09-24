@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod
 
 import logging.Log
 import org.infinispan.commons.marshall.Marshaller
-import org.infinispan.filter.{ConverterFactory, KeyValueFilterFactory}
+import org.infinispan.notifications.cachelistener.filter.{CacheEventConverterFactory, CacheEventFilterFactory}
 import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.{QueryFacade, AbstractProtocolServer}
@@ -227,20 +227,20 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    private[hotrod] def getAddressCache = addressCache
 
-   def addKeyValueFilterFactory(name: String, factory: KeyValueFilterFactory, marshaller: Marshaller): Unit = {
-      clientListenerRegistry.addKeyValueFilterFactory(name, factory, Option(marshaller))
+   def addCacheEventFilterFactory(name: String, factory: CacheEventFilterFactory, marshaller: Marshaller): Unit = {
+      clientListenerRegistry.addCacheEventFilterFactory(name, factory, Option(marshaller))
    }
 
-   def removeKeyValueFilterFactory(name: String): Unit = {
-      clientListenerRegistry.removeKeyValueFilterFactory(name)
+   def removeCacheEventFilterFactory(name: String): Unit = {
+      clientListenerRegistry.removeCacheEventFilterFactory(name)
    }
 
-   def addConverterFactory(name: String, factory: ConverterFactory, marshaller: Marshaller): Unit = {
-      clientListenerRegistry.addConverterFactory(name, factory, Option(marshaller))
+   def addCacheEventConverterFactory(name: String, factory: CacheEventConverterFactory, marshaller: Marshaller): Unit = {
+      clientListenerRegistry.addCacheEventConverterFactory(name, factory, Option(marshaller))
    }
 
-   def removeConverterFactory(name: String): Unit = {
-      clientListenerRegistry.removeConverterFactory(name)
+   def removeCacheEventConverterFactory(name: String): Unit = {
+      clientListenerRegistry.removeCacheEventConverterFactory(name)
    }
 
    override def stop: Unit = {

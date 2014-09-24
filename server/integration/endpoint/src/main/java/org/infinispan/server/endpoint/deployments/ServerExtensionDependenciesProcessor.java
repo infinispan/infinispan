@@ -1,7 +1,7 @@
 package org.infinispan.server.endpoint.deployments;
 
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.filter.KeyValueFilterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -34,7 +34,7 @@ public class ServerExtensionDependenciesProcessor implements DeploymentUnitProce
         DeploymentUnit deploymentUnit = ctx.getDeploymentUnit();
         ServicesAttachment servicesAttachment = deploymentUnit.getAttachment(Attachments.SERVICES);
         if (servicesAttachment != null) {
-            List<String> filterFactories = servicesAttachment.getServiceImplementations(KeyValueFilterFactory.class.getName());
+            List<String> filterFactories = servicesAttachment.getServiceImplementations(CacheEventFilterFactory.class.getName());
             List<String> marshallers = servicesAttachment.getServiceImplementations(Marshaller.class.getName());
             return !filterFactories.isEmpty() || !marshallers.isEmpty();
         }

@@ -1,8 +1,8 @@
 package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.filter.ConverterFactory;
-import org.infinispan.filter.KeyValueFilterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.StartContext;
@@ -19,8 +19,8 @@ import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 public class ExtensionManagerService implements Service<ExtensionManagerService> {
 
     private final List<HotRodServer> servers = new ArrayList<>();
-    private final Map<String, KeyValueFilterFactory> filterFactories = new HashMap<>();
-    private final Map<String, ConverterFactory> converterFactories = new HashMap<>();
+    private final Map<String, CacheEventFilterFactory> filterFactories = new HashMap<>();
+    private final Map<String, CacheEventConverterFactory> converterFactories = new HashMap<>();
     private volatile Marshaller marshaller;
 
     @Override
@@ -39,13 +39,13 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
         }
 
         synchronized (filterFactories) {
-            for (Map.Entry<String, KeyValueFilterFactory> entry : filterFactories.entrySet())
-                server.addKeyValueFilterFactory(entry.getKey(), entry.getValue(), marshaller);
+            for (Map.Entry<String, CacheEventFilterFactory> entry : filterFactories.entrySet())
+                server.addCacheEventFilterFactory(entry.getKey(), entry.getValue(), marshaller);
         }
 
         synchronized (converterFactories) {
-            for (Map.Entry<String, ConverterFactory> entry : converterFactories.entrySet())
-                server.addConverterFactory(entry.getKey(), entry.getValue(), marshaller);
+            for (Map.Entry<String, CacheEventConverterFactory> entry : converterFactories.entrySet())
+                server.addCacheEventConverterFactory(entry.getKey(), entry.getValue(), marshaller);
         }
     }
 
@@ -56,45 +56,45 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
 
         synchronized (filterFactories) {
             for (String name : filterFactories.keySet())
-                server.removeKeyValueFilterFactory(name);
+                server.removeCacheEventFilterFactory(name);
         }
 
         synchronized (converterFactories) {
             for (String name : converterFactories.keySet())
-                server.removeConverterFactory(name);
+                server.removeCacheEventConverterFactory(name);
         }
     }
 
-    public void addKeyValueFilterFactory(String name, KeyValueFilterFactory factory) {
+    public void addFilterFactory(String name, CacheEventFilterFactory factory) {
         synchronized (filterFactories) {
             filterFactories.put(name, factory);
         }
 
         synchronized (servers) {
             for (HotRodServer server : servers)
-                server.addKeyValueFilterFactory(name, factory, marshaller);
+                server.addCacheEventFilterFactory(name, factory, marshaller);
         }
     }
 
-    public void removeKeyValueFilterFactory(String name) {
+    public void removeFilterFactory(String name) {
         synchronized (filterFactories) {
             filterFactories.remove(name);
         }
 
         synchronized (servers) {
             for (HotRodServer server : servers)
-                server.removeKeyValueFilterFactory(name);
+                server.removeCacheEventFilterFactory(name);
         }
     }
 
-    public void addConverterFactory(String name, ConverterFactory factory) {
+    public void addConverterFactory(String name, CacheEventConverterFactory factory) {
         synchronized (converterFactories) {
             converterFactories.put(name, factory);
         }
 
         synchronized (servers) {
             for (HotRodServer server : servers)
-                server.addConverterFactory(name, factory, marshaller);
+                server.addCacheEventConverterFactory(name, factory, marshaller);
         }
     }
 
@@ -105,7 +105,7 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
 
         synchronized (servers) {
             for (HotRodServer server : servers)
-                server.removeConverterFactory(name);
+                server.removeCacheEventConverterFactory(name);
         }
     }
 

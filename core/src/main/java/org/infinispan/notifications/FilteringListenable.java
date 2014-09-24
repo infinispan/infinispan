@@ -3,6 +3,8 @@ package org.infinispan.notifications;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 
 /**
  * A Listable that can also filter events based on key
@@ -31,5 +33,5 @@ public interface FilteringListenable<K, V> extends Listenable {
     * @param <C> The type of the resultant value after being converted
     * @throws NullPointerException if the specified listener is null
     */
-   <C> void addListener(Object listener, KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, C> converter);
+   <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter);
 }

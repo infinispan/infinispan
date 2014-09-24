@@ -8,6 +8,7 @@ import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.server.hotrod.{Bytes, HotRodServer, HotRodSingleNodeTest}
 import org.testng.annotations.Test
+import org.infinispan.notifications.cachelistener.filter.{CacheEventConverter, EventType, CacheEventConverterFactory}
 
 /**
  * @author Galder Zamarreño
@@ -18,8 +19,8 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
       val server = HotRodTestingUtil.startHotRodServer(cacheManager)
       server.getClientListenerRegistry.setDefaultMarshaller(None)
-      server.addConverterFactory("static-converter-factory", new StaticConverterFactory, null)
-      server.addConverterFactory("dynamic-converter-factory", new DynamicConverterFactory, null)
+      server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory, null)
+      server.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory, null)
       server
    }
 
@@ -87,29 +88,31 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
       }
    }
 
-   class StaticConverterFactory extends ConverterFactory {
-      override def getConverter[K, V, C](params: Array[AnyRef]): Converter[K, V, C] = {
-         new Converter[Bytes, Bytes, Bytes] {
-            override def convert(key: Bytes, value: Bytes, metadata: Metadata): Bytes = {
+   class StaticConverterFactory extends CacheEventConverterFactory {
+      override def getConverter[K, V, C](params: Array[AnyRef]): CacheEventConverter[K, V, C] = {
+         new CacheEventConverter[Bytes, Bytes, Bytes] {
+            override def convert(key: Bytes, prevValue: Bytes, prevMetadata: Metadata, value: Bytes, metadata: Metadata,
+                                 eventType: EventType): Bytes = {
                val keyLength = key.length.toByte
                if (value == null) Array(keyLength) ++ key
                else Array(keyLength) ++ key ++ Array(value.length.toByte) ++ value
             }
-         }.asInstanceOf[Converter[K, V, C]] // ugly but it works :|
+         }.asInstanceOf[CacheEventConverter[K, V, C]] // ugly but it works :|
       }
    }
 
-   class DynamicConverterFactory extends ConverterFactory {
-      override def getConverter[K, V, C](params: Array[AnyRef]): Converter[K, V, C] = {
-         new Converter[Bytes, Bytes, Bytes] {
-            override def convert(key: Bytes, value: Bytes, metadata: Metadata): Bytes = {
+   class DynamicConverterFactory extends CacheEventConverterFactory {
+      override def getConverter[K, V, C](params: Array[AnyRef]): CacheEventConverter[K, V, C] = {
+         new CacheEventConverter[Bytes, Bytes, Bytes] {
+            override def convert(key: Bytes, prevValue: Bytes, prevMetadata: Metadata, value: Bytes, metadata: Metadata,
+                                 eventType: EventType): Bytes = {
                val keyLength = key.length.toByte
                if (value == null || java.util.Arrays.equals(params.head.asInstanceOf[Bytes], key))
                   Array(keyLength) ++ key
                else
                   Array(keyLength) ++ key ++ Array(value.length.toByte) ++ value
             }
-         }.asInstanceOf[Converter[K, V, C]] // ugly but it works :|
+         }.asInstanceOf[CacheEventConverter[K, V, C]] // ugly but it works :|
       }
    }
 

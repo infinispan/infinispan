@@ -67,14 +67,14 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
          e.setChanged(true);
          Object old = e.setValue(newValue);
          if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
-            return returnValue(old, true, ctx);
+            return returnValue(old, e.getMetadata(), true, ctx);
          } else {
             // Return the expected value when retrying
-            return returnValue(oldValue, true, ctx);
+            return returnValue(oldValue, e.getMetadata(), true, ctx);
          }
       }
 
-      return returnValue(null, false, ctx);
+      return returnValue(null, null, false, ctx);
    }
 
    @SuppressWarnings("unchecked")
@@ -85,15 +85,14 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       return oldValue.equals(newValue);
    }
 
-   private Object returnValue(Object beingReplaced, boolean successful, 
+   private Object returnValue(Object beingReplaced, Metadata previousMetadata, boolean successful,
          InvocationContext ctx) {
       this.successful = successful;
       
       Object previousValue = oldValue == null ? beingReplaced : oldValue;
 
       if (successful) {
-         notifier.notifyCacheEntryModified(
-               key, previousValue, previousValue == null, true, ctx, this);
+         notifier.notifyCacheEntryModified(key, newValue, previousValue, previousMetadata, true, ctx, this);
       }
 
       if (oldValue == null) {

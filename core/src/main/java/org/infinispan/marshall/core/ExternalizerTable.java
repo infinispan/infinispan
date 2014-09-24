@@ -69,6 +69,11 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverterAsConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterAsKeyValueFilter;
+import org.infinispan.notifications.cachelistener.filter.ConverterAsCacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.KeyValueFilterAsCacheEventFilter;
 import org.infinispan.registry.ScopedKey;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -321,6 +326,11 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MapReduceManagerImpl.DeltaListExternalizer());
       addInternalExternalizer(new MapReduceManagerImpl.DeltaAwareListExternalizer());
       addInternalExternalizer(new CacheStatusResponse.Externalizer());
+      addInternalExternalizer(new CacheEventConverterAsConverter.Externalizer());
+      addInternalExternalizer(new CacheEventFilterAsKeyValueFilter.Externalizer());
+      addInternalExternalizer(new ConverterAsCacheEventConverter.Externalizer());
+      addInternalExternalizer(new KeyFilterAsCacheEventFilter.Externalizer());
+      addInternalExternalizer(new KeyValueFilterAsCacheEventFilter.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

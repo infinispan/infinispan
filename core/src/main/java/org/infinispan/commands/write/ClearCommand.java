@@ -44,7 +44,7 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
          if (e instanceof MVCCEntry) {
             MVCCEntry me = (MVCCEntry) e;
             Object k = me.getKey(), v = me.getValue();
-            notifier.notifyCacheEntryRemoved(k, v, v, true, ctx, this);
+            notifier.notifyCacheEntryRemoved(k, v, me.getMetadata(), true, ctx, this);
             me.setRemoved(true);
             me.setValid(false);
             me.setChanged(true);

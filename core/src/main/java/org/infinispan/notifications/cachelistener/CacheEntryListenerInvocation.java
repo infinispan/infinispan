@@ -2,6 +2,8 @@ package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -25,7 +27,7 @@ public interface CacheEntryListenerInvocation<K, V> extends ListenerInvocation<E
 
    UUID getIdentifier();
 
-   KeyValueFilter<? super K, ? super V> getFilter();
+   CacheEventFilter<? super K, ? super V> getFilter();
 
-   <C> Converter<? super K, ? super V, C> getConverter();
+   <C> CacheEventConverter<? super K, ? super V, C> getConverter();
 }

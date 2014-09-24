@@ -7,7 +7,7 @@ import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
-import org.infinispan.client.hotrod.event.EventLogListener.StaticKeyValueFilterFactory;
+import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -48,8 +48,8 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       HotRodServer server = TestHelper.startHotRodServer(cm, serverBuilder);
-      server.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory(), null);
-      server.addConverterFactory("static-converter-factory", new StaticConverterFactory(), null);
+      server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory(), null);
+      server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory(), null);
       servers.add(server);
       return server;
    }

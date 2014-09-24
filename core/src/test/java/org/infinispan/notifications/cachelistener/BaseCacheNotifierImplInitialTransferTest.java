@@ -28,6 +28,9 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
@@ -75,21 +78,21 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          @Override
          public void raiseEvent(CacheNotifier notifier, Object key, Object prevValue, Object newValue,
                                 InvocationContext ctx) {
-            notifier.notifyCacheEntryModified(key, prevValue, false, true, ctx, null);
-            notifier.notifyCacheEntryModified(key, newValue, false, false, ctx, null);
+            notifier.notifyCacheEntryModified(key, newValue, prevValue, null, true, ctx, null);
+            notifier.notifyCacheEntryModified(key, newValue, prevValue, null, false, ctx, null);
          }
       }, REMOVE(Event.Type.CACHE_ENTRY_REMOVED) {
          @Override
          public void raiseEvent(CacheNotifier notifier, Object key, Object prevValue, Object newValue,
                                 InvocationContext ctx) {
-            notifier.notifyCacheEntryRemoved(key, prevValue, prevValue, true, ctx, null);
-            notifier.notifyCacheEntryRemoved(key, null, prevValue, false, ctx, null);
+            notifier.notifyCacheEntryRemoved(key, prevValue, null, true, ctx, null);
+            notifier.notifyCacheEntryRemoved(key, prevValue, null, false, ctx, null);
          }
       }, CREATE(Event.Type.CACHE_ENTRY_CREATED) {
          @Override
          public void raiseEvent(CacheNotifier notifier, Object key, Object prevValue, Object newValue,
                                 InvocationContext ctx) {
-            notifier.notifyCacheEntryCreated(key, prevValue, true, ctx, null);
+            notifier.notifyCacheEntryCreated(key, newValue, true, ctx, null);
             notifier.notifyCacheEntryCreated(key, newValue, false, ctx, null);
          }
       };
@@ -182,13 +185,15 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          }
       });
 
-      KeyValueFilter filter = mock(KeyValueFilter.class, withSettings().serializable());
-      Converter converter = mock(Converter.class, withSettings().serializable());
+      CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
+      CacheEventConverter converter = mock(CacheEventConverter.class, withSettings().serializable());
       n.addListener(listener, filter, converter);
       verifyEvents(isClustered(listener), listener, initialValues);
 
-      verify(filter, never()).accept(anyObject(), anyObject(), any(Metadata.class));
-      verify(converter, never()).convert(anyObject(), anyObject(), any(Metadata.class));
+      verify(filter, never()).accept(anyObject(), anyObject(), any(Metadata.class), anyObject(), any(Metadata.class),
+                                     any(EventType.class));
+      verify(converter, never()).convert(anyObject(), anyObject(), any(Metadata.class), anyObject(), any(Metadata.class),
+                                         any(EventType.class));
    }
 
    public void testMetadataAvailable() {
@@ -209,8 +214,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          }
       });
 
-      KeyValueFilter filter = mock(KeyValueFilter.class, withSettings().serializable());
-      Converter converter = mock(Converter.class, withSettings().serializable());
+      CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
+      CacheEventConverter converter = mock(CacheEventConverter.class, withSettings().serializable());
       StateListener<String, String> listener = new StateListenerClustered();
       n.addListener(listener, filter, converter);
       verifyEvents(isClustered(listener), listener, initialValues);
@@ -327,8 +332,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
             String key = "key-3";
 
             Object prevValue = initialValues.get(3).getValue();
-            n.notifyCacheEntryRemoved(key, prevValue, prevValue, true, ctx, null);
-            n.notifyCacheEntryRemoved(key, null, prevValue, false, ctx, null);
+            n.notifyCacheEntryRemoved(key, prevValue, null, true, ctx, null);
+            n.notifyCacheEntryRemoved(key, prevValue, null, false, ctx, null);
 
             // We shouldn't see the event at all now!
             initialValues.remove(3);
@@ -336,7 +341,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          case CREATE:
             key = "new-key";
             String value = "new-value";
-            n.notifyCacheEntryCreated(key, null, true, ctx, null);
+            n.notifyCacheEntryCreated(key, value, true, ctx, null);
             n.notifyCacheEntryCreated(key, value, false, ctx, null);
 
             // Need to add a new value to the end
@@ -346,8 +351,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
             key = "key-3";
             value = "value-3-changed";
 
-            n.notifyCacheEntryModified(key, initialValues.get(3).getValue(), false, true, ctx, null);
-            n.notifyCacheEntryModified(key, value, false, false, ctx, null);
+            n.notifyCacheEntryModified(key, initialValues.get(3).getValue(), value, null, true, ctx, null);
+            n.notifyCacheEntryModified(key, initialValues.get(3).getValue(), value, null, false, ctx, null);
 
             // Now remove the old value and put in the new one
             initialValues.remove(3);

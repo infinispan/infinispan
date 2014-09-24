@@ -17,6 +17,9 @@ import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.EventType;
 
 public class SecureCacheTestDriver {
 
@@ -24,8 +27,8 @@ public class SecureCacheTestDriver {
    private NullListener listener;
    private CommandInterceptor interceptor;
    private KeyFilter<String> keyFilter;
-   private Converter<String, String, String> converter;
-   private KeyValueFilter<String, String> keyValueFilter;
+   private CacheEventConverter<String, String, String> converter;
+   private CacheEventFilter<String, String> keyValueFilter;
 
    public SecureCacheTestDriver() {
       interceptor = new CommandInterceptor() {
@@ -36,16 +39,16 @@ public class SecureCacheTestDriver {
             return true;
          }
       };
-      keyValueFilter = new KeyValueFilter<String, String>() {
+      keyValueFilter = new CacheEventFilter<String, String>() {
          @Override
-         public boolean accept(String key, String value, Metadata metadata) {
+         public boolean accept(String key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
             return true;
          }
       };
-      converter = new Converter<String, String, String>() {
+      converter = new CacheEventConverter<String, String, String>() {
          @Override
-         public String convert(String key, String value, Metadata metadata) {
-            return value;
+         public String convert(String key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
+            return null;
          }
       };
       listener = new NullListener();
@@ -164,7 +167,7 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.LISTEN)
-   public void testAddListener_Object_KeyValueFilter_Converter(SecureCache<String, String> cache) {
+   public void testAddListener_Object_CacheEventFilter_CacheEventConverter(SecureCache<String, String> cache) {
       cache.addListener(listener, keyValueFilter, converter);
    }
 

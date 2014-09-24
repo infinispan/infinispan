@@ -1,5 +1,6 @@
 package org.infinispan.interceptors.locking;
 
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -99,7 +100,7 @@ public interface ClusteringDependentLogic {
 
       protected void notifyCommitEntry(boolean created, boolean removed,
                                        boolean evicted, CacheEntry entry, InvocationContext ctx,
-                                       FlagAffectedCommand command) {
+                                       FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
          // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
          // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
          // with non-null values, so we should do the same here as an ugly workaround.
@@ -108,15 +109,15 @@ public interface ClusteringDependentLogic {
                   entry.getKey(), entry.getValue(), ctx, command);
          } else if (removed) {
             notifier.notifyCacheEntryRemoved(
-                  entry.getKey(), null, entry.getValue(), false, ctx, command);
+                  entry.getKey(), previousValue, previousMetadata, false, ctx, command);
          } else {
             // Notify entry event after container has been updated
             if (created) {
                notifier.notifyCacheEntryCreated(
                      entry.getKey(), entry.getValue(), false, ctx, command);
             } else {
-               notifier.notifyCacheEntryModified(entry.getKey(),
-                                                 entry.getValue(), created, false, ctx, command);
+               notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), previousValue, previousMetadata,
+                                                 false, ctx, command);
             }
          }
       }
@@ -223,10 +224,17 @@ public interface ClusteringDependentLogic {
          boolean removed = entry.isRemoved();
          boolean evicted = entry.isEvicted();
 
+         InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
+         Object previousValue = null;
+         Metadata previousMetadata = null;
+         if (previousEntry != null) {
+            previousValue = previousEntry.getValue();
+            previousMetadata = previousEntry.getMetadata();
+         }
          commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
-         notifyCommitEntry(created, removed, evicted, entry, ctx, command);
+         notifyCommitEntry(created, removed, evicted, entry, ctx, command, previousValue, previousMetadata);
       }
 
       @Override
@@ -290,10 +298,17 @@ public interface ClusteringDependentLogic {
          boolean removed = entry.isRemoved();
          boolean evicted = entry.isEvicted();
 
+         InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
+         Object previousValue = null;
+         Metadata previousMetadata = null;
+         if (previousEntry != null) {
+            previousValue = previousEntry.getValue();
+            previousMetadata = previousEntry.getMetadata();
+         }
          commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
-         notifyCommitEntry(created, removed, evicted, entry, ctx, command);
+         notifyCommitEntry(created, removed, evicted, entry, ctx, command, previousValue, previousMetadata);
       }
 
       @Override
@@ -447,14 +462,21 @@ public interface ClusteringDependentLogic {
                evicted = entry.isEvicted();
             }
 
-            if (doCommit)
+            if (doCommit) {
+               InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
+               Object previousValue = null;
+               Metadata previousMetadata = null;
+               if (previousEntry != null) {
+                  previousValue = previousEntry.getValue();
+                  previousMetadata = previousEntry.getMetadata();
+               }
                commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
-            else
+               if (!isForeignOwned) {
+                  notifyCommitEntry(created, removed, evicted, entry, ctx, command, previousValue, previousMetadata);
+               }
+            } else
                entry.rollback();
 
-            if (!isForeignOwned) {
-               notifyCommitEntry(created, removed, evicted, entry, ctx, command);
-            }
          } finally {
             stateTransferLock.releaseSharedTopologyLock();
          }
