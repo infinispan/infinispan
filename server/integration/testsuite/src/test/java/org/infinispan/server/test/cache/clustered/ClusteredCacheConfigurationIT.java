@@ -9,13 +9,11 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.server.test.category.Unstable;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 import static org.infinispan.server.test.util.ITestUtils.eventually;
@@ -89,7 +87,6 @@ public class ClusteredCacheConfigurationIT {
 
     // test queue-flush-interval=3000 (ms) with memcached
     @Test
-    @Category(Unstable.class) // See ISPN-4057
     public void testQueueFlushIntervalMemcached() throws Exception {
         final MemcachedClient mc1 = new MemcachedClient(server1.getMemcachedEndpoint().getInetAddress().getHostName(), server1.getMemcachedEndpoint()
                 .getPort());
@@ -110,9 +107,9 @@ public class ClusteredCacheConfigurationIT {
             // this means that the next interval window starts now and we can do another check
             mc1.set("k2", "v2");
             assertNotNull(mc1.get("k2"));
-            assertNull(mc1.get("k2"));
+            assertNull(mc2.get("k2"));
             sleepForSecs(3.0);
-            assertNotNull(mc1.get("k2"));
+            assertNotNull(mc2.get("k2"));
         }
     }
 
