@@ -63,7 +63,7 @@ public interface HotRodConstants {
    static final byte AUTH_RESPONSE = 0x24;
    static final byte ADD_CLIENT_LISTENER_RESPONSE = 0x26;
    static final byte REMOVE_CLIENT_LISTENER_RESPONSE = 0x28;
-   static final byte SIZE_RESPONSE = 0x30;
+   static final byte SIZE_RESPONSE = 0x2A;
    static final byte ERROR_RESPONSE = 0x50;
    static final byte CACHE_ENTRY_CREATED_EVENT_RESPONSE = 0x60;
    static final byte CACHE_ENTRY_MODIFIED_EVENT_RESPONSE = 0x61;
