@@ -1031,7 +1031,7 @@ The following new response operation codes have been added:
 * +0x24+ = auth mech response
 * +0x26+ = add client remote event listener response
 * +0x28+ = remove client remote event listener response
-* +0x30+ = size response
+* +0x2A+ = size response
 
 ===== Distribution-Aware Client Topology Change Header
 
