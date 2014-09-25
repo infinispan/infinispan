@@ -544,6 +544,11 @@
             <version>${version.shrinkwrapResolver}</version>
             <type>pom</type>
             <scope>import</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.shrinkwrap.resolver</groupId>
+            <artifactId>shrinkwrap-resolver-impl-maven</artifactId>
+            <version>${version.shrinkwrapResolver}</version>
             <exclusions>
                <exclusion>
                   <groupId>com.google.collections</groupId>
@@ -964,6 +969,11 @@
             <artifactId>lucene-analyzers-common</artifactId>
             <version>${version.lucene}</version>
          </dependency>
+          <dependency>
+              <groupId>com.google.guava</groupId>
+              <artifactId>guava</artifactId>
+              <version>${version.guava}</version>
+          </dependency>
       </dependencies>
    </dependencyManagement>
    <dependencies>
