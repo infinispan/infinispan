@@ -97,6 +97,10 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          }
       }
 
+      if (maxTopology == null) {
+         log.debugf("No current topology, recovered only joiners for cache %s", context.getCacheName());
+      }
+
       // Since we picked the biggest topology, its topology id may not be the biggest
       int maxTopologyId = 0;
       for (CacheStatusResponse response : statusResponses) {
@@ -109,7 +113,7 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       // Cancel any pending rebalance in the current topology.
       // By definition, the stable topology does not have a pending CH.
       CacheTopology mergedTopology = maxTopology;
-      if (maxTopology.getPendingCH() != null) {
+      if (maxTopology != null && maxTopology.getPendingCH() != null) {
          mergedTopology = new CacheTopology(maxTopologyId + 1, maxTopology.getRebalanceId(),
                maxTopology.getCurrentCH(), null);
       }

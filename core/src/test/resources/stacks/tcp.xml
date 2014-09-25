@@ -48,7 +48,7 @@
 
    <MERGE3/>
 
-   <FD_SOCK/>
+   <FD_SOCK sock_conn_timeout="3000"/>
    <!--
        Note that this is an atypically short timeout and a small number of retries
        configured this way to speed up unit testing, since we know all nodes run in the same JVM

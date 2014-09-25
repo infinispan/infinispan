@@ -16,6 +16,10 @@ import org.infinispan.remoting.transport.Address;
 public interface ClusterTopologyManager {
    /**
     * Signals that a new member is joining the cache.
+    *
+    * The returned {@code CacheStatusResponse.cacheTopology} is the current cache topology before the node joined.
+    * If the node is the first to join the cache, the returned topology does include the joiner,
+    * and it is never {@code null}.
     */
    CacheStatusResponse handleJoin(String cacheName, Address joiner, CacheJoinInfo joinInfo, int viewId) throws Exception;
 

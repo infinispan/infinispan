@@ -149,16 +149,20 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          log.debugf("One of the partitions is available, using that partition's topology and staying in available mode");
          mergedAvailabilityMode = AvailabilityMode.AVAILABLE;
          mergedTopology = maxActiveTopology;
-      } else {
+      } else if (maxDegradedTopology != null) {
          log.debugf("No active or unavailable partitions, so all the partitions must be in degraded mode.");
          mergedAvailabilityMode = AvailabilityMode.DEGRADED_MODE;
          mergedTopology = maxDegradedTopology;
+      } else {
+         log.debugf("No current topology, recovered only joiners for cache %s", context.getCacheName());
+         mergedAvailabilityMode = AvailabilityMode.AVAILABLE;
+         mergedTopology = null;
       }
 
       // Cancel any pending rebalance by removing the pending CH.
       // Needed because we don't recover the rebalance confirmation status (yet).
       // By definition, the stable topology doesn't have a rebalance in progress.
-      if (mergedTopology.getPendingCH() != null) {
+      if (mergedTopology != null && mergedTopology.getPendingCH() != null) {
          mergedTopology = new CacheTopology(mergedTopology.getTopologyId() + 1, mergedTopology.getRebalanceId(),
                mergedTopology.getCurrentCH(), null);
       }
