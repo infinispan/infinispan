@@ -79,9 +79,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    @Override
    public void queueRebalance(List<Address> newMembers) {
       synchronized (this) {
-         log.debugf("Queueing rebalance for cache %s with members %s", cacheName, newMembers);
-         queuedRebalanceMembers = newMembers;
-         startQueuedRebalance();
+         if (newMembers != null && !newMembers.isEmpty()) {
+            log.debugf("Queueing rebalance for cache %s with members %s", cacheName, newMembers);
+            queuedRebalanceMembers = newMembers;
+            startQueuedRebalance();
+         }
       }
    }
 
@@ -315,6 +317,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          removeRebalanceConfirmationCollector();
 
          CacheTopology currentTopology = getCurrentTopology();
+         if (currentTopology == null) {
+            log.tracef("Rebalance finished because there are no more members in cache %s", cacheName);
+            return;
+         }
+
          int currentTopologyId = currentTopology.getTopologyId();
          log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d", cacheName, currentTopologyId);
          int newTopologyId = currentTopologyId + 1;
@@ -342,6 +349,10 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    @Override
    public void updateCurrentTopology(List<Address> newMembers) {
       synchronized (this) {
+         // The current topology might be null just after a joiner became the coordinator
+         if (currentTopology == null) {
+            createInitialCacheTopology();
+         }
          ConsistentHashFactory consistentHashFactory = getJoinInfo().getConsistentHashFactory();
          int topologyId = currentTopology.getTopologyId();
          int rebalanceId = currentTopology.getRebalanceId();
@@ -498,20 +509,14 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       synchronized (this) {
          isFirstMember = getCurrentTopology() == null;
          boolean memberJoined = addMember(joiner, joinInfo);
-         if (!memberJoined) {
+         if (!isFirstMember && !memberJoined) {
             if (trace) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
                   "members = %s, joiners = %s", joiner, cacheName, expectedMembers, joiners);
             return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
          }
          if (isFirstMember) {
             // This node was the first to join. We need to install the initial CH
-            List<Address> initialMembers = getExpectedMembers();
-            ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(
-                  joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
-                  initialMembers, getCapacityFactors());
-            CacheTopology initialTopology = new CacheTopology(0, 0, initialCH, null);
-            setCurrentTopology(initialTopology);
-            setStableTopology(initialTopology);
+            CacheTopology initialTopology = createInitialCacheTopology();
 
             // Don't need to broadcast the initial CH update, just return the cache topology to the joiner
             // But we do need to broadcast the initial topology as the stable topology
@@ -523,6 +528,17 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
 
       return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode);
+   }
+
+   protected CacheTopology createInitialCacheTopology() {
+      List<Address> initialMembers = getExpectedMembers();
+      ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(
+            joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
+            initialMembers, getCapacityFactors());
+      CacheTopology initialTopology = new CacheTopology(0, 0, initialCH, null);
+      setCurrentTopology(initialTopology);
+      setStableTopology(initialTopology);
+      return initialTopology;
    }
 
    public void doLeave(Address leaver) throws Exception {

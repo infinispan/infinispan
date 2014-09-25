@@ -40,6 +40,7 @@ import static org.mockito.Mockito.spy;
 public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
    public static final String CACHE_NAME = "testCache";
+   private static final String OTHER_CACHE_NAME = "other_cache";
    private ConfigurationBuilder defaultConfig;
    Cache c1, c2, c3;
    DISCARD d1, d2, d3;
@@ -457,6 +458,21 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       long endTime = System.currentTimeMillis();
       log.debugf("Recovery took %s", Util.prettyPrintTime(endTime - startTime));
       assert endTime - startTime < 30000 : "Recovery took too long: " + Util.prettyPrintTime(endTime - startTime);
+   }
+
+   public void testJoinerBecomesOnlyMember() {
+      // Keep only 2 nodes for this test
+      killMember(2, CACHE_NAME);
+
+      d2.setDiscardAll(true);
+      fork(new Callable<Object>() {
+         @Override
+         public Object call() throws Exception {
+            return cache(1, OTHER_CACHE_NAME);
+         }
+      });
+      TestingUtil.blockUntilViewsReceived(30000, false, manager(1));
+      TestingUtil.waitForRehashToComplete(cache(1, OTHER_CACHE_NAME));
    }
 }
 
