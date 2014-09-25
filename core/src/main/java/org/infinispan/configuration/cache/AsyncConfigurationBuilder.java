@@ -18,7 +18,7 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
 
    private boolean asyncMarshalling = false;
    private ReplicationQueue replicationQueue;
-   private long replicationQueueInterval = TimeUnit.SECONDS.toMillis(5);
+   private long replicationQueueInterval = 10;
    private int replicationQueueMaxElements = 1000;
    private boolean useReplicationQueue = false;
 

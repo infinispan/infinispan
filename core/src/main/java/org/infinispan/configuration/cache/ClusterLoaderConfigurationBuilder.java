@@ -6,7 +6,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfigurationBuilder<ClusterLoaderConfiguration, ClusterLoaderConfigurationBuilder> {
-   private long remoteCallTimeout;
+   private long remoteCallTimeout = TimeUnit.SECONDS.toMillis(15);
 
    public ClusterLoaderConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder);

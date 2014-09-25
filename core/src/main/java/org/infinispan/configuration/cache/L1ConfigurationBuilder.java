@@ -20,7 +20,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    private boolean enabled = false;
    private int invalidationThreshold = 0;
    private long lifespan = TimeUnit.MINUTES.toMillis(10);
-   private long cleanupTaskFrequency = TimeUnit.MINUTES.toMillis(10);
+   private long cleanupTaskFrequency = TimeUnit.MINUTES.toMillis(1);
 
    L1ConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);

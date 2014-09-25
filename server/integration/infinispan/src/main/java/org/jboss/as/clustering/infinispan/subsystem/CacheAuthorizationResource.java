@@ -49,7 +49,7 @@ public class CacheAuthorizationResource extends SimpleResourceDefinition {
             .setXmlName(Attribute.ENABLED.getLocalName())
             .setAllowExpression(true)
             .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-            .setDefaultValue(new ModelNode().set(true))
+            .setDefaultValue(new ModelNode().set(false))
             .build()
     ;
 

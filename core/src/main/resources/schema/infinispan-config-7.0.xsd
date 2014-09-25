@@ -641,12 +641,12 @@
         <xs:documentation>If true, a pool of shared locks is maintained for all entries that need to be locked. Otherwise, a lock is created per entry in the cache. Lock striping helps control memory footprint but may reduce concurrency in the system.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="acquire-timeout" type="xs:long" default="15000">
+    <xs:attribute name="acquire-timeout" type="xs:long" default="10000">
       <xs:annotation>
         <xs:documentation>Maximum time to attempt a particular lock acquisition.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="concurrency-level" type="xs:int" default="1000">
+    <xs:attribute name="concurrency-level" type="xs:int" default="32">
       <xs:annotation>
         <xs:documentation>Concurrency level for lock containers. Adjust this value according to the number of concurrent threads interacting with Infinispan.</xs:documentation>
       </xs:annotation>
@@ -726,7 +726,7 @@
         <xs:documentation>Sets the cache eviction strategy. Available options are 'UNORDERED', 'FIFO', 'LRU', 'LIRS' and 'NONE' (to disable eviction).</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="max-entries" type="xs:int" default="10000">
+    <xs:attribute name="max-entries" type="xs:int" default="-1">
       <xs:annotation>
         <xs:documentation>Maximum number of entries in a cache instance. If selected value is not a power of two the actual value will default to the least power of two larger than selected value. -1 means no limit.</xs:documentation>
       </xs:annotation>
@@ -751,7 +751,7 @@
         <xs:documentation>Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in milliseconds. -1 means the entries never expire.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="interval" type="xs:long" default="5000">
+    <xs:attribute name="interval" type="xs:long" default="60000">
       <xs:annotation>
         <xs:documentation>Interval (in milliseconds) between subsequent runs to purge expired entries from memory and any cache stores. If you wish to disable the periodic eviction process altogether, set interval to -1.</xs:documentation>
       </xs:annotation>
@@ -978,7 +978,7 @@
         </xs:attribute>
         <xs:attribute name="queue-size" type="xs:int" default="0">
           <xs:annotation>
-            <xs:documentation>In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold.</xs:documentation>
+            <xs:documentation>In ASYNC mode, this attribute can be used to trigger flushing of the queue when it reaches a specific threshold. A value of 0 (the default) disables the replication queue.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
         <xs:attribute name="queue-flush-interval" type="xs:long" default="10">
@@ -986,7 +986,7 @@
             <xs:documentation>In ASYNC mode, this attribute controls how often the asynchronous thread used to flush the replication queue runs. This should be a positive integer which represents thread wakeup time in milliseconds.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="remote-timeout" type="xs:long" default="17500">
+        <xs:attribute name="remote-timeout" type="xs:long" default="15000">
           <xs:annotation>
             <xs:documentation>In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown.</xs:documentation>
           </xs:annotation>
@@ -1036,7 +1036,7 @@
             <xs:documentation>Number of cluster-wide replicas for each cache entry.</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="segments" type="xs:int" default="80">
+        <xs:attribute name="segments" type="xs:int" default="60">
           <xs:annotation>
             <xs:documentation>Number of hash space segments (per cluster). The recommended value is 10 * cluster size. The default value is 80</xs:documentation>
           </xs:annotation>
@@ -1109,7 +1109,7 @@
   <xs:complexType name="cluster-loader">
     <xs:complexContent>
       <xs:extension base="tns:loader">
-        <xs:attribute name="remote-timeout" type="xs:long">
+        <xs:attribute name="remote-timeout" type="xs:long" default="15000">
           <xs:annotation>
             <xs:documentation>The timeout when performing remote calls.</xs:documentation>
           </xs:annotation>

@@ -30,6 +30,7 @@ public class ClusterLoaderResource extends BaseLoaderResource {
                     .setXmlName(Attribute.REMOTE_TIMEOUT.getLocalName())
                     .setAllowExpression(false)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setDefaultValue(new ModelNode().set(15000L))
                     .build();
 
     static final AttributeDefinition[] CLUSTER_LOADER_ATTRIBUTES = {REMOTE_TIMEOUT};

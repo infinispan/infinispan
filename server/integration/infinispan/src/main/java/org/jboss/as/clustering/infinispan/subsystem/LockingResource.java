@@ -54,7 +54,7 @@ public class LockingResource extends SimpleResourceDefinition {
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .setDefaultValue(new ModelNode().set(15000))
+                    .setDefaultValue(new ModelNode().set(10000))
                     .build();
 
     static final SimpleAttributeDefinition CONCURRENCY_LEVEL =
@@ -62,7 +62,7 @@ public class LockingResource extends SimpleResourceDefinition {
                     .setXmlName(Attribute.CONCURRENCY_LEVEL.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .setDefaultValue(new ModelNode().set(1000))
+                    .setDefaultValue(new ModelNode().set(32))
                     .build();
 
     static final SimpleAttributeDefinition ISOLATION =
@@ -71,6 +71,7 @@ public class LockingResource extends SimpleResourceDefinition {
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .setValidator(new EnumValidator<IsolationLevel>(IsolationLevel.class, true, false))
+                    .setDefaultValue(new ModelNode().set(IsolationLevel.READ_COMMITTED.name()))
                     .build();
 
     static final SimpleAttributeDefinition STRIPING =
