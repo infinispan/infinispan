@@ -27,7 +27,7 @@ public class NodeAuthenticationKrbPassIT extends AbstractNodeAuthentication {
    
    @BeforeClass
    public static void kerberosSetup() throws Exception {
-      krbLdapServer = new ApacheDsKrbLdap("localhost");
+      krbLdapServer = new ApacheDsKrbLdap("127.0.0.1");
       krbLdapServer.start();
    }
 
