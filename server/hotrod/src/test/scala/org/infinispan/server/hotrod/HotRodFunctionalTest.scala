@@ -77,7 +77,7 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
 
    def testPutWithPreviousValue(m: Method) {
       var resp = client.put(k(m) , 0, 0, v(m), 1).asInstanceOf[TestResponseWithPrevious]
-      assertStatus(resp, Success)
+      assertStatus(resp, SuccessWithPrevious)
       assertEquals(resp.previous, None)
       resp = client.put(k(m) , 0, 0, v(m, "v2-"), 1).asInstanceOf[TestResponseWithPrevious]
       assertSuccess(resp, v(m))
@@ -118,12 +118,11 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testPutIfAbsentWithPreviousValue(m: Method) {
-      var resp = client.putIfAbsent(k(m) , 0, 0, v(m), 1).asInstanceOf[TestResponseWithPrevious]
-      assertStatus(resp, Success)
-      assertEquals(resp.previous, None)
-      resp = client.putIfAbsent(k(m) , 0, 0, v(m, "v2-"), 1).asInstanceOf[TestResponseWithPrevious]
-      assertStatus(resp, OperationNotExecuted)
-      assertTrue(Arrays.equals(v(m), resp.previous.get))
+      val resp1 = client.putIfAbsent(k(m) , 0, 0, v(m), 1)
+      assertStatus(resp1, Success)
+      val resp2 = client.putIfAbsent(k(m) , 0, 0, v(m, "v2-"), 1).asInstanceOf[TestResponseWithPrevious]
+      assertStatus(resp2, NotExecutedWithPrevious)
+      assertTrue(Arrays.equals(v(m), resp2.previous.get))
    }
 
    def testReplaceBasic(m: Method) {
@@ -155,14 +154,13 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testReplaceWithPreviousValue(m: Method) {
-      var resp = client.replace(k(m) , 0, 0, v(m), 1).asInstanceOf[TestResponseWithPrevious]
+      val resp = client.replace(k(m) , 0, 0, v(m), 1)
       assertStatus(resp, OperationNotExecuted)
-      assertEquals(resp.previous, None)
-      resp = client.put(k(m) , 0, 0, v(m, "v2-"), 1).asInstanceOf[TestResponseWithPrevious]
-      assertStatus(resp, Success)
-      assertEquals(resp.previous, None)
-      resp = client.replace(k(m) , 0, 0, v(m, "v3-"), 1).asInstanceOf[TestResponseWithPrevious]
-      assertSuccess(resp, v(m, "v2-"))
+      val resp2 = client.put(k(m) , 0, 0, v(m, "v2-"), 1).asInstanceOf[TestResponseWithPrevious]
+      assertStatus(resp2, SuccessWithPrevious)
+      assertEquals(resp2.previous, None)
+      val resp3 = client.replace(k(m) , 0, 0, v(m, "v3-"), 1).asInstanceOf[TestResponseWithPrevious]
+      assertSuccess(resp3, v(m, "v2-"))
    }
 
    def testGetWithVersionBasic(m: Method) {
@@ -217,18 +215,17 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testReplaceIfUnmodifiedWithPreviousValue(m: Method) {
-      var resp = client.replaceIfUnmodified(k(m) , 0, 0, v(m), 999, 1).asInstanceOf[TestResponseWithPrevious]
+      var resp = client.replaceIfUnmodified(k(m) , 0, 0, v(m), 999, 1)
       assertStatus(resp, KeyDoesNotExist)
-      assertEquals(resp.previous, None)
       client.assertPut(m)
       val getResp = client.getWithVersion(k(m), 0)
       assertSuccess(getResp, v(m), 0)
-      resp  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1).asInstanceOf[TestResponseWithPrevious]
-      assertStatus(resp, OperationNotExecuted)
-      assertTrue(Arrays.equals(v(m), resp.previous.get))
-      resp  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.dataVersion, 1).asInstanceOf[TestResponseWithPrevious]
-      assertStatus(resp, Success)
-      assertTrue(Arrays.equals(v(m), resp.previous.get))
+      val resp2 = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1).asInstanceOf[TestResponseWithPrevious]
+      assertStatus(resp2, NotExecutedWithPrevious)
+      assertTrue(Arrays.equals(v(m), resp2.previous.get))
+      val resp3  = client.replaceIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.dataVersion, 1).asInstanceOf[TestResponseWithPrevious]
+      assertStatus(resp3, SuccessWithPrevious)
+      assertTrue(Arrays.equals(v(m), resp3.previous.get))
    }
 
    def testRemoveIfUnmodifiedWithExpiry(m: Method) {
@@ -278,12 +275,11 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testRemoveWithPreviousValue(m: Method) {
-      var resp = client.remove(k(m), 1).asInstanceOf[TestResponseWithPrevious]
+      val resp = client.remove(k(m), 1)
       assertStatus(resp, KeyDoesNotExist)
-      assertEquals(resp.previous, None)
       client.assertPut(m)
-      resp = client.remove(k(m), 1).asInstanceOf[TestResponseWithPrevious]
-      assertSuccess(resp, v(m))
+      val resp2 = client.remove(k(m), 1).asInstanceOf[TestResponseWithPrevious]
+      assertSuccess(resp2, v(m))
    }
 
    def testRemoveIfUnmodifiedBasic(m: Method) {
@@ -321,18 +317,17 @@ class HotRodFunctionalTest extends HotRodSingleNodeTest {
    }
 
    def testRemoveIfUmodifiedWithPreviousValue(m: Method) {
-      var resp = client.removeIfUnmodified(k(m) , 0, 0, v(m), 999, 1).asInstanceOf[TestResponseWithPrevious]
+      val resp = client.removeIfUnmodified(k(m) , 0, 0, v(m), 999, 1)
       assertStatus(resp, KeyDoesNotExist)
-      assertEquals(resp.previous, None)
       client.assertPut(m)
       val getResp = client.getWithVersion(k(m), 0)
       assertSuccess(getResp, v(m), 0)
-      resp  = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1).asInstanceOf[TestResponseWithPrevious]
-      assertStatus(resp, OperationNotExecuted)
-      assertTrue(Arrays.equals(v(m), resp.previous.get))
-      resp = client.removeIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.dataVersion, 1).asInstanceOf[TestResponseWithPrevious]
-      assertStatus(resp, Success)
-      assertTrue(Arrays.equals(v(m), resp.previous.get))
+      val resp2  = client.removeIfUnmodified(k(m), 0, 0, v(m, "v2-"), 888, 1).asInstanceOf[TestResponseWithPrevious]
+      assertStatus(resp2, NotExecutedWithPrevious)
+      assertTrue(Arrays.equals(v(m), resp2.previous.get))
+      val resp3 = client.removeIfUnmodified(k(m), 0, 0, v(m, "v3-"), getResp.dataVersion, 1).asInstanceOf[TestResponseWithPrevious]
+      assertStatus(resp3, SuccessWithPrevious)
+      assertTrue(Arrays.equals(v(m), resp3.previous.get))
    }
 
    def testContainsKeyBasic(m: Method) {

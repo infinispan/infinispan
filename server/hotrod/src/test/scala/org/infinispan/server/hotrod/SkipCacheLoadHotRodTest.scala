@@ -27,7 +27,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       commandInterceptor.expectSkipLoadFlag = true
       assertStatus(client.put(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.Success)
       assertStatus(client.put(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.Success)
+                                                     ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.SuccessWithPrevious)
    }
 
    def testReplace(m: Method) {
@@ -52,7 +52,7 @@ class SkipCacheLoadHotRodTest extends HotRodSingleNodeTest {
       commandInterceptor.expectSkipLoadFlag = false
       assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), ProtocolFlag.SkipCacheLoader.id), OperationStatus.OperationNotExecuted)
       assertStatus(client.putIfAbsent(k(m), 0, 0, v(m), join(ProtocolFlag.SkipCacheLoader.id,
-                                                             ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.OperationNotExecuted)
+                                                             ProtocolFlag.ForceReturnPreviousValue.id)), OperationStatus.NotExecutedWithPrevious)
    }
 
    def testReplaceIfUnmodified(m: Method) {
