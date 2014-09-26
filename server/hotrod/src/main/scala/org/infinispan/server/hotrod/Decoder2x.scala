@@ -153,9 +153,28 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       createResponse(header, toResponse(header.op), KeyDoesNotExist, null)
 
    private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: Array[Byte]): AnyRef = {
-      if (hasFlag(h, ForceReturnPreviousValue))
-         new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
-            h.clientIntel, op, st, h.topologyId, if (prev == null) None else Some(prev))
+      if (hasFlag(h, ForceReturnPreviousValue)) {
+         val adjustedStatus = (h.op, st) match {
+            case (PutRequest, Success) => SuccessWithPrevious
+            case (PutIfAbsentRequest, OperationNotExecuted) => NotExecutedWithPrevious
+            case (ReplaceRequest, Success) => SuccessWithPrevious
+            case (ReplaceIfUnmodifiedRequest, Success) => SuccessWithPrevious
+            case (ReplaceIfUnmodifiedRequest, OperationNotExecuted) => NotExecutedWithPrevious
+            case (RemoveRequest, Success) => SuccessWithPrevious
+            case (RemoveIfUnmodifiedRequest, Success) => SuccessWithPrevious
+            case (RemoveIfUnmodifiedRequest, OperationNotExecuted) => NotExecutedWithPrevious
+            case _ => st
+         }
+
+         adjustedStatus match {
+            case SuccessWithPrevious | NotExecutedWithPrevious =>
+               new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
+                  h.clientIntel, op, adjustedStatus, h.topologyId, if (prev == null) None else Some(prev))
+            case _ =>
+               new Response(h.version, h.messageId, h.cacheName, h.clientIntel, op, adjustedStatus, h.topologyId)
+         }
+
+      }
       else
          new Response(h.version, h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId)
    }

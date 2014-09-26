@@ -431,8 +431,8 @@ Replace response:
 +0x00+ = success, if stored +
 +0x01+ = if store did not happen because key does not exist +
 | Previous value Length  | vInt       | If force return previous value flag was
-sent in the request and the key was replaced, the length of the previous value
-will be returned. If the key does not exist, value length would be 0.
+sent in the request, the length of the previous value will be returned.
+If the key does not exist, value length would be 0.
 If no flag was sent, no value length would be present.
 | Previous value         | byte array | If force return previous value flag was
 sent in the request and the key was replaced, previous value.
@@ -448,6 +448,12 @@ PutIfAbsent response:
 | Response status     | 1 byte     |
 +0x00+ = success, if stored +
 +0x01+ = if store did not happen because key was present +
+| Previous value Length  | vInt       | If force return previous value flag was
+sent in the request, the length of the previous value will be returned.
+If the key does not exist, value length would be 0.
+If no flag was sent, no value length would be present.
+| Previous value         | byte array | If force return previous value flag was
+sent in the request and the key was replaced, previous value.
 |==============================================================================
 
 .ReplaceIfUnmodified
@@ -488,8 +494,8 @@ Response:
 +0x01+ = if replace did not happen because key had been modified +
 +0x02+ = if not replaced because if key does not exist
 | Previous value Length  | vInt       | If force return previous value flag was
-sent in the request and the key was replaced, the length of the previous value
-will be returned. If the key does not exist, value length would be 0.
+sent in the request, the length of the previous value will be returned.
+If the key does not exist, value length would be 0.
 If no flag was sent, no value length would be present.
 | Previous value         | byte array | If force return previous value flag was
 sent in the request and the key was replaced, previous value.
@@ -525,8 +531,8 @@ Response:
 +0x01+ = if remove did not happen because key had been modified +
 +0x02+ = if not removed because key does not exist +
 | Previous value Length  | vInt       | If force return previous value flag was
-sent in the request and the key was removed, the length of the previous value
-will be returned. If the key does not exist, value length would be 0.
+sent in the request, the length of the previous value will be returned.
+If the key does not exist, value length would be 0.
 If no flag was sent, no value length would be present.
 | Previous value         | byte array | If force return previous value flag was
 sent in the request and the key was removed, previous value.
@@ -1044,6 +1050,35 @@ can be failed-over to other nodes.
 it means that the server-side cache or cache manager are not available
 for requests because either stopped, they're stopping or similar situation.
 Generally, requests that return this error can be failed-over to other nodes.
+
+Some adjustments have been made to the responses for the following commands in
+order to better handle response decoding without the need to keep track of the
+information sent. More precisely, the way previous values are parsed has changed
+so that the status of the command response provides clues on whether the previous
+value follows or not. More precisely:
+
+* Put response returns `0x03` status code when put was successful
+and previous value follows.
+* PutIfAbsent response returns `0x04` status code only when the putIfAbsent
+operation failed because the key was present and its value follows in the
+response. If the putIfAbsent worked, there would have not been a previous value,
+and hence it does not make sense returning anything extra.
+* Replace response returns `0x03` status code only when replace happened and the
+previous or replaced value follows in the response. If the replace did not happen,
+it means that the cache entry was not present, and hence there's no previous value
+that can be returned.
+* ReplaceIfUnmodified returns `0x03` status code only when replace happened and
+the previous or replaced value follows in the response.
+* ReplaceIfUnmodified returns `0x04` status code only when replace did not happen
+as a result of the key being modified, and the modified value follows in the response.
+* Remove returns `0x03` status code when the remove happened and the previous or
+removed value follows in the response. If the remove did not occur as a result
+of the key not being present, it does not make sense sending any previous value
+information.
+* RemoveIfUnmodified returns `0x03` status code only when remove happened and
+the previous or replaced value follows in the response.
+* RemoveIfUnmodified returns `0x04` status code only when remove did not happen
+as a result of the key being modified, and the modified value follows in the response.
 
 ===== Distribution-Aware Client Topology Change Header
 

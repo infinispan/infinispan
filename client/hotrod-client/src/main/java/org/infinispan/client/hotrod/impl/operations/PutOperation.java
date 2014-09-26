@@ -28,9 +28,9 @@ public class PutOperation extends AbstractKeyValueOperation<byte[]> {
    @Override
    protected byte[] executeOperation(Transport transport) {
       short status = sendPutOperation(transport, PUT_REQUEST, PUT_RESPONSE);
-      if (status != NO_ERROR_STATUS) {
+      if (status != NO_ERROR_STATUS && status != SUCCESS_WITH_PREVIOUS) {
          throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
       }
-      return returnPossiblePrevValue(transport);
+      return returnPossiblePrevValue(transport, status);
    }
 }
