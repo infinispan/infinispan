@@ -1,6 +1,5 @@
 package org.infinispan.cdi.test;
 
-import org.infinispan.cdi.OverrideDefault;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -10,7 +9,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 
 /**
@@ -23,13 +21,12 @@ public class DefaultTestEmbeddedCacheManagerProducer {
    /**
     * Produces the default embedded cache manager.
     *
-    * @param providedDefaultEmbeddedCacheManager the provided default embedded cache manager.
     * @param defaultConfiguration the default configuration produced by the {@link DefaultTestEmbeddedCacheManagerProducer}.
     * @return the default embedded cache manager used by the application.
     */
    @Produces
    @ApplicationScoped
-   public EmbeddedCacheManager getDefaultEmbeddedCacheManager(@OverrideDefault Instance<EmbeddedCacheManager> providedDefaultEmbeddedCacheManager, Configuration defaultConfiguration) {
+   public EmbeddedCacheManager getDefaultEmbeddedCacheManager(Configuration defaultConfiguration) {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
       globalConfigurationBuilder.globalJmxStatistics().allowDuplicateDomains(true);

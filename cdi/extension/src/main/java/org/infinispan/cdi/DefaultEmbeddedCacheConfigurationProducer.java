@@ -6,7 +6,6 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 
 /**
@@ -26,17 +25,12 @@ public class DefaultEmbeddedCacheConfigurationProducer {
    /**
     * Produces the default embedded cache configuration.
     *
-    * @param providedDefaultEmbeddedCacheConfiguration the provided default embedded cache configuration.
     * @return the default embedded cache configuration.
     */
    @Produces
    @ConfigureCache
    @DefaultBean(Configuration.class)
-   public Configuration getDefaultEmbeddedCacheConfiguration(@OverrideDefault Instance<Configuration> providedDefaultEmbeddedCacheConfiguration) {
-      if (!providedDefaultEmbeddedCacheConfiguration.isUnsatisfied()) {
-         log.tracef("Default embedded cache configuration overridden by '%s'", providedDefaultEmbeddedCacheConfiguration);
-         return providedDefaultEmbeddedCacheConfiguration.get();
-      }
+   public Configuration getDefaultEmbeddedCacheConfiguration() {
       return new ConfigurationBuilder().build();
    }
 }

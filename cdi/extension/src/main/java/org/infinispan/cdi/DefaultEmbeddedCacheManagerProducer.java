@@ -9,7 +9,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
 
 /**
@@ -29,18 +28,13 @@ public class DefaultEmbeddedCacheManagerProducer {
    /**
     * Produces the default embedded cache manager.
     *
-    * @param providedDefaultEmbeddedCacheManager the provided default embedded cache manager.
     * @param defaultConfiguration the default configuration produced by the {@link DefaultEmbeddedCacheConfigurationProducer}.
     * @return the default embedded cache manager used by the application.
     */
    @Produces
    @ApplicationScoped
    @DefaultBean(EmbeddedCacheManager.class)
-   public EmbeddedCacheManager getDefaultEmbeddedCacheManager(@OverrideDefault Instance<EmbeddedCacheManager> providedDefaultEmbeddedCacheManager, Configuration defaultConfiguration) {
-      if (!providedDefaultEmbeddedCacheManager.isUnsatisfied()) {
-         log.tracef("Default embedded cache manager overridden by '%s'", providedDefaultEmbeddedCacheManager);
-         return providedDefaultEmbeddedCacheManager.get();
-      }
+   public EmbeddedCacheManager getDefaultEmbeddedCacheManager(Configuration defaultConfiguration) {
       return new DefaultCacheManager(defaultConfiguration);
    }
 
