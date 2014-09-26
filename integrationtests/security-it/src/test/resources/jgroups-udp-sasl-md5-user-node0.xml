@@ -1,48 +1,47 @@
 <config xmlns="urn:org:jgroups"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.4.xsd">
-   <UDP
-         mcast_addr="${jgroups.udp.mcast_addr:228.6.7.8}"
-         mcast_port="${jgroups.udp.mcast_port:46655}"
-         tos="8"
-         ucast_recv_buf_size="20m"
-         ucast_send_buf_size="640k"
-         mcast_recv_buf_size="25m"
-         mcast_send_buf_size="640k"
-         max_bundle_size="31k"
-         ip_ttl="${jgroups.udp.ip_ttl:2}"
-         enable_diagnostics="false"
+   
+   <TCP  bind_port="7800" port_range="10"
+         recv_buf_size="20000000"
+         send_buf_size="640000"
+         loopback="false"
+         max_bundle_size="64k"
          bundler_type="sender-sends-with-timer"
+         enable_diagnostics="true"
+         thread_naming_pattern="cl"
 
-         thread_naming_pattern="pl"
+         timer_type="new"
+         timer.min_threads="4"
+         timer.max_threads="10"
+         timer.keep_alive_time="3000"
+         timer.queue_max_size="1000"
+         timer.wheel_size="200"
+         timer.tick_time="50"
 
          thread_pool.enabled="true"
          thread_pool.min_threads="2"
-         thread_pool.max_threads="30"
-         thread_pool.keep_alive_time="60000"
+         thread_pool.max_threads="8"
+         thread_pool.keep_alive_time="5000"
          thread_pool.queue_enabled="true"
-         thread_pool.queue_max_size="100"
-         thread_pool.rejection_policy="Discard"
+         thread_pool.queue_max_size="100000"
+         thread_pool.rejection_policy="discard"
 
          oob_thread_pool.enabled="true"
-         oob_thread_pool.min_threads="2"
-         oob_thread_pool.max_threads="30"
-         oob_thread_pool.keep_alive_time="60000"
+         oob_thread_pool.min_threads="1"
+         oob_thread_pool.max_threads="8"
+         oob_thread_pool.keep_alive_time="5000"
          oob_thread_pool.queue_enabled="false"
          oob_thread_pool.queue_max_size="100"
-         oob_thread_pool.rejection_policy="Discard"
+         oob_thread_pool.rejection_policy="discard"/>
 
-         internal_thread_pool.enabled="true"
-         internal_thread_pool.min_threads="1"
-         internal_thread_pool.max_threads="10"
-         internal_thread_pool.keep_alive_time="60000"
-         internal_thread_pool.queue_enabled="true"
-         internal_thread_pool.queue_max_size="100"
-         internal_thread_pool.rejection_policy="Discard"
-         />
+   <MPING bind_addr="${jgroups.bind_addr:127.0.0.1}" break_on_coord_rsp="true"
+          mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
+          mcast_port="${jgroups.mping.mcast_port:43366}"
+          ip_ttl="${jgroups.udp.ip_ttl:2}"
+          num_initial_members="3" timeout="2000"/>
 
-   <PING timeout="3000" num_initial_members="3"/>
-   <MERGE2 max_interval="30000" min_interval="10000"/>
+   <MERGE3/>
 
    <FD_SOCK/>
    <FD_ALL timeout="15000" interval="3000"/>
