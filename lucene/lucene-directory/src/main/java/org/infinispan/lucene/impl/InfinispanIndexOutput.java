@@ -1,7 +1,11 @@
 package org.infinispan.lucene.impl;
 
 import java.io.IOException;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
+import org.apache.lucene.store.BufferedChecksum;
+import org.apache.lucene.store.IndexOutput;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
@@ -21,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Directory
  * @see org.apache.lucene.store.IndexInput
  */
-public class InfinispanIndexOutput {
+public class InfinispanIndexOutput extends IndexOutput {
 
    private static final Log log = LogFactory.getLog(InfinispanIndexOutput.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -33,6 +37,7 @@ public class InfinispanIndexOutput {
    private final FileMetadata file;
    private final FileCacheKey fileKey;
    private final FileListOperations fileOps;
+   private final Checksum crc = new BufferedChecksum(new CRC32());
 
    private byte[] buffer;
 
@@ -99,12 +104,14 @@ public class InfinispanIndexOutput {
       if (isNewChunkNeeded()) {
          newChunk();
       }
+      crc.update(b);
       buffer[positionInBuffer++] = b;
       filePosition++;
    }
 
    public final void writeBytes(final byte[] b, final int offset, final int length) {
       int writtenBytes = 0;
+      crc.update(b, offset, length);
       while (writtenBytes < length) {
          if (isNewChunkNeeded()) {
             newChunk();
@@ -218,6 +225,11 @@ public class InfinispanIndexOutput {
    private boolean isWritingOnLastChunk() {
       final int lastChunkNumber = file.getNumberOfChunks() - 1;
       return currentChunkNumber >= lastChunkNumber;
+   }
+
+   @Override
+   public long getChecksum() throws IOException {
+      return crc.getValue();
    }
 
 }

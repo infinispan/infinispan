@@ -109,13 +109,13 @@ class DirectoryImplementor {
 
     IndexOutput createOutput(final String name) {
        if (IndexFileNames.SEGMENTS_GEN.equals(name)) {
-          return new CheckSummingIndexOutput(metadataCache, chunksCache, segmentsGenFileKey, chunkSize, fileOps);
+          return new InfinispanIndexOutput(metadataCache, chunksCache, segmentsGenFileKey, chunkSize, fileOps);
        }
        else {
           final FileCacheKey key = new FileCacheKey(indexName, name);
           // creating new file, metadata is added on flush() or close() of
           // IndexOutPut
-          return new CheckSummingIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
+          return new InfinispanIndexOutput(metadataCache, chunksCache, key, chunkSize, fileOps);
        }
     }
 
