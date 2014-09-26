@@ -28,9 +28,7 @@ public class ReplaceOperation extends AbstractKeyValueOperation<byte[]> {
    protected byte[] executeOperation(Transport transport) {
       byte[] result = null;
       short status = sendPutOperation(transport, REPLACE_REQUEST, REPLACE_RESPONSE);
-      if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
-         result = returnPossiblePrevValue(transport);
-      }
+      result = returnPossiblePrevValue(transport, status);
       return result;
    }
 }

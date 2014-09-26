@@ -26,7 +26,7 @@ public class RemoveOperation extends AbstractKeyOperation<byte[]> {
    @Override
    public byte[] executeOperation(Transport transport) {
       short status = sendKeyOperation(key, transport, REMOVE_REQUEST, REMOVE_RESPONSE);
-      byte[] result = returnPossiblePrevValue(transport);
+      byte[] result = returnPossiblePrevValue(transport, status);
       if (status == KEY_DOES_NOT_EXIST_STATUS)
          return null;
 
