@@ -98,11 +98,20 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          }
       }
 
+      // Since we picked the biggest topology, its topology id may not be the biggest
+      int maxTopologyId = 0;
+      for (CacheStatusResponse response : statusResponses) {
+         CacheTopology topology = response.getCacheTopology();
+         if (topology != null && maxTopologyId < topology.getTopologyId()) {
+            maxTopologyId = topology.getTopologyId();
+         }
+      }
+
       // Cancel any pending rebalance in the current topology.
       // By definition, the stable topology does not have a pending CH.
       CacheTopology mergedTopology = maxTopology;
       if (maxTopology.getPendingCH() != null) {
-         mergedTopology = new CacheTopology(maxTopology.getTopologyId() + 1, maxTopology.getRebalanceId(),
+         mergedTopology = new CacheTopology(maxTopologyId + 1, maxTopology.getRebalanceId(),
                maxTopology.getCurrentCH(), null);
       }
 
