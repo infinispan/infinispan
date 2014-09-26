@@ -16,7 +16,7 @@
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-lucene-directory</artifactId>
+         <artifactId>infinispan-embedded-query</artifactId>
       </dependency>
       <dependency>
          <groupId>org.apache.lucene</groupId>

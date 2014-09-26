@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<infinispan xmlns="urn:infinispan:config:7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:7.0 http://infinispan.org/schemas/infinispan-config-7.0.xsd">
+   
+   <cache-container default-cache="default">
+      <transport cluster="demoCluster"/>
+      <jmx />
+      <distributed-cache name="default" mode="SYNC" l1-lifespan="60000" owners="2" statistics="true"/>
+   </cache-container>
+
+</infinispan>

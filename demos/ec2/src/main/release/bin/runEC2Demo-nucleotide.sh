@@ -2,18 +2,19 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath ${ISPN_HOME}/etc
-add_classpath ${ISPN_HOME}/etc/config-samples/ec2-demo
-add_classpath ${ISPN_HOME}/modules/demos/ec2/runtime-classpath.txt
+add_classpath ${ISPN_HOME}/*.jar
+add_classpath ${ISPN_HOME}/demos/ec2/etc
+add_classpath ${ISPN_HOME}/demos/ec2/etc/config
+add_classpath ${ISPN_HOME}/demos/ec2/etc/runtime-classpath.txt
 
-if [[ ! -e ${ISPN_HOME}/etc/Amazon-TestData/influenza_na.dat ]]; then
-  gunzip ${ISPN_HOME}/etc/Amazon-TestData/influenza_na.dat.gz > /dev/null
+if [[ ! -e ${ISPN_HOME}/demos/ec2/etc/Amazon-TestData/influenza_na.dat ]]; then
+  gunzip ${ISPN_HOME}/demos/ec2/etc/Amazon-TestData/influenza_na.dat.gz > /dev/null
 fi
 
 add_jvm_args '-Xmx512m'
 add_jvm_args $JVM_PARAMS
 add_jvm_args '-Djava.net.preferIPv4Stack=true'
-add_jvm_args "-DCFGPath=${ISPN_HOME}/etc/config-samples/ec2-demo/"
+add_jvm_args "-DCFGPath=${ISPN_HOME}/demos/ec2/etc/config"
 
 # RHQ monitoring options
 add_jvm_args '-Dcom.sun.management.jmxremote.ssl=false'
@@ -26,8 +27,8 @@ add_jvm_args '-Dsun.nio.ch.bugLevel=""'
 # Sample JPDA settings for remote socket debugging
 #add_jvm_args "-Xrunjdwp:transport=dt_socket,address=8686,server=y,suspend=n"
 
-add_program_args -c "${ISPN_HOME}/etc/config-samples/ec2-demo/infinispan-ec2-config.xml"
-add_program_args -i "${ISPN_HOME}/etc/Amazon-TestData/influenza_na.dat"
+add_program_args -c "${ISPN_HOME}/demos/ec2/etc/config/infinispan-ec2-config.xml"
+add_program_args -i "${ISPN_HOME}/demos/ec2/etc/Amazon-TestData/influenza_na.dat"
 
 start org.infinispan.ec2demo.InfinispanFluDemo
 

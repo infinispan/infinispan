@@ -2,9 +2,9 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath ${ISPN_HOME}/etc
-add_classpath ${ISPN_HOME}/modules/demos/distexec/*.jar
-add_classpath ${ISPN_HOME}/modules/demos/distexec/runtime-classpath.txt
+add_classpath ${ISPN_HOME}/demos/distexec/etc
+add_classpath ${ISPN_HOME}/demos/distexec/*.jar
+add_classpath ${ISPN_HOME}/demos/distexec/etc/runtime-classpath.txt
 
 add_jvm_args $JVM_PARAMS
 add_jvm_args '-Djava.net.preferIPv4Stack=true'

@@ -16,10 +16,10 @@
    <dependencies>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-core</artifactId>
+         <artifactId>infinispan-embedded</artifactId>
       </dependency>
       <dependency>
-         <groupId>jgoodies</groupId>
+         <groupId>com.jgoodies</groupId>
          <artifactId>forms</artifactId>
       </dependency>
       <dependency>

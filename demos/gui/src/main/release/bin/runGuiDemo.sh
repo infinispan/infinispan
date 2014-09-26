@@ -2,9 +2,10 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath ${ISPN_HOME}/etc
-add_classpath ${ISPN_HOME}/modules/demos/gui/*.jar
-add_classpath ${ISPN_HOME}/modules/demos/gui/runtime-classpath.txt
+add_classpath ${ISPN_HOME}/*.jar
+add_classpath ${ISPN_HOME}/demos/gui/etc
+add_classpath ${ISPN_HOME}/demos/gui/*.jar
+add_classpath ${ISPN_HOME}/demos/gui/etc/runtime-classpath.txt
 
 add_jvm_args $JVM_PARAMS
 add_jvm_args '-Djgroups.bind_addr=127.0.0.1'
