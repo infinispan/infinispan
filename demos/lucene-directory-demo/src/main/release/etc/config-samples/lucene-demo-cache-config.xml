@@ -1,22 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd"
-   xmlns="urn:infinispan:config:6.0">
-
-   <global>
-      <transport clusterName="luceneDemoCluster" />
-      <globalJmxStatistics enabled="false" />
-   </global>
-
-   <default>
-      <locking useLockStriping="false" />
-      <clustering mode="distribution">
-         <l1 enabled="true" lifespan="60000" />
-         <hash numOwners="2" />
-         <sync />
-      </clustering>
-      <invocationBatching enabled="true" />
-   </default>
+   xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+   xmlns="urn:infinispan:config:7.0">
+   
+   <cache-container default-cache="default">
+      <transport cluster="luceneDemoCluster"/>
+      <distributed-cache name="default" mode="SYNC" l1-lifespan="60000" owners="2" statistics="true" >
+        <locking striping="false"/>
+        <transaction mode="BATCH"/>
+      </distributed-cache>
+   </cache-container>
 
 </infinispan>

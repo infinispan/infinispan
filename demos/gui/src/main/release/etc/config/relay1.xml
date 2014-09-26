@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<infinispan xmlns="urn:infinispan:config:7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:7.0 http://infinispan.org/schemas/infinispan-config-7.0.xsd">
+   <jgroups>
+      <stack-file name="relay" path="config-samples/jgroups-relay1.xml"/>
+   </jgroups>
+   
+   <cache-container default-cache="default">
+      <transport cluster="demoCluster1" stack="relay"/>
+      <jmx />
+      <distributed-cache name="DIST_SYNC" mode="SYNC" owners="2" statistics="true"/>
+   </cache-container>
+
+</infinispan>

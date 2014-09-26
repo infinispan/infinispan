@@ -93,7 +93,7 @@ public class InfinispanDemo {
       if(args.length > 0)
          cfgFileName=args[0];
       else
-         cfgFileName = LegacyKeySupportSystemProperties.getProperty("infinispan.configuration", "infinispan.demo.cfg", "config-samples/gui-demo-cache-config.xml");
+         cfgFileName = LegacyKeySupportSystemProperties.getProperty("infinispan.configuration", "infinispan.demo.cfg", "config/gui-demo-cache-config.xml");
       frame = new JFrame("Infinispan GUI Demo (STOPPED)");
       frame.setContentPane(new InfinispanDemo(cfgFileName).panel1);
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

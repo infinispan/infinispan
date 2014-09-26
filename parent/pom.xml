@@ -138,7 +138,7 @@
       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.jetty>6.1.25</version.jetty>
-      <version.jgoodies.forms>1.0.5</version.jgoodies.forms>
+      <version.jgoodies.forms>1.0.7</version.jgoodies.forms>
       <version.jsap>2.1</version.jsap>
       <version.jstl>1.2</version.jstl>
       <version.junit>4.11</version.junit>
@@ -410,7 +410,7 @@
             <version>${version.javax.servlet}</version>
          </dependency>
          <dependency>
-            <groupId>jgoodies</groupId>
+            <groupId>com.jgoodies</groupId>
             <artifactId>forms</artifactId>
             <version>${version.jgoodies.forms}</version>
          </dependency>
@@ -1641,6 +1641,23 @@
                            <excludeScope>test</excludeScope>
                            <prefix>$ISPN_HOME/lib</prefix>
                            <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
+                           <excludeGroupIds>org.infinispan,org.jgroups,org.jboss.marshalling,org.jboss.logging,net.jcip</excludeGroupIds>
+                           <prefix>$ISPN_HOME/lib</prefix>
+                           <outputFile>${project.build.directory}/runtime-classpath.txt</outputFile>
+                           <silent>true</silent>
+                        </configuration>
+                     </execution>
+                     <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                           <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                           <includeScope>runtime</includeScope>
+                           <excludeScope>test</excludeScope>
+                           <excludeGroupIds>org.infinispan,org.jgroups,org.jboss.marshalling,org.jboss.logging,net.jcip</excludeGroupIds>
+                           <silent>true</silent>
                         </configuration>
                      </execution>
                   </executions>
