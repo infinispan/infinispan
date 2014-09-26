@@ -121,6 +121,10 @@ public class LargeIndexesTest {
          AssertJUnit.assertEquals(0, offset);
          AssertJUnit.assertEquals(expectedReadSize, len);
       }
+
+      public IndexInput slice(String sliceDescription, long offset, long length) throws IOException {
+         return null;
+      }
    }
 
 }

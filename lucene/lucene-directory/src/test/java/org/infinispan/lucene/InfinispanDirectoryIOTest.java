@@ -20,6 +20,7 @@ import org.infinispan.lucene.impl.DirectoryExtensions;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 import org.infinispan.lucene.testutils.RepeatableLongByteSequence;
+import org.infinispan.lucene.impl.InfinispanIndexOutput;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
@@ -86,7 +87,7 @@ public class InfinispanDirectoryIOTest {
       //between 2 chunks
       final int[] pointers = {0, 635, REPEATABLE_BUFFER_SIZE, 135};
       for(int i=0; i < pointers.length; i++) {
-         io.seek(pointers[i]);
+         ((InfinispanIndexOutput)io).seek(pointers[i]);
          io.writeBytes(someTextAsBytes, someTextAsBytes.length);
       }
 
@@ -492,7 +493,7 @@ public class InfinispanDirectoryIOTest {
 
       String testText = "This is some rubbish again that will span more than one chunk - one hopes.  Who knows, maybe even three or four chunks.";
       io = dir.createOutput("MyNewFile.txt", IOContext.DEFAULT);
-      io.seek(0);
+      ((InfinispanIndexOutput)io).seek(0);
       io.writeBytes(testText.getBytes(), 0, testText.length());
       io.close();
       // now compare.

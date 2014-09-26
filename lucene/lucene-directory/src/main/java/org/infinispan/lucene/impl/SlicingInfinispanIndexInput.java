@@ -45,7 +45,6 @@ final class SlicingInfinispanIndexInput extends IndexInput {
       return length;
    }
 
-   @Override
    public IndexInput slice(String sliceDescription, long offset, long length) throws IOException {
       return new SlicingInfinispanIndexInput(sliceDescription, offset + this.offset, length, delegate.copyAndReset());
    }

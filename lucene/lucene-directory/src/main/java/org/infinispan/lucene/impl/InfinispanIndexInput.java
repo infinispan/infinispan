@@ -161,7 +161,6 @@ public class InfinispanIndexInput extends IndexInput {
       return clone;
    }
 
-   @Override
    public IndexInput slice(String sliceDescription, long offset, long length) throws IOException {
       return new SlicingInfinispanIndexInput(sliceDescription, offset, length, copyAndReset());
    }

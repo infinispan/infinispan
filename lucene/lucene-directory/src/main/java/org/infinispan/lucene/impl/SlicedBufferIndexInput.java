@@ -54,7 +54,6 @@ final class SlicedBufferIndexInput extends IndexInput {
       return this.length;
    }
 
-   @Override
    public IndexInput slice(String sliceDescription, long offset, long length) throws IOException {
       return new SlicedBufferIndexInput(sliceDescription, buffer, offset + this.offset, length);
    }
