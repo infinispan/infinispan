@@ -6,6 +6,7 @@
 
     <major-minor version="${project.version}" property="infinispan.slot" prefix="ispn-"/>
     <major-minor version="${version.lucene}" property="lucene4.slot"/>
+    <major-minor version="${version.hibernate.search}" property="hibernate.search.slot"/>
 
     <target name="clean">
         <delete dir="${output.dir}" />
@@ -26,6 +27,7 @@
         <filterset id="module-filter">
             <filter token="infinispan.slot" value="${infinispan.slot}" />
             <filter token="lucene4.slot" value="${lucene4.slot}" />
+            <filter token="hibernate.search.slot" value="${hibernate.search.slot}" />
         </filterset>
 
         <module-def name="org.antlr.antlr-runtime" slot="${infinispan.slot}">
@@ -117,19 +119,13 @@
         </module-def>
 
         <module-def name="org.apache.lucene" slot="${lucene4.slot}">
-            <local-resource group="org.apache.lucene" artifact="lucene-core" version="${version.lucene}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-queries" version="${version.lucene}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-analyzers-common" version="${version.lucene}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-queryparser" version="${version.lucene}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-highlighter" version="${version.lucene}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-grouping" version="${version.lucene}"/>
-            <local-resource group="org.apache.lucene" artifact="lucene-facet" version="${version.lucene}"/>
-        </module-def>
-
-        <module-def name="org.hibernate.search.engine" slot="${infinispan.slot}">
-            <maven-resource group="org.hibernate" artifact="hibernate-search-engine" />
-            <maven-resource group="org.hibernate" artifact="hibernate-search-infinispan" />
-            <maven-resource group="org.hibernate" artifact="hibernate-search-serialization-avro" />
+            <maven-resource group="org.apache.lucene" artifact="lucene-core" />
+            <maven-resource group="org.apache.lucene" artifact="lucene-queries" />
+            <maven-resource group="org.apache.lucene" artifact="lucene-analyzers-common" />
+            <maven-resource group="org.apache.lucene" artifact="lucene-queryparser" />
+            <maven-resource group="org.apache.lucene" artifact="lucene-highlighter" />
+            <maven-resource group="org.apache.lucene" artifact="lucene-grouping" />
+            <maven-resource group="org.apache.lucene" artifact="lucene-facet" />
         </module-def>
 
         <module-def name="org.hibernate.hql.parser" slot="${infinispan.slot}">

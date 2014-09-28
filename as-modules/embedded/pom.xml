@@ -87,6 +87,33 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-tree</artifactId>
       </dependency>
+
+      <dependency>
+         <groupId>org.hibernate</groupId>
+         <artifactId>hibernate-search-modules</artifactId>
+         <version>${version.hibernate.search}</version>
+         <classifier>wildfly-8-dist</classifier>
+         <type>zip</type>
+      </dependency>
+
+      <!-- Deps for the lucene module, will eventually be replaced by https://github.com/hibernate/lucene-modules -->
+      <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-queryparser</artifactId>
+         <version>${version.lucene}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-highlighter</artifactId>
+         <version>${version.lucene}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-grouping</artifactId>
+         <version>${version.lucene}</version>
+      </dependency>
       
       <dependency>
          <groupId>org.xerial.snappy</groupId>
@@ -142,58 +169,6 @@
                <workDirectory>${buildDirectory}/assembly/work</workDirectory>
                <appendAssemblyId>false</appendAssemblyId>
             </configuration>
-         </plugin>
-         <!-- Explicitly getting lucene4 deps since the reactor already contains lucene 3 -->
-         <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>copy</id>
-                  <phase>generate-resources</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.apache.lucene</groupId>
-                           <artifactId>lucene-core</artifactId>
-                           <version>${version.lucene}</version>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.apache.lucene</groupId>
-                           <artifactId>lucene-queries</artifactId>
-                           <version>${version.lucene}</version>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.apache.lucene</groupId>
-                           <artifactId>lucene-analyzers-common</artifactId>
-                           <version>${version.lucene}</version>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.apache.lucene</groupId>
-                           <artifactId>lucene-queryparser</artifactId>
-                           <version>${version.lucene}</version>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.apache.lucene</groupId>
-                           <artifactId>lucene-highlighter</artifactId>
-                           <version>${version.lucene}</version>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.apache.lucene</groupId>
-                           <artifactId>lucene-grouping</artifactId>
-                           <version>${version.lucene}</version>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>org.apache.lucene</groupId>
-                           <artifactId>lucene-facet</artifactId>
-                           <version>${version.lucene}</version>
-                        </artifactItem>
-                     </artifactItems>
-                  </configuration>
-               </execution>
-            </executions>
          </plugin>
       </plugins>
    </build>
