@@ -96,6 +96,7 @@ public class BackupSenderImpl implements BackupSender {
                throw new IllegalStateException("Backup policy class missing for custom failure policy!");
             }
             CustomFailurePolicy instance = Util.getInstance(backupPolicy, globalConfig.classLoader());
+            instance.init(cache);
             siteFailurePolicy.put(bc.site(), instance);
          }
          OfflineStatus offline = new OfflineStatus(bc.takeOffline(), timeService);
