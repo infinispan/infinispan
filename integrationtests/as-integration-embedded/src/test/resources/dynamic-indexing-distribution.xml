@@ -4,9 +4,13 @@
       xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
       xmlns="urn:infinispan:config:7.0">
 
+   <jgroups>
+      <stack-file name="tcpStack" path="default-configs/default-jgroups-tcp.xml"/>
+   </jgroups>
+
    <cache-container name="QueryEnabledGrid-Dist" default-cache="default" statistics="true">
+      <transport stack="tcpStack" cluster="Infinispan-Query-Cluster" />
       <jmx duplicate-domains="true" />
-      <transport cluster="Infinispan-Query-Cluster"/>
        <!-- *************************************** -->
        <!--  Default Cache, with indexing enabled.  -->
        <!-- *************************************** -->
