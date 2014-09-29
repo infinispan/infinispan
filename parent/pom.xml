@@ -176,7 +176,7 @@
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
-      <version.pax.url>1.3.7</version.pax.url>
+      <version.pax.url>2.2.0</version.pax.url>
       <version.karaf>2.3.3</version.karaf>
       <version.pax.exam>4.1.0</version.pax.exam>
       <reportTitle>Infinispan JaCoCo Report</reportTitle>
