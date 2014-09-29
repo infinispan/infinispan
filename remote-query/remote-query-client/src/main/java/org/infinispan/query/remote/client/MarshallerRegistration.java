@@ -17,8 +17,8 @@ public class MarshallerRegistration {
 
    public static void registerMarshallers(SerializationContext ctx) throws IOException, DescriptorParserException {
       FileDescriptorSource fileDescriptorSource = new FileDescriptorSource();
-      fileDescriptorSource.addProtoFile("query.proto", MarshallerRegistration.class.getResourceAsStream(QUERY_PROTO_RES));
-      fileDescriptorSource.addProtoFile("message-wrapping.proto", MarshallerRegistration.class.getResourceAsStream(MESSAGE_PROTO_RES));
+      fileDescriptorSource.addProtoFile(QUERY_PROTO_RES, MarshallerRegistration.class.getResourceAsStream(QUERY_PROTO_RES));
+      fileDescriptorSource.addProtoFile(MESSAGE_PROTO_RES, MarshallerRegistration.class.getResourceAsStream(MESSAGE_PROTO_RES));
       ctx.registerProtoFiles(fileDescriptorSource);
       ctx.registerMarshaller(new QueryRequestMarshaller());
       ctx.registerMarshaller(new QueryResponseMarshaller());

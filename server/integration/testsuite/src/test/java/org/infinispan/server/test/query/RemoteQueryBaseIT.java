@@ -59,7 +59,7 @@ public abstract class RemoteQueryBaseIT {
             + ",component=ProtobufMetadataManager";
 
       //initialize server-side serialization context via JMX
-      String[] fileNames = {"bank.proto", "indexing.proto", "descriptor.proto"};
+      String[] fileNames = {"sample_bank_account/bank.proto", "infinispan/indexing.proto", "google/protobuf/descriptor.proto"};
       String[] fileContents = {read("/sample_bank_account/bank.proto"), read("/infinispan/indexing.proto"), read("/google/protobuf/descriptor.proto")};
       invokeOperation(jmxConnectionProvider, mbean, "registerProtofiles", new Object[]{fileNames, fileContents}, new String[]{String[].class.getName(), String[].class.getName()});
 

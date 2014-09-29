@@ -62,13 +62,13 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
               String[] nameArray = new String[descriptorsNodes.size()];
               String[] contentArray = new String[descriptorsNodes.size()];
               int i = 0;
-              for(ModelNode modelNode : descriptorsNodes) {
+              for (ModelNode modelNode : descriptorsNodes) {
                  String urlString = modelNode.asString();
                  nameArray[i] = extractFile(urlString);
                  contentArray[i] = Util.read(new URL(urlString).openStream());
                  i++;   
               }
-              protoManager.registerProtofiles(nameArray,contentArray);
+              protoManager.registerProtofiles(nameArray, contentArray);
            } catch (Exception e) {
               throw new OperationFailedException(new ModelNode().set(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage())));
            }
@@ -76,7 +76,7 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
         context.stepCompleted();
     }
 
-   private String extractFile(final String url){
-      return url.replaceFirst(".*/([^/?]+).*", "$1");
+   private String extractFile(final String url) {
+      return url.replaceFirst(".*!/(.*)", "$1");
    }
 }

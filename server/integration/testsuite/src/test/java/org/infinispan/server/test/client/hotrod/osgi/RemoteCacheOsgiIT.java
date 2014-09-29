@@ -80,7 +80,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
             KarafDistributionOption.editConfigurationFileExtend("etc/jre.properties", "jre-1.7", "sun.misc"),
             KarafDistributionOption.editConfigurationFileExtend("etc/jre.properties", "jre-1.6", "sun.misc"),
             KarafDistributionOption.keepRuntimeFolder(),
-            KarafTestSupport.localRepoForPAXUrl()
+            localRepoForPAXUrl()
       };
    }
 
@@ -121,10 +121,10 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(manager);
 
       FileDescriptorSource fds = new FileDescriptorSource();
-      fds.addProtoFile("bank.proto", bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
+      fds.addProtoFile("sample_bank_account/bank.proto", bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
       Bundle sampleDomainDefinitionBundle = getInstalledBundle("org.infinispan.protostream.sample-domain-definition");
-      fds.addProtoFile("indexing.proto", sampleDomainDefinitionBundle.getResource("/infinispan/indexing.proto").openStream());
-      fds.addProtoFile("descriptor.proto", sampleDomainDefinitionBundle.getResource("/google/protobuf/descriptor.proto").openStream());
+      fds.addProtoFile("infinispan/indexing.proto", sampleDomainDefinitionBundle.getResource("/infinispan/indexing.proto").openStream());
+      fds.addProtoFile("google/protobuf/descriptor.proto", sampleDomainDefinitionBundle.getResource("/google/protobuf/descriptor.proto").openStream());
       ctx.registerProtoFiles(fds);
 
       ctx.registerMarshaller(new UserMarshaller());
