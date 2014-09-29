@@ -1,5 +1,6 @@
 package org.infinispan.server.endpoint.subsystem;
 
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.filter.ConverterFactory;
 import org.infinispan.filter.KeyValueFilterFactory;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -20,6 +21,7 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
     private final List<HotRodServer> servers = new ArrayList<>();
     private final Map<String, KeyValueFilterFactory> filterFactories = new HashMap<>();
     private final Map<String, ConverterFactory> converterFactories = new HashMap<>();
+    private volatile Marshaller marshaller;
 
     @Override
     public void start(StartContext context) throws StartException {
@@ -38,12 +40,12 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
 
         synchronized (filterFactories) {
             for (Map.Entry<String, KeyValueFilterFactory> entry : filterFactories.entrySet())
-                server.addKeyValueFilterFactory(entry.getKey(), entry.getValue());
+                server.addKeyValueFilterFactory(entry.getKey(), entry.getValue(), marshaller);
         }
 
         synchronized (converterFactories) {
             for (Map.Entry<String, ConverterFactory> entry : converterFactories.entrySet())
-                server.addConverterFactory(entry.getKey(), entry.getValue());
+                server.addConverterFactory(entry.getKey(), entry.getValue(), marshaller);
         }
     }
 
@@ -70,7 +72,7 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
 
         synchronized (servers) {
             for (HotRodServer server : servers)
-                server.addKeyValueFilterFactory(name, factory);
+                server.addKeyValueFilterFactory(name, factory, marshaller);
         }
     }
 
@@ -92,7 +94,7 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
 
         synchronized (servers) {
             for (HotRodServer server : servers)
-                server.addConverterFactory(name, factory);
+                server.addConverterFactory(name, factory, marshaller);
         }
     }
 
@@ -105,6 +107,10 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
             for (HotRodServer server : servers)
                 server.removeConverterFactory(name);
         }
+    }
+
+    public void setMarshaller(Marshaller marshaller) {
+        this.marshaller = marshaller;
     }
 
     @Override

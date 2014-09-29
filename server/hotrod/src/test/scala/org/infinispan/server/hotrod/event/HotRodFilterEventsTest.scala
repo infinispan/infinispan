@@ -6,7 +6,6 @@ import org.infinispan.filter.{KeyValueFilterFactory, KeyValueFilter}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications.cachelistener.event.Event
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.{Bytes, HotRodServer, HotRodSingleNodeTest}
 import org.testng.annotations.Test
@@ -18,11 +17,10 @@ import org.testng.annotations.Test
 class HotRodFilterEventsTest extends HotRodSingleNodeTest {
 
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
-      val builder = new HotRodServerConfigurationBuilder
-      builder.marshallerClass(null)
-      val server = startHotRodServer(cacheManager, builder)
-      server.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory(Array[Byte](1, 2, 3)))
-      server.addKeyValueFilterFactory("dynamic-filter-factory", new DynamicKeyValueFilterFactory())
+      val server = startHotRodServer(cacheManager)
+      server.getClientListenerRegistry.setDefaultMarshaller(None)
+      server.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory(Array[Byte](1, 2, 3)), null)
+      server.addKeyValueFilterFactory("dynamic-filter-factory", new DynamicKeyValueFilterFactory(), null)
       server
    }
 

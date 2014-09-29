@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
+import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.filter.{ConverterFactory, KeyValueFilterFactory}
 import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
@@ -226,16 +227,16 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    private[hotrod] def getAddressCache = addressCache
 
-   def addKeyValueFilterFactory(name: String, factory: KeyValueFilterFactory): Unit = {
-      clientListenerRegistry.addKeyValueFilterFactory(name, factory)
+   def addKeyValueFilterFactory(name: String, factory: KeyValueFilterFactory, marshaller: Marshaller): Unit = {
+      clientListenerRegistry.addKeyValueFilterFactory(name, factory, Option(marshaller))
    }
 
    def removeKeyValueFilterFactory(name: String): Unit = {
       clientListenerRegistry.removeKeyValueFilterFactory(name)
    }
 
-   def addConverterFactory(name: String, factory: ConverterFactory): Unit = {
-      clientListenerRegistry.addConverterFactory(name, factory)
+   def addConverterFactory(name: String, factory: ConverterFactory, marshaller: Marshaller): Unit = {
+      clientListenerRegistry.addConverterFactory(name, factory, Option(marshaller))
    }
 
    def removeConverterFactory(name: String): Unit = {

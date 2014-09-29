@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 import io.netty.channel.Channel
 import org.infinispan.commons.equivalence.{AnyEquivalence, ByteArrayEquivalence}
+import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
 import org.infinispan.commons.util.CollectionFactory
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8
@@ -32,19 +33,37 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    private val eventSenders = new EquivalentConcurrentHashMapV8[Bytes, AnyRef](
       ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance())
 
-   private val marshaller = Option(configuration.marshallerClass()).map(_.newInstance())
+   private var defaultMashaller: Option[Marshaller] = Some(new GenericJBossMarshaller)
+   private var marshaller: Option[Marshaller] = None
    private val keyValueFilterFactories = CollectionFactory.makeConcurrentMap[String, KeyValueFilterFactory](4, 0.9f, 16)
    private val converterFactories = CollectionFactory.makeConcurrentMap[String, ConverterFactory](4, 0.9f, 16)
 
-   def addKeyValueFilterFactory(name: String, factory: KeyValueFilterFactory): Unit = {
+   def setDefaultMarshaller(marshaller: Option[Marshaller]): Unit = {
+      this.defaultMashaller = marshaller
+   }
+
+   def addKeyValueFilterFactory(name: String, factory: KeyValueFilterFactory, eventMarshaller: Option[Marshaller]): Unit = {
+      marshaller = getMarshaller(eventMarshaller)
       keyValueFilterFactories.put(name, factory)
+   }
+
+   def getMarshaller(maybeMarshaller: Option[Marshaller]): Option[Marshaller] = {
+      (marshaller, maybeMarshaller) match {
+         case (None, None) => defaultMashaller
+         case (Some(m), None) => marshaller
+         case (None, Some(m)) => maybeMarshaller
+         case (Some(m), Some(mm)) =>
+            warnMarshallerAlreadySet(m, mm)
+            marshaller
+      }
    }
 
    def removeKeyValueFilterFactory(name: String): Unit = {
       keyValueFilterFactories.remove(name)
    }
 
-   def addConverterFactory(name: String, factory: ConverterFactory): Unit = {
+   def addConverterFactory(name: String, factory: ConverterFactory, eventMarshaller: Option[Marshaller]): Unit = {
+      marshaller = getMarshaller(eventMarshaller)
       converterFactories.put(name, factory)
    }
 
@@ -83,9 +102,12 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    def findFactory[T](name: String, compatEnabled: Boolean, factories: ConcurrentMap[String, T], factoryType: String): T = {
       val factory = Option(factories.get(name)).getOrElse(
          throw new MissingFactoryException(s"Listener $factoryType factory '$name' not found in server"))
-      val marshallerClass = configuration.marshallerClass()
-      if (marshallerClass != null && !compatEnabled) toBinaryFactory(factory, marshallerClass)
-      else factory
+
+      (marshaller, compatEnabled) match {
+         case (None, _) => factory
+         case (_, true) => factory
+         case (Some(m), false) => toBinaryFactory(factory, m.getClass)
+      }
    }
 
    def toBinaryFactory[T](factory: T, marshallerClass: Class[_ <: Marshaller]): T = {

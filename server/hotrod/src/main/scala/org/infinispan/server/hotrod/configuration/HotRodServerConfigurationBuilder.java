@@ -1,8 +1,6 @@
 package org.infinispan.server.hotrod.configuration;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.cache.LockingConfigurationBuilder;
 import org.infinispan.configuration.cache.StateTransferConfigurationBuilder;
 import org.infinispan.configuration.cache.SyncConfigurationBuilder;
@@ -23,7 +21,6 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
    private long topologyReplTimeout = 10000L;
    private boolean topologyAwaitInitialTransfer = true;
    private boolean topologyStateTransfer = true;
-   private Class<? extends Marshaller> marshallerClass = GenericJBossMarshaller.class;
 
    public HotRodServerConfigurationBuilder() {
       super(11222);
@@ -94,26 +91,10 @@ public class HotRodServerConfigurationBuilder extends ProtocolServerConfiguratio
       return this;
    }
 
-   /**
-    * Marshaller used to unmarshall key/value pairs when passed onto filter
-    * and converter callbacks. If no marshaller configured,
-    * {@link org.infinispan.commons.marshall.jboss.GenericJBossMarshaller} is
-    * assumed, which is used by default by the Java Hot Rod client. This
-    * marshaller can be configured when the client uses a different marshalling
-    * mechanism to transform key/value pairs into binary payloads. For example,
-    * a different Hot Rod client could be using a Google Protocol Buffers based
-    * Marshaller.
-    */
-   public HotRodServerConfigurationBuilder marshallerClass(Class<? extends Marshaller> marshallerClass) {
-      this.marshallerClass = marshallerClass;
-      return this;
-   }
-
    @Override
    public HotRodServerConfiguration create() {
       return new HotRodServerConfiguration(defaultCacheName, proxyHost, proxyPort, topologyLockTimeout, topologyReplTimeout, topologyAwaitInitialTransfer, topologyStateTransfer, name, host, port, idleTimeout,
-            recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, authentication.create(),
-            marshallerClass);
+            recvBufSize, sendBufSize, ssl.create(), tcpNoDelay, workerThreads, authentication.create());
    }
 
    @Override

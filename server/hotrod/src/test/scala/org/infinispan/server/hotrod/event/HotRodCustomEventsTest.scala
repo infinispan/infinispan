@@ -1,11 +1,9 @@
 package org.infinispan.server.hotrod.event
 
 import java.lang.reflect.Method
-import java.util.concurrent.{TimeUnit, ArrayBlockingQueue}
 import org.infinispan.filter.{ConverterFactory, Converter}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.server.hotrod.{Bytes, HotRodServer, HotRodSingleNodeTest}
@@ -18,12 +16,10 @@ import org.testng.annotations.Test
 class HotRodCustomEventsTest extends HotRodSingleNodeTest {
 
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
-      val builder = new HotRodServerConfigurationBuilder
-      // Storing unmarshalled byte arrays, so nullify default marshaller
-      builder.marshallerClass(null)
-      val server = HotRodTestingUtil.startHotRodServer(cacheManager, builder)
-      server.addConverterFactory("static-converter-factory", new StaticConverterFactory)
-      server.addConverterFactory("dynamic-converter-factory", new DynamicConverterFactory)
+      val server = HotRodTestingUtil.startHotRodServer(cacheManager)
+      server.getClientListenerRegistry.setDefaultMarshaller(None)
+      server.addConverterFactory("static-converter-factory", new StaticConverterFactory, null)
+      server.addConverterFactory("dynamic-converter-factory", new DynamicConverterFactory, null)
       server
    }
 

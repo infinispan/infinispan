@@ -48,8 +48,8 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
       HotRodServer server = TestHelper.startHotRodServer(cm, serverBuilder);
-      server.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory());
-      server.addConverterFactory("static-converter-factory", new StaticConverterFactory());
+      server.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory(), null);
+      server.addConverterFactory("static-converter-factory", new StaticConverterFactory(), null);
       servers.add(server);
       return server;
    }

@@ -39,10 +39,10 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
    protected void setup() throws Exception {
       cacheFactory = new CompatibilityCacheFactory<Integer, String>(CacheMode.LOCAL).setup();
       HotRodServer hotrod = cacheFactory.getHotrodServer();
-      hotrod.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory());
-      hotrod.addKeyValueFilterFactory("dynamic-filter-factory", new DynamicKeyValueFilterFactory());
-      hotrod.addConverterFactory("static-converter-factory", new StaticConverterFactory());
-      hotrod.addConverterFactory("dynamic-converter-factory", new DynamicConverterFactory());
+      hotrod.addKeyValueFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory(), null);
+      hotrod.addKeyValueFilterFactory("dynamic-filter-factory", new DynamicKeyValueFilterFactory(), null);
+      hotrod.addConverterFactory("static-converter-factory", new StaticConverterFactory(), null);
+      hotrod.addConverterFactory("dynamic-converter-factory", new DynamicConverterFactory(), null);
    }
 
    @AfterClass
