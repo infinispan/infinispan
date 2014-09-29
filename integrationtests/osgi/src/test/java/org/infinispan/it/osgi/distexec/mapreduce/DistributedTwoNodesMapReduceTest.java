@@ -6,6 +6,7 @@ import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.test.TestingUtil;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
@@ -16,6 +17,7 @@ import org.ops4j.pax.exam.spi.reactors.PerSuite;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
+@Category(PerSuite.class)
 public class DistributedTwoNodesMapReduceTest extends BaseWordCountMapReduceTest {
    @Override
    protected void createCacheManagers() throws Throwable {
