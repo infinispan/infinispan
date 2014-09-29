@@ -21,6 +21,7 @@ package org.infinispan.server.endpoint.subsystem;
 import org.infinispan.server.endpoint.Constants;
 import org.infinispan.server.endpoint.deployments.ConverterFactoryExtensionProcessor;
 import org.infinispan.server.endpoint.deployments.FilterFactoryExtensionProcessor;
+import org.infinispan.server.endpoint.deployments.MarshallerExtensionProcessor;
 import org.infinispan.server.endpoint.deployments.ServerExtensionDependenciesProcessor;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
@@ -84,7 +85,9 @@ class EndpointSubsystemAdd extends AbstractAddStepHandler {
             processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
                 Phase.INSTALL, Constants.INSTALL_CONVERTER_FACTORY, new ConverterFactoryExtensionProcessor(serviceName));
             processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
-                Phase.DEPENDENCIES, Constants.DEPENDENCIES_FILTER_FACTORY, new ServerExtensionDependenciesProcessor());
+                Phase.INSTALL, Constants.INSTALL_MARSHALLER, new MarshallerExtensionProcessor(serviceName));
+            processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                Phase.DEPENDENCIES, Constants.DEPENDENCIES, new ServerExtensionDependenciesProcessor());
             }
         }, OperationContext.Stage.RUNTIME);
 

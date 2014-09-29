@@ -8,7 +8,6 @@ import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod._
-import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
 import org.infinispan.server.hotrod.test._
 import org.infinispan.test.AbstractCacheTest._
@@ -38,13 +37,12 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
       hotRodCacheConfiguration(getDefaultClusteredCacheConfig(cacheMode, false))
 
    override protected def startTestHotRodServer(cacheManager: EmbeddedCacheManager, port: Int) = {
-      val builder = new HotRodServerConfigurationBuilder
-      builder.marshallerClass(null)
-      val server = HotRodTestingUtil.startHotRodServer(cacheManager, port, builder)
+      val server = HotRodTestingUtil.startHotRodServer(cacheManager, port)
+      server.getClientListenerRegistry.setDefaultMarshaller(None)
       filters += new AcceptedKeyFilterFactory()
-      server.addKeyValueFilterFactory("accepted-key-filter-factory", filters.head)
+      server.addKeyValueFilterFactory("accepted-key-filter-factory", filters.head, null)
       converters += new AcceptedKeyValueConverterFactory()
-      server.addConverterFactory("accepted-keyvalue-converter-factory", converters.head)
+      server.addConverterFactory("accepted-keyvalue-converter-factory", converters.head, null)
       server
    }
 

@@ -1,5 +1,6 @@
 package org.infinispan.server.endpoint.deployments;
 
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.filter.KeyValueFilterFactory;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
@@ -33,8 +34,9 @@ public class ServerExtensionDependenciesProcessor implements DeploymentUnitProce
         DeploymentUnit deploymentUnit = ctx.getDeploymentUnit();
         ServicesAttachment servicesAttachment = deploymentUnit.getAttachment(Attachments.SERVICES);
         if (servicesAttachment != null) {
-            List<String> factories = servicesAttachment.getServiceImplementations(KeyValueFilterFactory.class.getName());
-            return !factories.isEmpty();
+            List<String> filterFactories = servicesAttachment.getServiceImplementations(KeyValueFilterFactory.class.getName());
+            List<String> marshallers = servicesAttachment.getServiceImplementations(Marshaller.class.getName());
+            return !filterFactories.isEmpty() || !marshallers.isEmpty();
         }
         return false;
     }

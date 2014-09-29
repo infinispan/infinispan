@@ -18,9 +18,6 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
-
 @Test(groups = "functional", testName = "client.hotrod.event.ClientCustomEventsTest")
 public class ClientCustomEventsTest extends SingleHotRodServerTest {
 
@@ -28,8 +25,8 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
-      server.addConverterFactory("static-converter-factory", new StaticConverterFactory());
-      server.addConverterFactory("dynamic-converter-factory", new DynamicConverterFactory());
+      server.addConverterFactory("static-converter-factory", new StaticConverterFactory(), null);
+      server.addConverterFactory("dynamic-converter-factory", new DynamicConverterFactory(), null);
       return server;
    }
 
