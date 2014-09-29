@@ -1095,32 +1095,6 @@
                                     </target>
                                 </configuration>
                             </execution>
-                            <!-- Register Protofile on the server before the test starts.
-                                 TODO: Do it directly from the test. The remoting-jmx implementation for
-                                 JMX is normally loaded via ServiceLoader and this is not working out-of-box in OSGi. -->
-                            <execution>
-                                <id>register-protofile-with-server</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>test</phase>
-                                <configuration>
-                                    <target>
-                                        <property name="test_classpath" refid="maven.test.classpath"/>
-                                        <java classname="org.infinispan.server.test.util.ProtofileRegistrar"
-                                              fork="false"
-                                              failonerror="true">
-                                            <arg value="/sample_bank_account/bank.proto,/infinispan/indexing.proto,/google/protobuf/descriptor.proto"/>
-                                            <arg value="localhost"/>
-                                            <arg value="9990"/>
-                                            <classpath>
-                                                <pathelement path="${project.build.directory}/test-classes"/>
-                                                <pathelement path="${test_classpath}"/>
-                                            </classpath>
-                                        </java>
-                                    </target>
-                                </configuration>
-                            </execution>
                         </executions>
                     </plugin>
                 </plugins>

@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.query.dsl.Query;
@@ -83,8 +84,10 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       remoteCache = remoteCacheManager.getCache();
 
       //initialize server-side serialization context
-      ProtobufMetadataManager protobufMetadataManager = manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofiles("/infinispan/indexing.proto", "/sample_bank_account/bank.proto", "/google/protobuf/descriptor.proto");
+      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
+      metadataCache.put("google/protobuf/descriptor.proto", Util.read(Util.getResourceAsStream("/google/protobuf/descriptor.proto", getClass().getClassLoader())));
+      metadataCache.put("infinispan/indexing.proto", Util.read(Util.getResourceAsStream("/infinispan/indexing.proto", getClass().getClassLoader())));
+      metadataCache.put("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));

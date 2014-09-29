@@ -9,15 +9,14 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
+import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.junit.After;
 import org.junit.Before;
 
-import javax.management.ObjectName;
 import java.io.IOException;
 
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
 
 /**
  * Base class for tests for remote queries over HotRod.
@@ -54,14 +53,11 @@ public abstract class RemoteQueryBaseIT {
       remoteCacheManager = rcmFactory.createManager(clientBuilder);
       remoteCache = remoteCacheManager.getCache(cacheName);
 
-      String mbean = "jboss.infinispan:type=RemoteQuery,name="
-            + ObjectName.quote(cacheContainerName)
-            + ",component=ProtobufMetadataManager";
-
-      //initialize server-side serialization context via JMX
-      String[] fileNames = {"sample_bank_account/bank.proto", "infinispan/indexing.proto", "google/protobuf/descriptor.proto"};
-      String[] fileContents = {read("/sample_bank_account/bank.proto"), read("/infinispan/indexing.proto"), read("/google/protobuf/descriptor.proto")};
-      invokeOperation(jmxConnectionProvider, mbean, "registerProtofiles", new Object[]{fileNames, fileContents}, new String[]{String[].class.getName(), String[].class.getName()});
+      //initialize server-side serialization context
+      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
+      metadataCache.put("google/protobuf/descriptor.proto", read("/google/protobuf/descriptor.proto"));
+      metadataCache.put("infinispan/indexing.proto", read("/infinispan/indexing.proto"));
+      metadataCache.put("sample_bank_account/bank.proto", read("/sample_bank_account/bank.proto"));
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));

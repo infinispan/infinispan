@@ -1,10 +1,8 @@
 package org.infinispan.query.impl;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TreeMap;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;

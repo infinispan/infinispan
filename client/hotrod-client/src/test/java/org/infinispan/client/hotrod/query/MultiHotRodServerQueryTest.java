@@ -65,7 +65,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    protected void populateCache() throws Exception {
       //initialize server-side serialization context
       ProtobufMetadataManager protobufMetadataManager = manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofiles("/sample_bank_account/bank.proto", "/infinispan/indexing.proto", "/google/protobuf/descriptor.proto");
+      protobufMetadataManager.registerProtofiles(MarshallerRegistration.PROTOBUF_RES);
 
       //initialize client-side serialization context
       for (RemoteCacheManager rcm : clients) {
