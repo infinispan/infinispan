@@ -944,12 +944,6 @@
          </dependency>
          <dependency>
             <groupId>org.ops4j.pax.url</groupId>
-            <artifactId>pax-url-mvn</artifactId>
-            <version>${version.pax.url}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.ops4j.pax.url</groupId>
             <artifactId>pax-url-wrap</artifactId>
             <version>${version.pax.url}</version>
             <scope>test</scope>
