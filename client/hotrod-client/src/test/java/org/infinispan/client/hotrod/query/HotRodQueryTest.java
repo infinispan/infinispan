@@ -84,7 +84,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
 
       //initialize server-side serialization context via JMX
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
-      String[] fileNames = {"bank.proto", "indexing.proto", "descriptor.proto"};
+      String[] fileNames = {"sample_bank_account/bank.proto", "infinispan/indexing.proto", "google/protobuf/descriptor.proto"};
       String[] fileContents = {read("/sample_bank_account/bank.proto"), read("/infinispan/indexing.proto"), read("/google/protobuf/descriptor.proto")};
       mBeanServer.invoke(getProtobufMetadataManagerObjectName(), "registerProtofiles",
                          new Object[]{fileNames, fileContents}, new String[]{String[].class.getName(), String[].class.getName()});

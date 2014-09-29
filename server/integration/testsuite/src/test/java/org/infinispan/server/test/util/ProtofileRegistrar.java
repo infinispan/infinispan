@@ -9,7 +9,6 @@ import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.LinkedList;
 
 /**
@@ -22,19 +21,19 @@ public class ProtofileRegistrar {
    public static void main(String[] args) {
       if (args.length != 3) {
          System.err.println("There are 3 parameters required:\n" +
-                 "1) path to one or more protofiles, comma separated \n" +
+                 "1) path to one or more proto classpath resources, comma separated \n" +
                  "2) server host\n" +
                  "3) server JMX port");
          System.exit(1);
       }
 
-      final String PROTOFILES_PATH = args[0];
-      final String SERVER_HOST = args[1];
-      final int JMX_PORT = Integer.parseInt(args[2]);
+      final String protofilesPath = args[0];
+      final String ser = args[1];
+      final int jmxPort = Integer.parseInt(args[2]);
 
       ProtofileRegistrar registrar = new ProtofileRegistrar();
       try {
-         registrar.registerProtofile(PROTOFILES_PATH, SERVER_HOST, JMX_PORT);
+         registrar.registerProtofile(protofilesPath, ser, jmxPort);
       } catch (Exception e) {
          e.printStackTrace();
          System.exit(1);
@@ -53,8 +52,9 @@ public class ProtofileRegistrar {
 
       //initialize client-side serialization context via JMX
       for (String protofile : protofilesPath.split(",")) {
-         String descriptor = readClasspathResource(protofile);
-         String name = Paths.get(protofile).getFileName().toString();
+         String absPath = protofile.startsWith("/") ? protofile : "/" + protofile;
+         String descriptor = readClasspathResource(absPath);
+         String name = protofile.startsWith("/") ? protofile.substring(1) : protofile;
          fileNames.add(name);
          fileContents.add(descriptor);
       }

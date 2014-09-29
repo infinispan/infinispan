@@ -59,7 +59,7 @@ public class RemoteQueryDescriptorIT {
    }
 
    private void registerProtoOnServer1() throws Exception {
-      String[] fileNames = {"indexing.proto", "bank.proto", "descriptor.proto"};
+      String[] fileNames = {"infinispan/indexing.proto", "sample_bank_account/bank.proto", "google/protobuf/descriptor.proto"};
       String[] fileContents = {
               read(getClass().getResourceAsStream("/infinispan/indexing.proto")),
               read(getClass().getResourceAsStream("/sample_bank_account/bank.proto")),
@@ -70,7 +70,7 @@ public class RemoteQueryDescriptorIT {
    }
 
    private void assertRegisteredOn(RemoteInfinispanServer server) throws Exception {
-      Object proto = invoke(getJmxConnection(server), "displayProtofile", "bank.proto");
+      Object proto = invoke(getJmxConnection(server), "displayProtofile", "sample_bank_account/bank.proto");
      
       assertTrue(proto.toString().contains("message User"));
    }
