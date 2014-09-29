@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.it.osgi.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
 import org.junit.Before;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -22,6 +23,7 @@ import org.osgi.framework.FrameworkUtil;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerSuite.class)
+@Category(PerSuite.class)
 public class JdbcStringBasedStoreManagedFactoryFunctionalTest extends JdbcStringBasedStoreFunctionalTest {
    @Configuration
    public Option[] config() throws Exception {

@@ -11,6 +11,7 @@ import org.infinispan.it.osgi.util.MavenUtils;
 import org.infinispan.it.osgi.util.PaxExamUtils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -29,6 +30,7 @@ import org.osgi.framework.ServiceReference;
  */
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
+@Category(PerClass.class)
 public class OSGiKarafFeaturesTest {
    private static final String PROP_PROJECT_VERSION = "project.version";
 
