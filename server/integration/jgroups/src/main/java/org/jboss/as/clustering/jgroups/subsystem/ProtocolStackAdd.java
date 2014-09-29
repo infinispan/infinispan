@@ -35,6 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -74,8 +75,8 @@ import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.value.InjectedValue;
-import org.jboss.msc.value.Value;
 import org.jboss.threads.JBossExecutors;
+import org.jgroups.Channel;
 
 /**
  * @author Paul Ferraro
@@ -208,7 +209,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         initProtocolProperties(transport, transportConfig);
 
         Relay relayConfig = null;
-        List<Map.Entry<String, Injector<ChannelFactory>>> stacks = new LinkedList<Map.Entry<String, Injector<ChannelFactory>>>();
+        List<Map.Entry<String, Injector<Channel>>> channels = new LinkedList<Map.Entry<String, Injector<Channel>>>();
         if (model.hasDefined(ModelKeys.RELAY)) {
             final ModelNode relay = model.get(ModelKeys.RELAY, ModelKeys.RELAY_NAME);
             final String siteName = RelayResourceDefinition.SITE.resolveModelAttribute(context, relay).asString();
@@ -218,13 +219,11 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
                 List<RemoteSiteConfiguration> remoteSites = relayConfig.getRemoteSites();
                 for (Property remoteSiteProperty : relay.get(ModelKeys.REMOTE_SITE).asPropertyList()) {
                     final String remoteSiteName = remoteSiteProperty.getName();
-                    final ModelNode remoteSite = remoteSiteProperty.getValue();
-                    final String clusterName = RemoteSiteResourceDefinition.CLUSTER.resolveModelAttribute(context, remoteSite)
-                            .asString();
-                    final String stack = RemoteSiteResourceDefinition.STACK.resolveModelAttribute(context, remoteSite).asString();
-                    final InjectedValue<ChannelFactory> channelFactory = new InjectedValue<ChannelFactory>();
-                    remoteSites.add(new RemoteSite(remoteSiteName, clusterName, channelFactory));
-                    stacks.add(new AbstractMap.SimpleImmutableEntry<String, Injector<ChannelFactory>>(stack, channelFactory));
+                    final String clusterName = RemoteSiteResourceDefinition.CLUSTER.resolveModelAttribute(context, remoteSiteProperty.getValue()).asString();
+                    final String stack = RemoteSiteResourceDefinition.STACK.resolveModelAttribute(context, remoteSiteProperty.getValue()).asString();
+                    RemoteSite remoteSite = new RemoteSite(remoteSiteName, clusterName);
+                    remoteSites.add(remoteSite);
+                    channels.add(new AbstractMap.SimpleImmutableEntry<String, Injector<Channel>>(stack, remoteSite.getChannelInjector()));
                 }
             }
         }
@@ -255,7 +254,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         // install the default channel factory service
         ServiceController<ChannelFactory> cfsController = installChannelFactoryService(context.getServiceTarget(),
                         name, diagnosticsSocketBinding, defaultExecutor, oobExecutor, timerExecutor, threadFactory,
-                        transportSocketBinding, protocolSocketBindings, transportConfig, stackConfig, stacks, saslConfig, verificationHandler);
+                        transportSocketBinding, protocolSocketBindings, transportConfig, stackConfig, channels, saslConfig, verificationHandler);
         if (newControllers != null) {
             newControllers.add(cfsController);
         }
@@ -283,7 +282,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
                                                                              List<Map.Entry<Protocol, String>> protocolSocketBindings,
                                                                              Transport transportConfig,
                                                                              ProtocolStack stackConfig,
-                                                                             List<Map.Entry<String, Injector<ChannelFactory>>> stacks,
+                                                                             List<Entry<String, Injector<Channel>>> channels,
                                                                              Sasl sasl,
                                                                              ServiceVerificationHandler verificationHandler) {
 
@@ -315,8 +314,8 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         if (sasl != null) {
             builder.addDependency(SecurityRealm.ServiceUtil.createServiceName(sasl.getRealm()), SecurityRealm.class, sasl.getSecurityRealmInjector());
         }
-        for (Map.Entry<String, Injector<ChannelFactory>> entry: stacks) {
-            builder.addDependency(ChannelFactoryService.getServiceName(entry.getKey()), ChannelFactory.class, entry.getValue());
+        for (Map.Entry<String, Injector<Channel>> entry: channels) {
+            builder.addDependency(ChannelService.getServiceName(entry.getKey()), Channel.class, entry.getValue());
         }
         return builder.install();
     }
@@ -597,14 +596,17 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
     }
 
     static class RemoteSite implements RemoteSiteConfiguration {
-        private final Value<ChannelFactory> channelFactory;
+        private final InjectedValue<Channel> channel = new InjectedValue<>();
         private final String name;
         private final String clusterName;
 
-        RemoteSite(String name, String clusterName, Value<ChannelFactory> channelFactory) {
+        RemoteSite(String name, String clusterName) {
             this.name = name;
             this.clusterName = clusterName;
-            this.channelFactory = channelFactory;
+        }
+
+        public Injector<Channel> getChannelInjector() {
+            return channel;
         }
 
         @Override
@@ -613,12 +615,12 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         }
 
         @Override
-        public ChannelFactory getChannelFactory() {
-            return this.channelFactory.getValue();
+        public Channel getChannel() {
+            return this.channel.getValue();
         }
 
         @Override
-        public String getCluster() {
+        public String getClusterName() {
             return this.clusterName;
         }
     }
