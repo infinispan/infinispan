@@ -29,6 +29,6 @@ public class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshalle
       if (cacheManager == null) {
          throw new IllegalStateException("cacheManager not set");
       }
-      return ProtobufMetadataManager.getSerializationContext(cacheManager);
+      return ProtobufMetadataManager.getSerializationContextInternal(cacheManager);
    }
 }

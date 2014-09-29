@@ -93,7 +93,6 @@ import org.jgroups.Channel;
 import org.jgroups.protocols.DELAY;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
-import org.jgroups.stack.Protocol;
 import org.jgroups.stack.ProtocolStack;
 
 public class TestingUtil {
@@ -961,7 +960,7 @@ public class TestingUtil {
       }
    }
 
-   public static CommandsFactory extractCommandsFactory(Cache<Object, Object> cache) {
+   public static CommandsFactory extractCommandsFactory(Cache<?, ?> cache) {
       return (CommandsFactory) extractField(cache, "commandsFactory");
    }
 
@@ -1166,7 +1165,7 @@ public class TestingUtil {
       return prefix + m.getName();
    }
 
-   public static TransactionTable getTransactionTable(Cache<Object, Object> cache) {
+   public static TransactionTable getTransactionTable(Cache<?, ?> cache) {
       return cache.getAdvancedCache().getComponentRegistry().getComponent(TransactionTable.class);
    }
 

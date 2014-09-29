@@ -10,7 +10,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
-import org.infinispan.util.DeltaCompositeKeyUtil;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

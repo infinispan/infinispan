@@ -62,7 +62,7 @@ public class QueryFacadeImpl implements QueryFacade {
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
       try {
-         SerializationContext serCtx = ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
+         SerializationContext serCtx = ProtobufMetadataManager.getSerializationContextInternal(cache.getCacheManager());
          QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
 
          QueryResponse response;

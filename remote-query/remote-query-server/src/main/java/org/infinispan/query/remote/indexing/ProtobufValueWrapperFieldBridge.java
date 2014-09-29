@@ -48,7 +48,7 @@ public final class ProtobufValueWrapperFieldBridge implements FieldBridge {
 
    private void decodeAndIndex(byte[] bytes, Document document, LuceneOptions luceneOptions) {
       if (serializationContext == null) {
-         serializationContext = ProtobufMetadataManager.getSerializationContext(cache.getCacheManager());
+         serializationContext = ProtobufMetadataManager.getSerializationContextInternal(cache.getCacheManager());
       }
       if (wrapperDescriptor == null) {
          wrapperDescriptor = serializationContext.getMessageDescriptor(WrappedMessage.PROTOBUF_TYPE_NAME);
