@@ -82,4 +82,9 @@ public interface LocalTopologyManager {
     * @return {@code true} if the cache is using the total order protocol, {@code false} otherwise.
     */
    boolean isTotalOrderCache(String cacheName);
+
+   /**
+    * Enable or disable rebalancing in the entire cluster.
+    */
+   void setRebalancingEnabled(boolean enabled) throws Exception;
 }

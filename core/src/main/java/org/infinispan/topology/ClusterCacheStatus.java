@@ -1,14 +1,5 @@
 package org.infinispan.topology;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -17,9 +8,19 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.partionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partionhandling.impl.AvailabilityStrategyContext;
+import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
 * Keeps track of a cache's status: members, current/pending consistent hashes, and rebalance status
@@ -556,7 +557,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
 
          CacheTopology cacheTopology = getCurrentTopology();
-         if (!isRebalanceEnabled()) {
+         if (!isRebalanceEnabled() && !cacheName.equals(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME)) {
             log.tracef("Postponing rebalance for cache %s, rebalancing is disabled", cacheName);
             return;
          }
