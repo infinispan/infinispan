@@ -247,7 +247,7 @@ public class ShellImpl implements Shell {
 
    private void version() {
       System.out.println("ispn-cli " + Version.class.getPackage().getImplementationVersion());
-      System.out.println("Copyright (C) 2009-2013 Red Hat Inc. and/or its affiliates and other contributors");
+      System.out.println("Copyright (C) 2009-2014 Red Hat Inc. and/or its affiliates and other contributors");
       System.out.println("License Apache License, v. 2.0. http://www.apache.org/licenses/LICENSE-2.0");
       System.exit(0);
    }
