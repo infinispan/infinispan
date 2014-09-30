@@ -1,7 +1,6 @@
 
  package org.infinispan.test.integration.security.embedded;
 
-import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,7 +37,7 @@ public class KrbLdapAuthenticationIT extends AbstractAuthentication {
    @BeforeClass
    public static void ldapSetup() throws Exception {
       System.setProperty("java.security.krb5.conf", KrbLdapAuthenticationIT.class.getResource("/krb5.conf").getPath());
-      krbLdapServer = new ApacheDsKrbLdap(InetAddress.getByName("127.0.0.1").getHostName());
+      krbLdapServer = new ApacheDsKrbLdap("127.0.0.1");
       krbLdapServer.start();
    }
 
