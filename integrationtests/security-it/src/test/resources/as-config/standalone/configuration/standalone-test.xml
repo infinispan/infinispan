@@ -326,7 +326,7 @@
                   <authentication>
                      <login-module code="org.jboss.security.auth.spi.LdapLoginModule" flag="required">
                         <module-option name="java.naming.factory.initial" value="com.sun.jndi.ldap.LdapCtxFactory"/>
-                        <module-option name="java.naming.provider.url" value="ldap://localhost:10389"/>
+                        <module-option name="java.naming.provider.url" value="ldap://127.0.0.1:10389"/>
                         <module-option name="java.naming.security.authentication" value="simple"/>
                         <module-option name="principalDNPrefix" value="uid="/>
                         <module-option name="principalDNSuffix" value=",ou=People,dc=infinispan,dc=org"/>
@@ -345,8 +345,8 @@
                             <module-option name="storeKey" value="true"/>
                             <module-option name="useKeyTab" value="true"/>
                             <module-option name="refreshKrb5Config" value="true"/>
-                            <module-option name="principal" value="ldap/localhost@INFINISPAN.ORG"/>
-                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/ldap.localhost.keytab"/>
+                            <module-option name="principal" value="ldap/127.0.0.1@INFINISPAN.ORG"/>
+                            <module-option name="keyTab" value="${basedir}/src/test/resources/keytab/ldap.127.0.0.1.keytab"/>
                             <module-option name="doNotPrompt" value="true"/>
                         </login-module>
                     </authentication>
@@ -434,7 +434,7 @@
                             <module-option name="password-stacking" value="useFirstPass"/>
                             <module-option name="bindAuthentication" value="GSSAPI"/>
                             <module-option name="jaasSecurityDomain" value="ldap-service"/>
-                            <module-option name="java.naming.provider.url" value="ldap://localhost:10389"/>
+                            <module-option name="java.naming.provider.url" value="ldap://127.0.0.1:10389"/>
                             <module-option name="baseCtxDN" value="ou=People,dc=infinispan,dc=org"/>
                             <module-option name="baseFilter" value="(krb5PrincipalName={0})"/>
                             <module-option name="rolesCtxDN" value="ou=Roles,dc=infinispan,dc=org"/>
@@ -454,7 +454,7 @@
                             <module-option name="password-stacking" value="useFirstPass"/>
                             <module-option name="bindAuthentication" value="GSSAPI"/>
                             <module-option name="jaasSecurityDomain" value="ldap-service"/>
-                            <module-option name="java.naming.provider.url" value="ldap://localhost:10389"/>
+                            <module-option name="java.naming.provider.url" value="ldap://127.0.0.1:10389"/>
                             <module-option name="baseCtxDN" value="ou=People,dc=infinispan,dc=org"/>
                             <module-option name="baseFilter" value="(krb5PrincipalName={0})"/>
                             <module-option name="rolesCtxDN" value="ou=Roles,dc=infinispan,dc=org"/>
@@ -474,7 +474,7 @@
                             <module-option name="password-stacking" value="useFirstPass"/>
                             <module-option name="bindAuthentication" value="GSSAPI"/>
                             <module-option name="jaasSecurityDomain" value="ldap-service"/>
-                            <module-option name="java.naming.provider.url" value="ldap://localhost:10389"/>
+                            <module-option name="java.naming.provider.url" value="ldap://127.0.0.1:10389"/>
                             <module-option name="baseCtxDN" value="ou=People,dc=infinispan,dc=org"/>
                             <module-option name="baseFilter" value="(krb5PrincipalName={0})"/>
                             <module-option name="rolesCtxDN" value="ou=Roles,dc=infinispan,dc=org"/>
@@ -494,7 +494,7 @@
                             <module-option name="password-stacking" value="useFirstPass"/>
                             <module-option name="bindAuthentication" value="GSSAPI"/>
                             <module-option name="jaasSecurityDomain" value="ldap-service"/>
-                            <module-option name="java.naming.provider.url" value="ldap://localhost:10389"/>
+                            <module-option name="java.naming.provider.url" value="ldap://127.0.0.1:10389"/>
                             <module-option name="baseCtxDN" value="ou=People,dc=infinispan,dc=org"/>
                             <module-option name="baseFilter" value="(krb5PrincipalName={0})"/>
                             <module-option name="rolesCtxDN" value="ou=Roles,dc=infinispan,dc=org"/>
