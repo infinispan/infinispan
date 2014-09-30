@@ -77,6 +77,11 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
       return delegate.getStableCacheTopology(cacheName);
    }
 
+   @Override
+   public void setRebalancingEnabled(boolean enabled) throws Exception {
+      delegate.setRebalancingEnabled(enabled);
+   }
+
    // Arbitrary value, only need to start after JGroupsTransport
    @Start(priority = 100)
    public final void startDelegate() {

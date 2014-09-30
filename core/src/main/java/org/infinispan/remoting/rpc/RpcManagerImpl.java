@@ -19,6 +19,7 @@ import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -103,14 +104,20 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    @ManagedAttribute(description = "Retrieves the committed view.", displayName = "Committed view", dataType = DataType.TRAIT)
    public String getCommittedViewAsString() {
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-      return cacheTopology != null ? cacheTopology.getCurrentCH().getMembers().toString() : "N/A";
+      if (cacheTopology == null)
+         return "N/A";
+
+      return cacheTopology.getCurrentCH().getMembers().toString();
    }
 
    @ManagedAttribute(description = "Retrieves the pending view.", displayName = "Pending view", dataType = DataType.TRAIT)
    public String getPendingViewAsString() {
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-      return (cacheTopology != null && cacheTopology.getPendingCH() != null)
-            ? cacheTopology.getPendingCH().getMembers().toString() : "N/A";
+      if (cacheTopology == null)
+         return "N/A";
+
+      ConsistentHash pendingCH = cacheTopology.getPendingCH();
+      return pendingCH != null ? pendingCH.getMembers().toString() : "null";
    }
 
    private boolean useReplicationQueue(boolean sync) {

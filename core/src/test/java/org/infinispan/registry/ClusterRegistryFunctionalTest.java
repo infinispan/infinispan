@@ -1,13 +1,18 @@
 package org.infinispan.registry;
 
+import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
+import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.LocalTopologyManager;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -24,18 +29,24 @@ import static org.junit.Assert.*;
 @Test(groups="functional", testName="registry.ClusterRegistryFunctionalTest")
 public class ClusterRegistryFunctionalTest extends MultipleCacheManagersTest {
 
-   private static final int NUM_MEMBERS = 3;
+   private static final int NUM_MEMBERS = 2;
 
    private ClusterRegistry<String, String, Integer> clusterRegistry0;
    private ClusterRegistry<String, String, Integer> clusterRegistry1;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      ConfigurationBuilder dcc = buildConfiguration();
       createCluster(dcc, NUM_MEMBERS);
       waitForClusterToForm();
       clusterRegistry0 = manager(0).getGlobalComponentRegistry().getComponent(ClusterRegistry.class);
       clusterRegistry1 = manager(1).getGlobalComponentRegistry().getComponent(ClusterRegistry.class);
+   }
+
+   private ConfigurationBuilder buildConfiguration() {
+      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
+      dcc.clustering().stateTransfer().awaitInitialTransfer(false);
+      return dcc;
    }
 
    public void testSimpleFunctionality() {
@@ -156,6 +167,36 @@ public class ClusterRegistryFunctionalTest extends MultipleCacheManagersTest {
       assertEquals(0, listener1s1.updates.size());
       assertEquals(0, listener0s2.updates.size());
       assertEquals(0, listener1s2.updates.size());
+   }
+
+   public void testRebalancingDisabled() throws Exception {
+      // Suspend rebalancing
+      LocalTopologyManager ltm0 = TestingUtil.extractGlobalComponent(manager(0), LocalTopologyManager.class);
+      ltm0.setRebalancingEnabled(false);
+
+      ConfigurationBuilder cb = buildConfiguration();
+      EmbeddedCacheManager manager2 = addClusterEnabledCacheManager(cb);
+      Cache cache2 = manager2.getCache();
+      // Check that cache 3 is not in the CH
+      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
+
+      ClusterRegistry clusterRegistry2 = manager2.getGlobalComponentRegistry().getComponent(ClusterRegistry.class);
+      // Check that the cluster registry on the joiner works properly
+      clusterRegistry2.put("s1", "k1", "v1");
+      assertEquals("v1", clusterRegistry0.get("s1", "k1"));
+
+      // Check that the cluster registry cache joined properly
+      TestingUtil.waitForRehashToComplete(clusterRegistryCache(0), clusterRegistryCache(1), clusterRegistryCache(2));
+
+      // Check that cache 3 is still not in the CH
+      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
+
+      // Enable rebalancing
+      ltm0.setRebalancingEnabled(true);
+   }
+
+   protected Cache<Object, Object> clusterRegistryCache(int index) {
+      return cache(index, ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
    }
 
    @Listener

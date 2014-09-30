@@ -1,5 +1,6 @@
 package org.infinispan.server.test.jmx.suppress.statetransfer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,7 @@ import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -183,10 +185,10 @@ public class StateTransferSuppressIT {
 
         checkRpcManagerStatistics(new String[]{"null", OWNERS_2_MEMBERS_NODE1_NODE2}, OWNERS_2_MEMBERS_NODE1_NODE2, provider(0), provider(1));
 
-        assertTrue(numEntries(server1, HOTROD_CACHE_NAME) == NUMBER_ENTRIES);
-        assertTrue(numEntries(server2, HOTROD_CACHE_NAME) == NUMBER_ENTRIES);
-        assertTrue(numEntries(server1, MEMCACHED_CACHE_NAME) == NUMBER_ENTRIES);
-        assertTrue(numEntries(server2, MEMCACHED_CACHE_NAME) == NUMBER_ENTRIES);
+        assertEquals(NUMBER_ENTRIES, numEntries(server1, HOTROD_CACHE_NAME));
+        assertEquals(NUMBER_ENTRIES, numEntries(server2, HOTROD_CACHE_NAME));
+        assertEquals(NUMBER_ENTRIES, numEntries(server1, MEMCACHED_CACHE_NAME));
+        assertEquals(NUMBER_ENTRIES, numEntries(server2, MEMCACHED_CACHE_NAME));
     }
 
     private void verifyRebalanceWith3rdNode() throws Exception {
@@ -206,8 +208,8 @@ public class StateTransferSuppressIT {
 
         checkRpcManagerStatistics(new String[]{"null"}, OWNERS_2_MEMBERS_NODE1_NODE2, provider(0), provider(1), provider(2));
 
-        assertTrue("The hotrod cache on server(2) should be empty.", numEntries(server3, HOTROD_CACHE_NAME) == 0);
-        assertTrue("The memcached cache on server(2) should be empty.", numEntries(server3, MEMCACHED_CACHE_NAME) == 0);
+        assertEquals("The hotrod cache on server(2) should be empty.", 0, numEntries(server3, HOTROD_CACHE_NAME));
+        assertEquals("The memcached cache on server(2) should be empty.", 0, numEntries(server3, MEMCACHED_CACHE_NAME));
 
         //Enabling the Rebalance and verifying that the consistent rehash takes place.
         setAttribute(provider(0), LOCAL_TOPOLOGY_MANAGER, REBALANCE_ENABLED_ATTR_NAME, true);
@@ -268,31 +270,26 @@ public class StateTransferSuppressIT {
         }
     }
 
-    private void putDataIntoCache(int count) {
+    private void putDataIntoCache(int count) throws Exception {
         // hotrod
         for (int i = 0; i < count; i++) {
             cache1.put("key" + i, "value" + i);
         }
 
-        assertTrue("The size of both caches should be equal.", cache1.size() == cache2.size());
         assertEquals(count, cache1.size());
         assertEquals(count, cache2.size());
 
         // memcached
-        try {
-            for (int i = 0; i < count; i++) {
-                mc.set("key" + i, "value" + i);
-            }
-
-            long num1 = numEntries(server1, MEMCACHED_CACHE_NAME);
-            long num2 = numEntries(server2, MEMCACHED_CACHE_NAME);
-
-            assertEquals("The size of both caches should be equal.", num1, num2);
-            assertEquals(count, num1);
-            assertEquals(count, num2);
-        } catch (Exception ex) {
-            log.error("putDataIntoCache() throws exception", ex);
+        for (int i = 0; i < count; i++) {
+            mc.set("key" + i, "value" + i);
         }
+
+        long num1 = numEntries(server1, MEMCACHED_CACHE_NAME);
+        long num2 = numEntries(server2, MEMCACHED_CACHE_NAME);
+
+        assertEquals("The size of both caches should be equal.", num1, num2);
+        assertEquals(count, num1);
+        assertEquals(count, num2);
     }
 
 }
