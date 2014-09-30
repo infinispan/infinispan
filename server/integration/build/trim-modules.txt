@@ -1,1 +1,8 @@
-org/jboss/marshalling/river/**
+org/apache/cxf/**
+org/apache/james/**
+org/jberet/**
+org/jboss/ws/**
+org/picketlink/**
+org/wildfly/extension/batch/**
+org/wildfly/jberet/**
+
