@@ -25,11 +25,8 @@ public class ConfigurationPropertiesOverridesTest {
    private final Properties defaultConfigurationProperties = new ConfigurationProperties()
          .getProperties();
 
-   /**
-    * Test method for {@link org.infinispan.spring.ConfigurationPropertiesOverrides#isEmpty()}.
-    */
    @Test
-   public final void isEmptyShouldRecognizeThatConfigurationPropertiesOverridesAreEmpty() {
+   public final void testIfIsEmptyRecognizesThatConfigurationPropertiesOverridesAreEmpty() {
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
       assertTrue(
@@ -37,11 +34,8 @@ public class ConfigurationPropertiesOverridesTest {
             objectUnderTest.isEmpty());
    }
 
-   /**
-    * Test method for {@link org.infinispan.spring.ConfigurationPropertiesOverrides#isEmpty()}.
-    */
    @Test
-   public final void isEmptyShouldRecognizeThatConfigurationPropertiesOverridesAreNotEmpty() {
+   public final void testIfIsEmptyShouldRecognizesThatConfigurationPropertiesOverridesAreNotEmpty() {
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
       objectUnderTest.setTransportFactory("test.TransportFactory");
 
@@ -50,13 +44,8 @@ public class ConfigurationPropertiesOverridesTest {
             objectUnderTest.isEmpty());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setTransportFactory(java.lang.String)}
-    * .
-    */
    @Test
-   public final void setTransportFactoryShouldOverrideDefaultTransportFactory() {
+   public final void testIfSetTransportFactoryOverridesDefaultTransportFactory() {
       final String expectedTransportFactory = "test.TransportFactory";
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
@@ -70,34 +59,8 @@ public class ConfigurationPropertiesOverridesTest {
                    overriddenConfigurationProperties.getProperty(TRANSPORT_FACTORY));
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setServerList(java.util.Collection)}
-    * .
-    */
    @Test
-   public final void setServerListShouldOverrideDefaultServerList() {
-      final Collection<InetSocketAddress> expectedServerList = new ArrayList<InetSocketAddress>(1);
-      expectedServerList.add(new InetSocketAddress("testhost", 4632));
-      final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
-      final String expectedServerListString = "testhost:4632";
-
-      objectUnderTest.setServerList(expectedServerList);
-      final Properties overriddenConfigurationProperties = objectUnderTest
-            .override(this.defaultConfigurationProperties);
-
-      assertEquals("override(" + this.defaultConfigurationProperties
-                         + ") should have overridden property 'transportFactory'. However, it didn't.",
-                   expectedServerListString, overriddenConfigurationProperties.getProperty(SERVER_LIST));
-   }
-
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setMarshaller(java.lang.String)}
-    * .
-    */
-   @Test
-   public final void setMarshallerShouldOverrideDefaultMarshaller() {
+   public final void testIfSetMarshallerOverridesDefaultMarshaller() {
       final String expectedMarshaller = "test.Marshaller";
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
@@ -110,13 +73,24 @@ public class ConfigurationPropertiesOverridesTest {
                    expectedMarshaller, overriddenConfigurationProperties.getProperty(MARSHALLER));
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setAsyncExecutorFactory(java.lang.String)}
-    * .
-    */
    @Test
-   public final void setAsyncExecutorFactoryShouldOverrideDefaultAsyncExecutorFactory() {
+   public final void testIfSetServerListOverridesDefaultServerList() {
+      final Collection<InetSocketAddress> expectedServerList = new ArrayList<InetSocketAddress>(1);
+      expectedServerList.add(new InetSocketAddress("testhost", 4632));
+      final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
+      final String expectedServerListString = "testhost:4632";
+
+      objectUnderTest.setServerList(expectedServerList);
+      final Properties overriddenConfigurationProperties = objectUnderTest
+            .override(this.defaultConfigurationProperties);
+
+      assertEquals("override(" + this.defaultConfigurationProperties
+                  + ") should have overridden property 'transportFactory'. However, it didn't.",
+            expectedServerListString, overriddenConfigurationProperties.getProperty(SERVER_LIST));
+   }
+
+   @Test
+   public final void testIfSetAsyncExecutorFactoryOverridesDefaultAsyncExecutorFactory() {
       final String expectedAsyncExecutorFactory = "test.AsyncExecutorFactor";
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
@@ -130,12 +104,8 @@ public class ConfigurationPropertiesOverridesTest {
                    overriddenConfigurationProperties.getProperty(ASYNC_EXECUTOR_FACTORY));
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setTcpNoDelay(boolean)}.
-    */
    @Test
-   public final void setTcpNoDelayShouldOverrideDefaultTcpNoDelay() {
+   public final void testIfSetTcpNoDelayOverridesDefaultTcpNoDelay() {
       final boolean expectedTcpNoDelay = true;
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
@@ -149,12 +119,8 @@ public class ConfigurationPropertiesOverridesTest {
                    overriddenConfigurationProperties.getProperty(TCP_NO_DELAY));
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setTcpKeepAlive(boolean)}.
-    */
    @Test
-   public final void setTcpKeepAliveShouldOverrideDefaultTcpKeepAive() {
+   public final void testIfSetTcpKeepAliveOverridesDefaultTcpKeepAive() {
       final boolean expectedTcpKeepAlive = false;
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
@@ -168,12 +134,8 @@ public class ConfigurationPropertiesOverridesTest {
                    overriddenConfigurationProperties.getProperty(TCP_KEEP_ALIVE));
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setPingOnStartup(boolean)}.
-    */
    @Test
-   public final void setPingOnStartupShouldOverrideDefaultPingOnStartup() {
+   public final void testIfSetPingOnStartupOverridesDefaultPingOnStartup() {
       final boolean expectedPingOnStartup = true;
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
@@ -187,13 +149,8 @@ public class ConfigurationPropertiesOverridesTest {
                    overriddenConfigurationProperties.getProperty(PING_ON_STARTUP));
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setRequestBalancingStrategy(java.lang.String)}
-    * .
-    */
    @Test
-   public final void setRequestBalancingStrategyShouldOverrideDefaultRequestBalancingStrategy() {
+   public final void testIfSetRequestBalancingStrategyOverridesDefaultRequestBalancingStrategy() {
       final String expectedRequestBalancingStrategy = "test.RequestBalancingStrategy";
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
@@ -207,12 +164,8 @@ public class ConfigurationPropertiesOverridesTest {
                    overriddenConfigurationProperties.getProperty(REQUEST_BALANCING_STRATEGY));
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setKeySizeEstimate(int)}.
-    */
    @Test
-   public final void setKeySizeEstimateShouldOverrideDefaultKeySizeEstimate() {
+   public final void testIfSetKeySizeEstimateOverridesDefaultKeySizeEstimate() {
       final int expectedKeySizeEstimate = -123456;
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
@@ -226,12 +179,8 @@ public class ConfigurationPropertiesOverridesTest {
                    overriddenConfigurationProperties.getProperty(KEY_SIZE_ESTIMATE));
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setValueSizeEstimate(int)}.
-    */
    @Test
-   public final void setValueSizeEstimateShouldOverrideDefaultValueSizeEstimate() {
+   public final void testIfValueSizeEstimateOverridesDefaultValueSizeEstimate() {
       final int expectedValueSizeEstimate = -3456789;
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 
@@ -245,12 +194,8 @@ public class ConfigurationPropertiesOverridesTest {
                    overriddenConfigurationProperties.getProperty(VALUE_SIZE_ESTIMATE));
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.ConfigurationPropertiesOverrides#setForceReturnValues(boolean)}.
-    */
    @Test
-   public final void setForceReturnValuesShouldOverrideDefaultForceReturnValues() {
+   public final void testIfForceReturnValuesOverridesDefaultForceReturnValues() {
       final boolean expectedForceReturnValues = true;
       final ConfigurationPropertiesOverrides objectUnderTest = new ConfigurationPropertiesOverrides();
 

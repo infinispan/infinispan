@@ -5,9 +5,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.spring.builders.SpringEmbeddedCacheManagerFactoryBeanBuilder;
 import org.infinispan.transaction.TransactionMode;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.*;
@@ -28,18 +28,20 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
 
    private static final String NAMED_ASYNC_CACHE_CONFIG_LOCATION = "named-async-cache.xml";
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean#setConfigurationFileLocation(org.springframework.core.io.Resource)}
-    * .
-    *
-    * @throws Exception
-    */
+   private SpringEmbeddedCacheManagerFactoryBean objectUnderTest;
+
+   @AfterTest
+   public void closeCacheManager() throws Exception {
+      if(objectUnderTest != null) {
+         objectUnderTest.destroy();
+      }
+   }
+
    @Test
-   public final void springEmbeddedCacheManagerFactoryBeanShouldCreateACacheManagerEvenIfNoDefaultConfigurationLocationHasBeenSet()
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanCreatesACacheManagerEvenIfNoDefaultConfigurationLocationHasBeenSet()
          throws Exception {
-      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
-      objectUnderTest.afterPropertiesSet();
+      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
+            .defaultBuilder().build();
 
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
@@ -47,25 +49,13 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
             "getObject() should have returned a valid SpringEmbeddedCacheManager, even if no defaulConfigurationLocation "
                   + "has been specified. However, it returned null.",
             springEmbeddedCacheManager);
-      springEmbeddedCacheManager.stop();
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean#setConfigurationFileLocation(org.springframework.core.io.Resource)}
-    * .
-    *
-    * @throws Exception
-    */
    @Test
-   public final void springEmbeddedCacheManagerFactoryBeanShouldCreateACustomizedCacheManagerIfGivenADefaultConfigurationLocation()
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanCreatesACustomizedCacheManagerIfGivenADefaultConfigurationLocation()
          throws Exception {
-      final Resource infinispanConfig = new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,
-                                                              getClass());
-
-      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
-      objectUnderTest.setConfigurationFileLocation(infinispanConfig);
-      objectUnderTest.afterPropertiesSet();
+      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
+            .defaultBuilder().fromFile(NAMED_ASYNC_CACHE_CONFIG_LOCATION, getClass()).build();
 
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
       assertNotNull(
@@ -85,20 +75,13 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
                   + "the configuration file when instantiating SpringEmbeddedCacheManager.",
             org.infinispan.configuration.cache.CacheMode.REPL_ASYNC,
             configuration.clustering().cacheMode());
-      springEmbeddedCacheManager.stop();
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean#getObjectType()}.
-    *
-    * @throws Exception
-    */
    @Test
-   public final void springEmbeddedCacheManagerFactoryBeanShouldReportTheCorrectObjectType()
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanReportsTheCorrectObjectType()
          throws Exception {
-      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
-      objectUnderTest.afterPropertiesSet();
+      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
+            .defaultBuilder().build();
 
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
 
@@ -106,32 +89,21 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
             "getObjectType() should return the most derived class of the actual SpringEmbeddedCacheManager "
                   + "implementation returned from getObject(). However, it didn't.",
             springEmbeddedCacheManager.getClass(), objectUnderTest.getObjectType());
-      springEmbeddedCacheManager.stop();
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean#isSingleton()}.
-    */
    @Test
-   public final void springEmbeddedCacheManagerFactoryBeanShouldDeclareItselfToOnlyProduceSingletons() {
-      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanDeclaresItselfToOnlyProduceSingletons() {
+      objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
 
       assertTrue("isSingleton() should always return true. However, it returned false",
                  objectUnderTest.isSingleton());
    }
 
-   /**
-    * Test method for
-    * {@link org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean#destroy()}.
-    *
-    * @throws Exception
-    */
    @Test
-   public final void springEmbeddedCacheManagerFactoryBeanShouldStopTheCreateEmbeddedCacheManagerWhenBeingDestroyed()
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanStopsTheCreatedEmbeddedCacheManagerWhenBeingDestroyed()
          throws Exception {
-      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
-      objectUnderTest.afterPropertiesSet();
+      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
+            .defaultBuilder().build();
 
       final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
       springEmbeddedCacheManager.getCache("default"); // Implicitly starts
@@ -143,13 +115,55 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
                   + "However, the created SpringEmbeddedCacheManager is still not terminated.",
             ComponentStatus.TERMINATED, springEmbeddedCacheManager.getNativeCacheManager()
                   .getStatus());
-      springEmbeddedCacheManager.stop();
    }
 
-   // Testing the addBuilder() methods
    @Test
-   public final void testAddConfigurations() throws Exception {
-      final SpringEmbeddedCacheManagerFactoryBean objectUnderTest = new SpringEmbeddedCacheManagerFactoryBean();
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanAllowesOverridingGlobalConfiguration() throws Exception {
+      GlobalConfigurationBuilder overriddenConfiguration = new GlobalConfigurationBuilder();
+      overriddenConfiguration.transport().rackId("r2");
+      overriddenConfiguration.globalJmxStatistics().allowDuplicateDomains(true);
+
+      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
+            .defaultBuilder().fromFile(NAMED_ASYNC_CACHE_CONFIG_LOCATION, getClass())
+            .withGlobalConfiguration(overriddenConfiguration).build();
+
+      final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
+
+      assertEquals(
+            "Transport for cache configured in"
+            + CACHE_NAME_FROM_CONFIGURATION_FILE + "is assigned to r1 rack. But later Global Configuration overrides "
+            + "this setting to r2. Obviously created SpringEmbeddedCacheManagerFactoryBean does not support this kind "
+            + "of overriding.",
+            "r2",
+            springEmbeddedCacheManager.getNativeCacheManager().getCacheManagerConfiguration().transport().rackId());
+   }
+
+   @Test
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanAllowesOverridingConfigurationBuilder() throws Exception {
+      ConfigurationBuilder overriddenBuilder = new ConfigurationBuilder();
+      overriddenBuilder.locking().concurrencyLevel(100);
+
+      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
+            .defaultBuilder().fromFile(NAMED_ASYNC_CACHE_CONFIG_LOCATION, getClass())
+            .withConfigurationBuilder(overriddenBuilder).build();
+
+      final SpringEmbeddedCacheManager springEmbeddedCacheManager = objectUnderTest.getObject();
+
+      assertEquals(
+            "Concurrency value of LockingLocking for cache configured in"
+                  + CACHE_NAME_FROM_CONFIGURATION_FILE + "is equal to 5000. But later Configuration Builder overrides "
+                  + "this setting to 100. Obviously created SpringEmbeddedCacheManagerFactoryBean does not support "
+                  + "this kind of overriding.",
+            100,
+            springEmbeddedCacheManager.getNativeCacheManager().getDefaultCacheConfiguration().locking()
+                  .concurrencyLevel());
+   }
+
+   @Test
+   public void testIfSpringEmbeddedCacheManagerFactoryBeanAllowesOverridingConfigurationWithEmptyInputStream()
+         throws Exception {
+      objectUnderTest = SpringEmbeddedCacheManagerFactoryBeanBuilder
+            .defaultBuilder().build();
 
       // Allow duplicate domains. A good little configuration modification to make. If this isn't enabled,
       // JMXDomainConflicts occur which break the testsuite. This way we can also have a non-default configuration to
@@ -169,8 +183,8 @@ public class SpringEmbeddedCacheManagerFactoryBeanTest {
       // Get the cache manager and make assertions.
       final EmbeddedCacheManager infinispanEmbeddedCacheManager = objectUnderTest.getObject().getNativeCacheManager();
       assertEquals(infinispanEmbeddedCacheManager.getCacheManagerConfiguration().globalJmxStatistics()
-                         .allowDuplicateDomains(), gcb.build().globalJmxStatistics().allowDuplicateDomains());
+                         .allowDuplicateDomains(), true);
       assertEquals(infinispanEmbeddedCacheManager.getDefaultCacheConfiguration().transaction().transactionMode().isTransactional(),
-                   builder.build().transaction().transactionMode().isTransactional());
+                   false);
    }
 }
