@@ -138,6 +138,7 @@ The AdvancedCache interface also offers advanced developers a mechanism with whi
 
 For more information on writing custom interceptors, see <<_custom_interceptors_chapter, this chapter>>.
 
+[[_Listeners_and_notifications_section]]
 ===  Listeners and Notifications
 
 Infinispan offers a listener API, where clients can register for and get notified when events take place.  This annotation-driven API applies to 2 different levels: cache level events and cache manager level events.

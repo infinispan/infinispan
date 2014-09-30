@@ -350,3 +350,33 @@ To use another cache specify its name with the cacheName attribute of the cache 
 @CacheResult(cacheName = "greeting-cache")
 
 ----
+
+=== Use Cache events and CDI
+
+It is possible to receive Cache and Cache Manager level events using CDI Events. You can achieve it using @Observes annotation as shown in the following snippet:
+
+[source,java]
+----
+
+import javax.enterprise.event.Observes;
+import org.infinispan.notifications.cachemanagerlistener.event.CacheStartedEvent;
+import org.infinispan.notifications.cachelistener.event.*;
+
+public class GreetingService {
+
+    // Cache level events
+    private void entryRemovedFromCache(@Observes CacheEntryCreatedEvent event) {
+        ...
+    }
+
+    // Cache Manager level events
+    private void cacheStarted(@Observes CacheStartedEvent event) {
+        ...
+    }
+}
+
+----
+
+TIP: Check <<_Listeners_and_notifications_section,Listeners and Notifications section>> for more information about event types.
+
+----
