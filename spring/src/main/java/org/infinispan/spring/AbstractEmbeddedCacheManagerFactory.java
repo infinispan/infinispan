@@ -2,6 +2,8 @@ package org.infinispan.spring;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
@@ -33,9 +35,19 @@ public class AbstractEmbeddedCacheManagerFactory {
    // ------------------------------------------------------------------------
 
    protected EmbeddedCacheManager createBackingEmbeddedCacheManager() throws IOException {
-      EmbeddedCacheManager cm;
       if (configurationFileLocation != null) {
-         return createCacheManager(configurationFileLocation.getInputStream());
+         ConfigurationBuilderHolder configurationBuilderHolder =
+               new ParserRegistry(Thread.currentThread().getContextClassLoader())
+                     .parse(configurationFileLocation.getInputStream());
+
+         if(gcb != null) {
+            configurationBuilderHolder.getGlobalConfigurationBuilder().read(gcb.build());
+         }
+         if (builder != null) {
+            configurationBuilderHolder.getDefaultConfigurationBuilder().read(builder.build());
+         }
+
+         return new DefaultCacheManager(configurationBuilderHolder, true);
       } else {
          if (gcb == null) {
             if (logger.isDebugEnabled()) logger.debug("GlobalConfigurationBuilder is null. Using default new " +
@@ -43,12 +55,13 @@ public class AbstractEmbeddedCacheManagerFactory {
             gcb = new GlobalConfigurationBuilder();
             gcb.globalJmxStatistics().allowDuplicateDomains(true);
          }
+
          if (builder == null) {
             if (logger.isDebugEnabled()) logger.debug("ConfigurationBuilder is null. Using default new instance.");
             builder = new ConfigurationBuilder();
          }
-         cm = createCacheManager(gcb, builder);
-         return cm;
+
+         return createCacheManager(gcb, builder);
       }
    }
 
