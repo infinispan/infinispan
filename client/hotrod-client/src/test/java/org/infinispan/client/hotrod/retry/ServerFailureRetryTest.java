@@ -1,18 +1,19 @@
 package org.infinispan.client.hotrod.retry;
 
+import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.jgroups.SuspectedException;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Method;
-
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
-import static org.infinispan.test.TestingUtil.k;
-import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Test different server error situations and check how clients behave under
@@ -30,25 +31,64 @@ public class ServerFailureRetryTest extends AbstractRetryTest {
             getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
    }
 
-   public void testRetryWithSuspectException(Method m) {
-      ErrorInducingListener listener = new ErrorInducingListener();
-      manager(0).getCache().addListener(listener);
+   public void testRetryWithInfinispanSuspectException() {
+      retryExceptions(false);
+   }
+
+   public void testRetryWithJGroupsSuspectedException() {
+      retryExceptions(true);
+   }
+
+   private void retryExceptions(boolean throwJGroupsException) {
+      AdvancedCache<?, ?> nextCache = nextCacheToHit();
+      ErrorInducingInterceptor interceptor = new ErrorInducingInterceptor(throwJGroupsException);
+      nextCache.addInterceptor(interceptor, 1);
       try {
-         remoteCache.put(k(m), v(m));
+         remoteCache.put(1, "v1");
+         assertTrue(interceptor.suspectExceptionThrown);
+         assertEquals("v1", remoteCache.get(1));
       } finally {
-         manager(0).getCache().removeListener(listener);
+         nextCache.removeInterceptor(ErrorInducingInterceptor.class);
       }
    }
 
-   @Listener
-   public static class ErrorInducingListener {
-      boolean induceError = true;
+   public void testRetryCacheStopped() {
+      // Put data in any of the cluster's default cache
+      remoteCache.put(1, "v1");
+      assertEquals("v1", remoteCache.get(1));
+      // Find out what next cluster cache to be hit and stop it
+      Cache<?, ?> cache = nextCacheToHit();
+      try {
+         cache.stop();
+         remoteCache.put(2, "v2");
+         assertEquals("v2", remoteCache.get(2));
+      } finally {
+         cache.start();
+      }
+   }
 
-      @CacheEntryCreated
-      public void entryCreated(CacheEntryEvent event) throws Exception {
-         if (!event.isPre() && event.isOriginLocal() && induceError) {
-            throw new SuspectException("Simulated suspicion");
+   // Listener callbacks can happen in the main thread or remote thread
+   // depending on primary owner considerations, even for replicated caches.
+   // Using an interceptor gives more flexibility by being able to put it
+   // at the top of the interceptor stack, before remote/local separation
+   public static class ErrorInducingInterceptor extends CommandInterceptor {
+      volatile boolean suspectExceptionThrown;
+      boolean throwJGroupsException;
+
+      public ErrorInducingInterceptor(boolean throwJGroupsException) {
+         this.throwJGroupsException = throwJGroupsException;
+      }
+
+      @Override
+      public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+         if (ctx.isOriginLocal()) {
+            suspectExceptionThrown = true;
+            throw throwJGroupsException ?
+                  new SuspectedException("Simulated suspicion")
+                  : new SuspectException("Simulated suspicion");
          }
+         return super.visitPutKeyValueCommand(ctx, command);
       }
    }
+
 }

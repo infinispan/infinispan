@@ -7,6 +7,7 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
+import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
@@ -264,6 +265,7 @@ public class Codec20 implements Codec, HotRodConstants {
       boolean isTrace = localLog.isTraceEnabled();
       if (isTrace) localLog.tracef("Received operation status: %#x", status);
 
+      String msgFromServer;
       try {
          switch (status) {
             case HotRodConstants.INVALID_MAGIC_OR_MESSAGE_ID_STATUS:
@@ -273,22 +275,25 @@ public class Codec20 implements Codec, HotRodConstants {
             case HotRodConstants.COMMAND_TIMEOUT_STATUS:
             case HotRodConstants.UNKNOWN_VERSION_STATUS: {
                // If error, the body of the message just contains a message
-               String msgFromServer = transport.readString();
+               msgFromServer = transport.readString();
                if (status == HotRodConstants.COMMAND_TIMEOUT_STATUS && isTrace) {
                   localLog.tracef("Server-side timeout performing operation: %s", msgFromServer);
-               } if (msgFromServer.contains("SuspectException")
-                     || msgFromServer.contains("SuspectedException")) {
-                  // Handle both Infinispan's and JGroups' suspicions
-                  if (isTrace)
-                     localLog.tracef("A remote node was suspected while executing messageId=%d. " +
-                           "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);
-                  // TODO: This will be better handled with its own status id in version 2 of protocol
-                  throw new RemoteNodeSuspectException(msgFromServer, params.messageId, status);
                } else {
                   localLog.errorFromServer(msgFromServer);
                }
                throw new HotRodClientException(msgFromServer, params.messageId, status);
             }
+            case HotRodConstants.ILLEGAL_LIFECYCLE_STATE:
+               msgFromServer = transport.readString();
+               throw new RemoteIllegalLifecycleStateException(msgFromServer, params.messageId, status);
+            case HotRodConstants.NODE_SUSPECTED:
+               // Handle both Infinispan's and JGroups' suspicions
+               msgFromServer = transport.readString();
+               if (isTrace)
+                  localLog.tracef("A remote node was suspected while executing messageId=%d. " +
+                        "Check if retry possible. Message from server: %s", params.messageId, msgFromServer);
+
+               throw new RemoteNodeSuspectException(msgFromServer, params.messageId, status);
             default: {
                throw new IllegalStateException(String.format("Unknown status: %#04x", status));
             }

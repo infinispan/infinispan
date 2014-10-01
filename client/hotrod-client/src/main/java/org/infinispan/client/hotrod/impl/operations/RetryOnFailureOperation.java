@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.exceptions.RemoteIllegalLifecycleStateException;
 import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
@@ -59,7 +60,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
                      te.getServerAddress(), transport);
             }
             logErrorAndThrowExceptionIfNeeded(retryCount, te);
-         } catch (RemoteNodeSuspectException e) {
+         } catch (RemoteNodeSuspectException | RemoteIllegalLifecycleStateException e) {
             // Do not invalidate transport because this exception is caused
             // as a result of a server finding out that another node has
             // been suspected, so there's nothing really wrong with the server

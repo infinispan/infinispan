@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.retry;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.client.hotrod.HitsAwareCacheManagersTest;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
@@ -14,6 +15,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 
+import java.net.SocketAddress;
 import java.util.Properties;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -28,7 +30,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    protected HotRodServer hotRodServer2;
    protected HotRodServer hotRodServer3;
 
-   RemoteCacheImpl remoteCache;
+   RemoteCacheImpl<Object, Object> remoteCache;
    protected RemoteCacheManager remoteCacheManager;
    protected TcpTransportFactory tcpConnectionFactory;
    protected ConfigurationBuilder config;
@@ -88,4 +90,10 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
    }
 
    protected abstract ConfigurationBuilder getCacheConfig();
+
+   protected AdvancedCache<?, ?> nextCacheToHit() {
+      SocketAddress expectedServer = strategy.getServers()[strategy.getNextPosition()];
+      return hrServ2CacheManager.get(expectedServer).getCache().getAdvancedCache();
+   }
+
 }

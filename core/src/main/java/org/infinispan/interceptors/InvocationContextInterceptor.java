@@ -86,15 +86,9 @@ public class InvocationContextInterceptor extends CommandInterceptor {
          }
 
          if (status.isTerminated()) {
-            throw new IllegalStateException(String.format(
-                  "%s is in 'TERMINATED' state and so it does not accept new invocations. " +
-                        "Either restart it or recreate the cache container.",
-                  getCacheNamePrefix()));
+            throw log.cacheIsTerminated(getCacheNamePrefix());
          } else if (stoppingAndNotAllowed(status, ctx)) {
-            throw new IllegalStateException(String.format(
-                  "%s is in 'STOPPING' state and this is an invocation not belonging to an on-going transaction, so it does not accept new invocations. " +
-                        "Either restart it or recreate the cache container.",
-                  getCacheNamePrefix()));
+            throw log.cacheIsStopping(getCacheNamePrefix());
          }
 
          LogFactory.pushNDC(componentRegistry.getCacheName(), trace);

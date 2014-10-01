@@ -77,6 +77,8 @@ public interface HotRodConstants {
    static final int KEY_DOES_NOT_EXIST_STATUS = 0x02;
    static final int UNKNOWN_VERSION_STATUS = 0x83;
    static final int COMMAND_TIMEOUT_STATUS = 0x86;
+   static final int NODE_SUSPECTED = 0x87;
+   static final int ILLEGAL_LIFECYCLE_STATE = 0x88;
 
 
    static final byte CLIENT_INTELLIGENCE_BASIC = 0x01;

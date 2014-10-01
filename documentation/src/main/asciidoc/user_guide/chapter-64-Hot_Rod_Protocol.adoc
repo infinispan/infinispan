@@ -1031,6 +1031,18 @@ The following new response operation codes have been added:
 * +0x26+ = add client remote event listener response
 * +0x28+ = remove client remote event listener response
 
+Two new error codes have also been added to enable clients more intelligent
+decisions, particularly when it comes to fail-over logic:
+
+* +0x87+ = Node suspected. When a client receives this error as response,
+it means that the node that responded had an issue sending an operation to a
+third node, which was suspected. Generally, requests that return this error
+can be failed-over to other nodes.
+* +0x88+ = Illegal lifecycle state. When a client receives this error as response,
+it means that the server-side cache or cache manager are not available
+for requests because either stopped, they're stopping or similar situation.
+Generally, requests that return this error can be failed-over to other nodes.
+
 ===== Distribution-Aware Client Topology Change Header
 
 In Infinispan 5.2, virtual nodes based consistent hashing was abandoned and
