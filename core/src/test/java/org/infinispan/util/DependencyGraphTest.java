@@ -35,11 +35,11 @@ public class DependencyGraphTest {
       for (int i = 1; i <= size; i++) {
          graph.addDependency(i, i - 1);
       }
-      List sort = graph.topologicalSort();
+      List<Integer> sort = graph.topologicalSort();
 
-      assertTrue(sort.size() == size + 1);
-      assertTrue(sort.get(0) == 100);
-      assertTrue(sort.get(100) == 0);
+      assertEquals(sort.size(), size + 1);
+      assertEquals(sort.get(0), Integer.valueOf(100));
+      assertEquals(sort.get(100), Integer.valueOf(0));
    }
 
    @Test
@@ -66,7 +66,7 @@ public class DependencyGraphTest {
       g.addDependency("N1", "N2");
       g.addDependency("N2", "N3");
 
-      assertTrue(g.topologicalSort().size() == 3);
+      assertEquals(g.topologicalSort().size(), 3);
       assertEquals(g.topologicalSort(), Arrays.asList("N1", "N2", "N3"));
    }
 
