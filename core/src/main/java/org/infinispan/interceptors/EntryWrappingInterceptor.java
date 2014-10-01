@@ -289,9 +289,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
                                                                    new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
       dataContainer.executeTask(keyFilter,
-                                new ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry<? super Object, ? super Object>>() {
+                                new ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry<Object, Object>>() {
          @Override
-         public void apply(Object o, InternalCacheEntry<? super Object, ? super Object> internalCacheEntry) {
+         public void apply(Object o, InternalCacheEntry<Object, Object> internalCacheEntry) {
             synchronized (ctx) {
                //the process can be made in multiple threads, so we need to synchronize in the context.
                entryFactory.wrapEntryForReading(ctx, o, internalCacheEntry).setSkipLookup(true);
