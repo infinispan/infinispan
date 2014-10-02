@@ -12,6 +12,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -27,7 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @ThreadSafe
 public final class FileListCacheValue implements DeltaAware {
 
-   protected final HashSet<String> filenames = new HashSet<>();
+   private final Set<String> filenames = new HashSet<>();
    private FileListCacheValueDelta fileListValueDelta = new FileListCacheValueDelta();
    private final Lock writeLock;
    private final Lock readLock;
@@ -48,6 +49,17 @@ public final class FileListCacheValue implements DeltaAware {
    public FileListCacheValue(String[] listAll) {
       this();
       Collections.addAll(filenames, listAll);
+   }
+
+   protected void apply(List<Operation> operations) {
+      writeLock.lock();
+      try {
+         for (Operation operation : operations) {
+            operation.apply(filenames);
+         }
+      } finally {
+         writeLock.unlock();
+      }
    }
 
    /**

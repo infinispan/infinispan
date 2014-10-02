@@ -39,9 +39,7 @@ public class FileListCacheValueDelta implements Delta {
       } else {
          other = new FileListCacheValue();
       }
-      for (Operation op : ops) {
-         op.apply(other);
-      }
+      other.apply(ops);
       return other;
    }
 

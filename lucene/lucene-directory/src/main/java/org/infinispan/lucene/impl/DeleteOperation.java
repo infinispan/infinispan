@@ -24,8 +24,8 @@ public class DeleteOperation implements Operation {
    }
 
    @Override
-   public void apply(FileListCacheValue target) {
-      target.filenames.remove(element);
+   public void apply(Set<String> target) {
+      target.remove(element);
    }
 
    String getElement() {

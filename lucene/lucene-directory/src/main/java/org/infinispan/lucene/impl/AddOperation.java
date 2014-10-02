@@ -24,8 +24,8 @@ public class AddOperation implements Operation {
    }
 
    @Override
-   public void apply(FileListCacheValue target) {
-      target.filenames.add(element);
+   public void apply(Set<String> target) {
+      target.add(element);
    }
 
    String getElement() {
