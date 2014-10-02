@@ -34,8 +34,8 @@ public class PutIfAbsentOperation extends AbstractKeyValueOperation<byte[]> {
    protected byte[] executeOperation(Transport transport) {
       short status = sendPutOperation(transport, PUT_IF_ABSENT_REQUEST, PUT_IF_ABSENT_RESPONSE);
       byte[] previousValue = null;
-      if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS) {
-         previousValue = returnPossiblePrevValue(transport);
+      if (status == NO_ERROR_STATUS || status == NOT_PUT_REMOVED_REPLACED_STATUS || status == NOT_EXECUTED_WITH_PREVIOUS) {
+         previousValue = returnPossiblePrevValue(transport, status);
          if (log.isTraceEnabled()) {
             log.tracef("Returning from putIfAbsent: %s", Util.printArray(previousValue, false));
          }

@@ -170,7 +170,7 @@ object HotRodTestingUtil extends Log {
    }
 
    def assertSuccess(resp: TestResponseWithPrevious, expected: Array[Byte]): Boolean = {
-      assertStatus(resp, Success)
+      assertStatus(resp, SuccessWithPrevious)
       val isSuccess = Arrays.equals(expected, resp.previous.get)
       assertTrue(isSuccess)
       isSuccess
