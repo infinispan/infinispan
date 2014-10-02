@@ -240,7 +240,7 @@ public class RemoteStore implements AdvancedLoadWriteStore {
       if (configuration.protocolVersion() != null)
          builder.protocolVersion(configuration.protocolVersion());
       else
-         builder.protocolVersion(ConfigurationProperties.PROTOCOL_VERSION_12);
+         builder.protocolVersion(ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
       if (configuration.transportFactory() != null)
          builder.transportFactory(configuration.transportFactory());
 
