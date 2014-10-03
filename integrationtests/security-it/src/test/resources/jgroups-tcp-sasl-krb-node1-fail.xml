@@ -39,7 +39,7 @@
           mcast_addr="${jgroups.mping.mcast_addr:228.2.4.6}"
           mcast_port="${jgroups.mping.mcast_port:43366}"
           ip_ttl="${jgroups.udp.ip_ttl:2}"
-          num_initial_members="3" timeout="2000"/>
+          num_initial_members="2" timeout="2000"/>
 
    <MERGE3/>
 
@@ -62,7 +62,7 @@
               
    <SASL mech="GSSAPI"
          server_name="node0/clustered"
-         login_module_name="krb-node1" />
+         login_module_name="krb-node1-fail" />
 
    <pbcast.STABLE stability_delay="500" desired_avg_gossip="5000" max_bytes="1m"/>
    <pbcast.GMS print_local_addr="false" join_timeout="3000" view_bundling="true"/>

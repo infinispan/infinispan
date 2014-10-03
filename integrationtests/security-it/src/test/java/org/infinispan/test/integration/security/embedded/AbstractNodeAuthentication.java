@@ -25,12 +25,12 @@ import org.junit.Test;
 public abstract class AbstractNodeAuthentication {
 
    protected static final String COORDINATOR_NODE = "node0";
-   protected static final String COORDINATOR_JGROUSP_CONFIG_MD5 = "jgroups-udp-sasl-md5-node0.xml";
-   protected static final String COORDINATOR_JGROUSP_CONFIG_MD5_USER = "jgroups-udp-sasl-md5-user-node0.xml";
-   protected static final String JOINING_NODE_JGROUSP_CONFIG_MD5 = "jgroups-udp-sasl-md5-node1.xml";
-   protected static final String COORDINATOR_JGROUSP_CONFIG_KRB = "jgroups-udp-sasl-krb-node0.xml";
-   protected static final String JOINING_NODE_JGROUSP_CONFIG_KRB = "jgroups-udp-sasl-krb-node1.xml";
-   protected static final String JOINING_NODE_JGROUSP_CONFIG_KRB_FAIL = "jgroups-udp-sasl-krb-node1-fail.xml";
+   protected static final String COORDINATOR_JGROUSP_CONFIG_MD5 = "jgroups-tcp-sasl-md5-node0.xml";
+   protected static final String COORDINATOR_JGROUSP_CONFIG_MD5_USER = "jgroups-tcp-sasl-md5-user-node0.xml";
+   protected static final String JOINING_NODE_JGROUSP_CONFIG_MD5 = "jgroups-tcp-sasl-md5-node1.xml";
+   protected static final String COORDINATOR_JGROUSP_CONFIG_KRB = "jgroups-tcp-sasl-krb-node0.xml";
+   protected static final String JOINING_NODE_JGROUSP_CONFIG_KRB = "jgroups-tcp-sasl-krb-node1.xml";
+   protected static final String JOINING_NODE_JGROUSP_CONFIG_KRB_FAIL = "jgroups-tcp-sasl-krb-node1-fail.xml";
 
    protected static final String CACHE_NAME = "replicatedCache";
    protected static final String TEST_ITEM_KEY = "test_key";
@@ -47,14 +47,8 @@ public abstract class AbstractNodeAuthentication {
    protected abstract String getJoiningNodeName();
 
    protected abstract String getJoiningNodeConfig();
-
-   protected Cache<String, String> getReplicatedCache(String jgrousConfigFile) throws Exception {
-      GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
-      globalConfig.globalJmxStatistics().disable();
-      globalConfig.globalJmxStatistics().mBeanServerLookup(null); //TODO remove once WFLY-3124 is fixed, for now fail JMX registration
-      globalConfig.transport().defaultTransport().addProperty("configurationFile", jgrousConfigFile);
-      EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build());
-
+   
+   protected Cache<String, String> getReplicatedCache(EmbeddedCacheManager manager) throws Exception {
       ConfigurationBuilder cacheConfig = new ConfigurationBuilder();
       cacheConfig.transaction().lockingMode(LockingMode.PESSIMISTIC);
       cacheConfig.invocationBatching().enable();
@@ -63,9 +57,19 @@ public abstract class AbstractNodeAuthentication {
 
       manager.defineConfiguration(CACHE_NAME, cacheConfig.build());
       Cache<String, String> replicatedCache = manager.getCache(CACHE_NAME);
+      
       return replicatedCache;
    }
 
+   private EmbeddedCacheManager getCacheManager(String jgrousConfigFile) {
+      GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
+      globalConfig.globalJmxStatistics().disable();
+      globalConfig.globalJmxStatistics().mBeanServerLookup(null); //TODO remove once WFLY-3124 is fixed, for now fail JMX registration
+      globalConfig.transport().defaultTransport().addProperty("configurationFile", jgrousConfigFile);
+      EmbeddedCacheManager manager = new DefaultCacheManager(globalConfig.build()); 
+      return manager;
+   }
+   
    @Test
    @InSequence(1)
    public void startNodes() throws Exception {
@@ -81,7 +85,7 @@ public abstract class AbstractNodeAuthentication {
    @OperateOnDeployment(COORDINATOR_NODE)
    @InSequence(2)
    public void testCreateItemOnCoordinator() throws Exception {
-      Cache<String, String> cache = getReplicatedCache(getCoordinatorNodeConfig());
+      Cache<String, String> cache = getReplicatedCache(getCacheManager(getCoordinatorNodeConfig()));
       cache.put(TEST_ITEM_KEY, TEST_ITEM_VALUE);
       assertEquals(TEST_ITEM_VALUE, cache.get(TEST_ITEM_KEY));
    }
@@ -90,7 +94,9 @@ public abstract class AbstractNodeAuthentication {
    @InSequence(3)
    //Needs to be overwritten in test class, which should add annotation @OperateOnDeployment(getJoiningNodeName())
    public void testReadItemOnJoiningNode() throws Exception {
-      Cache<String, String> cache = getReplicatedCache(getJoiningNodeConfig());
+      EmbeddedCacheManager manager = getCacheManager(getJoiningNodeConfig());  
+      Cache<String, String> cache = getReplicatedCache(manager);
+      assertEquals("Insufficient number of cluster members", 2, manager.getMembers().size());
       assertEquals(TEST_ITEM_VALUE, cache.get(TEST_ITEM_KEY));
    }
 
