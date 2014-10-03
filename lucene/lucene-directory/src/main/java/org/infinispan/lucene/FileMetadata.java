@@ -52,6 +52,10 @@ public final class FileMetadata {
       }
    }
 
+   public boolean isMultiChunked() {
+      return size > bufferSize;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) {

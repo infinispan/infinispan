@@ -41,7 +41,9 @@ public class LocalLockStressTest extends SingleCacheManagerTest {
       final Cache<Object, Object> chunks = cacheManager.getCache("chunks");
       final Cache<Object, Integer> locks = cacheManager.getCache("locks");
 
-      metadata.put(new FileCacheKey("indexName", "fileName"), new FileMetadata(10));
+      FileMetadata fileMetadata = new FileMetadata(10);
+      fileMetadata.setSize(11); // Make it chunked otherwise no read lock will involved
+      metadata.put(new FileCacheKey("indexName", "fileName"), fileMetadata);
       final LocalLockMergingSegmentReadLocker locker = new LocalLockMergingSegmentReadLocker(locks, chunks, metadata, "indexName");
       final AtomicBoolean testFailed = new AtomicBoolean(false);
       final ExecutorService exec = Executors.newFixedThreadPool(NUM_THREADS);
