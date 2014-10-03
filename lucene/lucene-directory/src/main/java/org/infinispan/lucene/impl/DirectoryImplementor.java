@@ -133,7 +133,7 @@ class DirectoryImplementor {
        if (fileMetadata == null) {
           throw new FileNotFoundException("Error loading metadata for index file: " + fileKey);
        }
-       else if (fileMetadata.getSize() <= fileMetadata.getBufferSize()) {
+       else if (!fileMetadata.isMultiChunked()) {
           //files smaller than chunkSize don't need a readLock
           return new IndexInputContext(chunksCache, fileKey, fileMetadata, null);
        }

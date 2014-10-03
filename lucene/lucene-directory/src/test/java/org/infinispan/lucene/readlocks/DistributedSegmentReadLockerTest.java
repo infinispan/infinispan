@@ -7,14 +7,22 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
+import org.infinispan.lucene.FileReadLockKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * DistributedSegmentReadLockerTest represents a quick check on the functionality
@@ -80,6 +88,22 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
       verifyBoth(cache0, cache1);
    }
 
+   @Test
+   public void testAvoidReadLocksOnSmallFiles() throws Exception {
+      CacheLockListener listener = new CacheLockListener();
+      cache0.addListener(listener);
+      IndexOutput indexOutput = dirA.createOutput(filename, IOContext.DEFAULT);
+
+      indexOutput.writeString("a");
+      indexOutput.flush();
+      indexOutput.close();
+
+      dirA.deleteFile(filename);
+
+      assertEquals(0, listener.readLocksAcquired.intValue());
+      assertEquals(0, listener.readLocksRemoved.intValue());
+   }
+
    void assertFileNotExists(String fileName) throws InterruptedException {
       DirectoryIntegrityCheck.assertFileNotExists(cache0, INDEX_NAME, fileName, 10000L);
       DirectoryIntegrityCheck.assertFileNotExists(cache1, INDEX_NAME, fileName, 10000L);
@@ -100,6 +124,32 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
    void verifyBoth(Cache cache0, Cache cache1) {
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache0, INDEX_NAME);
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache1, INDEX_NAME);
+   }
+
+   @Listener
+   @SuppressWarnings("unused")
+   public static class CacheLockListener {
+      LongAdder readLocksAcquired = new LongAdder();
+      LongAdder readLocksRemoved = new LongAdder();
+
+      @CacheEntryCreated
+      public void entryCreated(CacheEntryEvent event) {
+         if (validate(event)) {
+            readLocksAcquired.increment();
+         }
+      }
+
+      @CacheEntryRemoved
+      public void entryRemoved(CacheEntryEvent event) {
+         if (validate(event)) {
+            readLocksRemoved.increment();
+         }
+      }
+
+      private boolean validate(CacheEntryEvent event) {
+         return (!event.isPre() && event.getKey() instanceof FileReadLockKey);
+      }
+
    }
 
 }
