@@ -26,11 +26,11 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.jgroups.blocks.Response;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Set;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
@@ -112,7 +112,7 @@ public class DeltaReplicationTest extends MultipleCacheManagersTest {
    }
 
    class InboundInvocationHandlerDecorator extends InboundInvocationHandlerImpl {
-      final Set<AbstractDataWriteCommand> writeCommands = new HashSet<>();
+      final Set<AbstractDataWriteCommand> writeCommands = new ConcurrentHashSet<>();
 
       @Override
       public void handle(CacheRpcCommand cmd, Address origin, Response response, boolean preserveOrder) throws Throwable {
