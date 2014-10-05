@@ -28,7 +28,7 @@ import static org.infinispan.test.TestingUtil.existsDomains;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "functional", testName = "jmx.JmxStatsFunctionalTest")
+@Test(groups = "functional,smoke", testName = "jmx.JmxStatsFunctionalTest")
 public class JmxStatsFunctionalTest extends AbstractInfinispanTest {
 
    public static final String JMX_DOMAIN = JmxStatsFunctionalTest.class.getSimpleName();

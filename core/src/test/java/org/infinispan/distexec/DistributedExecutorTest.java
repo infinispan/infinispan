@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * @author Vladimir Blagojevic
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "distexec.DistributedExecutorTest")
+@Test(groups = "functional,smoke", testName = "distexec.DistributedExecutorTest")
 public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
    public DistributedExecutorTest() {

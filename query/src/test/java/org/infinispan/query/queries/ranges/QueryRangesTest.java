@@ -24,7 +24,7 @@ import java.util.Locale;
  *
  * @author Anna Manukyan
  */
-@Test(groups = "functional", testName = "query.queries.ranges.QueryRangesTest")
+@Test(groups = "functional,smoke", testName = "query.queries.ranges.QueryRangesTest")
 public class QueryRangesTest extends SingleCacheManagerTest {
    private Person person1;
    private Person person2;

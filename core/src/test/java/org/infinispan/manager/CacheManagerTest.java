@@ -42,7 +42,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Manik Surtani
  * @since 4.0
  */
-@Test(groups = "functional", testName = "manager.CacheManagerTest")
+@Test(groups = "functional,smoke", testName = "manager.CacheManagerTest")
 public class CacheManagerTest extends AbstractInfinispanTest {
    public void testDefaultCache() {
       EmbeddedCacheManager cm = createCacheManager(false);

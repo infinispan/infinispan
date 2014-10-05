@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
 
-@Test(groups = "functional", testName = "api.batch.BatchWithoutTMTest")
+@Test(groups = "functional,smoke", testName = "api.batch.BatchWithoutTMTest")
 public class BatchWithoutTMTest extends AbstractBatchTest {
 
    EmbeddedCacheManager cm;

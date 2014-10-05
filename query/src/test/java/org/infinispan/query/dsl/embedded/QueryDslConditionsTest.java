@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
  * @author rvansa@redhat.com
  * @since 6.0
  */
-@Test(groups = "functional", testName = "query.dsl.QueryDslConditionsTest")
+@Test(groups = "functional,smoke", testName = "query.dsl.QueryDslConditionsTest")
 public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
    @BeforeClass(alwaysRun = true)
