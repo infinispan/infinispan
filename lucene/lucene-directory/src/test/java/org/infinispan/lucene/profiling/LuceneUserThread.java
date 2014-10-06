@@ -33,6 +33,12 @@ public abstract class LuceneUserThread implements Runnable {
          state.errorManage(e1);
          return;
       }
+      try {
+         beforeLoop();
+      } catch (IOException e) {
+         log.error("unexpected error", e);
+         state.errorManage(e);
+      }
       while (!state.needToQuit()) {
          try {
             testLoop();
@@ -47,6 +53,10 @@ public abstract class LuceneUserThread implements Runnable {
          log.error("unexpected error", e);
          state.errorManage(e);
       }
+   }
+
+   protected void beforeLoop() throws IOException {
+      // defaults to no operation
    }
 
    protected abstract void testLoop() throws IOException;

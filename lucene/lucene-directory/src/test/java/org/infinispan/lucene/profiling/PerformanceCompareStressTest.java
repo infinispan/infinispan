@@ -54,11 +54,12 @@ public class PerformanceCompareStressTest {
    private static final int READER_THREADS = 5;
    private static final int WRITER_THREADS = 1;
 
-   private static final int CHUNK_SIZE = 512 * 1024;
+   private static final boolean INDEX_EXCLUSIVE = true;
+   private static final int CHUNK_SIZE = 1024 * 1024;
 
    private static final String indexName = "tempIndexName";
 
-   private static final long DEFAULT_DURATION_MS = 2 * 60 * 1000;
+   private static final long DEFAULT_DURATION_MS = 30 * 60 * 1000;
    private static final boolean ASYNC_METADATA_WRITES = true;
    private long durationMs = DEFAULT_DURATION_MS;
 
@@ -170,7 +171,7 @@ public class PerformanceCompareStressTest {
          e.execute(new LuceneReaderThread(dirReaders, state));
       }
       for (int i = 0; i < WRITER_THREADS; i++) {
-         e.execute(new LuceneWriterThread(dirWriter, state));
+         e.execute(INDEX_EXCLUSIVE ? new LuceneWriterExclusiveThread(dirWriter, state) : new LuceneWriterThread(dirWriter, state));
       }
       e.shutdown();
       System.out.println("Started test: " + testLabel);
