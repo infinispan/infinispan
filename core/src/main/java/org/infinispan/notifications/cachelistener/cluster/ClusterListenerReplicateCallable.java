@@ -13,6 +13,8 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.CompositeCacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.PostCacheEventFilter;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
@@ -86,7 +88,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                if (!alreadyInstalled) {
                   RemoteClusterListener listener = new RemoteClusterListener(identifier, origin, distExecutor, cacheNotifier,
                                                                            cacheManagerNotifier);
-                  cacheNotifier.addListener(listener, filter, converter);
+                  cacheNotifier.addListener(listener, filter != null ? new CompositeCacheEventFilter(new PostCacheEventFilter(), filter) : null, converter);
                   cacheManagerNotifier.addListener(listener);
                   // It is possible the member is now gone after registered, if so we have to remove just to be sure
                   if (!cacheManager.getMembers().contains(origin)) {
