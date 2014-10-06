@@ -68,29 +68,34 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     */
    @Override
    public void deleteOrReleaseReadLock(String filename) {
-      FileCacheKey fileCacheKey = new FileCacheKey(indexName, filename);
-      FileMetadata fileMetadata = metadataCache.get(fileCacheKey);
-      boolean isMultiChunked = fileMetadata.isMultiChunked();
-      FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
-      int newValue = 0;
-      boolean done = false;
-      Object lockValue = locksCache.get(readLockKey);
-      while (!done && isMultiChunked) {
-         if (lockValue == null) {
-            lockValue = locksCache.putIfAbsent(readLockKey, 0);
-            done = (null == lockValue);
-         }
-         else {
-            Integer refCountObject = (Integer) lockValue;
-            int refCount = refCountObject.intValue();
-            newValue = refCount - 1;
-            done = locksCache.replace(readLockKey, refCountObject, newValue);
-            if (!done) {
-               lockValue = locksCache.get(readLockKey);
+      final FileCacheKey fileCacheKey = new FileCacheKey(indexName, filename);
+      final FileMetadata fileMetadata = metadataCache.get(fileCacheKey);
+      final boolean isMultiChunked = fileMetadata.isMultiChunked();
+      if (isMultiChunked) {
+         int newValue = 0;
+         FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
+         boolean done = false;
+         Object lockValue = locksCache.get(readLockKey);
+         while (!done) {
+            if (lockValue == null) {
+               lockValue = locksCache.putIfAbsent(readLockKey, 0);
+               done = (null == lockValue);
+            }
+            else {
+               Integer refCountObject = (Integer) lockValue;
+               int refCount = refCountObject.intValue();
+               newValue = refCount - 1;
+               done = locksCache.replace(readLockKey, refCountObject, newValue);
+               if (!done) {
+                  lockValue = locksCache.get(readLockKey);
+               }
             }
          }
+         if (newValue == 0) {
+            realFileDelete(indexName, filename, locksCache, chunksCache, metadataCache, forceSynchronousDeletes);
+         }
       }
-      if (newValue == 0) {
+      else {
          realFileDelete(indexName, filename, locksCache, chunksCache, metadataCache, forceSynchronousDeletes);
       }
    }
