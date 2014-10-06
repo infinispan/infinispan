@@ -597,7 +597,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
 
       if (hasShared) {
-         if (!localIndexingEnabled())
+         if (indexShareable())
             flags.add(SKIP_INDEXING);
       } else {
          flags.add(SKIP_INDEXING);
@@ -609,6 +609,10 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private boolean localIndexingEnabled() {
       return configuration.indexing().index() == Index.LOCAL;
+   }
+
+   private boolean indexShareable() {
+      return configuration.indexing().indexShareable();
    }
 
    private int getMaxEntries() {

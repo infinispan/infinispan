@@ -10,6 +10,8 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
 
    private final Index index;
    private final boolean autoConfig;
+   private static final String DIRECTORY_PROVIDER_KEY = "directory_provider";
+   private static final String RAM_DIRECTORY_PROVIDER = "ram";
 
    IndexingConfiguration(TypedProperties properties, Index index, boolean autoConfig) {
       super(properties);
@@ -69,6 +71,28 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       return autoConfig;
    }
 
+   /**
+    * Check if the indexes can be shared. Currently only "ram"
+    * based indexes don't allow any sort of sharing
+    * 
+    * @return false if the index is ram only and thus not shared
+    */
+   public boolean indexShareable() {
+      TypedProperties properties = properties();
+      boolean hasRamDirectoryProvider = false;
+      for (Object objKey : properties.keySet()) {
+         String key = (String) objKey;
+         if (key.endsWith(DIRECTORY_PROVIDER_KEY)) {
+            if (properties.get(key).equals(RAM_DIRECTORY_PROVIDER)) {
+               hasRamDirectoryProvider = true;
+            } else {
+               return true;
+            }
+         }
+      }
+      return !hasRamDirectoryProvider;
+   }
+   
    @Override
    public String toString() {
       return "IndexingConfiguration{" +
