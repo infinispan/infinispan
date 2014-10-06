@@ -1,0 +1,17 @@
+            <security-realm name="LdapRealm">
+                <authentication>
+                    <properties path="application-users.properties" relative-to="jboss.server.config.dir"/>
+                </authentication>
+                <authorization>
+                    <ldap connection="ldap_connection">
+                        <username-to-dn force="false">
+                            <username-filter recursive="true" base-dn="ou=People,dc=infinispan,dc=org" attribute="uid" user-dn-attribute="dn"/>
+                        </username-to-dn>
+                        <group-search group-dn-attribute="dn" group-name-attribute="cn" >
+                            <group-to-principal recursive="true" base-dn="ou=Roles,dc=infinispan,dc=org" search-by="DISTINGUISHED_NAME">
+                                <membership-filter principal-attribute="member"/>
+                            </group-to-principal>
+                        </group-search>
+                    </ldap>
+                </authorization>
+            </security-realm>

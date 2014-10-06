@@ -184,6 +184,13 @@ cn: AdminIspnRole
 description: the Infinispan admin group
 member: uid=admin,ou=People,dc=infinispan,dc=org
 
+dn: cn=SupervisorIspnRole,ou=Roles,dc=infinispan,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: SupervisorIspnRole
+description: the Infinispan supervisor group
+member: uid=supervisor,ou=People,dc=infinispan,dc=org
+
 dn: cn=WriterIspnRole,ou=Roles,dc=infinispan,dc=org
 objectClass: top
 objectClass: groupOfNames
