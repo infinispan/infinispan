@@ -197,7 +197,7 @@ def upload_artifacts(base_dir, version):
   os.mkdir(".tmp")
   os.mkdir(".tmp/%s" % version)
   os.chdir(".tmp")
-  dist_dir = "%s/target/distribution" % base_dir
+  dist_dir = "%s/distribution/target/distribution" % base_dir
   prettyprint("Copying from %s to %s" % (dist_dir, version), Levels.INFO)
   for item in os.listdir(dist_dir):
     full_name = "%s/%s" % (dist_dir, item)
@@ -207,7 +207,7 @@ def upload_artifacts(base_dir, version):
   shutil.rmtree(".tmp", ignore_errors = True)
 
 def unzip_archive(version):
-  os.chdir("./target/distribution")
+  os.chdir("./distribution/target/distribution")
   ## Grab the distribution archive and un-arch it
   shutil.rmtree("infinispan-%s-all" % version, ignore_errors = True)
   if settings['verbose']:
@@ -216,7 +216,7 @@ def unzip_archive(version):
     subprocess.check_call(["unzip", "-q", "infinispan-%s-all.zip" % version])
 
 def update_javadoc_tracker(base_dir, version):
-  os.chdir("%s/target/distribution/infinispan-%s-all/doc" % (base_dir, version))
+  os.chdir("%s/distribution/target/distribution/infinispan-%s-all/doc" % (base_dir, version))
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
 
@@ -233,7 +233,7 @@ def upload_javadocs(base_dir, version):
 
 def upload_schema(base_dir, version):
   """Schema gets rsync'ed to filemgmt.jboss.org, in the docs_htdocs/infinispan/schemas and schema_htdoc/infinispan directories"""
-  os.chdir("%s/target/distribution/infinispan-%s-all/etc/schema" % (base_dir, version))
+  os.chdir("%s/distribution/target/distribution/infinispan-%s-all/etc/schema" % (base_dir, version))
   
   ## rsync this stuff to filemgmt.jboss.org, we put it in the orginal location (docs/infinispan/schemas) and the new location (schema/infinispan)
   uploader.upload_rsync('.', "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan/schemas")

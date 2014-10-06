@@ -87,11 +87,11 @@
             <mapper type="flatten" />
          </copy>
          <!-- JavaDocs -->
-         <mkdir dir="@{dir}/docs" />
-         <copy todir="@{dir}/docs/api">
+         <mkdir dir="@{dir}/doc" />
+         <copy todir="@{dir}/doc/apidocs">
             <fileset dir="${project.build.directory}/site/apidocs" />
          </copy>
-         <copy todir="@{dir}/docs/config">
+         <copy todir="@{dir}/doc/configdocs">
             <fileset dir="${project.build.directory}/site/configdocs" />
          </copy>
       </sequential>
