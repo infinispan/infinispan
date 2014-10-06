@@ -1,5 +1,4 @@
 org/apache/cxf/**
-org/apache/james/**
 org/jberet/**
 org/jboss/ws/**
 org/picketlink/**
