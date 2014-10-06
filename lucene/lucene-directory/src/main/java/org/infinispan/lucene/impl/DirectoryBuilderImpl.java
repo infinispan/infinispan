@@ -38,6 +38,7 @@ public class DirectoryBuilderImpl implements BuildContext {
    private int chunkSize = DEFAULT_BUFFER_SIZE;
    private SegmentReadLocker srl = null;
    private LockFactory lockFactory = null;
+   private boolean writeFileListAsync = false;
 
    public DirectoryBuilderImpl(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
       this.metadataCache = checkValidConfiguration(checkNotNull(metadataCache, "metadataCache"), indexName);
@@ -55,7 +56,7 @@ public class DirectoryBuilderImpl implements BuildContext {
       if (srl == null) {
          srl = makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName);
       }
-      return new DirectoryLuceneV4(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl);
+      return new DirectoryLuceneV4(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl, writeFileListAsync);
    }
 
    @Override
@@ -70,6 +71,12 @@ public class DirectoryBuilderImpl implements BuildContext {
    public BuildContext overrideSegmentReadLocker(SegmentReadLocker srl) {
       checkNotNull(srl, "srl");
       this.srl = srl;
+      return this;
+   }
+
+   @Override
+   public BuildContext writeFileListAsynchronously(boolean writeFileListAsync) {
+      this.writeFileListAsync = writeFileListAsync;
       return this;
    }
 

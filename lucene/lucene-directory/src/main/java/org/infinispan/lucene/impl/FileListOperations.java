@@ -30,9 +30,11 @@ public final class FileListOperations {
    private final AdvancedCache<FileListCacheKey, FileListCacheValue> cacheNoRetrieve;
    private final Lock readLock;
    private final Lock writeLock;
+   private final boolean writeAsync;
 
    @SuppressWarnings("unchecked")
-   public FileListOperations(AdvancedCache<?, ?> cache, String indexName) {
+   public FileListOperations(AdvancedCache<?, ?> cache, String indexName, boolean writeAsync) {
+      this.writeAsync = writeAsync;
       this.cache = (AdvancedCache<FileListCacheKey, Object>) cache;
       this.cacheNoRetrieve = (AdvancedCache<FileListCacheKey, FileListCacheValue>) cache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.indexName = indexName;
@@ -52,7 +54,7 @@ public final class FileListOperations {
          final FileListCacheValue fileList = getFileList();
          boolean done = fileList.add(fileName);
          if (done) {
-            cacheNoRetrieve.put(fileListCacheKey, fileList);
+            updateFileList(fileList);
             if (trace)
                log.trace("Updated file listing: added " + fileName);
          }
@@ -82,7 +84,7 @@ public final class FileListOperations {
          FileListCacheValue fileList = getFileList();
          boolean done = fileList.addAndRemove(toAdd, toRemove);
          if (done) {
-            cacheNoRetrieve.put(fileListCacheKey, fileList);
+            updateFileList(fileList);
             if (trace) {
                log.trace("Updated file listing: added " + toAdd + " and removed " + toRemove);
             }
@@ -127,12 +129,26 @@ public final class FileListOperations {
          FileListCacheValue fileList = getFileList();
          boolean done = fileList.remove(fileName);
          if (done) {
-            cacheNoRetrieve.put(fileListCacheKey, fileList);
+            updateFileList(fileList);
             if (trace)
                log.trace("Updated file listing: removed " + fileName);
          }
       } finally {
          writeLock.unlock();
+      }
+   }
+
+   /**
+    * Makes sure the Cache is updated.
+    * @param fileList the new content
+    */
+   @GuardedBy("writeLock")
+   private void updateFileList(FileListCacheValue fileList) {
+      if (writeAsync) {
+         cacheNoRetrieve.putAsync(fileListCacheKey, fileList);
+      }
+      else {
+         cacheNoRetrieve.put(fileListCacheKey, fileList);
       }
    }
 

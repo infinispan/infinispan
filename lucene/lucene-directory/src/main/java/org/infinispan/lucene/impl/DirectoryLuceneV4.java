@@ -37,9 +37,10 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
     * @param lf the LockFactory to be used by IndexWriters. @see org.infinispan.lucene.locking
     * @param chunkSize segments are fragmented in chunkSize bytes; larger values are more efficient for searching but less for distribution and network replication
     * @param readLocker @see org.infinispan.lucene.readlocks for some implementations; you might be able to provide more efficient implementations by controlling the IndexReader's lifecycle.
+    * @param fileListUpdatedAsync When true, the writes to the list of currently existing files in the Directory will use the putAsync method rather than put.
     */
-   public DirectoryLuceneV4(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker) {
-      this.impl = new DirectoryImplementor(metadataCache, chunksCache, indexName, chunkSize, readLocker);
+   public DirectoryLuceneV4(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync) {
+      this.impl = new DirectoryImplementor(metadataCache, chunksCache, indexName, chunkSize, readLocker, fileListUpdatedAsync);
       this.indexName = indexName;
       this.lockFactory = lf;
       this.lockFactory.setLockPrefix(this.getLockID());
