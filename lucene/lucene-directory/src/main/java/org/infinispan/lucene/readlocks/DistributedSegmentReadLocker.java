@@ -67,11 +67,8 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
     * @see org.apache.lucene.store.Directory#deleteFile(String)
     */
    @Override
-   public void deleteOrReleaseReadLock(String filename) {
-      final FileCacheKey fileCacheKey = new FileCacheKey(indexName, filename);
-      final FileMetadata fileMetadata = metadataCache.get(fileCacheKey);
-      final boolean isMultiChunked = fileMetadata.isMultiChunked();
-      if (isMultiChunked) {
+   public void deleteOrReleaseReadLock(final String filename) {
+      if (isMultiChunked(filename)) {
          int newValue = 0;
          FileReadLockKey readLockKey = new FileReadLockKey(indexName, filename);
          boolean done = false;
@@ -97,6 +94,27 @@ public class DistributedSegmentReadLocker implements SegmentReadLocker {
       }
       else {
          realFileDelete(indexName, filename, locksCache, chunksCache, metadataCache, forceSynchronousDeletes);
+      }
+   }
+
+   /**
+    * Evaluates if the file is potentially being stored as fragmented into multiple chunks;
+    * when it's a single chunk we don't need to apply readlocks.
+    * @param filename
+    * @return true if it is definitely fragmented, or if it's possibly fragmented.
+    */
+   private boolean isMultiChunked(final String filename) {
+      final FileCacheKey fileCacheKey = new FileCacheKey(indexName, filename);
+      final FileMetadata fileMetadata = metadataCache.get(fileCacheKey);
+      if (fileMetadata==null) {
+         //This might happen under high load when the metadata is being written
+         //using putAsync; in such case we return true as it's the safest option.
+         //Skipping the readlocks is just a performance optimisation, and this
+         //condition is extremely rare.
+         return true;
+      }
+      else {
+         return fileMetadata.isMultiChunked();
       }
    }
 

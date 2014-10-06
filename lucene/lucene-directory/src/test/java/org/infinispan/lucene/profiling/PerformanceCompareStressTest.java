@@ -59,6 +59,7 @@ public class PerformanceCompareStressTest {
    private static final String indexName = "tempIndexName";
 
    private static final long DEFAULT_DURATION_MS = 2 * 60 * 1000;
+   private static final boolean ASYNC_METADATA_WRITES = true;
    private long durationMs = DEFAULT_DURATION_MS;
 
    private final Map<Integer,EmbeddedCacheManager> cacheManagers = new HashMap<>();
@@ -155,6 +156,7 @@ public class PerformanceCompareStressTest {
       EmbeddedCacheManager cm = cacheManagers.get(node);
       return DirectoryBuilder
          .newDirectoryInstance(cm.getCache("index_metadata"), cm.getCache("index_data"), cm.getCache("index_locks"), indexName)
+         .writeFileListAsynchronously(ASYNC_METADATA_WRITES)
          .chunkSize(CHUNK_SIZE)
          .create();
    }
