@@ -308,6 +308,13 @@
                    hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
                    addKrbSecDomain="${other.parts}/kerberos-security-domain.xml" />
+        <transform in="standalone.xml" out="testsuite/hotrod-authz-ldap.xml" 
+                   modifyInfinispan="${infinispan.parts}/local-secured-ldap-roles.xml"
+                   hotrodAuth="${infinispan.parts}/hotrod-auth-krb-authz-ldap.xml"
+                   addSecRealm="${other.parts}/ldap-authz-security-realm.xml"
+                   addConnection="${other.parts}/ldap-connection.xml"
+                   addKrbOpts="${other.parts}/kerberos-properties.xml"
+                   addKrbSecDomain="${other.parts}/kerberos-security-domain.xml"/>    	
     </target>
 
     <macrodef name="transform">

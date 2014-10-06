@@ -1,4 +1,4 @@
-                <authentication security-realm="ApplicationRealm">
+                <authentication security-realm="LdapRealm">
                   <sasl server-context-name="hotrod-service" server-name="node0" mechanisms="GSSAPI" qop="auth" strength="high medium low">
                     <policy>
                       <no-anonymous value="true" />

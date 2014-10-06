@@ -1,0 +1,25 @@
+        <subsystem xmlns="urn:infinispan:server:core:7.0" >
+            <cache-container name="local" default-cache="testcache">
+                <security>
+                    <authorization>
+                        <identity-role-mapper />
+                        <role name="AdminIspnRole" permissions="ALL" />
+                        <role name="ReaderIspnRole" permissions="READ" />
+                        <role name="WriterIspnRole" permissions="WRITE" />
+                        <role name="SupervisorIspnRole" permissions="READ WRITE EXEC"/>
+                    </authorization>
+                </security>
+                <local-cache name="testcache" start="EAGER" batching="false">
+                    <transaction mode="NONE" />
+                    <security>
+                        <authorization roles="AdminIspnRole ReaderIspnRole WriterIspnRole SupervisorIspnRole" />
+                    </security>
+                </local-cache>
+                <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
+                <local-cache name="memcachedCache" start="EAGER" batching="false">
+                    <transaction mode="NONE" />
+                </local-cache>
+                <local-cache name="namedCache" start="EAGER" />
+            </cache-container>
+            <cache-container name="security"/>
+        </subsystem>
