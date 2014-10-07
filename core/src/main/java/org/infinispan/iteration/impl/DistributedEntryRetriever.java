@@ -350,26 +350,29 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                                          queue);
 
                      PassivationListener<K, V> listener = null;
+                     long currentTime = timeService.wallClockTime();
                      try {
                         for (InternalCacheEntry<K, V> entry : dataContainer) {
-                           InternalCacheEntry<K, V> clone = entryFactory.create(unwrapMarshalledvalue(entry.getKey()),
-                                                                                unwrapMarshalledvalue(entry.getValue()), entry);
-                           K key = clone.getKey();
-                           if (filter != null) {
-                              if (converter == null && filter instanceof KeyValueFilterConverter) {
-                                 C converted = ((KeyValueFilterConverter<K, V, C>)filter).filterAndConvert(
-                                       key, clone.getValue(), clone.getMetadata());
-                                 if (converted != null) {
-                                    clone.setValue((V) converted);
-                                 } else {
+                           if (!entry.isExpired(currentTime)) {
+                              InternalCacheEntry<K, V> clone = entryFactory.create(unwrapMarshalledvalue(entry.getKey()),
+                                                                                   unwrapMarshalledvalue(entry.getValue()), entry);
+                              K key = clone.getKey();
+                              if (filter != null) {
+                                 if (converter == null && filter instanceof KeyValueFilterConverter) {
+                                    C converted = ((KeyValueFilterConverter<K, V, C>)filter).filterAndConvert(
+                                          key, clone.getValue(), clone.getMetadata());
+                                    if (converted != null) {
+                                       clone.setValue((V) converted);
+                                    } else {
+                                       continue;
+                                    }
+                                 }
+                                 else if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
                                     continue;
                                  }
                               }
-                              else if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
-                                 continue;
-                              }
+                              action.apply(key, clone);
                            }
-                           action.apply(key, clone);
                         }
                         if (shouldUseLoader(flags) && persistenceManager.getStoresAsString().size() > 0) {
                            KeyFilter<K> loaderFilter;
