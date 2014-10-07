@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-server-parent</artifactId>
-      <version>7.0.0-SNAPSHOT</version>
+      <version>7.0.0.CR1</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -32,8 +32,7 @@
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
             <configuration>
-               <!-- we also pack WEB-INF/classes separately so JDG can use infinispan-server-rest-x.y.z-classes.jar
-               to build a custom server war rather than use the war generated here -->
+               
                <attachClasses>true</attachClasses>
             </configuration>
          </plugin>
@@ -73,7 +72,7 @@
          <artifactId>scala-xml_${version.scala.major}</artifactId>
       </dependency>
 
-      <!-- and now for unit and integration tests -->
+      
       <dependency>
          <groupId>org.mortbay.jetty</groupId>
          <artifactId>jetty-embedded</artifactId>

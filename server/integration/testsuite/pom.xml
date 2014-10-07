@@ -1,12 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
-         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.infinispan.server</groupId>
         <artifactId>infinispan-server-versions</artifactId>
-        <version>7.0.0-SNAPSHOT</version>
+        <version>7.0.0.CR1</version>
         <relativePath>../versions/pom.xml</relativePath>
     </parent>
 
@@ -173,7 +172,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- TODO: Make it possible to use a different version of Karaf -->
+        
         <dependency>
             <groupId>org.apache.karaf</groupId>
             <artifactId>apache-karaf</artifactId>
@@ -242,7 +241,7 @@
         <resources.dir>${basedir}/src/test/resources</resources.dir>
 
         <jvm.memory.args>-Xmx512m -XX:MaxPermSize=128m</jvm.memory.args>
-        <jvm.x64.args></jvm.x64.args>
+        <jvm.x64.args />
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
 
@@ -251,7 +250,7 @@
         <node1.ip>127.0.0.1</node1.ip>
         <node2.ip>127.0.0.1</node2.ip>
         <node3.ip>127.0.0.1</node3.ip>
-        <mcast.ip>234.99.54.14</mcast.ip> <!-- Default multicast address. -->
+        <mcast.ip>234.99.54.14</mcast.ip> 
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false
             -Djboss.default.multicast.address=${mcast.ip}
         </jvm.ip.stack>
@@ -317,7 +316,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- IMPORTANT: generates META-INF/maven/dependencies.properties required by PAX-EXAM framework -->
+            
             <plugin>
                 <groupId>org.apache.servicemix.tooling</groupId>
                 <artifactId>depends-maven-plugin</artifactId>
@@ -367,39 +366,35 @@
                         <configuration>
                             <target>
                                 <ant antfile="build-testsuite.xml" inheritRefs="true" target="create-all-distros">
-                                    <!--redefine uses properties to be propagated to ant build file, should be plugin bug-->
-                                    <property name="test_classpath" refid="maven.test.classpath"/>
+                                    
+                                    <property name="test_classpath" refid="maven.test.classpath" />
 
-                                    <property name="database" value="${database}"/>
-                                    <property name="driver.dir" value="${driver.dir}"/>
-                                    <property name="driver.jar" value="${driver.jar}"/>
-                                    <property name="driver.class" value="${driver.class}"/>
+                                    <property name="database" value="${database}" />
+                                    <property name="driver.dir" value="${driver.dir}" />
+                                    <property name="driver.jar" value="${driver.jar}" />
+                                    <property name="driver.class" value="${driver.class}" />
 
-                                    <property name="connection.url" value="${connection.url}"/>
-                                    <property name="connection.url.other" value="${connection.url.other}"/>
+                                    <property name="connection.url" value="${connection.url}" />
+                                    <property name="connection.url.other" value="${connection.url.other}" />
 
-                                    <property name="password" value="${password}"/>
-                                    <property name="username" value="${username}"/>
+                                    <property name="password" value="${password}" />
+                                    <property name="username" value="${username}" />
 
-                                    <property name="password.other" value="${password.other}"/>
-                                    <property name="username.other" value="${username.other}"/>
+                                    <property name="password.other" value="${password.other}" />
+                                    <property name="username.other" value="${username.other}" />
 
-                                    <property name="new.server.schema.version" value="${new.server.schema.version}"/>
+                                    <property name="new.server.schema.version" value="${new.server.schema.version}" />
                                 </ant>
-                                <!-- It happens when you do not specify namespaces in the XSLT templates for the newly added nodes
-                                     then the IBM jdk transformation is adding empty namespace there - not possible to influence this
-                                     behaviour by any environmental property - this is a bit workaround for it -->
-                                <echo message="Removing empty xmlns attributes (xmlns='') which IBM JDK could produce"/>
+                                
+                                <echo message="Removing empty xmlns attributes (xmlns=&apos;&apos;) which IBM JDK could produce" />
                                 <replace dir="target" value="">
-                                    <include name="server/node*/standalone/configuration/**/*.xml"/>
-                                    <replacetoken><![CDATA[xmlns=""]]></replacetoken>
+                                    <include name="server/node*/standalone/configuration/**/*.xml" />
+                                    <replacetoken>xmlns=""</replacetoken>
                                 </replace>
                             </target>
                         </configuration>
                     </execution>
-                    <!-- we need to start a special H2 TCP server because we need to be able to connect to it with a
-                    specific jdbc connection and verify what is in the DB, this is not possible with default
-                    H2 setting -->
+                    
                     <execution>
                         <id>check-h2-db-property</id>
                         <phase>pre-integration-test</phase>
@@ -407,12 +402,12 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <target name="setup-h2" description="Verify if H2 TCP server will be running">
+                            <target description="Verify if H2 TCP server will be running" name="setup-h2">
                                 <condition property="run.h2.server">
-                                    <equals arg1="${database}" arg2="h2"/>
+                                    <equals arg1="${database}" arg2="h2" />
                                 </condition>
                                 <first id="first.h2.jar">
-                                    <fileset dir="${server1.dist}/modules" includes="**/h2-*.jar"/>
+                                    <fileset dir="${server1.dist}/modules" includes="**/h2-*.jar" />
                                 </first>
                                 <echo>Run H2 TCP server?: ${run.h2.server}</echo>
                             </target>
@@ -426,20 +421,18 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <target name="start-h2" description="Starts Java H2 processes" if="run.h2.server">
+                            <target description="Starts Java H2 processes" if="run.h2.server" name="start-h2">
                                 <echo>Starting H2 TCP server!</echo>
                                 <echo>H2 jar: ${driver.dir}/${driver.jar}</echo>
-                                <java classpath="${driver.dir}/${driver.jar}"
-                                      classname="org.h2.tools.Server"
-                                      fork="true" spawn="true">
-                                    <!--do not use forking here because surefire JVM fails and H2 running process is not killed-->
-                                    <arg line="-tcp -tcpPort 9092 -tcpAllowOthers"/>
-                                    <jvmarg value="-Dh2.bindAddress=${h2.server.ip}"/>
+                                <java classname="org.h2.tools.Server" classpath="${driver.dir}/${driver.jar}" fork="true" spawn="true">
+                                    
+                                    <arg line="-tcp -tcpPort 9092 -tcpAllowOthers" />
+                                    <jvmarg value="-Dh2.bindAddress=${h2.server.ip}" />
                                 </java>
                             </target>
                         </configuration>
                     </execution>
-                    <!-- stop previously started H2 server -->
+                    
                     <execution>
                         <id>stop-h2-tcp-server</id>
                         <phase>post-integration-test</phase>
@@ -447,12 +440,11 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <target name="stop-h2" description="Stops Java H2 processes" if="run.h2.server">
+                            <target description="Stops Java H2 processes" if="run.h2.server" name="stop-h2">
                                 <echo>Stopping H2 TCP server!</echo>
                                 <echo>H2 jar: ${driver.dir}/${driver.jar}</echo>
-                                <java classpath="${driver.dir}/${driver.jar}"
-                                      classname="org.h2.tools.Server">
-                                    <arg line="-tcpShutdown ${h2.server.address} -tcpShutdownForce"/>
+                                <java classname="org.h2.tools.Server" classpath="${driver.dir}/${driver.jar}">
+                                    <arg line="-tcpShutdown ${h2.server.address} -tcpShutdownForce" />
                                 </java>
                             </target>
                         </configuration>
@@ -492,7 +484,7 @@
                         <resources.dir>${project.build.directory}/test-classes</resources.dir>
                         <version.karaf>${version.karaf}</version.karaf>
 
-                        <!--redefine jdbc properties-->
+                        
                         <database>${database}</database>
                         <driver.dir>${driver.dir}</driver.dir>
                         <driver.jar>${driver.jar}</driver.jar>
@@ -507,12 +499,12 @@
                         <username.other>${username.other}</username.other>
                         <password.other>${password.other}</password.other>
 
-                        <!--add for testing rebalancing-->
+                        
                         <node0.ip>${node0.ip}</node0.ip>
                         <node1.ip>${node1.ip}</node1.ip>
                         <node2.ip>${node2.ip}</node2.ip>
                     </systemPropertyVariables>
-                    <!--add jdbc driver to classpath-->
+                    
                     <additionalClasspathElements>
                         <element>${driver.dir}/${driver.jar}</element>
                     </additionalClasspathElements>
@@ -651,7 +643,7 @@
         </plugins>
         <pluginManagement>
             <plugins>
-                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+                
                 <plugin>
                     <groupId>org.eclipse.m2e</groupId>
                     <artifactId>lifecycle-mapping</artifactId>
@@ -669,7 +661,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -682,7 +674,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -695,7 +687,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -843,7 +835,7 @@
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
-                <!--don't use controller.start("any-jboss-as-old"); code in test -->
+                
                 <start.jboss.as.manually>true</start.jboss.as.manually>
             </properties>
             <build>
@@ -859,14 +851,13 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml"
-                                             target="start-jbossas">
-                                            <property name="server-dist" value="${server.old.dist}"/>
-                                            <property name="port-offset" value="100"/>
-                                            <property name="management-port" value="10090"/>
-                                            <property name="hotrod-port" value="11322"/>
-                                            <property name="jboss.node.name" value="node1"/>
-                                            <property name="configuration-file" value="standalone.xml"/>
+                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml" target="start-jbossas">
+                                            <property name="server-dist" value="${server.old.dist}" />
+                                            <property name="port-offset" value="100" />
+                                            <property name="management-port" value="10090" />
+                                            <property name="hotrod-port" value="11322" />
+                                            <property name="jboss.node.name" value="node1" />
+                                            <property name="configuration-file" value="standalone.xml" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -879,9 +870,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml"
-                                             target="kill-jbossas">
-                                            <property name="hotrod-port" value="11322"/>
+                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml" target="kill-jbossas">
+                                            <property name="hotrod-port" value="11322" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -900,7 +890,7 @@
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
-                <!--don't use controller.start("any-jboss-as-old"); code in test -->
+                
                 <start.jboss.as.manually>true</start.jboss.as.manually>
             </properties>
             <build>
@@ -916,14 +906,13 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml"
-                                             target="start-jbossas">
-                                            <property name="server-dist" value="${server2.old.dist}"/>
-                                            <property name="port-offset" value="200"/>
-                                            <property name="management-port" value="10190"/>
-                                            <property name="hotrod-port" value="11422"/>
-                                            <property name="jboss.node.name" value="node2"/>
-                                            <property name="configuration-file" value="clustered.xml"/>
+                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml" target="start-jbossas">
+                                            <property name="server-dist" value="${server2.old.dist}" />
+                                            <property name="port-offset" value="200" />
+                                            <property name="management-port" value="10190" />
+                                            <property name="hotrod-port" value="11422" />
+                                            <property name="jboss.node.name" value="node2" />
+                                            <property name="configuration-file" value="clustered.xml" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -936,14 +925,13 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml"
-                                             target="start-jbossas">
-                                            <property name="server-dist" value="${server3.old.dist}"/>
-                                            <property name="port-offset" value="300"/>
-                                            <property name="management-port" value="10290"/>
-                                            <property name="hotrod-port" value="11522"/>
-                                            <property name="jboss.node.name" value="node3"/>
-                                            <property name="configuration-file" value="clustered.xml"/>
+                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml" target="start-jbossas">
+                                            <property name="server-dist" value="${server3.old.dist}" />
+                                            <property name="port-offset" value="300" />
+                                            <property name="management-port" value="10290" />
+                                            <property name="hotrod-port" value="11522" />
+                                            <property name="jboss.node.name" value="node3" />
+                                            <property name="configuration-file" value="clustered.xml" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -956,9 +944,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml"
-                                             target="kill-jbossas">
-                                            <property name="hotrod-port" value="11422"/>
+                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml" target="kill-jbossas">
+                                            <property name="hotrod-port" value="11422" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -971,9 +958,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml"
-                                             target="kill-jbossas">
-                                            <property name="hotrod-port" value="11522"/>
+                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml" target="kill-jbossas">
+                                            <property name="hotrod-port" value="11522" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -1051,7 +1037,7 @@
                 <suite.client.local.phase>none</suite.client.local.phase>
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
-                <suite.manual.exclude.groups></suite.manual.exclude.groups>
+                <suite.manual.exclude.groups />
                 <suite.manual.include.groups>org.infinispan.server.test.category.Osgi</suite.manual.include.groups>
                 <suite.manual.include>org/infinispan/server/test/client/hotrod/osgi/RemoteCacheOsgiIT.java</suite.manual.include>
             </properties>
@@ -1068,14 +1054,13 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml"
-                                             target="start-jbossas">
-                                            <property name="server-dist" value="${server1.dist}"/>
-                                            <property name="port-offset" value="0"/>
-                                            <property name="management-port" value="9990"/>
-                                            <property name="hotrod-port" value="11222"/>
-                                            <property name="jboss.node.name" value="jdg"/>
-                                            <property name="configuration-file" value="testsuite/clustered-indexing.xml"/>
+                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml" target="start-jbossas">
+                                            <property name="server-dist" value="${server1.dist}" />
+                                            <property name="port-offset" value="0" />
+                                            <property name="management-port" value="9990" />
+                                            <property name="hotrod-port" value="11222" />
+                                            <property name="jboss.node.name" value="jdg" />
+                                            <property name="configuration-file" value="testsuite/clustered-indexing.xml" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -1088,9 +1073,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml"
-                                             target="kill-jbossas">
-                                            <property name="hotrod-port" value="11222"/>
+                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml" target="kill-jbossas">
+                                            <property name="hotrod-port" value="11222" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -1109,14 +1093,14 @@
                 </property>
             </activation>
             <properties>
-                <!-- Override IPv4 defaults from the top. -->
+                
                 <h2.server.ip>[::1]</h2.server.ip>
-                <!--<h2.server.address>tcp://${h2.server.ip}:9092</h2.server.address>-->
+                
 
                 <node0.ip>[::1]</node0.ip>
                 <node1.ip>[::1]</node1.ip>
                 <node2.ip>[::1]</node2.ip>
-                <mcast.ip>[ff01::1]</mcast.ip> <!-- ff01::1  is IPv6 Node-Local scope mcast addr. -->
+                <mcast.ip>[ff01::1]</mcast.ip> 
                 <jvm.ip.stack>-Djava.net.preferIPv4Stack=false -Djava.net.preferIPv6Addresses=true
                     -Djboss.default.multicast.address=${mcast.ip}
                 </jvm.ip.stack>
@@ -1126,14 +1110,14 @@
         <profile>
             <id>test-unstable</id>
             <properties>
-                <groups.unstable></groups.unstable>
-                <suite.manual.exclude.groups></suite.manual.exclude.groups>
+                <groups.unstable />
+                <suite.manual.exclude.groups />
                 <suite.manual.include.groups>org.infinispan.server.test.category.Unstable</suite.manual.include.groups>
                 <groups.queries>org.infinispan.server.test.category.UnstableQueries</groups.queries>
                 <groups.client.local>org.infinispan.server.test.category.UnstableClientLocal</groups.client.local>
                 <groups.client.clustered>org.infinispan.server.test.category.UnstableClientClustered</groups.client.clustered>
             </properties>
-            <!-- don't fail if there are no unstable tests (applies to all surefire executions) -->
+            
             <build>
                 <plugins>
                     <plugin>
