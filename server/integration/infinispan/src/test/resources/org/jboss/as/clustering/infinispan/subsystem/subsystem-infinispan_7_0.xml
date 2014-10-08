@@ -127,7 +127,10 @@
             <indexing index="LOCAL" auto-config="true"/>
             <backups>
                 <backup site="NYC" strategy="SYNC"/>
-                <backup site="SFO" strategy="ASYNC"/>
+                <backup site="SFO" strategy="ASYNC">
+                    <take-offline after-failures="1" min-wait="10000"/>
+                    <state-transfer chunk-size="10" max-retries="20" timeout="1200" wait-time="2400"/>
+                </backup>
             </backups>
         </distributed-cache>
     </cache-container>

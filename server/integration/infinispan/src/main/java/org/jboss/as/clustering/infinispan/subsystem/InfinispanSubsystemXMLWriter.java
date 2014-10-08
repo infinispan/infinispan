@@ -488,6 +488,20 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     BackupSiteResource.TAKE_OFFLINE_MIN_WAIT.marshallAsAttribute(backup, writer);
                     writer.writeEndElement();
                 }
+                if (backup.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME).isDefined()) {
+                    ModelNode stateTransfer = backup.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME);
+                    if (stateTransfer.hasDefined(ModelKeys.CHUNK_SIZE)
+                          || stateTransfer.hasDefined(ModelKeys.TIMEOUT)
+                          || stateTransfer.hasDefined(ModelKeys.MAX_RETRIES)
+                          || stateTransfer.hasDefined(ModelKeys.WAIT_TIME)) {
+                       writer.writeStartElement(Element.STATE_TRANSFER.getLocalName());
+                       BackupSiteStateTransferResource.STATE_TRANSFER_CHUNK_SIZE.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferResource.STATE_TRANSFER_TIMEOUT.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferResource.STATE_TRANSFER_MAX_RETRIES.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferResource.STATE_TRANSFER_WAIT_TIME.marshallAsAttribute(stateTransfer, writer);
+                       writer.writeEndElement();
+                    }
+                }
                 writer.writeEndElement();
             }
             writer.writeEndElement();

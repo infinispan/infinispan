@@ -1205,6 +1205,47 @@
                     <xs:documentation>Determines whether this backup is taken offline (ignored) after a certain number of tries.</xs:documentation>
                 </xs:annotation>
             </xs:element>
+            <xs:element name="state-transfer" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>
+                        Configures the properties needed to transfer the state for this site.
+                    </xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                    <xs:attribute name="chunk-size" type="xs:int" default="512">
+                        <xs:annotation>
+                            <xs:documentation>
+                                If &gt; 0, the state will be transferred in batches of {@code chunkSize} cache entries.
+                                If &lt;= 0, the state will be transferred in all at once. Not recommended. Defaults to 512.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="timeout" type="xs:long" default="1200000">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The time (in milliseconds) to wait for the backup site acknowledge the state chunk
+                                received and applied. Default value is 20 min.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="max-retries" type="xs:int" default="30">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The maximum number of retries when a push state command fails. A value &lt;= 0 (zero) mean that
+                                the command will not retry. Default value is 30.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="wait-time" type="xs:long" default="2000">
+                        <xs:annotation>
+                            <xs:documentation>
+                                The waiting time (in milliseconds) between each retry. The value should be &gt; 0 (zero). Default
+                                value is 2 seconds.
+                            </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:complexType>
+            </xs:element>
         </xs:sequence>
         <xs:attribute name="site" type="xs:string" use="required">
             <xs:annotation>

@@ -135,4 +135,10 @@ public class BackupSiteResource extends SimpleResourceDefinition {
     public boolean isRuntimeRegistration() {
         return runtimeRegistration;
     }
+
+    @Override
+    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
+        super.registerChildren(resourceRegistration);
+        resourceRegistration.registerSubModel(new BackupSiteStateTransferResource(runtimeRegistration));
+    }
 }
