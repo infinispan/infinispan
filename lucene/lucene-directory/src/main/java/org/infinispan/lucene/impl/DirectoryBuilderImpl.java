@@ -10,7 +10,10 @@ import org.infinispan.lucene.locking.BaseLockFactory;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
+import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.Executor;
 
 public class DirectoryBuilderImpl implements BuildContext {
 
@@ -39,6 +42,7 @@ public class DirectoryBuilderImpl implements BuildContext {
    private SegmentReadLocker srl = null;
    private LockFactory lockFactory = null;
    private boolean writeFileListAsync = false;
+   private Executor deleteExecutor = null;
 
    public DirectoryBuilderImpl(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName) {
       this.metadataCache = checkValidConfiguration(checkNotNull(metadataCache, "metadataCache"), indexName);
@@ -56,7 +60,10 @@ public class DirectoryBuilderImpl implements BuildContext {
       if (srl == null) {
          srl = makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName);
       }
-      return new DirectoryLuceneV4(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl, writeFileListAsync);
+      if (deleteExecutor == null) {
+         deleteExecutor = new WithinThreadExecutor();
+      }
+      return new DirectoryLuceneV4(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl, writeFileListAsync, deleteExecutor);
    }
 
    @Override
@@ -77,6 +84,13 @@ public class DirectoryBuilderImpl implements BuildContext {
    @Override
    public BuildContext writeFileListAsynchronously(boolean writeFileListAsync) {
       this.writeFileListAsync = writeFileListAsync;
+      return this;
+   }
+
+   @Override
+   public BuildContext deleteOperationsExecutor(Executor executor) {
+      checkNotNull(executor, "executor");
+      this.deleteExecutor = executor;
       return this;
    }
 

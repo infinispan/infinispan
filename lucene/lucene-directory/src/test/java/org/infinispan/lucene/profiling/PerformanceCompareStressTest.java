@@ -6,15 +6,21 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.RAMDirectory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.CacheTestSupport;
+import org.infinispan.lucene.directory.BuildContext;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
@@ -61,6 +67,8 @@ public class PerformanceCompareStressTest {
 
    private static final long DEFAULT_DURATION_MS = 30 * 60 * 1000;
    private static final boolean ASYNC_METADATA_WRITES = true;
+   private static final boolean ASYNC_DELETES = false;
+   private static final int ASYNC_DELETES_POOL_SIZE = 10;
    private long durationMs = DEFAULT_DURATION_MS;
 
    private final Map<Integer,EmbeddedCacheManager> cacheManagers = new HashMap<>();
@@ -153,13 +161,40 @@ public class PerformanceCompareStressTest {
       System.out.println("Simulating network packet delay of: " + delay);
    }
 
+   private ThreadFactory createThreadFactory() {
+      return new ThreadFactory() {
+         private AtomicInteger atomicInteger = new AtomicInteger(0);
+
+         @Override
+         public Thread newThread(Runnable runnable) {
+            Thread thread = new Thread(runnable);
+            thread.setName("File-deleter-" + atomicInteger.incrementAndGet());
+            return thread;
+         }
+      };
+   }
+
+   private Executor createDeleteExecutor() {
+      return new ThreadPoolExecutor(
+            0,
+            ASYNC_DELETES_POOL_SIZE,
+            60L,
+            TimeUnit.SECONDS,
+            new SynchronousQueue<Runnable>(),
+            createThreadFactory(),
+            new ThreadPoolExecutor.CallerRunsPolicy());
+   }
+
    private Directory buildDirectoryFromNode(int node) {
       EmbeddedCacheManager cm = cacheManagers.get(node);
-      return DirectoryBuilder
-         .newDirectoryInstance(cm.getCache("index_metadata"), cm.getCache("index_data"), cm.getCache("index_locks"), indexName)
-         .writeFileListAsynchronously(ASYNC_METADATA_WRITES)
-         .chunkSize(CHUNK_SIZE)
-         .create();
+      BuildContext context = DirectoryBuilder
+            .newDirectoryInstance(cm.getCache("index_metadata"), cm.getCache("index_data"), cm.getCache("index_locks"), indexName)
+            .writeFileListAsynchronously(ASYNC_METADATA_WRITES)
+            .chunkSize(CHUNK_SIZE);
+      if (ASYNC_DELETES) {
+         context.deleteOperationsExecutor(createDeleteExecutor());
+      }
+      return context.create();
    }
 
    @Test(enabled=false)//to prevent invocations from some versions of TestNG

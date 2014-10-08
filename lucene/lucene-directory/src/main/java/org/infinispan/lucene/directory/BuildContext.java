@@ -4,6 +4,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
 
+import java.util.concurrent.Executor;
+
 /**
  * Building context to set construction parameters of Infinispan Directory instances
  *
@@ -61,5 +63,13 @@ public interface BuildContext {
     * @experimental
     */
    BuildContext writeFileListAsynchronously(boolean writeFileListAsync);
+
+   /**
+    * Provides an Executor to handle delete operations in a background thread
+    *
+    * @param executor
+    * @return
+    */
+   BuildContext deleteOperationsExecutor(Executor executor);
 
 }
