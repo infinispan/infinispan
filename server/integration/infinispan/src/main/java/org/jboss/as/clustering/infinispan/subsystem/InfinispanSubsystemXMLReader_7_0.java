@@ -1746,6 +1746,7 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
 
         PathAddress address = PathAddress.pathAddress(cache.get(OP_ADDR)).append(ModelKeys.BACKUP, site);
         operation.get(OP_ADDR).set(address.toModelNode());
+        List<ModelNode> additionalOperations = new ArrayList<>(1);
 
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
@@ -1754,6 +1755,9 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
                     this.parseTakeOffline(reader, operation);
                     break;
                 }
+                case STATE_TRANSFER:
+                   this.parseXSiteStateTransfer(reader, operation, additionalOperations);
+                   break;
                 default: {
                     throw ParseUtils.unexpectedElement(reader);
                 }
@@ -1761,6 +1765,7 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
         }
 
         operations.add(operation);
+        operations.addAll(additionalOperations);
     }
 
     private void parseTakeOffline(XMLExtendedStreamReader reader, ModelNode operation) throws XMLStreamException {
@@ -1783,6 +1788,34 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
         }
         ParseUtils.requireNoContent(reader);
     }
+
+    private void parseXSiteStateTransfer(XMLExtendedStreamReader reader, ModelNode backup, List<ModelNode> operations) throws XMLStreamException {
+       PathAddress address = PathAddress.pathAddress(backup.get(OP_ADDR)).append(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME);
+       ModelNode operation = Util.createAddOperation(address);
+
+       for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case CHUNK_SIZE:
+                    BackupSiteStateTransferResource.STATE_TRANSFER_CHUNK_SIZE.parseAndSetParameter(value, operation, reader);
+                    break;
+                case TIMEOUT:
+                    BackupSiteStateTransferResource.STATE_TRANSFER_TIMEOUT.parseAndSetParameter(value, operation, reader);
+                    break;
+                case MAX_RETRIES:
+                    BackupSiteStateTransferResource.STATE_TRANSFER_MAX_RETRIES.parseAndSetParameter(value, operation, reader);
+                    break;
+                case WAIT_TIME:
+                    BackupSiteStateTransferResource.STATE_TRANSFER_WAIT_TIME.parseAndSetParameter(value, operation, reader);
+                    break;
+                default:
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+       }
+       ParseUtils.requireNoContent(reader);
+       operations.add(operation);
+   }
 
     private void parseCompatibility(XMLExtendedStreamReader reader, ModelNode cache, List<ModelNode> operations) throws XMLStreamException {
         PathAddress compatibilityAddress = PathAddress.pathAddress(cache.get(OP_ADDR)).append(ModelKeys.COMPATIBILITY, ModelKeys.COMPATIBILITY_NAME);

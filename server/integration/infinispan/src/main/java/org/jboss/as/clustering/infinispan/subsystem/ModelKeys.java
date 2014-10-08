@@ -125,6 +125,7 @@ public class ModelKeys {
     static final String MAX_CONNECTIONS_PER_HOST = "max-connections-per-host";
     static final String MAX_ENTRIES = "max-entries";
     static final String MAX_IDLE = "max-idle";
+    static final String MAX_RETRIES = "max-retries";
     static final String MAX_TOTAL_CONNECTIONS = "max-total-connections";
     static final String MIGRATOR_NAME = "migrator-name";
     static final String MODE = "mode";
@@ -196,6 +197,7 @@ public class ModelKeys {
     static final String TX_INTERNAL_ID = "internal-id";
     @Deprecated static final String VIRTUAL_NODES = "virtual-nodes";
     static final String WAIT = "wait";
+    static final String WAIT_TIME = "wait-time";
     static final String WRITE_BEHIND = "write-behind";
     static final String WRITE_BEHIND_NAME = "WRITE_BEHIND";
 }

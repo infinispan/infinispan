@@ -540,15 +540,29 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             for (Property property : cache.get(ModelKeys.BACKUP).asPropertyList()) {
                 String siteName = property.getName();
                 ModelNode site = property.getValue();
-                sitesBuilder
-                        .addBackup()
-                        .site(siteName)
+                BackupConfigurationBuilder backupConfigurationBuilder = sitesBuilder.addBackup();
+                backupConfigurationBuilder.site(siteName)
                         .backupFailurePolicy(BackupFailurePolicy.valueOf(BackupSiteResource.FAILURE_POLICY.resolveModelAttribute(context, site).asString()))
                         .strategy(BackupStrategy.valueOf(BackupSiteResource.STRATEGY.resolveModelAttribute(context, site).asString()))
                         .replicationTimeout(BackupSiteResource.REPLICATION_TIMEOUT.resolveModelAttribute(context, site).asLong());
                 if (BackupSiteResource.ENABLED.resolveModelAttribute(context, site).asBoolean()) {
                     sitesBuilder.addInUseBackupSite(siteName);
                 }
+                if (site.hasDefined(ModelKeys.TAKE_OFFLINE)) {
+                    ModelNode takeOfflineModel = site.get(ModelKeys.TAKE_OFFLINE);
+                    backupConfigurationBuilder.takeOffline()
+                          .afterFailures(BackupSiteResource.TAKE_OFFLINE_AFTER_FAILURES.resolveModelAttribute(context, takeOfflineModel).asInt())
+                          .minTimeToWait(BackupSiteResource.TAKE_OFFLINE_MIN_WAIT.resolveModelAttribute(context, takeOfflineModel).asLong());
+                }
+                if (site.hasDefined(ModelKeys.STATE_TRANSFER)) {
+                    ModelNode stateTransferModel = site.get(ModelKeys.STATE_TRANSFER);
+                    backupConfigurationBuilder.stateTransfer()
+                          .chunkSize(BackupSiteStateTransferResource.STATE_TRANSFER_CHUNK_SIZE.resolveModelAttribute(context, stateTransferModel).asInt())
+                          .timeout(BackupSiteStateTransferResource.STATE_TRANSFER_TIMEOUT.resolveModelAttribute(context, stateTransferModel).asLong())
+                          .maxRetries(BackupSiteStateTransferResource.STATE_TRANSFER_MAX_RETRIES.resolveModelAttribute(context, stateTransferModel).asInt())
+                          .waitTime(BackupSiteStateTransferResource.STATE_TRANSFER_WAIT_TIME.resolveModelAttribute(context, stateTransferModel).asLong());
+                }
+
             }
         }
     }
