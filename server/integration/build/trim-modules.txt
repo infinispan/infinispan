@@ -4,4 +4,6 @@ org/jboss/ws/**
 org/picketlink/**
 org/wildfly/extension/batch/**
 org/wildfly/jberet/**
+org/jboss/as/console/main/**
+org/jboss/as/domain-http-error-context/main/**
 

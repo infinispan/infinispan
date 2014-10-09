@@ -46,16 +46,31 @@
 
             <delete dir="${module.repo.output.dir}/${current.module.path}" quiet="true" />
 
-            <!-- Make the module output director -->
+            <!-- Make the module output directory -->
             <mkdir dir="${module.repo.output.dir}/${current.module.path}"/>
 
-            <!-- Copy the module.xml and other stuff to the output director -->
+            <!-- Copy the module.xml and other stuff to the output directory, skipping binaries -->
             <copy todir="${module.repo.output.dir}/${current.module.path}">
                 <filterset>
                     <filter token="project.version" value="${project.version}" />
                 </filterset>
                 <fileset dir="@{src}/${current.module.path}">
                     <include name="**"/>
+                    <exclude name="**/*.png"/>
+                    <exclude name="**/*.jpg"/>
+                    <exclude name="**/*.gif"/>
+                    <exclude name="**/*.pdf"/>
+                    <exclude name="**/*.ico"/>
+                </fileset>
+            </copy>
+            <!-- Copy the binaries binaries -->
+            <copy todir="${module.repo.output.dir}/${current.module.path}">
+                <fileset dir="@{src}/${current.module.path}">
+                    <include name="**/*.png"/>
+                    <include name="**/*.jpg"/>
+                    <include name="**/*.gif"/>
+                    <include name="**/*.pdf"/>
+                    <include name="**/*.ico"/>
                 </fileset>
             </copy>
 

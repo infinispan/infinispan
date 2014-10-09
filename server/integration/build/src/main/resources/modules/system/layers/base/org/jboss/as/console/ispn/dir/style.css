@@ -43,19 +43,19 @@ body {
     overflow: hidden;
     position: absolute;
     right: 0;
-    top: 58px;
+    top: 82px;
 }
 
 #header {
-	height: 58px;
+	height: 82px;
     left: 0;
     overflow: hidden;
     position: absolute;
     right: 0;
     top: 0;
-    min-height:58px;
+    min-height:82px;
     width:100%;
-    background: url("images/header_bg.png") repeat-x scroll 0 0 #424242;
+    background: url("images/banner.png") no-repeat scroll 0 0 #424242;
     color:#ffffff;
 }
 
@@ -71,8 +71,8 @@ body {
 }
 
 .section {
-	width:620px;
-	max-width:620px;
+	width:820px;
+	max-width:820px;
 	margin-left:auto;
     margin-right:auto;
 	padding-top:20px;
