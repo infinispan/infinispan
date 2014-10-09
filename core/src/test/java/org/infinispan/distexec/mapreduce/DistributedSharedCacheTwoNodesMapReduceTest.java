@@ -41,8 +41,8 @@ public class DistributedSharedCacheTwoNodesMapReduceTest extends BaseWordCountMa
             MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME, sharedCache);
       Cache<Object, Object> sharedTmpCache = cacheManager.getCache(sharedCache);
       int elementsInCache = sharedTmpCache.size();
-      assertEquals("Shared cache " + sharedCache + " is not empty. It has " + elementsInCache + " keys/values",
-            elementsInCache, 0);
+      assertEquals("Shared cache " + sharedCache + " is not empty. It has " + elementsInCache + " keys/values: " +
+                  sharedTmpCache.entrySet(), 0, elementsInCache);
       return task;
    }
 }
