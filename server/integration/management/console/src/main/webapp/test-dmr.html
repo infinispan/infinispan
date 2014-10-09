@@ -1,0 +1,26 @@
+<html>
+<head>
+<meta charset="utf-8"> 
+<script type="text/javascript" src="scripts/modelcontroller.js"></script>
+<script type="text/javascript" src="scripts/cluster.js"></script>
+<script type="text/javascript" src="scripts/node.js"></script>
+<script type="text/javascript" src="scripts/cache.js"></script>
+<script type="text/javascript">
+var dmrClient = new ModelControllerClient(window.location.protocol+"//"+window.location.hostname+":9990/management", "admin", "!qazxsw2");
+function executeDmr() {
+   var dmrIn = JSON.parse(document.getElementById("dmrIn").value);
+   dmrClient.execute(dmrIn, function callback(out) {
+      document.getElementById("dmrOut").value = JSON.stringify(out);
+   });
+}
+
+</script>
+</head>
+<body>
+    <form action="#">
+        <textarea id="dmrIn" rows="10" cols="80"></textarea>
+        <button onclick="executeDmr()">Execute</button>
+        <textarea id="dmrOut" rows="10" cols="80" readonly="readonly"></textarea>
+    </form>
+</body>
+</html>
