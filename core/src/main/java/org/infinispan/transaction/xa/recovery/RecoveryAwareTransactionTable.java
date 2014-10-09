@@ -41,7 +41,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
    /**
     * Marks the transaction as prepared. If at a further point the originator fails, the transaction is removed form the
     * "normal" transactions collection and moved into the cache that holds in-doubt transactions. See {@link
-    * #cleanupStaleTransactions(org.infinispan.topology.CacheTopology)}
+    * #cleanupLeaverTransactions(org.infinispan.topology.CacheTopology)}
     */
    @Override
    public void remoteTransactionPrepared(GlobalTransaction gtx) {
@@ -67,7 +67,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
     * @param cacheTopology
     */
    @Override
-   public void cleanupStaleTransactions(CacheTopology cacheTopology) {
+   public void cleanupLeaverTransactions(CacheTopology cacheTopology) {
       // We only care about transactions originated before this topology update
       if (getMinTopologyId() >= cacheTopology.getTopologyId())
          return;
@@ -84,7 +84,7 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
          }
       }
       //this cleans up the transactions that are not yet prepared
-      super.cleanupStaleTransactions(cacheTopology);
+      super.cleanupLeaverTransactions(cacheTopology);
    }
 
    @Override

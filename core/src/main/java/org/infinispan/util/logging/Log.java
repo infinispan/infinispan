@@ -1204,4 +1204,7 @@ public interface Log extends BasicLogger {
    @Message (value="Creating tmp cache %s timed out waiting for rebalancing to complete on node %s ", id=325)
    RuntimeException creatingTmpCacheTimedOut(String cacheName, Address address);
 
+   @LogMessage(level = WARN)
+   @Message(value = "Remote transaction %s timed out. Rolling back after %d ms", id = 326)
+   void remoteTransactionTimeout(GlobalTransaction gtx, long ageMilliSeconds);
 }
