@@ -43,7 +43,11 @@ public class RemoteQueryJONRegisterIT extends RemoteQueryIT {
       remoteCache = remoteCacheManager.getCache(cacheName);
 
       //initialize server-side serialization context via JON/RHQ
-      ModelNode resourceList = new ModelNode()
+      ModelNode nameList = new ModelNode()
+              .add("/infinispan/indexing.proto")
+              .add("/sample_bank_account/bank.proto")
+              .add("/google/protobuf/descriptor.proto");
+      ModelNode urlList = new ModelNode()
               .add(getClass().getResource("/infinispan/indexing.proto").toString())
               .add(getClass().getResource("/sample_bank_account/bank.proto").toString())
               .add(getClass().getResource("/google/protobuf/descriptor.proto").toString());
@@ -51,7 +55,7 @@ public class RemoteQueryJONRegisterIT extends RemoteQueryIT {
       ModelControllerClient client = ModelControllerClient.Factory.create(
             getServer().getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
 
-      ModelNode addProtobufFileOp = getOperation("clustered", "upload-proto-schemas", "proto-urls", resourceList);
+      ModelNode addProtobufFileOp = getOperation("clustered", "upload-proto-schemas", nameList, urlList);
 
       ModelNode result = client.execute(addProtobufFileOp);
       Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
@@ -67,12 +71,13 @@ public class RemoteQueryJONRegisterIT extends RemoteQueryIT {
                                                              InfinispanExtension.SUBSYSTEM_NAME)).append("cache-container", containerName);
    }
 
-   protected ModelNode getOperation(String containerName, String operationName, String argumentName, ModelNode arguments) {
+   protected ModelNode getOperation(String containerName, String operationName, ModelNode nameList, ModelNode urlList) {
       PathAddress cacheAddress = getCacheContainerAddress(containerName);
       ModelNode op = new ModelNode();
       op.get(OP).set(operationName);
       op.get(OP_ADDR).set(cacheAddress.toModelNode());
-      op.get(argumentName).set(arguments);
+      op.get("file-names").set(nameList);
+      op.get("file-urls").set(urlList);
       return op;
    }
 }

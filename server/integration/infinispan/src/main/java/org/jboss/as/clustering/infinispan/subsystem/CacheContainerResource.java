@@ -133,7 +133,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
             .build();
 
    static final ListAttributeDefinition PROTO_URLS =
-         new StringListAttributeDefinition.Builder("proto-urls")
+         new StringListAttributeDefinition.Builder("file-urls")
                .build();
 
    static final ListAttributeDefinition PROTO_NAMES =
@@ -145,7 +145,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                    .build();
 
    static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
-          .setParameters(PROTO_URLS)
+          .setParameters(PROTO_NAMES, PROTO_URLS)
           .build();
 
    static final OperationDefinition REGISTER_PROTO = new SimpleOperationDefinitionBuilder("register-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))

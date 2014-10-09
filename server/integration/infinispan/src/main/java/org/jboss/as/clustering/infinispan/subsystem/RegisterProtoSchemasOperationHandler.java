@@ -37,10 +37,10 @@ public class RegisterProtoSchemasOperationHandler implements OperationStepHandle
       ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
       if (protoManager != null) {
          try {
-            String nameParameter = CacheContainerResource.PROTO_NAMES.getName();
-            String contentParameter = CacheContainerResource.PROTO_CONTENTS.getName();
-            ModelNode names = operation.require(nameParameter);
-            ModelNode contents = operation.require(contentParameter);
+            String namesParameter = CacheContainerResource.PROTO_NAMES.getName();
+            String contentsParameter = CacheContainerResource.PROTO_CONTENTS.getName();
+            ModelNode names = operation.require(namesParameter);
+            ModelNode contents = operation.require(contentsParameter);
             validateParameters(names, contents);
             List<ModelNode> descriptorsNames = names.asList();
             List<ModelNode> descriptorsContents = contents.asList();

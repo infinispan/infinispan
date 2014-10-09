@@ -47,7 +47,10 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
 
     @Override
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-        ModelNode newValue = operation.require(CacheContainerResource.PROTO_URLS.getName());
+        final String namesParameter = CacheContainerResource.PROTO_NAMES.getName();
+        final String urlsParameter = CacheContainerResource.PROTO_URLS.getName();
+        final ModelNode names = operation.require(namesParameter);
+        final ModelNode urls = operation.require(urlsParameter);
 
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
         final String cacheContainerName = address.getElement(address.size() - 1).getValue();
@@ -58,13 +61,17 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
         ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
         if (protoManager != null) {
            try {
-              List<ModelNode> descriptorsNodes = newValue.asList();
-              String[] nameArray = new String[descriptorsNodes.size()];
-              String[] contentArray = new String[descriptorsNodes.size()];
+              List<ModelNode> descriptorsNames = names.asList();
+              List<ModelNode> descriptorsUrls = urls.asList();
+              if (descriptorsNames.size() != descriptorsUrls.size()) {
+                 throw MESSAGES.invalidParameterSizes(namesParameter, urlsParameter);
+              }
+              String[] nameArray = new String[descriptorsNames.size()];
+              String[] contentArray = new String[descriptorsUrls.size()];
               int i = 0;
-              for (ModelNode modelNode : descriptorsNodes) {
-                 String urlString = modelNode.asString();
-                 nameArray[i] = extractFile(urlString);
+              for (ModelNode modelNode : descriptorsNames) {
+                 nameArray[i] = modelNode.asString();
+                 String urlString = descriptorsUrls.get(i).asString();
                  contentArray[i] = Util.read(new URL(urlString).openStream());
                  i++;   
               }
@@ -75,8 +82,4 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
         }
         context.stepCompleted();
     }
-
-   private String extractFile(final String url) {
-      return url.replaceFirst(".*!/(.*)", "$1");
-   }
 }
