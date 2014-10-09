@@ -1,24 +1,3 @@
-<!--
-  ~ JBoss, Home of Professional Open Source.
-  ~ Copyright (c) 2011, Red Hat, Inc., and individual contributors
-  ~ as indicated by the @author tags. See the copyright.txt file in the
-  ~ distribution for a full listing of individual contributors.
-  ~
-  ~ This is free software; you can redistribute it and/or modify it
-  ~ under the terms of the GNU Lesser General Public License as
-  ~ published by the Free Software Foundation; either version 2.1 of
-  ~ the License, or (at your option) any later version.
-  ~
-  ~ This software is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  ~ Lesser General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Lesser General Public
-  ~ License along with this software; if not, write to the Free
-  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -26,25 +5,52 @@
 <!-- proper charset -->
 <meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <link rel="stylesheet" type="text/css" href="style.css">
-<link rel="shortcut icon" href="favicon.ico" />
+<link rel="shortcut icon" href="favicon.png" />
 </head>
 <body>
    <div id="container">
       <!-- header -->
-      <div id="header">
-         <!-- logo section -->
-         <table style="height: 100%; border: 0">
-            <tr style="vertical-align: bottom;">
-               <td style="padding-left: 15px;"><img src="images/prod_name.png" /></td>
-               <td class="prod-version">6</td>
-            </tr>
-         </table>
-      </div>
+      <div id="header"></div>
       <!-- main content -->
       <div id="content">
          <div class="section">
             <h1>Welcome to Infinispan Server</h1>
             <h3>Your Infinispan Server is running.</h3>
+            <p>However you have not yet added any users to be able to access the admin console.</p>
+      
+            <p>To add a new user execute the add-user.sh script within the bin folder of your Infinispan Server installation and enter the requested information.</p>
+         
+            <p>By default the realm name used by Infinispan Server is &quot;ManagementRealm&quot; this is already selected by default.</p>
+
+            <pre>
+$ ./bin/add-user.sh 
+
+What type of user do you wish to add? 
+ a) Management User (mgmt-users.properties) 
+ b) Application User (application-users.properties)
+(a): 
+
+Enter the details of the new user to add.
+Realm (ManagementRealm) : 
+Username : ispnadmin
+Password recommendations are listed below. To modify these restrictions edit the add-user.properties configuration file.
+ - The password should not be one of the following restricted values {root, admin, administrator}
+ - The password should contain at least 8 characters, 1 alphabetic character(s), 1 digit(s), 1 non-alphanumeric symbol(s)
+ - The password should be different from the username
+Password : 
+Re-enter Password : 
+What groups do you want this user to belong to? (Please enter a comma separated list, or leave blank for none)[  ]: 
+About to add user 'ispnadmin' for realm 'ManagementRealm'
+Is this correct yes/no? yes
+Added user 'ispnadmin' to file 'standalone/configuration/mgmt-users.properties'
+Added user 'ispnadmin' with groups  to file 'standalone/configuration/mgmt-groups.properties'
+Is this new user going to be used for one AS process to connect to another AS process? 
+e.g. for a slave host controller connecting to the master or for a Remoting connection for server to server EJB calls.
+yes/no? yes
+To represent the user add the following to the server-identities definition <secret value="UGFzc3dvcmQxIQ==" />
+            </pre>
+
+            <p>After you have added the user follow this link to <a href="/">Try Again</a>.</p>
          </div>
          <!-- footer -->
          <div id="footer">&nbsp;</div>
