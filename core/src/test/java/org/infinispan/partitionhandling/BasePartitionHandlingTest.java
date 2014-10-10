@@ -7,7 +7,7 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partionhandling.AvailabilityException;
-import org.infinispan.partionhandling.impl.AvailabilityMode;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;

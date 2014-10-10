@@ -85,12 +85,13 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
@@ -139,6 +140,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private RecoveryManager recoveryManager;
    private TransactionCoordinator txCoordinator;
    private AuthorizationManager authorizationManager;
+   private PartitionHandlingManager partitionHandlingManager;
    private GlobalConfiguration globalCfg;
    private boolean isClassLoaderInContext;
    private EntryRetriever<K, V> entryRetriever;
@@ -851,6 +853,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    )
    public String getCacheStatus() {
       return getStatus().toString();
+   }
+
+   @Override
+   public AvailabilityMode getAvailability() {
+      if (partitionHandlingManager != null) {
+         return partitionHandlingManager.getAvailabilityMode();
+      } else {
+         return AvailabilityMode.AVAILABLE;
+      }
+   }
+
+   @ManagedAttribute(
+         description = "Returns the cache availability",
+         displayName = "Cache availability",
+         dataType = DataType.TRAIT
+   )
+   public String getCacheAvailability() {
+      return getAvailability().toString();
    }
 
    @Override

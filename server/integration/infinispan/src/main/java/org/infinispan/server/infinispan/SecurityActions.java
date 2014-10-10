@@ -16,20 +16,33 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.Security;
+import org.infinispan.security.actions.GetCacheAvailabilityAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheInterceptorChainAction;
 import org.infinispan.security.actions.GetCacheLockManagerAction;
 import org.infinispan.security.actions.GetCacheManagerAddress;
+import org.infinispan.security.actions.GetCacheManagerClusterAvailabilityAction;
 import org.infinispan.security.actions.GetCacheManagerClusterNameAction;
 import org.infinispan.security.actions.GetCacheManagerCoordinatorAddress;
 import org.infinispan.security.actions.GetCacheManagerIsCoordinatorAction;
 import org.infinispan.security.actions.GetCacheManagerStatusAction;
 import org.infinispan.security.actions.GetCacheRpcManagerAction;
 import org.infinispan.security.actions.GetCacheStatusAction;
-import org.infinispan.server.infinispan.actions.*;
+import org.infinispan.server.infinispan.actions.ClearCacheAction;
+import org.infinispan.server.infinispan.actions.GetCacheVersionAction;
+import org.infinispan.server.infinispan.actions.GetCreatedCacheCountAction;
+import org.infinispan.server.infinispan.actions.GetDefinedCacheCountAction;
+import org.infinispan.server.infinispan.actions.GetDefinedCacheNamesAction;
+import org.infinispan.server.infinispan.actions.GetMembersAction;
+import org.infinispan.server.infinispan.actions.GetRunningCacheCountAction;
+import org.infinispan.server.infinispan.actions.ResetComponentJmxStatisticsAction;
+import org.infinispan.server.infinispan.actions.ResetInterceptorJmxStatisticsAction;
+import org.infinispan.server.infinispan.actions.StartCacheAction;
+import org.infinispan.server.infinispan.actions.StopCacheAction;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
 
@@ -174,6 +187,11 @@ public final class SecurityActions {
         return doPrivileged(action);
     }
 
+    public static String getCacheManagerClusterAvailability(DefaultEmbeddedCacheManager cacheManager) {
+        GetCacheManagerClusterAvailabilityAction action = new GetCacheManagerClusterAvailabilityAction(cacheManager);
+        return doPrivileged(action);
+    }
+
     public static String getDefinedCacheNames(DefaultEmbeddedCacheManager cacheManager) {
         GetDefinedCacheNamesAction action = new GetDefinedCacheNamesAction(cacheManager);
         return doPrivileged(action);
@@ -196,6 +214,11 @@ public final class SecurityActions {
 
     public static List<Address> getMembers(DefaultEmbeddedCacheManager cacheManager) {
         GetMembersAction action = new GetMembersAction(cacheManager);
+        return doPrivileged(action);
+    }
+
+    public static AvailabilityMode getCacheAvailability(AdvancedCache<?, ?> cache) {
+        GetCacheAvailabilityAction action = new GetCacheAvailabilityAction(cache);
         return doPrivileged(action);
     }
 

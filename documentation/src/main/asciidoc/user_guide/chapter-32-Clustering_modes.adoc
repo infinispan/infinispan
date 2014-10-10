@@ -848,3 +848,4 @@ dcc.clustering().partitionHandling().enabled(true);
 
 Note: there are plans to add JMX monitoring operations in order to forcefully migrate
 a cluster form degraded or unavailable state back to available, at the cost of consistency.
+

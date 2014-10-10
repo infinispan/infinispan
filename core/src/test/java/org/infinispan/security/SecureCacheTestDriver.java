@@ -13,7 +13,6 @@ import org.infinispan.context.Flag;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.Listener;
@@ -208,6 +207,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.NONE)
    public void testGetStatus(SecureCache<String, String> cache) {
       cache.getStatus();
+   }
+
+   @TestCachePermission(AuthorizationPermission.NONE)
+   public void testGetAvailability(SecureCache<String, String> cache) {
+      cache.getAvailability();
    }
 
    @TestCachePermission(AuthorizationPermission.READ)

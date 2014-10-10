@@ -3,7 +3,7 @@ package org.infinispan.topology;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.partionhandling.impl.AvailabilityMode;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.partionhandling.impl.AvailabilityStrategyContext;
 
 import java.io.IOException;

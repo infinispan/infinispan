@@ -15,6 +15,7 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
@@ -22,6 +23,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
+
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -144,6 +146,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public XAResource getXAResource() {
       return cache.getXAResource();
+   }
+
+   @Override
+   public AvailabilityMode getAvailability() {
+      return cache.getAvailability();
    }
 
    @Override
