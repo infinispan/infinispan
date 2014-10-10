@@ -11,6 +11,9 @@ import org.testng.annotations.Test;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import static org.infinispan.test.TestingUtil.getTransactionTable;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "tx.LocalModeTxTest")
 public class LocalModeTxTest extends SingleCacheManagerTest {
@@ -28,10 +31,10 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
       tm.begin();
       cache.put("key", "value");
       Transaction t = tm.suspend();
-      assert cache.isEmpty();
+      assertTrue(cache.isEmpty());
       tm.resume(t);
       tm.commit();
-      assert !cache.isEmpty();
+      assertFalse(cache.isEmpty());
    }
 
    public void testTxCommit3() throws Exception {
@@ -39,106 +42,106 @@ public class LocalModeTxTest extends SingleCacheManagerTest {
       tm.begin();
       cache.put("key", "value");
       tm.commit();
-      assert !cache.isEmpty();
+      assertFalse(cache.isEmpty());
    }
 
    public void testNonTx() throws Exception {
       cache.put("key", "value");
-      assert !cache.isEmpty();
+      assertFalse(cache.isEmpty());
    }
 
    public void testTxCommit2() throws Exception {
       TransactionManager tm = TestingUtil.getTransactionManager(cache);
       cache.put("key", "old");
       tm.begin();
-      assert cache.get("key").equals("old");
+      assertEquals("old", cache.get("key"));
       cache.put("key", "value");
-      assert cache.get("key").equals("value");
+      assertEquals("value", cache.get("key"));
       Transaction t = tm.suspend();
-      assert cache.get("key").equals("old");
+      assertEquals("old", cache.get("key"));
       tm.resume(t);
       tm.commit();
-      assert cache.get("key").equals("value");
-      assert !cache.isEmpty();
+      assertEquals("value", cache.get("key"));
+      assertFalse(cache.isEmpty());
    }
 
    public void testKeySet() throws Exception {
       tm().begin();
       cache.put("k1", "v1");
       cache.put("k2", "v2");
-      assert cache.keySet().size() == 2;
-      assert cache.values().size() == 2;
+      assertEquals(2, cache.keySet().size());
+      assertEquals(2, cache.values().size());
       tm().commit();
-      assert cache.keySet().size() == 2;
-      assert cache.values().size() == 2;
+      assertEquals(2, cache.keySet().size());
+      assertEquals(2, cache.values().size());
    }
 
    public void testKeySet2() throws Exception {
       cache.put("k1", "v1");
       cache.put("k2", "v2");
-      assert cache.keySet().size() == 2;
-      assert cache.values().size() == 2;
+      assertEquals(2, cache.keySet().size());
+      assertEquals(2, cache.values().size());
       tm().begin();
-      assert cache.keySet().size() == 2;
-      assert cache.values().size() == 2;
+      assertEquals(2, cache.keySet().size());
+      assertEquals(2, cache.values().size());
       cache.remove("k1");
-      assert cache.keySet().size() == 1;
-      assert cache.values().size() == 1;
+      assertEquals(1, cache.keySet().size());
+      assertEquals(1, cache.values().size());
       tm().rollback();
-      assert cache.keySet().size() == 2;
-      assert cache.values().size() == 2;
+      assertEquals(2, cache.keySet().size());
+      assertEquals(2, cache.values().size());
    }
 
    public void testKeySetAlterValue() throws Exception {
       cache.put("k1", "v1");
       cache.put("k2", "v2");
-      assert cache.keySet().size() == 2;
-      assert cache.values().size() == 2;
+      assertEquals(2, cache.keySet().size());
+      assertEquals(2, cache.values().size());
       tm().begin();
-      assert cache.keySet().size() == 2;
-      assert cache.values().size() == 2;
+      assertEquals(2, cache.keySet().size());
+      assertEquals(2, cache.values().size());
       cache.put("k1", "v3");
-      assert cache.keySet().size() == 2;
-      assert cache.values().size() == 2;
+      assertEquals(2, cache.keySet().size());
+      assertEquals(2, cache.values().size());
       assert cache.values().contains("v3");
       tm().rollback();
-      assert cache.keySet().size() == 2;
-      assert cache.values().size() == 2;
+      assertEquals(2, cache.keySet().size());
+      assertEquals(2, cache.values().size());
    }
 
    public void testTxCleanupWithKeySet() throws Exception {
       tm().begin();
-      assert cache.keySet().size() == 0;
+      assertEquals(0, cache.keySet().size());
       TransactionTable txTable = getTransactionTable(cache);
-      assert txTable.getLocalTransactions().size() == 1;
+      assertEquals(1, txTable.getLocalTransactions().size());
       tm().commit();
-      assert txTable.getLocalTransactions().size() == 0;
+      assertEquals(0, txTable.getLocalTransactions().size());
    }
 
    public void testTxCleanupWithEntrySet() throws Exception {
       tm().begin();
-      assert cache.entrySet().size() == 0;
+      assertEquals(0, cache.entrySet().size());
       TransactionTable txTable = getTransactionTable(cache);
-      assert txTable.getLocalTransactions().size() == 1;
+      assertEquals(1, txTable.getLocalTransactions().size());
       tm().commit();
-      assert txTable.getLocalTransactions().size() == 0;
+      assertEquals(0, txTable.getLocalTransactions().size());
    }
 
    public void testTxCleanupWithValues() throws Exception {
       tm().begin();
-      assert cache.values().size() == 0;
+      assertEquals(0, cache.values().size());
       TransactionTable txTable = getTransactionTable(cache);
-      assert txTable.getLocalTransactions().size() == 1;
+      assertEquals(1, txTable.getLocalTransactions().size());
       tm().commit();
-      assert txTable.getLocalTransactions().size() == 0;
+      assertEquals(0, txTable.getLocalTransactions().size());
    }
 
    public void testTxCleanupWithSize() throws Exception {
       tm().begin();
-      assert cache.size() == 0;
+      assertEquals(0, cache.size());
       TransactionTable txTable = getTransactionTable(cache);
-      assert txTable.getLocalTransactions().size() == 1;
+      assertEquals(1, txTable.getLocalTransactions().size());
       tm().commit();
-      assert txTable.getLocalTransactions().size() == 0;
+      assertEquals(0, txTable.getLocalTransactions().size());
    }
 }
