@@ -10,7 +10,7 @@ import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partionhandling.AvailabilityException;
-import org.infinispan.partionhandling.impl.AvailabilityMode;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.support.SingletonCacheWriter;
 import org.infinispan.remoting.RemoteException;

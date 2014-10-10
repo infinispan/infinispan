@@ -138,6 +138,7 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(MetricKeys.AVERAGE_WRITE_TIME, "cache");
         sharedAttributeResolver.put(MetricKeys.CACHE_NAME, "cache");
         sharedAttributeResolver.put(MetricKeys.CACHE_STATUS, "cache");
+        sharedAttributeResolver.put(MetricKeys.CACHE_AVAILABILITY, "cache");
         sharedAttributeResolver.put(MetricKeys.COMMITS, "cache");
         sharedAttributeResolver.put(MetricKeys.CONCURRENCY_LEVEL, "cache");
         sharedAttributeResolver.put(MetricKeys.EVICTIONS, "cache");

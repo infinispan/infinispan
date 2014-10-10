@@ -5,7 +5,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.partionhandling.impl.AvailabilityMode;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -20,6 +20,7 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;

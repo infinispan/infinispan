@@ -34,6 +34,7 @@ public class MetricKeys {
     public static final String IS_COORDINATOR = "is-coordinator";
     public static final String COORDINATOR_ADDRESS = "coordinator-address";
     public static final String LOCAL_ADDRESS = "local-address";
+    public static final String CLUSTER_AVAILABILITY = "cluster-availability";
     public static final String CLUSTER_NAME = "cluster-name";
     public static final String DEFINED_CACHE_COUNT = "defined-cache-count";
     public static final String DEFINED_CACHE_NAMES = "defined-cache-names";
@@ -44,6 +45,7 @@ public class MetricKeys {
     // cache
     public static final String CACHE_STATUS = "cache-status";
     public static final String CACHE_NAME = "cache-name";
+    public static final String CACHE_AVAILABILITY = "cache-availability";
     // LockManager
     public static final String NUMBER_OF_LOCKS_AVAILABLE = "number-of-locks-available";
     public static final String NUMBER_OF_LOCKS_HELD = "number-of-locks-held";

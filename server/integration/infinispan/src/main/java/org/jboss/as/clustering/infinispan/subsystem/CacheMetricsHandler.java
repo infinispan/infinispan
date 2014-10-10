@@ -47,6 +47,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         CACHE_STATUS(MetricKeys.CACHE_STATUS, ModelType.STRING, true),
         VERSION(MetricKeys.VERSION, ModelType.STRING, true),
         CACHE_NAME(MetricKeys.CACHE_NAME, ModelType.STRING, true),
+        CACHE_AVAILABILITY(MetricKeys.CACHE_AVAILABILITY, ModelType.STRING, true),
         // LockManager
         NUMBER_OF_LOCKS_AVAILABLE(MetricKeys.NUMBER_OF_LOCKS_AVAILABLE, ModelType.INT, true),
         NUMBER_OF_LOCKS_HELD(MetricKeys.NUMBER_OF_LOCKS_HELD, ModelType.INT, true),
@@ -152,6 +153,9 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             ComponentRegistry registry = SecurityActions.getComponentRegistry(aCache);
             ComponentStatus status = SecurityActions.getCacheStatus(aCache);
             switch (metric) {
+                case CACHE_AVAILABILITY:
+                    result.set(SecurityActions.getCacheAvailability(aCache).toString());
+                    break;
                 case CACHE_STATUS:
                     result.set(status.toString());
                     break;

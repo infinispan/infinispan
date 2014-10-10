@@ -168,7 +168,7 @@ public class CacheAuthorizationTest extends SingleCacheManagerTest {
          } catch (NoSuchMethodException e) {
             throw new Exception(
                   String.format(
-                        "Class %s needs to declare a method with the following signature: void %s(SecureCache<String, String> cache) {}\n",
+                        "Class %s needs to declare a method with the following signature: public void %s(SecureCache<String, String> cache) {}\n",
                         driver.getClass().getName(), methodName), e);
          }
       }

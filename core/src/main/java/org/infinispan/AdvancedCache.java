@@ -15,6 +15,8 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
@@ -439,4 +441,11 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param groupName the group name.
     */
    void removeGroup(String groupName);
+
+   /**
+    * Returns the cache's availability. In local mode this method will alway return {@link AvailabilityMode#AVAILABLE}. In
+    * clustered mode, the {@link PartitionHandlingManager} is queried to obtain the availability mode.
+    */
+   AvailabilityMode getAvailability();
+
 }

@@ -28,6 +28,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
     public enum CacheManagerMetrics {
         CACHE_MANAGER_STATUS(MetricKeys.CACHE_MANAGER_STATUS, ModelType.STRING, true),
         CLUSTER_NAME(MetricKeys.CLUSTER_NAME, ModelType.STRING, true, true),
+        CLUSTER_AVAILABILITY(MetricKeys.CLUSTER_AVAILABILITY, ModelType.STRING, true, true),
         IS_COORDINATOR(MetricKeys.IS_COORDINATOR, ModelType.BOOLEAN, true, true),
         COORDINATOR_ADDRESS(MetricKeys.COORDINATOR_ADDRESS, ModelType.STRING, true, true),
         LOCAL_ADDRESS(MetricKeys.LOCAL_ADDRESS, ModelType.STRING, true, true),
@@ -112,6 +113,9 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                 case COORDINATOR_ADDRESS:
                     Address coordinatorAddress = SecurityActions.getCacheManagerCoordinatorAddress(cacheManager);
                     result.set(coordinatorAddress != null ? coordinatorAddress.toString() : "N/A");
+                    break;
+                case CLUSTER_AVAILABILITY:
+                    result.set(SecurityActions.getCacheManagerClusterAvailability(cacheManager));
                     break;
                 case CLUSTER_NAME:
                     String clusterName = SecurityActions.getCacheManagerClusterName(cacheManager);
