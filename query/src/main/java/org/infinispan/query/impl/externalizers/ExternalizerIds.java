@@ -36,4 +36,7 @@ public interface ExternalizerIds {
    Integer FILTER_RESULT = 1611;
 
    Integer LUCENE_QUERY_MATCH_ALL = 1612;
+
+   Integer INDEX_WORKER = 1613;
+
 }
