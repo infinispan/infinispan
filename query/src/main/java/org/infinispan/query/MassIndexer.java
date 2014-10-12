@@ -1,6 +1,7 @@
 package org.infinispan.query;
 
 import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 
 /**
@@ -17,6 +18,11 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 @MBean(objectName = "MassIndexer",
       description = "Component that rebuilds the index from the cached data")
 public interface MassIndexer {
+
+   @ManagedAttribute(displayName = "flushPerNode enabled", description = "Flush indexes per node instead of once only", writable = true)
+   boolean isFlushPerNodeEnabled();
+
+   void setFlushPerNodeEnabled(boolean enabled);
 
    //TODO Add more parameters here, like timeout when it will be implemented
    //(see ISPN-1313, and ISPN-1042 for task cancellation)

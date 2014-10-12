@@ -6,8 +6,6 @@ import org.hibernate.search.spi.SearchFactoryIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.query.MassIndexer;
-import org.infinispan.query.backend.QueryInterceptor;
-import org.infinispan.query.impl.ComponentRegistryUtils;
 
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
@@ -16,6 +14,7 @@ public class MapReduceMassIndexer implements MassIndexer {
 
    private final AdvancedCache<Object, Object> cache;
    private final SearchFactoryIntegrator searchFactory;
+   private boolean flushPerNodeEnabled = false;  
 
    public MapReduceMassIndexer(AdvancedCache cache, SearchFactoryIntegrator searchFactory) {
       this.cache = cache;
@@ -26,20 +25,36 @@ public class MapReduceMassIndexer implements MassIndexer {
    public void start() {
       wipeExistingIndexes();
       new MapReduceTask<Object, Object, Object, LuceneWork>(cache)
-            .mappedWith(new IndexingMapper())
+            .mappedWith(new IndexingMapper(flushPerNodeEnabled))
             .reducedWith(new IndexingReducer())
             .execute();
       flush();
    }
 
+
+   @Override
+   public boolean isFlushPerNodeEnabled() {
+      return flushPerNodeEnabled;
+   }
+
+   @Override
+   public void setFlushPerNodeEnabled(boolean enabled) {
+      this.flushPerNodeEnabled = enabled;
+   }
+
    private void wipeExistingIndexes() {
-      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
-      queryInterceptor.purgeAllIndexes();
+      if (flushPerNodeEnabled) {
+         new PerNodeIndexPurger(cache).purge();
+      } else {
+         new SingleNodeIndexPurger(cache).purge();
+      }
    }
 
    private void flush() {
-      DefaultMassIndexerProgressMonitor progressMonitor = new DefaultMassIndexerProgressMonitor(cache.getAdvancedCache().getComponentRegistry().getTimeService());
-      new DefaultBatchBackend(searchFactory, progressMonitor).flush(searchFactory.getIndexedTypes());
+      if (!flushPerNodeEnabled) {
+         DefaultMassIndexerProgressMonitor progressMonitor = new DefaultMassIndexerProgressMonitor(cache.getAdvancedCache().getComponentRegistry().getTimeService());
+         new DefaultBatchBackend(searchFactory, progressMonitor).flush(searchFactory.getIndexedTypes());
+      }
    }
 
 }

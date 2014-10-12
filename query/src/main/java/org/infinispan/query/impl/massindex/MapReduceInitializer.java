@@ -7,7 +7,7 @@ import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle;
 
 /**
  * Initializes the custom Map Reduce tasks we use to rebuild indexes
- *  
+ * 
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
  */
 public class MapReduceInitializer implements MapReduceTaskLifecycle {
@@ -22,7 +22,10 @@ public class MapReduceInitializer implements MapReduceTaskLifecycle {
 
    @Override
    public <KIn, VIn, KOut, VOut> void onPostExecute(Mapper<KIn, VIn, KOut, VOut> mapper) {
-      //nothing to do
+      if (mapper instanceof IndexingMapper) {
+         IndexingMapper im = (IndexingMapper) mapper;
+         im.flush();
+      }
    }
 
    @Override

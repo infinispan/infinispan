@@ -16,8 +16,9 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.junit.Assert;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
@@ -35,10 +36,14 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       "LuceneIndexesLocking",
    };
 
+   protected String getConfigurationFile() {
+      return "dynamic-indexing-distribution.xml";
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; i++) {
-         EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml("dynamic-indexing-distribution.xml");
+         EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml(getConfigurationFile());
          registerCacheManager(cacheManager);
          Cache cache = cacheManager.getCache();
          caches.add(cache);
@@ -88,6 +93,6 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       QueryBuilder carQueryBuilder = searchManager.buildQueryBuilderForClass(Car.class).get();
       Query fullTextQuery = carQueryBuilder.keyword().onField("make").matching(carMake).createQuery();
       CacheQuery cacheQuery = searchManager.getQuery(fullTextQuery, Car.class);
-      Assert.assertEquals(expectedCount, cacheQuery.getResultSize());
+      assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 }
