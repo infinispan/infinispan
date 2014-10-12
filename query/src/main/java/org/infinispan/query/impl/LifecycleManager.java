@@ -55,7 +55,8 @@ import org.infinispan.query.impl.externalizers.LuceneTermExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTermQueryExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTopDocsExternalizer;
 import org.infinispan.query.impl.externalizers.LuceneTopFieldDocsExternalizer;
-import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
+import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
+import org.infinispan.query.impl.massindex.IndexWorker;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.transaction.LockingMode;
@@ -224,7 +225,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
             .toManageableComponentMetadata();
       try {
          // TODO: MassIndexer should be some kind of query cache component?
-         MapReduceMassIndexer maxIndexer = new MapReduceMassIndexer(cache, sf);
+         DistributedExecutorMassIndexer maxIndexer = new DistributedExecutorMassIndexer(cache, sf);
          ResourceDMBean mbean = new ResourceDMBean(maxIndexer, massIndexerCompMetadata);
          ObjectName massIndexerObjName = new ObjectName(jmxDomain + ":"
                + queryGroupName + ",component=" + massIndexerCompMetadata.getJmxObjectName());
@@ -343,6 +344,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
       externalizerMap.put(ExternalizerIds.LUCENE_SCORE_DOC, new LuceneScoreDocExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_TOPFIELDDOCS, new LuceneTopFieldDocsExternalizer());
       externalizerMap.put(ExternalizerIds.LUCENE_QUERY_MATCH_ALL, new LuceneMatchAllQueryExternalizer());
+      externalizerMap.put(ExternalizerIds.INDEX_WORKER, new IndexWorker.Externalizer());
    }
 
 }

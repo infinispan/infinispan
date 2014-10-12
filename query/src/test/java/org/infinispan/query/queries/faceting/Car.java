@@ -12,15 +12,15 @@ import org.hibernate.search.bridge.builtin.IntegerBridge;
 /**
  * @author Hardy Ferentschik
  */
-@Indexed
+@Indexed(index = "car")
 public class Car implements Serializable {
 
-   @Field(analyze=Analyze.NO)
+   @Field(analyze = Analyze.NO)
    private String color;
 
    @Field(store = Store.YES)
    private String make;
-
+   
    @Field(analyze = Analyze.NO, bridge = @FieldBridge(impl = IntegerBridge.class))
    private int cubicCapacity;
 
@@ -30,26 +30,12 @@ public class Car implements Serializable {
       this.make = make;
    }
 
-   public String getColor() {
-      return color;
-   }
-
-   public int getCubicCapacity() {
-      return cubicCapacity;
-   }
-
    public String getMake() {
       return make;
    }
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      sb.append("Car");
-      sb.append("{color='").append(color).append('\'');
-      sb.append(", make='").append(make).append('\'');
-      sb.append(", cubicCapacity=").append(cubicCapacity);
-      sb.append('}');
-      return sb.toString();
+      return "Car" + "{color='" + color + '\'' + ", make='" + make + '\'' + ", cubicCapacity=" + cubicCapacity + '}';
    }
 }

@@ -83,4 +83,15 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "%1$d documents indexed in %2$d ms", id = 14015)
    void indexingDocumentsCompleted(long doneCount, long elapsedMs);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Purging instances of '%s' from the index", id = 14016)
+   void purgingIndex(String entityType);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Flushing index '%s'", id = 14017)
+   void flushingIndex(String entityType);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Error executing MassIndexer", id = 14018)
+   void errorExecutingMassIndexer(@Cause Throwable cause);
 }

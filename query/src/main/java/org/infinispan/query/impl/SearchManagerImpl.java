@@ -20,7 +20,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.LuceneQuery;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
-import org.infinispan.query.impl.massindex.MapReduceMassIndexer;
+import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.spi.SearchManagerImplementor;
 
 /**
@@ -121,7 +121,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
    @Override
    public MassIndexer getMassIndexer() {
       // TODO: Should a new instance be created every time?
-      return new MapReduceMassIndexer(cache, searchFactory);
+      return new DistributedExecutorMassIndexer(cache, searchFactory);
    }
 
    @Override

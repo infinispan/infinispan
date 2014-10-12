@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:7.1 http://www.infinispan.org/schemas/infinispan-config-7.1.xsd" xmlns="urn:infinispan:config:7.1">
+   <cache-container default-cache="default">
+      <transport cluster="Infinispan-Query-Cluster" />
+      <distributed-cache name="default" mode="SYNC">
+         <indexing index="LOCAL">
+               <property name="default.directory_provider">infinispan</property>
+               <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
+         </indexing>
+      </distributed-cache>
+      <local-cache name="LuceneIndexesMetadata" />
+      <local-cache name="LuceneIndexesData" />
+      <local-cache name="LuceneIndexesLocking" />
+   </cache-container>
+</infinispan>

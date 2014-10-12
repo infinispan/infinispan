@@ -16,8 +16,9 @@ import org.infinispan.query.helper.StaticTestingErrorHandler;
 import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.junit.Assert;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
@@ -25,8 +26,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "query.distributed.DistributedMassIndexingTest")
 public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
 
-   protected static final int NUM_NODES = 4;
-   protected List<Cache> caches = new ArrayList<Cache>(NUM_NODES);
+   protected static final int NUM_NODES = 3;
+   protected List<Cache> caches = new ArrayList<>(NUM_NODES);
 
    protected static final String[] neededCacheNames = new String[] {
       BasicCacheContainer.DEFAULT_CACHE_NAME,
@@ -35,10 +36,14 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       "LuceneIndexesLocking",
    };
 
+   protected String getConfigurationFile() {
+      return "dynamic-indexing-distribution.xml";
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       for (int i = 0; i < NUM_NODES; i++) {
-         EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml("dynamic-indexing-distribution.xml");
+         EmbeddedCacheManager cacheManager = TestCacheManagerFactory.fromXml(getConfigurationFile());
          registerCacheManager(cacheManager);
          Cache cache = cacheManager.getCache();
          caches.add(cache);
@@ -58,7 +63,7 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       rebuildIndexes();
       verifyFindsCar(3, "megane");
       //verify we cleanup old stale index values:
-      caches.get(3).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("F2NUM"));
+      caches.get(2).getAdvancedCache().withFlags(Flag.SKIP_INDEXING).remove(key("F2NUM"));
       verifyFindsCar(3, "megane");
       //re-sync
       rebuildIndexes();
@@ -88,6 +93,6 @@ public class DistributedMassIndexingTest extends MultipleCacheManagersTest {
       QueryBuilder carQueryBuilder = searchManager.buildQueryBuilderForClass(Car.class).get();
       Query fullTextQuery = carQueryBuilder.keyword().onField("make").matching(carMake).createQuery();
       CacheQuery cacheQuery = searchManager.getQuery(fullTextQuery, Car.class);
-      Assert.assertEquals(expectedCount, cacheQuery.getResultSize());
+      assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 }
