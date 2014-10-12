@@ -1,42 +1,30 @@
 package org.infinispan.query.distributed;
 
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.Query;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
-import org.infinispan.query.queries.faceting.Car;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryParser;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests verifying that the Mass Indexing works for Clustered queries as well.
- *
- * @TODO enable the test when ISPN-2661 is fixed.
  */
 @Test(groups = "functional", testName = "query.distributed.ClusteredQueryMassIndexingTest")
 public class ClusteredQueryMassIndexingTest extends DistributedMassIndexingTest {
 
+   @Override
+   protected String getConfigurationFile() {
+      return "unshared-indexing-distribution.xml";
+   }
+
    protected void verifyFindsCar(Cache cache, int expectedCount, String carMake) {
-      QueryParser queryParser = createQueryParser("make");
+      CacheQuery cacheQuery = Search.getSearchManager(cache)
+            .getClusteredQuery(new TermQuery(new Term("make", carMake)));
 
-      try {
-         Query luceneQuery = queryParser.parse(carMake);
-         CacheQuery cacheQuery = Search.getSearchManager(cache).getClusteredQuery(luceneQuery, Car.class);
-
-         Assert.assertEquals(expectedCount, cacheQuery.getResultSize());
-      } catch(ParseException ex) {
-         ex.printStackTrace();
-         Assert.fail("Failed due to: " + ex.getMessage());
-      }
+      assertEquals(expectedCount, cacheQuery.getResultSize());
    }
 
-   //@TODO remove when ISPN-2661 is fixed.
-   @Test(groups = "unstable")
-   public void testReindexing() throws Exception {
-      super.testReindexing();
-   }
 }
