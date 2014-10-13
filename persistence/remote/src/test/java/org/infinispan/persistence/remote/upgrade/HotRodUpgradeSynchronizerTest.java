@@ -75,7 +75,7 @@ public class HotRodUpgradeSynchronizerTest extends AbstractInfinispanTest {
       RollingUpgradeManager targetUpgradeManager = targetServerCache.getAdvancedCache().getComponentRegistry().getComponent(RollingUpgradeManager.class);
       targetUpgradeManager.synchronizeData("hotrod");
       // The server contains one extra key: MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS
-      assertEquals(sourceServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size() - 1, targetServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).size());
+      assertEquals(sourceServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size() - 1, targetServerCache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).size());
 
       targetUpgradeManager.disconnectSource("hotrod");
    }

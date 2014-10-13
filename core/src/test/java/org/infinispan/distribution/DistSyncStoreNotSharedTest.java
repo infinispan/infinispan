@@ -65,8 +65,8 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
       assertEquals(value, ownerLoader.load(key).getValue());
       owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
       assertEquals(value, ownerLoader.load(key).getValue());
-      assertNull(owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key));
-      assertNull(nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get(key));
+      assertNull(owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get(key));
+      assertNull(nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get(key));
       assertEquals(value, nonOwner.get(key));
       // need to do the get() on all the owners first to load the values, otherwise assertOwnershipAndNonOwnership might fail
       assertOnAllCaches(key, value);
@@ -82,7 +82,7 @@ public class DistSyncStoreNotSharedTest extends BaseDistStoreTest<Object, String
 
       owner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).clear();
 
-      Future<String> async = nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).getAsync(key);
+      Future<String> async = nonOwner.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).getAsync(key);
       assertNotNull(async);
       assertNull(async.get());
 

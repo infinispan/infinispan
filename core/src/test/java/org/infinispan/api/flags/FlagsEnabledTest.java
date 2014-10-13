@@ -1,6 +1,7 @@
 package org.infinispan.api.flags;
 
 import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
 import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
 import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
@@ -85,7 +86,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
       assertNumberOfLoads(cache1, cache1Loads);
       assertNumberOfLoads(cache2, 1); //not incremented since ISPN-1642
 
-      final AdvancedCache<String, String> cache1SkipRemoteAndStores = cache1LocalOnly.withFlags(SKIP_CACHE_STORE);
+      final AdvancedCache<String, String> cache1SkipRemoteAndStores = cache1LocalOnly.withFlags(SKIP_CACHE_LOAD);
       cache1SkipRemoteAndStores.put("again", "value");
       assertNumberOfLoads(cache1, cache1Loads);
       assertNumberOfLoads(cache2, 1);
@@ -97,7 +98,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
       assertCacheValue(cache2, "again", null);
       assertNumberOfLoads(cache2, 3);
-      assertCacheValue(cache2.withFlags(SKIP_CACHE_STORE), "again", null);
+      assertCacheValue(cache2.withFlags(SKIP_CACHE_LOAD), "again", null);
       assertNumberOfLoads(cache2, 3);
 
       assertNumberOfLoads(cache1, cache1Loads);

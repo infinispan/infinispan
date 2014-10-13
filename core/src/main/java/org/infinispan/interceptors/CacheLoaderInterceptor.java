@@ -268,7 +268,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    protected final boolean hasSkipLoadFlag(LocalFlagAffectedCommand cmd) {
-      return cmd.hasFlag(Flag.SKIP_CACHE_LOAD) || cmd.hasFlag(Flag.SKIP_CACHE_STORE);
+      return cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
    }
 
    protected final boolean hasIgnoreReturnValueFlag(LocalFlagAffectedCommand cmd) {
