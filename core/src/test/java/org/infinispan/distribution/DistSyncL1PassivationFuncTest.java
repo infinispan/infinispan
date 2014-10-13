@@ -2,6 +2,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -58,7 +59,7 @@ public class DistSyncL1PassivationFuncTest extends BaseDistFunctionalTest {
       Cache<MagicKey, Object> ownerCache = cache(0, cacheName);
       Cache<MagicKey, Object> nonOwnerCache = cache(1, cacheName);
 
-      // Need to put 4+ magic keys to make sure we fill up the L1 on the local node
+      // Need to put 2+ magic keys to make sure we fill up the L1 on the local node
       for (int i = 0; i < insertCount; ++i) {
 
          // If the put worked then keep the key otherwise we need to generate a new one
@@ -72,7 +73,7 @@ public class DistSyncL1PassivationFuncTest extends BaseDistFunctionalTest {
       assertTrue(ownerCacheStore.size() >= minPassivated);
       assertTrue(MAX_ENTRIES >= ownerCache.getAdvancedCache().getDataContainer().size());
 
-      assertEquals(0, nonOwnerCache.size());
+      assertEquals(0, nonOwnerCache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
       assertEquals(0, nonOwnerCacheStore.size());
 
       // Now load those keys in our non owner cache which should store them in L1

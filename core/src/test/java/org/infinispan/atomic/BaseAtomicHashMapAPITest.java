@@ -3,6 +3,7 @@ package org.infinispan.atomic;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.context.Flag;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -632,7 +633,12 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
    }
 
    private void assertSize(Map<?, ?> map, int expectedSize) {
-      final int size = map.size();
+      final int size;
+      if (map instanceof Cache) {
+         size = ((Cache)map).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size();
+      } else {
+         size = map.size();
+      }
       assertEquals("Wrong size in map '" + map + "'.", expectedSize, size);
       if (size == 0) {
          assertEmpty(map);

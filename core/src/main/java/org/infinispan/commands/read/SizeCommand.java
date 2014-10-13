@@ -1,12 +1,17 @@
 package org.infinispan.commands.read;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
-import org.infinispan.container.DataContainer;
+import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.filter.AcceptAllKeyValueFilter;
+import org.infinispan.filter.NullValueConverter;
 
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -18,11 +23,11 @@ import java.util.Set;
  * @since 4.0
  */
 public class SizeCommand extends AbstractLocalCommand implements VisitableCommand {
-   private final DataContainer container;
+   private final Cache<Object, ?> cache;
 
-   public SizeCommand(DataContainer container, Set<Flag> flags) {
+   public SizeCommand(Cache<Object, ?> cache, Set<Flag> flags) {
       setFlags(flags);
-      this.container = container;
+      this.cache = cache;
    }
 
    @Override
@@ -32,28 +37,38 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
 
    @Override
    public Integer perform(InvocationContext ctx) throws Throwable {
-      if (ctx.getLookedUpEntries().isEmpty()) {
-         return container.size();
-      }
-
-      int size = container.size();
-      for (CacheEntry e: ctx.getLookedUpEntries().values()) {
-         if (container.containsKey(e.getKey())) {
-            if (e.isRemoved()) {
-               size --;
+      int size = 0;
+      Map<Object, CacheEntry> contextEntries = ctx.getLookedUpEntries();
+      // Keeps track of keys that were found in the context, which means to not count them later
+      Set<Object> keys = new HashSet<>();
+      try (CloseableIterable<CacheEntry<Object, Void>> iterator = cache.getAdvancedCache().withFlags(
+            flags != null ? flags.toArray(new Flag[flags.size()]) : null).filterEntries(AcceptAllKeyValueFilter.getInstance()).converter(
+            NullValueConverter.getInstance())) {
+         for (CacheEntry<Object, Void> entry : iterator) {
+            CacheEntry value = contextEntries.get(entry.getKey());
+            if (value != null) {
+               keys.add(entry.getKey());
+               if (!value.isRemoved()) {
+                  size++;
+               }
+            } else {
+               size++;
             }
-         } else if (!e.isRemoved()) {
-            size ++;
          }
       }
 
-      return Math.max(size, 0);
+      // We can only add context entries if we didn't see it in iterator and it isn't removed
+      for (Map.Entry<Object, CacheEntry> entry : contextEntries.entrySet()) {
+         if (!keys.contains(entry.getKey()) && !entry.getValue().isRemoved()) {
+            size++;
+         }
+      }
+
+      return size;
    }
 
    @Override
    public String toString() {
-      return "SizeCommand{" +
-            "containerSize=" + container.size() +
-            '}';
+      return "SizeCommand{}";
    }
 }
