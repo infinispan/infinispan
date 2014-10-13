@@ -38,7 +38,7 @@ import static org.testng.Assert.assertEquals;
 
 /**
  * A test to ensure stuff from a cache store is not loaded unnecessarily if it already exists in memory, or if the
- * Flag.SKIP_CACHE_STORE is applied.
+ * Flag.SKIP_CACHE_LOAD is applied.
  *
  * @author Manik Surtani
  * @author Sanne Grinovero
@@ -97,8 +97,8 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
       assert countingCS.numLoads == 0;
       assert countingCS.numContains == 0;
-      //load using SKIP_CACHE_STORE should not find the object in the store
-      assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get("k1") == null;
+      //load using SKIP_CACHE_LOAD should not find the object in the store
+      assert cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("k1") == null;
       assert countingCS.numLoads == 0;
       assert countingCS.numContains == 0;
 
@@ -109,7 +109,7 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
       // now check that put won't return the stored value
       store.write(new MarshalledEntryImpl("k2", "v2", null, marshaller(cache)));
-      Object putReturn = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).put("k2", "v2-second");
+      Object putReturn = cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).put("k2", "v2-second");
       assert putReturn == null;
       assert countingCS.numLoads == 1 : "Expected 1, was " + countingCS.numLoads;
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
@@ -128,14 +128,14 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
       cache.containsKey("k1");
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
-      assert false == cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).containsKey("k3");
+      assert false == cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).containsKey("k3");
       assert countingCS.numContains == 0 : "Expected 0, was " + countingCS.numContains;
       assert countingCS.numLoads == 2 : "Expected 2, was " + countingCS.numLoads;
 
       //now with batching:
       boolean batchStarted = cache.getAdvancedCache().startBatch();
       assert batchStarted;
-      assert null == cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).get("k1batch");
+      assert null == cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_LOAD).get("k1batch");
       assert countingCS.numLoads == 2 : "Expected 2, was " + countingCS.numLoads;
       assert null == cache.getAdvancedCache().get("k2batch");
       assert countingCS.numLoads == 3 : "Expected 3, was " + countingCS.numLoads;
