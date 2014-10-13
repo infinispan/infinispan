@@ -32,12 +32,12 @@ public class OsgiClassLoader extends ClassLoader {
    // singleton (bad) or on-demand (worse, imo).  Singleton will "work" for the time being, but it defeats "dynamic"
    // considerations within the container (ie, gracefully handling bundles being activated in the middle of runtime,
    // etc.).  However, the rest of Infinispan isn't setup for that either.  So, this might be an acceptable baby step.
-   private static OsgiClassLoader instance = null;
+   private static class LazyHolder {
+      private static OsgiClassLoader INSTANCE = new OsgiClassLoader();
+   }
+
    public static OsgiClassLoader getInstance() {
-      if (instance == null) {
-         instance = new OsgiClassLoader();
-      }
-      return instance;
+      return LazyHolder.INSTANCE;
    }
 
    private OsgiClassLoader() {
