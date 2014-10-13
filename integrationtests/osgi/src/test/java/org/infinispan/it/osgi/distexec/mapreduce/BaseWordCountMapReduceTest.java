@@ -93,7 +93,7 @@ public abstract class BaseWordCountMapReduceTest extends org.infinispan.distexec
       super.testInvokeMapReduceOnSubsetOfKeysWithCollatorAsync();
    }
 
-   @Test(expected = CacheException.class)
+   @Test
    public void testCombinerForDistributedReductionWithException() throws Exception {
       super.testCombinerForDistributedReductionWithException();
    }
