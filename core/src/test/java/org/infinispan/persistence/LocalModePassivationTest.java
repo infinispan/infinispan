@@ -123,7 +123,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
          cache.put(i, i);
       }
       assertFalse("Data Container should not have all keys", numKeys == cache.getAdvancedCache().getDataContainer().size());
-      assertEquals(numKeys, cache.size());
+      assertEquals(numKeys, cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
    }
 
    public void testSizeWithEvictedEntriesAndFlags() {

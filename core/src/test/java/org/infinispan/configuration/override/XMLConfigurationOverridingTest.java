@@ -1,5 +1,6 @@
 package org.infinispan.configuration.override;
 
+import org.infinispan.context.Flag;
 import org.junit.Assert;
 import org.infinispan.Cache;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -357,7 +358,8 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
                Cache cache2 = cm1.getCache(distCacheToChange);
                waitForRehashToComplete(cache1, cache2);
 
-               Assert.assertTrue(cache2.size() > 0 && cache2.size() != cache1.size());
+               int cache2Size = cache2.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size();
+               Assert.assertTrue(cache2Size > 0 && cache2Size != cache1.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).size());
             } catch (Exception e) {
                e.printStackTrace();
             } finally {

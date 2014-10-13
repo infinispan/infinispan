@@ -5,7 +5,6 @@ import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -25,6 +24,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
@@ -34,14 +34,13 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.persistence.PersistenceUtil;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.persistence.PersistenceUtil;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
@@ -158,21 +157,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          }
       }
       return invokeNextInterceptor(ctx, command);
-   }
-
-   @Override
-   public Object visitSizeCommand(InvocationContext ctx, SizeCommand command) throws Throwable {
-      int totalSize = 0;
-      if (enabled && !hasSkipLoadFlag(command)) {
-         totalSize = persistenceManager.size();
-      }
-      // Passivation stores evicted entries so we want to add those or if the loader didn't have anything or was skipped
-      // we should at least return the in memory size
-      // This assumes that when passivation is not enabled that the cache store holds a superset of the data container
-      if (cacheConfiguration.persistence().passivation() || totalSize == 0) {
-         totalSize += (Integer)super.visitSizeCommand(ctx, command);
-      }
-      return totalSize;
    }
 
    @Override
