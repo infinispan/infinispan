@@ -32,8 +32,12 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.commons.util.ClassFinder;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
 import com.sun.javadoc.DocErrorReporter;
+import com.sun.javadoc.LanguageVersion;
 import com.sun.javadoc.RootDoc;
+import com.sun.tools.doclets.standard.Standard;
+import com.sun.tools.javadoc.Main;
 
 /**
  * RhqPluginDoclet.
@@ -44,19 +48,27 @@ import com.sun.javadoc.RootDoc;
 public class RhqPluginXmlGenerator {
    private static final String URN_XMLNS_RHQ_CONFIGURATION = "urn:xmlns:rhq-configuration";
    private static ClassPool classPool;
-   private static String cp;
+   private static StringBuilder cp = new StringBuilder();
 
-   public static void main(String[] args) throws Exception {
-      cp = System.getProperty("java.class.path");
-      start(null);
+   public static void main(String[] args) {
+      String name = RhqPluginXmlGenerator.class.getName();
+      Main.execute(name, name, args);
+   }
+
+   public static LanguageVersion languageVersion() {
+      return LanguageVersion.JAVA_1_5;
+   }
+
+   public static int optionLength(String option) {
+      return Standard.optionLength(option);
    }
 
    public static boolean validOptions(String options[][], DocErrorReporter reporter) {
       for (String[] option : options) {
-         if (option[0].equals("-classpath"))
-            cp = option[1];
+         if (option[0].equals("-docletpath") || option[0].equals("-classpath"))
+            cp.append(option[1]).append(File.pathSeparator);
       }
-      return true;
+      return Standard.validOptions(options, reporter);
    }
 
    public static boolean start(RootDoc rootDoc) throws Exception {
@@ -102,7 +114,7 @@ public class RhqPluginXmlGenerator {
 
    private static List<Class<?>> getMBeanClasses() throws IOException {
       try {
-         return ClassFinder.withAnnotationDeclared(ClassFinder.infinispanClasses(cp), MBean.class);
+         return ClassFinder.withAnnotationDeclared(ClassFinder.infinispanClasses(cp.toString()), MBean.class);
       } catch (Exception e) {
          IOException ioe = new IOException("Unable to get Infinispan classes");
          ioe.initCause(e);
