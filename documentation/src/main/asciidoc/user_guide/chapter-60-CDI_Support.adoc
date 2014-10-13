@@ -379,4 +379,3 @@ public class GreetingService {
 
 TIP: Check <<_Listeners_and_notifications_section,Listeners and Notifications section>> for more information about event types.
 
-----
