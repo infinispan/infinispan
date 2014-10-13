@@ -1,0 +1,3 @@
+<infinispan>
+   <cache-container name="custom-cache-container-2"/>
+</infinispan>

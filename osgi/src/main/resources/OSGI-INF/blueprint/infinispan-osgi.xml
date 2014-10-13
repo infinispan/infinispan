@@ -2,13 +2,13 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
            xmlns:shell="http://karaf.apache.org/xmlns/shell/v1.0.0">
 
-    <bean id="infinispanServiceFactory" class="org.infinispan.osgi.InfinispanServiceFactory" destroy-method="destroy">
+    <bean id="infinispanEmbeddedServiceFactory" class="org.infinispan.osgi.InfinispanEmbeddedServiceFactory" destroy-method="destroy">
         <property name="bundleContext" ref="blueprintBundleContext"/>
     </bean>
 
-    <service ref="infinispanServiceFactory" interface="org.osgi.service.cm.ManagedServiceFactory">
+    <service ref="infinispanEmbeddedServiceFactory" interface="org.osgi.service.cm.ManagedServiceFactory">
         <service-properties>
-            <entry key="service.pid" value="org.jboss.infinispan.server"/>
+            <entry key="service.pid" value="org.infinispan.manager.embedded"/>
         </service-properties>
     </service>
 

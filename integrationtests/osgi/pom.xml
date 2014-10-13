@@ -115,6 +115,11 @@
          <artifactId>infinispan-cachestore-remote</artifactId>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-osgi</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
          <groupId>com.mchange</groupId>
          <artifactId>c3p0</artifactId>
          <scope>test</scope>
