@@ -9,12 +9,9 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 import org.rhq.plugins.jmx.util.ObjectNameQueryUtility;
 
-import javax.management.ObjectName;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Discovery class for individual cache instances
@@ -72,12 +69,32 @@ public class CacheDiscovery extends MBeanResourceDiscoveryComponent<CacheManager
    }
 
    protected static String getAllCachesPattern(String cacheManagerName) {
-      return cacheComponentPattern(cacheManagerName, "Cache") + ",*";
+      return cacheComponentPattern(cacheManagerName, "*", "Cache");
    }
 
-   protected static String cacheComponentPattern(String cacheManagerName, String componentName) {
+   protected static String cacheComponentPattern(String cacheManagerName, String cacheName, String componentName) {
       // The CacheManager registers like <domain>:name=<name> so add those to request
+      String cacheAttributeName;
+      String type;
+
+      // the query components do not follow the same naming conventions as the core components and need special handling
+      if (componentName.equals("MassIndexer")) {
+         cacheAttributeName = "cache";
+         // drop the "(cacheMode)" suffix from cache name
+         if (cacheName.endsWith(")\"")) {
+            cacheName = cacheName.substring(0, cacheName.length() - 2);
+            cacheName = cacheName.substring(0, cacheName.lastIndexOf('(')) + "\"";
+         }
+         type = "Query";
+      } else {
+         cacheAttributeName = "name";
+         type = "Cache";
+      }
+
       return cacheManagerName.substring(0, cacheManagerName.indexOf(":")) + ":manager=" +
-            cacheManagerName.substring(cacheManagerName.indexOf("=") + 1)  + ",type=Cache,component=" + componentName;
+            cacheManagerName.substring(cacheManagerName.indexOf("=") + 1)
+            + ",type=" + type
+            + ",component=" + componentName
+            + "," + cacheAttributeName + "=" + cacheName;
    }
 }

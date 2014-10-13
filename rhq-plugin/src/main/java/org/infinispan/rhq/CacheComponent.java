@@ -186,16 +186,15 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
    }
 
    private String namedCacheComponentPattern(String cacheManagerName, String cacheName, String componentName) {
-      return CacheDiscovery.cacheComponentPattern(cacheManagerName, componentName)
-            + ",name=" + cacheName;
+      return CacheDiscovery.cacheComponentPattern(cacheManagerName, cacheName, componentName);
    }
 
-   private EmsBean queryComponentBean(EmsConnection conn, String name) {
+   private EmsBean queryComponentBean(EmsConnection conn, String name) throws Exception {
       String componentName = name.substring(0, name.indexOf("."));
       return queryBean(conn, componentName);
    }
 
-   private EmsBean queryBean(EmsConnection conn, String componentName) {
+   private EmsBean queryBean(EmsConnection conn, String componentName) throws Exception {
       String pattern = getSingleComponentPattern(cacheManagerName, cacheName, componentName);
       if (log.isTraceEnabled()) log.trace("Pattern to query is " + pattern);
       ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility(pattern);
@@ -207,13 +206,13 @@ public class CacheComponent extends MBeanResourceComponent<CacheManagerComponent
             log.warn(String.format("MBeanServer returned spurious object %s", bean.getBeanName().getCanonicalName()));
          }
       }
-      if (log.isTraceEnabled()) log.trace("No mbean found with name " + pattern);
-      return null;
+      throw new Exception("No mbean found with name " + pattern);
    }
 
    protected static boolean isCacheComponent(EmsBean bean, String componentName) {
       EmsBeanName beanName = bean.getBeanName();
-      return "Cache".equals(beanName.getKeyProperty("type")) && componentName.equals(beanName.getKeyProperty("component"));
+      String type = beanName.getKeyProperty("type");
+      return ("Cache".equals(type) || "Query".equals(type)) && componentName.equals(beanName.getKeyProperty("component"));
    }
 
    @Override

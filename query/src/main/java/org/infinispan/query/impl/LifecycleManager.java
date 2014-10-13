@@ -60,11 +60,6 @@ import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import static org.hibernate.search.infinispan.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
