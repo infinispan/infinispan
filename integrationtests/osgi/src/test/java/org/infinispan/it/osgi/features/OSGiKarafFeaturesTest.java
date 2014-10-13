@@ -65,8 +65,10 @@ public class OSGiKarafFeaturesTest {
 
       checkInstall(service, "infinispan-commons", "infinispan-commons", version);
       checkInstall(service, "infinispan-core", "infinispan-core", version);
-      checkInstall(service, "infinispan-client-hotrod", "hotrod-client", version);
-      checkInstall(service, "infinispan-client-hotrod", "hotrod-client-with-query", version);
+      checkInstall(service, "infinispan-client-hotrod", /* deprecated */ "hotrod-client", version);
+      checkInstall(service, "infinispan-client-hotrod", /* deprecated */ "hotrod-client-with-query", version);
+      checkInstall(service, "infinispan-client-hotrod", "infinispan-client-hotrod", version);
+      checkInstall(service, "infinispan-client-hotrod", "infinispan-client-hotrod-with-query", version);
       checkInstall(service, "infinispan-cachestore-jdbc", "infinispan-cachestore-jdbc", version);
       checkInstall(service, "infinispan-cachestore-remote", "infinispan-cachestore-remote", version);
       checkInstall(service, "infinispan-cachestore-leveldb", "infinispan-cachestore-leveldb-jni", version);

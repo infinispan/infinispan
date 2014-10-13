@@ -7,7 +7,7 @@
    <feature name="infinispan-cachestore-remote" version="${project.version}">
       <feature version="${project.version}">infinispan-commons</feature>
       <feature version="${project.version}">infinispan-core</feature>
-      <feature version="${project.version}">hotrod-client</feature>
+      <feature version="${project.version}">infinispan-client-hotrod</feature>
       <bundle>mvn:org.infinispan/infinispan-cachestore-remote/${project.version}</bundle>
    </feature>
 </features>
