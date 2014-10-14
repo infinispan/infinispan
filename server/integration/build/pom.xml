@@ -169,7 +169,7 @@
 
       <dependency>
          <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cli-server</artifactId>
+         <artifactId>infinispan-cli-interpreter</artifactId>
       </dependency>
 
       <dependency>

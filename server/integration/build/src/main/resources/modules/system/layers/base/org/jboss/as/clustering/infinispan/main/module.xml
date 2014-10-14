@@ -41,7 +41,7 @@
       <module name="org.infinispan.persistence.remote" services="import"/>
       <module name="org.infinispan.persistence.rest" services="import"/>
       <module name="org.infinispan.hotrod.client" optional="true"/>
-      <module name="org.infinispan.cli.server" services="import"/>
+      <module name="org.infinispan.cli.interpreter" services="import"/>
       <module name="org.infinispan.server" services="import"/>
       <module name="org.infinispan.server.hotrod" services="import"/>
       <module name="org.infinispan.server.memcached" services="import"/>

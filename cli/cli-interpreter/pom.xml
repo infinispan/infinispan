@@ -8,10 +8,10 @@
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
-   <artifactId>infinispan-cli-server</artifactId>
+   <artifactId>infinispan-cli-interpreter</artifactId>
    <packaging>bundle</packaging>
-   <name>Infinispan CLI Server</name>
-   <description>Infinispan CLI Server module</description>
+   <name>Infinispan CLI Interpreter</name>
+   <description>Infinispan CLI Interpreter module</description>
 
    <!-- This module declares components that either has lifecycle (@Start or @Stop) or uses @Inject to retrieve dependencies -->
    <properties>

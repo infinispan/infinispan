@@ -148,8 +148,8 @@
          <maven-resource group="org.infinispan" artifact="infinispan-cli-client" />
       </module-def>
 
-      <module-def name="org.infinispan.cli.server">
-         <maven-resource group="org.infinispan" artifact="infinispan-cli-server" />
+      <module-def name="org.infinispan.cli.interpreter">
+         <maven-resource group="org.infinispan" artifact="infinispan-cli-interpreter" />
       </module-def>
 
       <module-def name="org.infinispan.client.hotrod">
