@@ -122,6 +122,12 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }
    }
 
+   protected final <K, V> void assertInSite(String siteName, String cacheName, AssertCondition<K, V> condition) {
+      for (Cache<K, V> cache : this.<K, V>caches(siteName, cacheName)) {
+         condition.assertInCache(cache);
+      }
+   }
+
    protected final <K, V> void assertEventuallyInSite(final String siteName, final EventuallyAssertCondition<K, V> condition,
                                                 long timeout, TimeUnit timeUnit) {
       eventually(new Condition() {

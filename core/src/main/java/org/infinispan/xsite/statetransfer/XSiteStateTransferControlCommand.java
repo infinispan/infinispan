@@ -124,6 +124,21 @@ public class XSiteStateTransferControlCommand extends XSiteReplicateCommand {
       this.topologyId = topologyId;
    }
 
+   public XSiteStateTransferControlCommand copyForCache(String cacheName) {
+      //cache name is final. we need to copy the command.
+      XSiteStateTransferControlCommand copy = new XSiteStateTransferControlCommand(cacheName);
+      copy.control = this.control;
+      copy.provider = this.provider;
+      copy.consumer = this.consumer;
+      copy. stateTransferManager = this.stateTransferManager;
+      copy.siteName = this.siteName;
+      copy.statusOk = this.statusOk;
+      copy.topologyId = this.topologyId;
+      copy.setOriginSite(this.getOriginSite());
+      copy.setOrigin(this.getOrigin());
+      return copy;
+   }
+
    public static enum StateTransferControl {
       START_SEND,
       START_RECEIVE,
