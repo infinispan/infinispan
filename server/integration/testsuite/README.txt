@@ -14,12 +14,20 @@ Currently these subsets are predefined:
   -P suite.leveldb-client            (LevelDB cache store tests - the whole suite.client with leveldb configs)
   -P suite.cachestore                (Tests that use different cachestore configurations, remote, leveldb apod)
 
-  -P suite.rolling.upgrades          (Rolling upgrades specific tests, mandatory specification of: -Dzip.dist.old=path/to/old_distro.zip
+  -P suite.rolling.upgrades          (Rolling upgrades specific tests, mandatory specification of:
+                                      -Dzip.dist.old=path/to/old_distro.zip
+
                                       NOTE: there are 2 properties defined with default values:
                                       1) -Dold.server.schema.version=6.1 -- used for failsafe report suffix
                                       2) -Dnew.server.schema.version=7.0 -- used to decide which snippet to use during
                                           transformation of a configuration for new servers in the clustered scenario
                                       Configuration snippets for new cluster are prepared for versions: 6.0, 6.1, 7.0)
+
+                                      Testing backwards compatibility: use "old" -Dhotrod.protocol.version to set
+                                      HR protocol version for communication with "new" servers.
+
+                                      Settings are also applicable/madatory for other Rolling Upgrades profiles bellow.
+
   -P suite.rolling.upgrades.dist     (Distribution case of Rolling upgrades)
 
   -P suite.rolling.upgrades.jbossas       (This profile needs to be used when running Rolling upgrades with

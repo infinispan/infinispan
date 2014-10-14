@@ -246,6 +246,10 @@
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
 
+        <!-- Used for rolling upgrades (for backwards compatibility) tests.
+             If not defined then DEFAULT_PROTOCOL_VERSION is used. -->
+        <hotrod.protocol.version></hotrod.protocol.version>
+
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
         <node0.ip>127.0.0.1</node0.ip>
         <node1.ip>127.0.0.1</node1.ip>
@@ -484,6 +488,7 @@
                         <start.jboss.as.manually>${start.jboss.as.manually}</start.jboss.as.manually>
                         <server.jvm>${server.jvm}</server.jvm>
                         <server.jvm.args>${server.jvm.args}</server.jvm.args>
+                        <hotrod.protocol.version>${hotrod.protocol.version}</hotrod.protocol.version>
                         <log4j.configuration>${log4j.configuration}</log4j.configuration>
                         <java.util.logging.config.file>${resources.dir}/jul.properties</java.util.logging.config.file>
                         <suite.client.local.config>${suite.client.local.config}</suite.client.local.config>
