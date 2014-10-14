@@ -1,5 +1,7 @@
 package org.infinispan.notifications.cachelistener.filter;
 
+import org.infinispan.notifications.cachelistener.event.Event;
+
 /**
  * Enum that provides information to allow for an event to know which type and if this event was generated due to a
  * retry usually caused by a topology change while replicating.
@@ -12,15 +14,15 @@ public class EventType {
       CREATE, REMOVE, MODIFY;
    }
 
-   private final Operation operation;
+   private final Event.Type type;
    private final boolean retried;
    private final boolean pre;
 
 
-   public EventType(boolean retried, boolean pre, Operation operation) {
+   public EventType(boolean retried, boolean pre, Event.Type type) {
       this.retried = retried;
       this.pre = pre;
-      this.operation = operation;
+      this.type = type;
    }
 
    boolean isPreEvent() { return pre; };
@@ -29,15 +31,19 @@ public class EventType {
       return retried;
    };
 
+   public Event.Type getType() {
+      return type;
+   }
+
    boolean isCreate() {
-      return operation == Operation.CREATE;
+      return type == Event.Type.CACHE_ENTRY_CREATED;
    }
 
    boolean isModified() {
-      return operation == Operation.MODIFY;
+      return type == Event.Type.CACHE_ENTRY_MODIFIED;
    }
 
    boolean isRemove() {
-      return operation == Operation.REMOVE;
+      return type == Event.Type.CACHE_ENTRY_REMOVED;
    }
 }

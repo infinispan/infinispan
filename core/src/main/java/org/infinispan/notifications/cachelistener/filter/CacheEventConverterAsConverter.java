@@ -6,6 +6,7 @@ import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.event.Event;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -23,7 +24,7 @@ import java.util.Set;
  * @since 7.0
  */
 public class CacheEventConverterAsConverter<K, V, C> implements Converter<K, V, C> {
-   private static final EventType CREATE_EVENT = new EventType(false, false, EventType.Operation.CREATE);
+   private static final EventType CREATE_EVENT = new EventType(false, false, Event.Type.CACHE_ENTRY_CREATED);
 
    private final CacheEventConverter<K, V, C> converter;
 
