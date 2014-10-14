@@ -1002,23 +1002,22 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          return true;
       }
 
+      // We can't currently filter events that don't implement CacheEntryEvent or CACHE_ENTRY_EVICTED events.  Basically
+      // events that have a single key value pair only
       private EventType getEvent(EventImpl<K, V> event) {
-         EventType.Operation operation;
          switch (event.getType()) {
+            case CACHE_ENTRY_ACTIVATED:
             case CACHE_ENTRY_CREATED:
-               operation = EventType.Operation.CREATE;
-               break;
+            case CACHE_ENTRY_INVALIDATED:
+            case CACHE_ENTRY_LOADED:
             case CACHE_ENTRY_MODIFIED:
-               operation = EventType.Operation.MODIFY;
-               break;
+            case CACHE_ENTRY_PASSIVATED:
             case CACHE_ENTRY_REMOVED:
-               operation = EventType.Operation.REMOVE;
-               break;
+            case CACHE_ENTRY_VISITED:
+               return new EventType(event.isPre(), event.isCommandRetried(), event.getType());
             default:
-               // We only support filtering create, modify and remove events
                return null;
          }
-         return new EventType(event.isPre(), event.isCommandRetried(), operation);
       }
 
       @Override

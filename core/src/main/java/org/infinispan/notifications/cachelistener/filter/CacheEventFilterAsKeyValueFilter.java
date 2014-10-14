@@ -5,6 +5,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.event.Event;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -22,7 +23,7 @@ import java.util.Set;
  * @since 7.0
  */
 public class CacheEventFilterAsKeyValueFilter<K, V> implements KeyValueFilter<K, V>, Serializable {
-   private static final EventType CREATE_EVENT = new EventType(false, false, EventType.Operation.CREATE);
+   private static final EventType CREATE_EVENT = new EventType(false, false, Event.Type.CACHE_ENTRY_CREATED);
 
    private final CacheEventFilter<K, V> filter;
 
