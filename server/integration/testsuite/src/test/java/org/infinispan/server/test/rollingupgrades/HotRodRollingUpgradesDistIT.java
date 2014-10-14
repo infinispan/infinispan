@@ -107,6 +107,7 @@ public class HotRodRollingUpgradesDistIT {
             controller.start("hotrod-rolling-upgrade-2-dist");
 
             RemoteInfinispanMBeans s1 = createRemotes("hotrod-rolling-upgrade-1-dist", "clustered-new", DEFAULT_CACHE_NAME);
+            // hotrod.protocol.version, if explictily defined, is set in createCache() method
             final RemoteCache<Object, Object> c1 = createCache(s1);
 
             RemoteInfinispanMBeans s2 = createRemotes("hotrod-rolling-upgrade-2-dist", "clustered-new", DEFAULT_CACHE_NAME);
@@ -179,7 +180,13 @@ public class HotRodRollingUpgradesDistIT {
     }
 
     protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans) {
-        return createCache(cacheBeans, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        if (System.getProperty("hotrod.protocol.version") != null) {
+            // we might want to test backwards compatibility as well
+            // old Hot Rod protocol version was set for communication with new server
+            return createCache(cacheBeans, System.getProperty("hotrod.protocol.version"));
+        } else {
+            return createCache(cacheBeans, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        }
     }
 
     protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans, String protocolVersion) {

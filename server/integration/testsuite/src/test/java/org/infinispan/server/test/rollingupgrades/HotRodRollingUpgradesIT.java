@@ -75,9 +75,9 @@ public class HotRodRollingUpgradesIT {
 
             ConfigurationBuilder builder = new ConfigurationBuilder();
             builder.addServer()
-                   .host("127.0.0.1")
-                   .port(11322)
-                   .protocolVersion(ConfigurationProperties.PROTOCOL_VERSION_12);
+                    .host("127.0.0.1")
+                    .port(11322)
+                    .protocolVersion(ConfigurationProperties.PROTOCOL_VERSION_12);
 
             RemoteCacheManager rcm = new RemoteCacheManager(builder.build());
             final RemoteCache<String, String> c2 = rcm.getCache("default");
@@ -92,6 +92,7 @@ public class HotRodRollingUpgradesIT {
             controller.start("hotrod-rolling-upgrade-1");
 
             RemoteInfinispanMBeans s1 = createRemotes("hotrod-rolling-upgrade-1", "local", DEFAULT_CACHE_NAME);
+            // hotrod.protocol.version, if explictily defined, is set in createRemotes() method
             final RemoteCache<Object, Object> c1 = createCache(s1);
 
             assertEquals("Can't access etries stored in source node (target's RemoteCacheStore).", "value1", c1.get("key1"));
@@ -134,7 +135,13 @@ public class HotRodRollingUpgradesIT {
     }
 
     protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans) {
-        return createCache(cacheBeans, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        if (System.getProperty("hotrod.protocol.version") != null) {
+            // we might want to test backwards compatibility as well
+            // old Hot Rod protocol version was set for communication with new server
+            return createCache(cacheBeans, System.getProperty("hotrod.protocol.version"));
+        } else {
+            return createCache(cacheBeans, ConfigurationProperties.DEFAULT_PROTOCOL_VERSION);
+        }
     }
 
     protected RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans cacheBeans, String protocolVersion) {
