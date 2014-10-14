@@ -1,11 +1,8 @@
 package org.infinispan.interceptors;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
-
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -50,6 +47,8 @@ import org.infinispan.transaction.xa.recovery.RecoverableTransactionIdentifier;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Interceptor in charge with handling transaction related operations, e.g enlisting cache as an transaction
@@ -128,7 +127,11 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
             //It is possible to receive a prepare or lock control command from a node that crashed. If that's the case rollback
             //the transaction forcefully in order to cleanup resources.
             boolean originatorMissing = !rpcManager.getTransport().getMembers().contains(command.getOrigin());
-            boolean alreadyCompleted = txTable.isTransactionCompleted(command.getGlobalTransaction());
+            // It is also possible that the LCC timed out on the originator's end and this node has processed
+            // a TxCompletionNotification.  So we need to check the presence of the remote transaction to
+            // see if we need to clean up any acquired locks on our end.
+            boolean alreadyCompleted = txTable.isTransactionCompleted(command.getGlobalTransaction()) ||
+                                       !txTable.containRemoteTx(command.getGlobalTransaction());
             if (trace) {
                log.tracef("invokeNextInterceptorAndVerifyTransaction :: originatorMissing=%s, alreadyCompleted=%s",
                           originatorMissing, alreadyCompleted);
