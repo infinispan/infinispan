@@ -329,7 +329,7 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-cli-server</artifactId>
+            <artifactId>infinispan-cli-interpreter</artifactId>
             <version>${project.version}</version>
          </dependency>
          <dependency>

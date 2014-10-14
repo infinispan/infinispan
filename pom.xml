@@ -53,7 +53,7 @@
       <module>rhq-plugin</module>
       <module>osgi</module>
       <module>spring</module>
-      <module>cli/cli-server</module>
+      <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
       <module>demos/gui</module>
       <module>demos/ec2</module>
