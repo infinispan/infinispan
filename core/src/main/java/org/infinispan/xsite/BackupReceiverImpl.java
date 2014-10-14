@@ -81,8 +81,13 @@ public class BackupReceiverImpl implements BackupReceiver {
 
    @Override
    public void handleStateTransferControl(XSiteStateTransferControlCommand command) throws Exception {
-      command.setSiteName(command.getOriginSite());
-      invokeRemotelyInLocalSite(command);
+      XSiteStateTransferControlCommand invokeCommand = command;
+      if (!command.getCacheName().equals(cache.getName())) {
+         //copy if the cache name is different
+         invokeCommand = command.copyForCache(cache.getName());
+      }
+      invokeCommand.setSiteName(command.getOriginSite());
+      invokeRemotelyInLocalSite(invokeCommand);
    }
 
    @Override
@@ -93,7 +98,7 @@ public class BackupReceiverImpl implements BackupReceiver {
       }
       final ClusteringDependentLogic clusteringDependentLogic = cache.getAdvancedCache().getComponentRegistry()
             .getComponent(ClusteringDependentLogic.class);
-      final Map<Address, List<XSiteState>> primaryOwnersChunks = new HashMap<Address, List<XSiteState>>();
+      final Map<Address, List<XSiteState>> primaryOwnersChunks = new HashMap<>();
 
       if (trace) {
          log.tracef("Received X-Site state transfer '%s'. Splitting by primary owner.", cmd);
@@ -103,14 +108,14 @@ public class BackupReceiverImpl implements BackupReceiver {
          final Address primaryOwner = clusteringDependentLogic.getPrimaryOwner(state.key());
          List<XSiteState> primaryOwnerList = primaryOwnersChunks.get(primaryOwner);
          if (primaryOwnerList == null) {
-            primaryOwnerList = new LinkedList<XSiteState>();
+            primaryOwnerList = new LinkedList<>();
             primaryOwnersChunks.put(primaryOwner, primaryOwnerList);
          }
          primaryOwnerList.add(state);
       }
 
       final List<XSiteState> localChunks = primaryOwnersChunks.remove(clusteringDependentLogic.getAddress());
-      final List<StatePushTask> tasks = new ArrayList<StatePushTask>(primaryOwnersChunks.size());
+      final List<StatePushTask> tasks = new ArrayList<>(primaryOwnersChunks.size());
 
       for (Map.Entry<Address, List<XSiteState>> entry : primaryOwnersChunks.entrySet()) {
          if (entry.getValue() == null || entry.getValue().isEmpty()) {
@@ -203,8 +208,8 @@ public class BackupReceiverImpl implements BackupReceiver {
 
    private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) throws Exception {
       final RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
-      final NotifyingNotifiableFuture<Map<Address, Response>> remoteFuture = new NotifyingFutureImpl<Map<Address, Response>>();
-      final Map<Address, Response> responseMap = new HashMap<Address, Response>();
+      final NotifyingNotifiableFuture<Map<Address, Response>> remoteFuture = new NotifyingFutureImpl<>();
+      final Map<Address, Response> responseMap = new HashMap<>();
       rpcManager.invokeRemotelyInFuture(remoteFuture, null, command, rpcManager.getDefaultRpcOptions(true, false));
       responseMap.put(rpcManager.getAddress(), LocalInvocation.newInstanceFromCache(cache, command).call());
       //noinspection unchecked
@@ -223,7 +228,7 @@ public class BackupReceiverImpl implements BackupReceiver {
       BackupCacheUpdater(Cache<Object, Object> backup) {
          //ignore return values on the backup
          this.backupCache = backup.getAdvancedCache().withFlags(Flag.IGNORE_RETURN_VALUES, Flag.SKIP_XSITE_BACKUP);
-         this.remote2localTx = new ConcurrentHashMap<GlobalTransaction, GlobalTransaction>();
+         this.remote2localTx = new ConcurrentHashMap<>();
       }
 
       @Override
@@ -391,7 +396,7 @@ public class BackupReceiverImpl implements BackupReceiver {
 
       public void executeRemote() {
          final RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
-         NotifyingNotifiableFuture<Map<Address, Response>> future = new NotifyingFutureImpl<Map<Address, Response>>();
+         NotifyingNotifiableFuture<Map<Address, Response>> future = new NotifyingFutureImpl<>();
          remoteFuture = future;
          rpcManager.invokeRemotelyInFuture(future, Collections.singletonList(address), newStatePushCommand(cache, chunk),
                                            rpcManager.getDefaultRpcOptions(true));
