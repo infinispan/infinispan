@@ -358,6 +358,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 5.3
     */
    V putIfAbsent(K key, V value, Metadata metadata);
+   
+   void putForExternalRead(K key, V value, Metadata metadata);
 
    /**
     * Asynchronous version of {@link #put(Object, Object, Metadata)} which stores

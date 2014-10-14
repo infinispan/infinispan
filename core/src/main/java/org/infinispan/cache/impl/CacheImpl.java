@@ -609,7 +609,29 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       putForExternalRead(key, value, null, null);
    }
 
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit) {
+      putForExternalRead(key, value, lifespan, lifespanUnit, defaultMetadata.maxIdle(), MILLISECONDS);
+   }
+
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit idleTimeUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+       .lifespan(lifespan, lifespanUnit)
+       .maxIdle(maxIdleTime, idleTimeUnit).build();
+      putForExternalRead(key, value, metadata);
+   }
+
+   @Override
+   public void putForExternalRead(K key, V value, Metadata metadata) {
+      putForExternalRead(key, value, metadata, null, null);
+   }
+
    final void putForExternalRead(K key, V value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      putForExternalRead(key, value, defaultMetadata, explicitFlags, explicitClassLoader);
+   }
+
+   final void putForExternalRead(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       Transaction ongoingTransaction = null;
       try {
          ongoingTransaction = suspendOngoingTransactionIfExists();
@@ -620,7 +642,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          }
 
          // if the entry exists then this should be a no-op.
-         putIfAbsent(key, value, defaultMetadata, flags, explicitClassLoader);
+         putIfAbsent(key, value, metadata, flags, explicitClassLoader);
       } catch (Exception e) {
          if (log.isDebugEnabled()) log.debug("Caught exception while doing putForExternalRead()", e);
       }

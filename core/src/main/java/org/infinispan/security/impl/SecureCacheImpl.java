@@ -298,6 +298,24 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public void putForExternalRead(K key, V value, Metadata metadata) {
+      authzManager.checkPermission(AuthorizationPermission.WRITE);
+      delegate.putForExternalRead(key, value);
+   }
+   
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
+      authzManager.checkPermission(AuthorizationPermission.WRITE);
+      delegate.putForExternalRead(key, value);
+   }
+   
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      authzManager.checkPermission(AuthorizationPermission.WRITE);
+      delegate.putForExternalRead(key, value);
+   }
+
+   @Override
    public ComponentRegistry getComponentRegistry() {
       authzManager.checkPermission(AuthorizationPermission.ADMIN);
       return delegate.getComponentRegistry();

@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The central interface of Infinispan.  A Cache provides a highly concurrent, optionally distributed data structure
@@ -111,6 +112,8 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @throws IllegalStateException if {@link #getStatus()} would not return {@link ComponentStatus#RUNNING}.
     */
    void putForExternalRead(K key, V value);
+   void putForExternalRead(K key, V value, long lifespan, TimeUnit unit);
+   void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**
     * Evicts an entry from the memory of the cache.  Note that the entry is <i>not</i> removed from any configured cache

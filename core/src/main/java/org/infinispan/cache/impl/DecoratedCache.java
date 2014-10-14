@@ -137,6 +137,31 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public void putForExternalRead(K key, V value, Metadata metadata) {
+      cacheImplementation.putForExternalRead(key, value, flags, classLoader.get());
+   }
+
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+       .lifespan(lifespan, unit)
+       .maxIdle(cacheImplementation.defaultMetadata.maxIdle(), MILLISECONDS)
+       .build();
+
+      cacheImplementation.putForExternalRead(key, value, metadata, flags, classLoader.get());
+   }
+
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      Metadata metadata = new EmbeddedMetadata.Builder()
+       .lifespan(lifespan, lifespanUnit)
+       .maxIdle(maxIdle, maxIdleUnit)
+       .build();
+
+      cacheImplementation.putForExternalRead(key, value, metadata, flags, classLoader.get());
+   }
+
+   @Override
    public void evict(K key) {
       cacheImplementation.evict(key, flags, classLoader.get());
    }
