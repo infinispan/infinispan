@@ -38,6 +38,16 @@ public abstract class AbstractDelegatingCache<K, V> implements Cache<K, V> {
    public void putForExternalRead(K key, V value) {
       cache.putForExternalRead(key, value);
    }
+   
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
+      cache.putForExternalRead(key, value, lifespan, unit);
+   }
+
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      cache.putForExternalRead(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+   }
 
    @Override
    public void evict(K key) {

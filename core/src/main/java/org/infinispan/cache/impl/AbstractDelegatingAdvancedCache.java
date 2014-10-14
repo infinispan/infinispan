@@ -226,8 +226,17 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       return cache.putAsync(key, value, metadata);
    }
 
+   @Override
+   public void putForExternalRead(K key, V value, Metadata metadata) {
+      cache.putForExternalRead(key, value, metadata);
+   }
+
    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
       ((CacheImpl<K, V>) cache).putForExternalRead(key, value, flags, classLoader);
+   }
+
+   protected final void putForExternalRead(K key, V value, Metadata metadata, EnumSet<Flag> flags, ClassLoader classLoader) {
+      ((CacheImpl<K, V>) cache).putForExternalRead(key, value, metadata, flags, classLoader);
    }
 
    public interface AdvancedCacheWrapper<K, V> {
