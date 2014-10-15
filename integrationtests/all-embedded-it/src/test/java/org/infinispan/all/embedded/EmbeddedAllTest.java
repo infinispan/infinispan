@@ -1,19 +1,23 @@
 package org.infinispan.all.embedded;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.Assert.assertEquals;
 
-import org.testng.annotations.Test;
-import org.infinispan.manager.*;
-import org.infinispan.*;
+import org.infinispan.Cache;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.junit.Test;
 
-@Test
 public class EmbeddedAllTest {
 
+   @Test
    public void testAllEmbedded() {
       EmbeddedCacheManager cm = new DefaultCacheManager();
-      Cache<String, String> cache = cm.getCache();
-      cache.put("key", "value");
-      assertEquals("value", cache.get("key"));
-
+      try {
+         Cache<String, String> cache = cm.getCache();
+         cache.put("key", "value");
+         assertEquals("value", cache.get("key"));
+      } finally {
+         cm.stop();
+      }
    }
 }

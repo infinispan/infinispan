@@ -96,12 +96,11 @@
       <version.ant>1.9.4</version.ant>
       <version.antlr>3.4</version.antlr>
       <version.apache.ds>2.0.0-M15</version.apache.ds>
-      <version.arquillian>1.0.3.Final</version.arquillian>
+      <version.arquillian>1.1.5.Final</version.arquillian>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
       <version.avro>1.7.6</version.avro>
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
-      <version.cdi>1.0-SP4</version.cdi>
       <version.com.intellij.forms_rt>6.0.5</version.com.intellij.forms_rt>
       <version.commons.compress>1.4</version.commons.compress>
       <version.commons.codec>1.4</version.commons.codec>
@@ -128,7 +127,6 @@
       <version.httpclient>4.2.4</version.httpclient>
       <version.howl>1.0.1-1</version.howl>
       <version.jackson>1.9.13</version.jackson>
-      <version.javax.cache>1.0.0</version.javax.cache>
       <version.javax.cache.cache-tests>${version.javax.cache}</version.javax.cache.cache-tests>
       <version.javax.servlet>2.5</version.javax.servlet>
       <version.jbossjta>4.17.13.Final</version.jbossjta>
@@ -386,11 +384,6 @@
          </dependency>
          <dependency>
             <groupId>javax.cache</groupId>
-            <artifactId>cache-api</artifactId>
-            <version>${version.javax.cache}</version>
-         </dependency>
-         <dependency>
-            <groupId>javax.cache</groupId>
             <artifactId>cache-tests</artifactId>
             <version>${version.javax.cache.cache-tests}</version>
          </dependency>
@@ -399,17 +392,6 @@
             <artifactId>cache-tests</artifactId>
             <version>${version.javax.cache.cache-tests}</version>
             <classifier>tests</classifier>
-         </dependency>
-         <dependency>
-            <groupId>javax.enterprise</groupId>
-            <artifactId>cdi-api</artifactId>
-            <version>${version.cdi}</version>
-            <exclusions>
-               <exclusion>
-                  <groupId>org.testng</groupId>
-                  <artifactId>testng</artifactId>
-               </exclusion>
-            </exclusions>
          </dependency>
          <dependency>
             <groupId>javax.servlet</groupId>

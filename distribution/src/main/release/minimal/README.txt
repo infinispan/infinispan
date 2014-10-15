@@ -9,6 +9,11 @@ essentials to get you started.
      Infinispan in a plain JavaSE environment or in a basic servlet 
      container (such as Tomcat) you will also need to add the Java 
      Transaction API jar (which you can find in the lib directory)
+     This jar also includes support for the following additional features:
+      - JCache (you will need the cache-api.jar)
+      - CDI (you will need a CDI container)
+      - SingleFile, JDBC, LevelDB and JPA cache stores (for the latter you
+        will need to add Hibernate to your dependencies).
    * infinispan-embedded-query.jar: add this jar to your application if
      you need query capabilities
    * lib: this directory contains additional dependencies needed for the demo
@@ -24,9 +29,16 @@ Infinispan needs a JDK 6 compliant Java virtual machine.
 
 Problems
 --------
+
 Please report problems on the Infinispan user forum.  Please see
 
    http://www.jboss.org/infinispan/community
 
 for details.
-   
+
+Contributing
+------------
+
+If you want to contribute, head over to
+
+   http://infinispan.org/getinvolved/

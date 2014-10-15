@@ -13,7 +13,7 @@ import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.InjectionPoint;
 
 import org.infinispan.cdi.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * <p>
@@ -109,39 +109,48 @@ public abstract class AbstractImmutableBean<T> implements Bean<T> {
         }
     }
 
-    public Class<?> getBeanClass() {
+    @Override
+   public Class<?> getBeanClass() {
         return beanClass;
     }
 
-    public Set<InjectionPoint> getInjectionPoints() {
+    @Override
+   public Set<InjectionPoint> getInjectionPoints() {
         return injectionPoints;
     }
 
-    public String getName() {
+    @Override
+   public String getName() {
         return name;
     }
 
-    public Set<Annotation> getQualifiers() {
+    @Override
+   public Set<Annotation> getQualifiers() {
         return Collections.unmodifiableSet(qualifiers);
     }
 
-    public Class<? extends Annotation> getScope() {
+    @Override
+   public Class<? extends Annotation> getScope() {
         return scope;
     }
 
-    public Set<Class<? extends Annotation>> getStereotypes() {
+    @Override
+   public Set<Class<? extends Annotation>> getStereotypes() {
         return Collections.unmodifiableSet(stereotypes);
     }
 
-    public Set<Type> getTypes() {
+    @Override
+   public Set<Type> getTypes() {
         return Collections.unmodifiableSet(types);
     }
 
-    public boolean isAlternative() {
+    @Override
+   public boolean isAlternative() {
         return alternative;
     }
 
-    public boolean isNullable() {
+    @Override
+   public boolean isNullable() {
         return nullable;
     }
 

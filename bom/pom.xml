@@ -63,6 +63,8 @@
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
       <version.hibernate.core>4.3.6.Final</version.hibernate.core>
       <version.hibernate.search>5.0.0.Alpha7</version.hibernate.search>
+      <version.javax.cache>1.0.0</version.javax.cache>
+      <version.cdi>1.0-SP4</version.cdi>
       <version.jboss.marshalling>1.4.4.Final</version.jboss.marshalling>
       <version.jboss.logging>3.1.2.GA</version.jboss.logging>
       <version.jgroups>3.5.0.Final</version.jgroups>
@@ -353,6 +355,24 @@
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>sample-domain-implementation</artifactId>
             <version>${version.protostream}</version>
+         </dependency>
+         <!-- Infinispan CDI module dependencies -->
+         <dependency>
+            <groupId>javax.enterprise</groupId>
+            <artifactId>cdi-api</artifactId>
+            <version>${version.cdi}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.testng</groupId>
+                  <artifactId>testng</artifactId>
+               </exclusion>
+            </exclusions>
+         </dependency>
+         <!-- Infinispan JCache module dependencies -->
+         <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-api</artifactId>
+            <version>${version.javax.cache}</version>
          </dependency>
          <!-- Infinispan Protocols module dependencies -->
          <dependency>

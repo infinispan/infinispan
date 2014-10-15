@@ -2,9 +2,9 @@ package org.infinispan.cdi;
 
 import org.infinispan.cdi.util.defaultbean.DefaultBean;
 import org.infinispan.cdi.util.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.util.logging.LogFactory;
 
 import javax.enterprise.inject.Produces;
 

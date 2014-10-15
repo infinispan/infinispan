@@ -38,7 +38,7 @@ import org.infinispan.cdi.util.Reflections;
 import org.infinispan.cdi.util.Synthetic;
 import org.infinispan.cdi.util.annotatedtypebuilder.AnnotatedTypeBuilder;
 import org.infinispan.cdi.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * Registers beans annotated @DefaultBean
@@ -417,7 +417,7 @@ public class DefaultBeanExtension implements Extension {
             event.addDefinitionError(e);
         }
     }
-    
+
     private <X> void fireBeanInstalledEvent(Bean<?> bean,  BeanManager beanManager) {
         beanManager.fireEvent(new DefaultBeanHolder(bean), InstalledLiteral.INSTANCE);
     }
@@ -612,7 +612,7 @@ public class DefaultBeanExtension implements Extension {
         }
 
     }
-    
+
     private Set<Annotation> postProcessQualifierSet(Set<Annotation> qualifiers) {
         if (qualifiers.isEmpty()) {
             qualifiers.add(DefaultLiteral.INSTANCE);

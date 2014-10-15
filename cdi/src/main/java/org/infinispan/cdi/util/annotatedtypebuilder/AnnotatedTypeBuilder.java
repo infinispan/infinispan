@@ -18,7 +18,7 @@ import javax.enterprise.inject.spi.AnnotatedType;
 
 import org.infinispan.cdi.util.Reflections;
 import org.infinispan.cdi.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.commons.logging.LogFactory;
 
 /**
  * <p> Class for constructing a new AnnotatedType. A new instance of builder
@@ -312,7 +312,7 @@ public class AnnotatedTypeBuilder<X> {
 
       return new AnnotatedTypeImpl<X>(javaClass, typeAnnotations.create(), fieldAnnotations, methodAnnotations, methodParameterAnnnotations, constructorAnnotations, constructorParameterAnnnotations, fieldTypes, methodParameterTypes, constructorParameterTypes);
    }
-   
+
    /**
     * Remove an annotation from the type
     *
@@ -323,7 +323,7 @@ public class AnnotatedTypeBuilder<X> {
        typeAnnotations.remove(annotationType);
        return this;
    }
-   
+
    /**
     * Remove an annotation from the specified method.
     *
@@ -352,7 +352,7 @@ public class AnnotatedTypeBuilder<X> {
    public AnnotatedTypeBuilder<X> removeFromMethod(AnnotatedMethod<? super X> method, Class<? extends Annotation> annotationType) {
        return removeFromMethod(method.getJavaMember(), annotationType);
    }
-   
+
    /**
     * Add an annotation to the specified method. If the method is not already
     * present, it will be added.
@@ -380,7 +380,7 @@ public class AnnotatedTypeBuilder<X> {
    public AnnotatedTypeBuilder<X> addToMethod(AnnotatedMethod<? super X> method, Annotation annotation) {
        return addToMethod(method.getJavaMember(), annotation);
    }
-   
+
    /**
     * Add an annotation to the specified method parameter. If the method is not
     * already present, it will be added. If the method parameter is not already
@@ -427,7 +427,7 @@ public class AnnotatedTypeBuilder<X> {
        }
        return this;
    }
-   
+
    /**
     * Add an annotation to the specified field. If the field is not already
     * present, it will be added.

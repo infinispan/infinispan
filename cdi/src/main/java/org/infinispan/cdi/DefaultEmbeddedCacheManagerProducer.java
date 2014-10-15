@@ -1,11 +1,9 @@
 package org.infinispan.cdi;
 
 import org.infinispan.cdi.util.defaultbean.DefaultBean;
-import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.util.logging.LogFactory;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
@@ -22,8 +20,6 @@ import javax.enterprise.inject.Produces;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 public class DefaultEmbeddedCacheManagerProducer {
-
-   private static final Log log = LogFactory.getLog(DefaultEmbeddedCacheManagerProducer.class, Log.class);
 
    /**
     * Produces the default embedded cache manager.
@@ -43,6 +39,7 @@ public class DefaultEmbeddedCacheManagerProducer {
     *
     * @param defaultEmbeddedCacheManager the default embedded cache manager.
     */
+   @SuppressWarnings("unused")
    private void stopCacheManager(@Disposes EmbeddedCacheManager defaultEmbeddedCacheManager) {
       defaultEmbeddedCacheManager.stop();
    }

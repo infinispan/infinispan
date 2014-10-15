@@ -47,6 +47,24 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi</artifactId>
+         <optional>true</optional>
+         <exclusions>
+            <exclusion>
+               <artifactId>infinispan-client-hotrod</artifactId>
+               <groupId>org.infinispan</groupId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-jcache</artifactId>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
          <groupId>org.jgroups</groupId>
          <artifactId>jgroups</artifactId>
          <optional>true</optional>
@@ -62,6 +80,12 @@
       <dependency>
          <groupId>org.jboss.spec.javax.transaction</groupId>
          <artifactId>jboss-transaction-api_1.1_spec</artifactId>
+      </dependency>
+      
+      <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cache-api</artifactId>
+         <scope>provided</scope>
       </dependency>
 
       <dependency>
@@ -96,7 +120,12 @@
                            <exclude>org.iq80.leveldb:leveldb-api:jar:</exclude>
                            <exclude>log4j:log4j:jar:</exclude>
                            <exclude>net.jcip:jcip-annotations:jar:</exclude>
+                           <exclude>org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.1_spec:jar:</exclude>
                            <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar:</exclude>
+                           <exclude>javax.annotation:jsr250-api:jar:</exclude>
+                           <exclude>javax.cache:cache-api:jar:</exclude>
+                           <exclude>javax.enterprise:cdi-api:jar:</exclude>
+                           <exclude>javax.inject:javax.inject:jar:</exclude>
                            <exclude>org.osgi:org.osgi.core:jar:</exclude>
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                         </excludes>
@@ -106,6 +135,10 @@
                         <relocation>
                            <pattern>com.google.common</pattern>
                            <shadedPattern>infinispan.com.google.common</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>org.jboss.logging</pattern>
+                           <shadedPattern>infinispan.org.jboss.logging</shadedPattern>
                         </relocation>
                      </relocations>
                      <transformers>
@@ -128,6 +161,9 @@
                            </resources>
                         </transformer>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.XmlAppendingTransformer">
+                           <resource>META-INF/beans.xml</resource>
+                        </transformer>
                      </transformers>
                   </configuration>
                </execution>
