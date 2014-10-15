@@ -1,0 +1,19 @@
+{
+  "name": "managementConsole",
+  "version": "0.0.0",
+  "dependencies": {
+    "modernizr": "2.8.x",
+    "angular": "1.2.x",
+    "jquery": "1.x.x",
+    "angular-ui-router": "0.2.x",
+    "bootstrap": "3.2.x",
+    "angular-ui-bootstrap-bower": "~0.11.2"
+  },
+  "devDependencies": {
+    "angular-mocks": "1.2.x"
+  },
+  "resolutions": {
+    "angular": "1.2.x",
+    "jquery": "1.x.x"
+  }
+}
