@@ -125,8 +125,9 @@ public class TransactionTable {
          clustered = true;
       }
 
+      boolean transactional = configuration.transaction().transactionMode().isTransactional();
       boolean totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-      if (clustered && !totalOrder) {
+      if (clustered && transactional && !totalOrder) {
          completedTransactionsInfo = new CompletedTransactionsInfo();
 
          // Periodically run a task to cleanup the transaction table from completed transactions.
