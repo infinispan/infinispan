@@ -211,9 +211,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
       // TODO Shouldn't PFERs be executed in a tx with total order?
       boolean topologyChanged = isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1;
-      if (command.isSuccessful() && topologyChanged) {
-         log.tracef("Cache topology changed while the command was executing: expected %d, got %d",
-               commandTopologyId, currentTopologyId);
+      log.tracef("Command topology id is %d, current topology id is %d, successful? %s",
+            commandTopologyId, currentTopologyId, command.isSuccessful());
+      // We need to check for topology changes on the origin even if the command was unsuccessful
+      // otherwise we execute the command on the correct primary owner, and then we still
+      // throw an OutdatedTopologyInterceptor when we return in EntryWrappingInterceptor.
+      if (topologyChanged) {
          throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
                commandTopologyId + ", got " + currentTopologyId);
       }

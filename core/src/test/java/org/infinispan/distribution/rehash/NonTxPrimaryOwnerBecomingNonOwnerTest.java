@@ -1,17 +1,15 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
-import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
+import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partionhandling.impl.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -39,15 +37,16 @@ import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.*;
 
 /**
- * Tests data loss during state transfer a backup owner of a key becomes the primary owner
- * modified key while a write operation is in progress.
- * See https://issues.jboss.org/browse/ISPN-3357
+ * Tests that a conditional write is retried properly if the write is unsuccessful on the primary owner
+ * because it became a non-owner and doesn't have the entry any more.
+ * 
+ * See https://issues.jboss.org/browse/ISPN-3830
  *
  * @author Dan Berindei
  */
-@Test(groups = "functional", testName = "distribution.rehash.NonTxBackupOwnerBecomingPrimaryOwnerTest")
+@Test(groups = "functional", testName = "distribution.rehash.NonTxPrimaryOwnerBecomingNonOwnerTest")
 @CleanupAfterMethod
-public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManagersTest {
+public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagersTest {
 
    private static final String CACHE_NAME = BasicCacheContainer.DEFAULT_CACHE_NAME;
 
@@ -138,19 +137,13 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s", key,
             duringJoinTopology.getCurrentCH().locateOwners(key), duringJoinTopology.getPendingCH().locateOwners(key));
 
-      // Every operation command will be blocked before reaching the distribution interceptor on cache1
-      CyclicBarrier beforeCache1Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor1 = new BlockingInterceptor(beforeCache1Barrier,
-            op.getCommandClass(), false, false);
-      cache1.addInterceptorBefore(blockingInterceptor1, NonTxDistributionInterceptor.class);
+      // Every operation command will be blocked before reaching the distribution interceptor on cache0 (the originator)
+      CyclicBarrier beforeCache0Barrier = new CyclicBarrier(2);
+      BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(beforeCache0Barrier,
+            op.getCommandClass(), false, true);
+      cache0.addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
 
-      // Every operation command will be blocked after returning to the distribution interceptor on cache2
-      CyclicBarrier afterCache2Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(afterCache2Barrier,
-            op.getCommandClass(), true, false);
-      cache2.addInterceptorBefore(blockingInterceptor2, StateTransferInterceptor.class);
-
-      // Put from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
+      // Write from cache0 with cache0 as primary owner, cache2 will become the primary owner for the retry
       Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
@@ -158,37 +151,39 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
          }
       });
 
-      // Wait for the command to be executed on cache2 and unblock it
-      afterCache2Barrier.await(10, TimeUnit.SECONDS);
-      afterCache2Barrier.await(10, TimeUnit.SECONDS);
+      // Block the write command on cache0
+      beforeCache0Barrier.await(10, TimeUnit.SECONDS);
 
-      // Allow the topology update to proceed on all the caches
-      int postJoinTopologyId = duringJoinTopologyId + 1;
+      // Allow the topology update to proceed on cache0
+      final int postJoinTopologyId = duringJoinTopologyId + 1;
       checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(0));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            CacheTopology cacheTopology = cache0.getComponentRegistry().getStateTransferManager().getCacheTopology();
+            return cacheTopology.getTopologyId() == postJoinTopologyId;
+         }
+      });
+
+      // Allow the command to proceed
+      log.tracef("Unblocking the write command on node " + address(1));
+      beforeCache0Barrier.await(10, TimeUnit.SECONDS);
+
+      // Wait for the retry after the OutdatedTopologyException
+      beforeCache0Barrier.await(10, TimeUnit.SECONDS);
+      // And allow it to proceed
+      beforeCache0Barrier.await(10, TimeUnit.SECONDS);
+
+      // Allow the topology update to proceed on the other caches
       checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(1));
       checkPoint.trigger("allow_topology_" + postJoinTopologyId + "_on_" + address(2));
 
       // Wait for the topology to change everywhere
       TestingUtil.waitForRehashToComplete(cache0, cache1, cache2);
 
-      // Allow the put command to throw an OutdatedTopologyException on cache1
-      log.tracef("Unblocking the put command on node " + address(1));
-      beforeCache1Barrier.await(10, TimeUnit.SECONDS);
-      beforeCache1Barrier.await(10, TimeUnit.SECONDS);
-
-      // Allow the retry to proceed on cache1
-      CacheTopology postJoinTopology = ltm0.getCacheTopology(CACHE_NAME);
-      if (postJoinTopology.getCurrentCH().locateOwners(key).contains(address(1))) {
-         beforeCache1Barrier.await(10, TimeUnit.SECONDS);
-         beforeCache1Barrier.await(10, TimeUnit.SECONDS);
-      }
-      // And allow the retry to finish successfully on cache2
-      afterCache2Barrier.await(10, TimeUnit.SECONDS);
-      afterCache2Barrier.await(10, TimeUnit.SECONDS);
-
-      // Check that the write command didn't fail
+      // Check that the put command didn't fail
       Object result = future.get(10, TimeUnit.SECONDS);
-      assertEquals(op.getReturnValueWithRetry(), result);
+      assertEquals(op.getReturnValue(), result);
       log.tracef("Write operation is done");
 
       // Check the value on all the nodes
@@ -220,7 +215,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
    }
 
    private void addBlockingLocalTopologyManager(final EmbeddedCacheManager manager, final CheckPoint checkPoint,
-                                                final int currentTopologyId)
+         final int currentTopologyId)
          throws InterruptedException {
       LocalTopologyManager component = TestingUtil.extractGlobalComponent(manager, LocalTopologyManager.class);
       LocalTopologyManager spyLtm = Mockito.spy(component);
