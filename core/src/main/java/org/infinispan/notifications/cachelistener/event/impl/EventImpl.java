@@ -37,7 +37,7 @@ import java.util.Map;
 @NotThreadSafe
 public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntriesEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
                                         CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
-                                        CacheEntryInvalidatedEvent, DataRehashedEvent, TopologyChangedEvent, CacheEntryEvictedEvent {
+                                        CacheEntryInvalidatedEvent, DataRehashedEvent, TopologyChangedEvent, CacheEntryEvictedEvent, Cloneable {
    private boolean pre = false; // by default events are after the fact
    private transient Cache<K, V> cache;
    private K key;
@@ -307,4 +307,12 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
       return entries;
    }
 
+   @Override
+   public EventImpl<K, V> clone() {
+      try {
+         return (EventImpl<K, V>) super.clone();
+      } catch (CloneNotSupportedException e) {
+         throw new RuntimeException("Should never happen!", e);
+      }
+   }
 }

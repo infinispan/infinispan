@@ -19,10 +19,7 @@ import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -39,6 +36,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterAsConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterAsKeyValueFilter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
@@ -53,7 +51,14 @@ import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -957,9 +962,10 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
        */
       @Override
       public void invoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner) {
+         CacheEntryEvent<K, V> resultingEvent;
          // See if this should be filtered first before evaluating
-         if (shouldInvoke(event, isLocalNodePrimaryOwner)) {
-            invokeNoChecks(event, false, false);
+         if ((resultingEvent = shouldInvoke(event, isLocalNodePrimaryOwner)) != null) {
+            invokeNoChecks(resultingEvent, false, filter == converter && filter instanceof CacheEventFilterConverter);
          }
       }
 
@@ -972,13 +978,17 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       public void invokeNoChecks(CacheEntryEvent<K, V> event, boolean skipQueue, boolean skipConverter) {
          // We run the converter first, this way the converter doesn't have to run serialized when enqueued and also
          // the handler doesn't have to worry about it
+         CacheEntryEvent<K, V> eventToUse;
          if (!skipConverter) {
-            convertValue(converter, event);
-         }
-         if (skipQueue) {
-            invocation.invoke(event);
+            eventToUse = convertValue(converter, event);
          } else {
-            doRealInvocation(event);
+            eventToUse = event;
+         }
+
+         if (skipQueue) {
+            invocation.invoke(eventToUse);
+         } else {
+            doRealInvocation(eventToUse);
          }
       }
 
@@ -986,20 +996,33 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          invocation.invoke(event);
       }
 
-      @Override
-      public boolean shouldInvoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner) {
-         if (onlyPrimary && !isLocalNodePrimaryOwner) return false;
+      protected CacheEntryEvent<K, V> shouldInvoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner) {
+         if (onlyPrimary && !isLocalNodePrimaryOwner) return null;
          if (event instanceof EventImpl) {
             EventImpl<K, V> eventImpl = (EventImpl<K, V>)event;
             // Cluster listeners only get post events
-            if (eventImpl.isPre() && clustered) return false;
+            if (eventImpl.isPre() && clustered) return null;
             EventType eventType;
             // Only use the filter if it was provided and we have an event that we can filter properly
-            if (filter != null && (eventType = getEvent(eventImpl)) != null &&
-                  !filter.accept(eventImpl.getKey(), eventImpl.getOldValue(), eventImpl.getOldMetadata(),
-                                 eventImpl.getValue(), eventImpl.getMetadata(), eventType)) return false;
+            if (filter != null && (eventType = getEvent(eventImpl)) != null) {
+               if (filter == converter && filter instanceof CacheEventFilterConverter) {
+                  Object newValue = ((CacheEventFilterConverter)filter).filterAndConvert(eventImpl.getKey(),
+                        eventImpl.getOldValue(), eventImpl.getOldMetadata(), eventImpl.getValue(),
+                        eventImpl.getMetadata(), eventType);
+                  if (newValue != null) {
+                     EventImpl<K, V> clone = eventImpl.clone();
+                     clone.setValue((V) newValue);
+                     return clone;
+                  } else {
+                     return null;
+                  }
+               } else if (!filter.accept(eventImpl.getKey(), eventImpl.getOldValue(), eventImpl.getOldMetadata(),
+                                 eventImpl.getValue(), eventImpl.getMetadata(), eventType)) {
+                  return null;
+               }
+            }
          }
-         return true;
+         return event;
       }
 
       // We can't currently filter events that don't implement CacheEntryEvent or CACHE_ENTRY_EVICTED events.  Basically
@@ -1045,19 +1068,30 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          return identifier;
       }
 
-      protected void convertValue(CacheEventConverter<? super K, ? super V, ?> converter, CacheEntryEvent<? extends K, ? extends V> event) {
+      protected CacheEntryEvent<K, V> convertValue(CacheEventConverter<? super K, ? super V, ?> converter, CacheEntryEvent<K, V> event) {
+         CacheEntryEvent<K, V> returnedEvent;
          if (converter != null) {
             if (event instanceof EventImpl) {
                // This is a bit hacky to let the C type be passed in for the V type
-               EventImpl<K, Object> eventImpl = (EventImpl<K, Object>)event;
-               eventImpl.setValue(converter.convert(eventImpl.getKey(), (V) eventImpl.getOldValue(),
-                                                    eventImpl.getOldMetadata(), (V) eventImpl.getValue(),
-                                                    eventImpl.getMetadata(), null));
+               EventImpl<K, V> eventImpl = (EventImpl<K, V>)event;
+               Object newValue = converter.convert(eventImpl.getKey(), (V) eventImpl.getOldValue(),
+                                 eventImpl.getOldMetadata(), (V) eventImpl.getValue(),
+                                 eventImpl.getMetadata(), null);
+               if (newValue != eventImpl.getValue()) {
+                  EventImpl<K, V> clone = eventImpl.clone();
+                  clone.setValue((V) newValue);
+                  returnedEvent = clone;
+               } else {
+                  returnedEvent = eventImpl;
+               }
             } else {
                throw new IllegalArgumentException("Provided event should be org.infinispan.notifications.cachelistener.eventEventImpl " +
                                                         "when a converter is being used!");
             }
+         } else {
+            returnedEvent = event;
          }
+         return returnedEvent;
       }
    }
 

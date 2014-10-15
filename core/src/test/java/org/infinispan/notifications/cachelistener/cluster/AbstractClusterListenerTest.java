@@ -506,4 +506,20 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       long newExpiration = 314159265;
       verifySimpleModification(cache0, key, newValue, newExpiration, clusterListener, newValue);
    }
+
+   @Test
+   public void testCacheEventFilterConverter() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(0, CACHE_NAME);
+
+      String convertedValue = "my-value";
+      FilterConverter filterConverter = new FilterConverter(true, convertedValue);
+      ClusterListener clusterListener = listener();
+      cache0.addListener(clusterListener, filterConverter, filterConverter);
+
+      MagicKey key = new MagicKey(cache1, cache2);
+
+      verifySimpleInsertion(cache0, key, "doesn't-matter", null, clusterListener, convertedValue);
+   }
 }

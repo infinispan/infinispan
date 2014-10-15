@@ -14,12 +14,12 @@ import org.infinispan.metadata.Metadata;
  */
 public abstract class AbstractKeyValueFilterConverter<K, V, C> implements KeyValueFilterConverter<K, V, C> {
    @Override
-   public C convert(K key, V value, Metadata metadata) {
+   public final C convert(K key, V value, Metadata metadata) {
       return filterAndConvert(key, value, metadata);
    }
 
    @Override
-   public boolean accept(K key, V value, Metadata metadata) {
+   public final boolean accept(K key, V value, Metadata metadata) {
       return filterAndConvert(key, value, metadata) != null;
    }
 }

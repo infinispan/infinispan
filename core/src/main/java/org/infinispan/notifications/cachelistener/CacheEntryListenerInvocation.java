@@ -21,8 +21,6 @@ public interface CacheEntryListenerInvocation<K, V> extends ListenerInvocation<E
 
    void invokeNoChecks(CacheEntryEvent<K, V> event, boolean skipQueue, boolean skipConverter);
 
-   boolean shouldInvoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner);
-
    boolean isClustered();
 
    UUID getIdentifier();
