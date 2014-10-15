@@ -8,11 +8,10 @@ import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CompositeCacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.PostCacheEventFilter;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
@@ -127,13 +126,27 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
          output.writeObject(object.identifier);
          output.writeObject(object.origin);
          output.writeObject(object.filter);
-         output.writeObject(object.converter);
+         if (object.filter == object.converter && object.filter instanceof CacheEventFilterConverter) {
+            output.writeBoolean(true);
+         } else {
+            output.writeBoolean(false);
+            output.writeObject(object.converter);
+         }
       }
 
       @Override
       public ClusterListenerReplicateCallable readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new ClusterListenerReplicateCallable((UUID)input.readObject(), (Address)input.readObject(),
-                                                     (CacheEventFilter)input.readObject(), (CacheEventConverter)input.readObject());
+         UUID id = (UUID)input.readObject();
+         Address address = (Address)input.readObject();
+         CacheEventFilter filter = (CacheEventFilter)input.readObject();
+         boolean sameConverter = input.readBoolean();
+         CacheEventConverter converter;
+         if (sameConverter) {
+            converter = (CacheEventFilterConverter)filter;
+         } else {
+            converter = (CacheEventConverter)input.readObject();
+         }
+         return new ClusterListenerReplicateCallable(id, address, filter, converter);
       }
 
       @Override

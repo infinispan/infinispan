@@ -4,12 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.MagicKey;
-import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.metadata.Metadata;
@@ -19,14 +14,13 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
@@ -34,7 +28,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.testng.annotations.Test;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -183,6 +176,38 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       @Override
       public String convert(Object key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
          return oldValue + (oldMetadata != null ? oldMetadata.lifespan() : "null") + newValue + (newMetadata != null ? newMetadata.lifespan() : "null");
+      }
+   }
+
+   protected static class FilterConverter implements CacheEventFilterConverter<Object, Object, Object>, Serializable {
+      private final boolean throwExceptionOnNonFilterAndConverterMethods;
+      private final Object convertedValue;
+
+      public FilterConverter(boolean throwExceptionOnNonFilterAndConverterMethods, Object convertedValue) {
+         this.throwExceptionOnNonFilterAndConverterMethods = throwExceptionOnNonFilterAndConverterMethods;
+         this.convertedValue = convertedValue;
+      }
+
+      @Override
+      public Object filterAndConvert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
+         return convertedValue;
+      }
+
+      @Override
+      public Object convert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
+         if (throwExceptionOnNonFilterAndConverterMethods) {
+            throw new AssertionError("Method should not have been invoked!");
+         }
+
+         return filterAndConvert(key, oldValue, oldMetadata, oldValue, oldMetadata, eventType);
+      }
+
+      @Override
+      public boolean accept(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
+         if (throwExceptionOnNonFilterAndConverterMethods) {
+            throw new AssertionError("Method should not have been invoked!");
+         }
+         return filterAndConvert(key, oldValue, oldMetadata, oldValue, oldMetadata, eventType) != null;
       }
    }
 

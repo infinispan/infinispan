@@ -1,8 +1,6 @@
 package org.infinispan.notifications;
 
-import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 
@@ -27,6 +25,12 @@ public interface FilteringListenable<K, V> extends Listenable {
    /**
     * Registers a listener that will be notified on events that pass the filter condition.  The value presented in the
     * notifications will be first converted using the provided converter if there is one.
+    * <p>
+    * Some implementations may provide optimizations when a
+    * {@link org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter} is provided as both arguments
+    * to the <b>filter</b> and <b>converter</b> arguments.  Note the provided object must have reference equality ie. (==)
+    * to be recognized.  This allows for the filter and conversion step to take place in the same method call reducing
+    * possible overhead.
     * @param listener The listener to callback upon event notifications.  Must not be null.
     * @param filter The filter to see if the notification should be sent to the listener.  Can be null.
     * @param converter The converter to apply to the entry before being sent to the listener.  Can be null.
