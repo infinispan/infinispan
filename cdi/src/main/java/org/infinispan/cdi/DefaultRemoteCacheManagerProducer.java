@@ -35,6 +35,7 @@ public class DefaultRemoteCacheManagerProducer {
     *
     * @param defaultRemoteCacheManager the default remote cache manager.
     */
+   @SuppressWarnings("unused")
    private void stopRemoteCacheManager(@Disposes RemoteCacheManager defaultRemoteCacheManager) {
       defaultRemoteCacheManager.stop();
    }

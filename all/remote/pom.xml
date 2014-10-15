@@ -45,6 +45,18 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi</artifactId>
+         <optional>true</optional>
+         <exclusions>
+            <exclusion>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-core</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
          <optional>true</optional>
@@ -71,12 +83,23 @@
                         <excludes>
                            <exclude>log4j:log4j:jar:</exclude>
                            <exclude>net.jcip:jcip-annotations:jar:</exclude>
+                           <exclude>org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.1_spec:jar:</exclude>
                            <exclude>org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar:</exclude>
+                           <exclude>javax.annotation:jsr250-api:jar:</exclude>
+                           <exclude>javax.cache:cache-api:jar:</exclude>
+                           <exclude>javax.enterprise:cdi-api:jar:</exclude>
+                           <exclude>javax.inject:javax.inject:jar:</exclude>
                            <exclude>org.osgi:org.osgi.core:jar:</exclude>
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                         </excludes>
                      </artifactSet>
                      <createSourcesJar>true</createSourcesJar>
+                     <relocations>
+                        <relocation>
+                           <pattern>org.jboss.logging</pattern>
+                           <shadedPattern>infinispan.org.jboss.logging</shadedPattern>
+                        </relocation>
+                     </relocations>
                      <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                            <manifestEntries>
@@ -96,6 +119,9 @@
                            </resources>
                         </transformer>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.XmlAppendingTransformer">
+                           <resource>META-INF/beans.xml</resource>
+                        </transformer>
                      </transformers>
                   </configuration>
                </execution>

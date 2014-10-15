@@ -3,7 +3,6 @@ package org.infinispan.cdi;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
-import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.Produces;
@@ -33,18 +32,18 @@ public class AdvancedCacheProducer {
 
    @Inject
    private CacheEventBridge cacheEventBridge;
-   
+
    @Inject
    private InfinispanExtension infinispanExtension;
-   
-   @Inject @Any 
+
+   @Inject @Any
    private Instance<EmbeddedCacheManager> cacheManagers;
-   
+
    @Inject
    private BeanManager beanManager;
-   
+
    @Inject
-   private CacheManagerEventBridge eventBridge; 
+   private CacheManagerEventBridge eventBridge;
 
    private CacheContainer getCacheContainer(Set<Annotation> qualifiers) {
       Instance<EmbeddedCacheManager> cacheContainer = cacheManagers.select(qualifiers.toArray(Reflections.EMPTY_ANNOTATION_ARRAY));
@@ -56,10 +55,10 @@ public class AdvancedCacheProducer {
    }
 
    public <K, V> AdvancedCache<K, V> getAdvancedCache(String name, Set<Annotation> qualifiers) {
-      
+
       // lazy register stuff
-      infinispanExtension.registerCacheConfigurations(eventBridge, cacheManagers, beanManager);
-       
+      infinispanExtension.getEmbeddedExtension().registerCacheConfigurations(eventBridge, cacheManagers, beanManager);
+
       Cache<K, V> cache;
       CacheContainer container = getCacheContainer(qualifiers);
       if (name.isEmpty()) {
@@ -75,11 +74,11 @@ public class AdvancedCacheProducer {
 
       return cache.getAdvancedCache();
    }
-   
+
    @Produces
    <K, V> AdvancedCache<K, V> getDefaultAdvancedCache() {
        // lazy register stuff
-       infinispanExtension.registerCacheConfigurations(eventBridge, cacheManagers, beanManager);
+       infinispanExtension.getEmbeddedExtension().registerCacheConfigurations(eventBridge, cacheManagers, beanManager);
        return defaultCacheContainer.<K, V>getCache().getAdvancedCache();
    }
 }

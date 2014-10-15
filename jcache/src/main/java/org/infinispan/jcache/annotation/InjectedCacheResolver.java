@@ -4,7 +4,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.jcache.JCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.cdi.InfinispanExtension;
-import org.infinispan.cdi.InfinispanExtension.InstalledCacheManager;
+import org.infinispan.cdi.InfinispanExtensionEmbedded.InstalledCacheManager;
 
 import javax.cache.Cache;
 import javax.cache.Caching;
@@ -45,7 +45,7 @@ public class InjectedCacheResolver implements CacheResolver {
 
    @Inject
    public void inject(InfinispanExtension extension, BeanManager beanManager) {
-      Set<InstalledCacheManager> installedCacheManagers = extension.getInstalledEmbeddedCacheManagers(beanManager);
+      Set<InstalledCacheManager> installedCacheManagers = extension.getEmbeddedExtension().getInstalledEmbeddedCacheManagers(beanManager);
       for (InstalledCacheManager installedCacheManager : installedCacheManagers) {
          JCacheManager jcacheManager = toJCacheManager(installedCacheManager.getCacheManager());
          if (installedCacheManager.isDefault()) {

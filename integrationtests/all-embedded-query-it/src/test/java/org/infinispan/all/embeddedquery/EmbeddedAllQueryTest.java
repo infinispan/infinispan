@@ -1,6 +1,6 @@
 package org.infinispan.all.embeddedquery;
 
-import static org.testng.AssertJUnit.assertEquals;
+import static org.junit.Assert.*;
 
 import org.apache.lucene.search.Query;
 import org.infinispan.Cache;
@@ -11,11 +11,11 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
-@Test
 public class EmbeddedAllQueryTest {
 
+   @Test
    public void testAllEmbedded() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder

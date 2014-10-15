@@ -1,13 +1,18 @@
 package org.infinispan.all.remote;
 
-import org.infinispan.client.hotrod.*;
-import org.infinispan.client.hotrod.configuration.*;
-import org.testng.annotations.Test;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.junit.Test;
 
-@Test
 public class RemoteAllTest {
 
+   @Test
    public void testRemoteAll() {
-      RemoteCacheManager rcm = new RemoteCacheManager();
+      RemoteCacheManager rcm = null;
+      try {
+         rcm = new RemoteCacheManager();
+      } finally {
+         if (rcm != null)
+            rcm.stop();
+      }
    }
 }
