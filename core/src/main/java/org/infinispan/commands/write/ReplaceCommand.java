@@ -63,7 +63,8 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
          return null;
       }
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      if (valueMatcher.matches(e, oldValue, newValue, valueEquivalence)) {
+      // We need the null check as in non-tx caches we don't always wrap the entry on the origin
+      if (e != null && valueMatcher.matches(e, oldValue, newValue, valueEquivalence)) {
          e.setChanged(true);
          Object old = e.setValue(newValue);
          if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
