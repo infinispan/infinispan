@@ -42,7 +42,7 @@ Access to a cache manager or a cache is controlled by using a list of required p
 
 Some permissions might need to be combined with others in order to be useful. For example, suppose you want to allow only "supervisors" to be able to run map/reduce jobs, while "standard" users can only perform puts and gets, you would define the following mappings:
 
-[code,xml]
+[source,xml]
 ----
 <role name="standard" permission="READ WRITE" />
 <role name="supervisors" permission="READ WRITE EXEC BULK"/>
@@ -175,7 +175,9 @@ The audit logger is configured at the cache container authorization level:
 
 In embedded mode the default audit logger is +org.infinispan.security.impl.NullAuditLogger+ which does nothing. Infinispan also comes with the +org.infinispan.security.impl.LoggingAuditLogger+ which outputs audit logs through the available logging framework (e.g. Log4J) at level TRACE and category AUDIT. These logs look like: 
 
+----
 [ALLOW|DENY] user READ cache[defaultCache]
+----
 
 Using an appropriate logging appender it is possible to send the AUDIT category either to a log file, a JMS queue, a database, etc.
 The +user+ which is included in the log above is the name of the first non-+java.security.acl.Group+ principal in the Subject.
