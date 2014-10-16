@@ -253,7 +253,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
             // In compatibility mode, version could be null if stored via embedded
             val version = event.getMetadata.version()
             val dataVersion = if (version == null) 0 else version.asInstanceOf[NumericVersion].getVersion
-            delegate.sendEvent(key, value, dataVersion, event)
+            delegate.sendEvent(key.asInstanceOf[Array[Byte]], value.asInstanceOf[Array[Byte]], dataVersion, event)
          } else {
             log.debug("Channel disconnected, remove event sender listener")
             event.getCache.removeListener(this)

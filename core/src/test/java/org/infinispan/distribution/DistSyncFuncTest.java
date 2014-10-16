@@ -6,6 +6,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.ObjectDuplicator;
+import org.infinispan.context.Flag;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -229,15 +230,15 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
          Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
          Collection expValueEntries = ObjectDuplicator.duplicateCollection(expValues);
 
-         Set keys = c.keySet();
+         Set keys = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet();
          for (Object key : keys) assert expKeys.remove(key);
          assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
 
-         Collection values = c.values();
+         Collection values = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).values();
          for (Object value : values) assert expValues.remove(value);
          assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
 
-         Set<Map.Entry> entries = c.entrySet();
+         Set<Map.Entry> entries = c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet();
          for (Map.Entry entry : entries) {
             assert expKeyEntries.remove(entry.getKey());
             assert expValueEntries.remove(entry.getValue());

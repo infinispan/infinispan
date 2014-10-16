@@ -1,5 +1,6 @@
 package org.infinispan.iteration.impl;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -18,12 +19,12 @@ import java.util.Map;
  */
 public class EntryIterableImpl<K, V> extends TrackingEntryIterable<K, V, V> implements EntryIterable<K, V> {
    public EntryIterableImpl(EntryRetriever<K, V> entryRetriver, KeyValueFilter<? super K, ? super V> filter,
-                            EnumSet<Flag> flags) {
-      super(entryRetriver, filter, null, flags);
+                            EnumSet<Flag> flags, Cache<K, V> cache) {
+      super(entryRetriver, filter, null, flags, cache);
    }
 
    @Override
    public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, ? extends C> converter) {
-      return new TrackingEntryIterable<>(entryRetriever, filter, converter, flags);
+      return new TrackingEntryIterable<>(entryRetriever, filter, converter, flags, cache);
    }
 }

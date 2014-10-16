@@ -7,6 +7,7 @@ import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.InterceptorChain;
@@ -32,9 +33,9 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.Serializable;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -243,55 +244,311 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       }
       assertTrue("Did not see keys " + expKeyEntries + " in iterator!", expKeyEntries.isEmpty());
       assertTrue("Did not see keys " + expValueEntries + " in iterator!", expValueEntries.isEmpty());
+   }
 
-      Collection[] collections = new Collection[]{keys, values, entries};
+   public void testUnsupportedKeyValueCollectionOperations() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      Set<Object> keys = cache(0, "replSync").keySet();
+      Collection<Object> values = cache(0, "replSync").values();
+      Collection[] collections = new Collection[]{keys, values};
+
       Object newObj = new Object();
       List newObjCol = new ArrayList();
       newObjCol.add(newObj);
       for (Collection col : collections) {
          try {
             col.add(newObj);
-            assertTrue("Should have thrown a UnsupportedOperationException", false);
+            fail("Should have thrown a UnsupportedOperationException");
          } catch (UnsupportedOperationException uoe) {
+         } catch (ClassCastException e) {
+            // Ignore class cast in expired filtered set because
+            // you cannot really add an Object type instance.
          }
          try {
             col.addAll(newObjCol);
-            assertTrue("Should have thrown a UnsupportedOperationException", false);
-         } catch (UnsupportedOperationException uoe) {
-         }
-
-         try {
-            col.clear();
-            assertTrue("Should have thrown a UnsupportedOperationException", false);
-         } catch (UnsupportedOperationException uoe) {
-         }
-
-         try {
-            col.remove(key1);
-            assertTrue("Should have thrown a UnsupportedOperationException", false);
-         } catch (UnsupportedOperationException uoe) {
-         }
-
-         try {
-            col.removeAll(newObjCol);
-            assertTrue("Should have thrown a UnsupportedOperationException", false);
-         } catch (UnsupportedOperationException uoe) {
-         }
-
-         try {
-            col.retainAll(newObjCol);
-            assertTrue("Should have thrown a UnsupportedOperationException", false);
+            fail("Should have thrown a UnsupportedOperationException");
          } catch (UnsupportedOperationException uoe) {
          }
       }
+   }
+
+   public void testAddMethodsForEntryCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      Set<Map.Entry<Object, Object>> entries = cache(0, "replSync").entrySet();
+
+      Map.Entry entry = new ImmortalCacheEntry("4", "four");
+      entries.add(entry);
+
+      assertEquals(4, cache(0, "replSync").size());
+
+      List<Map.Entry<Object, Object>> entryCollection = new ArrayList<>(2);
+
+      entryCollection.add(new ImmortalCacheEntry("5", "five"));
+      entryCollection.add(new ImmortalCacheEntry("6", "six"));
+
+      entries.addAll(entryCollection);
+
+      assertEquals(6, cache(0, "replSync").size());
+   }
+
+   public void testRemoveMethodOfKeyValueEntryCollections() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      Set<Object> keys = cache(0, "replSync").keySet();
+      keys.remove(key1);
+
+      assertEquals(2, cache(0, "replSync").size());
+
+      Collection<Object> values = cache(0, "replSync").values();
+      values.remove(value2);
+
+      assertEquals(1, cache(0, "replSync").size());
+
+      Set<Map.Entry<Object, Object>> entries = cache(0, "replSync").entrySet();
+      entries.remove(new ImmortalCacheEntry(key3, value3));
+
+      assertEquals(0, cache(0, "replSync").size());
+   }
+
+   public void testClearMethodOfKeyCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      Set<Object> keys = cache(0, "replSync").keySet();
+      keys.clear();
+
+      assertEquals(0, cache(0, "replSync").size());
+   }
+
+   public void testClearMethodOfValuesCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      Collection<Object> values = cache(0, "replSync").values();
+      values.clear();
+
+      assertEquals(0, cache(0, "replSync").size());
+   }
+
+   public void testClearMethodOfEntryCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      Set<Map.Entry<Object, Object>> entries = cache(0, "replSync").entrySet();
+      entries.clear();
+
+      assertEquals(0, cache(0, "replSync").size());
+   }
+
+   public void testRemoveAllMethodOfKeyCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      List<String> keyCollection = new ArrayList<>(2);
+
+      keyCollection.add(key2);
+      keyCollection.add(key3);
+
+      Collection<Object> keys = cache(0, "replSync").keySet();
+      keys.removeAll(keyCollection);
+
+      assertEquals(1, cache(0, "replSync").size());
+   }
+
+   public void testRemoveAllMethodOfValuesCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      List<String> valueCollection = new ArrayList<>(2);
+
+      valueCollection.add(value1);
+      valueCollection.add(value2);
+
+      Collection<Object> values = cache(0, "replSync").values();
+      values.removeAll(valueCollection);
+
+      assertEquals(1, cache(0, "replSync").size());
+   }
+
+   public void testRemoveAllMethodOfEntryCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      List<Map.Entry> entryCollection = new ArrayList<>(2);
+
+      entryCollection.add(new ImmortalCacheEntry(key1, value1));
+      entryCollection.add(new ImmortalCacheEntry(key3, value3));
+
+      Set<Map.Entry<Object, Object>> entries = cache(0, "replSync").entrySet();
+      entries.removeAll(entryCollection);
+
+      assertEquals(1, cache(0, "replSync").size());
+   }
+
+   public void testRetainAllMethodOfKeyCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      List<String> keyCollection = new ArrayList<>(2);
+
+      keyCollection.add(key2);
+      keyCollection.add(key3);
+      keyCollection.add("6");
+
+      Collection<Object> keys = cache(0, "replSync").keySet();
+      keys.retainAll(keyCollection);
+
+      assertEquals(2, cache(0, "replSync").size());
+   }
+
+   public void testRetainAllMethodOfValuesCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      List<String> valueCollection = new ArrayList<>(2);
+
+      valueCollection.add(value1);
+      valueCollection.add(value2);
+      valueCollection.add("5");
+
+      Collection<Object> values = cache(0, "replSync").values();
+      values.retainAll(valueCollection);
+
+      assertEquals(2, cache(0, "replSync").size());
+   }
+
+   public void testRetainAllMethodOfEntryCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      List<Map.Entry> entryCollection = new ArrayList<>(3);
+
+      entryCollection.add(new ImmortalCacheEntry(key1, value1));
+      entryCollection.add(new ImmortalCacheEntry(key3, value3));
+      entryCollection.add(new ImmortalCacheEntry("4", "5"));
+
+      Set<Map.Entry<Object, Object>> entries = cache(0, "replSync").entrySet();
+      entries.retainAll(entryCollection);
+
+      assertEquals(2, cache(0, "replSync").size());
+   }
+
+   public void testEntrySetValueFromEntryCollections() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+
+      Set<Map.Entry<Object, Object>> entries = cache(0, "replSync").entrySet();
+      String newString = "new-value";
 
       for (Map.Entry entry : entries) {
-         try {
-            entry.setValue(newObj);
-            assertTrue("Should have thrown a UnsupportedOperationException", false);
-         } catch (UnsupportedOperationException uoe) {
-         }
+         entry.setValue(newString);
       }
+
+      assertEquals(3, cache(0, "replSync").size());
+
+      assertEquals(newString, cache(0, "replSync").get(key1));
+      assertEquals(newString, cache(0, "replSync").get(key2));
+      assertEquals(newString, cache(0, "replSync").get(key3));
+   }
+
+   public void testKeyValueEntryCollections() {
+      String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache(0, "replSync").putAll(m);
+      assert 3 == cache(0, "replSync").size() && 3 == cache(0, "replSync").keySet().size() && 3 == cache(0, "replSync").values().size() && 3 == cache(0, "replSync").entrySet().size();
+
+      Set expKeys = new HashSet();
+      expKeys.add(key1);
+      expKeys.add(key2);
+      expKeys.add(key3);
+
+      Set expValues = new HashSet();
+      expValues.add(value1);
+      expValues.add(value2);
+      expValues.add(value3);
+
+      Set expKeyEntries = ObjectDuplicator.duplicateSet(expKeys);
+      Set expValueEntries = ObjectDuplicator.duplicateSet(expValues);
+
+      Set<Object> keys = cache(0, "replSync").keySet();
+      for (Object key : keys) {
+         assert expKeys.remove(key);
+      }
+      assert expKeys.isEmpty() : "Did not see keys " + expKeys + " in iterator!";
+
+      Collection<Object> values = cache(0, "replSync").values();
+      for (Object value : values) {
+         assert expValues.remove(value);
+      }
+      assert expValues.isEmpty() : "Did not see keys " + expValues + " in iterator!";
+
+      Set<Map.Entry<Object, Object>> entries = cache(0, "replSync").entrySet();
+      for (Map.Entry entry : entries) {
+         assert expKeyEntries.remove(entry.getKey());
+         assert expValueEntries.remove(entry.getValue());
+      }
+      assert expKeyEntries.isEmpty() : "Did not see keys " + expKeyEntries + " in iterator!";
+      assert expValueEntries.isEmpty() : "Did not see keys " + expValueEntries + " in iterator!";
    }
 
    public void testEqualsAndHashCode() throws Exception {

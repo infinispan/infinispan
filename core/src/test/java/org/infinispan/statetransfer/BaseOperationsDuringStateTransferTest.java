@@ -372,7 +372,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       log.info("Added a new node");
 
       // state transfer is blocked, no keys should be present on node B yet
-      assertTrue(cache(1).keySet().isEmpty());
+      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // wait for state transfer on node B to progress to the point where data segments are about to be applied
       if (!applyStateStartedLatch.await(15, TimeUnit.SECONDS)) {
@@ -380,7 +380,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       }
 
       // state transfer is blocked, no keys should be present on node B yet
-      assertTrue(cache(1).keySet().isEmpty());
+      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // initiate a GET
       Future<Object> getFuture = fork(new Callable<Object>() {
@@ -402,7 +402,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       // wait for state transfer to end
       TestingUtil.waitForRehashToComplete(cache(0), cache(1));
 
-      assertEquals(1, cache(1).keySet().size());
+      assertEquals(1, cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().size());
 
       // allow GET to continue
       getKeyProceedLatch.countDown();

@@ -21,9 +21,9 @@ class HotRodTypeConverter extends TypeConverter[AnyRef, AnyRef, AnyRef, AnyRef] 
 
    override def boxValue(value: AnyRef): AnyRef = unmarshall(value)
 
-   override def unboxKey(target: AnyRef): Array[Byte] = marshall(target)
+   override def unboxKey(target: AnyRef): AnyRef = marshall(target)
 
-   override def unboxValue(target: AnyRef): Array[Byte] = marshall(target)
+   override def unboxValue(target: AnyRef): AnyRef = marshall(target)
 
    override def supportsInvocation(flag: Flag): Boolean =
       if (flag == Flag.OPERATION_HOTROD) true else false
@@ -40,8 +40,9 @@ class HotRodTypeConverter extends TypeConverter[AnyRef, AnyRef, AnyRef, AnyRef] 
       }
    }
 
-   private def marshall(source: AnyRef): Array[Byte] =
-      if (source != null) marshaller.objectToByteBuffer(source) else null
+   private def marshall(source: AnyRef): AnyRef = {
+      if (source != null) { if (marshaller.isMarshallable(source)) marshaller.objectToByteBuffer(source) else source } else null
+   }
 
 }
 

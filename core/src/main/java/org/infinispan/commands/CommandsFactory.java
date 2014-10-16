@@ -1,9 +1,12 @@
 package org.infinispan.commands;
 
+import org.infinispan.Cache;
+import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
+import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
@@ -157,6 +160,14 @@ public interface CommandsFactory {
     * @return a EntrySetCommand
     */
    EntrySetCommand buildEntrySetCommand(Set<Flag> flags);
+
+   /**
+    * Builds a EntryRetrievalCommand
+    * @param flags Command flags provided by cache
+    * @param filter The filter used for the iteration process
+    * @return a EntryRetrievalCommand
+    */
+   EntryRetrievalCommand buildEntryRetrievalCommand(Set<Flag> flags, KeyValueFilter filter);
 
    /**
     * Builds a PutMapCommand

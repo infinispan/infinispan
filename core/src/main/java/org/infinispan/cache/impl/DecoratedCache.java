@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.util.CloseableIteratorCollection;
+import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -421,7 +423,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
-   public Set<K> keySet() {
+   public CloseableIteratorSet<K> keySet() {
       return cacheImplementation.keySet(flags, classLoader.get());
    }
 
@@ -436,12 +438,12 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
-   public Collection<V> values() {
+   public CloseableIteratorCollection<V> values() {
       return cacheImplementation.values(flags, classLoader.get());
    }
 
    @Override
-   public Set<Entry<K, V>> entrySet() {
+   public CloseableIteratorSet<Entry<K, V>> entrySet() {
       return cacheImplementation.entrySet(flags, classLoader.get());
    }
 
@@ -513,6 +515,6 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
 
    @Override
    public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
-      return cacheImplementation.filterEntries(filter, flags);
+      return cacheImplementation.filterEntries(filter, flags, classLoader.get());
    }
 }

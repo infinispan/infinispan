@@ -2,6 +2,7 @@ package org.infinispan.api;
 
 import org.infinispan.commons.util.ObjectDuplicator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -133,7 +134,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       assert cache.entrySet().isEmpty();
    }
 
-   public void testImmutabilityOfKeyValueEntryCollections() {
+   public void testUnsupportedKeyValueCollectionOperations() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
       Map<String, String> m = new HashMap<String, String>();
       m.put(key1, value1);
@@ -143,8 +144,8 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       Set<Object> keys = cache.keySet();
       Collection<Object> values = cache.values();
-      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
-      Collection[] collections = new Collection[]{keys, values, entries};
+      Collection[] collections = new Collection[]{keys, values};
+
       Object newObj = new Object();
       List newObjCol = new ArrayList();
       newObjCol.add(newObj);
@@ -162,39 +163,237 @@ public class APINonTxTest extends SingleCacheManagerTest {
             assert false : "Should have thrown a UnsupportedOperationException";
          } catch (UnsupportedOperationException uoe) {
          }
-
-         try {
-            col.clear();
-            assert false : "Should have thrown a UnsupportedOperationException";
-         } catch (UnsupportedOperationException uoe) {
-         }
-
-         try {
-            col.remove(key1);
-            assert false : "Should have thrown a UnsupportedOperationException";
-         } catch (UnsupportedOperationException uoe) {
-         }
-
-         try {
-            col.removeAll(newObjCol);
-            assert false : "Should have thrown a UnsupportedOperationException";
-         } catch (UnsupportedOperationException uoe) {
-         }
-
-         try {
-            col.retainAll(newObjCol);
-            assert false : "Should have thrown a UnsupportedOperationException";
-         } catch (UnsupportedOperationException uoe) {
-         }
       }
+   }
+
+   public void testAddMethodsForEntryCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
+
+      Map.Entry entry = new ImmortalCacheEntry("4", "four");
+      entries.add(entry);
+
+      assertEquals(4, cache.size());
+
+      List<Map.Entry<Object, Object>> entryCollection = new ArrayList<>(2);
+
+      entryCollection.add(new ImmortalCacheEntry("5", "five"));
+      entryCollection.add(new ImmortalCacheEntry("6", "six"));
+
+      entries.addAll(entryCollection);
+
+      assertEquals(6, cache.size());
+   }
+
+   public void testRemoveMethodOfKeyValueEntryCollections() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      Set<Object> keys = cache.keySet();
+      keys.remove(key1);
+
+      assertEquals(2, cache.size());
+
+      Collection<Object> values = cache.values();
+      values.remove(value2);
+
+      assertEquals(1, cache.size());
+
+      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
+      entries.remove(new ImmortalCacheEntry(key3, value3));
+
+      assertEquals(0, cache.size());
+   }
+
+   public void testClearMethodOfKeyCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      Set<Object> keys = cache.keySet();
+      keys.clear();
+
+      assertEquals(0, cache.size());
+   }
+
+   public void testClearMethodOfValuesCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      Collection<Object> values = cache.values();
+      values.clear();
+
+      assertEquals(0, cache.size());
+   }
+
+   public void testClearMethodOfEntryCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
+      entries.clear();
+
+      assertEquals(0, cache.size());
+   }
+
+   public void testRemoveAllMethodOfKeyCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      List<String> keyCollection = new ArrayList<>(2);
+
+      keyCollection.add(key2);
+      keyCollection.add(key3);
+
+      Collection<Object> keys = cache.keySet();
+      keys.removeAll(keyCollection);
+
+      assertEquals(1, cache.size());
+   }
+
+   public void testRemoveAllMethodOfValuesCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      List<String> valueCollection = new ArrayList<>(2);
+
+      valueCollection.add(value1);
+      valueCollection.add(value2);
+
+      Collection<Object> values = cache.values();
+      values.removeAll(valueCollection);
+
+      assertEquals(1, cache.size());
+   }
+
+   public void testRemoveAllMethodOfEntryCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      List<Map.Entry> entryCollection = new ArrayList<>(2);
+
+      entryCollection.add(new ImmortalCacheEntry(key1, value1));
+      entryCollection.add(new ImmortalCacheEntry(key3, value3));
+
+      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
+      entries.removeAll(entryCollection);
+
+      assertEquals(1, cache.size());
+   }
+
+   public void testRetainAllMethodOfKeyCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      List<String> keyCollection = new ArrayList<>(2);
+
+      keyCollection.add(key2);
+      keyCollection.add(key3);
+      keyCollection.add("6");
+
+      Collection<Object> keys = cache.keySet();
+      keys.retainAll(keyCollection);
+
+      assertEquals(2, cache.size());
+   }
+
+   public void testRetainAllMethodOfValuesCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      List<String> valueCollection = new ArrayList<>(2);
+
+      valueCollection.add(value1);
+      valueCollection.add(value2);
+      valueCollection.add("5");
+
+      Collection<Object> values = cache.values();
+      values.retainAll(valueCollection);
+
+      assertEquals(2, cache.size());
+   }
+
+   public void testRetainAllMethodOfEntryCollection() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      List<Map.Entry> entryCollection = new ArrayList<>(3);
+
+      entryCollection.add(new ImmortalCacheEntry(key1, value1));
+      entryCollection.add(new ImmortalCacheEntry(key3, value3));
+      entryCollection.add(new ImmortalCacheEntry("4", "5"));
+
+      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
+      entries.retainAll(entryCollection);
+
+      assertEquals(2, cache.size());
+   }
+
+   public void testEntrySetValueFromEntryCollections() {
+      final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
+      Map<String, String> m = new HashMap<String, String>();
+      m.put(key1, value1);
+      m.put(key2, value2);
+      m.put(key3, value3);
+      cache.putAll(m);
+
+      Set<Map.Entry<Object, Object>> entries = cache.entrySet();
+      Object newObj = new Object();
 
       for (Map.Entry entry : entries) {
-         try {
-            entry.setValue(newObj);
-            assert false : "Should have thrown a UnsupportedOperationException";
-         } catch (UnsupportedOperationException uoe) {
-         }
+         entry.setValue(newObj);
       }
+
+      assertEquals(3, cache.size());
+
+      assertEquals(newObj, cache.get(key1));
+      assertEquals(newObj, cache.get(key2));
+      assertEquals(newObj, cache.get(key3));
    }
 
    public void testKeyValueEntryCollections() {

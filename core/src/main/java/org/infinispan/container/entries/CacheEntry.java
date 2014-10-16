@@ -129,6 +129,6 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
     */
    boolean undelete(boolean doUndelete);
 
-   public CacheEntry clone();
+   public CacheEntry<K, V> clone();
 
 }

@@ -3,9 +3,12 @@ package org.infinispan.interceptors;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
+
+import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
@@ -29,6 +32,8 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.iteration.EntryIterable;
+import org.infinispan.iteration.impl.TransactionAwareEntryIterable;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -78,6 +83,7 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
    private boolean useOnePhaseForAutoCommitTx;
    private boolean useVersioning;
    private CommandsFactory commandsFactory;
+   private Cache cache;
 
    @Override
    protected Log getLog() {
@@ -86,13 +92,14 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
 
    @Inject
    public void init(TransactionTable txTable, Configuration configuration, TransactionCoordinator txCoordinator, RpcManager rpcManager,
-                    RecoveryManager recoveryManager, CommandsFactory commandsFactory) {
+                    RecoveryManager recoveryManager, CommandsFactory commandsFactory, Cache cache) {
       this.cacheConfiguration = configuration;
       this.txTable = txTable;
       this.txCoordinator = txCoordinator;
       this.rpcManager = rpcManager;
       this.recoveryManager = recoveryManager;
       this.commandsFactory = commandsFactory;
+      this.cache = cache;
 
       statisticsEnabled = cacheConfiguration.jmxStatistics().enabled();
       isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
@@ -290,6 +297,18 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       return enlistReadAndInvokeNext(ctx, command);
+   }
+
+   @Override
+   public EntryIterable visitEntryRetrievalCommand(InvocationContext ctx, EntryRetrievalCommand command) throws Throwable {
+      // Enlistment shouldn't be needed for this command.  The remove on the iterator will internally make a remove
+      // command and the iterator itself does not place read values into the context.
+      EntryIterable iterable = (EntryIterable) super.visitEntryRetrievalCommand(ctx, command);
+      if (ctx.isInTxScope()) {
+         return new TransactionAwareEntryIterable(iterable, (TxInvocationContext<LocalTransaction>) ctx, cache);
+      } else {
+         return iterable;
+      }
    }
 
    private Object enlistReadAndInvokeNext(InvocationContext ctx, VisitableCommand command) throws Throwable {

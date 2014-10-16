@@ -160,25 +160,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      Object keys = super.visitKeySetCommand(ctx, command);
-      if (enabled && !hasSkipLoadFlag(command)) {
-         Set<Object> keysSet = (Set<Object>) keys;
-         final ConcurrentHashSet<Object> union = new ConcurrentHashSet<Object>();
-         for (Object k : keysSet)
-            union.add(k);
-         persistenceManager.processOnAllStores(new CollectionKeyFilter(union), new AdvancedCacheLoader.CacheLoaderTask() {
-            @Override
-            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-               union.add(marshalledEntry.getKey());
-            }
-         }, false, false);
-         return Collections.unmodifiableSet(union);
-      }
-      return keys;
-   }
-
-   @Override
    public Object visitGetKeysInGroupCommand(final InvocationContext ctx, GetKeysInGroupCommand command) throws Throwable {
       final String groupName = command.getGroupName();
       if (!command.isGroupOwner() || !enabled || hasSkipLoadFlag(command)) {
@@ -197,45 +178,6 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
          }
       }, true, true);
       return invokeNextInterceptor(ctx, command);
-   }
-
-   @Override
-   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      Object entrySet = super.visitEntrySetCommand(ctx, command);
-      if (enabled && !hasSkipLoadFlag(command)) {
-         final ConcurrentHashSet<InternalCacheEntry> union = new ConcurrentHashSet<InternalCacheEntry>();
-         final ConcurrentHashSet<Object> processedKeys = new ConcurrentHashSet<Object>();
-         for (InternalCacheEntry ice : (Set<InternalCacheEntry>)entrySet)
-            processedKeys.add(ice.getKey());
-         persistenceManager.processOnAllStores(new CollectionKeyFilter(processedKeys), new AdvancedCacheLoader.CacheLoaderTask() {
-            @Override
-            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-               union.add(iceFactory.create(marshalledEntry.getKey(), marshalledEntry.getValue(), marshalledEntry.getMetadata()));
-            }
-         }, true, true);
-         for (InternalCacheEntry ice : (Set<InternalCacheEntry>) entrySet)
-            union.add(ice);
-         return Collections.unmodifiableSet(union);
-      }
-      return entrySet;
-   }
-
-   @Override
-   public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
-      Object values = super.visitValuesCommand(ctx, command);
-      if (enabled && !hasSkipLoadFlag(command)) {
-         final ConcurrentLinkedQueue<Object> result = new ConcurrentLinkedQueue<Object>();
-         persistenceManager.processOnAllStores(null, new AdvancedCacheLoader.CacheLoaderTask() {
-            @Override
-            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-               result.add(marshalledEntry.getValue());
-            }
-         }, true, false);
-
-         result.addAll((Collection<Object>)values);
-         return result;
-      }
-      return values;
    }
 
    /**

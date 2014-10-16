@@ -3,7 +3,9 @@
  import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
+ import org.infinispan.commons.util.CloseableIteratorCollection;
+ import org.infinispan.commons.util.CloseableIteratorSet;
+ import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -488,7 +490,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public Set<K> keySet() {
+   public CloseableIteratorSet<K> keySet() {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
       return delegate.keySet();
    }
@@ -535,7 +537,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public Collection<V> values() {
+   public CloseableIteratorCollection<V> values() {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
       return delegate.values();
    }
@@ -553,7 +555,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public Set<java.util.Map.Entry<K, V>> entrySet() {
+   public CloseableIteratorSet<Entry<K, V>> entrySet() {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
       return delegate.entrySet();
    }

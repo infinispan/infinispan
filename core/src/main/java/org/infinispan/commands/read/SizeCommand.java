@@ -49,10 +49,10 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
             if (value != null) {
                keys.add(entry.getKey());
                if (!value.isRemoved()) {
-                  size++;
+                  if (size++ == Integer.MAX_VALUE) {return Integer.MAX_VALUE;}
                }
             } else {
-               size++;
+               if (size++ == Integer.MAX_VALUE) {return Integer.MAX_VALUE;}
             }
          }
       }
@@ -60,7 +60,7 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
       // We can only add context entries if we didn't see it in iterator and it isn't removed
       for (Map.Entry<Object, CacheEntry> entry : contextEntries.entrySet()) {
          if (!keys.contains(entry.getKey()) && !entry.getValue().isRemoved()) {
-            size++;
+            if (size++ == Integer.MAX_VALUE) { return Integer.MAX_VALUE; }
          }
       }
 
