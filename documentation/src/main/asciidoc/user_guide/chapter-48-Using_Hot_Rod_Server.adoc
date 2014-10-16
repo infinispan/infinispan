@@ -639,7 +639,7 @@ The Hot Rod client allows one to plug in a custom marshaller for transforming us
 
 The marshaller can be plugged through the "marshaller" configuration element (see Configuration section): the value should be the fully qualified name of a class implementing the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/marshall/Marshaller.html$$[Marshaller] interface. This is a optional parameter, if not specified it defaults to the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/marshall/jboss/GenericJBossMarshaller.html$$[GenericJBossMarshaller] - a highly optimized implementation based on the link:$$http://www.jboss.org/jbossmarshalling$$[JBoss Marshalling] library.
 
-Since version 5.0, there's a new marshaller available to Java Hot Rod clients based on Apache Avro which generates portable payloads. You can find more information about it <<sid-68355061,here>> 
+Since version 6.0, there's a new marshaller available to Java Hot Rod clients based on Protostream which generates portable payloads. You can find more information about it <<_querying_via_the_java_hot_rod_client,here>> 
 
 ===== Statistics
 Various server usage statistics can be obtained through the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/RemoteCache.html$$[RemoteCache] .stats() method. This returns a link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/client/hotrod/ServerStatistics.html$$[ServerStatistics] object - please refer to javadoc for details on the available statistics.

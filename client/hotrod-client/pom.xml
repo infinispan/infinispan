@@ -30,12 +30,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.apache.avro</groupId>
-         <artifactId>avro</artifactId>
-         <scope>provided</scope>
-      </dependency>
-
-      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-core</artifactId>
          <type>test-jar</type>
@@ -127,7 +121,6 @@
                      ${project.groupId}.client.hotrod.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <Import-Package>
-                     org.apache.avro.*;resolution:=optional,
                      *
                   </Import-Package>
                </instructions>
