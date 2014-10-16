@@ -75,6 +75,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.impl.StatsImpl;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
@@ -148,6 +149,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private GlobalConfiguration globalCfg;
    private boolean isClassLoaderInContext;
    private EntryRetriever<K, V> entryRetriever;
+   private LocalTopologyManager localTopologyManager;
 
    public CacheImpl(String name) {
       this.name = name;
@@ -173,7 +175,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   LockManager lockManager,
                                   AuthorizationManager authorizationManager,
                                   GlobalConfiguration globalCfg,
-                                  EntryRetriever<K, V> entryRetriever) {
+                                  EntryRetriever<K, V> entryRetriever,
+                                  PartitionHandlingManager partitionHandlingManager,
+                                  LocalTopologyManager localTopologyManager) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -197,6 +201,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.authorizationManager = authorizationManager;
       this.globalCfg = globalCfg;
       this.entryRetriever = entryRetriever;
+      this.partitionHandlingManager = partitionHandlingManager;
+      this.localTopologyManager = localTopologyManager;
    }
 
    private void assertKeyNotNull(Object key) {
@@ -884,13 +890,29 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
+   @Override
+   public void setAvailability(AvailabilityMode availability) {
+      if (localTopologyManager != null) {
+         try {
+            localTopologyManager.setCacheAvailability(getName(), availability);
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+      }
+   }
+
    @ManagedAttribute(
          description = "Returns the cache availability",
          displayName = "Cache availability",
-         dataType = DataType.TRAIT
+         dataType = DataType.TRAIT,
+         writable = true
    )
    public String getCacheAvailability() {
       return getAvailability().toString();
+   }
+
+   public void setCacheAvailability(String availabilityString) throws Exception {
+      setAvailability(AvailabilityMode.valueOf(availabilityString));
    }
 
    @Override

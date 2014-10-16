@@ -22,12 +22,18 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.SimpleAttributeDefinition;
+import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
+import org.jboss.as.controller.operations.validation.EnumValidator;
+import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
+import org.jboss.dmr.ModelType;
 
 /**
  * Base class for cache resources which require common cache attributes, clustered cache attributes
@@ -37,6 +43,12 @@ import org.jboss.as.controller.services.path.ResolvePathHandler;
  */
 public class SharedCacheResource extends ClusteredCacheResource {
 
+   static final SimpleAttributeDefinition CACHE_AVAILABILITY =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.CACHE_AVAILABILITY, ModelType.STRING, true)
+                 .setFlags(AttributeAccess.Flag.STORAGE_RUNTIME)
+                 .setValidator(new EnumValidator<AvailabilityMode>(AvailabilityMode.class, false, false))
+                 .build();
+
     public SharedCacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, AbstractAddStepHandler addHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(pathElement, descriptionResolver, addHandler, removeHandler, resolvePathHandler, runtimeRegistration);
     }
@@ -44,7 +56,10 @@ public class SharedCacheResource extends ClusteredCacheResource {
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
-        // no attributes
+        if (runtimeRegistration) {
+            CacheMetricsHandler.INSTANCE.registerCommonMetrics(resourceRegistration);
+            resourceRegistration.registerReadWriteAttribute(CACHE_AVAILABILITY, CacheAvailabilityAttributeHandler.INSTANCE, CacheAvailabilityAttributeHandler.INSTANCE);
+        }
     }
 
     @Override

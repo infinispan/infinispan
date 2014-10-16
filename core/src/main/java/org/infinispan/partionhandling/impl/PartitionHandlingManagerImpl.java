@@ -38,7 +38,9 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
 
    @Override
    public void setAvailabilityMode(AvailabilityMode availabilityMode) {
-      if (trace) log.tracef("Updating availability: %s -> %s", this.availabilityMode, availabilityMode);
+      if (availabilityMode != this.availabilityMode) {
+         log.debugf("Updating availability for cache %s: %s -> %s", cacheName, this.availabilityMode, availabilityMode);
+      }
       this.availabilityMode = availabilityMode;
    }
 

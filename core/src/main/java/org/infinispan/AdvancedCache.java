@@ -4,6 +4,7 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.configuration.cache.PartitionHandlingConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
@@ -443,9 +444,15 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    void removeGroup(String groupName);
 
    /**
-    * Returns the cache's availability. In local mode this method will alway return {@link AvailabilityMode#AVAILABLE}. In
+    * Returns the cache's availability. In local mode this method will always return {@link AvailabilityMode#AVAILABLE}. In
     * clustered mode, the {@link PartitionHandlingManager} is queried to obtain the availability mode.
     */
    AvailabilityMode getAvailability();
 
+   /**
+    * Manually change the availability of the cache.
+    * Doesn't change anything if the cache is not clustered or partition handling is not enabled
+    * ({@link PartitionHandlingConfiguration#enabled()}.
+    */
+   void setAvailability(AvailabilityMode availabilityMode);
 }

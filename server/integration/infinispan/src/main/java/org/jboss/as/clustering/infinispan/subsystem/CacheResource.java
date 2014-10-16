@@ -22,9 +22,6 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.AttributeMarshaller;
@@ -44,6 +41,9 @@ import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  * Base class for cache resources which require common cache attributes only.
@@ -231,10 +231,6 @@ public class CacheResource extends SimpleResourceDefinition {
         final OperationStepHandler writeHandler = new CacheWriteAttributeHandler(CACHE_ATTRIBUTES);
         for (AttributeDefinition attr : CACHE_ATTRIBUTES) {
             resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, writeHandler);
-        }
-
-        if (runtimeRegistration) {
-            CacheMetricsHandler.INSTANCE.registerCommonMetrics(resourceRegistration);
         }
     }
 

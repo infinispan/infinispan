@@ -327,5 +327,10 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       public void forceRebalance(String cacheName) {
          instance.forceRebalance(cacheName);
       }
+
+      @Override
+      public void forceAvailabilityMode(String cacheName, AvailabilityMode availabilityMode) {
+         instance.forceAvailabilityMode(cacheName, availabilityMode);
+      }
    }
 }

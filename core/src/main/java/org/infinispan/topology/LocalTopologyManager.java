@@ -92,4 +92,9 @@ public interface LocalTopologyManager {
     * Retrieves the availability state of a cache.
     */
    AvailabilityMode getCacheAvailability(String cacheName);
+
+   /**
+    * Updates the availability state of a cache (for the entire cluster).
+    */
+   void setCacheAvailability(String cacheName, AvailabilityMode availabilityMode) throws Exception;
 }

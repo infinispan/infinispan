@@ -9,7 +9,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
 
 import javax.transaction.TransactionManager;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.*;

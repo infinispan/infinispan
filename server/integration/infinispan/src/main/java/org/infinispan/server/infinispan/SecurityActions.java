@@ -16,11 +16,9 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.Security;
-import org.infinispan.security.actions.GetCacheAvailabilityAction;
 import org.infinispan.security.actions.GetCacheComponentRegistryAction;
 import org.infinispan.security.actions.GetCacheInterceptorChainAction;
 import org.infinispan.security.actions.GetCacheLockManagerAction;
@@ -214,11 +212,6 @@ public final class SecurityActions {
 
     public static List<Address> getMembers(DefaultEmbeddedCacheManager cacheManager) {
         GetMembersAction action = new GetMembersAction(cacheManager);
-        return doPrivileged(action);
-    }
-
-    public static AvailabilityMode getCacheAvailability(AdvancedCache<?, ?> cache) {
-        GetCacheAvailabilityAction action = new GetCacheAvailabilityAction(cache);
         return doPrivileged(action);
     }
 

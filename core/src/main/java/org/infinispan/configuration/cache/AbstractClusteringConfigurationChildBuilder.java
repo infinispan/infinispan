@@ -34,6 +34,11 @@ abstract class AbstractClusteringConfigurationChildBuilder extends AbstractConfi
       return clusteringBuilder.sync();
    }
 
+   @Override
+   public PartitionHandlingConfigurationBuilder partitionHandling() {
+      return clusteringBuilder.partitionHandling();
+   }
+
    protected ClusteringConfigurationBuilder getClusteringBuilder() {
       return clusteringBuilder;
    }

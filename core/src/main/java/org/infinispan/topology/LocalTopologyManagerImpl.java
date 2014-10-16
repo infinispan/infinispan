@@ -250,6 +250,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          synchronized (cacheStatus) {
             CacheTopology stableTopology = cacheStatus.getStableTopology();
             if (stableTopology == null || stableTopology.getTopologyId() < newStableTopology.getTopologyId()) {
+               log.tracef("Updating stable topology for cache %s: %s", cacheName, newStableTopology);
                cacheStatus.setStableTopology(newStableTopology);
             }
          }
@@ -370,6 +371,14 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       AvailabilityMode availabilityMode = cacheStatus.getPartitionHandlingManager() != null ?
             cacheStatus.getPartitionHandlingManager().getAvailabilityMode() : AvailabilityMode.AVAILABLE;
       return availabilityMode;
+   }
+
+   @Override
+   public void setCacheAvailability(String cacheName, AvailabilityMode availabilityMode) throws Exception {
+      CacheTopologyControlCommand.Type type = CacheTopologyControlCommand.Type.AVAILABILITY_MODE_CHANGE;
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName, type, transport.getAddress(),
+            availabilityMode, transport.getViewId());
+      executeOnCoordinator(command, getGlobalTimeout());
    }
 
    private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {

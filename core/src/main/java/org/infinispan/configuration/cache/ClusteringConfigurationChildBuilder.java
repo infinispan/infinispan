@@ -32,4 +32,9 @@ public interface ClusteringConfigurationChildBuilder extends ConfigurationChildB
     * SyncConfig is mutually exclusive with the AsyncConfig.
     */
    SyncConfigurationBuilder sync();
+
+   /**
+    * Configures how the cache will react to cluster partitions.
+    */
+   PartitionHandlingConfigurationBuilder partitionHandling();
 }

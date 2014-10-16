@@ -1,24 +1,24 @@
 package org.infinispan.security;
 
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.context.Flag;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.partionhandling.AvailabilityMode;
+
+import javax.transaction.NotSupportedException;
+import javax.transaction.SystemException;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
 
 public class SecureCacheTestDriver {
 
@@ -212,6 +212,11 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.NONE)
    public void testGetAvailability(SecureCache<String, String> cache) {
       cache.getAvailability();
+   }
+
+   @TestCachePermission(AuthorizationPermission.ADMIN)
+   public void testSetAvailability_AvailabilityMode(SecureCache<String, String> cache) {
+      cache.setAvailability(AvailabilityMode.AVAILABLE);
    }
 
    @TestCachePermission(AuthorizationPermission.READ)
