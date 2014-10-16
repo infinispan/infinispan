@@ -4,6 +4,7 @@ import static org.infinispan.it.osgi.util.IspnKarafOptions.perSuiteOptions;
 import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.persistence.spi.PersistenceException;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,6 +28,7 @@ public class JpaStorePersonEntityTest extends org.infinispan.persistence.jpa.Jpa
    @Before
    @Override
    public void setUp() throws Exception {
+      TestResourceTracker.backgroundTestStarted(this);
       super.setUp();
    }
 

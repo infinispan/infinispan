@@ -5,6 +5,7 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,6 +36,7 @@ public class TransactionsSpanningReplicatedCachesTest extends org.infinispan.tx.
 
    @Before
    public void setUp() {
+      TestResourceTracker.backgroundTestStarted(this);
       ConfigurationBuilder c = getConfiguration();
       addClusterEnabledCacheManager(c);
       addClusterEnabledCacheManager(c);
