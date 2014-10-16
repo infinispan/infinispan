@@ -413,6 +413,14 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
    }
 
+   @Override
+   public void forceAvailabilityMode(String cacheName, AvailabilityMode availabilityMode) {
+      ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
+      if (cacheStatus != null) {
+         cacheStatus.forceAvailabilityMode(availabilityMode);
+      }
+   }
+
    @Listener(sync = true)
    public class ClusterViewListener {
       @SuppressWarnings("unused")
