@@ -2,6 +2,7 @@ package org.infinispan.util.mocks;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.iteration.impl.EntryRequestCommand;
@@ -183,6 +184,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public EntrySetCommand buildEntrySetCommand(Set<Flag> flags) {
       return actual.buildEntrySetCommand(flags);
+   }
+
+   @Override
+   public EntryRetrievalCommand buildEntryRetrievalCommand(Set<Flag> flags, KeyValueFilter filter) {
+      return actual.buildEntryRetrievalCommand(flags, filter);
    }
 
    @Override

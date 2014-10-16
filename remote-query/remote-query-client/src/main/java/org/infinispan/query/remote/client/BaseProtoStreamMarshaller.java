@@ -26,6 +26,11 @@ public abstract class BaseProtoStreamMarshaller extends AbstractMarshaller {
 
    @Override
    public boolean isMarshallable(Object o) {
+      // Protostream can handle all of these type as well
+      if (o instanceof String || o instanceof Long || o instanceof Integer || o instanceof Double || o instanceof Float
+            || o instanceof Boolean || o instanceof byte[]) {
+         return true;
+      }
       return getSerializationContext().canMarshall(o.getClass());
    }
 

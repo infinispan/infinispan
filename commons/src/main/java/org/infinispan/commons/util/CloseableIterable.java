@@ -12,4 +12,7 @@ package org.infinispan.commons.util;
 public interface CloseableIterable<E> extends AutoCloseable, Iterable<E> {
    @Override
    void close();
+
+   @Override
+   CloseableIterator<E> iterator();
 }

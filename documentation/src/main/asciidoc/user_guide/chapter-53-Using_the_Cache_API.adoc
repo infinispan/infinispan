@@ -7,10 +7,17 @@ The Cache interface exposes simple methods for adding, retrieving and removing e
 
 NOTE: For simple usage, using the Cache API should be no different from using the JDK Map API, and hence migrating from simple in-memory caches based on a Map to Infinispan's Cache should be trivial.
 
-==== Limitations of Certain Map Methods
-Certain methods exposed in Map have certain limitations when used with Infinispan, such as link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#size%28%29$$[size()] , link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#values%28%29$$[values()] , link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#keySet%28%29$$[keySet()] and link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#entrySet%28%29$$[entrySet()] .  Specifically, these methods are _unreliable_ and only provide a best-effort guess.  They do not acquire locks, either local or global, and concurrent modifications, additions and removals will not be considered in the result of any of these calls.  Further, they only operate on the local node, and as such, do not give you a global(cluster) view of the state.
+==== Performance Concerns of Certain Map Methods
+Certain methods exposed in Map have certain performance consequences when used with Infinispan, such as 
+link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#size%28%29$$[size()] , 
+link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#values%28%29$$[values()] , 
+link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#keySet%28%29$$[keySet()] and 
+link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#entrySet%28%29$$[entrySet()] .  
+Specific methods on the `keySet`, `values` and `entrySet` are fine for use please see their Javadoc for further details.
 
 Attempting to perform these operations globally would have large performance impact as well as become a scalability bottleneck.  As such, these methods should only be used for informational or debugging purposes only.
+
+It should be noted that using certain flags with the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/AdvancedCache.html#withFlags%28org.infinispan.context.Flag...%29$$[withFlags] method can mitigate some of these concerns, please check each method's documentation for more details.
 
 ==== Mortal and Immortal Data
 Further to simply storing entries, Infinispan's cache API allows you to attach mortality information to data.  For example, simply using link:$$http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#put%28K,%20V%29$$[put(key, value)] would create an _immortal_ entry, i.e., an entry that lives in the cache forever, until it is removed (or evicted from memory to prevent running out of memory).  If, however, you put data in the cache using link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#put%28K,%20V,%20long,%20java.util.concurrent.TimeUnit%29$$[put(key, value, lifespan, timeunit)] , this creates a _mortal_ entry, i.e., an entry that has a fixed lifespan and expires after that lifespan.
@@ -80,11 +87,15 @@ advancedCache.withFlags(Flag.CACHE_MODE_LOCAL, Flag.SKIP_LOCKING)
 
 ==== Entry Retrieval
 
-Bulk Map methods are not fully implemented for distributed caches (only uses local contents) as can be seen from their javadocs link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#entrySet()$$[entrySet], link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#values()$$[values], link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#keySet()$$[keySet], and link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#size()$$[size]
+It is possible to retrieve all of the entries stored in a given cache, irrespective of its clustering configuration.
+These entries are only retrieved through an iterator where each value is only returned one at a time.
+This is done because of the possible memory constraints of pulling all the values into a single node at the same time.
 
-This is done because of the possible memory constraints of pulling all the values into a single node.  It may desireable to still access all data and Infinispan allows this but through a different interface.
-
-An `EntryIterable` is available by invoking the link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/AdvancedCache.html#filterEntries(org.infinispan.filter.KeyValueFilter)$$[filterEntries] method on `AdvancedCache`.  Note you are required to provide a `KeyValueFilter`, this is to make sure users realize this can be an expensive operation and by filtering entries on the remote side will allow the operation to perform faster and more efficiently.  This allows you to iterate over the contents in the cache in a memory sensitive way so out of memory errors should not occur.  The size of contents held in memory by the iterator while being processed currently is limited by the state transfer chunk size configuration value.
+An `EntryIterable` is available by invoking the 
+link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/AdvancedCache.html#filterEntries(org.infinispan.filter.KeyValueFilter)$$[filterEntries]
+method on `AdvancedCache`.  Note you are required to provide a `KeyValueFilter`, this is to make sure users realize this can be an expensive operation and by filtering entries on the remote side will allow the operation to perform faster and more efficiently.
+This allows you to iterate over the contents in the cache in a memory sensitive way so out of memory errors should not occur.
+The size of contents held in memory by the iterator while being processed currently is limited by the state transfer chunk size configuration value.
 
 Once the `EntryIterable` is retrieved, invocation of the iterator method will immediately start retrieving entries.  Note each invocation of the iterator method will start a brand new entry request thus allowing the `Iterable` to be reused.
 
@@ -100,9 +111,16 @@ try (EntryIterable<Object, Object> iterable = advancedCache.filterEntries(filter
 }
 ----
 
-NOTE: The iterators produced do not obey the current transaction if there is one and thus will always retrieve the most current committed values from the cache.
+===== Transactional Aware
+The iterators produced will obey the current transaction if there is one when they are generated.  Note the transaction they use is the one that is found to be in the thread when `filterEntries` is first invoked.  Thus you should only access this iterator from the same thread or else undefind behavior may occur.
 
-NOTE: Also the remove method is not supported on the iterators and will throw an `UnsupportedOperationException` if invoked.
+Since we cannot put all entries into the local transaction any entries retrieved using the iterator are not added to the transaction context.  This means that the iterator will behave always in a way similar to a Read Committed isolation level even if Repeatable Read is enabled for example.  If an entry was previously put in the context it will use this value, including if it was removed, in which case it will not be returned from the iterator.
+
+
+===== Iterator remove
+We also do support the remove operation on the iterator.  In a non transactional cache this will immediately remove the key from the cache.  In a transactional cache this will instead be added to the existing transaction context if there is one otherwise an implicit transaction will be generated for it.
+
+===== Value conversion
 
 While the provided filter can be used to efficiently reduce what entries are returned to the local node, there is also the possibility of providing an optional link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/filter/Converter.html$$[Converter] which will convert the provided value to another object or even type, which is done on the remote side.  This is useful to reduce payload size when you may want only a partial view of the object or even an object that is created from it.
 
