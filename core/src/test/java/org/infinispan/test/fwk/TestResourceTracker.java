@@ -69,7 +69,7 @@ public class TestResourceTracker {
             // Test is being run from an IDE
             testName = "main";
          } else {
-            log.warnf("Test name not set in unknown thread %s", Thread.currentThread().getName());
+            log.warnf("Test name not set in unknown thread %s. Consider using TestResourceTracker.backgroundTestStarted(this) in your test method.", Thread.currentThread().getName());
             testName = "unknown";
          }
       }

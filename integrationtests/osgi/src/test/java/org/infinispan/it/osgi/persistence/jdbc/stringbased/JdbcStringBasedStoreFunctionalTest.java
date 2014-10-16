@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.it.osgi.persistence.jdbc.UnitTestDatabaseManager;
 import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +47,7 @@ public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest 
    @Before
    @Override
    public void setup() throws Exception {
+      TestResourceTracker.backgroundTestStarted(this);
       super.setup();
    }
 

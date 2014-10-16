@@ -5,6 +5,7 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -45,6 +46,7 @@ public class SingleFileStoreFunctionalTest extends org.infinispan.persistence.fi
    @Before
    @Override
    public void setup() throws Exception {
+      TestResourceTracker.backgroundTestStarted(this);
       super.setup();
    }
 

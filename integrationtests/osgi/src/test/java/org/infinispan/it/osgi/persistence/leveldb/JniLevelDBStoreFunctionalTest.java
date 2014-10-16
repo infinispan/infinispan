@@ -8,6 +8,7 @@ import org.infinispan.persistence.BaseStoreFunctionalTest;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -49,6 +50,7 @@ public class JniLevelDBStoreFunctionalTest extends BaseStoreFunctionalTest {
    @Before
    @Override
    public void setup() throws Exception {
+      TestResourceTracker.backgroundTestStarted(this);
       super.setup();
    }
 

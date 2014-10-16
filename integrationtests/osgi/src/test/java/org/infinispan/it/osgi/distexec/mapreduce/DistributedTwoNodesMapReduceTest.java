@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.experimental.categories.Category;
@@ -26,6 +27,7 @@ public class DistributedTwoNodesMapReduceTest extends BaseWordCountMapReduceTest
 
    @Before
    public void setUp() {
+      TestResourceTracker.backgroundTestStarted(this);
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
       builder.clustering().stateTransfer().chunkSize(2);
       createClusteredCaches(2, cacheName(), builder);

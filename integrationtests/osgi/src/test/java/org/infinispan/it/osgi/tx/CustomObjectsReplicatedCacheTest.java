@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.it.osgi.util.PaxExamUtils;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,6 +50,7 @@ public class CustomObjectsReplicatedCacheTest extends MultipleCacheManagersTest 
 
    @Before
    public void setUp() {
+      TestResourceTracker.backgroundTestStarted(this);
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       createCluster(c, 2);
    }
