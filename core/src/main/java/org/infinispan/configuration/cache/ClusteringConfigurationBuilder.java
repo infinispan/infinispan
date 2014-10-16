@@ -91,6 +91,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
       return syncConfigurationBuilder;
    }
 
+   @Override
    public PartitionHandlingConfigurationBuilder partitionHandling() {
       return partitionHandlingConfigurationBuilder;
    }

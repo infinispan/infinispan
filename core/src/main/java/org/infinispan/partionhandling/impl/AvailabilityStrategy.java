@@ -1,5 +1,6 @@
 package org.infinispan.partionhandling.impl;
 
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheStatusResponse;
 
@@ -50,6 +51,6 @@ public interface AvailabilityStrategy {
    /**
     * Called when the administrator manually changes the availability status.
     */
-   void onManualAvailabilityChange(AvailabilityStrategyContext context);
+   void onManualAvailabilityChange(AvailabilityStrategyContext context, AvailabilityMode newAvailabilityMode);
 }
 

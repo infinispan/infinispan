@@ -154,6 +154,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public void setAvailability(AvailabilityMode availabilityMode) {
+      cache.setAvailability(availabilityMode);
+   }
+
+   @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
       return this.wrapper.wrap(this.cache.withFlags(flags));
    }

@@ -87,6 +87,11 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
       return delegate.getCacheAvailability(cacheName);
    }
 
+   @Override
+   public void setCacheAvailability(String cacheName, AvailabilityMode availabilityMode) throws Exception {
+      delegate.setCacheAvailability(cacheName, availabilityMode);
+   }
+
    // Arbitrary value, only need to start after JGroupsTransport
    @Start(priority = 100)
    public final void startDelegate() {

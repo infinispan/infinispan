@@ -1,10 +1,10 @@
 package org.infinispan.partitionhandling;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partionhandling.AvailabilityException;
 import org.infinispan.partionhandling.AvailabilityMode;
@@ -14,12 +14,10 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
-import org.infinispan.test.concurrent.StateSequencerUtil;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -34,6 +32,10 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static org.infinispan.test.concurrent.StateSequencerUtil.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * With a cluster made out of nodes {A,B,C,D}, tests that D crashes and before the state transfer finishes, another node
@@ -104,8 +106,6 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       createCluster(configBuilder, 4);
       waitForClusterToForm();
 
-
-
       Object k0 = new MagicKey("k1", cache(a0), cache(a1));
       Object k1 = new MagicKey("k2", cache(a0), cache(a1));
       Object k2 = new MagicKey("k3", cache(a1), cache(c0));
@@ -119,19 +119,16 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       for (Object k : allKeys) cache(a0).put(k, k);
 
       StateSequencer ss = new StateSequencer();
-      ss.logicalThread("main", "main:st_in_progress", "main:2nd_node_left", "main:cluster_unavailable");
+      ss.logicalThread("main", "main:st_in_progress", "main:2nd_node_left", "main:cluster_unavailable", "main:after_cluster_unavailable");
 
-      final StateTransferManager stm0 = advancedCache(a0).getComponentRegistry().getStateTransferManager();
-      final int initialTopologyId = stm0.getCacheTopology().getTopologyId();
-      StateSequencerUtil.advanceOnInboundRpc(ss, manager(a1), new CommandMatcher() {
-         @Override
-         public boolean accept(ReplicableCommand command) {
-            if (!(command instanceof StateResponseCommand))
-               return false;
-            StateResponseCommand responseCommand = (StateResponseCommand) command;
-            return initialTopologyId < responseCommand.getCommandId();
-         }
-      }).before("main:st_in_progress", "main:cluster_unavailable");
+      advanceOnInboundRpc(ss, manager(a1),
+            matchCommand(StateResponseCommand.class).matchCount(0).build())
+            .before("main:st_in_progress", "main:cluster_unavailable");
+      // When the coordinator node stops gracefully there are two rebalance operations, one with the old coord
+      // and one with the new coord. The second
+      advanceOnInboundRpc(ss, manager(a1),
+            matchCommand(StateResponseCommand.class).matchCount(1).build())
+            .before("main:after_cluster_unavailable");
 
       // Prepare for rebalance. Manager a1 will request state from c0 for segment 2
       cchf.setMembersToUse(advancedCache(a0).getRpcManager().getTransport().getMembers());
@@ -150,38 +147,43 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       crashCacheManagers(manager(c0));
       installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1));
 
+      final PartitionHandlingManager phm0 = TestingUtil.extractComponent(cache(a0), PartitionHandlingManager.class);
+      final PartitionHandlingManager phm1 = TestingUtil.extractComponent(cache(a1), PartitionHandlingManager.class);
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            PartitionHandlingManager phm0 = TestingUtil.extractComponent(cache(a0), PartitionHandlingManager.class);
-            return phm0.getAvailabilityMode() == expectedAvailabilityMode;
+            return phm0.getAvailabilityMode() == expectedAvailabilityMode && phm1.getAvailabilityMode() == expectedAvailabilityMode;
          }
       });
       ss.exit("main:2nd_node_left");
 
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            log.trace("Testing condition");
-            ConsistentHash ch = cache(a0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
-            for (Object k : allKeys) {
-               Collection<Address> owners = ch.locateOwners(k);
-               try {
-                  cache(a0).get(k);
-                  if (owners.contains(address(c0)) || owners.contains(address(c1)))
-                     return false;
-               } catch (AvailabilityException e) {
-               }
-               try {
-                  cache(a1).put(k, k);
-                  if (owners.contains(address(c0)) || owners.contains(address(c1)))
-                     return false;
-               } catch (AvailabilityException e) {
-               }
+      log.trace("Testing condition");
+      ConsistentHash ch = cache(a0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
+      for (Object k : allKeys) {
+         Collection<Address> owners = ch.locateOwners(k);
+         try {
+            cache(a0).get(k);
+            if (owners.contains(address(c0)) || owners.contains(address(c1))) {
+               fail("get(" + k + ") should have failed on cache " + address(a0));
             }
-            return true;
+         } catch (AvailabilityException e) {
          }
-      });
+         try {
+            cache(a1).put(k, k);
+            if (owners.contains(address(c0)) || owners.contains(address(c1))) {
+               fail("put(" + k + ", v) should have failed on cache " + address(a0));
+            }
+         } catch (AvailabilityException e) {
+         }
+      }
+
+      log.debug("Changing partition availability mode back to AVAILABLE");
+      cchf.setOwnerIndexes(new int[]{a0, a1}, new int[]{a1, a0},
+            new int[]{a0, a1}, new int[]{a1, a0});
+      LocalTopologyManager ltm = TestingUtil.extractGlobalComponent(manager(a0), LocalTopologyManager.class);
+      ltm.setCacheAvailability(CacheContainer.DEFAULT_CACHE_NAME, AvailabilityMode.AVAILABLE);
+      TestingUtil.waitForRehashToComplete(cache(a0), cache(a1));
+      assertEquals(AvailabilityMode.AVAILABLE, phm0.getAvailabilityMode());
    }
 
    private void installNewView(List<Address> members, Address missing, EmbeddedCacheManager... where) {
@@ -191,7 +193,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
          if (!a.equals(missing))
             viewMembers.add(((JGroupsAddress) a).getJGroupsAddress());
       int viewId = where[0].getTransport().getViewId() + 1;
-      View view = View.create(viewMembers.get(0), viewId, (org.jgroups.Address[]) viewMembers.toArray(new org.jgroups.Address[viewMembers.size()]));
+      View view = View.create(viewMembers.get(0), viewId, viewMembers.toArray(new org.jgroups.Address[viewMembers.size()]));
 
       log.trace("Before installing new view:" + viewMembers);
       for (EmbeddedCacheManager ecm : where) {
