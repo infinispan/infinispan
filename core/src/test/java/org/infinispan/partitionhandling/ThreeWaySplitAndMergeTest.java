@@ -3,7 +3,6 @@ package org.infinispan.partitionhandling;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -52,26 +51,19 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
       log.trace("Before split.");
       splitCluster(p0.getNodes(), p1.getNodes(), p2.getNodes());
-
-      eventually(new AbstractInfinispanTest.Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (int i = 0; i < 4; i++)
-               if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.DEGRADED_MODE)
-                  return false;
-            return true;
-         }
-      });
+      partition(0).assertDegradedMode();
+      partition(1).assertDegradedMode();
+      partition(2).assertDegradedMode();
 
       //1. check key visibility in partition 0
       partition(0).assertKeyAvailableForRead(k0, 0);
-      partition(0).assertKeysNotAvailable(k1, k2, k3);
+      partition(0).assertKeysNotAvailableForRead(k1, k2, k3);
 
       //2. check key visibility in partition 1
-      partition(1).assertKeysNotAvailable(k0, k1, k2, k3);
+      partition(1).assertKeysNotAvailableForRead(k0, k1, k2, k3);
 
       //3. check key visibility in partition 2
-      partition(2).assertKeysNotAvailable(k0, k1, k2, k3);
+      partition(2).assertKeysNotAvailableForRead(k0, k1, k2, k3);
 
       //4. check key ownership
       assertTrue(dataContainer(p0.node(0)).containsKey(k0));
@@ -111,8 +103,8 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
       assertEquals(partitions.length, 2);
       log.tracef("After the 1st merge P0 = %s, P1 = %s", partition(0), partition(1));
 
-      partition(0).expectPartitionState(AvailabilityMode.AVAILABLE);
-      partition(1).expectPartitionState(AvailabilityMode.DEGRADED_MODE);
+      partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
+      partition(1).assertAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
 
       partition(0).assertKeyAvailableForRead(k0, -1);
       partition(0).assertKeyAvailableForRead(k1, 1);
@@ -129,7 +121,7 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
       assertEquals(new HashSet<>(advancedCache(p0.node(1)).getDistributionManager().getConsistentHash().getMembers()), members);
       assertEquals(new HashSet<>(advancedCache(p1.node(0)).getDistributionManager().getConsistentHash().getMembers()), members);
 
-      partition(1).assertKeysNotAvailable(k0, k1, k2, k3);
+      partition(1).assertKeysNotAvailableForRead(k0, k1, k2, k3);
 
       members = new HashSet<>(Arrays.asList(new Address[]{address(0), address(1), address(2), address(3)}));
       assertEquals(new HashSet<>(advancedCache(p2.node(0)).getDistributionManager().getConsistentHash().getMembers()), members);
@@ -143,7 +135,7 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
 
       assertEquals(partitions.length, 1);
-      partition(0).expectPartitionState(AvailabilityMode.AVAILABLE);
+      partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
 
       partition(0).assertKeyAvailableForRead(k0, 10);
       partition(0).assertKeyAvailableForRead(k1, 11);

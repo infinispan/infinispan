@@ -63,35 +63,28 @@ public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
          @Override
          public boolean isSatisfied() throws Exception {
             for (int i = 0; i < 4; i++)
-               if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.AVAILABLE)
+               if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE)
                   return false;
             return true;
          }
       });
 
       splitCluster(p0.getNodes(), p1.getNodes());
+      partition(0).assertDegradedMode();
+      partition(1).assertDegradedMode();
 
       assertEquals(partitionHandlingManager(0).getLastStableTopology().getMembers(), allMembers);
       assertEquals(partitionHandlingManager(1).getLastStableTopology().getMembers(), allMembers);
       assertEquals(partitionHandlingManager(2).getLastStableTopology().getMembers(), allMembers);
       assertEquals(partitionHandlingManager(3).getLastStableTopology().getMembers(), allMembers);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (int i = 0; i < 4; i++)
-               if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.DEGRADED_MODE)
-                  return false;
-            return true;
-         }
-      });
 
       //1. check key visibility in partition 1
       partition(0).assertKeyAvailableForRead(k0, 0);
-      partition(0).assertKeysNotAvailable(k1, k2, k3);
+      partition(0).assertKeysNotAvailableForRead(k1, k2, k3);
 
       //2. check key visibility in partition 2
       partition(1).assertKeyAvailableForRead(k2, 2);
-      partition(1).assertKeysNotAvailable(k0, k1, k3);
+      partition(1).assertKeysNotAvailableForRead(k0, k1, k3);
 
       //3. check key ownership
       assertTrue(dataContainer(p0.node(0)).containsKey(k0));
@@ -134,15 +127,7 @@ public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
       assertEquals(new HashSet<>(partitionHandlingManager(1).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
       assertEquals(new HashSet<>(partitionHandlingManager(2).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
       assertEquals(new HashSet<>(partitionHandlingManager(3).getLastStableTopology().getMembers()), new HashSet<>(allMembers));
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            for (int i = 0; i < 4; i++)
-               if (partitionHandlingManager(0).getAvailabilityMode() != AvailabilityMode.AVAILABLE)
-                  return false;
-            return true;
-         }
-      });
+      partition(0).assertAvailabilityMode(AvailabilityMode.AVAILABLE);
 
       // 4. check data seen correctly
       assertExpectedValue(-1, k0);
