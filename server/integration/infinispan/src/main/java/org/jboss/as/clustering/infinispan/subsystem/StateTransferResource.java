@@ -59,7 +59,7 @@ public class StateTransferResource extends SimpleResourceDefinition {
                     .setXmlName(Attribute.CHUNK_SIZE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .setDefaultValue(new ModelNode().set(10000))
+                    .setDefaultValue(new ModelNode().set(512))
                     .build();
 
     // enabled (used in state transfer, rehashing)
