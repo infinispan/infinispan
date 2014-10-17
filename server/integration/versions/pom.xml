@@ -267,7 +267,7 @@
 
          <dependency>
             <groupId>org.infinispan</groupId>
-            <artifactId>infinispan-cli-server</artifactId>
+            <artifactId>infinispan-cli-interpreter</artifactId>
             <version>${version.org.infinispan}</version>
          </dependency>
 
