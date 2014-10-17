@@ -305,4 +305,11 @@ public class InfinispanCollections {
       return EMPTY_LIST;
    }
 
+   public static final <T> boolean containsAny(Collection<T> haystack, Collection<T> needle) {
+      for (T element : needle) {
+         if (haystack.contains(element))
+            return true;
+      }
+      return false;
+   }
 }

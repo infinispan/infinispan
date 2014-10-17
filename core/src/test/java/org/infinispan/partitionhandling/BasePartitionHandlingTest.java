@@ -105,7 +105,6 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          disableDiscovery();
          installNewView();
          assertPartitionFormed();
-         assertDegradedMode();
          log.trace("New views installed");
       }
 
@@ -256,16 +255,9 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          }
       }
 
-      private void assertDegradedMode() {
+      public void assertDegradedMode() {
          if (partitionHandling) {
-            for (final Cache c : cachesInThisPartition()) {
-               eventually(new Condition() {
-                  @Override
-                  public boolean isSatisfied() throws Exception {
-                     return partitionHandlingManager(c.getAdvancedCache()).getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE;
-                  }
-               });
-            }
+            assertAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
          }
       }
 
@@ -282,12 +274,12 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          }
       }
 
-      protected void assertKeysNotAvailable(Object ... keys) {
+      protected void assertKeysNotAvailableForRead(Object... keys) {
          for (Object k : keys)
-            assertKeyNotAvailable(k);
+            assertKeyNotAvailableForRead(k);
       }
 
-      protected void assertKeyNotAvailable(Object key) {
+      protected void assertKeyNotAvailableForRead(Object key) {
          for (Cache c : cachesInThisPartition()) {
             try {
                c.get(key);
@@ -322,7 +314,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
          }
       }
 
-      public void expectPartitionState(final AvailabilityMode state) {
+      public void assertAvailabilityMode(final AvailabilityMode state) {
          for (final Cache c : cachesInThisPartition()) {
             eventually(new Condition() {
                @Override

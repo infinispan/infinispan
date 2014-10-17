@@ -1,5 +1,6 @@
 package org.infinispan.partionhandling.impl;
 
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
@@ -228,15 +229,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
 
    private boolean isDataLost(ConsistentHash currentCH, List<Address> newMembers) {
       for (int i = 0; i < currentCH.getNumSegments(); i++) {
-         if (!containsAny(newMembers, currentCH.locateOwnersForSegment(i)))
-            return true;
-      }
-      return false;
-   }
-
-   private boolean containsAny(List<Address> newMembers, List<Address> owners) {
-      for (Address owner : owners) {
-         if (newMembers.contains(owner))
+         if (!InfinispanCollections.containsAny(newMembers, currentCH.locateOwnersForSegment(i)))
             return true;
       }
       return false;
