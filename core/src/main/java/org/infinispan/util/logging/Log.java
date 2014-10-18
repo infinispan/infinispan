@@ -1149,17 +1149,17 @@ public interface Log extends BasicLogger {
    @Message(value = "Received a command from an outdated topology, returning the exception to caller", id = 311)
    void outdatedTopology(@Cause Throwable oe);
 
-   @LogMessage(level = ERROR)
+   @LogMessage(level = WARN)
    @Message(value = "Cache %s lost data because of graceful leaver %s", id = 312)
    void lostDataBecauseOfGracefulLeaver(String cacheName, Address leaver);
 
-   @LogMessage(level = ERROR)
+   @LogMessage(level = WARN)
    @Message(value = "Cache %s lost data because of abrupt leavers %s", id = 313)
    void lostDataBecauseOfAbruptLeavers(String cacheName, Collection<Address> leavers);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Cache %s lost a majority of members (%d out of %d), possible split brain causing data inconsistency", id = 314)
-   void minorityPartition(String cacheName, int lostMembersCount, int stableMembersCount);
+   @LogMessage(level = WARN)
+   @Message(value = "Cache %s lost at least half of the stable members, possible split brain causing data inconsistency. Current members are %s, lost members are %s, stable members are %s", id = 314)
+   void minorityPartition(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unexpected availability mode %s for cache %s partition %s", id = 315)
@@ -1170,20 +1170,20 @@ public interface Log extends BasicLogger {
    void enteringUnavailableModeGracefulLeaver(String cacheName, Address leaver);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Cache %s lost data because of lost members %s, assuming a network split and entering degraded mode", id = 317)
+   @Message(value = "Cache %s lost data because of abrupt leavers %s, assuming a network split and entering degraded mode", id = 317)
    void enteringDegradedModeLostData(String cacheName, Collection<Address> leavers);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Cache %s lost a majority of members (%d out of %d), assuming a network split and entering degraded mode", id = 318)
-   void enteringDegradedModeMinorityPartition(String cacheName, int lostMembersCount, int stableMembersCount);
+   @Message(value = "Cache %s lost at least half of the stable members, assuming a network split and entering degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 318)
+   void enteringDegradedModeMinorityPartition(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
 
    @LogMessage(level = ERROR)
-   @Message(value = "After merge, cache %s still hasn't recovered all its data (lost members %s) and must stay in degraded mode", id = 319)
-   void keepingDegradedModeAfterMergeDataLost(String cacheName, Collection<Address> leavers);
+   @Message(value = "After merge, cache %s still hasn't recovered all its data and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 319)
+   void keepingDegradedModeAfterMergeDataLost(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
 
    @LogMessage(level = ERROR)
-   @Message(value = "After merge, cache %s still hasn't recovered a majority of members (lost %d out of %d) and must stay in degraded mode", id = 320)
-   void keepingDegradedModeAfterMergeMinorityPartition(String cacheName, int lostMembersCount, int stableMembersCount);
+   @Message(value = "After merge, cache %s still hasn't recovered a majority of members and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 320)
+   void keepingDegradedModeAfterMergeMinorityPartition(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
 
    @LogMessage(level = WARN)
    @Message(value = "Cyclic dependency detected between caches, stop order ignored", id = 321)

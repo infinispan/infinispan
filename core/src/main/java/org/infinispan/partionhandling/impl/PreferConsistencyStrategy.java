@@ -73,8 +73,8 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
          return;
       }
-      if (lostMembers.size() >= stableMembers.size() - Math.ceil(stableMembers.size() / 2d)) {
-         log.enteringDegradedModeMinorityPartition(context.getCacheName(), lostMembers.size(), stableMembers.size());
+      if (isMinorityPartition(stableMembers, lostMembers)) {
+         log.enteringDegradedModeMinorityPartition(context.getCacheName(), newMembers, lostMembers, stableMembers);
          context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
          return;
       }
@@ -82,6 +82,10 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // We got back to available mode (e.g. because there was a merge before, but the merge coordinator didn't
       // finish installing the merged topology).
       updateMembersAndRebalance(context, newMembers);
+   }
+
+   protected boolean isMinorityPartition(List<Address> stableMembers, List<Address> lostMembers) {
+      return lostMembers.size() >= Math.ceil(stableMembers.size() / 2d);
    }
 
    @Override
@@ -187,13 +191,13 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          List<Address> lostMembers = new ArrayList<>(stableMembers);
          lostMembers.removeAll(context.getExpectedMembers());
          if (isDataLost(maxStableTopology.getCurrentCH(), newMembers)) {
-            log.keepingDegradedModeAfterMergeDataLost(context.getCacheName(), lostMembers);
+            log.keepingDegradedModeAfterMergeDataLost(context.getCacheName(), newMembers, lostMembers, stableMembers);
             context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
             return;
          }
          if (lostMembers.size() >= Math.ceil(stableMembers.size() / 2d)) {
-            log.keepingDegradedModeAfterMergeMinorityPartition(context.getCacheName(), lostMembers.size(),
-                  stableMembers.size());
+            log.keepingDegradedModeAfterMergeMinorityPartition(context.getCacheName(), newMembers, lostMembers,
+                  stableMembers);
             context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
             return;
          }
