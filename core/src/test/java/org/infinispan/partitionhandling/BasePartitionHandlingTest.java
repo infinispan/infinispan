@@ -53,6 +53,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode);
       dcc.clustering().partitionHandling().enabled(partitionHandling);
+      dcc.clustering().hash().numSegments(numMembersInCluster * 2);
       createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
    }
@@ -363,7 +364,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       return cache.getAdvancedCache().getComponentRegistry().getComponent(PartitionHandlingManager.class);
    }
 
-   protected void assertExpectedValue(int expectedVal, Object key) {
+   protected void assertExpectedValue(Object expectedVal, Object key) {
       for (int i = 0; i < 4; i++) {
          assertEquals(cache(i).get(key), expectedVal);
       }
