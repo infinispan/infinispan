@@ -21,7 +21,7 @@ var chalk = require('chalk');
 /*
  * Location of your backend server
  */
-var proxyTarget = 'http://server/context/';
+var proxyTarget = 'http://localhost:3000/management';
 
 var proxy = httpProxy.createProxyServer({
   target: proxyTarget
@@ -51,7 +51,7 @@ function proxyMiddleware(req, res, next) {
   if (/\.(html|css|js|png|jpg|jpeg|gif|ico|xml|rss|txt|eot|svg|ttf|woff|cur)(\?((r|v|rel|rev)=[\-\.\w]*)?)?$/.test(req.url)) {
     next();
   } else {
-    proxy.web(req, res);
+    proxy.web(req, res, {target: 'http://localhost:9990/management'});
   }
 }
 
@@ -61,5 +61,5 @@ function proxyMiddleware(req, res, next) {
  * The first line activate if and the second one ignored it
  */
 
-//module.exports = [proxyMiddleware];
-module.exports = [];
+module.exports = [proxyMiddleware];
+//module.exports = [];

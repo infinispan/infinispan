@@ -2,7 +2,7 @@
 <div class="container-fluid" style="margin:20px">
   <div class="row">
     <div class="col-md-6 breadcrumbs">
-      <span> <a> Cluster A </a>  >>  Node_a3b10 </span>
+      <span> <a> {{currentCluster.name}} </a>  >>  {{currentCache.name}} </span>
     </div>
 
     <div class="col-md-6 text-right">
@@ -17,7 +17,7 @@
   <br>
 
   <div class="node-details">
-    <div class="node-name">Node_a3b10</div>
+    <div class="node-name">{{currentCache.name}}</div>
     <div class="node-status">
         <span class="node-status-label">Status:</span> <span class="node-status-value available">Available</span>
     </div>

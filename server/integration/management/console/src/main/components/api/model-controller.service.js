@@ -26,31 +26,33 @@ angular.module('managementConsole.api')
       ModelControllerClient.prototype.execute = function(op, callback) {
         var http = new XMLHttpRequest();
         http.withCredentials = true;
-        http.open("POST", this.url, true, this.username, this.password);
-        http.setRequestHeader("Content-type", "application/json");
-        http.setRequestHeader("Accept", "application/json");
+        http.open('POST', this.url, true, this.username, this.password);
+        http.setRequestHeader('Content-type', 'application/json');
+        http.setRequestHeader('Accept', 'application/json');
         http.onreadystatechange = function() {
-          if (http.readyState == 4 && http.status == 200) {
-            response = JSON.parse(http.responseText);
-            if (response.outcome == 'success') {
-              callback(response.result);
+          if (http.readyState === 4 && http.status === 200) {
+            var response = JSON.parse(http.responseText);
+            if (response.outcome === 'success') {
+              if (callback) {
+                callback(response.result);
+              }
             } else {
-              alert(response);
+              console.error(response);
             }
           }
-        }
+        };
         http.send(JSON.stringify(op));
       };
 
       ModelControllerClient.prototype.readResource = function(address, recursive, includeRuntime, callback) {
         // parameters: RECURSIVE, RECURSIVE_DEPTH, PROXIES, INCLUDE_RUNTIME, INCLUDE_DEFAULTS, ATTRIBUTES_ONLY, INCLUDE_ALIASES
-        var op = {"operation":"read-resource", "recursive": recursive, "include-runtime": includeRuntime , "address": address};
+        var op = {'operation':'read-resource', 'recursive': recursive, 'include-runtime': includeRuntime , 'address': address};
         this.execute(op, callback);
       };
 
       ModelControllerClient.prototype.readResourceDescription = function(address, recursive, includeRuntime, callback) {
         // parameters: OPERATIONS, INHERITED, RECURSIVE, RECURSIVE_DEPTH, PROXIES, INCLUDE_ALIASES, ACCESS_CONTROL, LOCALE
-        var op = {"operation":"read-resource-description", "recursive": recursive, "include-runtime": includeRuntime , "address": address};
+        var op = {'operation':'read-resource-description', 'recursive': recursive, 'include-runtime': includeRuntime , 'address': address};
         this.execute(op, callback);
       };
 
