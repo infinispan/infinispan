@@ -1,6 +1,7 @@
 'use strict';
 
 angular.module('managementConsole', [
+  'managementConsole.api',
   'ui.router',
   'ui.bootstrap',
 ])
