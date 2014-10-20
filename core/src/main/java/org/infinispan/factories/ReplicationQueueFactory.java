@@ -12,7 +12,7 @@ import org.infinispan.remoting.ReplicationQueueImpl;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = ReplicationQueue.class)
-public class ReplicationQueueFactory extends EmptyConstructorNamedCacheFactory implements AutoInstantiableFactory {
+public class ReplicationQueueFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {

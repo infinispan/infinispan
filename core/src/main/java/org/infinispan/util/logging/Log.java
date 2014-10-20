@@ -1178,11 +1178,11 @@ public interface Log extends BasicLogger {
    void enteringDegradedModeMinorityPartition(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
 
    @LogMessage(level = ERROR)
-   @Message(value = "After merge, cache %s still hasn't recovered all its data and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 319)
+   @Message(value = "After merge (or coordinator change), cache %s still hasn't recovered all its data and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 319)
    void keepingDegradedModeAfterMergeDataLost(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
 
    @LogMessage(level = ERROR)
-   @Message(value = "After merge, cache %s still hasn't recovered a majority of members and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 320)
+   @Message(value = "After merge (or coordinator change), cache %s still hasn't recovered a majority of members and must stay in degraded mode. Current members are %s, lost members are %s, stable members are %s", id = 320)
    void keepingDegradedModeAfterMergeMinorityPartition(String cacheName, Collection<Address> currentMembers, Collection<Address> lostMembers, Collection<Address> stableMembers);
 
    @LogMessage(level = WARN)

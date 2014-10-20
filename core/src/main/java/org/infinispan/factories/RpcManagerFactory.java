@@ -12,7 +12,7 @@ import org.infinispan.remoting.rpc.RpcManagerImpl;
  * @since 4.0
  */
 @DefaultFactoryFor(classes = RpcManager.class)
-public class RpcManagerFactory extends EmptyConstructorNamedCacheFactory implements AutoInstantiableFactory {
+public class RpcManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
    public <T> T construct(Class<T> componentType) {

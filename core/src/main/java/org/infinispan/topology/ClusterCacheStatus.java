@@ -120,6 +120,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          boolean modeChanged = setAvailabilityMode(newAvailabilityMode);
 
          if (modeChanged) {
+            log.debugf("Updating availability for cache %s to %s", cacheName, newAvailabilityMode);
             CacheTopology newTopology = new CacheTopology(currentTopology.getTopologyId() + 1,
                   currentTopology.getRebalanceId(), currentTopology.getCurrentCH(), currentTopology.getPendingCH());
             setCurrentTopology(newTopology);
@@ -372,7 +373,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             return;
          }
 
-         ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newMembers, getCapacityFactors());
+         // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
+         List<Address> updateMembers = pruneInvalidMembers(currentCH.getMembers());
+         ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, updateMembers, getCapacityFactors());
          ConsistentHash newPendingCH = null;
          if (pendingCH != null) {
             List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());

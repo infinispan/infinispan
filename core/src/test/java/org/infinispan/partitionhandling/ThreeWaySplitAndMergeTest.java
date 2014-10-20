@@ -37,13 +37,13 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
    }
 
    private void testSplitAndMerge(PartitionDescriptor p0, PartitionDescriptor p1, PartitionDescriptor p2) throws Exception {
-      Object k0 = new MagicKey(cache(p0.node(0)), cache(p0.node(1)));
+      Object k0 = new MagicKey("k0", cache(p0.node(0)), cache(p0.node(1)));
       cache(0).put(k0, 0);
 
-      Object k1 = new MagicKey(cache(p0.node(1)), cache(p1.node(0)));
+      Object k1 = new MagicKey("k1", cache(p0.node(1)), cache(p1.node(0)));
       cache(1).put(k1, 1);
 
-      Object k2 = new MagicKey(cache(p1.node(0)), cache(p2.node(0)));
+      Object k2 = new MagicKey("k2", cache(p1.node(0)), cache(p2.node(0)));
       cache(2).put(k2, 2);
 
       Object k3 = new MagicKey(cache(p2.node(0)), cache(p0.node(0)));
@@ -126,8 +126,9 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
       members = new HashSet<>(Arrays.asList(new Address[]{address(0), address(1), address(2), address(3)}));
       assertEquals(new HashSet<>(advancedCache(p2.node(0)).getDistributionManager().getConsistentHash().getMembers()), members);
 
-      for (int i = 0; i < 100; i++)
+      for (int i = 0; i < 100; i++) {
          dataContainer(p2.node(0)).put(i, i, null);
+      }
 
       log.tracef("Before the 2nd merge P0 = %s, P1 = %s", partition(0), partition(1));
       partition(0).merge(partition(1));

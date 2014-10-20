@@ -84,7 +84,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
       interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class), false);
 
-      if (configuration.clustering().partitionHandling().enabled() && configuration.clustering().cacheMode().isDistributed()) {
+      if (configuration.clustering().partitionHandling().enabled()
+            && (configuration.clustering().cacheMode().isDistributed()
+            || configuration.clustering().cacheMode().isReplicated())) {
          interceptorChain.appendInterceptor(createInterceptor(new PartitionHandlingInterceptor(), PartitionHandlingInterceptor.class), false);
       }
 

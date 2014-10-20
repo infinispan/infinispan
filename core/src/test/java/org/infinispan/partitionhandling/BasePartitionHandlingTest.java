@@ -51,9 +51,8 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode);
-      dcc.clustering().partitionHandling().enabled(partitionHandling);
-      dcc.clustering().hash().numSegments(numMembersInCluster * 2);
+      ConfigurationBuilder dcc = new ConfigurationBuilder();
+      dcc.clustering().cacheMode(cacheMode).partitionHandling().enabled(partitionHandling);
       createClusteredCaches(numMembersInCluster, dcc, new TransportFlags().withFD(true).withMerge(true));
       waitForClusterToForm();
    }
@@ -365,7 +364,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    }
 
    protected void assertExpectedValue(Object expectedVal, Object key) {
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < numMembersInCluster; i++) {
          assertEquals(cache(i).get(key), expectedVal);
       }
    }
