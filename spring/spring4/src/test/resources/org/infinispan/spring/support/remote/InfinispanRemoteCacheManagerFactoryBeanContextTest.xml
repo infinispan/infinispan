@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:p="http://www.springframework.org/schema/p"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean
+            id="infinispanRemoteCacheManagerWithDefaultConfiguration"
+            class="org.infinispan.spring.support.remote.InfinispanRemoteCacheManagerFactoryBean"/>
+
+    <bean
+            id="infinispanRemoteCacheManagerConfiguredFromConfigurationPropertiesFile"
+            class="org.infinispan.spring.support.remote.InfinispanRemoteCacheManagerFactoryBean"
+            p:configurationPropertiesFileLocation="classpath:/org/infinispan/spring/support/remote/hotrod-client.properties"/>
+
+    <bean
+            id="infinispanRemoteCacheManagerConfiguredFromConfigurationProperties"
+            class="org.infinispan.spring.support.remote.InfinispanRemoteCacheManagerFactoryBean">
+        <property
+                name="configurationProperties">
+            <props>
+                <prop
+                        key="infinispan.client.hotrod.ping_on_startup">false
+                </prop>
+                <prop
+                        key="infinispan.client.hotrod.value_size_estimate">1024
+                </prop>
+                <prop
+                        key="infinispan.client.hotrod.tcp_no_delay">false
+                </prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean
+            id="infinispanRemoteCacheManagerConfiguredUsingSetters"
+            class="org.infinispan.spring.support.remote.InfinispanRemoteCacheManagerFactoryBean"
+            p:keySizeEstimate="768"
+            p:forceReturnValues="true"
+            p:startAutomatically="false"/>
+
+</beans>

@@ -1,0 +1,25 @@
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:infinispan:config:7.0"
+        xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd">
+
+    <cache-container default-cache="default">
+        <local-cache name="default">
+            <store-as-binary/>
+            <persistence>
+                <store class="PerstCacheStore" fetch-state="true" purge="false">
+                    <property name="flushInterval">10000</property>
+                    <property name="location">${java.io.tmpdir}/infinispan</property>
+                    <property name="lockAcquistionTimeout">600000"</property>
+                    <property name="pagePoolSize">16000000</property>
+                </store>
+            </persistence>
+        </local-cache>
+        <replicated-cache name="testCache">
+            <eviction max-entries="100" strategy="LRU"/>
+            <expiration lifespan="300000" interval="5000"/>
+            <state-transfer enabled="true"/>
+        </replicated-cache>
+
+    </cache-container>
+</infinispan>

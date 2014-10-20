@@ -1,0 +1,2 @@
+http\://www.infinispan.org/schemas/infinispan-spring.xsd=org/infinispan/spring/config/infinispan-spring-7.0.xsd
+http\://www.infinispan.org/schemas/infinispan-spring-7.0.xsd=org/infinispan/spring/config/infinispan-spring-7.0.xsd

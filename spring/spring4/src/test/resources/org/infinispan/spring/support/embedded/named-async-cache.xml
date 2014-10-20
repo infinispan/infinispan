@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+        xmlns="urn:infinispan:config:7.0">
+
+    <jgroups>
+        <stack-file name="udp" path="default-configs/default-jgroups-udp.xml"/>
+        <stack-file name="tcp" path="default-configs/default-jgroups-tcp.xml"/>
+    </jgroups>
+
+    <cache-container name="SampleCacheManager" statistics="true" default-cache="default">
+        <transport stack="tcp" cluster="infinispan-cluster" node-name="Node-A" machine="m1" rack="r1" site="LON"/>
+        <jmx domain="org.infinispan" duplicate-domains="true"/>
+        <replicated-cache name="default" statistics="true" mode="SYNC" remote-timeout="20000">
+            <locking isolation="READ_COMMITTED" acquire-timeout="20000" write-skew="false" concurrency-level="5000"
+                     striping="false"/>
+            <store-as-binary/>
+            <state-transfer enabled="false" timeout="240000" chunk-size="10000"/>
+        </replicated-cache>
+        <replicated-cache name="asyncCache" async-marshalling="true" mode="ASYNC"/>
+    </cache-container>
+
+</infinispan>
