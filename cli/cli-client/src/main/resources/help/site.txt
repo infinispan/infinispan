@@ -1,6 +1,6 @@
 .SH SYNOPSIS
 .B site [
-.I --status | --online | --offline
+.I --status | --online | --offline | --push | --cancelpush | --cancelreceive | --pushstatus | --clearpushstatus | --sendingsite
 .B ] [
 .I cachename.sitename
 .B ]
@@ -12,4 +12,4 @@ Shows the current status
 .IP cachename
 (optional) the name of the cache on which to invoke the specified site command
 .IP sitename
-(optional for status, required for all other operations) the name of the site on which to invoke the specified command
+(optional for --status, not required for --pushstatus, --clearpushstatus, --sendingsite and required for all other operations) the name of the site on which to invoke the specified command

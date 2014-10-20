@@ -564,8 +564,8 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
                           .afterFailures(BackupSiteResource.TAKE_OFFLINE_AFTER_FAILURES.resolveModelAttribute(context, takeOfflineModel).asInt())
                           .minTimeToWait(BackupSiteResource.TAKE_OFFLINE_MIN_WAIT.resolveModelAttribute(context, takeOfflineModel).asLong());
                 }
-                if (site.hasDefined(ModelKeys.STATE_TRANSFER)) {
-                    ModelNode stateTransferModel = site.get(ModelKeys.STATE_TRANSFER);
+                if (site.hasDefined(ModelKeys.STATE_TRANSFER) && site.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME).isDefined()) {
+                    ModelNode stateTransferModel = site.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME);
                     backupConfigurationBuilder.stateTransfer()
                           .chunkSize(BackupSiteStateTransferResource.STATE_TRANSFER_CHUNK_SIZE.resolveModelAttribute(context, stateTransferModel).asInt())
                           .timeout(BackupSiteStateTransferResource.STATE_TRANSFER_TIMEOUT.resolveModelAttribute(context, stateTransferModel).asLong())

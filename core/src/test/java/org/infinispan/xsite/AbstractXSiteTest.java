@@ -143,6 +143,21 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       }, timeUnit.toMillis(timeout));
    }
 
+   protected final <K, V> void assertEventuallyInSite(final String siteName, final String cacheName, final EventuallyAssertCondition<K, V> condition,
+                                                      long timeout, TimeUnit timeUnit) {
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            for (Cache<K, V> cache : AbstractXSiteTest.this.<K, V>caches(siteName, cacheName)) {
+               if (!condition.assertInCache(cache)) {
+                  return false;
+               }
+            }
+            return true;
+         }
+      }, timeUnit.toMillis(timeout));
+   }
+
    protected static interface AssertCondition<K, V> {
       void assertInCache(Cache<K, V> cache);
    }
