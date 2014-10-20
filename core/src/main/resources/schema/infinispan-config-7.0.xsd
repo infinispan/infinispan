@@ -690,10 +690,10 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute name="reaper-interval" type="xs:long" default="1000">
+    <xs:attribute name="reaper-interval" type="xs:long" default="30000">
       <xs:annotation>
         <xs:documentation>
-          The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 1000.
+          The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 30000.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
