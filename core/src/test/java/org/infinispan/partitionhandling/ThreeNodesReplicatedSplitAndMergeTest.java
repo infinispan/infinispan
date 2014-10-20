@@ -54,9 +54,11 @@ public class ThreeNodesReplicatedSplitAndMergeTest extends BasePartitionHandling
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
-            for (int i = 0; i < caches().size(); i++)
-               if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE)
+            for (int i = 0; i < numMembersInCluster; i++) {
+               if (partitionHandlingManager(i).getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
                   return false;
+               }
+            }
             return true;
          }
       });
