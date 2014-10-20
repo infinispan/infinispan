@@ -50,6 +50,10 @@
            paramTemplateFile="configuration/standalone/template.xml"
            paramSubsystemsFile="configuration/standalone/subsystems-clustered.xml"
            paramOutputFile="${generated.configs.standalone}/clustered.xml"/>
+        <generate-domain-config 
+           paramTemplateFile="configuration/domain/template.xml" 
+           paramSubsystemsFile="configuration/domain/subsystems.xml"
+           paramOutputFile="${generated.configs.domain}/domain.xml"/>
 
         <!-- Example configs -->
         <generate-server-config
