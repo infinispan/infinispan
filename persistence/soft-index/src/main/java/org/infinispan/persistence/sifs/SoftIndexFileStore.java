@@ -479,7 +479,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             if (entry == null) {
                entry = index.getPosition(key, serializedKey);
             }
-            if (entry != null) {
+            if (entry != null && entry.offset >= 0) {
                FileProvider.Handle handle = fileProvider.getFile(entry.file);
                try {
                   EntryHeader header = EntryRecord.readEntryHeader(handle, entry.offset);
