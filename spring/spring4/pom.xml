@@ -7,19 +7,19 @@
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
         <version>7.0.0-SNAPSHOT</version>
-        <relativePath>../parent/pom.xml</relativePath>
+        <relativePath>../../parent/pom.xml</relativePath>
     </parent>
 
-    <artifactId>infinispan-spring</artifactId>
+    <artifactId>infinispan-spring4</artifactId>
     <packaging>bundle</packaging>
 
-    <name>Infinispan Spring Integration</name>
+    <name>Infinispan Spring 4 Integration</name>
     <description>
         <![CDATA[
-                 The Infinispan Spring Integration project provides Spring 
+                 The Infinispan Spring Integration project provides Spring
                  integration for Infinispan, a high performance distributed cache.
                  Its primary features are
-                 
+
                   * An implementation of org.springframework.cache.CacheManager,
                     Spring's central caching abstraction, backed by Infinispan's
                     EmbeddedCacheManager. To be used if your Spring-powered
@@ -41,10 +41,6 @@
                  ... - within a Spring context.
         ]]>
     </description>
-
-    <!-- =================================================== -->
-    <!-- Developers section -->
-    <!-- =================================================== -->
 
     <developers>
         <developer>
@@ -68,21 +64,35 @@
         </developer>
     </developers>
 
-    <!-- =================================================== -->
-    <!-- Project Dependencies -->
-    <!-- =================================================== -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-context</artifactId>
+                <version>${version.spring4}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-test</artifactId>
+                <version>${version.spring4}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-jdbc</artifactId>
+                <version>${version.spring4}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!--Compile time dependencies -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-core</artifactId>
-            <scope>compile</scope>
         </dependency>
         <!-- Made the RHQ dependency non-transitive in case we only need the remote cache -->
         <dependency>
@@ -171,10 +181,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <!-- =================================================== -->
-    <!-- Project Plugins -->
-    <!-- =================================================== -->
 
     <build>
         <plugins>

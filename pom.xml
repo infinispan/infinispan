@@ -52,7 +52,8 @@
       <module>all/remote</module>
       <module>rhq-plugin</module>
       <module>osgi</module>
-      <module>spring</module>
+      <module>spring/spring</module>
+      <module>spring/spring4</module>
       <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
       <module>demos/gui</module>

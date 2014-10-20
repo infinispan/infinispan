@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+        xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:p="http://www.springframework.org/schema/p"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean
+            id="springRemoteCacheManagerWithDefaultConfiguration"
+            class="org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean"/>
+
+    <bean
+            id="springRemoteCacheManagerConfiguredFromConfigurationPropertiesFile"
+            class="org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean"
+            p:configurationPropertiesFileLocation="classpath:/org/infinispan/spring/provider/hotrod-client.properties"/>
+
+    <bean
+            id="springRemoteCacheManagerConfiguredUsingConfigurationProperties"
+            class="org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean">
+        <property
+                name="configurationProperties">
+            <props>
+                <prop
+                        key="infinispan.client.hotrod.force_return_values">true
+                </prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean
+            id="springRemoteCacheManagerConfiguredUsingSetters"
+            class="org.infinispan.spring.provider.SpringRemoteCacheManagerFactoryBean">
+        <property
+                name="configurationProperties">
+            <props>
+                <prop
+                        key=""></prop>
+            </props>
+        </property>
+    </bean>
+
+</beans>
