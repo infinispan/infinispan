@@ -48,7 +48,6 @@ import org.jgroups.JChannel;
 import org.jgroups.conf.PropertyConverters;
 import org.jgroups.conf.ProtocolStackConfigurator;
 import org.jgroups.jmx.JmxConfigurator;
-import org.jgroups.protocols.FORK;
 import org.jgroups.protocols.SASL;
 import org.jgroups.protocols.TP;
 import org.jgroups.protocols.pbcast.GMS;
@@ -85,12 +84,11 @@ public class JChannelFactory implements ChannelFactory, ChannelListener, Protoco
 
     @Override
     public Channel createChannel(final String id) throws Exception {
-        JChannel channel = new JChannel(this);
-        ProtocolStack stack = channel.getProtocolStack();
+        JChannel channel = new MuxChannel(this);
 
         // We need to synchronize on shared transport,
         // so we don't attempt to init a shared transport multiple times
-        TP transport = stack.getTransport();
+        TP transport = channel.getProtocolStack().getTransport();
         if (transport.isSingleton()) {
             synchronized (transport) {
                 this.init(transport);
@@ -100,31 +98,32 @@ public class JChannelFactory implements ChannelFactory, ChannelListener, Protoco
         }
 
         // Relay protocol is added to stack programmatically, not via ProtocolStackConfigurator
-        RelayConfiguration relayConfig = this.configuration.getRelay();
+        final RelayConfiguration relayConfig = this.configuration.getRelay();
         if (relayConfig != null) {
-            String localSite = relayConfig.getSiteName();
-            List<RemoteSiteConfiguration> remoteSites = this.configuration.getRelay().getRemoteSites();
-            List<String> sites = new ArrayList<>(remoteSites.size() + 1);
+            final String localSite = relayConfig.getSiteName();
+            final List<RemoteSiteConfiguration> remoteSites = this.configuration.getRelay().getRemoteSites();
+            final List<String> sites = new ArrayList<String>(remoteSites.size() + 1);
             sites.add(localSite);
             // Collect bridges, eliminating duplicates
-            Map<String, RelayConfig.BridgeConfig> bridges = new HashMap<>();
+            final Map<String, RelayConfig.BridgeConfig> bridges = new HashMap<String, RelayConfig.BridgeConfig>();
             for (final RemoteSiteConfiguration remoteSite: remoteSites) {
-                String siteName = remoteSite.getName();
+                final String siteName = remoteSite.getName();
                 sites.add(siteName);
-                String clusterName = remoteSite.getClusterName();
-                RelayConfig.BridgeConfig bridge = new RelayConfig.BridgeConfig(clusterName) {
+                final String cluster = remoteSite.getCluster();
+                final String clusterName = (cluster != null) ? cluster : siteName;
+                final RelayConfig.BridgeConfig bridge = new RelayConfig.BridgeConfig(clusterName) {
                     @Override
                     public JChannel createChannel() throws Exception {
-                        JChannel channel = (JChannel) remoteSite.getChannel();
-                        // Don't use FORK in bridge stack
-                        channel.getProtocolStack().removeProtocol(FORK.class);
-                        return channel;
+                        return (JChannel) remoteSite.getChannelFactory().createChannel(id + "/" + clusterName);
                     }
                 };
                 bridges.put(clusterName, bridge);
             }
-            RELAY2 relay = new RELAY2().site(localSite);
-            for (String site: sites) {
+            // Acquire consistent order of sites
+            Collections.sort(sites);
+            final RELAY2 relay = new RELAY2().site(localSite);
+            for (short i = 0; i < sites.size(); ++i) {
+                final String site = sites.get(i);
                 RelayConfig.SiteConfig siteConfig = new RelayConfig.SiteConfig(site);
                 relay.addSite(site, siteConfig);
                 if (site.equals(localSite)) {
@@ -135,14 +134,9 @@ public class JChannelFactory implements ChannelFactory, ChannelListener, Protoco
             }
             Configurator.resolveAndAssignFields(relay, relayConfig.getProperties());
             Configurator.resolveAndInvokePropertyMethods(relay, relayConfig.getProperties());
-            stack.addProtocol(relay);
+            channel.getProtocolStack().addProtocol(relay);
             relay.init();
         }
-
-        // Add implicit FORK to the top of the stack
-        FORK fork = new FORK();
-        stack.addProtocol(fork);
-        fork.init();
 
         // Handle the Sasl protocol
         final SaslConfiguration saslConfig = this.configuration.getSasl();
@@ -171,7 +165,7 @@ public class JChannelFactory implements ChannelFactory, ChannelListener, Protoco
            props.put("sasl_props",  new PropertyConverters.StringProperties().toString(saslProps));
            Configurator.resolveAndAssignFields(sasl, props);
            Configurator.resolveAndInvokePropertyMethods(sasl, props);
-           stack.insertProtocol(sasl, ProtocolStack.BELOW, GMS.class);
+           channel.getProtocolStack().insertProtocol(sasl, ProtocolStack.BELOW, GMS.class);
            sasl.init();
         }
 
