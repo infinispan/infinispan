@@ -191,7 +191,7 @@ There are some limitations to cluster listeners from a non clustered listener.
 . Only the post event is sent to a cluster listener, the pre event is ignored.
 
 ===== Event filtering and conversion
-All applicable events on the node where the listener is installed will be raised to the listener.  It is possible to dynamically filter what events are raised by using a link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/filter/KeyFilter.html$$[KeyFilter] (only allows filtering on keys) or link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/filter/KeyValueFilter.html$$[KeyValueFilter] (used to filter for both keys and values).
+All applicable events on the node where the listener is installed will be raised to the listener.  It is possible to dynamically filter what events are raised by using a link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/filter/KeyFilter.html$$[KeyFilter] (only allows filtering on keys) or link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/cachelistener/filter/CacheEventFilter.html$$[CacheEventFilter] (used to filter for keys, old value, old metadata, new value, new metadata, whether command was retried, if the event is before the event (ie. isPre) and also the command type).
 
 The example here shows a simple `KeyFilter` that will only allow events to be raised when an event modified the entry for the key `Only Me`.
 [source,java]
@@ -219,7 +219,7 @@ cache.addListener(listener, new SpecificKeyFilter("Only Me"));
 
 This can be useful when you want to limit what events you receive in a more efficient manner.
 
-There is also a link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/filter/Converter.html$$[Converter] that can be supplied that allows for converting a value to another before raising the event.  This can be nice to modularize any code that does value conversions.
+There is also a link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/filter/CacheEventConverter.html$$[CacheEventConverter] that can be supplied that allows for converting a value to another before raising the event.  This can be nice to modularize any code that does value conversions.
 
 NOTE: The mentioned filters and converters are especially beneficial when used in conjunction with a Cluster Listener.  This is because the filtering and conversion is done on the node where the event originated and not on the node where event is listened to.  This can provide benefits of not having to replicate events across the cluster (filter) or even have reduced payloads (converter).
 
@@ -250,6 +250,8 @@ public class MyRetryListener {
   }
 }
 ----
+
+Also when using a `CacheEventFilter` or `CacheEventConverter` the link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/notifications/cachelistener/filter/EventType.html$$[EventType] contains a method `isRetry` to tell if the event was generated due to retry.
 
 ==== Cache manager-level notifications
 Cache manager-level events occur on a cache manager.  These too are global and  cluster-wide, but involve events that affect all caches created by a single cache manager.  Examples of cache manager-level events are nodes joining or leaving a cluster, or caches starting or stopping.

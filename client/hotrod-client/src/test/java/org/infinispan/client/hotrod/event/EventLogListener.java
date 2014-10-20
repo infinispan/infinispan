@@ -8,7 +8,7 @@ import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.filter.NamedFactory;
+import org.infinispan.notifications.cachelistener.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
