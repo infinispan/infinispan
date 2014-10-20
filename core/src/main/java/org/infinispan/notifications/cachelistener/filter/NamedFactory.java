@@ -1,4 +1,4 @@
-package org.infinispan.filter;
+package org.infinispan.notifications.cachelistener.filter;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

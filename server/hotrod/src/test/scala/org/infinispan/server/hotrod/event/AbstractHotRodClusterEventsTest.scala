@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod.event
 import java.lang.reflect.Method
 import java.util
 import org.infinispan.configuration.cache.{CacheMode, ConfigurationBuilder}
-import org.infinispan.filter.{ConverterFactory, KeyValueFilterFactory, Converter, KeyValueFilter}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.server.hotrod.OperationStatus._
@@ -15,7 +14,7 @@ import org.infinispan.test.TestingUtil
 import org.testng.annotations.Test
 import scala.collection.mutable.ListBuffer
 import org.infinispan.notifications.cachelistener.event.Event
-import org.infinispan.notifications.cachelistener.filter._
+import org.infinispan.notifications.cachelistener.filter.{CacheEventFilterFactory, CacheEventFilter, CacheEventConverterFactory, CacheEventConverter, EventType}
 
 /**
  * @author Galder Zamarreño

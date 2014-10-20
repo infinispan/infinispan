@@ -1,18 +1,14 @@
 package org.infinispan.client.hotrod.event;
 
-import org.infinispan.Cache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.ConverterFactory;
-import org.infinispan.filter.NamedFactory;
+import org.infinispan.notifications.cachelistener.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.junit.Assert;
 
 import java.io.Serializable;
 import java.util.concurrent.ArrayBlockingQueue;
