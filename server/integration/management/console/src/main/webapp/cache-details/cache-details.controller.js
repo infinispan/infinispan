@@ -11,7 +11,9 @@ angular.module('managementConsole')
         $state.go('error404');
       }
 
-      // Set currentCache according to url params.
+      // Set currentCache according to the url params.
+      // TODO(matija): use some hashMap-like structure instead of
+      //               searching through an array.
       api.getClustersDeep(function(clusters) {
         $scope.safeApply(function() {
           angular.forEach(clusters, function(cluster) {
