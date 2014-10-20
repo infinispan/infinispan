@@ -275,13 +275,15 @@
    </target>
 
    <target name="trim-as">
-      <delete dir="${output.dir}/docs" />
-      <delete dir="${output.dir}/domain" />
       <delete>
          <fileset dir="${output.dir}/bin">
-            <include name="domain.*"/>
+            <include name="appclient.*" />
+            <include name="run.*" />
+            <include name="wsconsume.*" />
+            <include name="wsprovide.*" />
          </fileset>
       </delete>
+      <delete dir="${output.dir}/docs" />
       <delete dir="${output.dir}/appclient" />
       <delete dir="${output.dir}/welcome-content" />
    </target>
