@@ -1,6 +1,6 @@
 
 SYNOPSIS
-    site [ --status | --online | --offline ] [ cachename.sitename ] 
+    site [ --status | --online | --offline | --push | --cancelpush | --cancelreceive | --pushstatus | --clearpushstatus | --sendingsite ] [ cachename.sitename ]
     
 DESCRIPTION 
     Inspects or changes the status of sites for X-Site replication
@@ -11,4 +11,4 @@ ARGUMENTS
     cachename 
         (optional) the name of the cache on which to invoke the specified site command
     sitename 
-        (optional for status, required for all other operations) the name of the site on which to invoke the specified command
+        (optional for --status, not required for --pushstatus, --clearpushstatus, --sendingsite and required for all other operations) the name of the site on which to invoke the specified command

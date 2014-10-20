@@ -8,7 +8,6 @@ import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
 import org.infinispan.interceptors.InvalidationInterceptor;
 import org.infinispan.interceptors.TxInterceptor;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.server.infinispan.SecurityActions;
@@ -22,8 +21,10 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
+import java.util.Iterator;
+import java.util.Map;
+
 import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
-import static org.jboss.as.clustering.infinispan.subsystem.CacheMetricsHandler.getFirstInterceptorWhichExtends;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
@@ -373,10 +374,116 @@ public abstract class CacheCommands implements OperationStepHandler {
         }
    }
 
+    public static class BackupPushStateCommand extends CacheCommands {
+        public static final BackupPushStateCommand INSTANCE = new BackupPushStateCommand();
+
+        public BackupPushStateCommand() {
+         super(1);
+      }
+
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
+            final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
+            final String site = address.getLastElement().getValue();
+            XSiteAdminOperations xsiteAdminOperations = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+            return toOperationResult(xsiteAdminOperations.pushState(site));
+        }
+    }
+
+    public static class BackupCancelPushStateCommand extends CacheCommands {
+        public static final BackupCancelPushStateCommand INSTANCE = new BackupCancelPushStateCommand();
+
+        public BackupCancelPushStateCommand() {
+         super(1);
+      }
+
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
+            final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
+            final String site = address.getLastElement().getValue();
+            XSiteAdminOperations xsiteAdminOperations = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+            return toOperationResult(xsiteAdminOperations.cancelPushState(site));
+        }
+    }
+
+    public static class BackupCancelReceiveStateCommand extends CacheCommands {
+        public static final BackupCancelReceiveStateCommand INSTANCE = new BackupCancelReceiveStateCommand();
+
+        public BackupCancelReceiveStateCommand() {
+         super(1);
+      }
+
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
+            final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
+            final String site = address.getLastElement().getValue();
+            XSiteAdminOperations xsiteAdminOperations = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+            return toOperationResult(xsiteAdminOperations.cancelReceiveState(site));
+        }
+    }
+
+    public static class BackupPushStateStatusCommand extends CacheCommands {
+        public static final BackupPushStateStatusCommand INSTANCE = new BackupPushStateStatusCommand();
+
+        public BackupPushStateStatusCommand() {
+         super(1);
+      }
+
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
+            XSiteAdminOperations xsiteAdminOperations = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+            return toOperationResult(prettyPrintMap(xsiteAdminOperations.getPushStateStatus()));
+        }
+    }
+
+    public static class BackupGetSendingSiteCommand extends CacheCommands {
+        public static final BackupGetSendingSiteCommand INSTANCE = new BackupGetSendingSiteCommand();
+
+        public BackupGetSendingSiteCommand() {
+         super(1);
+      }
+
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
+            XSiteAdminOperations xsiteAdminOperations = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+            return toOperationResult(xsiteAdminOperations.getSendingSiteName());
+        }
+    }
+
+    public static class BackupClearPushStatusCommand extends CacheCommands {
+        public static final BackupClearPushStatusCommand INSTANCE = new BackupClearPushStatusCommand();
+
+        public BackupClearPushStatusCommand() {
+         super(1);
+      }
+
+        @Override
+        protected ModelNode invokeCommand(Cache<?, ?> cache, ModelNode operation) throws Exception {
+            XSiteAdminOperations xsiteAdminOperations = SecurityActions.getComponentRegistry(cache.getAdvancedCache()).getComponent(XSiteAdminOperations.class);
+            xsiteAdminOperations.clearPushStateStatus();
+            return null;
+        }
+    }
+
     private static ModelNode toOperationResult(String s) {
         ModelNode result = new ModelNode();
         result.add(s);
         return result;
     }
+
+    private static String prettyPrintMap(Map<?, ?> map) {
+        if (map.isEmpty()) {
+           return "";
+        }
+        StringBuilder builder = new StringBuilder();
+        for (Iterator<? extends Map.Entry<?, ?>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
+           Map.Entry<?, ?> entry = iterator.next();
+           builder.append(entry.getKey()).append("=").append(entry.getValue());
+           if (iterator.hasNext()) {
+              builder.append(System.lineSeparator());
+           }
+        }
+        return builder.toString();
+   }
 
 }

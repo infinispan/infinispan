@@ -107,6 +107,30 @@ public class BackupSiteResource extends SimpleResourceDefinition {
             new SimpleOperationDefinitionBuilder("site-status", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
                 .build();
 
+    static final OperationDefinition BACKUP_PUSH_STATE =
+            new SimpleOperationDefinitionBuilder("push-state", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+               .build();
+
+    static final OperationDefinition BACKUP_CANCEL_PUSH_STATE =
+            new SimpleOperationDefinitionBuilder("cancel-push", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+               .build();
+
+    static final OperationDefinition BACKUP_CANCEL_RECEIVE_STATE =
+            new SimpleOperationDefinitionBuilder("cancel-receive", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+               .build();
+
+    static final OperationDefinition BACKUP_PUSH_STATE_STATUS =
+            new SimpleOperationDefinitionBuilder("push-state-status", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+               .build();
+
+    static final OperationDefinition BACKUP_CLEAR_PUSH_STATE_STATUS =
+            new SimpleOperationDefinitionBuilder("clear-push-state-status", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+               .build();
+
+    static final OperationDefinition BACKUP_SENDING_SITE =
+            new SimpleOperationDefinitionBuilder("get-sending-site", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+               .build();
+
     private final boolean runtimeRegistration;
 
     BackupSiteResource(boolean runtimeRegistration) {
@@ -129,6 +153,12 @@ public class BackupSiteResource extends SimpleResourceDefinition {
             resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_BRING_SITE_ONLINE, CacheCommands.BackupBringSiteOnlineCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_TAKE_SITE_OFFLINE, CacheCommands.BackupTakeSiteOfflineCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_SITE_STATUS, CacheCommands.BackupSiteStatusCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_PUSH_STATE, CacheCommands.BackupPushStateCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_CANCEL_PUSH_STATE, CacheCommands.BackupCancelPushStateCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_CANCEL_RECEIVE_STATE, CacheCommands.BackupCancelReceiveStateCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_PUSH_STATE_STATUS, CacheCommands.BackupPushStateStatusCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_CLEAR_PUSH_STATE_STATUS, CacheCommands.BackupClearPushStatusCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_SENDING_SITE, CacheCommands.BackupGetSendingSiteCommand.INSTANCE);
         }
     }
 

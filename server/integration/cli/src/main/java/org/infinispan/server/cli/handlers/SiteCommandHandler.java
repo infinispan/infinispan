@@ -1,8 +1,10 @@
 package org.infinispan.server.cli.handlers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.infinispan.server.cli.util.CliCommandBuffer;
 import org.jboss.as.cli.CommandArgument;
@@ -22,15 +24,21 @@ import org.jboss.as.cli.operation.ParsedCommandLine;
  */
 public class SiteCommandHandler extends NoArgumentsCliCommandHandler {
 
-   private final ArgumentWithoutValue status;
-   private final ArgumentWithoutValue online;
-   private final ArgumentWithoutValue offline;
+   private final List<? extends CommandArgument> arguments;
 
    public SiteCommandHandler(CliCommandBuffer buffer) {
       super(CacheCommand.SITE, buffer);
-      status = new ArgumentWithoutValue(this, -1, "--status");
-      online = new ArgumentWithoutValue(this, -1, "--online");
-      offline = new ArgumentWithoutValue(this, -1, "--offline");
+      arguments = Arrays.asList(
+            new ArgumentWithoutValue(this, -1, "--status"),
+            new ArgumentWithoutValue(this, -1, "--online"),
+            new ArgumentWithoutValue(this, -1, "--offline"),
+            new ArgumentWithoutValue(this, -1, "--push"),
+            new ArgumentWithoutValue(this, -1, "--cancelpush"),
+            new ArgumentWithoutValue(this, -1, "--cancelreceive"),
+            new ArgumentWithoutValue(this, -1, "--pushstatus"),
+            new ArgumentWithoutValue(this, -1, "--clearpushstatus"),
+            new ArgumentWithoutValue(this, -1, "--sendingsite")
+      );
       new ArgumentWithValue(this, null, 0, "--site-name");
    }
 
@@ -38,10 +46,12 @@ public class SiteCommandHandler extends NoArgumentsCliCommandHandler {
    public Collection<CommandArgument> getArguments(CommandContext ctx) {
       ParsedCommandLine parsedCommandLine = ctx.getParsedCommandLine();
       try {
-         if (!status.isPresent(parsedCommandLine) && !online.isPresent(parsedCommandLine)
-               && !offline.isPresent(parsedCommandLine)) {
-            return Arrays.<CommandArgument> asList(status, online, offline);
+         for (CommandArgument argument : arguments) {
+            if (argument.isPresent(parsedCommandLine)) {
+               return Collections.emptyList();
+            }
          }
+         return Collections.unmodifiableCollection(arguments);
       } catch (CommandFormatException e) {
          //ignored!
       }
