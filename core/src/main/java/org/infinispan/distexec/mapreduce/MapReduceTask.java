@@ -553,8 +553,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          future.get();
       } catch (Exception e) {
          throw new MapReduceException(e);
-      }
-      rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());
+      }      
       Map<Address, Response> map = rpc.invokeRemotely(cache.getRpcManager().getMembers(), ccc, rpcOptionsBuilder.build());
       for (Entry<Address, Response> e : map.entrySet()) {
          if (!e.getValue().isSuccessful()) {
