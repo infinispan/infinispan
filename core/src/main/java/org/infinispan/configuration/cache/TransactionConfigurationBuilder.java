@@ -37,7 +37,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private boolean useSynchronization = true;
    private final RecoveryConfigurationBuilder recovery;
    private boolean use1PcForAutoCommitTransactions = false;
-   private long reaperWakeUpInterval = 1000;
+   private long reaperWakeUpInterval = 30000;
    private long completedTxTimeout = 60000;
    private TransactionProtocol transactionProtocol = TransactionProtocol.DEFAULT;
 
@@ -237,7 +237,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    /**
-    *The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 1000.
+    *The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 30000.
     */
    public TransactionConfigurationBuilder reaperWakeUpInterval(long interval) {
       this.reaperWakeUpInterval = interval;
