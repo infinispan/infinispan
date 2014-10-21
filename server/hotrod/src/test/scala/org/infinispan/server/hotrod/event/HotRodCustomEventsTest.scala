@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod.event
 
 import java.lang.reflect.Method
-import org.infinispan.filter.{ConverterFactory, Converter}
+import org.infinispan.filter.Converter
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
