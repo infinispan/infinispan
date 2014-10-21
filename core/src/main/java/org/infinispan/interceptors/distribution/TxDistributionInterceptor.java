@@ -320,7 +320,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          if (trace) log.tracef("Doing a remote get for key %s", key);
 
          boolean acquireRemoteLock = false;
-         if (ctx.isInTxScope()) {
+         if (ctx.isInTxScope() && ctx.isOriginLocal()) {
             TxInvocationContext txContext = (TxInvocationContext) ctx;
             acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
          }
