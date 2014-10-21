@@ -1,6 +1,5 @@
 package org.infinispan.server.endpoint.deployments;
 
-import org.infinispan.filter.ConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
