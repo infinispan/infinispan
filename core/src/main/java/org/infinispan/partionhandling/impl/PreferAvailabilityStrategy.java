@@ -113,10 +113,13 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
          }
       }
 
-      // Cancel any pending rebalance in the current topology.
-      // By definition, the stable topology does not have a pending CH.
+      // Increment the topology id so that it's bigger than any topology that might have been sent by the old
+      // coordinator. +1 is enough because there nodes wait for the new JGroups view before answering the status
+      // request, and after they have the new view they can't process topology updates with the old view id.
+      // Also cancel any pending rebalance by removing the pending CH, because we don't recover the rebalance
+      // confirmation status (yet).
       CacheTopology mergedTopology = maxTopology;
-      if (maxTopology != null && maxTopology.getPendingCH() != null) {
+      if (maxTopology != null) {
          mergedTopology = new CacheTopology(maxTopologyId + 1, maxTopology.getRebalanceId(),
                maxTopology.getCurrentCH(), null);
       }
