@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.commons.util.FileLookup;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.ConfigurationException;
@@ -49,7 +50,7 @@ public class InfinispanEmbeddedServiceFactory implements ManagedServiceFactory {
         }
 
         try {
-            URL configURL = this.getClass().getClassLoader().getResource(config);
+            URL configURL = new FileLookup().lookupFileLocation(config, Thread.currentThread().getContextClassLoader());
             if (configURL == null) {
                 throw new ConfigurationException(PROP_CONFIG, String.format("Failed to find the specified config '%s'.", config));
             }

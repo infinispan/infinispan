@@ -13,6 +13,7 @@ import java.util.NoSuchElementException;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleReference;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * @author Brett Meyer
@@ -47,8 +48,7 @@ public class OsgiClassLoader extends ClassLoader {
       super(null);
 
       if (Util.isOSGiContext()) {
-         final BundleContext bundleContext = ((BundleReference) OsgiClassLoader.class.getClassLoader()).getBundle()
-               .getBundleContext();
+         final BundleContext bundleContext = FrameworkUtil.getBundle(OsgiClassLoader.class).getBundleContext();
          Bundle[] foundBundles = bundleContext.getBundles();
          bundles = new ArrayList<WeakReference<Bundle>>(foundBundles.length);
          for (Bundle foundBundle : foundBundles) {
