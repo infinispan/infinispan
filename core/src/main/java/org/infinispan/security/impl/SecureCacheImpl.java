@@ -458,6 +458,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
 
    @Override
    public void setAvailability(AvailabilityMode availabilityMode) {
+      authzManager.checkPermission(AuthorizationPermission.ADMIN);
       delegate.setAvailability(availabilityMode);
    }
 
