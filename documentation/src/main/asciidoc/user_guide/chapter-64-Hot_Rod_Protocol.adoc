@@ -1045,11 +1045,11 @@ decisions, particularly when it comes to fail-over logic:
 * +0x87+ = Node suspected. When a client receives this error as response,
 it means that the node that responded had an issue sending an operation to a
 third node, which was suspected. Generally, requests that return this error
-can be failed-over to other nodes.
+should be failed-over to other nodes.
 * +0x88+ = Illegal lifecycle state. When a client receives this error as response,
 it means that the server-side cache or cache manager are not available
 for requests because either stopped, they're stopping or similar situation.
-Generally, requests that return this error can be failed-over to other nodes.
+Generally, requests that return this error should be failed-over to other nodes.
 
 Some adjustments have been made to the responses for the following commands in
 order to better handle response decoding without the need to keep track of the
