@@ -60,7 +60,7 @@ public class HotRodCustomMarshallerEventIT {
     @InfinispanResource("container1")
     RemoteInfinispanServer server1;
 
-    @Deployment(testable = false, name = "filter-converter-1")
+    @Deployment(testable = false, name = "marshaller")
     @TargetsContainer("container1")
     @OverProtocol("jmx-as7")
     public static Archive<?> deploy1() {
@@ -126,6 +126,9 @@ public class HotRodCustomMarshallerEventIT {
             remoteCache.remove(new Id(1));
             ClientCacheEntryRemovedEvent<Id> removed = eventListener.pollEvent();
             assertEquals(new Id(1), removed.getKey());
+            remoteCache.remove(new Id(2));
+            removed = eventListener.pollEvent();
+            assertEquals(new Id(2), removed.getKey());
         } finally {
             remoteCache.removeClientListener(eventListener);
         }

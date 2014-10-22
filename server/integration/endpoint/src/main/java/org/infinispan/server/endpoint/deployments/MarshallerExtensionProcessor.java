@@ -64,7 +64,8 @@ public class MarshallerExtensionProcessor extends AbstractServerExtensionProcess
 
         @Override
         public void stop(StopContext context) {
-            // No-op
+           ROOT_LOGGER.debugf("Stopped marshaller service with marshaller = %s", marshaller);
+           extensionManager.getValue().setMarshaller(null);
         }
 
         @Override
