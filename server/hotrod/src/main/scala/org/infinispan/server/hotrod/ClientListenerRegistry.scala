@@ -50,7 +50,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    def getMarshaller(maybeMarshaller: Option[Marshaller]): Option[Marshaller] = {
       (marshaller, maybeMarshaller) match {
          case (None, None) => defaultMashaller
-         case (Some(m), None) => marshaller
+         case (Some(m), None) => defaultMashaller
          case (None, Some(m)) => maybeMarshaller
          case (Some(m), Some(mm)) =>
             warnMarshallerAlreadySet(m, mm)
