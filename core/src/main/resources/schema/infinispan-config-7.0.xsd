@@ -805,6 +805,7 @@
           <xs:documentation>Defines a file-based cache store.</xs:documentation>
         </xs:annotation>
       </xs:element>
+      <xs:any namespace="##other" />
     </xs:choice>
     <xs:attribute name="passivation" type="xs:boolean" default="false">
       <xs:annotation>
