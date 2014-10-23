@@ -1,0 +1,155 @@
+
+<div class="container-fluid" style="margin:20px">
+  <div class="row">
+    <div class="col-md-6 breadcrumbs">
+      <span> <a> {{currentCluster.name}} </a>  >>  {{currentCache.name}} </span>
+    </div>
+
+    <div class="col-md-6 text-right">
+        <select>
+          <option value="0">Actions</option>
+          <option value="1">Edit cache</option>
+          <option value="2">Disable cache</option>
+          <option value="3">Delete existing entries</option>
+          <option value="4">Delete cache</option>
+        </select>
+    </div>
+  </div>
+  <br>
+
+  <div class="cache-details">
+    <div class="cache-name">{{currentCache.name}}</div>
+    <div class="cache-status">
+        <span class="cache-status-label">Status:</span> <span class="available">{{currentCache.data['cache-status']}}</span>
+    </div>
+    <div class="cache-details row cache-information">
+        <div class="col-md-3">
+            <div class="col-md-7">
+                <div>Average read time: </div>
+                <div>Average write time: </div>
+                <div>Average size of entry: </div>
+                <div>Total number of entries: </div>
+            </div>
+            <div class="col-md-5">
+                <div>{{currentCache.data['average-read-time']}} ms</div>
+                <div>23 ms</div>
+                <div>46 bytes</div>
+                <div>463</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="col-md-7">
+                <div>Total number of reads: </div>
+                <div>Total number of failed reads: </div>
+                <div>Total number of writes: </div>
+                <div>Total number of failed writes: </div>
+            </div>
+            <div class="col-md-5">
+                <div>700</div>
+                <div>700</div>
+                <div>700</div>
+                <div>700</div>
+            </div>
+        </div>
+    </div>
+
+    <br>
+
+    <div class="row">
+      <div class="col-md-9 text-left">
+        <div class="cache-status">
+          <span class="cache-status-label">Nodes</span>
+        </div>
+      </div>
+      <div class="col-md-3 text-right">
+        <span class="search-text"> Search: </span> <input type="search" class="search-field">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <table class="table table-bordered">
+          <thead>
+            <th> Name </th>
+            <th> Average reads </th>
+            <th> Average writes </th>
+            <th> Total entries </th>
+            <th> Total reads </th>
+            <th> Total failed reads </th>
+            <th> Total writes </th>
+            <th> Total failed writes </th>
+          </thead>
+          <tr>
+            <td> First node </td>
+            <td> 135 </td>
+            <td> 45 </td>
+            <td> 125,000 </td>
+            <td> 984,587</td>
+            <td> 56 </td>
+            <td> 156,078 </td>
+            <td> 1 </td>
+          </tr>
+          <tr>
+            <td> Second node </td>
+            <td> 23 </td>
+            <td> 35 </td>
+            <td> 1,562,400 </td>
+            <td> 549,848 </td>
+            <td> 2 </td>
+            <td> 265,889 </td>
+            <td> 0 </td>
+          </tr>
+          <tr>
+            <td> Third node </td>
+            <td> 15 </td>
+            <td> 24 </td>
+            <td> 865,000 </td>
+            <td> 984,754 </td>
+            <td> 68 </td>
+            <td> 358,745 </td>
+            <td> 3 </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <br>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="cache-status">
+          <span class="cache-status-label">Properties</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cache-properties row">
+      <div class="col-md-3">
+          <div>Cache name:</div>
+          <div>Mode:</div>
+          <div>Associated cache/loader store:</div>
+
+          <div>Write-through/Write-behind:</div>
+          <div>Isolation level:</div>
+          <div>Eviction strategy:</div>
+
+          <div>Passivation:</div>
+          <div>Expiration configuration:</div>
+          <div>Cross-site replication:</div>
+      </div>
+      <div class="col-md-9">
+          <div>{{currentCache.name}}</div>
+          <div>Mock mode</div>
+          <div>The mock loader</div>
+
+          <div>Mock</div>
+          <div>Mock</div>
+          <div>Mock</div>
+          
+          <div>Mock</div>
+          <div>Mock</div>
+          <div>Mock</div>
+      </div>
+    </div>
+
+  </div>
+</div>
