@@ -9,7 +9,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentMap;
@@ -42,7 +41,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    private static final Log log = LogFactory.getLog(ParserRegistry.class);
    private final WeakReference<ClassLoader> cl;
    private final ConcurrentMap<QName, ConfigurationParser> parserMappings;
-   
+
    public ParserRegistry() {
       this(Thread.currentThread().getContextClassLoader());
    }
@@ -65,7 +64,7 @@ public class ParserRegistry implements NamespaceMappingParser {
                }
             }
          } catch (Exception e) {
-            // 
+            //
          }
       }
    }
@@ -128,7 +127,7 @@ public class ParserRegistry implements NamespaceMappingParser {
       QName name = reader.getName();
       ConfigurationParser parser = parserMappings.get(name);
       if (parser == null) {
-         throw new XMLStreamException("Unexpected element '" + name + "'", reader.getLocation());
+         throw log.unsupportedConfiguration(name.getLocalPart(), name.getNamespaceURI());
       }
       parser.readElement(reader, holder);
    }
