@@ -19,8 +19,13 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
-@Namespaces({ @Namespace(uri = "urn:infinispan:config:soft-index:7.0", root = "softIndexStore"), @Namespace(root = "softIndexStore") })
+@Namespaces({
+      @Namespace(uri = "urn:infinispan:config:soft-index:7.0",
+                 root = SoftIndexFileStoreConfigurationParser70.ROOT_ELEMENT),
+      @Namespace(root = SoftIndexFileStoreConfigurationParser70.ROOT_ELEMENT)
+})
 public class SoftIndexFileStoreConfigurationParser70 implements ConfigurationParser {
+   public static final String ROOT_ELEMENT = "soft-index-file-store";
 
    public SoftIndexFileStoreConfigurationParser70() {
    }
@@ -52,30 +57,6 @@ public class SoftIndexFileStoreConfigurationParser70 implements ConfigurationPar
          String attrName = reader.getAttributeLocalName(i);
          Attribute attribute = Attribute.forName(attrName);
          switch (attribute) {
-            case DATA_LOCATION:
-               builder.dataLocation(value);
-               break;
-            case INDEX_LOCATION:
-               builder.indexLocation(value);
-               break;
-            case INDEX_SEGMENTS:
-               builder.indexSegments(Integer.parseInt(value));
-               break;
-            case INDEX_QUEUE_LENGTH:
-               builder.indexQueueLength(Integer.parseInt(value));
-               break;
-            case MAX_FILE_SIZE:
-               builder.maxFileSize(Integer.parseInt(value));
-               break;
-            case MIN_NODE_SIZE:
-               builder.minNodeSize(Integer.parseInt(value));
-               break;
-            case MAX_NODE_SIZE:
-               builder.maxNodeSize(Integer.parseInt(value));
-               break;
-            case SYNC_WRITES:
-               builder.syncWrites(Boolean.parseBoolean(value));
-               break;
             case OPEN_FILES_LIMIT:
                builder.openFilesLimit(Integer.parseInt(value));
                break;
@@ -87,8 +68,72 @@ public class SoftIndexFileStoreConfigurationParser70 implements ConfigurationPar
                break;
          }
       }
-      if (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
-         throw ParseUtils.unexpectedElement(reader);
+
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case DATA: {
+               this.parseData(reader, builder);
+               break;
+            }
+            case INDEX: {
+               this.parseIndex(reader, builder);
+               break;
+            }
+            default: {
+               Parser70.parseStoreElement(reader, builder);
+            }
+         }
       }
    }
+
+   private void parseData(XMLExtendedStreamReader reader, SoftIndexFileStoreConfigurationBuilder builder) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case PATH:
+               builder.dataLocation(value);
+               break;
+            case MAX_FILE_SIZE:
+               builder.maxFileSize(Integer.parseInt(value));
+               break;
+            case SYNC_WRITES:
+               builder.syncWrites(Boolean.parseBoolean(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseIndex(XMLExtendedStreamReader reader, SoftIndexFileStoreConfigurationBuilder builder) throws XMLStreamException {
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case PATH:
+               builder.indexLocation(value);
+               break;
+            case SEGMENTS:
+               builder.indexSegments(Integer.parseInt(value));
+               break;
+            case INDEX_QUEUE_LENGTH:
+               builder.indexQueueLength(Integer.parseInt(value));
+               break;
+            case MIN_NODE_SIZE:
+               builder.minNodeSize(Integer.parseInt(value));
+               break;
+            case MAX_NODE_SIZE:
+               builder.maxNodeSize(Integer.parseInt(value));
+               break;
+            default:
+               throw ParseUtils.unexpectedAttribute(reader, i);
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+
 }

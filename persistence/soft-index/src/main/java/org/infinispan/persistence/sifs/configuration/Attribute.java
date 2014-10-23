@@ -11,16 +11,15 @@ import java.util.Map;
 public enum Attribute {
    // must be first
    UNKNOWN(null),
-   COMPACTION_THRESHOLD("compactionThreshold"),
-   DATA_LOCATION("dataLocation"),
-   INDEX_QUEUE_LENGTH("indexQueueLength"),
-   INDEX_LOCATION("indexLocation"),
-   INDEX_SEGMENTS("indexSegments"),
-   MAX_FILE_SIZE("maxFileSize"),
-   MAX_NODE_SIZE("maxNodeSize"),
-   MIN_NODE_SIZE("minNodeSize"),
-   OPEN_FILES_LIMIT("openFilesLimit"),
-   SYNC_WRITES("syncWrites")
+   COMPACTION_THRESHOLD("compaction-threshold"),
+   PATH("path"),
+   INDEX_QUEUE_LENGTH("max-queue-length"),
+   SEGMENTS("segments"),
+   MAX_FILE_SIZE("max-file-size"),
+   MAX_NODE_SIZE("max-node-size"),
+   MIN_NODE_SIZE("min-node-size"),
+   OPEN_FILES_LIMIT("open-files-limit"),
+   SYNC_WRITES("sync-writes")
    ;
 
    private final String name;
