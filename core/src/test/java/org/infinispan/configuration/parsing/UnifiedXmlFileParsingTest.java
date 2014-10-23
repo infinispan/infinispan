@@ -1,6 +1,7 @@
 package org.infinispan.configuration.parsing;
 
 import org.infinispan.Version;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
@@ -34,7 +35,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
-import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -432,6 +432,19 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             assertTrue(c.storeAsBinary().storeKeysAsBinary());
             assertFalse(c.storeAsBinary().storeValuesAsBinary());
          }
+      });
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testUnsupportedConfiguration() throws Exception {
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.fromXml("configs/unified/old.xml", true)) {
+
+               @Override
+               public void call() {
+                  fail("Parsing an unsupported file should have failed.");
+               }
+
       });
    }
 
