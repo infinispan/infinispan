@@ -118,9 +118,7 @@ public abstract class AbstractRemoteCacheIT {
     }
 
     private void clearServer(int serverIndex) {
-        while (remoteCache.size() != 0) {
-            remoteCache.clear();
-        }
+        remoteCache.clear();
     }
 
     private long numEntriesOnServer(int serverIndex) {
