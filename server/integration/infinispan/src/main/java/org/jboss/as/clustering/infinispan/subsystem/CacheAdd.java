@@ -374,6 +374,8 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         CacheResource.CACHE_MODULE.validateAndSet(fromModel, toModel);
         CacheResource.INDEXING_PROPERTIES.validateAndSet(fromModel, toModel);
         CacheResource.STATISTICS.validateAndSet(fromModel, toModel);
+        CacheResource.REMOTE_CACHE.validateAndSet(fromModel, toModel);
+        CacheResource.REMOTE_SITE.validateAndSet(fromModel, toModel);
     }
 
     /**
@@ -408,6 +410,14 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
                 .withProperties(indexingProperties)
                 .autoConfig(autoConfig)
         ;
+
+        if (cache.hasDefined(ModelKeys.REMOTE_CACHE)) {
+             builder.sites().backupFor().remoteCache(CacheResource.REMOTE_CACHE.resolveModelAttribute(context, cache).asString());
+        }
+        if (cache.hasDefined(ModelKeys.REMOTE_SITE)) {
+             builder.sites().backupFor().remoteSite(CacheResource.REMOTE_SITE.resolveModelAttribute(context, cache).asString());
+        }
+
 
         // locking is a child resource
         if (cache.hasDefined(ModelKeys.LOCKING) && cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME).isDefined()) {

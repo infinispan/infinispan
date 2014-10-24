@@ -41,6 +41,7 @@ public class ModelKeys {
     static final String BACKUP_FAILURE_POLICY = "failure-policy";
     static final String BACKUP_STRATEGY = "strategy";
     static final String BACKUPS = "backups";
+    static final String BACKUP_FOR = "backup-for";
     static final String BATCH_SIZE = "batch-size";
     static final String BATCHING = "batching";
     static final String BINARY_KEYED_TABLE = "binary-keyed-table";
@@ -151,8 +152,10 @@ public class ModelKeys {
     static final String READ_ONLY = "read-only";
     static final String REBALANCING = "rebalancing";
     static final String RELATIVE_TO = "relative-to";
+    static final String REMOTE_CACHE = "remote-cache";
     static final String REMOTE_SERVER = "remote-server";
     static final String REMOTE_SERVERS = "remote-servers";
+    static final String REMOTE_SITE = "remote-site";
     static final String REMOTE_STORE_NAME = "REMOTE_STORE";
     static final String REMOTE_STORE = "remote-store";
     static final String REMOTE_TIMEOUT = "remote-timeout";
