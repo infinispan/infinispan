@@ -132,12 +132,13 @@ public abstract class HotRodSaslAuthTestBase {
    public void testAdmin() throws PrivilegedActionException, LoginException {
       initAsAdmin();
       testWriteRead();
+      testSize();
    }
 
    @Test
    public void testReaderRead() throws PrivilegedActionException, LoginException {
       initAsReader();
-      testReadNonExitent();
+      testReadNonExistent();
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
@@ -162,9 +163,10 @@ public abstract class HotRodSaslAuthTestBase {
    public void testSupervisorWriteRead() throws PrivilegedActionException, LoginException {
       initAsSupervisor();
       testWriteRead();
+      testSize();
    }
 
-   protected void testReadNonExitent() {
+   protected void testReadNonExistent() {
       assertEquals(null, remoteCache.get("nonExistentKey"));
    }
 
@@ -175,6 +177,10 @@ public abstract class HotRodSaslAuthTestBase {
 
    protected void testWrite() {
       assertNull(remoteCache.put(TEST_KEY, TEST_VALUE));
+   }
+   
+   protected void testSize() {
+      assertTrue(remoteCache.size() > 0);
    }
 
    protected void testWriteRead() {

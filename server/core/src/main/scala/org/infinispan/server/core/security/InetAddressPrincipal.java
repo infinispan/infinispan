@@ -1,8 +1,13 @@
 package org.infinispan.server.core.security;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.Principal;
+
+import org.infinispan.commons.marshall.SerializeWith;
 
 /**
  * InetAddressPrincipal.
@@ -10,6 +15,7 @@ import java.security.Principal;
  * @author Tristan Tarrant
  * @since 7.0
  */
+@SerializeWith(InetAddressPrincipal.Externalizer.class)
 public class InetAddressPrincipal implements Principal {
    private final InetAddress address;
 
@@ -58,4 +64,19 @@ public class InetAddressPrincipal implements Principal {
    public String toString() {
       return "InetAddressPrincipal [address=" + address + "]";
    }
+
+   public static class Externalizer implements org.infinispan.commons.marshall.Externalizer<InetAddressPrincipal> {
+
+      @Override
+      public void writeObject(ObjectOutput output, InetAddressPrincipal object) throws IOException {
+         output.writeObject(object.address);
+      }
+
+      @Override
+      public InetAddressPrincipal readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new InetAddressPrincipal((InetAddress) input.readObject());
+      }
+
+   }
+
 }
