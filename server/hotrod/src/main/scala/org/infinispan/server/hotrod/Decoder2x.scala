@@ -271,7 +271,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             }
          }
          case SizeRequest =>
-            val size = calculateSize(cache)
+            val size = cache.size()
             new SizeResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                h.topologyId, size)
       }
@@ -347,17 +347,6 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                createSuccessResponse(h, null)
             else
                createNotExecutedResponse(h, null)
-      }
-   }
-
-   private def calculateSize(cache: Cache): Int = {
-      val mode = cache.getCacheConfiguration.clustering().cacheMode()
-      val invokeLocalSize = !mode.isClustered || mode.isReplicated
-      if (invokeLocalSize) cache.size()
-      else {
-         val task = new MapReduceTask[Bytes, Bytes, Bytes, Int](cache)
-               .mappedWith(new KeyCountMapper).reducedWith(new KeyCountReducer)
-         task.execute(new KeyCountCollator)
       }
    }
 
@@ -492,24 +481,6 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    def normalizeAuthorizationId(id: String): String = {
       val realm = id.indexOf('@')
       if (realm >= 0) id.substring(0, realm) else id
-   }
-
-   private class KeyCountMapper extends Mapper[Bytes, Bytes, Bytes, Int] {
-      override def map(key: Bytes, value: Bytes, collector: Collector[Bytes, Int]): Unit = {
-         collector.emit(key, 1)
-      }
-   }
-
-   private class KeyCountReducer extends Reducer[Bytes, Int] {
-      override def reduce(reducedKey: Bytes, iter: java.util.Iterator[Int]): Int = {
-         iter.asScala.foldLeft(0)((acc, c) => acc + c)
-      }
-   }
-
-   private class KeyCountCollator extends Collator[Bytes, Int, Int] {
-      override def collate(reducedResults: java.util.Map[Bytes, Int]): Int = {
-         reducedResults.asScala.foldLeft(0)((acc, kv) => acc + kv._2)
-      }
    }
 
 }
