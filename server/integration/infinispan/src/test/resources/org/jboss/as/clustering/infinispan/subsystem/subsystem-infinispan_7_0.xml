@@ -132,6 +132,7 @@
                     <state-transfer chunk-size="10" max-retries="20" timeout="1200" wait-time="2400"/>
                 </backup>
             </backups>
+            <backup-for remote-cache="other.cache" remote-site="other.site"/>
         </distributed-cache>
     </cache-container>
     <cache-container name="secure-container">

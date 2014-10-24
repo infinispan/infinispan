@@ -134,7 +134,21 @@ public class CacheResource extends SimpleResourceDefinition {
                    .setAllowExpression(false)
                    .build();
 
-    static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, INDEXING, INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS};
+    static final SimpleAttributeDefinition REMOTE_CACHE =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_CACHE, ModelType.STRING, true)
+                   .setXmlName(Attribute.REMOTE_CACHE.getLocalName())
+                   .setAllowExpression(false)
+                   .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                   .build();
+
+    static final SimpleAttributeDefinition REMOTE_SITE =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_SITE, ModelType.STRING, true)
+                   .setXmlName(Attribute.REMOTE_SITE.getLocalName())
+                   .setAllowExpression(false)
+                   .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                   .build();
+
+    static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, INDEXING, INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS, REMOTE_CACHE, REMOTE_SITE};
 
     // here for legacy purposes only
     static final SimpleAttributeDefinition NAME =

@@ -578,6 +578,10 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
                 this.parseBackups(reader, cache, operations);
                 break;
             }
+            case BACKUP_FOR: {
+                this.parseBackupFor(reader, cache);
+                break;
+            }
             case CLUSTER_LOADER: {
                 this.parseClusterLoader(reader, cache, operations);
                 break;
@@ -1704,6 +1708,28 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
             }
         }
     }
+
+   private void parseBackupFor(XMLExtendedStreamReader reader, ModelNode cache) throws XMLStreamException {
+
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         String value = reader.getAttributeValue(i);
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case REMOTE_CACHE: {
+               CacheResource.REMOTE_CACHE.parseAndSetParameter(value, cache, reader);
+               break;
+            }
+            case REMOTE_SITE: {
+               CacheResource.REMOTE_SITE.parseAndSetParameter(value, cache, reader);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
 
     private void parseBackup(XMLExtendedStreamReader reader, ModelNode cache, List<ModelNode> operations) throws XMLStreamException {
 

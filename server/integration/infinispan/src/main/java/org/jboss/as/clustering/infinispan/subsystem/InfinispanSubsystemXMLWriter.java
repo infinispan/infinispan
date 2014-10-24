@@ -507,6 +507,13 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             writer.writeEndElement();
         }
 
+        if (cache.get(ModelKeys.REMOTE_CACHE).isDefined() || cache.get(ModelKeys.REMOTE_SITE).isDefined()) {
+            writer.writeStartElement(Element.BACKUP_FOR.getLocalName());
+            CacheResource.REMOTE_CACHE.marshallAsAttribute(cache, writer);
+            CacheResource.REMOTE_SITE.marshallAsAttribute(cache, writer);
+            writer.writeEndElement();
+        }
+
         if (cache.get(ModelKeys.LEVELDB_STORE).isDefined()) {
             for (Property levelDbStoreEntry : cache.get(ModelKeys.LEVELDB_STORE).asPropertyList()) {
                 ModelNode store = levelDbStoreEntry.getValue();
