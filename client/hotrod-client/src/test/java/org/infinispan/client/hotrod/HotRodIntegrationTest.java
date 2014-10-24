@@ -271,4 +271,37 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert cache.isEmpty();
    }
 
+   public void testPutWithPrevious() {
+      assert null == remoteCache.put("aKey", "aValue");
+      assert "aValue".equals(remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).put("aKey", "otherValue"));
+      assert remoteCache.containsKey("aKey");
+      assert remoteCache.get("aKey").equals("otherValue");
+   }
+
+   public void testRemoveWithPrevious() {
+      assert null == remoteCache.put("aKey", "aValue");
+      assert remoteCache.get("aKey").equals("aValue");
+      assert "aValue".equals(remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).remove("aKey"));
+      assert !remoteCache.containsKey("aKey");
+   }
+
+   public void testRemoveNonExistForceReturnPrevious() {
+      assertNull(remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).remove("aKey"));
+      remoteCache.put("k", "v");
+   }
+
+   public void testReplaceWithPrevious() {
+      assert null == remoteCache.replace("aKey", "anotherValue");
+      remoteCache.put("aKey", "aValue");
+      assert "aValue".equals(remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).replace("aKey", "anotherValue"));
+      assert remoteCache.get("aKey").equals("anotherValue");
+   }
+
+   public void testPutIfAbsentWithPrevious() {
+      remoteCache.put("aKey", "aValue");
+      assert null == remoteCache.putIfAbsent("aKey", "anotherValue");
+      Object existingValue = remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent("aKey", "anotherValue");
+      assert "aValue".equals(existingValue) : "Existing value was:" + existingValue;
+   }
+
 }

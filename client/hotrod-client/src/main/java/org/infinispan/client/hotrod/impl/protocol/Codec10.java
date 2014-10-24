@@ -21,6 +21,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
+import org.infinispan.commons.util.Util;
 
 /**
  * A Hot Rod encoder/decoder for version 1.0 of the protocol.
@@ -118,6 +119,26 @@ public class Codec10 implements Codec {
    @Override
    public Either<Short, ClientEvent> readHeaderOrEvent(Transport transport, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller) {
       return null;  // No events sent in Hot Rod 1.x protocol
+   }
+
+   @Override
+   public byte[] returnPossiblePrevValue(Transport transport, short status, Flag[] flags) {
+      if (hasForceReturn(flags)) {
+         byte[] bytes = transport.readArray();
+         if (log.isTraceEnabled()) log.tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
+         //0-length response means null
+         return bytes.length == 0 ? null : bytes;
+      } else {
+         return null;
+      }
+   }
+
+   private boolean hasForceReturn(Flag[] flags) {
+      if (flags == null) return false;
+      for (Flag flag : flags) {
+         if (flag == Flag.FORCE_RETURN_VALUE) return true;
+      }
+      return false;
    }
 
    @Override
