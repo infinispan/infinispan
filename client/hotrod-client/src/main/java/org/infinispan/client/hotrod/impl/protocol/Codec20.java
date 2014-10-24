@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
@@ -15,6 +16,7 @@ import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
+import org.infinispan.commons.util.Util;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -166,6 +168,18 @@ public class Codec20 implements Codec, HotRodConstants {
             return Either.newRight(clientEvent);
          default:
             return Either.newLeft(readPartialHeader(transport, params, opCode));
+      }
+   }
+
+   @Override
+   public byte[] returnPossiblePrevValue(Transport transport, short status, Flag[] flags) {
+      if (status == SUCCESS_WITH_PREVIOUS || status == NOT_EXECUTED_WITH_PREVIOUS) {
+         byte[] bytes = transport.readArray();
+         if (log.isTraceEnabled()) log.tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
+         //0-length response means null
+         return bytes.length == 0 ? null : bytes;
+      } else {
+         return null;
       }
    }
 

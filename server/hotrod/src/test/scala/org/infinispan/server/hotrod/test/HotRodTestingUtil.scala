@@ -169,13 +169,6 @@ object HotRodTestingUtil extends Log {
       assertSuccess(resp, expected)
    }
 
-   def assertSuccess(resp: TestResponseWithPrevious, expected: Array[Byte]): Boolean = {
-      assertStatus(resp, SuccessWithPrevious)
-      val isSuccess = Arrays.equals(expected, resp.previous.get)
-      assertTrue(isSuccess)
-      isSuccess
-   }
-
    def assertKeyDoesNotExist(resp: TestGetResponse): Boolean = {
       val status = resp.status
       assertTrue(status == KeyDoesNotExist, "Status should have been 'KeyDoesNotExist' but instead was: " + status)

@@ -54,22 +54,7 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    }
 
    protected byte[] returnPossiblePrevValue(Transport transport, short status) {
-      if (status == SUCCESS_WITH_PREVIOUS || status == NOT_EXECUTED_WITH_PREVIOUS) {
-         byte[] bytes = transport.readArray();
-         if (log.isTraceEnabled()) log.tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
-         //0-length response means null
-         return bytes.length == 0 ? null : bytes;
-      } else {
-         return null;
-      }
-   }
-
-   private boolean hasForceReturn(Flag[] flags) {
-      if (flags == null) return false;
-      for (Flag flag : flags) {
-         if (flag == Flag.FORCE_RETURN_VALUE) return true;
-      }
-      return false;
+      return codec.returnPossiblePrevValue(transport, status, flags);
    }
 
    protected VersionedOperationResponse returnVersionedOperationResponse(Transport transport, HeaderParams params) {
