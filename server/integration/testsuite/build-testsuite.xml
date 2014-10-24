@@ -289,6 +289,9 @@
         <transform in="standalone.xml" out="testsuite/hotrod-auth.xml"
                    modifyInfinispan="${infinispan.parts}/local-secured.xml"
                    hotrodAuth="${infinispan.parts}/hotrod-auth.xml" />
+        <transform in="clustered.xml" out="testsuite/hotrod-auth-clustered.xml"
+                   modifyInfinispan="${infinispan.parts}/clustered-secured.xml"
+                   hotrodAuth="${infinispan.parts}/hotrod-auth-clustered.xml" />
         <transform in="standalone.xml" out="testsuite/hotrod-auth-qop.xml"
                    modifyInfinispan="${infinispan.parts}/local-secured.xml"
                    hotrodAuth="${infinispan.parts}/hotrod-auth-qop.xml" />
