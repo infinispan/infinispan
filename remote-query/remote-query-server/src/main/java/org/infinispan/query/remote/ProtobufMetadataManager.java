@@ -103,7 +103,7 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
             .transaction().lockingMode(LockingMode.PESSIMISTIC).syncCommitPhase(true).syncRollbackPhase(true)
             .locking().isolationLevel(IsolationLevel.READ_COMMITTED).useLockStriping(false)
             .clustering().cacheMode(cacheMode).sync()
-            .stateTransfer().fetchInMemoryState(true)
+            .stateTransfer().fetchInMemoryState(true).awaitInitialTransfer(false)
             .compatibility().enable().marshaller(new CompatibilityProtoStreamMarshaller())
             .customInterceptors().addInterceptor()
             .interceptor(new ProtobufMetadataManagerInterceptor()).after(PessimisticLockingInterceptor.class);
