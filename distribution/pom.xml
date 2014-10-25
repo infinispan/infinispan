@@ -124,7 +124,8 @@
                      <doctitle>Infinispan ${project.version} API</doctitle>
 
                      <dependencySourceExcludes>
-                        <ddependencySourceExclude>org.fusesource.leveldbjni:*</ddependencySourceExclude>
+                        <dependencySourceExclude>org.fusesource.leveldbjni:*</dependencySourceExclude>
+                        <dependencySourceExclude>antlr:antlr</dependencySourceExclude>
                      </dependencySourceExcludes>
                      <docfilessubdirs>true</docfilessubdirs>
                      <detectLinks>false</detectLinks>
