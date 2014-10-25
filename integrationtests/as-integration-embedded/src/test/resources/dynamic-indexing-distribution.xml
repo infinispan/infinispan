@@ -26,8 +26,6 @@
                <property name="hibernate.search.default.directory_provider">infinispan</property>
                <!-- Supporting exclusive index usage will require lock cleanup on crashed nodes to be implemented -->
                <property name="hibernate.search.default.exclusive_index_use">false</property>
-               <!-- Use latest Lucene version -->
-               <property name="hibernate.search.lucene_version">LUCENE_48</property>
             </indexing>
        </distributed-cache>
 

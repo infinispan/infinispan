@@ -1,9 +1,13 @@
 package org.infinispan.query.backend;
 
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.query.CacheQuery;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -31,9 +35,9 @@ import static org.infinispan.test.TestingUtil.killCacheManagers;
 public class MergeTest extends MultipleCacheManagersTest {
 
    // Low merge factor means more frequent merges
-   private static final String MERGE_FACTOR = "3";
-   private static final int OBJECT_COUNT = 5000;
-   private static final int NUMBER_OF_THREADS = 2;
+   private static final String MERGE_FACTOR = "10";
+   private static final int OBJECT_COUNT = 100000;
+   private static final int NUMBER_OF_THREADS = 10;
    private static final boolean TX_ENABLED = false;
 
    Cache<Long, Person> cache1, cache2;
@@ -52,13 +56,15 @@ public class MergeTest extends MultipleCacheManagersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, TX_ENABLED);
       cacheCfg.clustering().sync().replTimeout(120000)
-            .indexing().index(Index.ALL)
+            .indexing().index(Index.LOCAL)
             .addProperty("default.directory_provider", "infinispan")
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("default.indexwriter.merge_factor", MERGE_FACTOR)
+            .addProperty("hibernate.search.default.worker.execution", "async")
             .addProperty("default.indexwriter.merge_max_size", "1024")
-            .addProperty("default.indexwriter.ram_buffer_size", "256");
+            .addProperty("default.indexwriter.ram_buffer_size", "256")
+      ;
       List<Cache<Long, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);
       cache2 = caches.get(1);
@@ -101,7 +107,17 @@ public class MergeTest extends MultipleCacheManagersTest {
       }
 
       assertAllGood(cache1, cache2);
-      System.out.println("Test took: " + (System.currentTimeMillis() - start) / 1000 + " s");
+      System.out.println("Load took: " + (System.currentTimeMillis() - start) / 1000 + " s");
+      SearchManager searchManager = Search.getSearchManager(cache1);
+      final CacheQuery query = searchManager.getQuery(new MatchAllDocsQuery(), Person.class);
+      final int total = NUMBER_OF_THREADS * OBJECT_COUNT;
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return query.list().size() == total;
+         }
+      });
+      System.out.println("Indexing finished: " + query.list().size());
       killCacheManagers(cacheManagers);
    }
 }

@@ -15,6 +15,7 @@
         <module name="org.infinispan" slot="${slot}"/>
         <module name="org.infinispan.objectfilter" slot="${slot}"/>
         <module name="org.infinispan.lucene-directory" slot="${slot}" services="export" />
+        <module name="org.hibernate.search.infinispan-storage" slot="${slot}" />
         <module name="org.jboss.logging" />
     </dependencies>
 </module>

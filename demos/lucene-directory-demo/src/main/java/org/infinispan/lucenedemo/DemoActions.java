@@ -38,10 +38,10 @@ public class DemoActions {
    /** The MAIN_FIELD */
    private static final String MAIN_FIELD = "myField";
 
-   private static final Version luceneVersion = Version.LUCENE_48;
+   private static final Version luceneVersion = Version.LUCENE_4_10_1;
 
    /** The Analyzer used in all methods **/
-   private static final Analyzer analyzer = new StandardAnalyzer(luceneVersion);
+   private static final Analyzer analyzer = new StandardAnalyzer();
 
    private final Directory index;
 
@@ -119,7 +119,7 @@ public class DemoActions {
     * @throws ParseException
     */
    public Query parseQuery(String queryLine) throws ParseException {
-      QueryParser parser = new QueryParser(Version.LUCENE_48, MAIN_FIELD, analyzer);
+      QueryParser parser = new QueryParser(MAIN_FIELD, analyzer);
       return parser.parse(queryLine);
    }
 

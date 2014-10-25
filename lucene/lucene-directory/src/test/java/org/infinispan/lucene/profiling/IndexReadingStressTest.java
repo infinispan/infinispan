@@ -7,9 +7,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
@@ -120,11 +120,11 @@ public class IndexReadingStressTest {
          String term = String.valueOf(i);
          //For even values of i we add to "main" field
          if (i % 2 == 0) {
-            doc.add(new Field("main", term, Store.NO, Index.NOT_ANALYZED));
+            doc.add(new StringField("main", term, Store.NO));
             state.addStringWrittenToIndex(term);
          }
          else {
-            doc.add(new Field("secondaryField", term, Store.NO, Index.NOT_ANALYZED));
+            doc.add(new StringField("secondaryField", term, Store.NO));
          }
          iwriter.addDocument(doc);
       }
@@ -157,7 +157,7 @@ public class IndexReadingStressTest {
          this.startValue = startValue;
          this.increment = increment;
          this.max = max;
-         indexReader = IndexReader.open(directory);
+         indexReader = DirectoryReader.open(directory);
          searcher = new IndexSearcher(indexReader);
       }
 

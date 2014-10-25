@@ -5,9 +5,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.StringField;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Directory;
 import org.infinispan.lucene.testutils.LuceneSettings;
@@ -39,7 +38,7 @@ public class LuceneWriterExclusiveThread extends LuceneUserThread {
       int numElements = state.stringsOutOfIndex.drainTo(strings, 5);
       for (String term : strings) {
          Document doc = new Document();
-         doc.add(new Field("main", term, Store.NO, Index.NOT_ANALYZED));
+         doc.add(new StringField("main", term, Store.NO));
          iwriter.addDocument(doc);
       }
       iwriter.commit();

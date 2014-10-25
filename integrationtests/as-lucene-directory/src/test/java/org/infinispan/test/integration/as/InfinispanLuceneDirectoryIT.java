@@ -45,8 +45,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -63,7 +61,7 @@ public class InfinispanLuceneDirectoryIT {
    private Directory directory;
    private EmbeddedCacheManager cacheManager;
    private Cache<?, ?> cache;
-   private static final org.apache.lucene.util.Version LUCENE_VERSION = luceneVersion();
+   private static final org.apache.lucene.util.Version LUCENE_VERSION = org.apache.lucene.util.Version.LUCENE_4_10_1;
 
    @Before
    public void setup() {
@@ -150,7 +148,7 @@ public class InfinispanLuceneDirectoryIT {
    }
 
    private Query buildQuery(String q) throws ParseException {
-      QueryParser queryParser = new QueryParser(LUCENE_VERSION, "field1", new WhitespaceAnalyzer(LUCENE_VERSION));
+      QueryParser queryParser = new QueryParser("field1", new WhitespaceAnalyzer());
       return queryParser.parse(q);
    }
 
@@ -165,7 +163,7 @@ public class InfinispanLuceneDirectoryIT {
    }
 
    private void index(Document... documents) throws IOException {
-      IndexWriterConfig iwc = new IndexWriterConfig(LUCENE_VERSION, new WhitespaceAnalyzer(LUCENE_VERSION));
+      IndexWriterConfig iwc = new IndexWriterConfig(LUCENE_VERSION, new WhitespaceAnalyzer());
       IndexWriter indexWriter = new IndexWriter(directory, iwc);
       for (Document doc : documents) {
          indexWriter.addDocument(doc);
@@ -179,20 +177,6 @@ public class InfinispanLuceneDirectoryIT {
       fieldType.setIndexed(true);
       document.add(new Field(fieldName, contents, fieldType));
       return document;
-   }
-
-   private static org.apache.lucene.util.Version luceneVersion() {
-      return nonDeprecatedConstants(org.apache.lucene.util.Version.class).iterator().next();
-   }
-
-   private static <E extends Enum<E>> List<E> nonDeprecatedConstants(Class<E> enumType) {
-      List<E> results = new ArrayList<>();
-      for (java.lang.reflect.Field f : enumType.getDeclaredFields()) {
-         if (f.isEnumConstant() && !f.isAnnotationPresent(Deprecated.class)) {
-            results.add(Enum.valueOf(enumType, f.getName()));
-         }
-      }
-      return results;
    }
 
    private static String dep(String name, String version) {

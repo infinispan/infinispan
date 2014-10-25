@@ -21,9 +21,9 @@ import org.apache.lucene.util.Version;
  */
 public class LuceneSettings {
 
-   public static final Version LUCENE_VERSION = Version.LUCENE_48;
+   public static final Version LUCENE_VERSION = Version.LUCENE_4_10_1;
 
-   public static final Analyzer analyzer = new SimpleAnalyzer(LUCENE_VERSION);
+   public static final Analyzer analyzer = new SimpleAnalyzer();
 
    private static final MergeScheduler mergeScheduler = new SerialMergeScheduler();
 

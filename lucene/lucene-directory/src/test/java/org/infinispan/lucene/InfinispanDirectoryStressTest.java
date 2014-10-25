@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
@@ -49,7 +50,7 @@ public class InfinispanDirectoryStressTest {
          CacheTestSupport.doReadOperation(directory);
       }
 
-      IndexReader ir = IndexReader.open(directory);
+      IndexReader ir = DirectoryReader.open(directory);
       IndexSearcher search = new IndexSearcher(ir);
       Term t = new Term("info", "good");
       Query query = new TermQuery(t);
@@ -104,7 +105,7 @@ public class InfinispanDirectoryStressTest {
          }
       }
 
-      IndexReader indexReader1 = IndexReader.open(directory1);
+      IndexReader indexReader1 = DirectoryReader.open(directory1);
       IndexSearcher search = new IndexSearcher(indexReader1);
       Term t = new Term("info", "good");
       Query query = new TermQuery(t);

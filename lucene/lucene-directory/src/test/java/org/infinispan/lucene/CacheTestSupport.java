@@ -5,6 +5,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -125,11 +126,11 @@ public abstract class CacheTestSupport {
          log.info("IndexWriter was constructed");
 
          Document doc = new Document();
-         doc.add(new Field("path", document.getPath(), Field.Store.YES, Field.Index.NOT_ANALYZED));
-         doc.add(new Field("modified", DateTools.timeToString(document.lastModified(), DateTools.Resolution.MINUTE),
-                  Field.Store.YES, Field.Index.NOT_ANALYZED));
-         doc.add(new Field("contents", new FileReader(document)));
-         doc.add(new Field("info", "good", Field.Store.YES, Field.Index.ANALYZED));
+         doc.add(new StringField("path", document.getPath(), Field.Store.YES));
+         doc.add(new StringField("modified", DateTools.timeToString(document.lastModified(), DateTools.Resolution.MINUTE),
+                  Field.Store.YES));
+         doc.add(new TextField("contents", new FileReader(document)));
+         doc.add(new TextField("info", "good", Field.Store.YES));
 
          writer.addDocument(doc);
       } catch (LockObtainFailedException lofe) {
@@ -146,7 +147,7 @@ public abstract class CacheTestSupport {
       IndexReader indexReader = null;
       IndexSearcher search = null;
       try {
-         indexReader = IndexReader.open(d);
+         indexReader = DirectoryReader.open(d);
          // this is a read
          search = new IndexSearcher(indexReader);
          // dummy query that probably won't return anything
@@ -166,7 +167,7 @@ public abstract class CacheTestSupport {
       iwriter.commit();
       iwriter.close();
       //reopen to check for index
-      IndexReader reader = IndexReader.open(directory);
+      IndexReader reader = DirectoryReader.open(directory);
       reader.close();
    }
 
@@ -195,7 +196,7 @@ public abstract class CacheTestSupport {
    public static void assertTextIsFoundInIds(Directory dir, String term, Integer... validDocumentIds) throws IOException {
       int expectedResults = validDocumentIds.length;
       Set<Integer> expectedDocumendIds = new HashSet<Integer>(Arrays.asList(validDocumentIds));
-      IndexReader reader = IndexReader.open(dir);
+      IndexReader reader = DirectoryReader.open(dir);
       IndexSearcher searcher = new IndexSearcher(reader);
       Query query = new TermQuery(new Term("body", term));
       TopDocs docs = searcher.search(query, null, expectedResults + 1);

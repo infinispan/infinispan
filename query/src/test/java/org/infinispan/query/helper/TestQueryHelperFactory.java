@@ -34,14 +34,14 @@ import java.util.List;
  */
 public class TestQueryHelperFactory {
    
-   public static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer(getLuceneVersion());
+   public static final Analyzer STANDARD_ANALYZER = new StandardAnalyzer();
    
    public static QueryParser createQueryParser(String defaultFieldName) {
-      return new QueryParser(getLuceneVersion(), defaultFieldName, STANDARD_ANALYZER);
+      return new QueryParser(defaultFieldName, STANDARD_ANALYZER);
    }
    
    public static Version getLuceneVersion() {
-      return Version.LUCENE_48; //Change as needed
+      return Version.LUCENE_4_10_1; //Change as needed
    }
 
    public static CacheQuery createCacheQuery(Cache m_cache, String fieldName, String searchString) throws ParseException {

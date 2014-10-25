@@ -27,8 +27,6 @@
             <property name="default.indexwriter.ram_buffer_size">256</property>
             <!-- Enable sharding on writers
             <property name="default.sharding_strategy.nbr_of_shards">6</property> -->
-            <!-- Use latest Lucene version -->
-            <property name="hibernate.search.lucene_version">LUCENE_48</property>
          </indexing>
       </distributed-cache>
       <!-- ******************************************************************************* -->

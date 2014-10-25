@@ -6,7 +6,6 @@
                     <indexing index="ALL">
                         <property name="default.directory_provider">infinispan</property>
                         <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
-                        <property name="lucene_version">LUCENE_48</property>
                     </indexing>
                 </replicated-cache>
                 <replicated-cache name="LuceneIndexesMetadata" mode="SYNC">
@@ -27,7 +26,6 @@
                 <distributed-cache name="disttestcache" mode="SYNC" start="EAGER" module="org.infinispan.remote-query.server">
                     <indexing index="ALL">
                         <property name="default.directory_provider">ram</property>
-                        <property name="lucene_version">LUCENE_48</property>
                     </indexing>
                 </distributed-cache>
 

@@ -2,6 +2,8 @@ package org.infinispan.lucene.cacheloader;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
@@ -58,7 +60,7 @@ public class TestHelper {
     * @throws IOException
     */
    public static void verifyOnDirectory(Directory directory, int termsAdded, boolean inverted) throws IOException {
-      IndexReader indexReader = IndexReader.open(directory);
+      IndexReader indexReader = DirectoryReader.open(directory);
       IndexSearcher searcher = new IndexSearcher(indexReader);
       try {
          for (int i = 0; i <= termsAdded; i++) {
@@ -105,10 +107,10 @@ public class TestHelper {
                String term = String.valueOf(i);
                //For even values of i we add to "main" field
                if (i % 2 == 0 ^ invert) {
-                  doc.add(new Field("main", term, Field.Store.NO, Field.Index.NOT_ANALYZED));
+                  doc.add(new StringField("main", term, Field.Store.NO));
                }
                else {
-                  doc.add(new Field("secondaryField", term, Field.Store.YES, Field.Index.NOT_ANALYZED));
+                  doc.add(new StringField("secondaryField", term, Field.Store.YES));
                }
                iwriter.addDocument(doc);
             }

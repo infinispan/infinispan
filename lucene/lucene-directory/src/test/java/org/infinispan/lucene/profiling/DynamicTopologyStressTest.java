@@ -8,8 +8,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.Field.Index;
 import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
@@ -129,7 +130,7 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
                int toWrite = lastWrittenTermId + 1;
                writer = LuceneSettings.openWriter(masterDirectory, 3); // 3 or any low setting
                Document doc = new Document();
-               Field field = new Field(FIELDNAME, "HA" + toWrite, Store.YES, Index.NOT_ANALYZED);
+               Field field = new StringField(FIELDNAME, "HA" + toWrite, Store.YES);
                doc.add(field);
                writer.addDocument(doc);
                writer.commit();
@@ -171,7 +172,7 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
             IndexReader indexReader = null;
             try {
                int i = lastWrittenTermId;
-               indexReader = IndexReader.open(masterDirectory);
+               indexReader = DirectoryReader.open(masterDirectory);
                IndexSearcher indexSearcher = new IndexSearcher(indexReader);
                if (i==0) continue; // nothing written yet
                String termValue = "HA" + i;
