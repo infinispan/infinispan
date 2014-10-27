@@ -3,6 +3,7 @@
 <config>
    <subsystems>
       <subsystem>configuration/subsystems/logging.xml</subsystem>
+      <subsystem>configuration/subsystems/deployment-scanner.xml</subsystem>
       <subsystem supplement="clustered">configuration/subsystems/endpoint.xml</subsystem>
       <subsystem>configuration/examples/subsystems/datasources.xml</subsystem>
       <subsystem supplement="jdbc-clustered">configuration/examples/subsystems/infinispan.xml</subsystem>
