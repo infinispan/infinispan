@@ -5,6 +5,7 @@ import os
 import os.path
 import subprocess
 import shutil
+import tempfile
 from datetime import *
 from multiprocessing import Process
 from utils import *
@@ -193,17 +194,15 @@ def get_module_name(pom_file):
 
 def upload_artifacts(dist_dir, version):
   """Artifacts gets rsync'ed to filemgmt.jboss.org, in the downloads_htdocs/infinispan directory"""
-  shutil.rmtree(".tmp", ignore_errors = True)  
-  os.mkdir(".tmp")
-  os.mkdir(".tmp/%s" % version)
-  os.chdir(".tmp")
+  tempdir = tempfile.mkdtemp(prefix = '.tmp', dir='.')
+  os.mkdir("%s/%s" % (tempdir,version))
   prettyprint("Copying from %s to %s" % (dist_dir, version), Levels.INFO)
   for item in os.listdir(dist_dir):
     full_name = "%s/%s" % (dist_dir, item)
     if item.strip().lower().endswith(".zip") and os.path.isfile(full_name):
-      shutil.copy2(full_name, version)
-  uploader.upload_rsync(version, "infinispan@filemgmt.jboss.org:/downloads_htdocs/infinispan")
-  shutil.rmtree(".tmp", ignore_errors = True)
+      shutil.copy2(full_name, "%s/%s" % (tempdir,version))
+  uploader.upload_rsync("%s/%s" % (tempdir,version), "infinispan@filemgmt.jboss.org:/downloads_htdocs/infinispan")
+  shutil.rmtree(tempdir, ignore_errors = True)
 
 def unzip_archive(version):
   os.chdir("./distribution/target/distribution")
