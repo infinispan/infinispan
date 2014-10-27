@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
-   xmlns="urn:infinispan:config:7.0">
+   xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd
+   urn:infinispan:config:store:jpa:7.0 http://www.infinispan.org/schemas/infinispan-cachestore-jpa-config-7.0.xsd"
+   xmlns="urn:infinispan:config:7.0"
+   xmlns:jpa="urn:infinispan:config:store:jpa:7.0"
+   >
 
   <cache-container default-cache="default">
     <local-cache name="default">
