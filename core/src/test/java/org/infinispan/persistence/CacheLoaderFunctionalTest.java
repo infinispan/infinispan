@@ -36,7 +36,10 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.api.mvcc.LockAssert.assertNoLocks;
@@ -514,6 +517,23 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
          tm.rollback();
       }
    }
+
+   public void testValuesForCacheLoader() {
+      cache.putIfAbsent("k1", "v1");
+      List<String> copy1 = copyValues(cache);
+      assertEquals(1, copy1.size());
+      assertEquals("v1", copy1.get(0));
+
+      cache.putIfAbsent("k2", "v2");
+      List<String> copy2 = copyValues(cache);
+      assertEquals(2, copy2.size());
+      assertEquals(Arrays.asList("v1", "v2"), copy2);
+   }
+
+   private List<String> copyValues(Cache<?, String> cache) {
+      return new ArrayList<>(cache.values());
+   }
+
 
    protected void doPreloadingTest(Configuration preloadingCfg, String cacheName) throws Exception {
       assertTrue("Preload not enabled for preload test", preloadingCfg.persistence().preload());
