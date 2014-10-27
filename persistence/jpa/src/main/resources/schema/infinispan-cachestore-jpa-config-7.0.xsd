@@ -2,7 +2,7 @@
 <xs:schema attributeFormDefault="unqualified"
            elementFormDefault="qualified" version="1.0"
            targetNamespace="urn:infinispan:config:store:jpa:7.0"
-           xmlns:tns="urn:infinispan:config:jpa:store:7.0"
+           xmlns:tns="urn:infinispan:config:store:jpa:7.0"
            xmlns:config="urn:infinispan:config:7.0"
            xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:import namespace="urn:infinispan:config:7.0"
