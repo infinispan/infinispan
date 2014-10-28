@@ -444,7 +444,12 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
          }
          case PutResponse | PutIfAbsentResponse | ReplaceResponse | ReplaceIfUnmodifiedResponse
               | RemoveResponse | RemoveIfUnmodifiedResponse => {
-            if (status == SuccessWithPrevious || status == NotExecutedWithPrevious) {
+            val checkPrevious = op.version match {
+               case 10 | 11 | 12 | 13 => (op.flags & ProtocolFlag.ForceReturnPreviousValue.id) == 1
+               case _ => status == SuccessWithPrevious || status == NotExecutedWithPrevious
+            }
+
+            if (checkPrevious) {
                val length = readUnsignedInt(buf)
                if (length == 0) {
                   new TestResponseWithPrevious(op.version, id, op.cacheName,
@@ -457,8 +462,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
                      op.clientIntel, opCode, status, op.topologyId, Some(previous),
                      topologyChangeResponse)
                }
-            }
-            else new TestResponse(op.version, id, op.cacheName, op.clientIntel,
+            } else new TestResponse(op.version, id, op.cacheName, op.clientIntel,
                      opCode, status, op.topologyId, topologyChangeResponse)
          }
          case ContainsKeyResponse | ClearResponse | PingResponse | AddClientListenerResponse | RemoveClientListenerResponse =>

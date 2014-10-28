@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
+import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
@@ -29,6 +30,8 @@ public interface Codec {
    ClientEvent readEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller);
 
    Either<Short, ClientEvent> readHeaderOrEvent(Transport transport, HeaderParams params, byte[] expectedListenerId, Marshaller marshaller);
+
+   byte[] returnPossiblePrevValue(Transport transport, short status, Flag[] flags);
 
    /**
     * Logger for Hot Rod client codec
