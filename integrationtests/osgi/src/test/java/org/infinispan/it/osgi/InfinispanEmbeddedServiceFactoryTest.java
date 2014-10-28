@@ -22,6 +22,7 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerMethod;
 import org.osgi.framework.BundleContext;
@@ -41,6 +42,7 @@ public class InfinispanEmbeddedServiceFactoryTest {
             IspnKarafOptions.commonOptions(),
             /* The blueprint contained in this bundle will register a ManagedServiceFactory. */
             IspnKarafOptions.mvnFeature("org.infinispan", "infinispan-osgi", "infinispan-osgi"),
+            KarafDistributionOption.replaceConfigurationFile("/etc/custom-etc-infinispan-config.xml", OSGiTestUtils.getResourceFile("org/infinispan/it/osgi/custom-config-3.xml"))
       };
    }
 
@@ -101,7 +103,7 @@ public class InfinispanEmbeddedServiceFactoryTest {
    public void testConfigurationPresent() throws Exception {
       BundleContext bundleContext = OSGiTestUtils.getBundleContext(this);
 
-      final CountDownLatch expectedServiceRegistrations = new CountDownLatch(2);
+      final CountDownLatch expectedServiceRegistrations = new CountDownLatch(3);
 
       /* Add a listener which updates the service registration counter. */
       bundleContext.addServiceListener(new ServiceListener() {
@@ -137,6 +139,13 @@ public class InfinispanEmbeddedServiceFactoryTest {
       configuration = configurationService.createFactoryConfiguration("org.infinispan.manager.embedded", null);
       configuration.update(configProperties);
 
+      /* Third config is from the etc/ Karaf directory. */
+      configProperties = new Hashtable<String, Object>();
+      configProperties.put("instanceId", "instance3");
+      configProperties.put("config", "etc/custom-etc-infinispan-config.xml");
+      configuration = configurationService.createFactoryConfiguration("org.infinispan.manager.embedded", null);
+      configuration.update(configProperties);
+
       /* Configuration updating and service registration are done concurrently. Await for then to complete first. */
       expectedServiceRegistrations.await(10, TimeUnit.SECONDS);
 
@@ -146,6 +155,9 @@ public class InfinispanEmbeddedServiceFactoryTest {
       assertEquals("Expecting the service to be registered through the mananged service factory.", 1, serviceReferences.size());
 
       serviceReferences = bundleContext.getServiceReferences(EmbeddedCacheManager.class, "(instanceId=instance2)");
+      assertEquals("Expecting the service to be registered through the mananged service factory.", 1, serviceReferences.size());
+
+      serviceReferences = bundleContext.getServiceReferences(EmbeddedCacheManager.class, "(instanceId=instance3)");
       assertEquals("Expecting the service to be registered through the mananged service factory.", 1, serviceReferences.size());
    }
 }
