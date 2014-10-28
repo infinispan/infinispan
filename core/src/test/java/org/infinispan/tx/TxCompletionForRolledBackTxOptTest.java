@@ -38,7 +38,7 @@ public class TxCompletionForRolledBackTxOptTest extends MultipleCacheManagersTes
          tm(0).commit();
          fail();
       } catch (Throwable t) {
-         //expected
+         log.debugf("Got expected exception", t);
       }
 
       assertNotLocked(k1);
@@ -47,7 +47,7 @@ public class TxCompletionForRolledBackTxOptTest extends MultipleCacheManagersTes
       assertNull(cache(0).get(k2));
 
       assertEquals(cf.received(PrepareCommand.class), 1);
-      assertEquals(cf.received(RollbackCommand.class), 2);
+      assertEquals(cf.received(RollbackCommand.class), 1);
       assertEquals(cf.received(TxCompletionNotificationCommand.class), 0);
    }
 }

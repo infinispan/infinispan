@@ -29,7 +29,7 @@ public class LocalRecoveryTest extends SingleCacheManagerTest {
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .useSynchronization(false)
             .transactionManagerLookup(new RecoveryDummyTransactionManagerLookup())
-            .recovery();
+            .recovery().enable();
       return TestCacheManagerFactory.createCacheManager(cb);
    }
 

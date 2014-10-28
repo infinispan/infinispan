@@ -6,6 +6,9 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.0
@@ -19,8 +22,8 @@ public class NoXaConfigTest extends SingleCacheManagerTest {
    }
 
    public void testConfig() {
-      assert cacheManager.getCache("syncEnabled").getCacheConfiguration().transaction().useSynchronization();
-      assert cacheManager.getCache("notSpecified").getCacheConfiguration().transaction().useSynchronization();
+      assertTrue(cacheManager.getCache("syncEnabled").getCacheConfiguration().transaction().useSynchronization());
+      assertFalse(cacheManager.getCache("notSpecified").getCacheConfiguration().transaction().useSynchronization());
 
       cacheManager.getCache("syncAndRecovery");
    }
@@ -29,6 +32,6 @@ public class NoXaConfigTest extends SingleCacheManagerTest {
       ConfigurationBuilder configuration = getDefaultStandaloneCacheConfig(true);
       configuration.transaction().useSynchronization(true);
       cacheManager.defineConfiguration("newCache", configuration.build());
-      assert cacheManager.getCache("newCache").getCacheConfiguration().transaction().useSynchronization();
+      assertTrue(cacheManager.getCache("newCache").getCacheConfiguration().transaction().useSynchronization());
    }
 }
