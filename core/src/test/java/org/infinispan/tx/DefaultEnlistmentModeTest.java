@@ -15,7 +15,6 @@ import org.testng.annotations.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 @Test (groups = "functional", testName = "tx.DefaultEnlistmentModeTest")
 public class DefaultEnlistmentModeTest extends AbstractCacheTest {
@@ -32,7 +31,8 @@ public class DefaultEnlistmentModeTest extends AbstractCacheTest {
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       dcm = new DefaultCacheManager(getGlobalConfig(), builder.build());
       Cache<Object,Object> cache = dcm.getCache();
-      assertTrue(cache.getCacheConfiguration().transaction().useSynchronization());
+      assertFalse(cache.getCacheConfiguration().transaction().useSynchronization());
+      assertFalse(cache.getCacheConfiguration().transaction().recovery().enabled());
       cache.put("k", "v");
       assertEquals("v", cache.get("k"));
    }
@@ -45,7 +45,7 @@ public class DefaultEnlistmentModeTest extends AbstractCacheTest {
       dcm = new DefaultCacheManager(getGlobalConfig(), builder.build());
       Cache<Object,Object> cache = dcm.getCache();
       assertFalse(cache.getCacheConfiguration().transaction().useSynchronization());
-      assertTrue(cache.getCacheConfiguration().transaction().recovery().enabled());
+      assertFalse(cache.getCacheConfiguration().transaction().recovery().enabled());
       cache.put("k", "v");
       assertEquals("v", cache.get("k"));
    }

@@ -34,7 +34,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
    private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
    TransactionMode transactionMode = null;
    private boolean useEagerLocking = false;
-   private boolean useSynchronization = true;
+   private boolean useSynchronization = false;
    private final RecoveryConfigurationBuilder recovery;
    private boolean use1PcForAutoCommitTransactions = false;
    private long reaperWakeUpInterval = 30000;

@@ -35,7 +35,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
             getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
       builder.clustering().hash().numOwners(1).numSegments(1)
             .consistentHashFactory(new ControlledConsistentHashFactory(0))
-            .transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+            .transaction().transactionMode(TransactionMode.TRANSACTIONAL).useSynchronization(true);
       return builder;
    }
 

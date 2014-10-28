@@ -14,7 +14,7 @@ import static org.infinispan.configuration.cache.RecoveryConfiguration.DEFAULT_R
  */
 public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder implements Builder<RecoveryConfiguration> {
 
-   boolean enabled = true;
+   boolean enabled = false;
    private String recoveryInfoCacheName = DEFAULT_RECOVERY_INFO_CACHE;
 
    RecoveryConfigurationBuilder(TransactionConfigurationBuilder builder) {
