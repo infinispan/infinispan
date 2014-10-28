@@ -43,7 +43,6 @@
                      ${project.groupId}.persistence.jpa.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <Import-Package><![CDATA[
-                  org.osgi.framework;version="$<range;[==,+)>",
                   *
                   ]]>
                   </Import-Package>

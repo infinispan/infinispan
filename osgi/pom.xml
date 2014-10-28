@@ -71,8 +71,6 @@
                      ${project.groupId}.osgi.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <Import-Package><![CDATA[
-                  org.osgi.framework;version="$<range;[==,+)>",
-                  org.osgi.service.cm;version="$<range;[==,+)>",
                   *
                   ]]>
                   </Import-Package>
