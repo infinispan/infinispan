@@ -1,5 +1,8 @@
 package org.infinispan.it.osgi.util;
 
+import java.io.File;
+import java.net.URL;
+
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -35,5 +38,13 @@ public class OSGiTestUtils {
          throw new IllegalArgumentException(String.format("Unable to retrieve service from reference for class '%s'.", serviceClss));
       }
       return service;
+   }
+
+   public static File getResourceFile(String resource) {
+      URL url = OSGiTestUtils.class.getClassLoader().getResource(resource);
+      if (url == null || !"file".equalsIgnoreCase(url.getProtocol())) {
+         throw new IllegalArgumentException("Cannot find file resource: " + resource);
+      }
+      return new File(url.getFile());
    }
 }
