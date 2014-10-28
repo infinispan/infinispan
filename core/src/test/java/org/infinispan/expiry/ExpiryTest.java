@@ -13,6 +13,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "expiry.ExpiryTest")
 public class ExpiryTest extends AbstractInfinispanTest {
@@ -275,11 +278,12 @@ public class ExpiryTest extends AbstractInfinispanTest {
       final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
-      entries = Collections.emptySet();
       while (true) {
-         entries = cache.entrySet();
+         // cache.entrySet is backing so expired entries will be removed so we have to make a copy
+         entries = new HashSet<>(cache.entrySet());
          if (moreThanDurationElapsed(startTime, lifespan))
             break;
+         // If the time hasn't lapsed then the entries should be the same
          assertEquals(entriesIn, entries);
          Thread.sleep(100);
       }
@@ -287,10 +291,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
       // Make sure that in the next 20 secs data is removed
       while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
          entries = cache.entrySet();
-         if (entries.size() == 0) return;
+         if (entries.size() == 0) break;
       }
 
-      assert entries.size() == 0;
+      assertEquals(0, entries.size());
    }
 
    private void doEntrySetAfterExpiryInTransaction(Method m, CacheContainer cc) throws Exception {
@@ -314,9 +318,8 @@ public class ExpiryTest extends AbstractInfinispanTest {
          // Add an entry within tx
          cache.putAll(txDataIn);
 
-         entries = Collections.emptySet();
          while (true) {
-            entries = cache.entrySet();
+            entries = new HashSet<>(cache.entrySet());
             if (moreThanDurationElapsed(startTime, lifespan))
                break;
             assertEquals(allEntriesIn.entrySet(), entries);
@@ -326,13 +329,13 @@ public class ExpiryTest extends AbstractInfinispanTest {
          // Make sure that in the next 20 secs data is removed
          while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
             entries = cache.entrySet();
-            if (entries.size() == 1) return;
+            if (entries.size() == 1) break;
          }
       } finally {
          cache.getAdvancedCache().getTransactionManager().commit();
       }
 
-      assert entries.size() == 1;
+      assertEquals(1, entries.size());
    }
 
    public void testKeySetAfterExpiryInPut(Method m) throws Exception {
@@ -348,7 +351,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
       while (true) {
-         keys = cache.keySet();
+         keys = new HashSet<>(cache.keySet());
          if (moreThanDurationElapsed(startTime, lifespan))
             break;
          assertEquals(keysIn, keys);
@@ -358,10 +361,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
       // Make sure that in the next 20 secs data is removed
       while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
          keys = cache.keySet();
-         if (keys.size() == 0) return;
+         if (keys.size() == 0) break;
       }
 
-      assert keys.size() == 0;
+      assertEquals(0, keys.size());
    }
 
    public void testKeySetAfterExpiryInTransaction(Method m) throws Exception {
@@ -394,9 +397,8 @@ public class ExpiryTest extends AbstractInfinispanTest {
          // Add an entry within tx
          cache.putAll(txDataIn);
 
-         keys = Collections.emptySet();
          while (true) {
-            keys = cache.keySet();
+            keys = new HashSet<>(cache.keySet());
             if (moreThanDurationElapsed(startTime, lifespan))
                break;
             assertEquals(allEntriesIn.keySet(), keys);
@@ -406,13 +408,13 @@ public class ExpiryTest extends AbstractInfinispanTest {
          // Make sure that in the next 20 secs data is removed
          while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
             keys = cache.keySet();
-            if (keys.size() == 1) return;
+            if (keys.size() == 1) break;
          }
       } finally {
          cache.getAdvancedCache().getTransactionManager().commit();
       }
 
-      assert keys.size() == 1;
+      assertEquals(1, keys.size());
    }
 
    public void testValuesAfterExpiryInPut(Method m) throws Exception {
@@ -420,19 +422,18 @@ public class ExpiryTest extends AbstractInfinispanTest {
       // Values come as a Collection, but comparison of HashMap#Values is done
       // by reference equality, so wrap the collection around to set to make
       // testing easier, given that we know that there are dup values.
-      Set<String> values;
-      Map dataIn = new HashMap();
+      Collection<String> values;
+      Map<Integer, String> dataIn = new HashMap<>();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
-      Set valuesIn = new HashSet(dataIn.values());
+      Collection<String> valuesIn = new ArrayList<>(dataIn.values());
 
       final long startTime = now();
       final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
-      values = Collections.emptySet();
       while (true) {
-         values = new HashSet(cache.values());
+         values = new ArrayList<>(cache.values());
          if (moreThanDurationElapsed(startTime, lifespan))
             break;
          assertEquals(valuesIn, values);
@@ -441,11 +442,11 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
       // Make sure that in the next 20 secs data is removed
       while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-         values = new HashSet(cache.values());
-         if (values.size() == 0) return;
+         values = cache.values();
+         if (values.size() == 0) break;
       }
 
-      assert values.size() == 0;
+      assertEquals(0, values.size());
    }
 
    public void testValuesAfterExpiryInTransaction(Method m) throws Exception {
@@ -469,8 +470,8 @@ public class ExpiryTest extends AbstractInfinispanTest {
       // Values come as a Collection, but comparison of HashMap#Values is done
       // by reference equality, so wrap the collection around to set to make
       // testing easier, given that we know that there are dup values.
-      Set<String> values;
-      Map dataIn = new HashMap();
+      Collection<String> values;
+      Map<Integer, String> dataIn = new HashMap<>();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
 
@@ -480,32 +481,31 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
       cache.getAdvancedCache().getTransactionManager().begin();
       try {
-         Map txDataIn = new HashMap();
+         Map<Integer, String> txDataIn = new HashMap<>();
          txDataIn.put(3, v(m, 3));
-         Set allValuesIn = new HashSet(dataIn.values());
+         Collection<String> allValuesIn = new ArrayList<>(dataIn.values());
          allValuesIn.addAll(txDataIn.values());
 
          // Add an entry within tx
          cache.putAll(txDataIn);
 
-         values = Collections.emptySet();
          while (true) {
-            values = new HashSet(cache.values());
+            values = new ArrayList<>(cache.values());
             if (moreThanDurationElapsed(startTime, lifespan))
                break;
-            assertEquals(allValuesIn, values);
+            assertTrue(allValuesIn.containsAll(values));
             Thread.sleep(100);
          }
 
          // Make sure that in the next 20 secs data is removed
          while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-            values = new HashSet(cache.values());
-            if (values.size() == 1) return;
+            values = cache.values();
+            if (values.size() == 1) break;
          }
       } finally {
          cache.getAdvancedCache().getTransactionManager().commit();
       }
 
-      assert values.size() == 1;
+      assertEquals(1, values.size());
    }
 }
