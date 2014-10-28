@@ -1,5 +1,6 @@
 package org.infinispan.test;
 
+import org.hamcrest.Matcher;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.ConcurrentHashSet;

@@ -22,9 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.AttributeMarshaller;
@@ -44,6 +42,9 @@ import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  * Base class for cache resources which require common cache attributes only.
@@ -67,6 +68,12 @@ public class CacheResource extends SimpleResourceDefinition {
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .setValidator(new ModuleIdentifierValidator(true))
+                    .build();
+
+    static final SimpleAttributeDefinition CACHE_AVAILABILITY =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.CACHE_AVAILABILITY, ModelType.STRING, true)
+                    .setFlags(AttributeAccess.Flag.STORAGE_RUNTIME)
+                    .setValidator(new EnumValidator<AvailabilityMode>(AvailabilityMode.class, false, false))
                     .build();
 
     static final SimpleAttributeDefinition INDEXING =
@@ -134,7 +141,8 @@ public class CacheResource extends SimpleResourceDefinition {
                    .setAllowExpression(false)
                    .build();
 
-    static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, INDEXING, INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS};
+    static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, CACHE_AVAILABILITY, INDEXING,
+          INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS};
 
     // here for legacy purposes only
     static final SimpleAttributeDefinition NAME =

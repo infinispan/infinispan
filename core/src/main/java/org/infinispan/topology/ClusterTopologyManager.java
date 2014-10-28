@@ -49,4 +49,6 @@ public interface ClusterTopologyManager {
    void setRebalancingEnabled(boolean enabled);
 
    void forceRebalance(String cacheName);
+
+   void forceAvailabilityMode(String cacheName, AvailabilityMode availabilityMode);
 }

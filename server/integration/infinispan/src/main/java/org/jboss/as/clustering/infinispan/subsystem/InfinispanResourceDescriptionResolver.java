@@ -1,11 +1,11 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.jboss.as.controller.descriptions.StandardResourceDescriptionResolver;
+
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-
-import org.jboss.as.controller.descriptions.StandardResourceDescriptionResolver;
 
 /**
  * Custom resource description resolver to handle resources structured in a class hierarchy
@@ -104,6 +104,7 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(ModelKeys.STATISTICS, "cache");
 
         sharedAttributeResolver.put(ModelKeys.ASYNC_MARSHALLING, "clustered-cache");
+        sharedAttributeResolver.put(ModelKeys.CACHE_AVAILABILITY, "cache");
         sharedAttributeResolver.put(ModelKeys.MODE, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.QUEUE_FLUSH_INTERVAL, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.QUEUE_SIZE, "clustered-cache");
@@ -138,7 +139,6 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(MetricKeys.AVERAGE_WRITE_TIME, "cache");
         sharedAttributeResolver.put(MetricKeys.CACHE_NAME, "cache");
         sharedAttributeResolver.put(MetricKeys.CACHE_STATUS, "cache");
-        sharedAttributeResolver.put(MetricKeys.CACHE_AVAILABILITY, "cache");
         sharedAttributeResolver.put(MetricKeys.COMMITS, "cache");
         sharedAttributeResolver.put(MetricKeys.CONCURRENCY_LEVEL, "cache");
         sharedAttributeResolver.put(MetricKeys.EVICTIONS, "cache");

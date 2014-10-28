@@ -1,31 +1,5 @@
 package org.infinispan.cache.impl;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.*;
-import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import javax.transaction.InvalidTransactionException;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
@@ -71,6 +45,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
@@ -85,8 +61,6 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
@@ -96,6 +70,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.impl.StatsImpl;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.TransactionXaAdapter;
@@ -103,6 +78,35 @@ import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import javax.transaction.InvalidTransactionException;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.context.Flag.FAIL_SILENTLY;
+import static org.infinispan.context.Flag.FORCE_ASYNCHRONOUS;
+import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
+import static org.infinispan.context.Flag.PUT_FOR_EXTERNAL_READ;
+import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
+import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -144,6 +148,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private GlobalConfiguration globalCfg;
    private boolean isClassLoaderInContext;
    private EntryRetriever<K, V> entryRetriever;
+   private LocalTopologyManager localTopologyManager;
 
    public CacheImpl(String name) {
       this.name = name;
@@ -169,7 +174,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   LockManager lockManager,
                                   AuthorizationManager authorizationManager,
                                   GlobalConfiguration globalCfg,
-                                  EntryRetriever<K, V> entryRetriever) {
+                                  EntryRetriever<K, V> entryRetriever,
+                                  PartitionHandlingManager partitionHandlingManager,
+                                  LocalTopologyManager localTopologyManager) {
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
       this.config = configuration;
@@ -193,6 +200,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.authorizationManager = authorizationManager;
       this.globalCfg = globalCfg;
       this.entryRetriever = entryRetriever;
+      this.partitionHandlingManager = partitionHandlingManager;
+      this.localTopologyManager = localTopologyManager;
    }
 
    private void assertKeyNotNull(Object key) {
@@ -864,13 +873,29 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       }
    }
 
+   public void setAvailability(AvailabilityMode availability) {
+      if (partitionHandlingManager != null) {
+         try {
+            localTopologyManager.setCacheAvailability(getName(), availability);
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+      }
+   }
+
+
    @ManagedAttribute(
          description = "Returns the cache availability",
          displayName = "Cache availability",
-         dataType = DataType.TRAIT
+         dataType = DataType.TRAIT,
+         writable = true
    )
    public String getCacheAvailability() {
       return getAvailability().toString();
+   }
+
+   public void setCacheAvailability(String availabilityString) throws Exception {
+      setAvailability(AvailabilityMode.valueOf(availabilityString));
    }
 
    @Override

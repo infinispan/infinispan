@@ -45,7 +45,6 @@ public class MetricKeys {
     // cache
     public static final String CACHE_STATUS = "cache-status";
     public static final String CACHE_NAME = "cache-name";
-    public static final String CACHE_AVAILABILITY = "cache-availability";
     // LockManager
     public static final String NUMBER_OF_LOCKS_AVAILABLE = "number-of-locks-available";
     public static final String NUMBER_OF_LOCKS_HELD = "number-of-locks-held";

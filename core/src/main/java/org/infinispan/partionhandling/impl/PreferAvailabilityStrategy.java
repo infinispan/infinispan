@@ -2,6 +2,7 @@ package org.infinispan.partionhandling.impl;
 
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
@@ -144,9 +145,8 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
    }
 
    @Override
-   public void onManualAvailabilityChange(AvailabilityStrategyContext context) {
-      context.updateCurrentTopology(context.getExpectedMembers());
-      context.queueRebalance(context.getExpectedMembers());
+   public void onManualAvailabilityChange(AvailabilityStrategyContext context, AvailabilityMode newAvailabilityMode) {
+      // The cache should always be AVAILABLE
    }
 
    private boolean isDataLost(ConsistentHash currentCH, List<Address> newMembers) {

@@ -32,6 +32,7 @@ import org.infinispan.security.actions.GetCacheManagerIsCoordinatorAction;
 import org.infinispan.security.actions.GetCacheManagerStatusAction;
 import org.infinispan.security.actions.GetCacheRpcManagerAction;
 import org.infinispan.security.actions.GetCacheStatusAction;
+import org.infinispan.security.actions.SetCacheAvailabilityAction;
 import org.infinispan.server.infinispan.actions.ClearCacheAction;
 import org.infinispan.server.infinispan.actions.GetCacheVersionAction;
 import org.infinispan.server.infinispan.actions.GetCreatedCacheCountAction;
@@ -217,12 +218,17 @@ public final class SecurityActions {
         return doPrivileged(action);
     }
 
-    public static AvailabilityMode getCacheAvailability(AdvancedCache<?, ?> cache) {
-        GetCacheAvailabilityAction action = new GetCacheAvailabilityAction(cache);
-        return doPrivileged(action);
-    }
+   public static AvailabilityMode getCacheAvailability(AdvancedCache<?, ?> cache) {
+      GetCacheAvailabilityAction action = new GetCacheAvailabilityAction(cache);
+      return doPrivileged(action);
+   }
 
-    public static Void clearCache(AdvancedCache<?, ?> cache) {
+   public static void setCacheAvailability(AdvancedCache<?, ?> cache, AvailabilityMode availabilityMode) {
+      SetCacheAvailabilityAction action = new SetCacheAvailabilityAction(cache, availabilityMode);
+      doPrivileged(action);
+   }
+
+   public static Void clearCache(AdvancedCache<?, ?> cache) {
         ClearCacheAction action = new ClearCacheAction(cache);
         doPrivileged(action);
         return null;
