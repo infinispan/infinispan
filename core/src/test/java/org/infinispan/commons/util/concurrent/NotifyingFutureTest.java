@@ -1,156 +1,142 @@
 package org.infinispan.commons.util.concurrent;
 
-import org.infinispan.util.concurrent.WithinThreadExecutor;
+import org.infinispan.assertions.ExceptionAssertion;
+import org.infinispan.assertions.FutureAssertion;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertTrue;
 
 /**
+ * Tests notifications for {@link org.infinispan.commons.util.concurrent.NotifyingFuture}
+ *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
+ * @author Sebastian Laskawiec
  */
 @Test(groups = "functional", testName = "commons.NotifyingFutureTest")
-public class NotifyingFutureTest {
+public class NotifyingFutureTest extends AbstractInfinispanTest {
 
-   public void testDoneThisThread() throws ExecutionException, InterruptedException {
-      testDone(new WithinThreadExecutor(), 0, 0);
-   }
+   public static final int FUTURE_GET_TIMEOUT_MS = 1000;
 
-   public void testExceptionThisThread() throws ExecutionException, InterruptedException {
-      testException(new WithinThreadExecutor(), 0, 0);
-   }
+   public void testAttachingListenerBeforeSetFuture() throws Exception {
+      //given
+      final NotifyingFutureImpl<Integer> nf = createNotifyingFuture();
+      final AtomicBoolean wasListenerInvoked = new AtomicBoolean(false);
 
-   public void testDoneOtherThread1() throws ExecutionException, InterruptedException {
-      testDoneOtherThread(100, 0);
-   }
-
-   @Test(groups = "unstable", description = "See ISPN-4029")
-   public void testDoneOtherThread2() throws ExecutionException, InterruptedException {
-      testDoneOtherThread(0, 100);
-   }
-
-   @Test(groups = "unstable", description = "See ISPN-4029")
-   public void testExceptionOtherThread1() throws ExecutionException, InterruptedException {
-      testExceptionOtherThread(100, 0);
-   }
-
-   @Test(groups = "unstable", description = "See ISPN-4029")
-   public void testExceptionOtherThread2() throws ExecutionException, InterruptedException {
-      testExceptionOtherThread(0, 100);
-   }
-
-   private void testDoneOtherThread(long beforeSetDelay, long beforeExecuteDelay) throws ExecutionException, InterruptedException {
-      ThreadPoolExecutor tpe = null;
-      try {
-         tpe = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(1));
-         testDone(tpe, beforeSetDelay, beforeExecuteDelay);
-      } finally {
-         if (tpe != null) tpe.shutdown();
-      }
-   }
-
-   private void testExceptionOtherThread(long beforeSetDelay, long beforeExecuteDelay) throws ExecutionException, InterruptedException {
-      ThreadPoolExecutor tpe = null;
-      try {
-         tpe = new ThreadPoolExecutor(1, 1, Long.MAX_VALUE, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(1));
-         testException(tpe, beforeSetDelay, beforeExecuteDelay);
-      } finally {
-         if (tpe != null) tpe.shutdown();
-      }
-   }
-
-   private void testDone(ExecutorService service, long beforeSetDelay, final long beforeExecuteDelay) throws InterruptedException, ExecutionException {
-      final NotifyingFutureImpl<Integer> nf = new NotifyingFutureImpl<Integer>();
-      Future<Integer> f = service.submit(new Callable<Integer>() {
-         @Override
-         public Integer call() throws Exception {
-            Thread.sleep(beforeExecuteDelay);
-            int retval = 42;
-            nf.notifyDone(retval);
-            return retval;
-         }
-      });
-      try {
-         assertEquals(Integer.valueOf(42), f.get(0, TimeUnit.NANOSECONDS));
-      } catch (TimeoutException e) {
-      }
-      Thread.sleep(beforeSetDelay);
-      nf.setFuture(f);
-      try {
-         assertEquals(Integer.valueOf(42), f.get(0, TimeUnit.NANOSECONDS));
-      } catch (TimeoutException e) {
-      }
-      final AtomicInteger retval = new AtomicInteger(-1);
-      final CountDownLatch latch = new CountDownLatch(1);
+      //when
       nf.attachListener(new FutureListener<Integer>() {
          @Override
          public void futureDone(Future<Integer> future) {
-            try {
-               retval.set(future.get());
-            } catch (Exception e) {
-               e.printStackTrace();
-            } finally {
-               latch.countDown();
-            }
+            wasListenerInvoked.set(true);
          }
       });
-      latch.await();
-      assertTrue(nf.isDone());
-      assertFalse(nf.isCancelled());
-      assertTrue(f.isDone());
-      assertFalse(f.isCancelled());
-      assertEquals(42, retval.get());
-      assertEquals(Integer.valueOf(42), nf.get());
-      assertEquals(Integer.valueOf(42), f.get());
-   }
 
-   private void testException(ExecutorService service, long beforeSetDelay, final long beforeExecuteDelay) throws InterruptedException, ExecutionException {
-      final NotifyingFutureImpl<Integer> nf = new NotifyingFutureImpl<Integer>();
-      Future<Integer> f = service.submit(new Callable<Integer>() {
+      Future<Integer> future = fork(new Callable<Integer>() {
          @Override
          public Integer call() throws Exception {
-            Thread.sleep(beforeExecuteDelay);
-            Exception e = new IllegalStateException();
-            nf.notifyException(e);
-            throw e;
+            // this invokes listeners, so there is no need to wait for them.
+            nf.notifyDone(42);
+            return 42;
          }
       });
-      Thread.sleep(beforeSetDelay);
-      nf.setFuture(f);
-      final CountDownLatch latch = new CountDownLatch(1);
-      final AtomicReference<Throwable> ex = new AtomicReference<Throwable>(null);
+      nf.setFuture(future);
+
+      //ensure that all work is done.
+      callGetAndExtractException(future);
+
+      //then
+      assertTrue(wasListenerInvoked.get());
+      FutureAssertion.assertThat(nf, FUTURE_GET_TIMEOUT_MS).isDone().isNotCanceled().hasValue(42);
+      FutureAssertion.assertThat(future, FUTURE_GET_TIMEOUT_MS).isDone().isNotCanceled().hasValue(42);
+   }
+
+   public void testCompletingJobBeforeListenerRegistration() throws Exception {
+      //given
+      final NotifyingFutureImpl<Integer> nf = createNotifyingFuture();
+      final AtomicBoolean wasListenerInvoked = new AtomicBoolean(false);
+
+      //when
+      Future<Integer> future = fork(new Callable<Integer>() {
+         @Override
+         public Integer call() throws Exception {
+            // this invokes listeners, so there is no need to wait for them.
+            nf.notifyDone(42);
+            return 42;
+         }
+      });
+      nf.setFuture(future);
+      //ensure that all work is done.
+      callGetAndExtractException(future);
+
       nf.attachListener(new FutureListener<Integer>() {
          @Override
          public void futureDone(Future<Integer> future) {
-            try {
-               future.get();
-            } catch (Throwable t) {
-               ex.set(t);
-            } finally {
-               latch.countDown();
-            }
+            wasListenerInvoked.set(true);
          }
       });
-      if (!latch.await(5, TimeUnit.SECONDS)) {
-         fail("Not finished withing time limit (5 seconds)");
+
+      //then
+      assertTrue(wasListenerInvoked.get());
+      FutureAssertion.assertThat(nf, FUTURE_GET_TIMEOUT_MS).isDone().isNotCanceled().hasValue(42);
+      FutureAssertion.assertThat(future, FUTURE_GET_TIMEOUT_MS).isDone().isNotCanceled().hasValue(42);
+   }
+
+   public void testForwardingExceptionFromInnerFuture() throws Exception {
+      //given
+      class TestingException extends Exception {
+         TestingException(String message) {
+            super(message);
+         }
       }
-      assertTrue(nf.isDone());
-      assertFalse(nf.isCancelled());
-      assertTrue(f.isDone());
-      assertFalse(f.isCancelled());
-      assertTrue(ex.get() instanceof ExecutionException);
-      assertTrue(ex.get().getCause() instanceof IllegalStateException);
-      boolean thrown = false;
+
+      final NotifyingFutureImpl<Integer> nf = createNotifyingFuture();
+      final AtomicReference<Exception> exceptionInListener = new AtomicReference<>();
+
+      //when
+      nf.attachListener(new FutureListener<Integer>() {
+         @Override
+         public void futureDone(Future<Integer> future) {
+            exceptionInListener.set(callGetAndExtractException(future));
+         }
+      });
+
+      Future<Integer> future = fork(new Callable<Integer>() {
+         @Override
+         public Integer call() throws Exception {
+            TestingException testingException = new TestingException("Ignore me");
+            nf.notifyException(testingException);
+            throw testingException;
+         }
+      });
+      nf.setFuture(future);
+      //ensure that all work is done.
+      callGetAndExtractException(future);
+
+      //then
+      ExceptionAssertion.assertThat(exceptionInListener.get()).IsNotNull().isTypeOf(ExecutionException.class)
+            .hasCauseTypeOf(TestingException.class);
+      FutureAssertion.assertThat(nf, FUTURE_GET_TIMEOUT_MS).isDone().isNotCanceled();
+      FutureAssertion.assertThat(future, FUTURE_GET_TIMEOUT_MS).isDone().isNotCanceled();
+   }
+
+   private Exception callGetAndExtractException(Future<Integer> future) {
+      Exception holder = null;
       try {
-         nf.get();
-      } catch (ExecutionException e) {
-         assertTrue(e instanceof ExecutionException);
-         assertTrue(e.getCause() instanceof IllegalStateException);
-         thrown = true;
+         future.get(FUTURE_GET_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      } catch (Exception e) {
+         holder = e;
       }
-      assertTrue(thrown);
+      return holder;
+   }
+
+   private <T> NotifyingFutureImpl<T> createNotifyingFuture() {
+      return new NotifyingFutureImpl<>();
    }
 }
