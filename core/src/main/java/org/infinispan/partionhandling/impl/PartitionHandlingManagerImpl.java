@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -18,19 +19,21 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    private static final Log log = LogFactory.getLog(PartitionHandlingManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
+   private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
 
    private DistributionManager distributionManager;
    private RpcManager rpcManager;
    private LocalTopologyManager localTopologyManager;
    private String cacheName;
+   private CacheNotifier notifier;
 
    @Inject void init(DistributionManager distributionManager, RpcManager rpcManager,
-         LocalTopologyManager localTopologyManager, Cache cache) {
+         LocalTopologyManager localTopologyManager, Cache cache, CacheNotifier notifier) {
       this.distributionManager = distributionManager;
       this.rpcManager = rpcManager;
       this.localTopologyManager = localTopologyManager;
       this.cacheName = cache.getName();
+      this.notifier = notifier;
    }
 
    @Start void start() {
@@ -40,8 +43,10 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    public void setAvailabilityMode(AvailabilityMode availabilityMode) {
       if (availabilityMode != this.availabilityMode) {
          log.debugf("Updating availability for cache %s: %s -> %s", cacheName, this.availabilityMode, availabilityMode);
+         notifier.notifyPartitionStatusChanged(availabilityMode, true);
+         this.availabilityMode = availabilityMode;
+         notifier.notifyPartitionStatusChanged(availabilityMode, false);
       }
-      this.availabilityMode = availabilityMode;
    }
 
    @Override

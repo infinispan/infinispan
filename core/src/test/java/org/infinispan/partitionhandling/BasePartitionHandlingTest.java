@@ -49,6 +49,10 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    protected volatile Partition[] partitions;
    protected boolean partitionHandling = true;
 
+   public BasePartitionHandlingTest() {
+      this.cleanup = CleanupPhase.AFTER_METHOD;
+   }
+
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = new ConfigurationBuilder();

@@ -5,7 +5,6 @@ import org.infinispan.distribution.MagicKey;
 import org.infinispan.partionhandling.AvailabilityException;
 import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.test.concurrent.StateSequencer;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -14,11 +13,9 @@ import org.testng.annotations.Test;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
 import static org.testng.Assert.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "functional", testName = "partitionhandling.DelayedAvailabilityUpdateTest")
-@CleanupAfterMethod
 public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
    private static final Log log = LogFactory.getLog(DelayedAvailabilityUpdateTest.class);
 

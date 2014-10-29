@@ -21,6 +21,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.responses.ExceptionResponse;

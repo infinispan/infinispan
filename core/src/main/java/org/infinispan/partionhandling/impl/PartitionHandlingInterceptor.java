@@ -1,5 +1,6 @@
 package org.infinispan.partionhandling.impl;
 
+import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -8,10 +9,12 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Transport;
 
@@ -63,6 +66,15 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       partitionHandlingManager.checkWrite(command.getKey());
       return super.visitApplyDeltaCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitEntryRetrievalCommand(InvocationContext ctx, EntryRetrievalCommand command) throws Throwable {
+      if (partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE && (command.getFlags() == null ||
+            !command.getFlags().contains(Flag.CACHE_MODE_LOCAL))) {
+         throw getLog().partitionUnavailable();
+      }
+      return super.visitEntryRetrievalCommand(ctx, command);
    }
 
    @Override

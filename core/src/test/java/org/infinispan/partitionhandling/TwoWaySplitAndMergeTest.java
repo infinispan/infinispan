@@ -3,7 +3,6 @@ package org.infinispan.partitionhandling;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashSet;
@@ -12,7 +11,6 @@ import java.util.List;
 import static org.testng.Assert.*;
 
 @Test(groups = "functional", testName = "partitionhandling.TwoWaySplitAndMergeTest")
-@CleanupAfterMethod
 public class TwoWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
    public void testSplitAndMerge0() throws Exception {

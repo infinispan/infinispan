@@ -3,7 +3,6 @@ package org.infinispan.partitionhandling;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -15,7 +14,6 @@ import java.util.Set;
 import static org.testng.Assert.*;
 
 @Test(groups = "functional", testName = "partitionhandling.ThreeWaySplitAndMergeTest")
-@CleanupAfterMethod
 public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
 
    private static Log log = LogFactory.getLog(ThreeWaySplitAndMergeTest.class);
