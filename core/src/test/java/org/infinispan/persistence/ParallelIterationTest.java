@@ -102,7 +102,7 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
             synchronized (entries) {
                boolean shouldStop = entries.size() == 100 && !stopped.get();
-               log.info("shouldStop = " + shouldStop);
+               log.info("shouldStop = " + shouldStop + ",entries size = " + entries.size());
                if (shouldStop) {
                   stopped.set(true);
                   taskContext.stop();
@@ -125,7 +125,6 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       int numEntries = insertData();
       final ConcurrentMap<Integer, Integer> entries = new ConcurrentHashMap<>();
       final ConcurrentMap<Integer, InternalMetadata> metadata = new ConcurrentHashMap<>();
-      final ConcurrentHashSet<Thread> threads = new ConcurrentHashSet<>();
       final AtomicBoolean sameKeyMultipleTimes = new AtomicBoolean();
       final AtomicInteger processed = new AtomicInteger();
       final CyclicBarrier barrier = new CyclicBarrier(numThreads);
@@ -134,18 +133,6 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
       store.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
-            if (threads.add(Thread.currentThread())) {
-               try {
-                  //in some cases, if the task is fast enough, it may not use all the threads expected
-                  //this barrier will ensure that when the thread is used for the first time, it will wait
-                  //for the expected number of threads.
-                  //this should remove the random failures.
-                  barrier.await(1, TimeUnit.MINUTES);
-               } catch (BrokenBarrierException | TimeoutException e) {
-                  log.warn("Exception occurred while waiting for barrier", e);
-                  brokenBarrier.set(true);
-               }
-            }
             int key = unwrapKey(marshalledEntry.getKey());
             if (fetchValues) {
                // Note: MarshalledEntryImpl.getValue() fails with NPE when it's got null valueBytes,
@@ -187,12 +174,10 @@ public abstract class ParallelIterationTest extends SingleCacheManagerTest {
             assertMetadataEmpty(metadata.get(i));
          }
       }
-
-      assertEquals(threads.size(), numThreads);
    }
 
    private int insertData() {
-      int numEntries = 12000;
+      int numEntries = 101;
       for (int i = 0; i < numEntries; i++) {
          MarshalledEntryImpl me = new MarshalledEntryImpl(wrapKey(i), wrapValue(i, i),
                insertMetadata(i) ? TestingUtil.internalMetadata(lifespan(i), maxIdle(i)) : null, sm);
