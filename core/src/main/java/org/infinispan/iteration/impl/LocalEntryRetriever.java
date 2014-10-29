@@ -16,6 +16,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.Converter;
@@ -28,12 +29,17 @@ import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
+import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
+import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
+import org.infinispan.partionhandling.AvailabilityException;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -81,6 +87,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    protected Equivalence<K> keyEquivalence;
 
    protected final Executor withinThreadExecutor = new WithinThreadExecutor();
+   protected final PartitionListener partitionListener = new PartitionListener();
 
    boolean passivationEnabled;
 
@@ -98,6 +105,34 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
 
       this.passivationEnabled = config.persistence().passivation();
       this.keyEquivalence = config.dataContainer().keyEquivalence();
+   }
+
+   @Start
+   public void start() {
+      cache.addListener(partitionListener);
+   }
+
+   @Listener
+   protected class PartitionListener {
+      protected volatile AvailabilityMode currentMode = AvailabilityMode.AVAILABLE;
+
+      protected final Set<Itr<?, ?>> iterators = new ConcurrentHashSet<>();
+
+      @PartitionStatusChanged
+      public void onPartitionChange(PartitionStatusChangedEvent event) {
+         if (!event.isPre()) {
+            currentMode = event.getAvailabilityMode();
+            if (currentMode != AvailabilityMode.AVAILABLE) {
+               Iterator<Itr<?, ?>> itrIterator = iterators.iterator();
+               // Now we close all the iterators but with the exception so they throw it properly
+               while (itrIterator.hasNext()) {
+                  Itr<?, ?> itr = itrIterator.next();
+                  itr.close(new AvailabilityException());
+                  itrIterator.remove();
+               }
+            }
+         }
+      }
    }
 
    public LocalEntryRetriever(int batchSize, long timeout, TimeUnit unit) {
@@ -192,6 +227,18 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       return usedConverter;
    }
 
+   protected <C> void registerIterator(Itr<K, C> itr, Set<Flag> flags) {
+      // If we are running in local mode we ignore the partition status
+      if (flags == null || !flags.contains(Flag.CACHE_MODE_LOCAL)) {
+         // Note we have to register the iterator before we check the mode in case if it changes concurrently
+         partitionListener.iterators.add(itr);
+         if (partitionListener.currentMode != AvailabilityMode.AVAILABLE) {
+            partitionListener.iterators.remove(itr);
+            throw log.partitionUnavailable();
+         }
+      }
+   }
+
    @Override
    public <C> CloseableIterator<CacheEntry<K, C>> retrieveEntries(final KeyValueFilter<? super K, ? super V> filter,
                                                                  Converter<? super K, ? super V, ? extends C> converter,
@@ -200,6 +247,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       final Converter<? super K, ? super V, ? extends C> usedConverter = checkForKeyValueFilterConverter(filter, converter);
       wireFilterAndConverterDependencies(filter, usedConverter);
       final Itr<K, C> iterator = new Itr<K, C>(batchSize);
+      registerIterator(iterator, flags);
       final ItrQueuerHandler<C> handler = new ItrQueuerHandler<C>(iterator);
       executorService.submit(new Runnable() {
 
@@ -291,6 +339,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                }
 
                handler.handleBatch(true, queue);
+               partitionListener.iterators.remove(iterator);
             } catch (Throwable e) {
                //todo [anistor] any exception happening during entry retrieval should stop the process and throw an exception to the requestor instead of timing out
                log.exceptionProcessingEntryRetrievalValues(e);
@@ -366,6 +415,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       private final Lock nextLock = new ReentrantLock();
       private final Condition nextCondition = nextLock.newCondition();
       private boolean completed;
+      private CacheException exception;
 
       public Itr(int batchSize) {
          // This is a blocking queue so that addEntries blocks to prevent multiple batches from the same sender
@@ -395,6 +445,9 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                      interrupted = true;
                   }
                }
+               if (!hasNext && exception != null) {
+                  throw exception;
+               }
             } finally {
                nextLock.unlock();
             }
@@ -411,6 +464,9 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
          CacheEntry<K, C> entry = queue.poll();
          if (entry == null) {
             if (completed) {
+               if (exception != null) {
+                  throw exception;
+               }
                throw new NoSuchElementException();
             }
             nextLock.lock();
@@ -423,6 +479,9 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                   }
                }
                if (entry == null) {
+                  if (exception != null) {
+                     throw exception;
+                  }
                   throw new NoSuchElementException();
                }
             } finally {
@@ -469,9 +528,18 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
 
       @Override
       public void close() {
+         close(null);
+      }
+
+      protected void close(CacheException e) {
          nextLock.lock();
          try {
-            completed = true;
+            // We only set the exception if we weren't completed prior - which will allow for this iterator to complete
+            // since it retrieved all the other values
+            if (!completed) {
+               exception = e;
+               completed = true;
+            }
             nextCondition.signalAll();
          } finally {
             nextLock.unlock();

@@ -10,6 +10,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.ClassLoaderAwareFilteringListenable;
 import org.infinispan.notifications.ClassLoaderAwareListenable;
 import org.infinispan.notifications.FilteringListenable;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
@@ -105,4 +106,5 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
 
    void notifyTopologyChanged(CacheTopology oldTopology, CacheTopology newTopology, int newTopologyId, boolean pre);
 
+   void notifyPartitionStatusChanged(AvailabilityMode mode, boolean pre);
 }

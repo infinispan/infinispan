@@ -8,20 +8,8 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent;
-import org.infinispan.notifications.cachelistener.event.DataRehashedEvent;
-import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
-import org.infinispan.notifications.cachelistener.event.TransactionCompletedEvent;
-import org.infinispan.notifications.cachelistener.event.TransactionRegisteredEvent;
+import org.infinispan.notifications.cachelistener.event.*;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
@@ -37,7 +25,7 @@ import java.util.Map;
 @NotThreadSafe
 public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCreatedEvent, CacheEntriesEvictedEvent, CacheEntryLoadedEvent, CacheEntryModifiedEvent,
                                         CacheEntryPassivatedEvent, CacheEntryRemovedEvent, CacheEntryVisitedEvent, TransactionCompletedEvent, TransactionRegisteredEvent,
-                                        CacheEntryInvalidatedEvent, DataRehashedEvent, TopologyChangedEvent, CacheEntryEvictedEvent, Cloneable {
+                                        CacheEntryInvalidatedEvent, DataRehashedEvent, TopologyChangedEvent, CacheEntryEvictedEvent, PartitionStatusChangedEvent, Cloneable {
    private boolean pre = false; // by default events are after the fact
    private transient Cache<K, V> cache;
    private K key;
@@ -54,6 +42,7 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    private Map<? extends K, ? extends V> entries;
    private boolean created;
    private boolean commandRetried;
+   private AvailabilityMode mode;
 
    public EventImpl() {
    }
@@ -300,6 +289,15 @@ public class EventImpl<K, V> implements CacheEntryActivatedEvent, CacheEntryCrea
    @Override
    public int getNewTopologyId() {
       return newTopologyId;
+   }
+
+   @Override
+   public AvailabilityMode getAvailabilityMode() {
+      return mode;
+   }
+
+   public void setAvailabilityMode(AvailabilityMode mode) {
+      this.mode = mode;
    }
 
    @Override

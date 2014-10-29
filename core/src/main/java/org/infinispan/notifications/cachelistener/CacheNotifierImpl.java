@@ -41,6 +41,7 @@ import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
 import org.infinispan.notifications.impl.ListenerInvocation;
+import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -100,6 +101,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       allowedListeners.put(CacheEntryInvalidated.class, CacheEntryInvalidatedEvent.class);
       allowedListeners.put(DataRehashed.class, DataRehashedEvent.class);
       allowedListeners.put(TopologyChanged.class, TopologyChangedEvent.class);
+      allowedListeners.put(PartitionStatusChanged.class, PartitionStatusChangedEvent.class);
 
       // For backward compat
       allowedListeners.put(CacheEntryEvicted.class, CacheEntryEvictedEvent.class);
@@ -124,6 +126,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    final List<CacheEntryListenerInvocation<K, V>> transactionCompletedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
    final List<CacheEntryListenerInvocation<K, V>> dataRehashedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
    final List<CacheEntryListenerInvocation<K, V>> topologyChangedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> partitionChangedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
 
    // For backward compat
    final List<CacheEntryListenerInvocation<K, V>> cacheEntryEvictedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
@@ -166,6 +169,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       listenersMap.put(CacheEntryInvalidated.class, cacheEntryInvalidatedListeners);
       listenersMap.put(DataRehashed.class, dataRehashedListeners);
       listenersMap.put(TopologyChanged.class, topologyChangedListeners);
+      listenersMap.put(PartitionStatusChanged.class, partitionChangedListeners);
 
       // For backward compat
       listenersMap.put(CacheEntryEvicted.class, cacheEntryEvictedListeners);
@@ -496,6 +500,16 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          e.setConsistentHashAtEnd(newTopology.getWriteConsistentHash());
          e.setNewTopologyId(newTopologyId);
          for (CacheEntryListenerInvocation<K, V> listener : topologyChangedListeners) listener.invoke(e);
+      }
+   }
+
+   @Override
+   public void notifyPartitionStatusChanged(AvailabilityMode mode, boolean pre) {
+      if (!partitionChangedListeners.isEmpty()) {
+         EventImpl<K, V> e = EventImpl.createEvent(cache, PARTITION_STATUS_CHANGED);
+         e.setPre(pre);
+         e.setAvailabilityMode(mode);
+         for (CacheEntryListenerInvocation<K, V> listener : partitionChangedListeners) listener.invoke(e);
       }
    }
 

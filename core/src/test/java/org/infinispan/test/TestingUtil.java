@@ -47,6 +47,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -761,9 +762,10 @@ public class TestingUtil {
                   }
                }
                if (c.getAdvancedCache().getRpcManager() != null) {
-                  log.tracef("Cache contents on %s before stopping: %s", c.getAdvancedCache().getRpcManager().getAddress(), c.entrySet());
+                  log.tracef("Cache contents on %s before stopping: %s", c.getAdvancedCache().getRpcManager().getAddress(),
+                             c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet());
                } else {
-                  log.tracef("Cache contents before stopping: %s", c.entrySet());
+                  log.tracef("Cache contents before stopping: %s", c.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).entrySet());
                }
                if (clear) {
                   try {

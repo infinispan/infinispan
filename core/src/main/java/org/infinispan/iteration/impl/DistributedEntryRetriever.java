@@ -2,6 +2,7 @@ package org.infinispan.iteration.impl;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
@@ -263,6 +264,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
 
    @Start
    public void start() {
+      super.start();
       cache.addListener(this);
       localAddress = rpcManager.getAddress();
    }
@@ -524,6 +526,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       }
 
       DistributedItr<K, C> itr = new DistributedItr<>(batchSize, identifier, listener, hash);
+      registerIterator(itr, flags);
       Set<Integer> remoteSegments = new HashSet<>();
       AtomicReferenceArray<Set<K>> processedKeys = new AtomicReferenceArray<Set<K>>(hash.getNumSegments());
       for (int i = 0; i < processedKeys.length(); ++i) {
@@ -565,6 +568,14 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
    private <C> boolean eventuallySendRequest(UUID identifier, IterationStatus<K, V, ? extends Object> status) {
       boolean sent = false;
       while (!sent) {
+         // This means our iterator was closed explicitly
+         if (!iteratorDetails.containsKey(identifier)) {
+            if (log.isTraceEnabled()) {
+               log.tracef("Cannot send remote request as our iterator was concurrently closed for %s", identifier);
+            }
+            return false;
+         }
+
          ConsistentHash hash = getCurrentHash();
          Set<Integer> missingRemoteSegments = findMissingRemoteSegments(status.processedKeys, hash);
          if (!missingRemoteSegments.isEmpty()) {
@@ -933,7 +944,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                   @Override
                   public void run() {
                      // We have to keep trying until either there are no more missing segments or we have sent a request
-                     while (missingRemoteSegment(processedKeys, getCurrentHash())) {
+                     while (missingRemoteSegment(processedKeys, getCurrentHash()) && iteratorDetails.containsKey(identifier)) {
                         if (!eventuallySendRequest(identifier, status)) {
                            // We couldn't send a remote request, so remove the awaitingResponse and make sure there
                            // are no more missing remote segments
@@ -996,6 +1007,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       IterationStatus<K, V, ?> status = iteratorDetails.get(identifier);
       if (status != null) {
          Itr<K, ?> itr = status.ongoingIterator;
+         partitionListener.iterators.remove(itr);
          itr.close();
       }
    }
@@ -1066,11 +1078,10 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          }
       }
 
-      @Override
-      public void close() {
+      protected void close(CacheException e) {
+         super.close(e);
          // When the iterator is closed we have to stop all other processing and remove any references to our identifier
          iteratorDetails.remove(identifier);
-         super.close();
       }
 
       @Override
