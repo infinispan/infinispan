@@ -40,9 +40,9 @@ abstract class AbstractHotRodClusterEventsTest extends HotRodMultiNodeTest {
       val server = HotRodTestingUtil.startHotRodServer(cacheManager, port)
       server.getClientListenerRegistry.setDefaultMarshaller(None)
       filters += new AcceptedKeyFilterFactory()
-      server.addCacheEventFilterFactory("accepted-key-filter-factory", filters.head, null)
+      server.addCacheEventFilterFactory("accepted-key-filter-factory", filters.head)
       converters += new AcceptedKeyValueConverterFactory()
-      server.addCacheEventConverterFactory("accepted-keyvalue-converter-factory", converters.head, null)
+      server.addCacheEventConverterFactory("accepted-keyvalue-converter-factory", converters.head)
       server
    }
 

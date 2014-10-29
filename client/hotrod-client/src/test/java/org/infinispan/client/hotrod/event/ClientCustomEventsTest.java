@@ -25,8 +25,8 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
-      server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory(), null);
-      server.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory(), null);
+      server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());
+      server.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory());
       return server;
    }
 

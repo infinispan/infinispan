@@ -19,8 +19,8 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
       val server = HotRodTestingUtil.startHotRodServer(cacheManager)
       server.getClientListenerRegistry.setDefaultMarshaller(None)
-      server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory, null)
-      server.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory, null)
+      server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory)
+      server.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory)
       server
    }
 
