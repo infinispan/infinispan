@@ -1,18 +1,19 @@
 package org.infinispan.server.hotrod
 
-import org.infinispan.test.MultipleCacheManagersTest
-import org.testng.annotations.{AfterMethod, AfterClass, Test}
-import org.infinispan.test.fwk.TestCacheManagerFactory
 import org.infinispan.configuration.cache.CacheMode
+import org.infinispan.test.MultipleCacheManagersTest
+import org.infinispan.test.fwk.TestCacheManagerFactory
+import org.testng.annotations.Test
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 // Do not remove, otherwise getDefaultClusteredConfig is not found
-import org.infinispan.test.AbstractCacheTest._
-import test.{UniquePortThreadLocal, HotRodClient}
-import scala.concurrent.{Await, Future}
-import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
-import test.HotRodTestingUtil._
 import org.infinispan.server.core.test.ServerTestingUtil._
+import org.infinispan.server.hotrod.test.HotRodTestingUtil._
+import org.infinispan.server.hotrod.test.UniquePortThreadLocal
+import org.infinispan.test.AbstractCacheTest._
 
 /**
  * Tests concurrent Hot Rod server startups
@@ -22,8 +23,6 @@ import org.infinispan.server.core.test.ServerTestingUtil._
  */
 @Test(groups = Array("functional"), testName = "server.hotrod.HotRodConcurrentStartTest")
 class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
-   private[this] var hotRodServers: List[HotRodServer] = List()
-   private[this] val hotRodClients: List[HotRodClient] = List()
    private val numberOfServers = 2
    private val cacheName = "hotRodConcurrentStart"
 
@@ -38,31 +37,30 @@ class HotRodConcurrentStartTest extends MultipleCacheManagersTest {
       }
    }
 
-   @AfterClass(alwaysRun = true)
-   override def destroy() {
-      try {
-         log.debug("Test finished, close Hot Rod server")
-         hotRodClients.foreach(killClient(_))
-         hotRodServers.foreach(killServer(_))
-      } finally {
-         super.destroy() // Stop the caches last so that at stoppage time topology cache can be updated properly
-      }
-   }
-
-   @AfterMethod(alwaysRun=true)
-   override def clearContent() {
-      // Do not clear cache between methods so that topology cache does not get cleared
-   }
-
    def testConcurrentStartup() {
       val initialPort = UniquePortThreadLocal.get.intValue
-      // Start servers in paralell using Scala's futures
-      // Start first server with delay so that cache not found issue can be replicated
-      val hotRodServer1 = Future(startHotRodServerWithDelay(getCacheManagers.get(0), initialPort, 10000))
-      val hotRodServer2 = Future(startHotRodServer(getCacheManagers.get(1), initialPort + 10))
 
-      hotRodServers = hotRodServers ::: List(Await.result(hotRodServer1, 20 seconds))
-      hotRodServers = hotRodServers ::: List(Await.result(hotRodServer2, 20 seconds))
+      implicit val forExecutionContext = new ExecutionContext {
+         override def execute(runnable: Runnable): Unit = fork(runnable)
+         override def reportFailure(cause: Throwable): Unit = throw cause
+      }
+
+      val futures: Seq[Future[HotRodServer]] = (1 to numberOfServers).map {
+         case 1 =>  Future(startHotRodServerWithDelay(getCacheManagers.get(0), initialPort, 10000))
+         case i =>  Future(startHotRodServer(getCacheManagers.get(i - 1), initialPort + (i * 10)))
+      }
+
+      val results = futures.map(f => Try(Await.result(f, 1 minute)))
+      val success = results.collect { case Success(s) => s}
+      val errors = results.collect { case Failure(e) => e}
+      if (success.isEmpty) {
+         errors.foreach(log.error("Server failed to start", _))
+         throw new AssertionError("All serves failed to start, see error log messages for more info")
+      }
+      // kill servers that started
+      success map killServer
+      // throw error if any
+      errors map(throw _)
    }
 
 }
