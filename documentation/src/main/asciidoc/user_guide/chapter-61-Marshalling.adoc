@@ -56,17 +56,15 @@ The preference will be to compare object representations, unless the cache is li
 This will affect the way keys stored in the cache will work, when `storeAsBinary` is used, since comparisons happen on the key which will be wrapped by a MarshalledValue. Implementers of equals() methods on their keys need to be aware of the behavior of equality comparison, when a key is wrapped as a MarshalledValue, as detailed above.
 
 ===== Store-by-value via defensive copying
-From Infinispan 5.3, `storeAsBinary` configuration offers the possibility to enable defensive copying, which allows for store-by-value like behaviour. 
+The configuration `storeAsBinary` offers the possibility to enable defensive copying, which allows for store-by-value like behaviour. 
 
-When defensive copying is disabled (default), Infinispan keeps object references around and stores them in a binary format lazily. So clients can still modify entries via original object references, and marshalling only happens when entries are to be replicated/distributed, or stored in a cache store. Since client references are valid, clients can make changes to entries in the cache using those references, but these modifications are only local and you still need to call one of the cache's put/replace... methods in order for changes to replicate. This is essentially store-by-reference. This is the default mode for performance reasons.
+Infinispan marshalls objects the moment they're stored, hence changes made to object references are not stored in the cache, not even for local caches. This provides store-by-value like behaviour. Enabling `storeAsBinary` can be achieved:
 
-When defensive copies are enabled, Infinispan marshalls objects the moment they're stored, hence changes made to object references are not stored in the cache, not even for local caches. This provides store-by-value like behaviour. Enabling defensive copying can be achieved:
-
-*  Via XML at the Cache level, either under `<namedCache />` or `<default />` elements: 
+*  Via XML at the Cache level, either under `<*-cache />` or `<default />` elements: 
 
 [source,xml]
 ----
-<storeAsBinary enabled="true" defensive="true"/>
+<store-as-binary keys="true" values="true"/>
 ----
 
 
@@ -75,7 +73,7 @@ When defensive copies are enabled, Infinispan marshalls objects the moment they'
 [source,java]
 ----
 ConfigurationBuilder builder = ...
-builder.storeAsBinary().enable().defensive(true);
+builder.storeAsBinary().enable().storeKeysAsBinary(true).storeValuesAsBinary(true);
 
 ----
 
@@ -85,11 +83,11 @@ Internally, Infinispan uses an implementation of link:$$http://docs.jboss.org/in
 By default, Infinispan uses the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/marshall/VersionAwareMarshaller.html$$[VersionAwareMarshaller] which, as the name suggests, adds a version short to the start of any stream when writing, enabling similar VersionAwareMarshaller instances to read the version short and know which specific marshaller implementation to delegate the call to. Using a VersionAwareMarshaller helps achieve wire protocol compatibility between minor releases but still affords us the flexibility to tweak and improve the wire protocol between minor or micro releases. Optionally, Infinispan users to optionally provide their own marshaller, for example:
 
 
-*  Via XML at the CacheManager level, under `<global />` element: 
+*  Via XML at the CacheManager level, under `<cache-manager />` element: 
 
 [source,xml]
 ----
-<serialization marshallerClass="com.acme.MyMarshaller"/>
+<serialization marshaller="com.acme.MyMarshaller"/>
 ----
 
 

@@ -73,7 +73,7 @@ Configuration cacheConfig = new ConfigurationBuilder().loaders()
 
 === Additional References
 
-Refer to the link:$$https://github.com/infinispan/infinispan/blob/master/cachestore/leveldb/src/test/java/org/infinispan/loaders/leveldb/config/ConfigurationTest.java$$[test case] for code samples in action. 
+Refer to the link:$$https://github.com/infinispan/infinispan/blob/master/persistence/leveldb/src/test/java/org/infinispan/persistence/leveldb/config/ConfigurationTest.java$$[test case] for code samples in action. 
 
-Refer to link:$$https://github.com/infinispan/infinispan/blob/master/cachestore/leveldb/src/test/resources/config/leveldb-config-52.xml$$[test configurations] for configuration samples. 
+Refer to link:$$https://github.com/infinispan/infinispan/tree/master/persistence/leveldb/src/test/resources/config/$$[test configurations] for configuration samples. 
 

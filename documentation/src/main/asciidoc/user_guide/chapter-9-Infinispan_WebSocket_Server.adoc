@@ -83,7 +83,7 @@ Getting and updating data in the cache is done by simply calling the get , put a
 ----
 
 ==== Sample code
-Infinispan's source tree contains a sample HTML document that makes use of the WebSocket server.  Browse through the source of this HTML document link:$$http://fisheye.jboss.org/browse/Infinispan/trunk/server/websocket/src/main/distribution/sample-websocket-client.html$$[here] . 
+Infinispan's source tree contains a sample HTML document that makes use of the WebSocket server.  Browse through the source of this HTML document link:$$https://github.com/infinispan/infinispan/blob/master/server/websocket/src/main/release/etc/sample-websocket-client.html$$[here] . 
 
 ==== Screencast
 See the following link:$$http://www.screencast.com/t/ZGEzNDJlY$$[demo of the Infinispan WebSocket Server] in action. 

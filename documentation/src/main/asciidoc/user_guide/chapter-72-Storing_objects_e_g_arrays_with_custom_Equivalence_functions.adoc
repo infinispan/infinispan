@@ -49,7 +49,7 @@ public final class ByteArrayKey implements Serializable {
 The problem with these classes is that they result in extra memory consumption due to the extra objects required to support data types such as arrays and really, these classes just a workaround for the lack of ability to provide a way to pass in a function that specifies how two byte arrays are are compared, or how to calculate the hash code of a given array.
 
 === New solution: Plugging Equivalence functions
-Starting with Infinispan 5.3, Infinispan users can provide these functions for both keys and values implementing the new link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/util/Equivalence.java$$[`Equivalence<T>`] interface: 
+Starting with Infinispan 5.3, Infinispan users can provide these functions for both keys and values implementing the new link:$$https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/equivalence/Equivalence.java$$[`Equivalence<T>`] interface: 
 
 [source,java]
 ----
@@ -162,7 +162,7 @@ public class ByteArrayEquivalence implements Equivalence<byte[]> {
 
 ----
 
-Or you could have implementations that support multiple different types, in case you store varied information, for example link:$$https://github.com/infinispan/infinispan-server/blob/master/infinispan/src/main/java/org/jboss/as/clustering/infinispan/equivalence/AnyServerEquivalence.java$$[AnyServerEquivalence] which supports both arrays and normal objects: 
+Or you could have implementations that support multiple different types, in case you store varied information, for example link:$$https://github.com/infinispan/infinispan/blob/master/server/integration/infinispan/src/main/java/org/jboss/as/clustering/infinispan/equivalence/AnyServerEquivalence.java$$[AnyServerEquivalence] which supports both arrays and normal objects: 
 
 [source,java]
 ----
@@ -237,7 +237,7 @@ If you were trying to store both byte arrays as keys and values, you'd configure
 
 ----
 
-If no key or value equivalence is configured, they default to link:$$https://github.com/infinispan/infinispan/blob/master/core/src/main/java/org/infinispan/util/AnyEquivalence.java$$[org.infinispan.util.AnyEquivalence], which behaves like any standard java object, delegating the equals/hashCode() calls to the objects themselves.
+If no key or value equivalence is configured, they default to link:$$https://github.com/infinispan/infinispan/blob/master/commons/src/main/java/org/infinispan/commons/equivalence/AnyEquivalence.java$$[org.infinispan.commons.equivalence.AnyEquivalence], which behaves like any standard java object, delegating the equals/hashCode() calls to the objects themselves.
 
 ===== Using Programmatic Configuration
 Key and/or value equivalence could also have been configured programmatically, for example:

@@ -17,8 +17,6 @@ Infinispan ships with several transaction manager lookup classes:
 
 *  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/transaction/lookup/GenericTransactionManagerLookup.html$$[GenericTransactionManagerLookup] : This is a lookup class that locate transaction managers in the most  popular Java EE application servers. If no transaction manager can be found, it defaults on the dummy transaction manager.
 
-*  link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/transaction/lookup/JBossTransactionManagerLookup.html$$[JBossTransactionManagerLookup] : This lookup class locates the transaction manager running within a JBoss Application Server instance.
-
 Once initialized, the TransactionManager can also be obtained from the Cache itself:
 
 [source,java]
@@ -174,7 +172,7 @@ From a use case perspective, optimistic transactions should be used when there i
 On the other hand, pessimistic transactions might be a better fit when there is high contention on the keys and transaction rollbacks are less desirable. Pessimistic transactions are more costly by their nature: each write operation potentially involves a RPC for lock acquisition.
 
 === Deadlock detection
-Deadlocks can significantly (up to one order of magnitude, see benchmarks) reduce the throughput of a system, especially when multiple transactions are operating agains the same key set. Deadlock detection is disabled by default, but can be enabled/configured per cache (i.e. under namedCache config element) by adding the following: 
+Deadlocks can significantly (up to one order of magnitude, see benchmarks) reduce the throughput of a system, especially when multiple transactions are operating agains the same key set. Deadlock detection is disabled by default, but can be enabled/configured per cache (i.e. under *-cache config element) by adding the following: 
 
 [source,xml]
 ----
