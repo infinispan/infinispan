@@ -58,7 +58,7 @@ Similar to, but unlike eviction, is expiration. Expiration allows you to attach 
 TIP: Unlike eviction, expired entries are removed globally - from memory, cache stores, and cluster-wide.
 
 By default entries created are immortal and do not have a lifespan or maximum idle time.  Using the cache API, mortal entries can be created with lifespans and/or maximum idle times.
-Further, default lifespans and/or maximum idle times can be configured by adding the link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.expiration.html$$[&lt;expiration /&gt;] element to your `<default />` or `<namedCache />` configuration sections. 
+Further, default lifespans and/or maximum idle times can be configured by adding the link:$$http://docs.jboss.org/infinispan/7.0/configdocs/infinispan-config-7.0.html$$[&lt;expiration /&gt;] element to your `<*-cache />`  configuration sections. 
 
 ==== Difference between Eviction and Expiration
 Both Eviction and Expiration are means of cleaning the cache of unused entries and thus guarding the heap against OutOfMemory exceptions, so now a brief explanation of the difference.

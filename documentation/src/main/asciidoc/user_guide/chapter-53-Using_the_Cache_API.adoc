@@ -287,12 +287,12 @@ public class MyAsyncListener { .... }
 ----
 
 ===== Asynchronous thread pool
-To tune the thread pool used to dispatch such asynchronous notifications, use the link:$$http://docs.jboss.org/infinispan/5.0/apidocs/config.html#ce_global_asyncListenerExecutor$$[`<asyncListenerExecutor />`] XML element in your configuration file.
+To tune the thread pool used to dispatch such asynchronous notifications, use the link:$$http://docs.jboss.org/infinispan/7.0/configdocs/infinispan-config-7.0.html$$[`<listener-executor />`] XML element in your configuration file.
 
 ===  Asynchronous API
-In addition to synchronous API methods like link:$$http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#put%28K,%20V%29$$[Cache.put()] , link:$$http://docs.oracle.com/javase/6/docs/api/java/util/Map.html#remove%28java.lang.Object%29$$[Cache.remove()] , etc., Infinispan also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
+In addition to synchronous API methods like link:$$http://docs.oracle.com/javase/7/docs/api/java/util/Map.html#put%28K,%20V%29$$[Cache.put()] , link:$$http://docs.oracle.com/javase/7/docs/api/java/util/Map.html#remove%28java.lang.Object%29$$[Cache.remove()] , etc., Infinispan also has an asynchronous, non-blocking API where you can achieve the same results in a non-blocking fashion.
 
-These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#putAsync%28K,%20V%29$$[Cache.putAsync()] , link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#removeAsync%28java.lang.Object%29$$[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:$$http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/Future.html$$[Future] containing the actual result of the operation.
+These methods are named in a similar fashion to their blocking counterparts, with "Async" appended.  E.g., link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#putAsync%28K,%20V%29$$[Cache.putAsync()] , link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/Cache.html#removeAsync%28java.lang.Object%29$$[Cache.removeAsync()] , etc.  These asynchronous counterparts return a link:$$http://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Future.html$$[Future] containing the actual result of the operation.
 
 For example, in a cache parameterized as `Cache<String, String>`, `Cache.put(String key, String value)` returns a `String`.
 `Cache.putAsync(String key, String value)` would return a `Future<String>`.

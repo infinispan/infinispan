@@ -47,13 +47,13 @@ However, that would only give you the most basic, local mode, non-clustered cach
 Non-basic configurations are very likely to use customized global and default cache elements.
 
 Declarative configuration is the most common approach to configuring Infinispan cache instances.
-In order to read XML configuration files one would typically construct an instance of CacheManager by pointing to an XML file containing Infinispan configuration.
+In order to read XML configuration files one would typically construct an instance of DefaultCacheManager by pointing to an XML file containing Infinispan configuration.
 Once configuration file is read you can obtain reference to the default cache instance. 
 
 [source,java]
 ----
 
-CacheManager manager = new DefaultCacheManager("my-config-file.xml");
+EmbeddedCacheManager manager = new DefaultCacheManager("my-config-file.xml");
 Cache defaultCache = manager.getCache();
 
 ----
@@ -66,12 +66,11 @@ or any other named instance specified in `my-config-file.xml`.
 Cache someNamedCache = manager.getCache("someNamedCache");
 
 ----
+The name of the default cache is defined in the `<cache-container>` element of the XML configuration file, and additional 
+caches can be configured using the `<local-cache>`,`<distributed-cache>`,`<invalidation-cache>` or `<replicated-cache>` elements.
 
-Every time you define `<namedCache>` element in XML configuration file, in addition to `<default>` cache element,
-you are effectively configuring additional caches whose settings are inheriting and/or overriding the default cache.
-
-Refer to Infinispan configuration link:$$http://docs.jboss.org/infinispan/5.1/configdocs$$[reference] for more details.
-If you are using XML editing tools for configuration writing you can use provided Infinispan link:$$http://www.infinispan.org/schemas/infinispan-config-5.1.xsd$$[schema] to assist you. 
+Refer to Infinispan configuration link:$$http://docs.jboss.org/infinispan/7.0/configdocs$$[reference] for more details.
+If you are using XML editing tools for configuration writing you can use provided Infinispan link:$$http://infinispan.org/schemas/infinispan-config-7.0.xsd$$[schema] to assist you. 
 
 ===  Configuring cache programmatically
 Programmatic Infinispan configuration is centered around CacheManager and ConfigurationBuilder API.
@@ -106,7 +105,7 @@ Therefore, the starting point would be to read an instance of a default Configur
 [source,java]
 ----
 EmbeddedCacheManager manager = new DefaultCacheManager("infinispan-config-file.xml");
-Configuration dcc = cacheManager.getDefaultCacheConfiguration();
+Configuration dcc = manager.getDefaultCacheConfiguration();
 Configuration c = new ConfigurationBuilder().read(dcc).clustering().cacheMode(CacheMode.DIST_SYNC).l1().lifespan(60000L).build();
  
 String newCacheName = "distributedWithL1";
@@ -120,7 +119,7 @@ As long as the based configuration is the default named cache, the previous code
 [source,java]
 ----
 EmbeddedCacheManager manager = new DefaultCacheManager("infinispan-config-file.xml");
-Configuration rc = cacheManager.getCacheConfiguration("replicatedCache");
+Configuration rc = manager.getCacheConfiguration("replicatedCache");
 Configuration c = new ConfigurationBuilder().read(rc).clustering().cacheMode(CacheMode.DIST_SYNC).l1().lifespan(60000L).build();
  
 String newCacheName = "distributedWithL1";
@@ -175,7 +174,7 @@ Further options at the global JMX statistics level allows you to configure the c
 GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
   .globalJmxStatistics()
     .cacheManagerName("SalesCacheManager")
-    .mBeanServerLookupClass(JBossMBeanServerLookup.class)
+    .mBeanServerLookup(new JBossMBeanServerLookup())
   .build();
 
 ----
@@ -185,9 +184,8 @@ Some of the Infinispan features are powered by a group of the thread pool execut
 [source,java]
 ----
 GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
-  .replicationQueueScheduledExecutor()
-    .factory(DefaultScheduledExecutorFactory.class)
-    .addProperty("threadNamePrefix", "RQThread")
+   .replicationQueueThreadPool()
+     .threadPoolFactory(ScheduledThreadPoolExecutorFactory.create())
   .build();
 
 ----
@@ -227,9 +225,10 @@ Configuration config = new ConfigurationBuilder()
   .locking()
     .concurrencyLevel(10000).isolationLevel(IsolationLevel.REPEATABLE_READ)
     .lockAcquisitionTimeout(12000L).useLockStriping(false).writeSkewCheck(true)
+    .versioning().enable().scheme(VersioningScheme.SIMPLE)
   .transaction()
-    .recovery()
     .transactionManagerLookup(new GenericTransactionManagerLookup())
+    .recovery()
   .jmxStatistics()
   .build();
 
@@ -253,8 +252,8 @@ The fluent configuration can also be used to configure more advanced or exotic o
 ----
 GlobalConfiguration globalConfig = new GlobalConfigurationBuilder()
   .serialization()
-    .addAdvancedExternalizer(PersonExternalizer.class)
-    .addAdvancedExternalizer(999, AddressExternalizer.class)
+    .addAdvancedExternalizer(998, new PersonExternalizer())
+    .addAdvancedExternalizer(999, new AddressExternalizer())
   .build();
 
 ----
@@ -264,17 +263,17 @@ Or, add custom interceptors:
 [source,java]
 ----
 Configuration config = new ConfigurationBuilder()
-  .customInterceptors().interceptors()
-    .add(new FirstInterceptor()).first()
-    .add(new LastInterceptor()).last()
-    .add(new FixPositionInterceptor()).atIndex(8)
-    .add(new AfterInterceptor()).after(LockingInterceptor.class)
-    .add(new BeforeInterceptor()).before(CallInterceptor.class)
+  .customInterceptors().addInterceptor()
+    .interceptor(new FirstInterceptor()).position(InterceptorConfiguration.Position.FIRST)
+    .interceptor(new LastInterceptor()).position(InterceptorConfiguration.Position.LAST)
+    .interceptor(new FixPositionInterceptor()).index(8)
+    .interceptor(new AfterInterceptor()).after(NonTransactionalLockingInterceptor.class)
+    .interceptor(new BeforeInterceptor()).before(CallInterceptor.class)
   .build();
 
 ----
 
-For information on the individual configuration options, please check the link:$$http://docs.jboss.org/infinispan/5.0/apidocs/config.html$$[configuration guide] .
+For information on the individual configuration options, please check the link:$$http://docs.jboss.org/infinispan/7.0/configdocs/$$[configuration guide] .
 
 ===  Configuration Migration Tools
 Infinispan has a number of scripts for importing configurations from other cache and data grid products.
@@ -340,8 +339,9 @@ and if you happen to use an XML file to configure Infinispan, just use:
   <jgroups>
      <stack-file name="external-file" path="jgroups.xml"/>
   </jgroups>
-  <cache-container>
+  <cache-container default-cache="replicatedCache">
     <transport stack="external-file" />
+    <replicated-cache name="replicatedCache"/>
   </cache-container>
 
   ...
@@ -354,13 +354,13 @@ In both cases above, Infinispan looks for _jgroups.xml_ first in your classpath,
 
 ==== Use one of the pre-configured JGroups files
 Infinispan ships with a few different JGroups files (packaged in infinispan-core.jar) which means they will already be on your classpath by default. 
-All you need to do is specify the file name, e.g., instead of `jgroups.xml` above, specify `jgroups-tcp.xml`.
+All you need to do is specify the file name, e.g., instead of `jgroups.xml` above, specify `/default-configs/default-jgroups-tcp.xml`.
 
 The configurations available are:
 
-*  jgroups-udp.xml - Uses UDP as a transport, and UDP multicast for discovery.  Usually suitable for larger (over 100 nodes) clusters _or_ if you are using link:$$http://community.jboss.org/docs/DOC-14853#replicated$$[replication or invalidation] .  Minimises opening too many sockets. 
-*  jgroups-tcp.xml - Uses TCP as a transport and UDP multicast for discovery.  Better for smaller clusters (under 100 nodes) _only if_ you are using link:$$http://community.jboss.org/docs/DOC-14853#distribution$$[distribution] , as TCP is more efficient as a point-to-point protocol 
-*  jgroups-ec2.xml - Uses TCP as a transport and link:$$http://community.jboss.org/docs/DOC-15925$$[S3_PING] for discovery.  Suitable on link:$$http://$$[Amazon EC2] nodes where UDP multicast isn't available. 
+*  default-jgroups-udp.xml - Uses UDP as a transport, and UDP multicast for discovery.  Usually suitable for larger (over 100 nodes) clusters _or_ if you are using link:$$http://community.jboss.org/docs/DOC-14853#replicated$$[replication or invalidation] .  Minimises opening too many sockets. 
+*  default-jgroups-tcp.xml - Uses TCP as a transport and UDP multicast for discovery.  Better for smaller clusters (under 100 nodes) _only if_ you are using link:$$http://community.jboss.org/docs/DOC-14853#distribution$$[distribution] , as TCP is more efficient as a point-to-point protocol 
+*  default-jgroups-ec2.xml - Uses TCP as a transport and link:$$http://community.jboss.org/docs/DOC-15925$$[S3_PING] for discovery.  Suitable on link:$$http://$$[Amazon EC2] nodes where UDP multicast isn't available. 
 
 ===== Tuning JGroups settings
 The settings above can be further tuned without editing the XML files themselves.
@@ -370,7 +370,7 @@ Passing in certain system properties to your JVM at startup can affect the behav
 $ java -cp ... -Djgroups.tcp.port=1234 -Djgroups.tcp.address=10.11.12.13
 ----
 
-.jgroups-udp.xml
+.default-jgroups-udp.xml
 |===============
 | _System Property_ | _Description_ | _Default_ | _Required?_ 
 |jgroups.udp.mcast_addr| IP address to use for multicast (both for communications and discovery).  Must be a valid link:$$http://compnetworking.about.com/od/workingwithipaddresses/l/aa042400b.htm$$[Class D] IP address, suitable for IP multicast. |228.6.7.8|No
@@ -378,7 +378,7 @@ $ java -cp ... -Djgroups.tcp.port=1234 -Djgroups.tcp.address=10.11.12.13
 |jgroups.udp.ip_ttl|Specifies the time-to-live (TTL) for IP multicast packets. The value here refers to the number of network hops a packet is allowed to make before it is dropped|2|No
 |===============
 
-.jgroups-tcp.xml
+.default-jgroups-tcp.xml
 |===============
 | _System Property_ | _Description_ | _Default_ | _Required?_ 
 |jgroups.tcp.address|IP address to use for the TCP transport.|127.0.0.1|No
@@ -388,7 +388,7 @@ $ java -cp ... -Djgroups.tcp.port=1234 -Djgroups.tcp.address=10.11.12.13
 |jgroups.udp.ip_ttl|Specifies the time-to-live (TTL) for IP multicast packets. The value here refers to the number of network hops a packet is allowed to make before it is dropped|2|No
 |===============
 
-.jgroups-ec2.xml
+.default-jgroups-ec2.xml
 |===============
 | _System Property_ | _Description_ | _Default_ | _Required?_ 
 |jgroups.tcp.address|IP address to use for the TCP transport.|127.0.0.1|No
