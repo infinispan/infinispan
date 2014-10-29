@@ -10,7 +10,7 @@
         <relativePath>../versions/pom.xml</relativePath>
     </parent>
 
-    <artifactId>test-suite</artifactId>
+    <artifactId>infinispan-server-testsuite</artifactId>
     <packaging>jar</packaging>
     <name>Infinispan Server - Test Suite</name>
 

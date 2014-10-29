@@ -630,7 +630,7 @@ public class ExampleConfigsIT {
                                                 RemoteInfinispanServer server) {
         ConfigurationBuilder builder = ITestUtils.createConfigBuilder(server.getHotrodEndpoint().getInetAddress().getHostName(),
                 server.getHotrodEndpoint().getPort());
-        builder.ssl().enable().keyStoreFileName(ITestUtils.SERVER_CONFIG_DIR + File.separator + keystoreName)
+        builder.security().ssl().enable().keyStoreFileName(ITestUtils.SERVER_CONFIG_DIR + File.separator + keystoreName)
                 .keyStorePassword("secret".toCharArray())
                 .trustStoreFileName(ITestUtils.SERVER_CONFIG_DIR + File.separator + truststoreName)
                 .trustStorePassword("secret".toCharArray());
