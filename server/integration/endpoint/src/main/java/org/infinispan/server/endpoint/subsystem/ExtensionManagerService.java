@@ -21,7 +21,6 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
     private final List<HotRodServer> servers = new ArrayList<>();
     private final Map<String, CacheEventFilterFactory> filterFactories = new HashMap<>();
     private final Map<String, CacheEventConverterFactory> converterFactories = new HashMap<>();
-    private volatile Marshaller marshaller;
 
     @Override
     public void start(StartContext context) throws StartException {
@@ -40,12 +39,12 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
 
         synchronized (filterFactories) {
             for (Map.Entry<String, CacheEventFilterFactory> entry : filterFactories.entrySet())
-                server.addCacheEventFilterFactory(entry.getKey(), entry.getValue(), marshaller);
+                server.addCacheEventFilterFactory(entry.getKey(), entry.getValue());
         }
 
         synchronized (converterFactories) {
             for (Map.Entry<String, CacheEventConverterFactory> entry : converterFactories.entrySet())
-                server.addCacheEventConverterFactory(entry.getKey(), entry.getValue(), marshaller);
+                server.addCacheEventConverterFactory(entry.getKey(), entry.getValue());
         }
     }
 
@@ -72,7 +71,7 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
 
         synchronized (servers) {
             for (HotRodServer server : servers)
-                server.addCacheEventFilterFactory(name, factory, marshaller);
+                server.addCacheEventFilterFactory(name, factory);
         }
     }
 
@@ -94,7 +93,7 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
 
         synchronized (servers) {
             for (HotRodServer server : servers)
-                server.addCacheEventConverterFactory(name, factory, marshaller);
+                server.addCacheEventConverterFactory(name, factory);
         }
     }
 
@@ -110,7 +109,10 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
     }
 
     public void setMarshaller(Marshaller marshaller) {
-        this.marshaller = marshaller;
+       synchronized (servers) {
+          for (HotRodServer server : servers)
+             server.setEventMarshaller(marshaller);
+       }
     }
 
     @Override

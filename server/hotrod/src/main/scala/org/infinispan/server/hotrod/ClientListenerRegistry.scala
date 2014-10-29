@@ -33,37 +33,28 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    private val eventSenders = new EquivalentConcurrentHashMapV8[Bytes, AnyRef](
       ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance())
 
-   private var defaultMashaller: Option[Marshaller] = Some(new GenericJBossMarshaller)
-   private var marshaller: Option[Marshaller] = None
+   private var defaultMarshaller: Option[Marshaller] = Some(new GenericJBossMarshaller)
+   @volatile private var marshaller: Option[Marshaller] = None
    private val cacheEventFilterFactories = CollectionFactory.makeConcurrentMap[String, CacheEventFilterFactory](4, 0.9f, 16)
    private val cacheEventConverterFactories = CollectionFactory.makeConcurrentMap[String, CacheEventConverterFactory](4, 0.9f, 16)
 
    def setDefaultMarshaller(marshaller: Option[Marshaller]): Unit = {
-      this.defaultMashaller = marshaller
+      this.defaultMarshaller = marshaller
    }
 
-   def addCacheEventFilterFactory(name: String, factory: CacheEventFilterFactory, eventMarshaller: Option[Marshaller]): Unit = {
-      marshaller = getMarshaller(eventMarshaller)
+   def setEventMarshaller(eventMarshaller: Option[Marshaller]): Unit = {
+      marshaller = eventMarshaller
+   }
+
+   def addCacheEventFilterFactory(name: String, factory: CacheEventFilterFactory): Unit = {
       cacheEventFilterFactories.put(name, factory)
-   }
-
-   def getMarshaller(maybeMarshaller: Option[Marshaller]): Option[Marshaller] = {
-      (marshaller, maybeMarshaller) match {
-         case (None, None) => defaultMashaller
-         case (Some(m), None) => defaultMashaller
-         case (None, Some(m)) => maybeMarshaller
-         case (Some(m), Some(mm)) =>
-            warnMarshallerAlreadySet(m, mm)
-            marshaller
-      }
    }
 
    def removeCacheEventFilterFactory(name: String): Unit = {
       cacheEventFilterFactories.remove(name)
    }
 
-   def addCacheEventConverterFactory(name: String, factory: CacheEventConverterFactory, eventMarshaller: Option[Marshaller]): Unit = {
-      marshaller = getMarshaller(eventMarshaller)
+   def addCacheEventConverterFactory(name: String, factory: CacheEventConverterFactory): Unit = {
       cacheEventConverterFactories.put(name, factory)
    }
 
@@ -103,12 +94,14 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       val factory = Option(factories.get(name)).getOrElse(
          throw new MissingFactoryException(s"Listener $factoryType factory '$name' not found in server"))
 
-      (marshaller, compatEnabled) match {
+      (selectMarshaller(), compatEnabled) match {
          case (None, _) => factory
          case (_, true) => factory
          case (Some(m), false) => toBinaryFactory(factory, m.getClass)
       }
    }
+
+   private def selectMarshaller(): Option[Marshaller] = marshaller.orElse(defaultMarshaller)
 
    def toBinaryFactory[T](factory: T, marshallerClass: Class[_ <: Marshaller]): T = {
       factory match {
@@ -121,7 +114,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       factory match {
          case Some(namedFactory) =>
             namedFactory._2.map { paramBytes =>
-               marshaller match {
+               selectMarshaller() match {
                   case None => paramBytes
                   case Some(m) => m.objectFromByteBuffer(paramBytes)
                }

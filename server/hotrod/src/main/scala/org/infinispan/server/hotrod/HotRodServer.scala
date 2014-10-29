@@ -227,20 +227,24 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    private[hotrod] def getAddressCache = addressCache
 
-   def addCacheEventFilterFactory(name: String, factory: CacheEventFilterFactory, marshaller: Marshaller): Unit = {
-      clientListenerRegistry.addCacheEventFilterFactory(name, factory, Option(marshaller))
+   def addCacheEventFilterFactory(name: String, factory: CacheEventFilterFactory): Unit = {
+      clientListenerRegistry.addCacheEventFilterFactory(name, factory)
    }
 
    def removeCacheEventFilterFactory(name: String): Unit = {
       clientListenerRegistry.removeCacheEventFilterFactory(name)
    }
 
-   def addCacheEventConverterFactory(name: String, factory: CacheEventConverterFactory, marshaller: Marshaller): Unit = {
-      clientListenerRegistry.addCacheEventConverterFactory(name, factory, Option(marshaller))
+   def addCacheEventConverterFactory(name: String, factory: CacheEventConverterFactory): Unit = {
+      clientListenerRegistry.addCacheEventConverterFactory(name, factory)
    }
 
    def removeCacheEventConverterFactory(name: String): Unit = {
       clientListenerRegistry.removeCacheEventConverterFactory(name)
+   }
+
+   def setEventMarshaller(marshaller: Marshaller): Unit = {
+      clientListenerRegistry.setEventMarshaller(Option(marshaller))
    }
 
    override def stop: Unit = {
