@@ -952,7 +952,7 @@
         </container>
     </group>
     <group qualifier="suite-security-manual">
-        <container qualifier="hotrodAuthClustered" mode="suite">
+        <container qualifier="hotrodAuthClustered" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>

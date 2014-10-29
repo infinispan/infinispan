@@ -3,7 +3,11 @@ package org.infinispan.server.test.client.hotrod.security;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.server.test.category.Security;
+import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
@@ -17,6 +21,11 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 @Category({ Security.class })
 public class HotRodPlainAuthClusteredIT extends HotRodSaslAuthTestBase {
+   
+   private static final String ARQ_CONTAINER_ID = "hotrodAuthClustered";
+   
+   @ArquillianResource
+   public ContainerController controller;
 
    @InfinispanResource("hotrodAuthClustered")
    RemoteInfinispanServer server;
@@ -26,14 +35,24 @@ public class HotRodPlainAuthClusteredIT extends HotRodSaslAuthTestBase {
       return "PLAIN";
    }
 
+   @Before
+   public void startIspnServer() {
+      controller.start(ARQ_CONTAINER_ID);
+   }
+
+   @After
+   public void stopIspnServer() {
+      controller.stop(ARQ_CONTAINER_ID);
+   }
+
    @Override
    public String getHRServerHostname() {
-      return server.getHotrodEndpoint().getInetAddress().getHostName();
+      return "localhost";
    }
 
    @Override
    public int getHRServerPort() {
-      return server.getHotrodEndpoint().getPort();
+      return 11222;
    }
 
    @Override
