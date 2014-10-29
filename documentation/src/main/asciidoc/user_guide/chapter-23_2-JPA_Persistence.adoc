@@ -53,11 +53,11 @@ Then you can configure a cache "usersCache" to use JPA Cache Store, so that when
 EmbeddedCacheManager cacheManager = ...;
 
 
-Configuration cacheConfig = new ConfigurationBuilder().loaders()
-				.addLoader(JpaCacheStoreConfigurationBuilder.class)
-				.persistenceUnitName("myPersistenceUnit")
-				.entityClass(User.class)
-				.build();
+Configuration cacheConfig = new ConfigurationBuilder().persistence()
+            .addStore(JpaStoreConfigurationBuilder.class)
+            .persistenceUnitName("org.infinispan.loaders.jpa.configurationTest")
+            .entityClass(User.class)
+            .build();
 cacheManager.defineCache("usersCache", cacheConfig);
 
 Cache<String, User> usersCache = cacheManager.getCache("usersCache");
@@ -120,11 +120,11 @@ When putting things into the cache with a JPA cache store, the key should be the
 [source,java]
 ----
 
-Configuration cacheConfig = new ConfigurationBuilder().loaders()
-				.addLoader(JpaCacheStoreConfigurationBuilder.class)
-				.persistenceUnitName("org.infinispan.loaders.jpa.configurationTest")
-				.entityClass(User.class)
-				.build();
+Configuration cacheConfig = new ConfigurationBuilder().persistence()
+             .addStore(JpaStoreConfigurationBuilder.class)
+             .persistenceUnitName("org.infinispan.loaders.jpa.configurationTest")
+             .entityClass(User.class)
+             .build();
 
 ----
 
@@ -140,29 +140,29 @@ Configuration cacheConfig = new ConfigurationBuilder().loaders()
 [source,xml]
 ----
 
-<namedCache name="vehicleCache">
-	<loaders passivation="false" shared="true" preload="true">
-		<jpaStore 
-			persistenceUnitName="org.infinispan.loaders.jpa.configurationTest"
-			entityClassName="org.infinispan.loaders.jpa.entity.User"
+<local-cache name="vehicleCache">
+   <persistence passivation="false">
+      <jpa-store xmlns="urn:infinispan:config:store:jpa:7.0"
+         persistence-unit="org.infinispan.persistence.jpa.configurationTest"
+         entity-class="org.infinispan.persistence.jpa.entity.Vehicle">
 		/>
-	</loaders>
-</namedCache>
+   </persistence>
+</local-cache>
 
 ----
 
 [options="header"]
 |===============
 |Parameter|Description
-|persistenceUnitName| JPA persistence unit name in JPA configuration ﻿(persistence.xml) that contains the JPA entity class 
-|entityClassName|Fully qualified JPA entity class name that is expected to be stored in this cache.  Only one class is allowed.
+|persistence-unit| JPA persistence unit name in JPA configuration ﻿(persistence.xml) that contains the JPA entity class 
+|entity-class|Fully qualified JPA entity class name that is expected to be stored in this cache.  Only one class is allowed.
 
 |===============
 
 === Additional References
-Refer to the link:$$https://github.com/infinispan/infinispan-cachestore-jpa/tree/master/src/test/java/org/infinispan/loaders/jpa/config/ConfigurationTest.java$$[test case] for code samples in action. 
+Refer to the link:$$https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/java/org/infinispan/persistence/jpa/JpaConfigurationTest.java$$[test case] for code samples in action. 
 
-Refer to link:$$https://github.com/infinispan/infinispan-cachestore-jpa/tree/master/src/test/resources/config/jpa-config-53.xml$$[test configurations] for configuration samples. 
+Refer to link:$$https://github.com/infinispan/infinispan/blob/master/persistence/jpa/src/test/resources/config/jpa-config.xml$$[test configurations] for configuration samples. 
 
 === Javadoc
 

@@ -3,7 +3,7 @@ Even though Infinispan's biggest potential is as distributed, in-memory data gri
 
 .Why a Cache is better than a Map
 *  _Eviction._ Built-in eviction ensures you don't run out of memory. 
-*  _Write-through and write-behind caching._ Going beyond memory and onto disk (or any other pluggable link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/loaders/CacheStore.html$$[CacheStore] ) means that your state survives restarts, and preloaded hot caches can be configured.
+*  _Write-through and write-behind caching._ Going beyond memory and onto disk (or any other pluggable link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/loaders/CacheStore.html$$[CacheStore] ) means that your state survives restarts, and preloaded hot caches can be configured.
 *  _JTA support and XA compliance._ Participate in ongoing transactions with any link:$$http://java.sun.com/javaee/technologies/jta/index.jsp$$[JTA] -compliant transaction manager. 
 *  _MVCC-based concurrency._ Highly optimized for fast, non-blocking readers. 
 *  _Manageability._ link:$$http://docs.jboss.org/infinispan/7.0/apidocs/jmxComponents.html$$[Simple JMX] or rich GUI management console via link:$$http://community.jboss.org/docs/DOC-13721$$[JOPR] , you have a choice.
