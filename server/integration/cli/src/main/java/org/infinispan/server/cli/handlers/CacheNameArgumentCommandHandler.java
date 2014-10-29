@@ -73,7 +73,7 @@ public class CacheNameArgumentCommandHandler extends NoArgumentsCliCommandHandle
 
       @Override
       public String[] getNames() {
-         return new String[] { CacheCommand.INFO.toString() };
+         return new String[] { CacheCommand.INFO.getName() };
       }
    }
 
@@ -91,7 +91,7 @@ public class CacheNameArgumentCommandHandler extends NoArgumentsCliCommandHandle
 
       @Override
       public String[] getNames() {
-         return new String[] { CacheCommand.ROLLBACK.toString() };
+         return new String[] { CacheCommand.ROLLBACK.getName() };
       }
    }
 
@@ -109,7 +109,7 @@ public class CacheNameArgumentCommandHandler extends NoArgumentsCliCommandHandle
 
       @Override
       public String[] getNames() {
-         return new String[] { CacheCommand.START.toString() };
+         return new String[] { CacheCommand.START.getName() };
       }
    }
 }
