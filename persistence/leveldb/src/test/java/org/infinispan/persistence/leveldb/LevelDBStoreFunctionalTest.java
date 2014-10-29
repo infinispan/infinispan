@@ -12,7 +12,7 @@ import java.io.File;
 public abstract class LevelDBStoreFunctionalTest extends BaseStoreFunctionalTest {
    protected String tmpDirectory;
 
-   @BeforeClass
+   @BeforeClass(alwaysRun = true)
    protected void setUpTempDir() {
       tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
    }
