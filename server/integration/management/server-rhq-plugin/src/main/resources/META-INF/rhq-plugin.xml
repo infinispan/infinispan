@@ -110,8 +110,8 @@
    '>
 ]>
 
-<plugin name="&pluginName;" displayName="Infinispan Server 7.0.x"
-        description="Supports management and monitoring of Infinispan Server 7.0.x" package="org.infinispan.server.rhq"
+<plugin name="&pluginName;" displayName="Infinispan Server 7.0"
+        description="Supports management and monitoring of Infinispan Server 7.0" package="org.infinispan.server.rhq"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -400,6 +400,11 @@
                         <c:simple-property name="operationResult"/>
                     </results>
                 </operation>
+                <operation name="mass-reindex" description="Initiates a mass reindex of the entries in the cache.">
+                    <results>
+                        <c:simple-property name="operationResult"/>
+                    </results>
+                </operation>
 
 
                 <metric property="cacheStatus" displayName="Cache Status" displayType="summary" units="none"
@@ -550,6 +555,13 @@
                         <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="true"
                                            defaultValue="false"
                                            description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
+                        <c:simple-property name="cache-availability" required="false" type="string" readOnly="false" default="AVAILABLE" description="The availability status of the cache.">
+                            <c:property-options>
+                                <c:option value="AVAILABLE"/>
+                                <c:option value="DEGRADED_MODE"/>
+                                <c:option value="UNAVAILABLE"/>
+                            </c:property-options>
+                        </c:simple-property>
                     </c:group>
 
                     <c:group name="distributed-cache-attributes" displayName="Distributed Cache Attributes" hiddenByDefault="true">
@@ -572,7 +584,7 @@
                         <c:simple-property name="path" readOnly="true" default="backup"/>
                     </plugin-configuration>
 
-                    <operation name="status" description="Shows the site's status">
+                    <operation name="site-status" description="Shows the site's status">
                         <results>
                             <c:simple-property name="operationResult"/>
                         </results>
@@ -583,6 +595,36 @@
                         </results>
                     </operation>
                     <operation name="take-site-offline" description="Takes this site offline">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="cancel-push" description="Cancels the push state to remote site">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="cancel-receive" description="Cancels the push state to this site">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="clear-push-state-status" description="Clears the push state status">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="push-state" description="Pushes the state of this cache to the remote site">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="push-state-status" description="Shows a map with destination site name and the push state status">
+                        <results>
+                            <c:simple-property name="operationResult"/>
+                        </results>
+                    </operation>
+                    <operation name="get-sending-site" description="Returns the site name from which this site is receiving state">
                         <results>
                             <c:simple-property name="operationResult"/>
                         </results>
