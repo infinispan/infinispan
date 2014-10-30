@@ -187,8 +187,16 @@ public final class InfinispanSubsystemXMLReader_7_0 implements XMLElementReader<
                     TransportResource.LOCK_TIMEOUT.parseAndSetParameter(value, transport, reader);
                     break;
                 }
+                case REMOTE_COMMAND_EXECUTOR: {
+                    TransportResource.REMOTE_COMMAND_EXECUTOR.parseAndSetParameter(value, transport, reader);
+                    break;
+                }
                 case STRICT_PEER_TO_PEER: {
                     TransportResource.STRICT_PEER_TO_PEER.parseAndSetParameter(value, transport, reader);
+                    break;
+                }
+                case TOTAL_ORDER_EXECUTOR: {
+                    TransportResource.TOTAL_ORDER_EXECUTOR.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 default: {

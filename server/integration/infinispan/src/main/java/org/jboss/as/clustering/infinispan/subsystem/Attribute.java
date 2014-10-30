@@ -22,12 +22,11 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import javax.xml.XMLConstants;
+import org.jboss.as.controller.AttributeDefinition;
 
+import javax.xml.XMLConstants;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.jboss.as.controller.AttributeDefinition;
 
 /**
  * Enumerates the attributes used in the Infinispan subsystem schema.
@@ -110,6 +109,7 @@ public enum Attribute {
     READ_ONLY(ModelKeys.READ_ONLY),
     RELATIVE_TO(ModelKeys.RELATIVE_TO),
     REMOTE_CACHE(ModelKeys.REMOTE_CACHE),
+    REMOTE_COMMAND_EXECUTOR(ModelKeys.REMOTE_COMMAND_EXECUTOR),
     REMOTE_SITE(ModelKeys.REMOTE_SITE),
     REMOTE_TIMEOUT(ModelKeys.REMOTE_TIMEOUT),
     REPLICATION_QUEUE_EXECUTOR(ModelKeys.REPLICATION_QUEUE_EXECUTOR),
@@ -132,6 +132,7 @@ public enum Attribute {
     TCP_NO_DELAY(ModelKeys.TCP_NO_DELAY),
     THREAD_POOL_SIZE(ModelKeys.THREAD_POOL_SIZE),
     TIMEOUT(ModelKeys.TIMEOUT),
+    TOTAL_ORDER_EXECUTOR(ModelKeys.TOTAL_ORDER_EXECUTOR),
     TYPE(ModelKeys.TYPE),
     @Deprecated VIRTUAL_NODES("virtual-nodes"),
     WAIT_TIME(ModelKeys.WAIT_TIME)

@@ -22,10 +22,6 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.List;
-
-import javax.xml.stream.XMLStreamException;
-
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -35,6 +31,9 @@ import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
 import org.jboss.staxmapper.XMLElementWriter;
 import org.jboss.staxmapper.XMLExtendedStreamWriter;
+
+import javax.xml.stream.XMLStreamException;
+import java.util.List;
 
 /**
  * XML writer for current Infinispan subsystem schema version.
@@ -80,7 +79,9 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     this.writeOptional(writer, Attribute.CLUSTER, transport, ModelKeys.CLUSTER);
                     this.writeOptional(writer, Attribute.EXECUTOR, transport, ModelKeys.EXECUTOR);
                     this.writeOptional(writer, Attribute.LOCK_TIMEOUT, transport, ModelKeys.LOCK_TIMEOUT);
+                    this.writeOptional(writer, Attribute.REMOTE_COMMAND_EXECUTOR, transport, ModelKeys.REMOTE_COMMAND_EXECUTOR);
                     this.writeOptional(writer, Attribute.STRICT_PEER_TO_PEER, transport, ModelKeys.STRICT_PEER_TO_PEER);
+                    this.writeOptional(writer, Attribute.TOTAL_ORDER_EXECUTOR, transport, ModelKeys.TOTAL_ORDER_EXECUTOR);
                     writer.writeEndElement();
                 }
 

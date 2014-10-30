@@ -154,6 +154,7 @@ public class ModelKeys {
     static final String REBALANCING = "rebalancing";
     static final String RELATIVE_TO = "relative-to";
     static final String REMOTE_CACHE = "remote-cache";
+    static final String REMOTE_COMMAND_EXECUTOR = "remote-command-executor";
     static final String REMOTE_SERVER = "remote-server";
     static final String REMOTE_SERVERS = "remote-servers";
     static final String REMOTE_SITE = "remote-site";
@@ -193,6 +194,7 @@ public class ModelKeys {
     static final String THREAD_POOL_SIZE = "thread-pool-size";
     static final String TIMEOUT = "timeout";
     static final String TIMESTAMP_COLUMN = "timestamp-column";
+    static final String TOTAL_ORDER_EXECUTOR = "total-order-executor";
     static final String TRANSACTION = "transaction";
     static final String TRANSACTION_NAME = "TRANSACTION";
     static final String TRANSPORT = "transport";

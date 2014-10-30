@@ -22,20 +22,6 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledExecutorService;
-
-import javax.management.MBeanServer;
-
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -69,6 +55,19 @@ import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.value.InjectedValue;
+
+import javax.management.MBeanServer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
  * @author Paul Ferraro
@@ -148,8 +147,10 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         // if we have a transport defined, pick up the transport-related attributes and install a channel
         final Transport transportConfig = containerModel.hasDefined(ModelKeys.TRANSPORT) && containerModel.get(ModelKeys.TRANSPORT).hasDefined(ModelKeys.TRANSPORT_NAME) ? new Transport() : null;
 
-        String stack = null ;
-        String transportExecutor = null ;
+        String stack = null;
+        String transportExecutor = null;
+        String totalOrderExecutor = null;
+        String remoteCommandExecutor = null;
 
         Collection<ServiceController<?>> controllers = new LinkedList<ServiceController<?>>();
 
@@ -160,7 +161,9 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
             // if cluster is not defined, use the cache container name as the default
             final String cluster = (resolvedValue = TransportResource.CLUSTER.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : name ;
             long lockTimeout = TransportResource.LOCK_TIMEOUT.resolveModelAttribute(context, transport).asLong();
-            transportExecutor = (resolvedValue = TransportResource.EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null ;
+            transportExecutor = (resolvedValue = TransportResource.EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+            totalOrderExecutor = (resolvedValue = TransportResource.TOTAL_ORDER_EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
+            remoteCommandExecutor = (resolvedValue = TransportResource.REMOTE_COMMAND_EXECUTOR.resolveModelAttribute(context, transport)).isDefined() ? resolvedValue.asString() : null;
             final boolean strictPeerToPeer = TransportResource.STRICT_PEER_TO_PEER.resolveModelAttribute(context, transport).asBoolean();
             transportConfig.setStrictPeerToPeer(strictPeerToPeer);
 
@@ -198,8 +201,9 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         }
 
         // install the cache container configuration service
-        controllers.add(this.installContainerConfigurationService(target, name, defaultCache, statistics, moduleId, stack, transportConfig, authorizationConfig,
-                        transportExecutor, listenerExecutor, evictionExecutor, replicationQueueExecutor, verificationHandler));
+        controllers.add(this.installContainerConfigurationService(target, name, defaultCache, statistics, moduleId,
+                stack, transportConfig, authorizationConfig, transportExecutor, totalOrderExecutor,
+                remoteCommandExecutor, listenerExecutor, evictionExecutor, replicationQueueExecutor, verificationHandler));
 
         // install a cache container service
         controllers.add(this.installContainerService(target, name, aliases, transportConfig, initialMode, verificationHandler));
@@ -265,8 +269,8 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
 
     ServiceController<?> installContainerConfigurationService(ServiceTarget target,
             String containerName, String defaultCache, boolean statistics, ModuleIdentifier moduleId, String stack, Transport transportConfig, Authorization authorizationConfig,
-            String transportExecutor, String listenerExecutor, String evictionExecutor, String replicationQueueExecutor,
-            ServiceVerificationHandler verificationHandler) {
+            String transportExecutor, String totalOrderExecutor, String remoteCommandExecutor, String listenerExecutor,
+            String evictionExecutor, String replicationQueueExecutor, ServiceVerificationHandler verificationHandler) {
 
         final ServiceName configServiceName = EmbeddedCacheManagerConfigurationService.getServiceName(containerName);
         final EmbeddedCacheManagerDependencies dependencies = new EmbeddedCacheManagerDependencies(transportConfig, authorizationConfig);
@@ -281,6 +285,8 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         if (transportConfig != null) {
             if (transportExecutor != null) {
                 addExecutorDependency(configBuilder, transportExecutor, transportConfig.getExecutorInjector());
+                addExecutorDependency(configBuilder, totalOrderExecutor, transportConfig.getTotalorderExecutorInjector());
+                addExecutorDependency(configBuilder, remoteCommandExecutor, transportConfig.getRemoteCommandExecutorInjector());
             }
             configBuilder.addDependency(ChannelFactoryService.getServiceName(stack), ChannelFactory.class, transportConfig.getChannelFactoryInjector());
         }
@@ -409,6 +415,8 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
     static class Transport implements EmbeddedCacheManagerConfigurationService.TransportConfiguration {
         private final InjectedValue<ChannelFactory> channelFactory = new InjectedValue<ChannelFactory>();
         private final InjectedValue<Executor> executor = new InjectedValue<Executor>();
+        private final InjectedValue<Executor> totalOrderExecutor = new InjectedValue<Executor>();
+        private final InjectedValue<Executor> remoteCommandExecutor = new InjectedValue<Executor>();
 
         private Long lockTimeout;
         private boolean strictPeerToPeer;
@@ -429,7 +437,15 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
             return this.executor;
         }
 
-        @Override
+        Injector<Executor> getTotalorderExecutorInjector() {
+            return this.totalOrderExecutor;
+        }
+
+        Injector<Executor> getRemoteCommandExecutorInjector() {
+          return this.remoteCommandExecutor;
+       }
+
+       @Override
         public ChannelFactory getChannelFactory() {
             return this.channelFactory.getValue();
         }
@@ -440,6 +456,16 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         }
 
         @Override
+        public Executor getTotalOrderExecutor() {
+            return this.totalOrderExecutor.getOptionalValue();
+        }
+
+        @Override
+        public Executor getRemoteCommandExecutor() {
+            return this.remoteCommandExecutor.getOptionalValue();
+        }
+
+       @Override
         public boolean isStrictPeerToPeer() {
             return this.strictPeerToPeer;
         }

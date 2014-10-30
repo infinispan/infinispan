@@ -69,6 +69,13 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(240000))
                     .build();
 
+    static final SimpleAttributeDefinition REMOTE_COMMAND_EXECUTOR =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_COMMAND_EXECUTOR, ModelType.STRING, true)
+                    .setXmlName(Attribute.REMOTE_COMMAND_EXECUTOR.getLocalName())
+                    .setAllowExpression(false)
+                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .build();
+
     // if stack is null, use default stack
     static final SimpleAttributeDefinition STACK =
             new SimpleAttributeDefinitionBuilder(ModelKeys.STACK, ModelType.STRING, true)
@@ -85,7 +92,15 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
-    static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {STACK, CLUSTER, EXECUTOR, LOCK_TIMEOUT, STRICT_PEER_TO_PEER};
+    static final SimpleAttributeDefinition TOTAL_ORDER_EXECUTOR =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.TOTAL_ORDER_EXECUTOR, ModelType.STRING, true)
+                    .setXmlName(Attribute.TOTAL_ORDER_EXECUTOR.getLocalName())
+                    .setAllowExpression(false)
+                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .build();
+
+    static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {STACK, CLUSTER, EXECUTOR, LOCK_TIMEOUT,
+            REMOTE_COMMAND_EXECUTOR, STRICT_PEER_TO_PEER, TOTAL_ORDER_EXECUTOR};
 
     public TransportResource() {
         super(TRANSPORT_PATH,
