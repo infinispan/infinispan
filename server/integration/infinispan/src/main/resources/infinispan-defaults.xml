@@ -27,9 +27,9 @@
    <cache-container default-cache="default">
       <local-cache name="default">
          <locking acquire-timeout="15000" striping="false" concurrency-level="1000"/>
-         <store-as-binary keys="false" values="false"/>
          <eviction strategy="NONE"/>
          <expiration interval="-1"/>
+         <store-as-binary keys="false" values="false"/>
          <data-container key-equivalence="org.jboss.as.clustering.infinispan.equivalence.AnyServerEquivalence"
                          value-equivalence="org.jboss.as.clustering.infinispan.equivalence.AnyServerEquivalence" />
       </local-cache>

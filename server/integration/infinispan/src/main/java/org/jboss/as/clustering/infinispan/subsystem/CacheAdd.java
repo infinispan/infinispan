@@ -422,9 +422,9 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         // locking is a child resource
         if (cache.hasDefined(ModelKeys.LOCKING) && cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME).isDefined()) {
             ModelNode locking = cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME);
-            
+
             final IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
-            if (LockingResource.ISOLATION.resolveModelAttribute(context, locking).isDefined()) {  
+            if (locking.hasDefined(ModelKeys.ISOLATION)) {
                log.warn("Ignoring XML attribute " + ModelKeys.ISOLATION + ", please remove from configuration file");
             }
             final boolean striping = LockingResource.STRIPING.resolveModelAttribute(context, locking).asBoolean();
