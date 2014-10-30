@@ -21,14 +21,6 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledExecutorService;
-
-import javax.management.MBeanServer;
-
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -39,8 +31,8 @@ import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.security.PrincipalRoleMapper;
-import org.jboss.as.clustering.infinispan.ChannelTransport;
 import org.infinispan.security.impl.ClusterRoleMapper;
+import org.jboss.as.clustering.infinispan.ChannelTransport;
 import org.jboss.as.clustering.infinispan.MBeanServerProvider;
 import org.jboss.as.clustering.infinispan.ThreadPoolExecutorFactories;
 import org.jboss.as.clustering.infinispan.io.SimpleExternalizer;
@@ -56,6 +48,13 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 
+import javax.management.MBeanServer;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+
 /**
  * @author Paul Ferraro
  */
@@ -68,6 +67,8 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         Long getLockTimeout();
         ChannelFactory getChannelFactory();
         Executor getExecutor();
+        Executor getTotalOrderExecutor();
+        Executor getRemoteCommandExecutor();
         boolean isStrictPeerToPeer();
     }
 
@@ -177,6 +178,16 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
                 builder.transport().transportThreadPool().threadPoolFactory(
                       ThreadPoolExecutorFactories.mkManagedExecutorFactory(executor));
             }
+            Executor totalOrderExecutor = transport.getTotalOrderExecutor();
+            if (totalOrderExecutor != null) {
+                builder.transport().totalOrderThreadPool().threadPoolFactory(
+                      ThreadPoolExecutorFactories.mkManagedExecutorFactory(totalOrderExecutor));
+           }
+           Executor remoteCommandExecutor = transport.getRemoteCommandExecutor();
+           if (remoteCommandExecutor != null) {
+                builder.transport().remoteCommandThreadPool().threadPoolFactory(
+                      ThreadPoolExecutorFactories.mkManagedExecutorFactory(remoteCommandExecutor));
+           }
         }
 
         AuthorizationConfiguration authorization = this.dependencies.getAuthorizationConfiguration();

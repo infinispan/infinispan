@@ -159,6 +159,11 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="remote-command-executor" type="xs:string" >
+            <xs:annotation>
+                <xs:documentation>Defines the executor used for processing remote (non-total order) commands.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="strict-peer-to-peer" type="xs:boolean" default="false">
             <xs:annotation>
                 <xs:documentation>
@@ -167,6 +172,11 @@
                     certain nodes due to the named cache not being available. This behaviour is applicable only to replicated caches.
                     Defaults to false.
                 </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="total-order-executor" type="xs:string" >
+            <xs:annotation>
+                <xs:documentation>Defines the executor used for processing remote total order commands.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
