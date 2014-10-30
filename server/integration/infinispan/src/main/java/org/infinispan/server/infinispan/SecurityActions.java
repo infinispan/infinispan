@@ -16,6 +16,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.query.SearchManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.Security;
@@ -37,6 +38,7 @@ import org.infinispan.server.infinispan.actions.GetDefinedCacheCountAction;
 import org.infinispan.server.infinispan.actions.GetDefinedCacheNamesAction;
 import org.infinispan.server.infinispan.actions.GetMembersAction;
 import org.infinispan.server.infinispan.actions.GetRunningCacheCountAction;
+import org.infinispan.server.infinispan.actions.GetSearchManagerAction;
 import org.infinispan.server.infinispan.actions.ResetComponentJmxStatisticsAction;
 import org.infinispan.server.infinispan.actions.ResetInterceptorJmxStatisticsAction;
 import org.infinispan.server.infinispan.actions.StartCacheAction;
@@ -256,5 +258,8 @@ public final class SecurityActions {
         return doPrivileged(action);
     }
 
-
+    public static SearchManager getSearchManager(AdvancedCache<?, ?> cache) {
+        GetSearchManagerAction action = new GetSearchManagerAction(cache);
+        return doPrivileged(action);
+    }
 }

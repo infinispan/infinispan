@@ -214,6 +214,12 @@ public class CacheResource extends SimpleResourceDefinition {
                   InfinispanExtension.getResourceDescriptionResolver("cache")
            ).build();
 
+    static final OperationDefinition MASS_REINDEX =
+          new SimpleOperationDefinitionBuilder(
+                  "mass-reindex",
+                  InfinispanExtension.getResourceDescriptionResolver("cache")
+          ).build();
+
 
     protected final ResolvePathHandler resolvePathHandler;
     protected final boolean runtimeRegistration;
@@ -249,6 +255,7 @@ public class CacheResource extends SimpleResourceDefinition {
             resourceRegistration.registerOperationHandler(CacheResource.DISCONNECT_SOURCE, CacheCommands.DisconnectSourceCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(CacheResource.RECORD_KNOWN_GLOBAL_KEYSET, CacheCommands.RecordGlobalKeySetCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(CacheResource.SYNCHRONIZE_DATA, CacheCommands.SynchronizeDataCommand.INSTANCE);
+            resourceRegistration.registerOperationHandler(CacheResource.MASS_REINDEX, CacheCommands.MassReindexCommand.INSTANCE);
         }
     }
 
