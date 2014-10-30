@@ -9,7 +9,7 @@ import org.infinispan.IllegalLifecycleStateException
 import org.infinispan.commons.CacheException
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
-import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, IGNORE_RETURN_VALUES}
+import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, SKIP_INDEXING, IGNORE_RETURN_VALUES}
 import org.infinispan.distexec.mapreduce._
 import org.infinispan.remoting.transport.jgroups.SuspectException
 import org.infinispan.server.core.Operation._
@@ -458,6 +458,18 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                  | GetWithMetadataRequest
                  | BulkGetKeysRequest =>
                optCache = optCache.withFlags(SKIP_CACHE_LOAD)
+            case _ =>
+         }
+      }
+      if (hasFlag(h, SkipIndexing)) {
+         h.op match {
+            case PutRequest
+                 | PutIfAbsentRequest
+                 | RemoveRequest
+                 | RemoveIfUnmodifiedRequest
+                 | ReplaceRequest
+                 | ReplaceIfUnmodifiedRequest =>
+               optCache = optCache.withFlags(SKIP_INDEXING)
             case _ =>
          }
       }

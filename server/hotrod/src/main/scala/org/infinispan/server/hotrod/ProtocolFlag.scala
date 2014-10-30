@@ -10,4 +10,5 @@ object ProtocolFlag extends Enumeration {
    val DefaultLifespan = Value(0x02)
    val DefaultMaxIdle = Value(0x04)
    val SkipCacheLoader = Value(0x08)
+   val SkipIndexing = Value(0x10)
 }

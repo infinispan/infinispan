@@ -1017,9 +1017,10 @@ be upped, with the necessary changes in the request header.
 
 The `version` field in the header is updated to `20`.
 
-One new flag has been added to:
+Two new flags have been added:
 
 * +0x0008+  = operation skips loading from configured cache loader.
+* +0x0010+  = operation skips indexing. Only relevant when the query module is enabled for the cache
 
 The following new request operation codes have been added:
 
