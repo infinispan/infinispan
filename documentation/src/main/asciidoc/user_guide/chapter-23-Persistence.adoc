@@ -249,6 +249,19 @@ Since this strategy is oriented at cache stores with high latency or expensive o
 
 === Filesystem based cache stores
 
+A filesystem-based cache store is typically used when you want to have a
+cache with a cache store available locally which stores data that has
+overflowed from memory, having exceeded size and/or time restrictions.
+
+WARNING: Usage of filesystem-based cache stores on shared filesystems like NFS,
+Windows shares, etc. should be avoided as these do not implement proper
+file locking and can cause data corruption. File systems are inherently
+not transactional, so when attempting to use your cache in a transactional
+context, failures when writing to the file (which happens during the commit
+phase) cannot be recovered.
+
+==== Single File Store
+
 Starting with Infinispan 6.0, a new file cache store has been created called
 single file cache store. The old pre-6.0 file cache store has been completely
 removed, and it's no longer configurable.
@@ -264,16 +277,11 @@ file cache store. There is one caveat though. Since the single file based
 cache store keeps keys in memory, it can lead to increased memory consumption,
 and hence it's not recommended for caches with big keys.
 
-A filesystem-based cache store is typically used when you want to have a
-cache with a cache store available locally which stores data that has
-overflowed from memory, having exceeded size and/or time restrictions.
-
-WARNING: Usage of filesystem-based cache stores on shared filesystems like NFS,
-Windows shares, etc. should be avoided as these do not implement proper
-file locking and can cause data corruption. File systems are inherently
-not transactional, so when attempting to use your cache in a transactional
-context, failures when writing to the file (which happens during the commit
-phase) cannot be recovered.
+In certain use cases, this cache store suffers from fragmentation: if you
+store larger and larger values, the space is not reused and instead the entry
+is appended at the end of the file. The space (now empty) is reused only if you
+write another entry that can fit there. Also, when you remove all entries from
+the cache, the file won't shrink, and neither will be de-fragmented.
 
 These are the available configuration options for the single file cache store:
 
@@ -307,15 +315,79 @@ loss, and hence it's not recommended for this use case. The default value is
 ----
 
 ConfigurationBuilder b = new ConfigurationBuilder();
-b.loaders()
+b.persistence()
     .addSingleFileStore()
     .location("/tmp/myDataStore")
     .maxEntries(5000);
 
 ----
 
+==== Soft-Index File Store
+
+In Infinispan 7.0 we have added a new experimental local file-based cache store
+- Soft-Index File Store. It is a pure Java implementation that tries to get
+around Single File Store's drawbacks by implementing a variant of B+ tree that
+is cached in-memory using Java's soft references - here's where the name
+Soft-Index File Store comes from. This B+ tree (called Index) is offloaded on
+filesystem to single file that does not need to be persisted - it is purged and
+rebuilt when the cache store restarts, its purpose is only offloading.
+
+The data that should be persisted are stored in a set of files that are written
+in append-only way - that means that if you store this on conventional magnetic
+disk, it does not have to seek when writing a burst of entries. It is not
+stored in single file but set of files. When the usage of any of these files
+drops below 50% (the entries from the file are overwritten to another file),
+the file starts to be collected, moving the live entries into different file
+and in the end removing that file from disk.
+
+Most of the structures in Soft Index File Store are bounded, therefore you don't
+have to be afraid of OOMEs. For example, you can configure the limits for
+concurrently open files as well.
+
+===== Configuration
+
+Here is an example of Soft-Index File Store configuration via XML:
+
+[source,xml]
+----
+<persistence>
+    <soft-index-file-store xmlns="urn:infinispan:config:soft-index:7.0">
+        <index path="/tmp/sifs/testCache/index" />
+        <data path="/tmp/sifs/testCache/data" />
+    </soft-index-file-store>
+</persistence>
+----
+
+Programmatic configuration would look as follows:
+
+[source,java]
+----
+ConfigurationBuilder b = new ConfigurationBuilder();
+b.persistence()
+    .addStore(SoftIndexFileStoreConfigurationBuilder.class)
+        .indexLocation("/tmp/sifs/testCache/index");
+        .dataLocation("/tmp/sifs/testCache/data")
+----
+
+===== Current limitations
+
+Size of a node in the Index is limited, by default it is 4096 bytes, though it
+can be configured. This size also limits the key length (or rather the length
+of the serialized form): you can't use keys longer than size of the node
+- 15 bytes. Moreover, the key length is stored as 'short', limiting it to 32767
+bytes. There's no way how you can use longer keys - SIFS throws an exception
+when the key is longer after serialization.
+
+When entries are stored with expiration, SIFS cannot detect that some of those
+entries are expired. Therefore, such old file will not be compacted (method
+AdvancedStore.purgeExpired() is not implemented). This can lead to excessive
+file-system space usage.
+
+'''
+
 For detailed description of all the parameters supported by the stores,
 please consult the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/$$[javadoc].
+
 
 === JDBC based cache loaders
 Based on the type of keys to be persisted, there are three JDBC cache loaders:
