@@ -178,11 +178,12 @@ public class RestStore implements AdvancedLoadWriteStore {
       try {
          String contentType = metadataHelper.getContentType(entry);
          put.setEntity(new ByteArrayEntity(marshall(contentType, entry), ContentType.create(contentType)));
-         httpClient.execute(httpHost, put);
+         HttpResponse response = httpClient.execute(httpHost, put);
+         EntityUtils.consume(response.getEntity());
       } catch (Exception e) {
          throw new PersistenceException(e);
       } finally {
-         put.abort();
+         put.reset();
       }
    }
 
@@ -195,7 +196,7 @@ public class RestStore implements AdvancedLoadWriteStore {
       } catch (Exception e) {
          throw new PersistenceException(e);
       } finally {
-         del.abort();
+         del.reset();
       }
    }
 
@@ -209,7 +210,7 @@ public class RestStore implements AdvancedLoadWriteStore {
       } catch (Exception e) {
          throw new PersistenceException(e);
       } finally {
-         del.abort();
+         del.reset();
       }
    }
 
@@ -243,7 +244,7 @@ public class RestStore implements AdvancedLoadWriteStore {
       } catch (Exception e) {
          throw new PersistenceException(e);
       } finally {
-         get.abort();
+         get.reset();
       }
    }
 
@@ -294,7 +295,7 @@ public class RestStore implements AdvancedLoadWriteStore {
       } catch (Exception e) {
          throw log.errorLoadingRemoteEntries(e);
       } finally {
-         get.releaseConnection();
+         get.reset();
       }
    }
 
