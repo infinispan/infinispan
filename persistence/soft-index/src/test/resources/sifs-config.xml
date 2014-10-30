@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
+   xmlns="urn:infinispan:config:7.0">
+
+   <cache-container default-cache="testCache">
+
+      <local-cache name="testCache">
+         <persistence>
+            <soft-index-file-store xmlns="urn:infinispan:config:soft-index:7.0">
+               <index path="/tmp/sifs/testCache/index" />
+               <data path="/tmp/sifs/testCache/data" />
+            </soft-index-file-store>
+         </persistence>
+      </local-cache>
+
+   </cache-container>
+</infinispan>
