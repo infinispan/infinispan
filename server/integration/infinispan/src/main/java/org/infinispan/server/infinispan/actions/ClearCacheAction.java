@@ -1,9 +1,6 @@
 package org.infinispan.server.infinispan.actions;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.interceptors.CacheMgmtInterceptor;
-
-import static org.jboss.as.clustering.infinispan.subsystem.CacheMetricsHandler.getFirstInterceptorWhichExtends;
 
 /**
  * ClearCacheAction.
