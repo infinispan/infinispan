@@ -1133,60 +1133,83 @@ $$3.$$ Configure persistence.xml to use Infinispan instead of JBoss Cache:
 ----
 
 ===  Using Infinispan as a Spring Cache provider
-Starting with version 3.1, the link:http://spring.io/[Spring Framework] offers a link:http://blog.springsource.com/2011/02/23/spring-3-1-m1-caching[cache abstraction], enabling users to declaratively add caching support to applications via two simple annotations, `@Cacheable` and `@CacheEvict`.
+Starting with version 3.1, the link:http://spring.io/[Spring Framework] offers a link:http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html[cache abstraction], enabling users to declaratively add caching support to applications via two simple annotations, `@Cacheable` and `@CacheEvict`.
 While out of the box Spring 3.1's caching support is backed by link:http://ehcache.org[EHCache] it has been designed to easily support different cache providers.
 To that end Spring 3.1 defines a simple and straightforward SPI other caching solutions may implement.
-Infinispan's very own spring module does - amongst other things - exactly this and therefore users invested in Spring's programming model may easily have all their caching needs fulfilled through Infinispan.
+Infinispan's very own spring modules do - amongst other things - exactly this and therefore users invested in Spring's programming model may easily have all their caching needs fulfilled through Infinispan.
 
 Here's how.
 
-NOTE: The following is based on a small but fully functional example that is part of Spring Infinispan's test suite. For further details you are encouraged to look at `org.infinispan.spring.provider.sample.CachingBookDaoContextTest` and its ilk.
+NOTE: The following is based on a small but fully functional example that is part of Spring Infinispan's test suite. For further details you are encouraged to look at link:https://github.com/infinispan/infinispan/blob/master/spring/spring4/src/test/java/org/infinispan/spring/provider/sample/CachingBookDaoContextTest.java[org.infinispan.spring.provider.sample.CachingBookDaoContextTest] and its ilk.
 
 ==== Activating Spring Cache support
-You activate Spring's cache support via putting
+You activate Spring's cache support using xml:
 
 [source,xml]
 ----
-<beans xmlns="<a href="http://www.springframework.org/schema/beans">http://www.springframework.org/schema/beans</a>" 
-            xmlns:xsi="<a href="http://www.w3.org/2001/XMLSchema-instance">http://www.w3.org/2001/XMLSchema-instance</a>"
-            xmlns:cache="<a href="http://www.springframework.org/schema/cache">http://www.springframework.org/schema/cache</a>"
-            xsi:schemaLocation="
-                <a href="http://www.springframework.org/schema/beans">http://www.springframework.org/schema/beans</a> 
-                <a href="http://www.springframework.org/schema/beans/spring-beans.xsd">http://www.springframework.org/schema/beans/spring-beans.xsd</a>
-                <a href="http://www.springframework.org/schema/cache">http://www.springframework.org/schema/cache</a> 
-                <a href="http://www.springframework.org/schema/cache/spring-cache.xsd">http://www.springframework.org/schema/cache/spring-cache.xsd</a>">
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:cache="http://www.springframework.org/schema/cache"
+    xmlns:p="http://www.springframework.org/schema/p"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
 
-  <cache:annotation-driven />
+        <cache:annotation-driven />
 
 </beans>
 
 ----
 
-somewhere in your application context. This will tell Spring to be on the lookout for `@Cacheable` and `@CacheEvict` within your application code.
+somewhere in your application context. This enable the cache annotations in Spring. Alternatively, it can be done programmatically:
+
+[source,java]
+----
+@EnableCaching @Configuration
+public class Config {
+}
+
+----
+
 Now, assuming you've already got Infinispan and its dependencies on your classpath, all that's left to do is installing `infinispan-spring` and `spring`.
 For Maven users this translates into
 
-.pom.xml
+.pom.xml for Spring 4
 [source,xml]
 ----
 
      <dependency>
          <groupId>org.springframework</groupId>
          <artifactId>spring-context</artifactId>
-         <version>3.1.0.M1</version>
-         <scope>compile</scope>
+         <version>4.1.1.RELEASE</version>
+      </dependency>
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-spring4</artifactId>
+         <version>${infinispan.version}</version>
+      </dependency>
+ 
+----
+
+.pom.xml for Spring 3
+[source,xml]
+----
+
+     <dependency>
+         <groupId>org.springframework</groupId>
+         <artifactId>spring-context</artifactId>
+         <version>3.2.9.RELEASE</version>
       </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-spring</artifactId>
          <version>${infinispan.version}</version>
-         <scope>compile</scope>
       </dependency>
  
 ----
 
 ==== Telling Spring to use Infinispan as its caching provider
-Spring 3.1's cache provider SPI comprises two interfaces, `org.springframework.cache.CacheManager` and `org.springframework.cache.Cache` where a `CacheManager` serves as a factory for named `Cache` instances.
+Spring cache provider SPI comprises two interfaces, `org.springframework.cache.CacheManager` and `org.springframework.cache.Cache` where a `CacheManager` serves as a factory for named `Cache` instances.
 By default Spring will look at runtime for a `CacheManager` implementation having the bean name "cacheManager" in an application's application context. So by putting
 
 [source,xml]
@@ -1197,6 +1220,26 @@ By default Spring will look at runtime for a `CacheManager` implementation havin
           class="org.infinispan.spring.provider.SpringEmbeddedCacheManagerFactoryBean"
           p:configurationFileLocation="classpath:/org/infinispan/spring/provider/sample/books-infinispan-config.xml" />
 
+----
+
+or using java config:
+
+[source, java]
+----
+@EnableCaching
+@Configuration
+public class Config {
+
+   @Bean
+   public CacheManager cacheManager() {
+      return new SpringEmbeddedCacheManager(infinispanCacheManager());
+   }
+
+   private EmbeddedCacheManager infinispanCacheManager() {
+      return new DefaultCacheManager();
+   }
+
+}
 ----
 
 somewhere in your application context you tell Spring to henceforth use Infinispan as its caching provider.
@@ -1227,7 +1270,7 @@ void deleteBook(Integer bookId) {...}
 and you may rest assured that no stray books be left in your application once you decide to remove them.
 
 ==== Conclusion
-Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://static.springsource.org/spring/docs/3.1.0.M1/spring-framework-reference/html/cache.html$$[reference documentation] and link:$$http://static.springsource.org/spring/docs/3.1.0.M1/javadoc-api/index.html?org/springframework/cache/package-summary.html$$[jvadocs]. Also see link:$$http://blog.springsource.com/2011/02/23/spring-3-1-m1-caching/$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
+Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html$$[reference documentation]. Also see link:$$http://blog.springsource.com/2011/02/23/spring-3-1-m1-caching/$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
 
 ===  Infinispan modules for JBoss AS 7.x
 Since Infinispan 5.2, the distribution includes a set of modules for JBoss AS 7.x. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size. In order not to conflict with the Infinispan modules which are already present within an AS installation, the modules provided by the Infinispan distribution are located within their own slot identified by the _major.minor_ versions (e.g. slot="5.2"). 
