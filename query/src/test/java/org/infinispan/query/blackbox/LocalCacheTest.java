@@ -54,7 +54,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@Test(groups = "functional,smoke", testName = "query.blackbox.LocalCacheTest")
+@Test(groups = {"functional", "smoke"}, testName = "query.blackbox.LocalCacheTest")
 public class LocalCacheTest extends SingleCacheManagerTest {
    protected Person person1;
    protected Person person2;

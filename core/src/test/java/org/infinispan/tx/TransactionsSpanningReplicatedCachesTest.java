@@ -16,7 +16,7 @@ import java.util.Arrays;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
-@Test(groups = "functional,smoke", testName = "tx.TransactionsSpanningReplicatedCachesTest")
+@Test(groups = {"functional", "smoke"}, testName = "tx.TransactionsSpanningReplicatedCachesTest")
 public class TransactionsSpanningReplicatedCachesTest extends MultipleCacheManagersTest {
 
    public TransactionsSpanningReplicatedCachesTest() {

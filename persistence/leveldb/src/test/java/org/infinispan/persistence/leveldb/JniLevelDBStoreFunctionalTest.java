@@ -4,7 +4,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration;
 import org.testng.annotations.Test;
 
-@Test(groups = "unit,smoke", testName = "persistence.leveldb.JniLevelDBStoreFunctionalTest")
+@Test(groups = {"unit", "smoke"}, testName = "persistence.leveldb.JniLevelDBStoreFunctionalTest")
 public class JniLevelDBStoreFunctionalTest extends LevelDBStoreFunctionalTest {
 
    @Override

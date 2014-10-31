@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals;
  * @author Galder Zamarreño
  * @since 6.0
  */
-@Test(groups = "unit,smoke", testName = "persistence.file.SingleFileStoreFunctionalTest")
+@Test(groups = {"unit", "smoke"}, testName = "persistence.file.SingleFileStoreFunctionalTest")
 public class SingleFileStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    private String tmpDirectory;

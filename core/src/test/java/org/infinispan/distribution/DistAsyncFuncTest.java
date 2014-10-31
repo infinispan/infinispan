@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-@Test(groups = "functional,smoke", testName = "distribution.DistAsyncFuncTest")
+@Test(groups = {"functional", "smoke"}, testName = "distribution.DistAsyncFuncTest")
 public class DistAsyncFuncTest extends DistSyncFuncTest {
 
    ReplListener r1, r2, r3, r4;
