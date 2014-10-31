@@ -126,7 +126,7 @@ public class CacheResource extends SimpleResourceDefinition {
                     .setXmlName(Attribute.STATISTICS.getLocalName())
                     .setAllowExpression(false)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(true))
+                    .setDefaultValue(new ModelNode().set(false))
                     .build();
 
     static final SimpleAttributeDefinition MIGRATOR_NAME =

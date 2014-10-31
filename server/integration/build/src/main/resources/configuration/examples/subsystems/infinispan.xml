@@ -8,7 +8,7 @@
    <supplement name="ccl-clustered">
       <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="clustered" default-cache="default" >
+         <cache-container name="clustered" default-cache="default" statistics="false">
             <transport executor="infinispan-transport" lock-timeout="60000" />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
@@ -35,7 +35,7 @@
    <supplement name="fcs-local">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="local" default-cache="default">
+         <cache-container name="local" default-cache="default" statistics="false">
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
@@ -59,7 +59,7 @@
    <supplement name="leveldb-cs-local">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="local" default-cache="default">
+         <cache-container name="local" default-cache="default" statistics="false">
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
@@ -87,7 +87,7 @@
    <supplement name="hotrod-rolling-upgrade">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="local" default-cache="default">
+         <cache-container name="local" default-cache="default" statistics="false">
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
@@ -102,7 +102,7 @@
    <supplement name="jdbc-clustered">
       <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="clustered" default-cache="default" >
+         <cache-container name="clustered" default-cache="default" statistics="false">
             <transport executor="infinispan-transport" lock-timeout="60000" />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
@@ -152,7 +152,7 @@
    <supplement name="rcs-local">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="local" default-cache="default">
+         <cache-container name="local" default-cache="default" statistics="false">
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
@@ -181,7 +181,7 @@
    <supplement name="rest-auth">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="local" default-cache="default">
+         <cache-container name="local" default-cache="default" statistics="false">
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
@@ -197,7 +197,7 @@
    <supplement name="rest-rolling-upgrade">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="local" default-cache="default">
+         <cache-container name="local" default-cache="default" statistics="false">
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <rest-store path="/rest/default" shared="true" purge="false" passivation="false">
@@ -213,7 +213,7 @@
    <supplement name="xsite">
       <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="clustered" default-cache="default" >
+         <cache-container name="clustered" default-cache="default" statistics="false">
             <transport executor="infinispan-transport" lock-timeout="60000" cluster="LON" stack="udp"/>
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
@@ -246,7 +246,7 @@
    <supplement name="compatibility-mode">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="local" default-cache="default">
+         <cache-container name="local" default-cache="default" statistics="false">
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <compatibility enabled="true" />
@@ -259,7 +259,7 @@
    <supplement name="auth">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
-         <cache-container name="local" default-cache="default">
+         <cache-container name="local" default-cache="default" statistics="false">
             <security>
                 <authorization>
                     <identity-role-mapper />
