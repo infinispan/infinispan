@@ -132,8 +132,10 @@
       <version.jbossjta>4.17.13.Final</version.jbossjta>
       <version.jboss.logging.processor>1.1.0.Final</version.jboss.logging.processor>
       <version.jboss.logmanager>1.3.1.Final</version.jboss.logmanager>
+      <version.jboss.remotingjmx>2.0.0.Final</version.jboss.remotingjmx>
       <version.jboss.sasl>1.0.4.Final</version.jboss.sasl>
       <version.jboss.spec>1.0.0.Final</version.jboss.spec>
+      <version.jboss.xnio>3.2.2.Final</version.jboss.xnio>
       <version.jcipannotations>1.0</version.jcipannotations>
       <version.jetty>6.1.25</version.jetty>
       <version.jgoodies.forms>1.0.7</version.jgoodies.forms>
@@ -523,6 +525,11 @@
             <scope>test</scope>
          </dependency>
          <dependency>
+            <groupId>org.jboss.remotingjmx</groupId>
+            <artifactId>remoting-jmx</artifactId>
+            <version>${version.jboss.remotingjmx}</version>
+         </dependency>
+         <dependency>
             <groupId>org.jboss.sasl</groupId>
             <artifactId>jboss-sasl</artifactId>
             <version>${version.jboss.sasl}</version>
@@ -601,6 +608,11 @@
             <artifactId>weld-se</artifactId>
             <version>${version.weld}</version>
             <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.xnio</groupId>
+            <artifactId>xnio-nio</artifactId>
+            <version>${version.jboss.xnio}</version>
          </dependency>
          <dependency>
             <groupId>org.milyn</groupId>
