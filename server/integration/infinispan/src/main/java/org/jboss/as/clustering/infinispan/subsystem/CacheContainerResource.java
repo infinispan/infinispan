@@ -116,7 +116,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .setXmlName(Attribute.STATISTICS.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
+                    .setDefaultValue(new ModelNode().set(true))
                     .build()
 ;
 
