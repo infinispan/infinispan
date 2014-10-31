@@ -20,6 +20,7 @@ import org.infinispan.commons.util.Util;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
+import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -222,32 +223,34 @@ public class ClientListenerNotifier {
 
       @Override
       public void run() {
-         try {
-            while (true) {
-               ClientEvent clientEvent = null;
-               try {
-                  clientEvent = codec.readEvent(transport, op.listenerId, marshaller);
-                  invokeClientEvent(clientEvent);
-                  // Nullify event, makes it easier to identify network vs invocation error messages
-                  clientEvent = null;
-               } catch (TransportException e) {
-                  if (e.getCause() instanceof ClosedChannelException)
-                     throw (ClosedChannelException) e.getCause();
-                  else if (clientEvent != null)
-                     log.unexpectedErrorConsumingEvent(clientEvent, e);
-                  else {
-                     log.unableToReadEventFromServer(e, transport.getRemoteSocketAddress());
-                     return; // Server is likely gone!
-                  }
-               } catch (Throwable t) {
-                  if (clientEvent != null)
-                     log.unexpectedErrorConsumingEvent(clientEvent, t);
-                  else
-                     log.unableToReadEventFromServer(t, transport.getRemoteSocketAddress());
+         while (true) {
+            ClientEvent clientEvent = null;
+            try {
+               clientEvent = codec.readEvent(transport, op.listenerId, marshaller);
+               invokeClientEvent(clientEvent);
+               // Nullify event, makes it easier to identify network vs invocation error messages
+               clientEvent = null;
+            } catch (TransportException e) {
+               if (e.getCause() instanceof ClosedChannelException) {
+                  // Channel closed, ignore and exit
+                  log.debug("Channel closed, exiting event reader thread");
+                  return;
+               } else if (clientEvent != null) {
+                  log.unexpectedErrorConsumingEvent(clientEvent, e);
+               }  else {
+                  log.unrecoverableErrorReadingEvent(e, transport.getRemoteSocketAddress());
+                  return; // Server is likely gone!
                }
+            } catch (CancelledKeyException e) {
+               // Cancelled key exceptions are also thrown when the channel has been closed
+               log.debug("Key cancelled, most likely channel closed, exiting event reader thread");
+               return;
+            } catch (Throwable t) {
+               if (clientEvent != null)
+                  log.unexpectedErrorConsumingEvent(clientEvent, t);
+               else
+                  log.unableToReadEventFromServer(t, transport.getRemoteSocketAddress());
             }
-         } catch (ClosedChannelException e) {
-            // Channel closed, ignore and exit
          }
       }
 

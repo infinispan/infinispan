@@ -176,4 +176,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to set method %s accessible", id = 4042)
    void unableToSetAccesible(Method m, @Cause Exception e);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Unrecoverable error reading event from server %s, exiting event reader thread", id = 4043)
+   void unrecoverableErrorReadingEvent(@Cause Throwable t, SocketAddress server);
+
 }
