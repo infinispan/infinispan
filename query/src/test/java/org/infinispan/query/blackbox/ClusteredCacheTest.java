@@ -41,7 +41,7 @@ import static org.infinispan.query.helper.TestQueryHelperFactory.createQueryPars
  * @author Navin Surtani
  * @author Sanne Grinovero
  */
-@Test(groups = "functional,smoke", testName = "query.blackbox.ClusteredCacheTest")
+@Test(groups = {"functional", "smoke"}, testName = "query.blackbox.ClusteredCacheTest")
 public class ClusteredCacheTest extends MultipleCacheManagersTest {
 
    Cache cache1, cache2;

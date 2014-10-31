@@ -52,7 +52,7 @@ import static org.testng.AssertJUnit.*;
  * @author wburns
  * @since 7.0
  */
-@Test(groups = "functional,smoke", testName = "iteration.DistributedEntryRetrieverTest")
+@Test(groups = {"functional", "smoke"}, testName = "iteration.DistributedEntryRetrieverTest")
 public class DistributedEntryRetrieverTest extends BaseClusteredEntryRetrieverTest {
    public DistributedEntryRetrieverTest() {
       super(false, CacheMode.DIST_SYNC);

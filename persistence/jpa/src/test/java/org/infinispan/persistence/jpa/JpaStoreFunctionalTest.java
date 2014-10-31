@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-@Test(groups = "unit,smoke", testName = "persistence.JpaStoreFunctionalTest")
+@Test(groups = {"unit", "smoke"}, testName = "persistence.JpaStoreFunctionalTest")
 public class JpaStoreFunctionalTest extends BaseStoreFunctionalTest {
    @Override
    protected PersistenceConfigurationBuilder createCacheStoreConfig(PersistenceConfigurationBuilder persistence, boolean preload) {

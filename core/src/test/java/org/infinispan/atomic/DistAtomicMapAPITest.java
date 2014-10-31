@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.0
  */
-@Test(groups = "functional,smoke", testName = "atomic.DistAtomicMapAPITest")
+@Test(groups = {"functional", "smoke"}, testName = "atomic.DistAtomicMapAPITest")
 public class DistAtomicMapAPITest extends AtomicMapAPITest {
 
    @Override

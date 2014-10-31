@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-@Test(groups = "functional,smoke", testName = "notifications.ConcurrentNotificationTest")
+@Test(groups = {"functional", "smoke"}, testName = "notifications.ConcurrentNotificationTest")
 public class ConcurrentNotificationTest extends AbstractInfinispanTest {
    Cache<String, String> cache;
    CacheContainer cm;
