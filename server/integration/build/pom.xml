@@ -10,11 +10,11 @@
    </parent>
 
    <artifactId>infinispan-server-build</artifactId>
+   <packaging>pom</packaging>
 
    <name>Infinispan Server - Build</name>
    <description>Infinispan Server - Build</description>
 
-   <packaging>pom</packaging>
 
    <properties>
       
