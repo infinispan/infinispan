@@ -1,5 +1,5 @@
         <subsystem xmlns="urn:infinispan:server:core:7.0" >
-            <cache-container name="local" default-cache="testcache">
+            <cache-container name="clustered" default-cache="testcache">
                 <security>
                     <authorization>
                         <identity-role-mapper />
@@ -9,12 +9,13 @@
                         <role name="SupervisorIspnRole" permissions="READ WRITE EXEC BULK_READ"/>
                     </authorization>
                 </security>
-                <local-cache name="testcache" start="EAGER" batching="false">
+                <transport stack="udp" executor="infinispan-transport" lock-timeout="240000"/>
+                <distributed-cache name="testcache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                     <transaction mode="NONE" />
                     <security>
                         <authorization roles="AdminIspnRole ReaderIspnRole WriterIspnRole SupervisorIspnRole" enabled="true" />
                     </security>
-                </local-cache>
+                </distributed-cache>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->
                 <local-cache name="memcachedCache" start="EAGER" batching="false">
                     <transaction mode="NONE" />
