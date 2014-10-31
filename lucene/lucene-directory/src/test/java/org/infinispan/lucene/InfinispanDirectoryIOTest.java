@@ -35,7 +35,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  */
 @SuppressWarnings("unchecked")
-@Test(groups = "functional,smoke", testName = "lucene.InfinispanDirectoryIOTest", singleThreaded = true)
+@Test(groups = {"functional", "smoke"}, testName = "lucene.InfinispanDirectoryIOTest", singleThreaded = true)
 public class InfinispanDirectoryIOTest {
 
    /** The Test index name */

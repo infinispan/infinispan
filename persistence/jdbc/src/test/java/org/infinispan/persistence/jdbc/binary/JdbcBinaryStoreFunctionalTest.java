@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  * @author Galder Zamarreño
  * @since 4.0
  */
-@Test(groups = "functional,smoke", testName = "persistence.jdbc.binary.JdbcBinaryStoreFunctionalTest")
+@Test(groups = {"functional", "smoke"}, testName = "persistence.jdbc.binary.JdbcBinaryStoreFunctionalTest")
 public class JdbcBinaryStoreFunctionalTest extends BaseStoreFunctionalTest {
 
    @Override

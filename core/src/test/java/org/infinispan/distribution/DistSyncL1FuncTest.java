@@ -23,7 +23,7 @@ import java.util.concurrent.TimeoutException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-@Test(groups = "functional,smoke", testName = "distribution.DistSyncL1FuncTest")
+@Test(groups = {"functional", "smoke"}, testName = "distribution.DistSyncL1FuncTest")
 public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
    public DistSyncL1FuncTest() {

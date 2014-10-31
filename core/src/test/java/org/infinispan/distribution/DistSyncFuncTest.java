@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-@Test(groups = "functional,smoke", testName = "distribution.DistSyncFuncTest")
+@Test(groups = {"functional", "smoke"}, testName = "distribution.DistSyncFuncTest")
 public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
    public DistSyncFuncTest() {
