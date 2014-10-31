@@ -1,7 +1,5 @@
 package org.infinispan.server.test.cs.jdbc;
 
-import java.io.IOException;
-
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -24,14 +22,10 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import static org.infinispan.server.test.util.ITestUtils.createMBeans;
-import static org.infinispan.server.test.util.ITestUtils.createMemcachedClient;
-import static org.infinispan.server.test.util.ITestUtils.eventually;
-import static org.infinispan.server.test.util.ITestUtils.getRealKeyStored;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import java.io.IOException;
+
+import static org.infinispan.server.test.util.ITestUtils.*;
+import static org.junit.Assert.*;
 
 /**
  * These are the tests for various JDBC stores (string, binary, mixed) with a single server.
@@ -413,15 +407,8 @@ public class SingleNodeJdbcStoreIT {
         // 1. marshall the key
         // 2. encode it with base64 (that's what DefaultTwoWayKey2StringMapper does)
         // 3. prefix it with 9 (again, done by DefaultTwoWayKey2StringMapper to mark the key as byte array type)
-        // 4. prefix it with UTF-8 BOM (it's being added somewhere along the way, probably by h2)
-        String base64encoded = "9" + Base64.encodeBytes(cache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(key));
-        byte[] a = {-17, -69, -65}; // BOM for UTF 8 is EF BB BF  = 239 187 191
-        byte[] b = base64encoded.getBytes();
-
-        byte[] c = new byte[a.length + b.length];
-        System.arraycopy(a, 0, c, 0, a.length);
-        System.arraycopy(b, 0, c, a.length, b.length);
-        return new String(c);
+        // 4. prefix it with UTF-16 BOM (that is what DefaultTwoWayKey2StringMapper does for non string values)
+        return '\uFEFF' + "9" + Base64.encodeBytes(cache.getRemoteCacheManager().getMarshaller().objectToByteBuffer(key));
     }
 
     public RemoteCache<Object, Object> createCache(RemoteInfinispanMBeans mbeans) {
