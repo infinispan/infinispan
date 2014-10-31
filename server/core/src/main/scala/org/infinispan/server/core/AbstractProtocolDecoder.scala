@@ -92,33 +92,16 @@ abstract class AbstractProtocolDecoder[K, V](secure: Boolean, transport: NettyTr
       try {
          if (isTrace) // To aid debugging
             trace("Decode using instance @%x", System.identityHashCode(this))
-         state match {
-            case DECODE_HEADER =>
-               if (subject == null) decodeHeader(ctx, in, state, out) else
-                  Security.doAs(subject, new PrivilegedExceptionAction[Unit] {
-                    def run: Unit = {
-                       decodeHeader(ctx, in, state, out)
-                    }
-                })
-            case DECODE_KEY =>
-               Security.doAs(subject, new PrivilegedExceptionAction[Unit] {
-                  def run: Unit = {
-                     decodeKey(ctx, in, state)
-                  }
-               })
-            case DECODE_PARAMETERS =>
-               Security.doAs(subject, new PrivilegedExceptionAction[Unit] {
-                  def run: Unit = {
-                     decodeParameters(ctx, in, state)
-                  }
-               })
-            case DECODE_VALUE =>
-               Security.doAs(subject, new PrivilegedExceptionAction[Unit] {
-                  def run: Unit = {
-                     decodeValue(ctx, in, state)
-                  }
-               })
-         }
+         Security.doAs(subject, new PrivilegedExceptionAction[Unit] {
+            def run: Unit = {
+               state match {
+                  case DECODE_HEADER => decodeHeader(ctx, in, state, out)
+                  case DECODE_KEY => decodeKey(ctx, in, state)
+                  case DECODE_PARAMETERS => decodeParameters(ctx, in, state)
+                  case DECODE_VALUE => decodeValue(ctx, in, state)
+               }
+            }
+         })
       } catch {
          case e: Exception => {
             val (serverException, isClientError) = createServerException(e, in)
@@ -187,7 +170,6 @@ abstract class AbstractProtocolDecoder[K, V](secure: Boolean, transport: NettyTr
          checkpointTo(DECODE_PARAMETERS)
       }
    }
-
 
    private def decodeParameters(ctx: ChannelHandlerContext, buffer: ByteBuf, state: DecoderState): AnyRef = {
       val ch = ctx.channel

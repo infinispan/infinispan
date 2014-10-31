@@ -1,11 +1,11 @@
- package org.infinispan.security.impl;
+package org.infinispan.security.impl;
 
- import org.infinispan.AdvancedCache;
+import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
- import org.infinispan.commons.util.CloseableIteratorCollection;
- import org.infinispan.commons.util.CloseableIteratorSet;
- import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.CloseableIteratorCollection;
+import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -31,7 +31,7 @@ import org.infinispan.security.SecureCache;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
 
- import javax.transaction.TransactionManager;
+import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import java.util.Collection;
