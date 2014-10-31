@@ -8,6 +8,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
@@ -381,6 +382,22 @@ public class SecureCacheTestDriver {
    public void testPutForExternalRead_Object_Object(SecureCache<String, String> cache) {
       cache.putForExternalRead("a", "a");
    }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testPutForExternalRead_Object_Object_long_TimeUnit(SecureCache<String, String> cache) {
+      cache.putForExternalRead("a", "a", 1000, TimeUnit.MILLISECONDS);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testPutForExternalRead_Object_Object_long_TimeUnit_long_TimeUnit(SecureCache<String, String> cache) {
+      cache.putForExternalRead("a", "a", 1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+   }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testPutForExternalRead_Object_Object_Metadata(SecureCache<String, String> cache) {
+      cache.putForExternalRead("a", "a", new EmbeddedMetadata.Builder().lifespan(1, TimeUnit.SECONDS).build());
+   }
+
 
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testReplaceAsync_Object_Object(SecureCache<String, String> cache) {
