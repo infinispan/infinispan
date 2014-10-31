@@ -39,13 +39,8 @@ public class HotRodPlainAuthLdapIT extends HotRodSaslAuthTestBase {
    }
 
    @Override
-   public String getHRServerHostname() {
-      return server.getHotrodEndpoint().getInetAddress().getHostName();
-   }
-
-   @Override
-   public int getHRServerPort() {
-      return server.getHotrodEndpoint().getPort();
+   public RemoteInfinispanServer getRemoteServer() {
+      return server;
    }
 
    @Override

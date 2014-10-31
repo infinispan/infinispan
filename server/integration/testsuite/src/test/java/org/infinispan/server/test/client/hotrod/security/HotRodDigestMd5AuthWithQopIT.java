@@ -1,14 +1,12 @@
 package org.infinispan.server.test.client.hotrod.security;
 
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.client.hotrod.configuration.SaslQop;
-import org.infinispan.client.hotrod.configuration.SaslStrength;
+import org.infinispan.arquillian.core.InfinispanResource;
+import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.arquillian.core.RunningServer;
+import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.server.test.category.Security;
-import org.jboss.arquillian.container.test.api.ContainerController;
+import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.test.api.ArquillianResource;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
@@ -23,17 +21,16 @@ import org.junit.runner.RunWith;
  */
 @RunWith(Arquillian.class)
 @Category({ Security.class })
+@WithRunningServer({@RunningServer(name="hotrodAuthQop")})
 public class HotRodDigestMd5AuthWithQopIT extends HotRodSaslAuthTestBase {
-
-   private static final String ARQ_CONTAINER_ID = "hotrodAuthQop";
-
-   @ArquillianResource
-   public ContainerController controller;
+   
+   @InfinispanResource("hotrodAuthQop")
+   RemoteInfinispanServer server;
 
    @Override
-   protected ConfigurationBuilder getDefaultConfigBuilder() {
-      ConfigurationBuilder builder = super.getDefaultConfigBuilder();
-      builder.security().authentication().saslQop(SaslQop.AUTH_CONF).saslStrength(SaslStrength.HIGH, SaslStrength.MEDIUM, SaslStrength.LOW);
+   protected SaslConfigurationBuilder getDefaultSaslConfigBuilder() {
+      SaslConfigurationBuilder builder = super.getDefaultSaslConfigBuilder();
+      builder.withDefaultQop();
       return builder;
    }
 
@@ -42,26 +39,11 @@ public class HotRodDigestMd5AuthWithQopIT extends HotRodSaslAuthTestBase {
       return "DIGEST-MD5";
    }
 
-   @Before
-   public void startIspnServer() {
-      controller.start(ARQ_CONTAINER_ID);
-   }
-
-   @After
-   public void stopIspnServer() {
-      controller.stop(ARQ_CONTAINER_ID);
-   }
-
    @Override
-   public String getHRServerHostname() {
-      return "localhost";
+   public RemoteInfinispanServer getRemoteServer() {
+      return server;
    }
-
-   @Override
-   public int getHRServerPort() {
-      return 11222;
-   }
-
+   
    @Override
    public void initAsAdmin() {
       initialize(ADMIN_LOGIN, ADMIN_PASSWD);

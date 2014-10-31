@@ -6,13 +6,13 @@
                         <role name="AdminIspnRole" permissions="ALL" />
                         <role name="ReaderIspnRole" permissions="READ" />
                         <role name="WriterIspnRole" permissions="WRITE" />
-                        <role name="SupervisorIspnRole" permissions="READ WRITE EXEC"/>
+                        <role name="SupervisorIspnRole" permissions="READ WRITE EXEC BULK_READ"/>
                     </authorization>
                 </security>
                 <local-cache name="testcache" start="EAGER" batching="false">
                     <transaction mode="NONE" />
                     <security>
-                        <authorization roles="AdminIspnRole ReaderIspnRole WriterIspnRole SupervisorIspnRole" />
+                        <authorization roles="AdminIspnRole ReaderIspnRole WriterIspnRole SupervisorIspnRole" enabled="true" />
                     </security>
                 </local-cache>
                 <!-- to get a memcached module to work, there needs to be a named cache called "memcachedCache" -->

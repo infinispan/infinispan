@@ -27,15 +27,10 @@ public class HotRodDigestMd5AuthIT extends HotRodSaslAuthTestBase {
    }
 
    @Override
-   public String getHRServerHostname() {
-      return server.getHotrodEndpoint().getInetAddress().getHostName();
+   public RemoteInfinispanServer getRemoteServer() {
+      return server;
    }
-
-   @Override
-   public int getHRServerPort() {
-      return server.getHotrodEndpoint().getPort();
-   }
-
+   
    @Override
    public void initAsAdmin() {
       initialize(ADMIN_LOGIN, ADMIN_PASSWD);
