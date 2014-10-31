@@ -114,6 +114,12 @@
             <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
+       <dependency>
+          <groupId>org.infinispan.server</groupId>
+          <artifactId>infinispan-server-build</artifactId>
+          <type>pom</type>
+          <scope>test</scope>
+       </dependency>
         <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId> 
