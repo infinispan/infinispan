@@ -2,39 +2,33 @@ package org.infinispan.server.test.client.hotrod.security;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.arquillian.core.RunningServer;
-import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.server.test.category.Security;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- *
- * HotRodPlainAuthIT tests PLAIN SASL authentication of HotRod client.
- *
+ * 
+ * HotRodDigestMd5AuthLocalIT tests DIGEST-MD5 SASL authentication of HotRod client against local cache.
+ * 
  * @author vjuranek
  * @since 7.0
  */
 @RunWith(Arquillian.class)
 @Category({ Security.class })
-@WithRunningServer({@RunningServer(name = "hotrodAuthClustered"), @RunningServer(name = "hotrodAuthClustered-2")})
-public class HotRodPlainAuthClusteredIT extends HotRodSaslAuthTestBase {
-   
-   @InfinispanResource("hotrodAuthClustered")
-   RemoteInfinispanServer server1;
-   
-   @InfinispanResource("hotrodAuthClustered-2")
-   RemoteInfinispanServer server2;
+public class HotRodDigestMd5AuthLocalIT extends HotRodSaslAuthTestBase {
+
+   @InfinispanResource("hotrodAuth")
+   RemoteInfinispanServer server;
 
    @Override
    public String getTestedMech() {
-      return "PLAIN";
+      return "DIGEST-MD5";
    }
 
    @Override
    public RemoteInfinispanServer getRemoteServer() {
-      return server1;
+      return server;
    }
 
    @Override
@@ -56,4 +50,5 @@ public class HotRodPlainAuthClusteredIT extends HotRodSaslAuthTestBase {
    public void initAsSupervisor() {
       initialize(SUPERVISOR_LOGIN, SUPERVISOR_PASSWD);
    }
+
 }
