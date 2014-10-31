@@ -1,12 +1,5 @@
 package org.infinispan.server.test.transport;
 
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
-import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
-
-import java.util.Scanner;
-
-import javax.management.ObjectName;
-
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
@@ -15,11 +8,15 @@ import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.management.ObjectName;
+import java.util.Scanner;
+
+import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
+import static org.infinispan.server.test.util.ITestUtils.SERVER2_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.getAttribute;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -79,7 +76,7 @@ public class TransportStackConfigurationIT {
         assertEquals("discard", getAttribute(provider, protocolMBean, "thread_pool.rejection_policy"));
 
         assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "oob_thread_pool.enabled")));
-        assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "oob_thread_pool.queue_enabled")));
+        assertEquals(false, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "oob_thread_pool.queue_enabled")));
         assertEquals("discard", getAttribute(provider, protocolMBean, "oob_thread_pool.rejection_policy"));
     }
 
