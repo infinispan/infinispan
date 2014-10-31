@@ -4,24 +4,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
 import java.security.PrivilegedActionException;
 
 import javax.security.auth.Subject;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.PasswordCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.LoginException;
-import javax.security.sasl.RealmCallback;
 
+import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-import org.infinispan.server.test.util.ITestUtils;
+import org.infinispan.server.test.util.security.SaslConfigurationBuilder;
 import org.junit.After;
 import org.junit.Test;
 
@@ -35,35 +27,28 @@ import org.junit.Test;
  */
 public abstract class HotRodSaslAuthTestBase {
 
-   protected static final String TEST_REALM = "ApplicationRealm";
-   protected static final String TEST_SERVER_NAME = "node0";
+   public static final String TEST_REALM = "ApplicationRealm";
+   public static final String TEST_SERVER_NAME = "node0";
 
-   protected static final String TEST_CACHE_NAME = "testcache";
-   protected static final String TEST_KEY = "testKey";
-   protected static final String TEST_VALUE = "testValue";
+   public static final String TEST_CACHE_NAME = "testcache";
+   public static final String TEST_KEY = "testKey";
+   public static final String TEST_VALUE = "testValue";
 
-   protected static final String ADMIN_LOGIN = "admin";
-   protected static final String ADMIN_PASSWD = "strongPassword";
-   protected static final String READER_LOGIN = "reader";
-   protected static final String READER_PASSWD = "password";
-   protected static final String WRITER_LOGIN = "writer";
-   protected static final String WRITER_PASSWD = "somePassword";
-   protected static final String SUPERVISOR_LOGIN = "supervisor";
-   protected static final String SUPERVISOR_PASSWD = "lessStrongPassword";
-
-   protected static final String KEYSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator + "keystore_client.jks";
-   protected static final String KEYSTORE_PASSWORD = "secret";
-   protected static final String TRUSTSTORE_PATH = ITestUtils.SERVER_CONFIG_DIR + File.separator + "truststore_client.jks";
-   protected static final String TRUSTSTORE_PASSWORD = "secret";
+   public static final String ADMIN_LOGIN = "admin";
+   public static final String ADMIN_PASSWD = "strongPassword";
+   public static final String READER_LOGIN = "reader";
+   public static final String READER_PASSWD = "password";
+   public static final String WRITER_LOGIN = "writer";
+   public static final String WRITER_PASSWD = "somePassword";
+   public static final String SUPERVISOR_LOGIN = "supervisor";
+   public static final String SUPERVISOR_PASSWD = "lessStrongPassword";
 
    protected RemoteCache<String, String> remoteCache;
    protected static RemoteCacheManager remoteCacheManager = null;
 
    public abstract String getTestedMech();
 
-   public abstract String getHRServerHostname();
-
-   public abstract int getHRServerPort();
+   public abstract RemoteInfinispanServer getRemoteServer();
 
    public abstract void initAsAdmin() throws PrivilegedActionException, LoginException;
 
@@ -79,7 +64,7 @@ public abstract class HotRodSaslAuthTestBase {
          remoteCacheManager.stop();
       }
    }
-
+   
    protected void initialize(Subject subj) throws PrivilegedActionException {
       final Configuration config = getRemoteCacheManagerConfig(subj);
       remoteCacheManager = new RemoteCacheManager(config, true);
@@ -99,32 +84,20 @@ public abstract class HotRodSaslAuthTestBase {
    }
 
    protected Configuration getRemoteCacheManagerConfig(String login, String password) {
-      ConfigurationBuilder config = getDefaultConfigBuilder();
-      config.security().authentication().callbackHandler(new LoginHandler(login, password, TEST_REALM));
-      return config.build();
+      return getDefaultSaslConfigBuilder().forCredentials(login, password).build();
    }
 
    protected Configuration getRemoteCacheManagerOverSslConfig(String login, String password) {
-      ConfigurationBuilder config = getDefaultConfigBuilder();
-      config.security().authentication().callbackHandler(new LoginHandler(login, password, TEST_REALM));
-      config.security().ssl().enable()
-            .keyStoreFileName(KEYSTORE_PATH)
-            .keyStorePassword(KEYSTORE_PASSWORD.toCharArray())
-            .trustStoreFileName(TRUSTSTORE_PATH)
-            .trustStorePassword(TRUSTSTORE_PASSWORD.toCharArray());
-      return config.build();
+      return getDefaultSaslConfigBuilder().forCredentials(login, password).withDefaultSsl().build();
    }
 
    protected Configuration getRemoteCacheManagerConfig(Subject subj) {
-      ConfigurationBuilder config = getDefaultConfigBuilder();
-      config.security().authentication().clientSubject(subj).callbackHandler(new LoginHandler("", "")); //callback handle is required by ISPN config validation
-      return config.build();
+      return getDefaultSaslConfigBuilder().forSubject(subj).build();
    }
 
-   protected ConfigurationBuilder getDefaultConfigBuilder() {
-      ConfigurationBuilder config = new ConfigurationBuilder();
-      config.addServer().host(getHRServerHostname()).port(getHRServerPort());
-      config.security().authentication().serverName(TEST_SERVER_NAME).saslMechanism(getTestedMech()).enable();
+   protected SaslConfigurationBuilder getDefaultSaslConfigBuilder() {
+      SaslConfigurationBuilder config = new SaslConfigurationBuilder(getTestedMech());
+      config.forIspnServer(getRemoteServer()).withServerName(TEST_SERVER_NAME);
       return config;
    }
 
@@ -186,39 +159,28 @@ public abstract class HotRodSaslAuthTestBase {
    protected void testWriteRead() {
       testWrite();
       testRead();
+   } 
+   
+   public static void testReadNonExistent(RemoteCache<String, String> remoteCache) {
+      assertEquals(null, remoteCache.get("nonExistentKey"));
    }
 
-   public static class LoginHandler implements CallbackHandler {
-      final private String login;
-      final private String password;
-      final private String realm;
+   public static void testRead(RemoteCache<String, String> remoteCache) {
+      assertTrue(remoteCache.containsKey(TEST_KEY));
+      assertEquals(TEST_VALUE, remoteCache.get(TEST_KEY));
+   }
 
-      public LoginHandler(String login, String password) {
-         this.login = login;
-         this.password = password;
-         this.realm = null;
-      }
+   public static void testWrite(RemoteCache<String, String> remoteCache) {
+      assertNull(remoteCache.put(TEST_KEY, TEST_VALUE));
+   }
+   
+   public static void testSize(RemoteCache<String, String> remoteCache) {
+      assertTrue(remoteCache.size() > 0);
+   }
 
-      public LoginHandler(String login, String password, String realm) {
-         this.login = login;
-         this.password = password;
-         this.realm = realm;
-      }
-
-      @Override
-      public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-         for (Callback callback : callbacks) {
-            if (callback instanceof NameCallback) {
-               ((NameCallback) callback).setName(login);
-            } else if (callback instanceof PasswordCallback) {
-               ((PasswordCallback) callback).setPassword(password.toCharArray());
-            } else if (callback instanceof RealmCallback) {
-               ((RealmCallback) callback).setText(realm);
-            } else {
-               throw new UnsupportedCallbackException(callback);
-            }
-         }
-      }
+   public static void testWriteRead(RemoteCache<String, String> remoteCache) {
+      testWrite(remoteCache);
+      testRead(remoteCache);
    }
 
 }
