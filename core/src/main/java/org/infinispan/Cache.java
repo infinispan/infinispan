@@ -112,7 +112,32 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @throws IllegalStateException if {@link #getStatus()} would not return {@link ComponentStatus#RUNNING}.
     */
    void putForExternalRead(K key, V value);
+   
+   /**
+    * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in lifespan parameters.
+    *
+    * @param key      key to use
+    * @param value    value to store
+    * @param lifespan lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param unit     unit of measurement for the lifespan
+    * 
+    * @since 7.0
+    */
    void putForExternalRead(K key, V value, long lifespan, TimeUnit unit);
+   
+   /**
+    * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in lifespan parameters.
+    *
+    * @param key             key to use
+    * @param value           value to store
+    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit    time unit for lifespan
+    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                        expired
+    * @param maxIdleTimeUnit time unit for max idle time
+    * 
+    * @since 7.0
+    */
    void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
 
    /**

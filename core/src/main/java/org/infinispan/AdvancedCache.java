@@ -359,6 +359,19 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     */
    V putIfAbsent(K key, V value, Metadata metadata);
    
+   /**
+    * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in an
+    * instance of {@link Metadata} which can be used to provide metadata
+    * information for the entry being stored, such as lifespan, version
+    * of value...etc. The {@link Metadata} is only stored if the call is
+    * successful.
+    *
+    * @param key key with which the specified value is to be associated
+    * @param value value to be associated with the specified key
+    * @param metadata information to store alongside the new value
+    *
+    * @since 7.0
+    */
    void putForExternalRead(K key, V value, Metadata metadata);
 
    /**
