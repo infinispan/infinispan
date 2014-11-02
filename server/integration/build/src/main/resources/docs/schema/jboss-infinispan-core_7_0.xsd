@@ -401,7 +401,7 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="statistics" type="xs:boolean" default="true">
+        <xs:attribute name="statistics" type="xs:boolean" default="false">
             <xs:annotation>
                 <xs:documentation>Determines whether or not the cache should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
             </xs:annotation>
