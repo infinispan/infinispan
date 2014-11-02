@@ -229,12 +229,12 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         }
 
         GlobalJmxStatisticsConfigurationBuilder jmxBuilder = builder.globalJmxStatistics().cacheManagerName(this.name);
+        jmxBuilder.jmxDomain(EmbeddedCacheManagerService.getServiceName(null).getCanonicalName());
 
         MBeanServer server = this.dependencies.getMBeanServer();
         if (server != null && this.statistics) {
             jmxBuilder.enable()
                 .mBeanServerLookup(new MBeanServerProvider(server))
-                .jmxDomain(EmbeddedCacheManagerService.getServiceName(null).getCanonicalName())
                 .allowDuplicateDomains(true)
             ;
         } else {
