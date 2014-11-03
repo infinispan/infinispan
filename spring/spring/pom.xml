@@ -1,12 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
-         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
-        <version>7.0.0-SNAPSHOT</version>
+        <version>7.0.0.Final</version>
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
 
@@ -15,7 +14,7 @@
 
     <name>Infinispan Spring 3 Integration</name>
     <description>
-        <![CDATA[
+        
                  The Infinispan Spring Integration project provides Spring
                  integration for Infinispan, a high performance distributed cache.
                  Its primary features are
@@ -39,7 +38,7 @@
                  In addition, Infinispan Spring Integration offers various FactoryBeans
                  for facilitating creation of Infinispan core classes - Cache, CacheManager,
                  ... - within a Spring context.
-        ]]>
+        
     </description>
 
     <developers>
@@ -85,7 +84,7 @@
     </dependencyManagement>
 
     <dependencies>
-        <!--Compile time dependencies -->
+        
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
@@ -94,7 +93,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-core</artifactId>
         </dependency>
-        <!-- Made the RHQ dependency non-transitive in case we only need the remote cache -->
+        
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-client-hotrod</artifactId>
@@ -108,7 +107,7 @@
             </exclusions>
         </dependency>
 
-        <!--Runtime dependencies -->
+        
         <dependency>
             <groupId>commons-pool</groupId>
             <artifactId>commons-pool</artifactId>
@@ -136,7 +135,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!--Test Dependencies -->
+        
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
