@@ -36,6 +36,7 @@ Access to a cache manager or a cache is controlled by using a list of required p
 * BULK_READ (keySet, values, entrySet, query): whether bulk retrieve operations can be executed
 * BULK_WRITE (clear, putAll): whether bulk write operations can be executed
 * LIFECYCLE (start, stop): whether a cache can be started / stopped
+* ADMIN (getVersion, addInterceptor*, removeInterceptor, getInterceptorChain, getEvictionManager, getComponentRegistry, getDistributionManager, getAuthorizationManager, evict, getRpcManager, getCacheConfiguration, getCacheManager, getInvocationContextContainer, setAvailability, getDataContainer, getStats, getXAResource): whether access to the underlying components/internal structures is allowed
 * ALL: a convenience permission which includes all of the above
 * ALL_READ: combines READ and BULK_READ
 * ALL_WRITE: combines WRITE and BULK_WRITE
