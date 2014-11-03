@@ -1,8 +1,10 @@
 package org.infinispan.query;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.engine.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
+import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.stat.Statistics;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.LuceneQuery;
 
@@ -43,8 +45,10 @@ public interface SearchManager {
    /**
     * Experimental.
     * Access the SearchFactory
+    * @Deprecated This method is going to be changed or removed with no replacement.
+    * If you need this method, please let us know so that replacements can be created.
     */
-   SearchFactory getSearchFactory();
+   SearchFactoryIntegrator getSearchFactory();
 
    /**
     * Experimental!
@@ -62,5 +66,39 @@ public interface SearchManager {
     * @return the MassIndexer component
     */
    MassIndexer getMassIndexer();
+
+   /**
+    * Retrieve an analyzer instance by its definition name
+    *
+    * @param name the name of the analyzer
+    *
+    * @return analyzer with the specified name
+    *
+    * @throws org.hibernate.search.exception.SearchException if the definition name is unknown
+    * @since 7.0
+    */
+   Analyzer getAnalyzer(String name);
+
+   /**
+    * Get access to the Query specific statistics for this SearchManager instance
+    *
+    * @return The statistics.
+    * @since 7.0
+    */
+   Statistics getStatistics();
+
+   /**
+    * Retrieves the scoped analyzer for a given class type.
+    *
+    * @param clazz The class for which to retrieve the analyzer.
+    *
+    * @return The scoped analyzer for the specified class.
+    *
+    * @throws java.lang.IllegalArgumentException in case {@code clazz == null} or the specified
+    * class is not an indexed entity.
+    *
+    * @since 7.0
+    */
+   Analyzer getAnalyzer(Class<?> clazz);
 
 }
