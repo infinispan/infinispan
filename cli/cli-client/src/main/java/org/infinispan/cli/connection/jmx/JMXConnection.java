@@ -50,7 +50,11 @@ public class JMXConnection implements Connection {
    @Override
    public void connect(String credentials) throws Exception {
       JMXServiceURL url = new JMXServiceURL(serviceUrl.getJMXServiceURL());
-      jmxConnector = JMXConnectorFactory.connect(url, serviceUrl.getConnectionEnvironment(credentials));
+      try {
+         jmxConnector = JMXConnectorFactory.connect(url, serviceUrl.getConnectionEnvironment(credentials));
+      } catch (Throwable t) {
+         throw new Exception(t);
+      }
       mbsc = jmxConnector.getMBeanServerConnection();
       cacheManagers = new TreeMap<String, ObjectInstance>();
       for (ObjectInstance mbean : mbsc.queryMBeans(null, INTERPRETER_QUERY)) {
