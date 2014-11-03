@@ -47,7 +47,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
 
       if (isDataLost(context.getStableTopology().getCurrentCH(), newMembers)) {
          log.enteringUnavailableModeGracefulLeaver(context.getCacheName(), leaver);
-         context.updateAvailabilityMode(AvailabilityMode.UNAVAILABLE);
+         context.updateAvailabilityMode(AvailabilityMode.UNAVAILABLE, true);
          return;
       }
 
@@ -77,12 +77,12 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       lostMembers.removeAll(newMembers);
       if (isDataLost(stableTopology.getCurrentCH(), newMembers)) {
          log.enteringDegradedModeLostData(context.getCacheName(), lostMembers);
-         context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
+         context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE, true);
          return;
       }
       if (isMinorityPartition(stableMembers, lostMembers)) {
          log.enteringDegradedModeMinorityPartition(context.getCacheName(), newMembers, lostMembers, stableMembers);
-         context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE);
+         context.updateAvailabilityMode(AvailabilityMode.DEGRADED_MODE, true);
          return;
       }
 
@@ -192,7 +192,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       // It shouldn't be possible to recover from unavailable mode without user action
       if (mergedAvailabilityMode == AvailabilityMode.UNAVAILABLE) {
          log.debugf("After merge, cache %s is staying in unavailable mode", context.getCacheName());
-         context.updateAvailabilityMode(AvailabilityMode.UNAVAILABLE);
+         context.updateAvailabilityMode(AvailabilityMode.UNAVAILABLE, true);
          return;
       } else if (mergedAvailabilityMode == AvailabilityMode.AVAILABLE) {
          log.debugf("After merge, cache %s has recovered and is entering available mode");
@@ -234,16 +234,17 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          List<Address> newMembers = context.getExpectedMembers();
          // Update the topology to remove leavers - the current topology may not have been updated for a while
          context.updateCurrentTopology(newMembers);
+         context.updateAvailabilityMode(newAvailabilityMode, false);
          // Then queue a rebalance to include the joiners as well
          context.queueRebalance(newMembers);
+      } else {
+         context.updateAvailabilityMode(newAvailabilityMode, true);
       }
-
-      context.updateAvailabilityMode(newAvailabilityMode);
    }
 
    private void updateMembersAndRebalance(AvailabilityStrategyContext context, List<Address> newMembers) {
       // Change the availability mode if needed
-      context.updateAvailabilityMode(AvailabilityMode.AVAILABLE);
+      context.updateAvailabilityMode(AvailabilityMode.AVAILABLE, false);
 
       // Update the topology to remove leavers - in case there is a rebalance in progress, or rebalancing is disabled
       context.updateCurrentTopology(newMembers);

@@ -115,14 +115,21 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    @Override
-   public void updateAvailabilityMode(AvailabilityMode newAvailabilityMode) {
+   public void updateAvailabilityMode(AvailabilityMode newAvailabilityMode, boolean cancelRebalance) {
       synchronized (this) {
          boolean modeChanged = setAvailabilityMode(newAvailabilityMode);
 
          if (modeChanged) {
             log.debugf("Updating availability for cache %s to %s", cacheName, newAvailabilityMode);
+            ConsistentHash newPendingCH = currentTopology.getPendingCH();
+            if (cancelRebalance) {
+               newPendingCH = null;
+               if (isRebalanceInProgress()) {
+                  removeRebalanceConfirmationCollector();
+               }
+            }
             CacheTopology newTopology = new CacheTopology(currentTopology.getTopologyId() + 1,
-                  currentTopology.getRebalanceId(), currentTopology.getCurrentCH(), currentTopology.getPendingCH());
+                  currentTopology.getRebalanceId(), currentTopology.getCurrentCH(), newPendingCH);
             setCurrentTopology(newTopology);
             clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, newAvailabilityMode,
                   isTotalOrder(), isDistributed());
@@ -292,7 +299,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (rebalanceConfirmationCollector == null)
             return false;
 
-         return rebalanceConfirmationCollector.updateMembers(expectedMembers);
+         // We rely on the AvailabilityStrategy updating the current topology beforehand.
+         return rebalanceConfirmationCollector.updateMembers(currentTopology.getMembers());
       }
    }
 
