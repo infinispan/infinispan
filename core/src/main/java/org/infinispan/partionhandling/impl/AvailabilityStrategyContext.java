@@ -74,7 +74,7 @@ public interface AvailabilityStrategyContext {
    /**
     * Enter a new availability mode.
     */
-   void updateAvailabilityMode(AvailabilityMode mode);
+   void updateAvailabilityMode(AvailabilityMode mode, boolean cancelRebalance);
 
    /**
     * Updates both the stable and the current topologies.
