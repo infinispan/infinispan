@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
-        <version>7.0.0-SNAPSHOT</version>
+        <version>7.0.1-SNAPSHOT</version>
         <relativePath>../parent/pom.xml</relativePath>
     </parent>
 
@@ -13,7 +13,7 @@
     <name>Infinispan Extended Statistics</name>
     <description>Infinispan Extended Statistics module</description>
 
-    <!-- This module declares components that either has lifecycle (@Start or @Stop) or uses @Inject to retrieve dependencies -->
+    
     <properties>
         <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
     </properties>

@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>7.0.0-SNAPSHOT</version>
+      <version>7.0.1-SNAPSHOT</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -37,7 +37,7 @@
          <artifactId>netty-all</artifactId>
       </dependency>
 
-      <!-- HornetQ dependencies -->
+      
       <dependency>
           <groupId>org.hornetq</groupId>
           <artifactId>hornetq-bootstrap</artifactId>

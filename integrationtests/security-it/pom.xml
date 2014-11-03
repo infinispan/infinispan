@@ -1,12 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-   xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>7.0.0-SNAPSHOT</version>
+      <version>7.0.1-SNAPSHOT</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -68,7 +67,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
-               <!-- Force use of JUnit, since TestNG+Arquillian break in wonderful ways -->
+               
                <testNGArtifactName>none:none</testNGArtifactName>
                <forkCount>1</forkCount>
                <reuseForks>false</reuseForks>
@@ -143,7 +142,7 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
             <executions>
-               <!-- Copy the AS configuration files so we can use our custom configurations -->
+               
                <execution>
                   <id>configure-as-testnode</id>
                   <phase>pre-integration-test</phase>
@@ -198,7 +197,7 @@
       </plugins>
       <pluginManagement>
          <plugins>
-            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
+            
             <plugin>
                <groupId>org.eclipse.m2e</groupId>
                <artifactId>lifecycle-mapping</artifactId>
@@ -216,7 +215,7 @@
                               </goals>
                            </pluginExecutionFilter>
                            <action>
-                              <ignore></ignore>
+                              <ignore />
                            </action>
                         </pluginExecution>
                      </pluginExecutions>

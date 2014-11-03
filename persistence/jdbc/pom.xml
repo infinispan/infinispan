@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-persistence-parent</artifactId>
-      <version>7.0.0-SNAPSHOT</version>
+      <version>7.0.1-SNAPSHOT</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -26,7 +26,7 @@
          <scope>test</scope>
       </dependency>
 
-      <!-- for testing against MySQL -->
+      
       <dependency>
          <groupId>mysql</groupId>
          <artifactId>mysql-connector-java</artifactId>
@@ -91,9 +91,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <!-- Run the test with a single thread, otherwise the suite might hang due to a
-            concurrency issue in c3p0: https://sourceforge.net/p/c3p0/bugs/119/. Once this is fixed
-             this can be switched back to parallel execution -->
+            
             <configuration>
                <threadCount>1</threadCount>
             </configuration>

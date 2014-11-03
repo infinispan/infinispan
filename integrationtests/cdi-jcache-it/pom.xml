@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-parent</artifactId>
-      <version>7.0.0-SNAPSHOT</version>
+      <version>7.0.1-SNAPSHOT</version>
       <relativePath>../../parent/pom.xml</relativePath>
    </parent>
 
@@ -60,7 +60,7 @@
    
    <build>
       <plugins>
-         <!-- Disable parallel execution of tests ARQ-127 -->
+         
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>

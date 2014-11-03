@@ -1,12 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>org.infinispan</groupId>
         <artifactId>infinispan-parent</artifactId>
-        <version>7.0.0-SNAPSHOT</version>
+        <version>7.0.1-SNAPSHOT</version>
         <relativePath>../../parent/pom.xml</relativePath>
     </parent>
 
@@ -21,12 +20,12 @@
         <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${basedir}/src/test/resources</resources.dir>
         <jvm.memory.args>-Xmx512m -XX:MaxPermSize=128m</jvm.memory.args>
-        <jvm.x64.args></jvm.x64.args>
+        <jvm.x64.args />
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true</jvm.ip.stack>
         <mcast.ip>234.99.54.14</mcast.ip>
-        <!-- Default multicast address. -->
+        
         <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false -Djboss.default.multicast.address=${mcast.ip}</jvm.ip.stack>
         <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
         <log4j.configuration>log4j.xml</log4j.configuration>
@@ -182,7 +181,7 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                               <ant antfile="build.xml" target="create_distro"/>
+                               <ant antfile="build.xml" target="create_distro" />
                             </target>
                         </configuration>
                     </execution>
@@ -194,7 +193,7 @@
                         </goals>
                         <configuration>
                             <target>
-                               <ant antfile="build.xml" target="start_server"/>
+                               <ant antfile="build.xml" target="start_server" />
                             </target>
                         </configuration>
                     </execution>
@@ -206,7 +205,7 @@
                         </goals>
                         <configuration>
                             <target>
-                               <ant antfile="build.xml" target="kill_server"/>
+                               <ant antfile="build.xml" target="kill_server" />
                             </target>
                         </configuration>
                     </execution>
@@ -229,8 +228,8 @@
                         <configuration>
                             <groups combine.self="override">org.infinispan.test.integration.as.category.UnstableTest
                             </groups>
-                            <!-- empty since we are not going to exclude any group -->
-                            <excludedGroups combine.self="override"></excludedGroups>
+                            
+                            <excludedGroups combine.self="override" />
                         </configuration>
                     </plugin>
                 </plugins>
