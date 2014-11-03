@@ -151,4 +151,9 @@ public class StateTransferLockImpl implements StateTransferLock {
          log.tracef("Topology %d is now installed, expected topology was %d", topologyId, expectedTopologyId);
       }
    }
+
+   @Override
+   public boolean topologyReceived(int expectedTopologyId) {
+      return topologyId >= expectedTopologyId;
+   }
 }

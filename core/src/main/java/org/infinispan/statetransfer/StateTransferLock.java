@@ -48,4 +48,6 @@ public interface StateTransferLock {
    void notifyTopologyInstalled(int topologyId);
 
    void waitForTopology(int expectedTopologyId, long timeout, TimeUnit unit) throws InterruptedException;
+
+   boolean topologyReceived(int expectedTopologyId);
 }
