@@ -91,7 +91,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
 
          // check that our settings are not ignored
          SearchManager searchManager = Search.getSearchManager(cache);
-         assertTrue(searchManager.getSearchFactory().getStatistics().isStatisticsEnabled());
+         assertTrue(searchManager.getStatistics().isStatisticsEnabled());
 
          // add some test data
          for(int i = 0; i < numberOfEntries; i++) {
@@ -105,7 +105,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          }
 
          // after adding more classes and reconfiguring the SearchFactory it might happen isStatisticsEnabled is reset, so we check again
-         assertTrue(searchManager.getSearchFactory().getStatistics().isStatisticsEnabled());
+         assertTrue(searchManager.getStatistics().isStatisticsEnabled());
 
          assertEquals(0L, server.getAttribute(name, "SearchQueryExecutionCount"));
 
@@ -121,7 +121,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
                                        new Object[]{Person.class.getCanonicalName()},
                                        new String[]{String.class.getCanonicalName()}));
 
-         assertEquals(1, searchManager.getSearchFactory().getStatistics().indexedEntitiesCount().size());
+         assertEquals(1, searchManager.getStatistics().indexedEntitiesCount().size());
 
          // add more test data
          AnotherGrassEater anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
@@ -139,7 +139,7 @@ public class QueryMBeanTest extends SingleCacheManagerTest {
          assertEquals(2, classNames.size());
          assertTrue("The set should contain the Person class name.", classNames.contains(Person.class.getCanonicalName()));
          assertTrue("The set should contain the AnotherGrassEater class name.", classNames.contains(AnotherGrassEater.class.getCanonicalName()));
-         assertEquals(2, searchManager.getSearchFactory().getStatistics().indexedEntitiesCount().size());
+         assertEquals(2, searchManager.getStatistics().indexedEntitiesCount().size());
 
          // check the statistics and see they have reasonable values
          assertTrue("The query execution total time should be > 0.", (Long) server.getAttribute(name, "SearchQueryTotalTime") > 0);

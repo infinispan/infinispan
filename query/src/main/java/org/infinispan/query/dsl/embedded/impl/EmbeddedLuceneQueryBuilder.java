@@ -60,7 +60,7 @@ final class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
    }
 
    private LuceneQueryParsingResult parse(String jpqlString) {
-      SearchFactoryIntegrator searchFactory = (SearchFactoryIntegrator) searchManager.getSearchFactory();
+      SearchFactoryIntegrator searchFactory = searchManager.getSearchFactory();
       LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver).buildProcessingChainForClassBasedEntities();
       QueryParser queryParser = new QueryParser();
       return queryParser.parseQuery(jpqlString, processingChain);

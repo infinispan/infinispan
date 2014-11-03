@@ -2,12 +2,13 @@ package org.infinispan.query.impl;
 
 import java.util.concurrent.ExecutorService;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.hibernate.search.engine.SearchFactory;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.query.CacheQuery;
@@ -112,8 +113,8 @@ public class SearchManagerImpl implements SearchManagerImplementor {
    /* (non-Javadoc)
     * @see org.infinispan.query.SearchManager#getSearchFactory()
     */
-   @Override
-   public SearchFactory getSearchFactory() {
+   @Override @Deprecated
+   public SearchFactoryIntegrator getSearchFactory() {
       return searchFactory;
    }
 
@@ -121,6 +122,21 @@ public class SearchManagerImpl implements SearchManagerImplementor {
    public MassIndexer getMassIndexer() {
       // TODO: Should a new instance be created every time?
       return new MapReduceMassIndexer(cache, searchFactory);
+   }
+
+   @Override
+   public Analyzer getAnalyzer(String name) {
+      return searchFactory.getAnalyzer(name);
+   }
+
+   @Override
+   public Statistics getStatistics() {
+      return searchFactory.getStatistics();
+   }
+
+   @Override
+   public Analyzer getAnalyzer(Class<?> clazz) {
+      return searchFactory.getAnalyzer(clazz);
    }
 
 }

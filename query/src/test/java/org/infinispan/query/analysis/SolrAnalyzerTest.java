@@ -81,47 +81,47 @@ public class SolrAnalyzerTest extends SingleCacheManagerTest {
    public void testAnalyzers() throws Exception {
       SearchManager search = Search.getSearchManager(cache);
 
-      Analyzer analyzer = search.getSearchFactory().getAnalyzer( "standard_analyzer" );
+      Analyzer analyzer = search.getAnalyzer( "standard_analyzer" );
       String text = "This is just FOOBAR's";
       Token[] tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "This", "is", "just", "FOOBAR's" } );
 
-      analyzer = search.getSearchFactory().getAnalyzer( "html_standard_analyzer" );
+      analyzer = search.getAnalyzer( "html_standard_analyzer" );
       text = "This is <b>foo</b><i>bar's</i>";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "This", "is", "foobar's" } );
 
-      analyzer = search.getSearchFactory().getAnalyzer( "html_whitespace_analyzer" );
+      analyzer = search.getAnalyzer( "html_whitespace_analyzer" );
       text = "This is <b>foo</b><i>bar's</i>";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "This", "is", "foobar's" } );
 
-      analyzer = search.getSearchFactory().getAnalyzer( "length_analyzer" );
+      analyzer = search.getAnalyzer( "length_analyzer" );
       text = "ab abc abcd abcde abcdef";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "abc", "abcd", "abcde" } );
 
-      analyzer = search.getSearchFactory().getAnalyzer( "length_analyzer" );
+      analyzer = search.getAnalyzer( "length_analyzer" );
       text = "ab abc abcd abcde abcdef";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "abc", "abcd", "abcde" } );
 
-      analyzer = search.getSearchFactory().getAnalyzer( "porter_analyzer" );
+      analyzer = search.getAnalyzer( "porter_analyzer" );
       text = "bikes bikes biking";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "bike", "bike", "bike" } );
 
-      analyzer = search.getSearchFactory().getAnalyzer( "word_analyzer" );
+      analyzer = search.getAnalyzer( "word_analyzer" );
       text = "CamelCase";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "Camel", "Case" } );
 
-      analyzer = search.getSearchFactory().getAnalyzer( "synonym_analyzer" );
+      analyzer = search.getAnalyzer( "synonym_analyzer" );
       text = "ipod cosmos";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "ipod", "i-pod", "universe", "cosmos" } );
 
-      analyzer = search.getSearchFactory().getAnalyzer( "shingle_analyzer" );
+      analyzer = search.getAnalyzer( "shingle_analyzer" );
       text = "please divide this sentence into shingles";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual(
@@ -141,13 +141,13 @@ public class SolrAnalyzerTest extends SingleCacheManagerTest {
             }
       );
 
-      analyzer = search.getSearchFactory().getAnalyzer( "pattern_analyzer" );
+      analyzer = search.getAnalyzer( "pattern_analyzer" );
       text = "foo,bar";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "foo", "bar" } );
 
       // CharStreamFactories test
-      analyzer = search.getSearchFactory().getAnalyzer( "mapping_char_analyzer" );
+      analyzer = search.getAnalyzer( "mapping_char_analyzer" );
       text = "CORA\u00C7\u00C3O DE MEL\u00C3O";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
       assertTokensEqual( tokens, new String[] { "CORACAO", "DE", "MELAO" } );

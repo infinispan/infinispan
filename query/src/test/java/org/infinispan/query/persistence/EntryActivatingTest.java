@@ -79,7 +79,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       verifyFullTextHasMatches(1);
 
       cache.stop();
-      assert ((SearchFactoryIntegrator)search.getSearchFactory()).isStopped();
+      assert search.getSearchFactory().isStopped();
       TestingUtil.killCacheManagers(cm);
 
       // Now let's check the entry is not re-indexed during data preloading:
