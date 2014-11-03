@@ -13,7 +13,7 @@ Use the newproject-archetype project.  The simple command below will get you sta
 $ mvn archetype:generate \
     -DarchetypeGroupId=org.infinispan.archetypes \
     -DarchetypeArtifactId=newproject-archetype \
-    -DarchetypeVersion=1.0.13 \
+    -DarchetypeVersion=1.0.14 \
     -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
 
 ----
@@ -21,13 +21,13 @@ $ mvn archetype:generate \
 You will be prompted for a few things, including the _artifactId_ , _groupId_ and _version_ of your new project.  And that's it - you're ready to go! 
 
 ==== Playing with your new project
-The skeleton project ships with a sample application class, interacting with Infinispan.  You should open this new project in your IDE - most good IDEs such as IntelliJ and Eclipse allow you to import Maven projects, see link:$$http://www.jetbrains.com/idea/webhelp/importing-maven-project.html$$[this guide] and link:$$http://m2eclipse.sonatype.org/$$[this guide] .  Once you open your project in your IDE, you should examine the generated classes and read through the comments. 
+The skeleton project ships with a sample application class, interacting with Infinispan.  You should open this new project in your IDE - most good IDEs such as IntelliJ and Eclipse allow you to import Maven projects, see link:$$https://www.jetbrains.com/idea/webhelp/importing-project-from-maven-model.html$$[this guide] and link:$$http://m2eclipse.sonatype.org/$$[this guide] .  Once you open your project in your IDE, you should examine the generated classes and read through the comments.
 
 ==== On the command line...
 Try running 
 
 ----
-$ mvn install -Prun
+$ mvn install -Prun verify
 ----
 
 in your newly generated project!  This runs the main() method in the generated application class.
@@ -40,7 +40,7 @@ Use
 $ mvn archetype:generate \
     -DarchetypeGroupId=org.infinispan.archetypes \
     -DarchetypeArtifactId=testcase-archetype \
-    -DarchetypeVersion=1.0.13 \
+    -DarchetypeVersion=1.0.14 \
     -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
 ----
 

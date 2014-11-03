@@ -2,72 +2,54 @@
 This article shows how to use Infinispan with link:$$http://www.scala-lang.org/$$[Scala language] . It uses the same commands and configurations used in the <<_example_with_groovy, Example with Groovy>>. For more details about the scenarios and steps please visit about page since here will will only focus on Scala compatibility. 
 
 === Environment
-Preparing the environment is almost similar to one described here, but with a minor difference that unlike Groovy which uses _$$~/.groovy/lib$$_ folder to extend initial classpath, we will use classic _CLASSPATH_ environment variable with Scala. Another issue is that with the recent edition of Infinispan core jar file is in the root folder of $INIFINISPAN_HOME, hence here a sample bash script to prepare CLASSPATH for our demo: 
-
+Running the shell
 
 ----
-export INFINISPAN_HOME=~/build/infinispan/infinispan-4.2.1.CR1
-for j in $INFINISPAN_HOME/lib/*.jar; do CLASSPATH=$CLASSPATH:$j; done
-export CLASSPATH=$CLASSPATH:$INFINISPAN_HOME/infinispan-core.jar
-export CLASSPATH=$CLASSPATH:[Path to folder containing sample-configurations.xml file]
+ $ scala -cp infinispan-embedded-7.0.0.Final.jar:lib/jboss-transaction-api_1.1_spec-1.0.1.Final.jar:sample-configurations.xml
 ----
+
+where infinispan-embedded-7.0.0.Final.jar, jboss-transaction-api_1.1_spec-1.0.1.Final.jar are shipped with the infinispan zip.
 
 .sample-configurations.xml
 [source,xml]
 ----
 <?xml version="1.0" encoding="UTF-8"?>
 
-<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="urn:infinispan:config:4.0">
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:7.0 http://infinispan.org/schemas/infinispan-config-7.0.xsd"
+        xmlns="urn:infinispan:config:7.0">
 
-   <!-- *************************** -->
-   <!-- System-wide global settings -->
-   <!-- *************************** -->
+   <jgroups>
+      <stack-file name="tcpStack" path="default-configs/default-jgroups-tcp.xml"/>
+   </jgroups>
 
-	<global>
-   		<shutdown hookBehavior="DEFAULT"/>
-	</global>
+   <cache-container default-cache="default">
+      <transport stack="tcpStack" cluster="sampleCluster"/>
+      <local-cache name="LocalTX">
+         <transaction transaction-manager-lookup="org.infinispan.transaction.lookup.DummyTransactionManagerLookup" />
+      </local-cache>
+      <local-cache name="CacheStore">
+         <persistence>
+            <file-store path="${java.io.tmpdir}" shared="false" preload="false" />
+         </persistence>
+      </local-cache>
+      <local-cache name="Eviction">
+         <eviction max-entries="2" strategy="FIFO" />
+         <expiration interval="500" />
+      </local-cache>
+      <local-cache name="CacheStoreEviction">
+         <eviction max-entries="2" strategy="FIFO" />
+         <expiration interval="500" />
+         <persistence>
+            <file-store path="${java.io.tmpdir}" shared="false" preload="false" purge="false" fetch-state="true" />
+         </persistence>
+      </local-cache>
+      <replicated-cache name="ReplicatedTX" mode="SYNC" remote-timeout="20000">
+         <state-transfer timeout="20000" />
+      </replicated-cache>
+   </cache-container>
 
-   <!-- ************************************** -->
-   <!-- Individually configured "named" caches -->
-   <!-- ************************************** -->
-
-	<namedCache name="Local"/>
-	
-   	<namedCache name="LocalTX">
-		<transaction transactionManagerLookupClass="org.infinispan.transaction.lookup.DummyTransactionManagerLookup"/>
-	</namedCache>
-	
-	<namedCache name="CacheStore">
-		<loaders passivation="false" shared="false" preload="true">
-		   <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
-		           ignoreModifications="false" purgeOnStartup="false">
-		      <properties>
-		         <property name="location" value="/tmp"/>
-		      </properties>
-		   </loader>
-		</loaders>
-   	</namedCache>
-
-   <namedCache name="Eviction">
-      <eviction wakeUpInterval="500" maxEntries="2" strategy="FIFO"/>
-   </namedCache>
-   <namedCache name="CacheStoreEviction">
-		<loaders passivation="false" shared="false" preload="true">
-		   <loader class="org.infinispan.loaders.file.FileCacheStore" fetchPersistentState="true"
-		           ignoreModifications="false" purgeOnStartup="false">
-		      <properties>
-		         <property name="location" value="/tmp"/>
-		      </properties>
-		   </loader>
-		</loaders>
-      <eviction wakeUpInterval="500" maxEntries="2" strategy="FIFO"/>
-   </namedCache>
-   <namedCache name="ReplicatedTX">
-  	  <clustering mode="replication">
-         <sync replTimeout="20000"/>
-         <stateRetrieval timeout="20000" fetchInMemoryState="true"/>
-      </clustering>
-   </namedCache>
 </infinispan>
 ----
 
@@ -77,16 +59,16 @@ The following code shows how to start an Scala console that will allow commands 
 
 
 ----
-[z@dnb:~/Go/demos/interactive-infinispan-scala]% ./scala
-Welcome to Scala version 2.8.1.final (Java HotSpot(TM) 64-Bit Server VM, Java 1.6.0_22).
+ $ scala -cp infinispan-embedded-7.0.0.Final.jar:lib/jboss-transaction-api_1.1_spec-1.0.1.Final.jar:sample-configuration.xml
+Welcome to Scala version 2.11.1 (Java HotSpot(TM) 64-Bit Server VM, Java 1.7.0_60).
 Type in expressions to have them evaluated.
 Type :help for more information.
 
 scala> import org.infinispan._
 import org.infinispan._
 
-scala> println(Version.version)
-4.2.1.CR1
+scala> println(Version.VERSION)
+7.0.0.Final
 
 
 ----
@@ -136,7 +118,7 @@ In this section, several basic operations will be executed against the cache tha
 scala> val localCache = manager.getCache[String, String]("Local")
 localCache: org.infinispan.Cache[String,String] = Cache 'Local'@420875876
 
-scala> localCache.size()
+scala> localCache.size
 res0: Int = 0
 
 scala> localCache.put("aKey", "aValue")
@@ -144,7 +126,7 @@ res1: String = null
 // This null was returned by put() indicating that 
 // the key was not associated with any previous value.
 
-scala> localCache.size()
+scala> localCache.size
 res2: Int = 1
 
 scala> localCache.containsKey("aKey")
@@ -153,13 +135,13 @@ res3: Boolean = true
 scala> localCache.get("aKey")
 res4: String = aValue
 
-scala> localCache.size()
+scala> localCache.size
 res5: Int = 1
 
 scala> localCache.remove("aKey")
 res6: String = aValue
 
-scala> localCache.isEmpty()
+scala> localCache.isEmpty
 res7: Boolean = true
 ----
 
@@ -178,13 +160,13 @@ import java.util.concurrent.TimeUnit
 scala> localCache.put("timedKey", "timedValue", 1000, TimeUnit.MILLISECONDS)
 res9: String = null
 
-scala> localCache.size()
+scala> localCache.size
 res10: Int = 2
 
 scala> localCache.get("timedKey")
 res11: String = null
 
-scala> localCache.size()
+scala> localCache.size
 res12: Int = 1
 ----
 
@@ -194,14 +176,14 @@ When caches are local and not configured with a persistent store, restarting the
 
 
 ----
-scala> localCache.size()
+scala> localCache.size
 res13: Int = 1
 
-scala> localCache.stop()
+scala> localCache.stop
 
-scala> localCache.start()
+scala> localCache.start
 
-scala> localCache.size()
+scala> localCache.size
 res16: Int = 0
 ----
 
@@ -220,37 +202,37 @@ localTxCache: org.infinispan.Cache[String,String] = Cache 'LocalTX'@955386212
 scala> val tm = localTxCache.getAdvancedCache().getTransactionManager()
 tm: javax.transaction.TransactionManager = org.infinispan.transaction.tm.DummyTransactionManager@81ee8c1
 
-scala> tm.begin()
+scala> tm.begin
 
 scala> localTxCache.put("key1", "value1")
 res1: String = null
 
-scala> localTxCache.size()
+scala> localTxCache.size
 res2: Int = 1
 
-scala> tm.suspend()
+scala> val tx = tm.suspend
 res3: javax.transaction.Transaction = DummyTransaction{xid=DummyXid{id=1}, status=0}
 
-scala> localTxCache.size()
+scala> localTxCache.size
 res4: Int = 0
 
 scala> localTxCache.get("key1")
 res5: String = null
 
-scala> tm.resume(res3)
+scala> tm.resume(tx)
 
 scala> localTxCache.size()
 res7: Int = 1
 
-scala> localTxCache.get("key1")
+scala> localTxCache get "key1"
 res8: String = value1
 
-scala> tm.commit()
+scala> tm.commit
 
-scala> localTxCache.size()
+scala> localTxCache.size
 res10: Int = 1
 
-scala> localTxCache.get("key1")
+scala> localTxCache get "key1"
 res11: String = value1
 
 ----
@@ -272,18 +254,18 @@ res21: String = null
 scala> localCache.put("storedKey", "storedValue")
 res22: String = null
 
-scala> cacheWithStore.stop()
+scala> cacheWithStore.stop
 
-scala> localCache.stop()
+scala> localCache.stop
 
-scala> cacheWithStore.start()
+scala> cacheWithStore.start
 
-scala> localCache.start()
+scala> localCache.start
 
 scala> localCache.get("storedKey")
 res27: String = null
 
-scala> cacheWithStore.size()
+scala> cacheWithStore.size
 res28: Int = 1
 
 scala> cacheWithStore.get("storedKey")

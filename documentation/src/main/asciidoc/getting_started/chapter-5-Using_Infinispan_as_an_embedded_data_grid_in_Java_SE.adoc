@@ -25,9 +25,7 @@ same local machine.
 The quickstart follows the same structure as the embedded-cache quickstart, using Maven to compile the project, and a
 main method to launch the node.
 
-If you are following along with the quickstarts, you can try the examples out. First, compile the project:
-
- $ mvn clean compile dependency:copy-dependencies -DstripVersion
+If you are following along with the quickstarts, you can try the examples out.
 
 The quickstart defines two clustered caches, one in _replication mode_ and one _distribution mode_.
 
@@ -35,11 +33,11 @@ The quickstart defines two clustered caches, one in _replication mode_ and one _
 To run the example in replication mode, we need to launch two nodes from different consoles.
 For the first node:
 
- $ java -cp target/classes/:target/dependency/* -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 org.infinispan.quickstart.clusteredcache.Node A
+ $ mvn exec:java -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Dexec.mainClass="org.infinispan.quickstart.clusteredcache.Node" -Dexec.args="A"
 
 And for the second node:
 
- $ java -cp target/classes/:target/dependency/* -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 org.infinispan.quickstart.clusteredcache.Node B
+ $ mvn exec:java -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -Dexec.mainClass="org.infinispan.quickstart.clusteredcache.Node" -Dexec.args="B"
 
 Note: You need to set `-Djava.net.preferIPv4Stack=true` because the JGroups configuration uses IPv4 multicast address.
 Normally you should not need `-Djgroups.bind_addr=127.0.0.1`, but many wireless routers do not relay IP multicast by default.
@@ -51,15 +49,15 @@ To run the example in distribution mode and see how entries are replicated to on
 nodes from different consoles.
 For the first node:
 
- $ java -cp target/classes/:target/dependency/* -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 org.infinispan.quickstart.clusteredcache.Node -d A
+ $ mvn compile exec:java -Djava.net.preferIPv4Stack=true  -Dexec.mainClass="org.infinispan.quickstart.clusteredcache.Node" -Dexec.args="-d A"
 
 For the second node:
 
- $ java -cp target/classes/:target/dependency/* -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 org.infinispan.quickstart.clusteredcache.Node -d B
+ $ mvn compile exec:java -Djava.net.preferIPv4Stack=true  -Dexec.mainClass="org.infinispan.quickstart.clusteredcache.Node" -Dexec.args="-d B"
 
 And for the third node:
 
- $ java -cp target/classes/:target/dependency/* -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 org.infinispan.quickstart.clusteredcache.Node -d C
+ $ mvn compile exec:java -Djava.net.preferIPv4Stack=true  -Dexec.mainClass="org.infinispan.quickstart.clusteredcache.Node" -Dexec.args="-d C"
 
 The same as in replication mode, each node will insert or update an entry every second, and it will log any changes.
 But unlike in replication mode, not every node will see every modification.
