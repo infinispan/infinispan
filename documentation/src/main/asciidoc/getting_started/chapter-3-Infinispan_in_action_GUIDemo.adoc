@@ -1,4 +1,4 @@
 ==  Infinispan in action - GUIDemo
 
-TODO
+See link:getting_started.html#_infinispan_gui_demo[GUI Demo]
 
