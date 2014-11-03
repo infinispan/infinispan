@@ -23,14 +23,15 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
-import org.infinispan.statetransfer.OutdatedTopologyException;
-import org.infinispan.statetransfer.StateTransferLock;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.statetransfer.StateRequestCommand;
+import org.infinispan.statetransfer.StateTransferLock;
+import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
 import org.infinispan.transaction.totalorder.TotalOrderLatch;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
@@ -164,12 +165,19 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
          final int commandTopologyId = extractCommandTopologyId(cmd);
          // Always wait for the first topology (i.e. for the join to finish)
          final int waitTopologyId = Math.max(commandTopologyId, 0);
+         // For regular topology-affected commands, we need to wait for the transaction data.
+         // For StateRequestCommands, that would lead to a deadlock, instead we only wait for the topology.
+         final boolean waitForTransactionData = !(cmd instanceof StateRequestCommand);
 
          if (!preserveOrder && cmd.canBlock()) {
             remoteCommandsExecutor.execute(new BlockingRunnable() {
                @Override
                public boolean isReady() {
-                  return stateTransferLock.transactionDataReceived(waitTopologyId);
+                  if (waitForTransactionData) {
+                     return stateTransferLock.transactionDataReceived(waitTopologyId);
+                  } else {
+                     return stateTransferLock.topologyReceived(waitTopologyId);
+                  }
                }
 
                @Override
@@ -192,9 +200,13 @@ public class InboundInvocationHandlerImpl implements InboundInvocationHandler {
                }
             });
          } else {
-            // Non-OOB commands. We still have to wait for transaction data, but we should "never" time out
-            // In non-transactional caches, this just waits for the topology to be installed
-            stateTransferLock.waitForTransactionData(waitTopologyId, 1, TimeUnit.DAYS);
+            if (waitForTransactionData) {
+               // Non-OOB commands. We still have to wait for transaction data, but we should "never" time out
+               // In non-transactional caches, this just waits for the topology to be installed
+               stateTransferLock.waitForTransactionData(waitTopologyId, 1, TimeUnit.DAYS);
+            } else {
+               stateTransferLock.waitForTopology(waitTopologyId, 1, TimeUnit.DAYS);
+            }
 
             if (0 <= commandTopologyId && commandTopologyId < stm.getFirstTopologyAsMember()) {
                if (trace) log.tracef("Ignoring command sent before the local node was a member " +
