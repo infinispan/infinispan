@@ -263,13 +263,13 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * Retrieves the configuration currently in use. The configuration object is immutable. If you wish to change configuration,
     * you should use the following pattern:
     *
-    * <code>
+    * <pre><code>
     * ConfigurationBuilder builder = new ConfigurationBuilder();
     * builder.read(remoteCacheManager.getConfiguration());
     * // modify builder
     * remoteCacheManager.stop();
     * remoteCacheManager = new RemoteCacheManager(builder.build());
-    * </code>
+    * </code></pre>
     *
     * @since 5.3
     * @return The configuration of this RemoteCacheManager
@@ -283,12 +283,13 @@ public class RemoteCacheManager implements BasicCacheContainer {
     * retrieved will not affect an already-running RemoteCacheManager.  If you wish to make changes to an already-running
     * RemoteCacheManager, you should use the following pattern:
     *
-    * <code>
+    * <pre><code>
     * Properties p = remoteCacheManager.getProperties();
     * // update properties
     * remoteCacheManager.stop();
     * remoteCacheManager = new RemoteCacheManager(p);
-    * </code>
+    * </code></pre>
+    *
     * @return a clone of the properties used to configure this RemoteCacheManager
     * @since 4.2
     */

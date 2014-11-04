@@ -9,8 +9,8 @@ import org.infinispan.remoting.transport.Address;
  * <p/>
  * Sample usage:
  * <p/>
- * <code>
- *    Cache&gt;String,Long&lt; cache = getDistributedCache();
+ * <pre><code>
+ *    Cache&lt;String, Long&gt; cache = getDistributedCache();
  *    KeyAffinityService&lt;String&gt; service = KeyAffinityServiceFactory.newKeyAffinityService(cache, 100);
  *    ...
  *    String sessionId = sessionObject.getId();
@@ -18,7 +18,7 @@ import org.infinispan.remoting.transport.Address;
  *
  *    //this will reside on the same node in the cluster
  *    cache.put(newCollocatedSession, someInfo);
- * </code>
+ * </code></pre>
  * <p/>
  * Uniqueness: the service does not guarantee that the generated keys are unique. It relies on an
  * {@link org.infinispan.affinity.KeyGenerator} for obtaining and distributing the generated keys. If key uniqueness is
