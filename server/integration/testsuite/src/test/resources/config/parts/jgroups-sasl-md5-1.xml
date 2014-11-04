@@ -1,0 +1,3 @@
+                <sasl security-realm="ApplicationRealm" mech="DIGEST-MD5">
+                   <property name="client_password">192f232a72633ebb5ce2156fa787417d</property>
+                </sasl> 
