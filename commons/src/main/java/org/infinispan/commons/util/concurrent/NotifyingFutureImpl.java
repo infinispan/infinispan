@@ -10,8 +10,12 @@ import java.util.concurrent.TimeUnit;
  * <p/>
  * Typical usage:
  * <p/>
- * <code> Object retval = .... // do some work here NotifyingFuture nf = new NotifyingFutureImpl();
- * rpcManager.broadcastRpcCommandInFuture(nf, command); return nf; </code>
+ * <pre><code>
+ * Object retval = ... // do some work here
+ * NotifyingFuture nf = new NotifyingFutureImpl();
+ * rpcManager.broadcastRpcCommandInFuture(nf, command);
+ * return nf;
+ * </code></pre>
  *
  * @author Manik Surtani
  * @since 4.0

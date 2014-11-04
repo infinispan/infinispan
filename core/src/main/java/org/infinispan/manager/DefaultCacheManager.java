@@ -92,7 +92,7 @@ import org.infinispan.util.logging.LogFactory;
  * within its scope are properly stopped as well.
  * <p/>
  * Sample usage:
- * <code>
+ * <pre><code>
  *    CacheManager manager = CacheManager.getInstance("my-config-file.xml");
  *    Cache&lt;String, Person&gt; entityCache = manager.getCache("myEntityCache");
  *    entityCache.put("aPerson", new Person());
@@ -101,7 +101,7 @@ import org.infinispan.util.logging.LogFactory;
  *    confBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
  *    manager.defineConfiguration("myReplicatedCache", confBuilder.build());
  *    Cache&lt;String, String&gt; replicatedCache = manager.getCache("myReplicatedCache");
- * </code>
+ * </code></pre>
  *
  * @author Manik Surtani
  * @author Galder Zamarreño
