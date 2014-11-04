@@ -282,6 +282,59 @@
          </cache-container>
       </replacement>
    </supplement>
+   <supplement name="indexing">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
+      <replacement placeholder="CACHE-CONTAINERS">
+         <cache-container name="clustered" default-cache="default" statistics="true">
+            <transport executor="infinispan-transport" lock-timeout="60000" cluster="LON" stack="udp"/>
+            <distributed-cache name="default" mode="SYNC" start="EAGER"/>
+            <!-- Indexes are local to each node, stored on the filesystem -->
+            <replicated-cache name="OnDiskNonSharedIndex" mode="SYNC" start="EAGER">
+               <indexing index="ALL">
+                  <property name="default.indexmanager">near-real-time</property>
+                  <property name="default.indexBase">${java.io.tmpdir}/OnDiskNonSharedIndex</property>
+               </indexing>
+            </replicated-cache>
+            <!-- Indexes are local to each node, stored in memory -->
+            <replicated-cache name="InMemoryNonSharedIndex" mode="SYNC" start="EAGER">
+               <indexing index="ALL">
+                  <property name="default.directory_provider">ram</property>
+               </indexing>
+            </replicated-cache>
+            <!-- Indexes are local to each node, stored on infinispan itself on configured caches -->
+            <replicated-cache name="InfinispanCustomNonSharedIndex" mode="SYNC" start="EAGER">
+               <indexing index="ALL">
+                  <property name="default.directory_provider">infinispan</property>
+                  <property name="default.metadata_cachename">indexMetadata</property>
+                  <property name="default.data_cachename">indexData</property>
+                  <property name="default.locking_cachename">indexLocking</property>
+               </indexing>
+            </replicated-cache>
+            <local-cache name="indexMetadata" start="EAGER">
+               <indexing index="NONE"/>
+            </local-cache>
+            <local-cache name="indexData" start="EAGER">
+               <indexing index="NONE"/>
+            </local-cache>
+            <local-cache name="indexLocking" start="EAGER">
+               <indexing index="NONE"/>
+            </local-cache>
+            <!-- Indexes are shared between all nodes, stored on infinispan itself -->
+            <distributed-cache name="InfinispanSharedIndex" mode="SYNC" start="EAGER">
+               <indexing index="LOCAL">
+                  <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
+               </indexing>
+            </distributed-cache>
+            <!-- Auto config based on cache type -->
+            <distributed-cache name="sharedIndexInfinispanDirectory" mode="SYNC" start="EAGER">
+               <indexing index="LOCAL" auto-config="true"/>
+            </distributed-cache>
+            <replicated-cache name="nearRealtimeFileSystemIndex" mode="SYNC" start="EAGER">
+               <indexing index="ALL" auto-config="true"/>
+            </replicated-cache>
+         </cache-container>
+      </replacement>
+   </supplement>
    <outbound-socket-binding name="remote-store-hotrod-server">
       <remote-destination host="remote-host" port="11222" />
    </outbound-socket-binding>

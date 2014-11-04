@@ -66,6 +66,10 @@
            paramOutputFile="${generated.configs.examples}/standalone-leveldb-cs-local.xml"/>
         <generate-server-config
            paramTemplateFile="configuration/standalone/template.xml"
+           paramSubsystemsFile="configuration/examples/subsystems-indexing.xml"
+           paramOutputFile="${generated.configs.examples}/clustered-indexing.xml"/>
+        <generate-server-config
+           paramTemplateFile="configuration/standalone/template.xml"
            paramSubsystemsFile="configuration/examples/subsystems-jdbc-clustered.xml"
            paramOutputFile="${generated.configs.examples}/clustered-jdbc.xml"/>
         <generate-server-config
