@@ -1,7 +1,6 @@
 package org.infinispan.commons.util;
 
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * A collection that defines an iterator method that returns a {@link CloseableIterator}
