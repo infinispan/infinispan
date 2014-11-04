@@ -318,6 +318,22 @@
                    addConnection="${other.parts}/ldap-connection.xml"
                    addKrbOpts="${other.parts}/kerberos-properties.xml"
                    addKrbSecDomain="${other.parts}/kerberos-security-domain.xml"/>    	
+        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-0.xml"  
+    	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
+    	           addJGroupsSasl="${other.parts}/jgroups-sasl-md5-0.xml" />
+        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-1.xml"  
+    	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
+    	           addJGroupsSasl="${other.parts}/jgroups-sasl-md5-1.xml" />
+        <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-0.xml"  
+                   modifyInfinispan="${infinispan.parts}/default-repl.xml"
+        	   addJGroupsSasl="${other.parts}/jgroups-sasl-krb-0.xml"
+    	           addKrbOpts="${other.parts}/kerberos-properties.xml"
+    	           addKrbSecDomain="${other.parts}/kerberos-sec-domain-node0.xml" />
+    	<transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-1.xml"  
+    	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
+    		   addJGroupsSasl="${other.parts}/jgroups-sasl-krb-1.xml"		
+    	           addKrbOpts="${other.parts}/kerberos-properties.xml"
+    	           addKrbSecDomain="${other.parts}/kerberos-sec-domain-node1.xml" />
     </target>
 
     <macrodef name="transform">
@@ -341,6 +357,7 @@
         <attribute name="infinispanFile" default="false"/>
         <attribute name="filtering" default="false"/>
         <attribute name="addEncrypt" default="false"/>
+    	<attribute name="addJGroupsSasl" default="false"/>
         <attribute name="hotrodAuth" default="false"/>
     	<attribute name="hotrodEncrypt" default="false"/>
     	<attribute name="addKrbOpts" default="false"/>
@@ -358,6 +375,7 @@
                 <param name="modifyStack" expression="@{modifyStack}"/>
                 <param name="modifyRelay" expression="@{modifyRelay}"/>
                 <param name="addEncrypt" expression="@{addEncrypt}"/>
+            	<param name="addJGroupsSasl" expression="@{addJGroupsSasl}"/>
                 <param name="hotrodAuth" expression="@{hotrodAuth}"/>
             	<param name="hotrodEncrypt" expression="@{hotrodEncrypt}"/>
             	<param name="addKrbOpts" expression="@{addKrbOpts}"/>

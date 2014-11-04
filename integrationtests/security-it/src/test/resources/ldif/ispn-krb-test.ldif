@@ -126,9 +126,9 @@ objectClass: person
 objectClass: inetOrgPerson
 objectClass: krb5principal
 objectClass: krb5kdcentry
-cn: ISPN hotrod client
-sn: hotrod
-uid: hotrod
+cn: ISPN hotrod service
+sn: hotrod service
+uid: hotrod service
 userPassword: hotrodPassword
 krb5PrincipalName: hotrod/node0@INFINISPAN.ORG
 krb5KeyVersionNumber: 0

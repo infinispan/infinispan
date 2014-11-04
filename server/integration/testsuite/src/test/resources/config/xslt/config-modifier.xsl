@@ -30,6 +30,7 @@
     <xsl:param name="infinispanFile">none</xsl:param>
     <xsl:param name="addAuth">false</xsl:param>
     <xsl:param name="addEncrypt">false</xsl:param>
+    <xsl:param name="addJGroupsSasl">false</xsl:param>
     <xsl:param name="hotrodAuth">false</xsl:param>
     <xsl:param name="hotrodEncrypt">false</xsl:param>
     <xsl:param name="addKrbOpts">false</xsl:param>
@@ -163,7 +164,19 @@
             <xsl:call-template name="copynode"/>
         </xsl:if>
     </xsl:template>
-
+    
+    <xsl:template match="//*[local-name()='subsystem' and starts-with(namespace-uri(), $nsJGroups)]//*[local-name()='stack']">
+        <xsl:if test="$addJGroupsSasl = 'false'">
+            <xsl:call-template name="copynode"/>
+        </xsl:if>
+        <xsl:if test="$addJGroupsSasl != 'false'">
+            <xsl:copy>
+               <xsl:apply-templates select="@* | node()" />
+               <xsl:copy-of select="document($addJGroupsSasl)"/>
+            </xsl:copy>
+        </xsl:if>
+    </xsl:template>
+    
     <xsl:template match="p:extensions">
         <xsl:if test="$addKrbOpts = 'false'">
             <xsl:call-template name="copynode"/>
