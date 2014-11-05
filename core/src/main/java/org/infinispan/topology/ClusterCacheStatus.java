@@ -645,7 +645,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       synchronized (this) {
          if (enabled) {
             log.debugf("Rebalancing is now enabled for cache %s", cacheName);
-            queueRebalance(expectedMembers);
+            startQueuedRebalance();
          } else {
             log.debugf("Rebalancing is now disabled for cache %s", cacheName);
          }
