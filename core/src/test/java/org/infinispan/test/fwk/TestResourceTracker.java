@@ -129,7 +129,7 @@ public class TestResourceTracker {
       return "testng-" + simpleName + (nextThreadIndex != 0 ? "-" + nextThreadIndex : "");
    }
 
-   private static String getNameForIndex(int i) {
+   public static String getNameForIndex(int i) {
       final int k = 'Z' - 'A' + 1;
       String c = String.valueOf((char) ('A' + i % k));
       int q = i / k;
