@@ -745,7 +745,7 @@ public class StateConsumerImpl implements StateConsumer {
             // get cluster listeners
             try {
                StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(StateRequestCommand.Type.GET_CACHE_LISTENERS,
-                                                                                  rpcManager.getAddress(), 0, null);
+                                                                                  rpcManager.getAddress(), topology.getTopologyId(), null);
                Map<Address, Response> responses = rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcOptions);
                Response response = responses.get(source);
                if (response instanceof SuccessfulResponse) {

@@ -1,5 +1,6 @@
 package org.infinispan.statetransfer;
 
+import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
@@ -15,7 +16,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 5.2
  */
-public class StateRequestCommand extends BaseRpcCommand {
+public class StateRequestCommand extends BaseRpcCommand implements TopologyAffectedCommand {
 
    private static final Log log = LogFactory.getLog(StateRequestCommand.class);
 
@@ -101,6 +102,11 @@ public class StateRequestCommand extends BaseRpcCommand {
 
    public int getTopologyId() {
       return topologyId;
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      // CacheRpcCommandExternalizer wants to read and write the topology id out of get/setParameters, ignore it
    }
 
    public Set<Integer> getSegments() {
