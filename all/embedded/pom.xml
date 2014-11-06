@@ -129,6 +129,14 @@
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                         </excludes>
                      </artifactSet>
+                     <filters>
+                        <filter>
+                           <artifact>org.infinispan:infinispan-cdi</artifact>
+                           <excludes>
+                              <exclude>META-INF/beans.xml</exclude>
+                           </excludes>
+                        </filter>
+                     </filters>
                      <createSourcesJar>true</createSourcesJar>
                      <relocations>
                         <relocation>
@@ -160,9 +168,6 @@
                            </resources>
                         </transformer>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.XmlAppendingTransformer">
-                           <resource>META-INF/beans.xml</resource>
-                        </transformer>
                      </transformers>
                   </configuration>
                </execution>
