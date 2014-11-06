@@ -128,7 +128,12 @@ public final class FilterAndConverter<K, V> extends AbstractKeyValueFilterConver
 
       @Override
       public void writeObject(ObjectOutput output, FilterResultImpl filterResult) throws IOException {
-         output.writeObject(filterResult.getInstance());  //todo [anistor] skip serializing the instance if there is a projection
+         if (filterResult.getProjection() != null) {
+            // skip serializing the instance if there is a projection
+            output.writeObject(null);
+         } else {
+            output.writeObject(filterResult.getInstance());
+         }
          output.writeObject(filterResult.getProjection());
          output.writeObject(filterResult.getSortProjection());
       }
