@@ -38,6 +38,9 @@
       <module dir="${output.dir}" target="modules/spring" module="spring" artifact="infinispan-spring" />
       <module dir="${output.dir}" target="modules/spring" module="spring4" artifact="infinispan-spring4" />
       <module dir="${output.dir}" target="modules/tree" module="tree" artifact="infinispan-tree" />
+      
+      <!-- CLI -->
+      <module dir="${output.dir}" target="modules/cli" module="cli/cli-client" artifact="infinispan-cli" dependencies="false"/>
 
       <!-- RHQ plugin -->
       <module dir="${output.dir}" target="rhq-plugin" module="rhq-plugin" artifact="infinispan-rhq-plugin" dependencies="false" />
@@ -177,10 +180,17 @@
                </fileset>
             </copy>
          </sequential>
+         <!-- Copy any executable scripts -->
+         <copy todir="@{dir}/bin" failonerror="false">
+            <fileset dir="${root.dir}/@{module}/src/main/release/bin">
+               <include name="**" />
+            </fileset>
+         </copy>
          <!-- Copy any collateral files -->
          <copy todir="@{dir}/@{target}" failonerror="false">
             <fileset dir="${root.dir}/@{module}/src/main/release">
                <include name="**" />
+               <exclude name="bin/**"/>
             </fileset>
          </copy>
          <fix-permissions dir="@{dir}/@{target}" />
