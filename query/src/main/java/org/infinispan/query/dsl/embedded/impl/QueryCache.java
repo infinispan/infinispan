@@ -29,7 +29,7 @@ public class QueryCache {
     * Users can define a cache configuration with this name if they need to fine tune query caching. If they do not do
     * so a default config is used (see {@link QueryCache#getDefaultQueryCacheConfig()}).
     */
-   public static final String QUERY_CACHE_NAME = "__query_cache__";
+   public static final String QUERY_CACHE_NAME = "___query_cache";
 
    /**
     * Max number of cached entries.
@@ -93,10 +93,8 @@ public class QueryCache {
       cfgBuilder
             .clustering().cacheMode(CacheMode.LOCAL)
             .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
-            .dataContainer().expiration()
-            .maxIdle(ENTRY_LIFESPAN, TimeUnit.SECONDS)
-            .dataContainer().eviction()
-            .maxEntries(MAX_ENTRIES)
+            .expiration().maxIdle(ENTRY_LIFESPAN, TimeUnit.SECONDS)
+            .eviction().maxEntries(MAX_ENTRIES)
             .strategy(EvictionStrategy.LIRS);
       return cfgBuilder;
    }
