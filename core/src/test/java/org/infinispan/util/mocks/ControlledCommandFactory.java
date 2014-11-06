@@ -35,6 +35,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.*;
+import org.infinispan.commons.CacheException;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
@@ -58,6 +59,7 @@ import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 
 import javax.transaction.xa.Xid;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -364,9 +366,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, C> EntryResponseCommand buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
-                                                                Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> values) {
-      return actual.buildEntryResponseCommand(identifier, completedSegments, inDoubtSegments, values);
+   public <K, C> EntryResponseCommand<K, C> buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
+                                                                Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> values,
+                                                                CacheException e) {
+      return actual.buildEntryResponseCommand(identifier, completedSegments, inDoubtSegments, values, e);
    }
 
    @Override

@@ -188,7 +188,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
 
             for (Map.Entry<UUID, IterationStatus<? extends Object>> details : iteratorDetails.entrySet()) {
                UUID identifier = details.getKey();
-               IterationStatus<? extends Object> status = details.getValue();
+               final IterationStatus<? extends Object> status = details.getValue();
                Set<Integer> remoteSegments = findMissingRemoteSegments(status.processedKeys, afterHash);
                if (!remoteSegments.isEmpty()) {
                   Map.Entry<Address, Set<Integer>> route = findOptimalRoute(remoteSegments, afterHash);
@@ -241,7 +241,12 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                   startRetrievingValuesLocal(identifier, processSegments, status, new SegmentBatchHandler<K, Object>() {
                      @Override
                      public void handleBatch(UUID identifier, boolean complete, Set<Integer> completedSegments, Set<Integer> inDoubtSegments, Collection<CacheEntry<K, Object>> entries) {
-                     processData(identifier, localAddress, completedSegments, inDoubtSegments, entries);
+                        processData(identifier, localAddress, completedSegments, inDoubtSegments, entries);
+                     }
+
+                     @Override
+                     public void handleException(CacheException e) {
+                        status.ongoingIterator.close(e);;
                      }
                   });
                }
@@ -296,7 +301,14 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
             }
 
             EntryResponseCommand<K, C> command = commandsFactory.buildEntryResponseCommand(identifier, completedSegments,
-                                                                                     inDoubtSegments, entries);
+                                                                                     inDoubtSegments, entries, null);
+            rpcManager.invokeRemotely(Collections.singleton(origin), command, rpcManager.getRpcOptionsBuilder(
+                  ResponseMode.SYNCHRONOUS).timeout(Long.MAX_VALUE, TimeUnit.SECONDS).build());
+         }
+
+         @Override
+         public void handleException(CacheException e) {
+            EntryResponseCommand<K, C> command = commandsFactory.buildEntryResponseCommand(identifier, null, null, null, e);
             rpcManager.invokeRemotely(Collections.singleton(origin), command, rpcManager.getRpcOptionsBuilder(
                   ResponseMode.SYNCHRONOUS).timeout(Long.MAX_VALUE, TimeUnit.SECONDS).build());
          }
@@ -432,8 +444,9 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                      if (log.isTraceEnabled()) {
                         log.tracef("Completed data iteration for request %s with segments %s", identifier, segmentsToUse);
                      }
-                  } catch (Throwable e) {
-                     log.exceptionProcessingEntryRetrievalValues(e);
+                  } catch (Throwable t) {
+                     CacheException e = log.exceptionProcessingEntryRetrievalValues(t);
+                     handler.handleException(e);
                   } finally {
                      changeListener.remove(identifier);
                   }
@@ -536,7 +549,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
          remoteSegments.add(i);
       }
 
-      IterationStatus<C> status = new IterationStatus<>(itr, listener, filter, usedConverter, flags, processedKeys);
+      final IterationStatus<C> status = new IterationStatus<>(itr, listener, filter, usedConverter, flags, processedKeys);
       iteratorDetails.put(identifier, status);
 
       Set<Integer> ourSegments = hash.getPrimarySegmentsForOwner(localAddress);
@@ -550,6 +563,11 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
             @Override
             public void handleBatch(UUID identifier, boolean complete, Set<Integer> completedSegments, Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> entries) {
                processData(identifier, localAddress, completedSegments, inDoubtSegments, entries);
+            }
+
+            @Override
+            public void handleException(CacheException e) {
+               status.ongoingIterator.close(e);
             }
          });
       }
@@ -812,14 +830,25 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
 
    @Override
    public <C> void receiveResponse(UUID identifier, Address origin, Set<Integer> completedSegments,
-                                   Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> entries) {
+                                   Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> entries, CacheException e) {
       if (log.isTraceEnabled()) {
          log.tracef("Processing response for identifier %s", identifier);
       }
-      try {
-         processData(identifier, origin, completedSegments, inDoubtSegments, entries);
-      } catch (Exception e) {
-         log.exceptionProcessingIteratorResponse(identifier, e);
+      
+      if (e != null) {
+         log.tracef("Response for identifier %s contained exception", identifier, e);
+      } else {
+         try {
+            processData(identifier, origin, completedSegments, inDoubtSegments, entries);
+         } catch (Throwable t) {
+            e = log.exceptionProcessingIteratorResponse(identifier, e);
+         }
+      }
+      if (e != null) {
+         IterationStatus<?> status = iteratorDetails.get(identifier);
+         if (status != null) {
+            status.ongoingIterator.close(e);
+         }
       }
    }
 
@@ -841,7 +870,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       if (status != null) {
          final AtomicReferenceArray<Set<K>> processedKeys = status.processedKeys;
 
-         DistributedItr<C> itr = status.ongoingIterator;
+         final DistributedItr<C> itr = status.ongoingIterator;
          if (log.isTraceEnabled()) {
             log.tracef("Processing data for identifier %s completedSegments: %s inDoubtSegments: %s entryCount: %s", identifier,
                        completedSegments, inDoubtSegments, entries.size());
@@ -969,6 +998,11 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                   @Override
                   public void handleBatch(UUID identifier, boolean complete, Set<Integer> completedSegments, Set<Integer> inDoubtSegments, Collection<CacheEntry<K, Object>> entries) {
                      processData(identifier, localAddress, completedSegments, inDoubtSegments, entries);
+                  }
+
+                  @Override
+                  public void handleException(CacheException e) {
+                     itr.close(e);
                   }
                });
             }
@@ -1130,9 +1164,11 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       }
    }
 
-   private interface SegmentBatchHandler<K, C> {
+   interface SegmentBatchHandler<K, C> {
       public void handleBatch(UUID identifier, boolean complete, Set<Integer> completedSegments,
                               Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> entries);
+      
+      public void handleException(CacheException e);
    }
 
    private static class SegmentFilter<K> implements KeyFilter<K> {

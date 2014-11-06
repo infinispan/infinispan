@@ -169,7 +169,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
 
    @Override
    public <C> void receiveResponse(UUID identifier, Address origin, Set<Integer> completedSegments, Set<Integer> inDoubtSegments,
-                                   Collection<CacheEntry<K, C>> entries) {
+                                   Collection<CacheEntry<K, C>> entries, CacheException e) {
       throw new UnsupportedOperationException();
    }
 
@@ -340,9 +340,9 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
 
                handler.handleBatch(true, queue);
                partitionListener.iterators.remove(iterator);
-            } catch (Throwable e) {
-               //todo [anistor] any exception happening during entry retrieval should stop the process and throw an exception to the requestor instead of timing out
-               log.exceptionProcessingEntryRetrievalValues(e);
+            } catch (Throwable t) {
+               CacheException e = log.exceptionProcessingEntryRetrievalValues(t);
+               iterator.close(e);
             }
          }
       });

@@ -2,13 +2,13 @@ package org.infinispan.iteration.impl;
 
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,6 +25,7 @@ public class EntryResponseCommand<K, C> extends BaseRpcCommand implements Topolo
    private Set<Integer> completedSegments;
    private Set<Integer> inDoubtSegments;
    private Collection<CacheEntry<K, C>> values;
+   private CacheException e;
    private int topologyId = -1;
    private Address origin;
 
@@ -40,13 +41,14 @@ public class EntryResponseCommand<K, C> extends BaseRpcCommand implements Topolo
    }
 
    public EntryResponseCommand(Address origin, String cacheName, UUID identifier, Set<Integer> completedSegments,
-                               Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> values) {
+                               Set<Integer> inDoubtSegments, Collection<CacheEntry<K, C>> values, CacheException e) {
       super(cacheName);
       this.origin = origin;
       this.identifier = identifier;
       this.completedSegments = completedSegments;
       this.inDoubtSegments = inDoubtSegments;
       this.values = values;
+      this.e = e;
 
    }
 
@@ -57,7 +59,7 @@ public class EntryResponseCommand<K, C> extends BaseRpcCommand implements Topolo
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      entryRetrieverManager.receiveResponse(identifier, origin, completedSegments, inDoubtSegments, values);
+      entryRetrieverManager.receiveResponse(identifier, origin, completedSegments, inDoubtSegments, values, e);
       return null;
    }
 
@@ -68,7 +70,7 @@ public class EntryResponseCommand<K, C> extends BaseRpcCommand implements Topolo
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{origin, identifier, completedSegments, inDoubtSegments, values, topologyId};
+      return new Object[]{origin, identifier, completedSegments, inDoubtSegments, values, e, topologyId};
    }
 
    @Override
@@ -79,6 +81,7 @@ public class EntryResponseCommand<K, C> extends BaseRpcCommand implements Topolo
       completedSegments = (Set<Integer>) parameters[i++];
       inDoubtSegments = (Set<Integer>) parameters[i++];
       values = (Collection<CacheEntry<K, C>>)parameters[i++];
+      e = (CacheException)parameters[i++];
       topologyId = (Integer) parameters[i++];
    }
 
