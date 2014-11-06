@@ -48,6 +48,7 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
@@ -617,11 +618,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, C> EntryResponseCommand buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
+   public <K, C> EntryResponseCommand<K, C> buildEntryResponseCommand(UUID identifier, Set<Integer> completedSegments,
                                                                 Set<Integer> inDoubtSegments,
-                                                                Collection<CacheEntry<K, C>> values) {
-      return new EntryResponseCommand(cache.getCacheManager().getAddress(), cacheName, identifier, completedSegments,
-                                      inDoubtSegments, values);
+                                                                Collection<CacheEntry<K, C>> values, CacheException e) {
+      return new EntryResponseCommand<>(cache.getCacheManager().getAddress(), cacheName, identifier, completedSegments,
+                                      inDoubtSegments, values, e);
    }
 
    @Override

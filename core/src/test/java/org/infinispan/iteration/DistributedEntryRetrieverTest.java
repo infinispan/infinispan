@@ -1,6 +1,7 @@
 package org.infinispan.iteration;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
@@ -384,7 +385,7 @@ public class DistributedEntryRetrieverTest extends BaseClusteredEntryRetrieverTe
             }
          }
       }).when(mockRetriever).receiveResponse(any(UUID.class), any(Address.class), anySetOf(Integer.class),
-                                             anySetOf(Integer.class), anyCollection());
+                                             anySetOf(Integer.class), anyCollection(), any(CacheException.class));
       TestingUtil.replaceComponent(cache, EntryRetriever.class, mockRetriever, true);
       return rpc;
    }
