@@ -116,17 +116,17 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    protected class PartitionListener {
       protected volatile AvailabilityMode currentMode = AvailabilityMode.AVAILABLE;
 
-      protected final Set<Itr<?, ?>> iterators = new ConcurrentHashSet<>();
+      protected final Set<Itr<?>> iterators = new ConcurrentHashSet<>();
 
       @PartitionStatusChanged
-      public void onPartitionChange(PartitionStatusChangedEvent event) {
+      public void onPartitionChange(PartitionStatusChangedEvent<K, V> event) {
          if (!event.isPre()) {
             currentMode = event.getAvailabilityMode();
             if (currentMode != AvailabilityMode.AVAILABLE) {
-               Iterator<Itr<?, ?>> itrIterator = iterators.iterator();
+               Iterator<Itr<?>> itrIterator = iterators.iterator();
                // Now we close all the iterators but with the exception so they throw it properly
                while (itrIterator.hasNext()) {
-                  Itr<?, ?> itr = itrIterator.next();
+                  Itr<?> itr = itrIterator.next();
                   itr.close(new AvailabilityException());
                   itrIterator.remove();
                }
@@ -183,7 +183,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       }
    }
 
-   protected class KeyValueActionForCacheLoaderTask<K, V> implements AdvancedCacheLoader.CacheLoaderTask<K, V> {
+   protected class KeyValueActionForCacheLoaderTask implements AdvancedCacheLoader.CacheLoaderTask<K, V> {
 
       private final ParallelIterableMap.KeyValueAction<? super K, ? super InternalCacheEntry<K, V>> action;
 
@@ -227,7 +227,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       return usedConverter;
    }
 
-   protected <C> void registerIterator(Itr<K, C> itr, Set<Flag> flags) {
+   protected <C> void registerIterator(Itr<C> itr, Set<Flag> flags) {
       // If we are running in local mode we ignore the partition status
       if (flags == null || !flags.contains(Flag.CACHE_MODE_LOCAL)) {
          // Note we have to register the iterator before we check the mode in case if it changes concurrently
@@ -246,7 +246,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                                                                  final SegmentListener listener) {
       final Converter<? super K, ? super V, ? extends C> usedConverter = checkForKeyValueFilterConverter(filter, converter);
       wireFilterAndConverterDependencies(filter, usedConverter);
-      final Itr<K, C> iterator = new Itr<K, C>(batchSize);
+      final Itr<C> iterator = new Itr<C>(batchSize);
       registerIterator(iterator, flags);
       final ItrQueuerHandler<C> handler = new ItrQueuerHandler<C>(iterator);
       executorService.submit(new Runnable() {
@@ -264,7 +264,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                };
                // Note we still use the batchSize here so that if we have a lot of values we return them as we see
                // them
-               MapAction<C> action = new MapAction(batchSize, usedConverter, queue, handler);
+               MapAction<C> action = new MapAction<>(batchSize, usedConverter, queue, handler);
 
                PassivationListener<K, V> listener = null;
                long currentTime = timeService.wallClockTime();
@@ -312,7 +312,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                                                                  new KeyValueFilterAsKeyFilter<K>(filter));
                      }
                      if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
-                        action = new MapAction(batchSize, (KeyValueFilterConverter) filter, queue, handler);
+                        action = new MapAction<>(batchSize, (KeyValueFilterConverter<K, V, C>) filter, queue, handler);
                      }
                      persistenceManager.processOnAllStores(withinThreadExecutor, loaderFilter,
                                                            new KeyValueActionForCacheLoaderTask(action), true, true);
@@ -326,7 +326,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                      for (K key : listener.activatedKeys) {
                         // If we didn't process it already we have to look it up
                         if (!processedKeys.contains(key)) {
-                           CacheEntry entry = advancedCache.getCacheEntry(key);
+                           CacheEntry<K, C> entry = (CacheEntry<K, C>) advancedCache.getCacheEntry(key);
                            if (entry != null) {
                               queue.add(entry);
                            }
@@ -394,9 +394,9 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    }
 
    protected class ItrQueuerHandler<C> implements BatchHandler<K, C> {
-      final Itr<K, C> iterator;
+      final Itr<C> iterator;
 
-      public ItrQueuerHandler(Itr<K, C> iterator) {
+      public ItrQueuerHandler(Itr<C> iterator) {
          this.iterator = iterator;
       }
 
@@ -409,7 +409,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       }
    }
 
-   class Itr<K, C> implements CloseableIterator<CacheEntry<K, C>> {
+   protected class Itr<C> implements CloseableIterator<CacheEntry<K, C>> {
 
       private final BlockingQueue<CacheEntry<K, C>> queue;
       private final Lock nextLock = new ReentrantLock();
