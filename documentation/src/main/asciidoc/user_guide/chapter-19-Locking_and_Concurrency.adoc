@@ -14,6 +14,44 @@ In particular, Infinispan's MVCC implementation is heavily optimized for readers
 
 Writers, on the other hand, need to acquire a write lock.  This ensures only one concurrent writer per entry, causing concurrent writers to queue up to change an entry.  To allow concurrent reads, writers make a copy of the entry they intend to modify, by wrapping the entry in an link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/container/entries/MVCCEntry.html$$[MVCCEntry] .  This copy isolates concurrent readers from seeing partially modified state.  Once a write has completed, MVCCEntry.commit() will flush changes to the data container and subsequent readers will see the changes written.
 
+==== How it works in clustered caches?
+
+In clustered caches, each key has a node responsible to lock the key. This node is called primary owner.
+
+===== Non Transactional caches
+
+. The write operation is sent to the primary owner of the key.
+. The primary owner tries to lock the key.
+.. If it succeeds, it forwards the operation to the other owners;
+.. Otherwise, an exception is thrown.
+
+NOTE: If the operation is conditional and it fails on the primary owner, it is not forwarded to the other owners.
+
+NOTE: If the operation is executed locally in the primary owner, the first step is skipped.
+
+===== Pessimistic transactional cache
+
+In pessimist transactional caches, the locks are acquired during write/lock operations.
+
+. A lock request is sent to the primary owner (can be an explicit lock request or an operation)
+. The primary owner tries to acquire the lock:
+.. If it succeed, it sends back a positive reply;
+.. Otherwise, a negative reply is sent and the transaction is rollback.
+
+NOTE: For conditional operations and write skew check (if enabled), the validation is performed in the originator.
+
+===== Optimistic transactional cache
+
+In optimistic transactional caches, the locks are acquired during transaction prepare time.
+
+. The prepare is sent to all the owners.
+. The primary owners try to acquire the locks needed:
+.. If locking succeeds, it performs the write skew check.
+.. If the write skew check succeeds (or is disabled), send a positive reply.
+.. Otherwise, a negative reply is sent and the transaction is rolled back.
+
+NOTE: For conditional commands, the validation still happens on the originator. In addition to that, the write skew check is done in the primary owner.
+
 ==== Isolation levels
 Infinispan offers two isolation levels - link:$$http://en.wikipedia.org/wiki/Isolation_level#READ_COMMITTED$$[READ_COMMITTED] (the default) and link:$$http://en.wikipedia.org/wiki/Isolation_level#REPEATABLE_READ$$[REPEATABLE_READ], configurable via the link:$$http://docs.jboss.org/infinispan/5.1/configdocs/urn_infinispan_config_5.1/complexType/configuration.locking.html$$[`<locking />`] configuration element.
 
