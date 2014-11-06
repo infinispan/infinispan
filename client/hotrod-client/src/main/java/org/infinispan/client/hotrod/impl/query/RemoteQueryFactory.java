@@ -26,8 +26,7 @@ public final class RemoteQueryFactory extends BaseQueryFactory<Query> {
       try {
          MarshallerRegistration.registerMarshallers(serializationContext);
       } catch (Exception e) {
-         //todo [anistor] need better exception handling
-         throw new HotRodClientException("Failed to initialise serialization context", e);
+         throw new HotRodClientException("Failed to initialise the Protobuf serialization context", e);
       }
    }
 

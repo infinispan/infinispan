@@ -1,10 +1,10 @@
 package org.infinispan.query.remote;
 
 import org.infinispan.protostream.BaseMarshaller;
-import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.config.Configuration;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.EnumDescriptor;
 import org.infinispan.protostream.descriptors.FileDescriptor;
@@ -14,6 +14,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * A wrapper around a real {@link SerializationContext} that intercepts calls to {@link
+ * SerializationContext#registerProtoFiles} and {@link SerializationContext#unregisterProtoFile} and instead of
+ * delegating the call it just updates the Protobuf metadata cache. The rest of the {@link SerializationContext} are
+ * delegated directly.
+ *
  * @author anistor@redhat.com
  * @since 7.0
  */
@@ -21,6 +26,9 @@ final class DelegatingSerializationContext implements SerializationContext {
 
    private final ProtobufMetadataManager protobufMetadataManager;
 
+   /**
+    * The wrapped serialization context.
+    */
    private final SerializationContext delegate;
 
    public DelegatingSerializationContext(ProtobufMetadataManager protobufMetadataManager) {
@@ -28,6 +36,9 @@ final class DelegatingSerializationContext implements SerializationContext {
       this.delegate = protobufMetadataManager.getSerializationContext();
    }
 
+   /**
+    * Return the real SerializationContext.
+    */
    public SerializationContext getDelegate() {
       return delegate;
    }
