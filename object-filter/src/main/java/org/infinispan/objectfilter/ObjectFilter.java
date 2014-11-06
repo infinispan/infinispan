@@ -48,7 +48,9 @@ public interface ObjectFilter {
    interface FilterResult {
 
       /**
-       * Returns the object being matched.
+       * Returns the object being matched. This is guaranteed to be non-null unless projections are present. If there is
+       * a projection then this field could be null in order to save network bandwidth. If the execution is local then
+       * it is guaranteed to be non-null.
        */
       Object getInstance();
 
