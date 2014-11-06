@@ -45,6 +45,11 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cli</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cachestore-rest</artifactId>
       </dependency>
 
@@ -130,6 +135,7 @@
                      <dependencySourceExcludes>
                         <dependencySourceExclude>org.fusesource.leveldbjni:*</dependencySourceExclude>
                         <dependencySourceExclude>antlr:antlr</dependencySourceExclude>
+                        <dependencySourceExclude>org.infinispan:infinispan-cli</dependencySourceExclude>
                      </dependencySourceExcludes>
                      <docfilessubdirs>true</docfilessubdirs>
                      <detectLinks>false</detectLinks>
