@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.query;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -38,6 +39,7 @@ public class RemoteQueryDslConditionsFilesystemTest extends RemoteQueryDslCondit
       return builder;
    }
 
+   @AfterClass(alwaysRun = true)
    @Override
    protected void destroy() {
       try {
