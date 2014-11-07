@@ -22,6 +22,7 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
  */
 public final class IndexingMapper implements Mapper<Object, Object, Object, LuceneWork> {
 
+   private final boolean flushPerNode;
    private AdvancedCache cache;
    private SearchFactoryIntegrator searchFactory;
    private QueryInterceptor queryInterceptor;
@@ -29,6 +30,10 @@ public final class IndexingMapper implements Mapper<Object, Object, Object, Luce
    private DefaultMassIndexerProgressMonitor progressMonitor;
    private DefaultBatchBackend defaultBatchBackend;
 
+   public IndexingMapper(boolean flushPerNode) {
+      this.flushPerNode = flushPerNode;
+   }
+   
    public void initialize(Cache inputCache) {
       this.cache = inputCache.getAdvancedCache();
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
@@ -75,7 +80,9 @@ public final class IndexingMapper implements Mapper<Object, Object, Object, Luce
     * make sure we don't return control to user before all work was processed and flushed.
     */
    public void flush() {
-      defaultBatchBackend.flush(searchFactory.getIndexedTypes());
+      if (flushPerNode) {
+         defaultBatchBackend.flush(searchFactory.getIndexedTypes());
+      }
    }
 
 }

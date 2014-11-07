@@ -75,4 +75,7 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Cache named '%1$s' is being shut down. No longer accepting remote commands.", id = 14013)
    CacheException cacheIsStoppingNoCommandAllowed(String cacheName);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Could not purge indexes", id = 14014)
+   void errorPurgingIndexes(@Cause Exception e);   
 }

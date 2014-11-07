@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd" xmlns="urn:infinispan:config:7.0">
+   <cache-container name="QueryEnabledGrid-Dist" default-cache="default" statistics="true">
+      <transport cluster="Infinispan-Query-Cluster" />
+      <jmx duplicate-domains="true" />
+      <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
+         <locking acquire-timeout="20000" write-skew="false" concurrency-level="500" striping="false" />
+         <eviction max-entries="-1" strategy="NONE" />
+         <expiration max-idle="-1" />
+         <indexing index="LOCAL">
+               <property name="default.directory_provider">infinispan</property>
+               <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
+         </indexing>
+         <state-transfer timeout="480000" enabled="true" />
+      </distributed-cache>
+      <local-cache name="LuceneIndexesMetadata" />
+      <local-cache name="LuceneIndexesData" />
+      <local-cache name="LuceneIndexesLocking" />
+   </cache-container>
+</infinispan>
