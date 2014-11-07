@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<blueprint  default-activation="eager" 
+            xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <bean id="parser71" class="org.infinispan.configuration.parsing.Parser71"/>
+    <service ref="parser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+
+    <bean id="defaultMapReduceTaskLifecycle" class="org.infinispan.distexec.mapreduce.spi.DefaultMapReduceTaskLifecycle"/>
+    <service ref="defaultMapReduceTaskLifecycle" interface="org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle"/>
+
+    <bean id="defaultDistributedTaskLifecycle" class="org.infinispan.distexec.spi.DefaultDistributedTaskLifecycle"/>
+    <service ref="defaultDistributedTaskLifecycle" interface="org.infinispan.distexec.spi.DistributedTaskLifecycle"/>
+
+    <bean id="jdbcStoreConfigurationParser71" class="org.infinispan.persistence.jdbc.configuration.JdbcStoreConfigurationParser71"/>
+    <service ref="jdbcStoreConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+
+    <bean id="levelDBStoreConfigurationParser71" class="org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationParser71"/>
+    <service ref="levelDBStoreConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+
+    <bean id="remoteStoreConfigurationParser71" class="org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser71"/>
+    <service ref="remoteStoreConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+
+    <bean id="hotRodTargetMigrator" class="org.infinispan.persistence.remote.upgrade.HotRodTargetMigrator"/>
+    <service ref="hotRodTargetMigrator" interface="org.infinispan.upgrade.TargetMigrator"/>
+
+    <bean id="clInterfaceLoaderConfigurationParser71" class="org.infinispan.persistence.cli.configuration.CLInterfaceLoaderConfigurationParser71"/>
+    <service ref="clInterfaceLoaderConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+
+    <bean id="clInterfaceTargetMigrator" class="org.infinispan.persistence.cli.upgrade.CLInterfaceTargetMigrator"/>
+    <service ref="clInterfaceTargetMigrator" interface="org.infinispan.upgrade.TargetMigrator"/>
+  
+</blueprint>

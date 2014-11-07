@@ -37,6 +37,7 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import org.osgi.framework.Bundle;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
@@ -71,12 +72,12 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       return new Option[] {
             KarafDistributionOption
                   .karafDistributionConfiguration()
+                  .unpackDirectory(new File("target/pax"))
                   .frameworkUrl(
                         maven().groupId("org.apache.karaf").artifactId("apache-karaf").type("zip")
                               .version(KARAF_VERSION)).karafVersion(KARAF_VERSION),
-            //install HotRod client feature ("feature" is a set of bundles, all the bundles are installed at once)
-            KarafDistributionOption.features(maven().groupId("org.infinispan").artifactId("infinispan-client-hotrod")
-                  .type("xml").classifier("features").versionAsInProject(), "hotrod-client-with-query"),
+            KarafDistributionOption.features(maven().groupId("org.infinispan").artifactId("infinispan-remote")
+                                                   .type("xml").classifier("features").versionAsInProject(), "infinispan-remote"),
             KarafDistributionOption.features(new RawUrlReference("file:///" + RESOURCES_DIR.replace("\\", "/")
                   + "/test-features.xml"), "query-sample-domain"),
             KarafDistributionOption.editConfigurationFileExtend("etc/jre.properties", "jre-1.7", "sun.misc"),

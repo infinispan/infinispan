@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<features name="infinispan-embedded-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+   <feature name="infinispan-embedded" version="${project.version}">
+      <feature>transaction</feature>
+      <bundle>mvn:org.infinispan/infinispan-embedded/${project.version}</bundle>
+   </feature>
+   <!-- c3p0 dependencies required only when using PooledConnectionFactory with JDBC cache store -->
+   <feature name="c3p0" version="${project.version}">
+      <bundle>wrap:mvn:com.mchange/c3p0/${version.c3p0}$DynamicImport-Package=*</bundle>
+      <bundle>wrap:mvn:com.mchange/mchange-commons-java/${version.c3p0_dep.mchange-commons-java}</bundle>
+   </feature>
+   <!-- Hibernate dependencies required only when using JPACacheStore -->
+   <feature name="hibernate" version="${project.version}">
+      <feature>jndi</feature>
+      <!-- hibernate -->
+      <bundle>mvn:org.hibernate/hibernate-core/${version.hibernate.core}</bundle>
+      <bundle>mvn:org.hibernate/hibernate-entitymanager/${version.hibernate.entitymanager}</bundle>
+      <bundle>mvn:org.hibernate/hibernate-osgi/${version.hibernate.osgi}</bundle>
+      <bundle>mvn:org.hibernate.javax.persistence/hibernate-jpa-2.1-api/${version.hibernate.javax.persistence}</bundle>
+      <!-- hibernate's dependencies -->
+      <bundle>mvn:org.jboss.logging/jboss-logging/${version.jboss.logging}</bundle>
+      <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.antlr/${version.hibernate_dep.antlr}</bundle>
+      <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.dom4j/${version.hibernate_dep.dom4j}</bundle>
+      <bundle>mvn:com.fasterxml/classmate/${version.hibernate_dep.classmate}</bundle>
+      <bundle>mvn:org.javassist/javassist/${version.hibernate_dep.javaassist}</bundle>
+      <bundle>wrap:mvn:org.hibernate.common/hibernate-commons-annotations/${version.hibernate_dep.hibernate-commons-annotations}</bundle>
+      <bundle>wrap:mvn:org.jboss/jandex/${version.hibernate_dep.jandex}</bundle>
+   </feature>
+</features>

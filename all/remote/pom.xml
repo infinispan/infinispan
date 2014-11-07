@@ -44,18 +44,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cdi</artifactId>
-         <optional>true</optional>
-         <exclusions>
-            <exclusion>
-               <groupId>org.infinispan</groupId>
-               <artifactId>infinispan-core</artifactId>
-            </exclusion>
-         </exclusions>
-      </dependency>
-
-      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
          <optional>true</optional>
@@ -63,10 +51,23 @@
    </dependencies>
 
    <build>
-      <pluginManagement>
-         <plugins>
-         </plugins>
-      </pluginManagement>
+      <finalName>${project.artifactId}-${project.version}</finalName>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>true</filtering>
+            <includes>
+               <include>features.xml</include>
+            </includes>
+         </resource>
+         <resource>
+            <directory>${project.basedir}/target/classes</directory>
+            <filtering>false</filtering>
+            <includes>
+               <include>**/*</include>
+            </includes>
+         </resource>
+      </resources>
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -126,7 +127,137 @@
                </execution>
             </executions>
          </plugin>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>unpack</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>unpack</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>${project.groupId}</groupId>
+                           <artifactId>${project.artifactId}</artifactId>
+                           <version>${project.version}</version>
+                           <type>jar</type>
+                           <overWrite>true</overWrite>
+                        </artifactItem>
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.apache.felix</groupId>
+            <artifactId>maven-bundle-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>bundle-package</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>bundle</goal>
+                  </goals>
+                  <configuration>
+                     <excludeDependencies>*</excludeDependencies>
+                     <instructions>
+                        <!-- Define packages from dependencies, exported further by current bundle -->
+                        <_exportcontents>
+                           org.infinispan.client.hotrod.*,
+                           org.infinispan.commons.*,
+                           org.infinispan.query.*,
+                           org.infinispan.protostream;version=${version.protostream}
+                        </_exportcontents>
+                        <Export-Package>
+                           !${project.groupId}.*.logging
+                        </Export-Package>
+                        <Import-Package>
+                           !sun.misc,
+                           !sun.reflect,
+                           !net.jcip.annotations,
+                           !org.jboss.logmanager,
+                           !org.jboss.modules,
+                           *
+                        </Import-Package>
+                        <DynamicImport-Package>*</DynamicImport-Package>
+                     </instructions>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>attach-artifacts</id>
+                  <phase>package</phase>
+                  <goals>
+                     <goal>attach-artifact</goal>
+                  </goals>
+                  <configuration>
+                     <artifacts>
+                        <artifact>
+                           <file>target/classes/features.xml</file>
+                           <type>xml</type>
+                           <classifier>features</classifier>
+                        </artifact>
+                     </artifacts>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>attach-sources</id>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+         </plugin>
+         <plugin>
+            <artifactId>maven-jar-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>build-test-jar</id>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+         </plugin>
       </plugins>
+      <pluginManagement>
+         <plugins>
+            <plugin>
+               <groupId>org.eclipse.m2e</groupId>
+               <artifactId>lifecycle-mapping</artifactId>
+               <version>1.0.0</version>
+               <configuration>
+                  <lifecycleMappingMetadata>
+                     <pluginExecutions>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>org.apache.felix</groupId>
+                              <artifactId>maven-bundle-plugin</artifactId>
+                              <versionRange>[2.4.0,)</versionRange>
+                              <goals>
+                                 <goal>cleanVersions</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore />
+                           </action>
+                        </pluginExecution>
+                     </pluginExecutions>
+                  </lifecycleMappingMetadata>
+               </configuration>
+            </plugin>
+         </plugins>
+      </pluginManagement>
    </build>
 
 </project>
