@@ -39,6 +39,8 @@ class HotRodEventsTest extends HotRodSingleNodeTest {
       withClientListener() { () =>
          eventListener.expectNoEvents()
          val key = k(m)
+         client.remove(key)
+         eventListener.expectNoEvents()
          client.put(key, 0, 0, v(m))
          eventListener.expectOnlyCreatedEvent(key)
          client.remove(key)

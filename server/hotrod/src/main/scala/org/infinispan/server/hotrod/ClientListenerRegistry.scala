@@ -14,7 +14,7 @@ import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications._
 import org.infinispan.notifications.cachelistener.annotation.{CacheEntryCreated, CacheEntryModified, CacheEntryRemoved}
-import org.infinispan.notifications.cachelistener.event.{CacheEntryRemovedEvent, CacheEntryModifiedEvent, CacheEntryCreatedEvent, CacheEntryEvent}
+import org.infinispan.notifications.cachelistener.event._
 import org.infinispan.notifications.cachelistener.filter._
 import org.infinispan.notifications.cachelistener.event.Event.Type
 import org.infinispan.server.hotrod.ClientListenerRegistry.{BinaryConverter, BinaryFilter}
@@ -153,13 +153,25 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
          if (isSendEvent(event)) {
             val dataVersion = event.getMetadata.version().asInstanceOf[NumericVersion].getVersion
             sendEvent(event.getKey, event.getValue, dataVersion, event)
-         } else {
-            log.debug("Channel disconnected, remove event sender listener")
-            event.getCache.removeListener(this)
          }
       }
 
-      def isSendEvent(event: CacheEntryEvent[_, _]): Boolean = !event.isPre && ch.isOpen
+      def isSendEvent(event: CacheEntryEvent[_, _]): Boolean = {
+         if (isChannelDisconnected()) {
+            log.debug("Channel disconnected, remove event sender listener")
+            event.getCache.removeListener(this)
+            false
+         } else {
+            event.getType match {
+               case Type.CACHE_ENTRY_CREATED | Type.CACHE_ENTRY_MODIFIED => !event.isPre
+               case Type.CACHE_ENTRY_REMOVED =>
+                  val removedEvent = event.asInstanceOf[CacheEntryRemovedEvent[_, _]]
+                  !event.isPre && removedEvent.getOldValue != null
+            }
+         }
+      }
+
+      def isChannelDisconnected(): Boolean = !ch.isOpen
 
       def sendEvent(key: Bytes, value: Bytes, dataVersion: Long, event: CacheEntryEvent[_, _]) {
          val remoteEvent = createRemoteEvent(key, value, dataVersion, event)
@@ -247,9 +259,6 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
             val version = event.getMetadata.version()
             val dataVersion = if (version == null) 0 else version.asInstanceOf[NumericVersion].getVersion
             delegate.sendEvent(key.asInstanceOf[Array[Byte]], value.asInstanceOf[Array[Byte]], dataVersion, event)
-         } else {
-            log.debug("Channel disconnected, remove event sender listener")
-            event.getCache.removeListener(this)
          }
       }
    }

@@ -175,6 +175,13 @@ provide information on the affected key, and the version of the entry. This
 version can be used to invoke conditional operations on the server, such as
 `replaceWithVersion` or `removeWithVersion`.
 
+`ClientCacheEntryRemovedEvent` events are only sent when the remove operation
+succeeds. In other words, if a remove operation is invoked but no entry is
+found or no entry should be removed, no event is generated. Users interested
+in removed events, even when no entry was removed, can develop event
+customization logic to generate such events. More information can be found
+in the link:$$#_customizing_client_events_contents$$[customizing client events section].
+
 All `ClientCacheEntryCreatedEvent`, `ClientCacheEntryModifiedEvent` and
 `ClientCacheEntryRemovedEvent` event instances also provide a `boolean isCommandRetried()`
 method that will return true if the write command that caused this had to be retried
