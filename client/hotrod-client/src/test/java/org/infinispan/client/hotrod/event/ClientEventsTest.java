@@ -57,6 +57,8 @@ public class ClientEventsTest extends SingleHotRodServerTest {
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
             eventListener.expectNoEvents();
+            cache.remove(1);
+            eventListener.expectNoEvents();
             cache.put(1, "one");
             eventListener.expectOnlyCreatedEvent(1, cache());
             cache.remove(1);

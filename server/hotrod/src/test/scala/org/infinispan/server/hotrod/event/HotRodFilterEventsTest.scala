@@ -30,6 +30,8 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
       withClientListener(filterFactory = Some(("static-filter-factory", List.empty))) { () =>
          eventListener.expectNoEvents()
          val key = k(m)
+         client.remove(key)
+         eventListener.expectNoEvents()
          client.put(key, 0, 0, v(m))
          eventListener.expectNoEvents()
          client.put(acceptedKey, 0, 0, v(m))

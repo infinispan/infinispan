@@ -29,6 +29,8 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
       withClientListener(converterFactory = Some(("static-converter-factory", List.empty))) { () =>
          eventListener.expectNoEvents()
          val key = k(m)
+         client.remove(key)
+         eventListener.expectNoEvents()
          val keyLength = key.length.toByte
          val value = v(m)
          val valueLength = value.length.toByte
