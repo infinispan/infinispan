@@ -75,4 +75,12 @@ public interface Log extends org.infinispan.util.logging.Log {
    @Message(value = "Cache named '%1$s' is being shut down. No longer accepting remote commands.", id = 14013)
    CacheException cacheIsStoppingNoCommandAllowed(String cacheName);
 
+   @LogMessage(level = INFO)
+   @Message(value = "Reindexed %1$d entities", id = 14014)
+   void indexingEntitiesCompleted(long nbrOfEntities);
+
+   @LogMessage(level = INFO)
+   @Message(value = "%1$d documents indexed in %2$d ms", id = 14015)
+   void indexingDocumentsCompleted(long doneCount, long elapsedMs);
+
 }
