@@ -1210,4 +1210,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot find a parser for element '%s' in namespace '%s'. Check that your configuration is up-to date for this version of Infinispan.", id = 327)
    CacheConfigurationException unsupportedConfiguration(String element, String namespaceUri);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Finished local rebalance for cache %s on node %s, topology id = %d", id = 328)
+   void rebalanceCompleted(String cacheName, Address node, int topologyId);
 }

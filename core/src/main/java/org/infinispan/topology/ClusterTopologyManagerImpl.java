@@ -147,8 +147,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          // For now we are just logging the error and proceeding as if the rebalance was successful everywhere
          log.rebalanceError(cacheName, node, throwable);
       }
-      log.debugf("Finished local rebalance for cache %s on node %s, topology id = %d", cacheName, node,
-            topologyId);
+
+      CLUSTER.rebalanceCompleted(cacheName, node, topologyId);
+
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       if (cacheStatus == null || !cacheStatus.isRebalanceInProgress()) {
          log.debugf("Ignoring rebalance confirmation from %s " +
