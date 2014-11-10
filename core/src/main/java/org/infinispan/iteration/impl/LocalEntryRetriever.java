@@ -409,7 +409,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       }
    }
 
-   protected class Itr<K, C> implements CloseableIterator<CacheEntry<K, C>> {
+   class Itr<K, C> implements CloseableIterator<CacheEntry<K, C>> {
 
       private final BlockingQueue<CacheEntry<K, C>> queue;
       private final Lock nextLock = new ReentrantLock();
@@ -510,6 +510,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                }
                entry = null;
             }
+            
             // Signal anyone waiting for values now
             nextLock.lock();
             try {
@@ -518,10 +519,25 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
             } finally {
                nextLock.unlock();
             }
+            
             // If we broke out early from not fully iterating then we need to block until the queue has something
             // available to be inserted and then we restart again.
-            if (!wasCompleted && entry != null) {
-               queue.put(entry);
+            if (entry != null) {
+               while (!wasCompleted) {
+                  // If we were able to offer a value this means someone took from the queue so let us come back around main
+                  // loop to offer all values we can
+                  if (queue.offer(entry, 100, TimeUnit.MILLISECONDS)) {
+                     break;
+                  }
+                  // If we couldn't offer an entry check if we were completed concurrently
+                  // We have to do in lock to ensure we see updated value properly
+                  nextLock.lock();
+                  try {
+                     wasCompleted = completed;
+                  } finally {
+                     nextLock.unlock();
+                  }
+               }
             }
          }
       }
