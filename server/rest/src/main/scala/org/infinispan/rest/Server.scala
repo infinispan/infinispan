@@ -423,17 +423,23 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
    }
 
    def createMetadata(cfg: Configuration, dataType: String, ttl: Long, idleTime: Long): Metadata = {
+      val metadata = new MimeMetadataBuilder
+      metadata.contentType(dataType)
       (ttl, idleTime) match {
-         case (0, 0) => MimeMetadata(dataType,
-            cfg.expiration().lifespan(), MILLIS,
-            cfg.expiration().maxIdle(), MILLIS)
+         case (0, 0) =>
+            metadata.lifespan(cfg.expiration().lifespan(), MILLIS)
+                  .maxIdle(cfg.expiration().maxIdle(), MILLIS)
          case (0, maxIdle) =>
-            MimeMetadata(dataType, cfg.expiration().lifespan(), MILLIS, maxIdle, SECS)
+            metadata.lifespan(cfg.expiration().lifespan(), MILLIS)
+                  .maxIdle(maxIdle, SECS)
          case (lifespan, 0) =>
-            MimeMetadata(dataType, lifespan, SECS, cfg.expiration().maxIdle(), MILLIS)
+            metadata.lifespan(lifespan, SECS)
+                  .maxIdle(cfg.expiration().maxIdle(), MILLIS)
          case (lifespan, maxIdle) =>
-            MimeMetadata(dataType, lifespan, SECS, maxIdle, SECS)
+            metadata.lifespan(lifespan, SECS)
+                  .maxIdle(maxIdle, SECS)
       }
+      metadata.build()
    }
 
    private def putOrReplace(cache: AdvancedCache[String, Array[Byte]],

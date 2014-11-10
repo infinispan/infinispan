@@ -30,7 +30,7 @@ class MimeMetadata(val contentType: String) extends Metadata {
    override def equals(obj: Any): Boolean = {
       obj match {
          case that: MimeMetadata =>
-            (that.canEqual(this)) && contentType == that.contentType
+            that.canEqual(this) && contentType == that.contentType
          case _ => false
       }
    }
@@ -51,10 +51,13 @@ private class MimeExpirableMetadata(override val contentType: String,
 
    override final val maxIdle = maxIdleUnit.toMillis(maxIdleTime)
 
+   override def builder(): Builder = new MimeMetadataBuilder()
+         .contentType(contentType).lifespan(lifespan).maxIdle(maxIdle)
+
    override def equals(obj: Any): Boolean = {
       obj match {
          case that: MimeExpirableMetadata =>
-            (that.canEqual(this)) &&
+            that.canEqual(this) &&
                     contentType == that.contentType &&
                     lifespan == that.lifespan &&
                     maxIdle == that.maxIdle
@@ -72,7 +75,63 @@ private class MimeExpirableMetadata(override val contentType: String,
 
 }
 
-private class MimeMetadataBuilder extends EmbeddedMetadata.Builder {
+private class MimeLifespanExpirableMetadata(override val contentType: String,
+      lifespanTime: Long, lifespanUnit: TimeUnit) extends MimeMetadata(contentType) {
+
+   override final val lifespan = lifespanUnit.toMillis(lifespanTime)
+
+   override def builder(): Builder = new MimeMetadataBuilder()
+         .contentType(contentType).lifespan(lifespan)
+
+   override def equals(obj: Any): Boolean = {
+      obj match {
+         case that: MimeExpirableMetadata =>
+            that.canEqual(this) &&
+                  contentType == that.contentType &&
+                  lifespan == that.lifespan
+         case _ => false
+      }
+   }
+
+   override def canEqual(other: Any): Boolean = other.isInstanceOf[MimeLifespanExpirableMetadata]
+
+   override def hashCode(): Int =
+      41 * (41 + contentType.hashCode) + lifespan.toInt
+
+   override def toString: String =
+      s"MimeLifespanExpirableMetadata(contentType=$contentType, lifespan=$lifespan)"
+
+}
+
+private class MimeMaxIdleExpirableMetadata(override val contentType: String,
+      maxIdleTime: Long, maxIdleUnit: TimeUnit) extends MimeMetadata(contentType) {
+
+   override final val maxIdle = maxIdleUnit.toMillis(maxIdleTime)
+
+   override def builder(): Builder = new MimeMetadataBuilder()
+         .contentType(contentType).maxIdle(maxIdle)
+
+   override def equals(obj: Any): Boolean = {
+      obj match {
+         case that: MimeExpirableMetadata =>
+            that.canEqual(this) &&
+                  contentType == that.contentType &&
+                  maxIdle == that.maxIdle
+         case _ => false
+      }
+   }
+
+   override def canEqual(other: Any): Boolean = other.isInstanceOf[MimeMaxIdleExpirableMetadata]
+
+   override def hashCode(): Int =
+      41 * (41 + contentType.hashCode) + maxIdle.toInt
+
+   override def toString: String =
+      s"MimeMaxIdleExpirableMetadata(contentType=$contentType, maxIdle=$maxIdle)"
+
+}
+
+class MimeMetadataBuilder extends EmbeddedMetadata.Builder {
 
    private var contentType: String = _
 
@@ -81,21 +140,21 @@ private class MimeMetadataBuilder extends EmbeddedMetadata.Builder {
       this
    }
 
-   override def build(): Metadata =
-      MimeMetadata(contentType, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-
+   override def build(): Metadata = {
+      val hasLifespanTimeout = hasLifespan
+      val hasMaxIdleTimeout = hasMaxIdle
+      if (hasLifespanTimeout && hasMaxIdleTimeout)
+         new MimeExpirableMetadata(contentType, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
+      else if (hasLifespanTimeout)
+         new MimeLifespanExpirableMetadata(contentType, lifespan, lifespanUnit)
+      else if (hasMaxIdleTimeout)
+         new MimeMaxIdleExpirableMetadata(contentType, maxIdle, maxIdleUnit)
+      else
+         new MimeMetadata(contentType)
+   }
 }
 
 object MimeMetadata {
-
-   def apply(contentType: String,
-           lifespan: Long, lifespanUnit: TimeUnit,
-           maxIdle: Long, maxIdleUnit: TimeUnit): MimeMetadata = {
-      if (lifespan < 0 && maxIdle < 0)
-         new MimeMetadata(contentType)
-      else
-         new MimeExpirableMetadata(contentType, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-   }
 
    private def apply(contentType: String): MimeMetadata = new MimeMetadata(contentType)
 
@@ -103,11 +162,15 @@ object MimeMetadata {
 
       final val Immortal = 0
       final val Expirable = 1
+      final val LifespanExpirable = 2
+      final val MaxIdleExpirable = 3
 
-      final val numbers = new IdentityIntMap[Class[_]](2)
+      final val numbers = new IdentityIntMap[Class[_]](4)
 
       numbers.put(classOf[MimeMetadata], Immortal)
       numbers.put(classOf[MimeExpirableMetadata], Expirable)
+      numbers.put(classOf[MimeLifespanExpirableMetadata], LifespanExpirable)
+      numbers.put(classOf[MimeMaxIdleExpirableMetadata], MaxIdleExpirable)
 
       def readObject(input: ObjectInput): MimeMetadata = {
          val contentType = input.readUTF()
@@ -117,7 +180,13 @@ object MimeMetadata {
             case Expirable =>
                val lifespan = input.readLong()
                val maxIdle = input.readLong()
-               MimeMetadata(contentType, lifespan, MILLIS, maxIdle, MILLIS)
+               new MimeExpirableMetadata(contentType, lifespan, MILLIS, maxIdle, MILLIS)
+            case LifespanExpirable =>
+               val lifespan = input.readLong()
+               new MimeLifespanExpirableMetadata(contentType, lifespan, MILLIS)
+            case MaxIdleExpirable =>
+               val maxIdle = input.readLong()
+               new MimeMaxIdleExpirableMetadata(contentType, maxIdle, MILLIS)
          }
       }
 
@@ -125,15 +194,22 @@ object MimeMetadata {
          output.writeUTF(meta.contentType)
          val number = numbers.get(meta.getClass, -1)
          output.write(number)
-         if (number == Expirable) {
-            output.writeLong(meta.lifespan())
-            output.writeLong(meta.maxIdle())
+         number match {
+            case Immortal => // no-op
+            case Expirable =>
+               output.writeLong(meta.lifespan())
+               output.writeLong(meta.maxIdle())
+            case LifespanExpirable =>
+               output.writeLong(meta.lifespan())
+            case MaxIdleExpirable =>
+               output.writeLong(meta.maxIdle())
          }
       }
 
       def getTypeClasses: util.Set[Class[_ <: MimeMetadata]] =
          setAsJavaSet(Set[java.lang.Class[_ <: MimeMetadata]](
-            classOf[MimeMetadata], classOf[MimeExpirableMetadata]))
+            classOf[MimeMetadata], classOf[MimeExpirableMetadata],
+            classOf[MimeLifespanExpirableMetadata], classOf[MimeMaxIdleExpirableMetadata]))
 
    }
 

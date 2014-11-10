@@ -474,9 +474,13 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    }
 
    override protected def buildMetadata(): Metadata = {
-      val version = generateVersion(cache)
-      MemcachedMetadata(params.flags, version,
-         toMillis(params.lifespan), MILLIS, defaultMaxIdleTime, MILLIS)
+      val metadata = new MemcachedMetadataBuilder
+      metadata.version(generateVersion(cache))
+      metadata.flags(params.flags)
+      if (params.lifespan > 0)
+         metadata.lifespan(toMillis(params.lifespan))
+
+      metadata.build()
    }
 
    private def logAndCreateErrorMessage(sb: StringBuilder, m: MemcachedException): StringBuilder = {
