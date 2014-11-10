@@ -624,7 +624,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public void putForExternalRead(K key, V value, Metadata metadata) {
-      putForExternalRead(key, value, metadata, null, null);
+      Metadata merged = applyDefaultMetadata(metadata);
+      putForExternalRead(key, value, merged, null, null);
    }
 
    final void putForExternalRead(K key, V value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
@@ -1643,27 +1644,37 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V put(K key, V value, Metadata metadata) {
-      return put(key, value, metadata, null, null);
+      Metadata merged = applyDefaultMetadata(metadata);
+      return put(key, value, merged, null, null);
+   }
+
+   private Metadata applyDefaultMetadata(Metadata metadata) {
+      Metadata.Builder builder = metadata.builder();
+      return builder != null ? builder.merge(defaultMetadata).build() : metadata;
    }
 
    @Override
    public V replace(K key, V value, Metadata metadata) {
-      return replace(key, value, metadata, null, null);
+      Metadata merged = applyDefaultMetadata(metadata);
+      return replace(key, value, merged, null, null);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
-      return replace(key, oldValue, value, metadata, null, null);
+      Metadata merged = applyDefaultMetadata(metadata);
+      return replace(key, oldValue, value, merged, null, null);
    }
 
    @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
-      return putIfAbsent(key, value, metadata, null, null);
+      Metadata merged = applyDefaultMetadata(metadata);
+      return putIfAbsent(key, value, merged, null, null);
    }
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
-      return putAsync(key, value, metadata, null, null);
+      Metadata merged = applyDefaultMetadata(metadata);
+      return putAsync(key, value, merged, null, null);
    }
 
    private void associateImplicitTransactionWithCurrentThread(InvocationContext ctx) throws InvalidTransactionException, SystemException {

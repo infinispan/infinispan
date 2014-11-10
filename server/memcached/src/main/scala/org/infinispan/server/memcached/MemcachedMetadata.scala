@@ -28,7 +28,7 @@ class MemcachedMetadata(val flags: Long, val version: EntryVersion) extends Meta
    override def equals(obj: Any): Boolean = {
       obj match {
          case that: MemcachedMetadata =>
-            (that.canEqual(this)) &&
+            that.canEqual(this) &&
                     flags == that.flags &&
                     version == that.version
          case _ => false
@@ -45,21 +45,20 @@ class MemcachedMetadata(val flags: Long, val version: EntryVersion) extends Meta
 
 private class MemcachedExpirableMetadata(
         override val flags: Long, override val version: EntryVersion,
-        lifespanTime: Long, lifespanUnit: TimeUnit,
-        maxIdleTime: Long, maxIdleUnit: TimeUnit) extends MemcachedMetadata(flags, version) {
+        lifespanTime: Long, lifespanUnit: TimeUnit) extends MemcachedMetadata(flags, version) {
 
    override final val lifespan = lifespanUnit.toMillis(lifespanTime)
 
-   override final val maxIdle = maxIdleUnit.toMillis(maxIdleTime)
+   override def builder(): Builder = new MemcachedMetadataBuilder()
+         .flags(flags).version(version).lifespan(lifespan)
 
    override def equals(obj: Any): Boolean = {
       obj match {
          case that: MemcachedExpirableMetadata =>
-            (that.canEqual(this)) &&
+            that.canEqual(this) &&
                     flags == that.flags &&
                     version == that.version &&
-                    lifespan == that.lifespan &&
-                    maxIdle == that.maxIdle
+                    lifespan == that.lifespan
          case _ => false
       }
    }
@@ -67,14 +66,14 @@ private class MemcachedExpirableMetadata(
    override def canEqual(other: Any): Boolean = other.isInstanceOf[MemcachedExpirableMetadata]
 
    override def hashCode(): Int =
-      41 * (41 * (41 * (41 + flags.hashCode) + version.hashCode) + lifespan.toInt) + maxIdle.toInt
+      41 * (41 * (41 + flags.hashCode) + version.hashCode) + lifespan.toInt
 
    override def toString: String =
-      s"MemcachedExpirableMetadata(flags=$flags, version=$version, lifespan=$lifespan, maxIdle=$maxIdle)"
+      s"MemcachedExpirableMetadata(flags=$flags, version=$version, lifespan=$lifespan)"
 
 }
 
-private class MemcachedMetadataBuilder extends EmbeddedMetadata.Builder {
+class MemcachedMetadataBuilder extends EmbeddedMetadata.Builder {
 
    private var flags: Long = _
 
@@ -83,25 +82,15 @@ private class MemcachedMetadataBuilder extends EmbeddedMetadata.Builder {
       this
    }
 
-   override def build(): Metadata =
-      MemcachedMetadata(flags, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-
+   override def build(): Metadata = {
+      if (hasLifespan)
+         new MemcachedExpirableMetadata(flags, version, lifespan, lifespanUnit)
+      else
+         new MemcachedMetadata(flags, version)
+   }
 }
 
-
 object MemcachedMetadata {
-
-   def apply(flags: Long, version: EntryVersion,
-           lifespan: Long, lifespanUnit: TimeUnit,
-           maxIdle: Long, maxIdleUnit: TimeUnit): MemcachedMetadata = {
-      if (lifespan < 0 && maxIdle < 0)
-         new MemcachedMetadata(flags, version)
-      else
-         new MemcachedExpirableMetadata(flags, version, lifespan, lifespanUnit, maxIdle, maxIdleUnit)
-   }
-
-   def apply(flags: Long, version: EntryVersion): MemcachedMetadata =
-      new MemcachedMetadata(flags, version)
 
    class Externalizer extends AbstractExternalizer[MemcachedMetadata] {
 
@@ -118,11 +107,10 @@ object MemcachedMetadata {
          val version = input.readObject().asInstanceOf[EntryVersion]
          val number = input.readUnsignedByte()
          number match {
-            case Immortal => MemcachedMetadata(flags, version)
+            case Immortal => new MemcachedMetadata(flags, version)
             case Expirable =>
                val lifespan = input.readLong()
-               val maxIdle = input.readLong()
-               MemcachedMetadata(flags, version, lifespan, MILLIS, maxIdle, MILLIS)
+               new MemcachedExpirableMetadata(flags, version, lifespan, MILLIS)
          }
       }
 
@@ -133,7 +121,6 @@ object MemcachedMetadata {
          output.write(number)
          if (number == Expirable) {
             output.writeLong(meta.lifespan())
-            output.writeLong(meta.maxIdle())
          }
       }
 

@@ -102,6 +102,13 @@ public interface Metadata {
        */
       Metadata build();
 
+      /**
+       * Merges the given metadata information into the given builder.
+       *
+       * @param metadata to merge into this builder
+       * @return a builder instance with the metadata applied
+       */
+      Builder merge(Metadata metadata);
    }
 
 }

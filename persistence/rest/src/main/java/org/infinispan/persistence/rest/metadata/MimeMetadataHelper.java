@@ -4,6 +4,7 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
 import org.infinispan.rest.MimeMetadata;
+import org.infinispan.rest.MimeMetadataBuilder;
 
 import java.util.concurrent.TimeUnit;
 
@@ -19,7 +20,9 @@ public class MimeMetadataHelper implements MetadataHelper {
 
    @Override
    public Metadata buildMetadata(String contentType, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
-      return MimeMetadata.apply(contentType, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      MimeMetadataBuilder builder = new MimeMetadataBuilder();
+      builder.contentType(contentType).lifespan(lifespan, lifespanUnit).maxIdle(maxIdle, maxIdleUnit);
+      return builder.build();
    }
 
 }
