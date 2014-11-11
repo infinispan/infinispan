@@ -16,7 +16,7 @@
     <description>The Infinispan Documentation</description>
 
     <properties>
-        <infinispan.version>6.0.x</infinispan.version>
+        <infinispan.version>7.1</infinispan.version>
         
         <maven.deploy.skip>true</maven.deploy.skip>
 		<skipTests>true</skipTests>
@@ -51,7 +51,7 @@
                         <icons>font</icons>
                         <docinfo>true</docinfo>
                         <experimental>true</experimental>
-                        <infinispan-version>${infinispan.version}</infinispan-version>
+                        <infinispanversion>${infinispan.version}</infinispanversion>
                     </attributes>
                 </configuration>
             </plugin>

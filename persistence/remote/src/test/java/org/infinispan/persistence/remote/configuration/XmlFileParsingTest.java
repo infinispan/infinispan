@@ -1,6 +1,5 @@
 package org.infinispan.persistence.remote.configuration;
 
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +8,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -24,11 +24,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testRemoteCacheStore() throws Exception {
-      String config = INFINISPAN_START_TAG +
+      String config = InfinispanStartTag.LATEST +
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <remote-store xmlns=\"urn:infinispan:config:store:remote:7.0\" >\n" +
+            "       <remote-store xmlns=\"urn:infinispan:config:store:remote:"+ InfinispanStartTag.LATEST.majorMinor()+"\" >\n" +
             "         <remote-server host=\"one\" />\n" +
             "         <remote-server host=\"two\" />\n" +
             "         <connection-pool max-active=\"10\" exhausted-action=\"CREATE_NEW\" />\n" +

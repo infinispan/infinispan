@@ -984,7 +984,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    )
    @Override
    public String getVersion() {
-      return Version.VERSION;
+      return Version.getVersion();
    }
 
    @Override

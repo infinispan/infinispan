@@ -17,7 +17,7 @@ data, eviction of entries to prevent running out of memory, and support for expi
 entries.
 Infinispan, specifically, is built around a high-performance, read-biased data container
 which uses modern techniques similar to
-link:$$http://en.wikipedia.org/wiki/Read-copy-update$$[read-copy-update]
+link:http://en.wikipedia.org/wiki/Read-copy-update[read-copy-update]
 -- which buys you non-blocking, thread-safe reads even when concurrent writes are taking
 place.
 Infinispan also makes heavy use of compare-and-swap and other lock-free algorithms,
@@ -119,7 +119,7 @@ whether the cache is transactional).
 
 NOTE: We are investigating doing a single GET request and contacting the other owners
 only after a timeout.
-See link:$$https://issues.jboss.org/browse/ISPN-825$$[ISPN-825].
+See link:https://issues.jboss.org/browse/ISPN-825[ISPN-825].
 
 
 ==== Read consistency
@@ -138,7 +138,7 @@ image::images/Figure3_3.png[]
 
 ==== Hashing Algorithms
 The hashing algorithm in Infinispan is based on
-link:$$http://en.wikipedia.org/wiki/Consistent_hashing$$[consistent hashing], and even
+link:http://en.wikipedia.org/wiki/Consistent_hashing[consistent hashing], and even
 though our implementation has diverged a bit, we still use the term *consistent hash*.
 
 Unlike in consistent hashing, we split the key space into fixed *segments*.
@@ -250,7 +250,7 @@ TIP: Looking for Buddy Replication?  Buddy Replication - from JBoss Cache - doe
 in Infinispan. 
 See this blog article which discusses the reasons why Buddy Replication was not
 implemented in Infinispan, and how the same effects can be achieved using Infinispan:
-link:$$http://infinispan.blogspot.com/2009/08/distribution-instead-of-buddy.html$$[]
+link:http://infinispan.blogspot.com/2009/08/distribution-instead-of-buddy.html[]
 
 
 [[ServerHinting]]
@@ -293,7 +293,7 @@ guarantees that backups will not be stored in instances on the same machine/rack
 The key affinity service solves the following problem: for a distributed Infinispan
 cluster one wants to make sure that a value is placed in a certain node.
 Based on a supplied cluster
-link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/remoting/transport/Address.html$$[address]
+link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/remoting/transport/Address.html[address]
 identifying the node, the service returns a key that will be hashed to that particular
 node.
 
@@ -369,7 +369,7 @@ doesn't apply during the instability of topology changes.
 
 ====  The Grouping API
 Complementary to <<KeyAffinityService, Key affinity service>> and similar to
-link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/atomic/AtomicMap.html$$[AtomicMap],
+link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/atomic/AtomicMap.html[AtomicMap],
 the grouping API allows you to co-locate a group of entries on the same nodes, but without
 being able to select the actual nodes.
 
@@ -507,7 +507,7 @@ Or, if you are using XML:
 
 ===== Advanced Interface
 
-NOTE: This interface is available since Infinispan 7.0
+NOTE: This interface is available since Infinispan {infinispanversion}
 
 +AdvancedCache+ allows to interact with the keys belonging to a group. It is possible to return the +Set+ of keys
 belonging to a group and remove all the keys of the group. Below is the interface available:
@@ -564,7 +564,7 @@ important to understand the following configuration settings:
 
 ==== Asynchronous Communications
 Whenever you add
-link:$$http://docs.jboss.org/infinispan/7.0/configdocs/infinispan-config-7.0.html$$[`<replicated-cache mode="ASYNC"> or <distributed-cache mode="ASYNC"> or <invalidation-cache mode="ASYNC">`]
+link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<replicated-cache mode="ASYNC"> or <distributed-cache mode="ASYNC"> or <invalidation-cache mode="ASYNC">`]
 element, you're telling the underlying JGroups layer in Infinispan
 to use asynchronous communication. What this means is that JGroups will send any
 replication/distribution/invalidation request to the wire but will not wait for a reply
@@ -572,7 +572,7 @@ from the receiver.
 
 ==== Asynchronous Marshalling
 This is a configurable boolean property of
-link:$$http://docs.jboss.org/infinispan/7.0/configdocs/infinispan-config-7.0.html$$[`<[replicated|distributed|invalidation]-cache />`]
+link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<[replicated|distributed|invalidation]-cache />`]
 element that indicates whether the actual call from Infinispan to the JGroups layer is
 done on a separate thread or not.
 When set to true, once Infinispan has figured out that a request needs to be sent to
@@ -611,7 +611,7 @@ cache.put("car", "bmw");
 The end result is clearly different which is often not desirable.
 So, if your application makes multiple modifications on the same key, you should either:
 turn off asynchronous marshalling, or set a custom executor via
-link:$$http://docs.jboss.org/infinispan/7.0/configdocs/infinispan-config-7.0.html$$[`<transport executor="custom" />`]
+link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<transport executor="custom" />`]
 element and define the executor's max-threads to 1 in the _<threads>_ section.
 The first modification only applies to a particular named cache, whereas the second option
 affects all named caches in configuration file that are configured with async marshalling.
@@ -656,7 +656,7 @@ With replication, the previous value is already available locally, and with dist
 regardless of whether it's asynchronous or synchronous, Infinispan sends a synchronous
 request to get the previous value if not present locally.
 If on the other hand the asynchronous API is used, client code needs to get hold of the
-link:$$https://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/commons/util/concurrent/NotifyingFuture.html$$[NotifiyngFuture]
+link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/util/concurrent/NotifyingFuture.html[NotifiyngFuture]
 returned by the async operation in order to be able to query the previous value.
 
 
@@ -677,7 +677,7 @@ partitions, or sub-clusters that operate independently. In these circumstances,
 multiple clients reading/writing from different partitions see different versions
 of the same cache entry, which for many application is problematic. Note there are
 ways to alleviate the possibility for the split brain to happen, such as redundant networks or
- link:$$https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/s2-networkscripts-interfaces-chan.html$$[IP bonding].
+ link:https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Deployment_Guide/s2-networkscripts-interfaces-chan.html[IP bonding].
  These only reduce the window of time for the problem to occur, though.
 - *numOwners* nodes crash in sequence. When at least *numOwners* nodes crash in rapid
 sequence and Infinispan does not have the time to properly rebalance its state between
@@ -688,7 +688,7 @@ be informed when data has been lost, temporarily or permanently, and wait for th
 The goal is to avoid situations in which wrong data is returned to the user as a result of either split
 brain or multiple nodes crashing in rapid sequence.
 In terms of Brewer's
-link:$$http://en.wikipedia.org/wiki/CAP_theorem$$[CAP theorem]
+link:http://en.wikipedia.org/wiki/CAP_theorem[CAP theorem]
 , enabling partition handling in Infinispan preserves data consistency
 but sacrifices availability in the presence of partitions.
 

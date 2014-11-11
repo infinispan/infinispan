@@ -3,6 +3,7 @@ package org.infinispan;
 import net.jcip.annotations.Immutable;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Arrays;
 
 /**
  * Contains version information about this release of Infinispan.
@@ -12,93 +13,55 @@ import java.io.ByteArrayOutputStream;
  */
 @Immutable
 public class Version {
-
-   private static final String MAJOR = "7";
-   private static final String MINOR = "1";
-   private static final String MICRO = "0";
-   private static final String MODIFIER = "SNAPSHOT";
-   private static final boolean SNAPSHOT = true;
-
-   public static final String VERSION = String.format("%s.%s.%s%s%s", MAJOR, MINOR, MICRO, SNAPSHOT ? "-" : ".", MODIFIER);
-   public static final String CODENAME = "Guinness";
-   public static final String PROJECT_NAME = "Infinispan";
-   public static final byte[] VERSION_ID = readVersionBytes();
-   public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
-   public static final String MODULE_SLOT = "ispn-" + MAJOR_MINOR;
-
+   private static final String MODULE_PREFIX = "ispn";
    private static final int MAJOR_SHIFT = 11;
    private static final int MINOR_SHIFT = 6;
    private static final int MAJOR_MASK = 0x00f800;
    private static final int MINOR_MASK = 0x0007c0;
    private static final int PATCH_MASK = 0x00003f;
 
-   private static byte[] readVersionBytes() {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      for (int i = 0; i < MAJOR.length(); i++) baos.write(MAJOR.charAt(i));
-      for (int i = 0; i < MINOR.length(); i++) baos.write(MINOR.charAt(i));
-      for (int i = 0; i < MICRO.length(); i++) baos.write(MICRO.charAt(i));
-      if (SNAPSHOT)
-         baos.write('S');
-      else
-         for (int i = 0; i < MODIFIER.length(); i++) baos.write(MODIFIER.charAt(i));
-      return baos.toByteArray();
+   public static final String PROJECT_NAME = "Infinispan";
+   public static final String CODENAME = "Guinness";
+
+   private static final Version INSTANCE = new Version();
+
+   private final byte[] versionId;
+   private final String moduleSlot;
+   private final short versionShort;
+   private final short marshallVersion;
+   private final String majorMinor;
+
+   private Version() {
+      String parts[] = getParts(Injected.getVersion());
+      versionId = readVersionBytes(parts[0], parts[1], parts[2], parts[3]);
+      versionShort = getVersionShort(Injected.getVersion());
+      moduleSlot = String.format("%s-%s.%s", MODULE_PREFIX, parts[0], parts[1]);
+      marshallVersion = Short.valueOf(parts[0] + parts[1]);
+      majorMinor = String.format("%s.%s", parts[0], parts[1]);
    }
 
-   /**
-    * Prints version information.
-    */
-   public static void main(String[] args) {
-      printFullVersionInformation();
+   public static String getVersion() {
+      return Injected.getVersion();
    }
 
-   /**
-    * Prints full version information to the standard output.
-    */
-   public static void printFullVersionInformation() {
-      System.out.println(PROJECT_NAME);
-      System.out.println();
-      System.out.printf("Version: \t%s%n", VERSION);
-      System.out.printf("Codename: \t%s%n", CODENAME);
-      System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)");
-      System.out.println();
+   public static String getModuleSlot() {
+      return INSTANCE.moduleSlot;
    }
 
-   /**
-    * Returns version information as a string.
-    */
-   public static String printVersion() {
-      return PROJECT_NAME + " '" + CODENAME + "' " + VERSION;
+   public static short getMarshallVersion() {
+      return INSTANCE.marshallVersion;
    }
 
-   public static String printVersionId(byte[] v, int len) {
-      StringBuilder sb = new StringBuilder();
-      if (v != null) {
-         if (len <= 0)
-            len = v.length;
-         for (int i = 0; i < len; i++)
-            sb.append((char) v[i]);
-      }
-      return sb.toString();
+   public static String getMajorMinor() {
+      return INSTANCE.majorMinor;
    }
 
    public static boolean compareTo(byte[] v) {
-      if (v == null)
-         return false;
-      if (v.length < VERSION_ID.length)
-         return false;
-      for (int i = 0; i < VERSION_ID.length; i++) {
-         if (VERSION_ID[i] != v[i])
-            return false;
-      }
-      return true;
-   }
-
-   public static int getLength() {
-      return VERSION_ID.length;
+      return Arrays.equals(INSTANCE.versionId, v);
    }
 
    public static short getVersionShort() {
-      return getVersionShort(VERSION);
+      return INSTANCE.versionShort;
    }
 
    public static short getVersionShort(String versionString) {
@@ -118,10 +81,8 @@ public class Version {
       return encodeVersion(a, b, c);
    }
 
-   public static short encodeVersion(int major, int minor, int patch) {
-      return (short) ((major << MAJOR_SHIFT)
-                            + (minor << MINOR_SHIFT)
-                            + patch);
+   private static short encodeVersion(int major, int minor, int patch) {
+      return (short) ((major << MAJOR_SHIFT) + (minor << MINOR_SHIFT) + patch);
    }
 
    public static String decodeVersion(short version) {
@@ -140,7 +101,55 @@ public class Version {
       return major + "." + minor;
    }
 
-   private static String[] getParts(String versionString) {
-      return versionString.split("[\\.\\-]");
+   /**
+    * Prints version information.
+    */
+   public static void main(String[] args) {
+      printFullVersionInformation();
+   }
+
+   /**
+    * Prints full version information to the standard output.
+    */
+   public static void printFullVersionInformation() {
+      System.out.println(PROJECT_NAME);
+      System.out.println();
+      System.out.printf("Version: \t%s%n", Injected.getVersion());
+      System.out.printf("Codename: \t%s%n", CODENAME);
+      System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)");
+      System.out.println();
+   }
+
+   /**
+    * Returns version information as a string.
+    */
+   public static String printVersion() {
+      return PROJECT_NAME + " '" + CODENAME + "' " + Injected.getVersion();
+   }
+
+   private static byte[] readVersionBytes(String major, String minor, String micro, String modifier) {
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      for (int i = 0; i < major.length(); i++)
+         baos.write(major.charAt(i));
+      for (int i = 0; i < minor.length(); i++)
+         baos.write(minor.charAt(i));
+      for (int i = 0; i < micro.length(); i++)
+         baos.write(micro.charAt(i));
+      if ("SNAPSHOT".equals(modifier))
+         baos.write('S');
+      else
+         for (int i = 0; i < modifier.length(); i++)
+            baos.write(modifier.charAt(i));
+      return baos.toByteArray();
+   }
+
+   private static String[] getParts(String version) {
+      return version.split("[\\.\\-]");
+   }
+
+   static class Injected {
+      static String getVersion() {
+         return "0.0.0-SNAPSHOT"; // Will be replaced by the Maven Injection plugin
+      }
    }
 }

@@ -80,8 +80,8 @@ public class InfinispanLuceneDirectoryIT {
    @Deployment
    public static Archive<?> deployment() {
       String dependencies = deps(
-            dep("org.infinispan", Version.MODULE_SLOT),
-            dep("org.infinispan.lucene-directory", Version.MODULE_SLOT)
+            dep("org.infinispan", Version.getModuleSlot()),
+            dep("org.infinispan.lucene-directory", Version.getModuleSlot())
       );
       StringAsset manifest = new StringAsset(
             Descriptors.create(ManifestDescriptor.class).attribute("Dependencies", dependencies).exportAsString());

@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -12,7 +13,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
 import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "unit", testName = "persistence.remote.configuration.XmlFileParsingTest")
@@ -26,11 +26,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testRemoteCacheStore() throws Exception {
-      String config = INFINISPAN_START_TAG +
+      String config = InfinispanStartTag.LATEST +
             "   <cache-container default-cache=\"default\">\n" +
             "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <cli-loader xmlns=\"urn:infinispan:config:store:cli:7.0\" " +
+            "       <cli-loader xmlns=\"urn:infinispan:config:store:cli:"+ InfinispanStartTag.LATEST.majorMinor()+"\" " +
             "                  connection=\"jmx://1.2.3.4:4444/MyCacheManager/myCache\">\n" +
             "       </cli-loader>\n" +
             "     </persistence>\n" +

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd
-                          urn:infinispan:config:store:jdbc:7.0 http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config-7.0.xsd"
-      xmlns="urn:infinispan:config:7.0">
+      xsi:schemaLocation="urn:infinispan:config:7.1 http://www.infinispan.org/schemas/infinispan-config-7.1.xsd
+                          urn:infinispan:config:store:jdbc:7.1 http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config-7.1.xsd"
+      xmlns="urn:infinispan:config:7.1">
 
    <cache-container>
       <transport cluster="MyCluster"/>
@@ -22,7 +22,7 @@
          <transaction mode="NON_XA" />
          <indexing index="NONE" />
          <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:7.0"
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:7.1"
                                   key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
                                   fetch-state="false"
                                   read-only="false"
@@ -44,7 +44,7 @@
          <transaction mode="NON_XA" />
          <indexing index="NONE" />
          <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:7.0"
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:7.1"
                                      key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
                                      fetch-state="false"
                                      read-only="false"
@@ -66,7 +66,7 @@
          <transaction mode="NON_XA" />
          <indexing index="NONE" />
          <persistence>
-            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:7.0"
+            <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:7.1"
                                      key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
                                      fetch-state="false"
                                      read-only="false"

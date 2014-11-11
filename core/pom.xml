@@ -155,6 +155,21 @@
                               <ignore />
                            </action>
                         </pluginExecution>
+                        <pluginExecution>
+                           <pluginExecutionFilter>
+                              <groupId>org.jboss.maven.plugins</groupId>
+                              <artifactId>
+                                 maven-injection-plugin
+                              </artifactId>
+                              <versionRange>[1.0.2,)</versionRange>
+                              <goals>
+                                 <goal>bytecode</goal>
+                              </goals>
+                           </pluginExecutionFilter>
+                           <action>
+                              <ignore></ignore>
+                           </action>
+                        </pluginExecution>
                      </pluginExecutions>
                   </lifecycleMappingMetadata>
                </configuration>
@@ -162,6 +177,31 @@
          </plugins>
       </pluginManagement>
       <plugins>
+         <plugin>
+            <groupId>org.jboss.maven.plugins</groupId>
+            <artifactId>maven-injection-plugin</artifactId>
+            <executions>
+               <execution>
+                  <phase>compile</phase>
+                  <goals>
+                     <goal>bytecode</goal>
+                  </goals>
+               </execution>
+            </executions>
+            <configuration>
+               <bytecodeInjections>
+                  <bytecodeInjection>
+                     <expression>${project.version}</expression>
+                     <targetMembers>
+                        <methodBodyReturn>
+                           <className>org.infinispan.Version$Injected</className>
+                           <methodName>getVersion</methodName>
+                        </methodBodyReturn>
+                     </targetMembers>
+                  </bytecodeInjection>
+               </bytecodeInjections>
+            </configuration>
+         </plugin>
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>

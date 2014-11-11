@@ -56,7 +56,7 @@ public class FileLookup {
 
    public URL lookupFileLocation(String filename, ClassLoader cl) {
       URL u = getAsURLFromClassLoader(filename, cl);
-   
+
       if (u == null) {
          File f = new File(filename);
          if (f.exists()) try {
@@ -71,7 +71,7 @@ public class FileLookup {
 
    public Collection<URL> lookupFileLocations(String filename, ClassLoader cl) throws IOException {
       Collection<URL> u = getAsURLsFromClassLoader(filename, cl);
-   
+
          File f = new File(filename);
          if (f.exists()) try {
             u.add(f.toURI().toURL());
@@ -81,7 +81,7 @@ public class FileLookup {
          }
       return u;
    }
-   
+
    private InputStream getAsInputStreamFromClassLoader(String filename, ClassLoader appClassLoader) {
       for (ClassLoader cl : Util.getClassLoaders(appClassLoader))  {
          if (cl == null)
@@ -97,7 +97,7 @@ public class FileLookup {
       }
       return null;
    }
-   
+
    private URL getAsURLFromClassLoader(String filename, ClassLoader userClassLoader) {
       for (ClassLoader cl : Util.getClassLoaders(userClassLoader))  {
          if (cl == null)
@@ -114,7 +114,7 @@ public class FileLookup {
       }
       return null;
    }
-   
+
    private Collection<URL> getAsURLsFromClassLoader(String filename, ClassLoader userClassLoader) throws IOException {
       Collection<URL> urls = new HashSet<URL>(4);
       for (ClassLoader cl : Util.getClassLoaders(userClassLoader))  {

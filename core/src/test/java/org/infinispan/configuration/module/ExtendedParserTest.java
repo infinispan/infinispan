@@ -1,6 +1,5 @@
 package org.infinispan.configuration.module;
 
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
 import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 
@@ -11,6 +10,7 @@ import java.io.InputStream;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 public class ExtendedParserTest {
 
    public void testExtendedParser() throws IOException {
-      String config = INFINISPAN_START_TAG +
+      String config = InfinispanStartTag.LATEST +
             "<cache-container name=\"container-extra-modules\" default-cache=\"extra-module\">" +
             "   <local-cache name=\"extra-module\">\n" +
             "     <modules>\n" +

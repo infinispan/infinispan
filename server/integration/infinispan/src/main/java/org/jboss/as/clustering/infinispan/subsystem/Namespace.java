@@ -44,13 +44,14 @@ public enum Namespace {
     INFINISPAN_SERVER_5_3("infinispan:server:core", 5, 3, new InfinispanSubsystemXMLReader_5_3()),
     INFINISPAN_SERVER_6_0("infinispan:server:core", 6, 0, new InfinispanSubsystemXMLReader_6_0()),
     INFINISPAN_SERVER_7_0("infinispan:server:core", 7, 0, new InfinispanSubsystemXMLReader_7_0()),
+    INFINISPAN_SERVER_7_1("infinispan:server:core", 7, 1, new InfinispanSubsystemXMLReader_7_1()),
     ;
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
     /**
      * The current namespace version.
      */
-    public static final Namespace CURRENT = INFINISPAN_SERVER_7_0;
+    public static final Namespace CURRENT = INFINISPAN_SERVER_7_1;
 
     private final int major;
     private final int minor;

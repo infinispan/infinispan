@@ -22,7 +22,6 @@ import javax.xml.stream.XMLStreamException;
  */
 @Namespaces({
       @Namespace(uri = "urn:infinispan:config:store:leveldb:7.0", root = "leveldb-store"),
-      @Namespace(root = "leveldb-store")
 })
 public class LevelDBStoreConfigurationParser70 implements ConfigurationParser {
 

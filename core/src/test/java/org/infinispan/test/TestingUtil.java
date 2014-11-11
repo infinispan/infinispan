@@ -103,30 +103,41 @@ public class TestingUtil {
    public static final String JGROUPS_CONFIG = "<jgroups>\n" +
          "      <stack-file name=\"tcp\" path=\"jgroups-tcp.xml\"/>\n" +
          "   </jgroups>";
-   public static final String INFINISPAN_START_TAG = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
+
+   public static enum InfinispanStartTag {
+      START_40(4, 0),
+      START_41(4, 1),
+      START_42(4, 2),
+      START_50(5, 0),
+      START_51(5, 1),
+      START_52(5, 2),
+      START_53(5, 3),
+      START_60(6, 0),
+      START_70(7, 0),
+      START_71(7, 1);
+
+      public static final InfinispanStartTag LATEST = START_71;
+      private final String tag;
+      private final String majorMinor;
+
+      InfinispanStartTag(int major, int minor) {
+         tag = String.format("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
          "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-         "      xsi:schemaLocation=\"urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd\"\n" +
-         "      xmlns=\"urn:infinispan:config:7.0\">";
-   public static final String INFINISPAN_START_TAG_60 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
-         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-         "      xsi:schemaLocation=\"urn:infinispan:config:6.0 http://www.infinispan.org/schemas/infinispan-config-6.0.xsd\"\n" +
-         "      xmlns=\"urn:infinispan:config:6.0\">";
-   public static final String INFINISPAN_START_TAG_53 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
-         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-         "      xsi:schemaLocation=\"urn:infinispan:config:5.3 http://www.infinispan.org/schemas/infinispan-config-5.3.xsd\"\n" +
-         "      xmlns=\"urn:infinispan:config:5.3\">";
-   public static final String INFINISPAN_START_TAG_52 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
-         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-         "      xsi:schemaLocation=\"urn:infinispan:config:5.2 http://www.infinispan.org/schemas/infinispan-config-5.2.xsd\"\n" +
-         "      xmlns=\"urn:infinispan:config:5.2\">";
-   public static final String INFINISPAN_START_TAG_51 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
-         "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-         "      xsi:schemaLocation=\"urn:infinispan:config:5.1 http://www.infinispan.org/schemas/infinispan-config-5.1.xsd\"\n" +
-         "      xmlns=\"urn:infinispan:config:5.1\">";
-   public static final String INFINISPAN_START_TAG_40 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<infinispan\n" +
-           "      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-           "      xsi:schemaLocation=\"urn:infinispan:config:4.0 http://www.infinispan.org/schemas/infinispan-config-4.0.xsd\"\n" +
-           "      xmlns=\"urn:infinispan:config:4.0\">";
+         "      xsi:schemaLocation=\"urn:infinispan:config:%d.%d http://www.infinispan.org/schemas/infinispan-config-%d.%d.xsd\"\n" +
+         "      xmlns=\"urn:infinispan:config:%d.%d\">", major, minor, major, minor, major, minor);
+         majorMinor = String.format("%d.%d", major, minor);
+      }
+
+      @Override
+      public String toString() {
+         return tag;
+      }
+
+      public String majorMinor() {
+         return majorMinor;
+      }
+   }
+
    public static final String INFINISPAN_END_TAG = "</infinispan>";
    public static final String INFINISPAN_START_TAG_NO_SCHEMA = "<infinispan>";
 

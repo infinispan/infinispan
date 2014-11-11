@@ -1,23 +1,25 @@
 package org.infinispan.manager;
 
 import static org.testng.AssertJUnit.assertFalse;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import javax.transaction.TransactionManager;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
 import static org.testng.Assert.*;
 
 /**
@@ -73,7 +75,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheXMLClashingNames() {
-      String xml = INFINISPAN_START_TAG +
+      String xml = InfinispanStartTag.LATEST +
             "<cache-container default-cache=\"default\">" +
             "\n" +
             "   <local-cache name=\"default\">\n" +
@@ -98,7 +100,7 @@ public class CacheManagerXmlConfigurationTest extends AbstractInfinispanTest {
    }
 
    public void testNamedCacheXMLClashingNamesProgrammatic() throws IOException {
-      String xml = INFINISPAN_START_TAG +
+      String xml = InfinispanStartTag.LATEST +
             "\n" +
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +

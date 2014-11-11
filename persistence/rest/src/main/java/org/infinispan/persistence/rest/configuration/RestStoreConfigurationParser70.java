@@ -25,7 +25,6 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  */
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:store:rest:7.0", root = "rest-store"),
-   @Namespace(root = "rest-store")
 })
 public class RestStoreConfigurationParser70 implements ConfigurationParser {
 

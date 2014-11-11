@@ -47,6 +47,10 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    public ParserRegistry(ClassLoader classLoader) {
+      this(classLoader, false);
+   }
+
+   public ParserRegistry(ClassLoader classLoader, boolean defaultParsersOnly) {
       this.parserMappings = CollectionFactory.makeConcurrentMap();
       this.cl = new WeakReference<ClassLoader>(classLoader);
       Collection<ConfigurationParser> parsers = ServiceFinder.load(ConfigurationParser.class, cl.get(), ParserRegistry.class.getClassLoader());
@@ -57,10 +61,22 @@ public class ParserRegistry implements NamespaceMappingParser {
                throw log.parserDoesNotDeclareNamespaces(parser.getClass().getName());
             }
 
-            for (Namespace ns : namespaces) {
-               QName qName = new QName(ns.uri(), ns.root());
-               if (parserMappings.putIfAbsent(qName, parser) != null) {
-                  throw log.parserRootElementAlreadyRegistered(qName);
+            boolean skipParser = defaultParsersOnly;
+
+            if (skipParser) {
+               for (Namespace ns : namespaces) {
+                  if ("".equals(ns.uri())) {
+                     skipParser = false;
+                  }
+               }
+            }
+
+            if (!skipParser) {
+               for (Namespace ns : namespaces) {
+                  QName qName = new QName(ns.uri(), ns.root());
+                  if (parserMappings.putIfAbsent(qName, parser) != null) {
+                     throw log.parserRootElementAlreadyRegistered(qName);
+                  }
                }
             }
          } catch (Exception e) {
