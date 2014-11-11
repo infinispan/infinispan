@@ -38,7 +38,7 @@
       <version.org.wildfly>8.1.0.Final</version.org.wildfly>
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
       <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
-      <version.org.infinispan.protostream>2.0.1.Final</version.org.infinispan.protostream>
+      <version.org.infinispan.protostream>2.0.2.Final</version.org.infinispan.protostream>
       <version.http.client>4.3</version.http.client>
       <version.org.picketbox>4.0.17.SP2</version.org.picketbox>
       <version.xpp3>1.1.4c</version.xpp3>
