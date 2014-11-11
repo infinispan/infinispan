@@ -155,6 +155,10 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
       getCache().put(name, contents);
    }
 
+   /**
+    * This method is deprecated. Use one of the alternative methods from ProtobufMetadataManagerMBean.
+    */
+   @Deprecated
    public void registerProtofiles(String... classPathResources) throws Exception {
       Map<String, String> files = new HashMap<String, String>(classPathResources.length);
       for (String classPathResource : classPathResources) {

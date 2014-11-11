@@ -90,10 +90,7 @@ public class RemoteQueryJmxTest extends SingleCacheManagerTest {
       mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
 
       ProtobufMetadataManagerMBean protobufMetadataManagerMBean = JMX.newMBeanProxy(mBeanServer, getProtobufMetadataManagerObjectName(), ProtobufMetadataManagerMBean.class);
-      protobufMetadataManagerMBean.registerProtofiles(
-            new String[]{"sample_bank_account/bank.proto"},
-            new String[]{read("/sample_bank_account/bank.proto")}
-      );
+      protobufMetadataManagerMBean.registerProtofile("sample_bank_account/bank.proto", read("/sample_bank_account/bank.proto"));
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
