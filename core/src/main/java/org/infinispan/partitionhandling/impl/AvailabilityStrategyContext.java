@@ -74,12 +74,13 @@ public interface AvailabilityStrategyContext {
    /**
     * Enter a new availability mode.
     */
-   void updateAvailabilityMode(AvailabilityMode mode, boolean cancelRebalance);
+   void updateAvailabilityMode(List<Address> actualMembers, AvailabilityMode mode, boolean cancelRebalance);
 
    /**
     * Updates both the stable and the current topologies.
     *
     * Does not install the current topology on the cache members.
     */
-   void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology, AvailabilityMode availabilityMode);
+   void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology,
+         AvailabilityMode availabilityMode);
 }

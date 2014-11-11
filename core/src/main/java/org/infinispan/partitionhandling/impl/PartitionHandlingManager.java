@@ -18,5 +18,7 @@ public interface PartitionHandlingManager {
 
    void checkClear();
 
+   void checkBulkRead();
+
    CacheTopology getLastStableTopology();
 }

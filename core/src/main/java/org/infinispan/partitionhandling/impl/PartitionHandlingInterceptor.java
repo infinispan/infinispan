@@ -5,6 +5,7 @@ import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -15,14 +16,12 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Transport;
 
 import java.util.Set;
 
 public class PartitionHandlingInterceptor extends CommandInterceptor {
-
    PartitionHandlingManager partitionHandlingManager;
    private Transport transport;
    private ClusteringDependentLogic cdl;
@@ -45,26 +44,24 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (performPartitionCheck(ctx, command)) {
-         partitionHandlingManager.checkWrite(command.getKey());
-      }
-      return super.visitPutKeyValueCommand(ctx, command);
+      return handleSingleWrite(ctx, command);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      if (performPartitionCheck(ctx, command)) {
-         partitionHandlingManager.checkWrite(command.getKey());
-      }
-      return super.visitRemoveCommand(ctx, command);
+      return handleSingleWrite(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return handleSingleWrite(ctx, command);
+   }
+
+   protected Object handleSingleWrite(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkWrite(command.getKey());
       }
-      return super.visitReplaceCommand(ctx, command);
+      return handleDefault(ctx, command);
    }
 
    @Override
@@ -73,7 +70,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
          for (Object k : command.getAffectedKeys())
             partitionHandlingManager.checkWrite(k);
       }
-      return super.visitPutMapCommand(ctx, command);
+      return handleDefault(ctx, command);
    }
 
    @Override
@@ -81,24 +78,20 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkClear();
       }
-      return super.visitClearCommand(ctx, command);
+      return handleDefault(ctx, command);
    }
 
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      if (performPartitionCheck(ctx, command)) {
-         partitionHandlingManager.checkWrite(command.getKey());
-      }
-      return super.visitApplyDeltaCommand(ctx, command);
+      return handleSingleWrite(ctx, command);
    }
 
    @Override
    public Object visitEntryRetrievalCommand(InvocationContext ctx, EntryRetrievalCommand command) throws Throwable {
-      if (partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE &&
-            performPartitionCheck(ctx, command)) {
-         throw getLog().partitionUnavailable();
+      if (performPartitionCheck(ctx, command)) {
+         partitionHandlingManager.checkBulkRead();
       }
-      return super.visitEntryRetrievalCommand(ctx, command);
+      return handleDefault(ctx, command);
    }
 
    @Override
