@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -20,6 +21,7 @@ import org.infinispan.query.remote.ProtobufMetadataManager;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -65,7 +67,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
    protected void populateCache() throws Exception {
       //initialize server-side serialization context
       ProtobufMetadataManager protobufMetadataManager = manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
-      protobufMetadataManager.registerProtofiles(MarshallerRegistration.PROTOBUF_RES);
+      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", read("/sample_bank_account/bank.proto"));
 
       //initialize client-side serialization context
       for (RemoteCacheManager rcm : clients) {
@@ -100,6 +102,10 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
       assertNotNull(remoteCache0.get(2));
       assertNotNull(remoteCache1.get(2));
+   }
+
+   private String read(String classPathResource) throws IOException {
+      return Util.read(getClass().getResourceAsStream(classPathResource));
    }
 
    public void testAttributeQuery() throws Exception {
