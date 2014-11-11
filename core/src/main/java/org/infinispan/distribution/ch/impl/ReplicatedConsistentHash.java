@@ -140,10 +140,18 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       OwnershipStatistics stats = new OwnershipStatistics(this, members);
       StringBuilder sb = new StringBuilder("ReplicatedConsistentHash{");
       sb.append("ns = ").append(segments.size());
+      sb.append(", owners = (").append(members.size()).append(")[");
+      boolean first = true;
       for (Address a : members) {
-         sb.append(", ").append(a).append(": ").append(stats.getPrimaryOwned(a));
+         if (first) {
+            first = false;
+         } else {
+            sb.append(", ");
+         }
+         int primaryOwned = stats.getPrimaryOwned(a);
+         sb.append(a).append(": ").append(primaryOwned);
       }
-      sb.append('}');
+      sb.append("]}");
       return sb.toString();
    }
 

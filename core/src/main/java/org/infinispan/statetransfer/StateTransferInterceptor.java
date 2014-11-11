@@ -9,7 +9,16 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
-import org.infinispan.commands.write.*;
+import org.infinispan.commands.write.ApplyDeltaCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.EvictCommand;
+import org.infinispan.commands.write.InvalidateCommand;
+import org.infinispan.commands.write.InvalidateL1Command;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -22,11 +31,13 @@ import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -57,6 +68,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private static boolean trace = log.isTraceEnabled();
 
    private StateTransferManager stateTransferManager;
+   private Transport transport;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
 
@@ -66,8 +78,9 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Inject
-   public void init(StateTransferManager stateTransferManager) {
+   public void init(StateTransferManager stateTransferManager, Transport transport) {
       this.stateTransferManager = stateTransferManager;
+      this.transport = transport;
    }
 
    @Override
@@ -153,7 +166,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
     * the {@code CACHE_MODE_LOCAL} flag.
     */
    private Object handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      if (trace) log.tracef("handleNonTxWriteCommand for command %s", command);
+      if (trace) log.tracef("handleNonTxWriteCommand for command %s, topology id %d", command, command.getTopologyId());
 
       if (isLocalOnly(ctx, command)) {
          return invokeNextInterceptor(ctx, command);
@@ -166,6 +179,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          return invokeNextInterceptor(ctx, command);
       }
 
+      int initialViewId = transport.getViewId();
+      List<Address> initialViewMembers = transport.getMembers();
       int commandTopologyId = command.getTopologyId();
       Object localResult;
       try {
@@ -179,13 +194,14 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
             throw e;
 
-         if (trace) log.tracef("Retrying command because of topology change: %s", command);
          // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
+         if (trace) log.tracef("Retrying command because of topology change, current topology is %d: %s", command);
          int newTopologyId = Math.max(currentTopologyId(), commandTopologyId + 1);
          command.setTopologyId(newTopologyId);
-         command.setFlags(Flag.COMMAND_RETRY);
          waitForTransactionData(newTopologyId);
+
+         command.setFlags(Flag.COMMAND_RETRY);
          localResult = handleNonTxWriteCommand(ctx, command);
       }
 

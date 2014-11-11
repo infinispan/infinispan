@@ -392,10 +392,9 @@ public class AbstractInfinispanTest {
          try {
             log.trace("Started fork runnable..");
             realOne.run();
+            log.debug("Exiting fork runnable.");
          } catch (Throwable e) {
-            log.trace("Exiting fork runnable due to exception", e);
-         } finally {
-            log.trace("Exiting fork runnable.");
+            log.debug("Exiting fork runnable due to exception", e);
          }
       }
    }
@@ -420,12 +419,12 @@ public class AbstractInfinispanTest {
       public T call() throws Exception {
          try {
             log.trace("Started fork callable..");
-            return c.call();
+            T result = c.call();
+            log.debug("Exiting fork callable.");
+            return result;
          } catch (Exception e) {
-            log.trace("Exiting fork callable due to exception", e);
+            log.debug("Exiting fork callable due to exception", e);
             throw e;
-         } finally {
-            log.trace("Exiting fork callable.");
          }
       }
    }

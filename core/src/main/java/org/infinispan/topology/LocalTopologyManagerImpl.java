@@ -1,14 +1,5 @@
 package org.infinispan.topology;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
@@ -32,6 +23,15 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
@@ -199,9 +199,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          }
 
          CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH);
-
+               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers());
          unionTopology.logRoutingTableInformation();
+
+         boolean updateAvailabilityModeFirst = availabilityMode != AvailabilityMode.AVAILABLE;
+         if (updateAvailabilityModeFirst) {
+            if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
+               cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
+            }
+         }
          if ((existingTopology == null || existingTopology.getRebalanceId() != cacheTopology.getRebalanceId()) && unionCH != null) {
             // This CH_UPDATE command was sent after a REBALANCE_START command, but arrived first.
             // We will start the rebalance now and ignore the REBALANCE_START command when it arrives.
@@ -211,8 +217,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
             handler.updateConsistentHash(unionTopology);
          }
 
-         if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
-            cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
+         if (!updateAvailabilityModeFirst) {
+            if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
+               cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
+            }
          }
       }
    }
@@ -293,7 +301,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          ConsistentHash unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
                cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
          CacheTopology newTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH);
+               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers());
          handler.rebalance(newTopology);
       }
    }
@@ -327,13 +335,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    private void waitForView(int viewId) throws InterruptedException {
-      if (transport.getViewId() < viewId) {
-         log.tracef("Received a cache topology command with a higher view id: %s, our view id is %s", viewId,
-               transport.getViewId());
-      }
-      while (transport.getViewId() < viewId) {
-         Thread.sleep(100);
-      }
+      transport.waitForView(viewId);
    }
 
    @ManagedAttribute(description = "Rebalancing enabled", displayName = "Rebalancing enabled",

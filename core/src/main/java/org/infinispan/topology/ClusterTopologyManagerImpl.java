@@ -28,6 +28,7 @@ import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -64,12 +65,14 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private EmbeddedCacheManager cacheManager;
    private ExecutorService asyncTransportExecutor;
 
-
+   // These need to be volatile because they are sometimes read without holding the view handling lock.
    private volatile boolean isCoordinator;
    private volatile boolean isShuttingDown;
+   private boolean mustRecoverClusterStatus;
+   private final Object viewHandlingLock = new Object();
+
    private volatile int viewId = -1;
    private final Object viewUpdateLock = new Object();
-   private final Object viewHandlingLock = new Object();
 
 
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = CollectionFactory.makeConcurrentMap();
@@ -232,18 +235,22 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          isCoordinator = transport.isCoordinator();
          log.tracef("Received new cluster view: %s, isCoordinator = %s, becameCoordinator = %s", newViewId,
                isCoordinator, becameCoordinator);
+         mustRecoverClusterStatus |= mergeView || becameCoordinator;
          if (!isCoordinator)
             return;
 
-         if (mergeView || becameCoordinator) {
+         if (mustRecoverClusterStatus) {
             try {
                recoverClusterStatus(newViewId, mergeView, transport.getMembers());
+               mustRecoverClusterStatus = false;
             } catch (InterruptedException e) {
                log.tracef("Cluster state recovery interrupted because the coordinator is shutting down");
                // the CTMI has already stopped, no need to update the view id or notify waiters
                return;
+            } catch (SuspectException e) {
+               // We will retry when we receive the new view and then we'll reset the mustRecoverClusterStatus flag
+               return;
             } catch (Exception e) {
-               // TODO Retry?
                log.failedToRecoverClusterState(e);
             }
          } else {
@@ -274,8 +281,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          } else {
             availabilityStrategy = new PreferAvailabilityStrategy();
          }
-         ClusterCacheStatus newCacheStatus = new ClusterCacheStatus(cacheName, availabilityStrategy, this
-         );
+         ClusterCacheStatus newCacheStatus = new ClusterCacheStatus(cacheName, availabilityStrategy, this, transport);
          cacheStatus = cacheStatusMap.putIfAbsent(cacheName, newCacheStatus);
          if (cacheStatus == null) {
             cacheStatus = newCacheStatus;
@@ -324,10 +330,17 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    public void updateCacheMembers(List<Address> newClusterMembers) throws Exception {
       log.tracef("Updating cluster members for all the caches. New list is %s", newClusterMembers);
+      // If we get a SuspectException here, it means we will have a new view soon and we can ignore this one.
+      confirmMembersAvailable();
 
       for (ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
-         cacheStatus.doHandleClusterView(newClusterMembers);
+         cacheStatus.doHandleClusterView();
       }
+   }
+
+   private void confirmMembersAvailable() throws Exception {
+      ReplicableCommand heartbeatCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), -1);
+      executeOnClusterSync(heartbeatCommand, getGlobalTimeout(), false, false);
    }
 
    private void waitForView(int viewId) throws InterruptedException {
@@ -373,7 +386,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          @Override
          public Map<Address, Response> call() throws Exception {
             return transport.invokeRemotely(null, command,
-                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, filter, false, false);
+                  ResponseMode.SYNCHRONOUS, timeout, true, filter, false, false);
          }
       });
 
