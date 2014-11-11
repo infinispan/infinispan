@@ -136,7 +136,8 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       Address missing = address(c1);
       log.tracef("Before killing node %s", missing);
       crashCacheManagers(manager(c1));
-      installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1), manager(c0));
+      installNewView(advancedCache(a0).getRpcManager().getTransport().getMembers(), missing, manager(a0), manager(a1)
+            , manager(c0));
 
       ss.enter("main:2nd_node_left");
 
@@ -157,6 +158,7 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
 
       log.trace("Testing condition");
       ConsistentHash ch = cache(a0).getAdvancedCache().getDistributionManager().getReadConsistentHash();
+      assertEquals(3, ch.getMembers().size());
       for (Object k : allKeys) {
          Collection<Address> owners = ch.locateOwners(k);
          try {

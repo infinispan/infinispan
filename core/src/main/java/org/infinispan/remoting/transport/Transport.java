@@ -107,6 +107,8 @@ public interface Transport extends Lifecycle {
     */
    int getViewId();
 
+   void waitForView(int viewId) throws InterruptedException;
+
    Log getLog();
 
    /**

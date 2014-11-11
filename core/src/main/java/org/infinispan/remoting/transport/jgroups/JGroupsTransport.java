@@ -1,26 +1,5 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
-import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commons.CacheConfigurationException;
@@ -71,6 +50,28 @@ import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 
 /**
  * An encapsulation of a JGroups transport. JGroups transports can be configured using a variety of
@@ -125,7 +126,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    protected volatile List<Address> members = null;
    protected volatile Address coordinator = null;
    protected volatile boolean isCoordinator = false;
-   protected CountDownLatch channelConnectedLatch = new CountDownLatch(1);
+   protected Lock viewUpdateLock = new ReentrantLock();
+   protected Condition viewUpdateCondition = viewUpdateLock.newCondition();
 
    /**
     * This form is used when the transport is created by an external source and passed in to the
@@ -233,7 +235,22 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       View view = channel.getView();
       if (view == null)
          return -1;
-      return (int) view.getVid().getId();
+      return (int) view.getViewId().getId();
+   }
+
+   @Override
+   public void waitForView(int viewId) throws InterruptedException {
+      if (channel == null)
+         return;
+      log.tracef("Waiting on view %d being accepted", viewId);
+      viewUpdateLock.lock();
+      try {
+         while (channel != null && this.getViewId() < viewId) {
+               viewUpdateCondition.await();
+         }
+      } finally {
+         viewUpdateLock.unlock();
+      }
    }
 
    @Override
@@ -279,6 +296,15 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       coordinator = null;
       isCoordinator = false;
       dispatcher = null;
+
+      // Wake up any view waiters
+      viewUpdateLock.lock();
+      try {
+         viewUpdateCondition.signalAll();
+      } finally {
+         viewUpdateLock.unlock();
+      }
+
    }
 
    protected void initChannel() {
@@ -432,13 +458,12 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    public void waitForChannelToConnect() {
-      if (channel == null)
-         return;
-      log.debug("Waiting on view being accepted");
       try {
-         channelConnectedLatch.await();
+         waitForView(0);
       } catch (InterruptedException e) {
+         // The start method can't throw checked exceptions
          log.interruptedWaitingForCoordinator(e);
+         Thread.currentThread().interrupt();
       }
    }
 
@@ -667,7 +692,12 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       // Wake up any threads that are waiting to know about who the isCoordinator is
       // do it before the notifications, so if a listener throws an exception we can still start
-      channelConnectedLatch.countDown();
+      viewUpdateLock.lock();
+      try {
+         viewUpdateCondition.signalAll();
+      } finally {
+         viewUpdateLock.unlock();
+      }
 
       // now notify listeners - *after* updating the isCoordinator. - JBCACHE-662
       boolean hasNotifier = notifier != null;

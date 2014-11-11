@@ -10,6 +10,7 @@ import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategyContext;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -35,6 +36,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private final String cacheName;
    private final AvailabilityStrategy availabilityStrategy;
    private final ClusterTopologyManager clusterTopologyManager;
+   private Transport transport;
 
    // Minimal cache clustering configuration
    private volatile CacheJoinInfo joinInfo;
@@ -54,10 +56,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private volatile RebalanceConfirmationCollector rebalanceConfirmationCollector;
 
    public ClusterCacheStatus(String cacheName, AvailabilityStrategy availabilityStrategy,
-         ClusterTopologyManager clusterTopologyManager) {
+         ClusterTopologyManager clusterTopologyManager, Transport transport) {
       this.cacheName = cacheName;
       this.availabilityStrategy = availabilityStrategy;
       this.clusterTopologyManager = clusterTopologyManager;
+      this.transport = transport;
 
       this.currentTopology = null;
       this.stableTopology = null;
@@ -115,11 +118,12 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    @Override
-   public void updateAvailabilityMode(AvailabilityMode newAvailabilityMode, boolean cancelRebalance) {
+   public void updateAvailabilityMode(List<Address> actualMembers, AvailabilityMode newAvailabilityMode,
+         boolean cancelRebalance) {
       synchronized (this) {
          boolean modeChanged = setAvailabilityMode(newAvailabilityMode);
 
-         if (modeChanged) {
+         if (modeChanged || !actualMembers.equals(currentTopology.getActualMembers())) {
             log.debugf("Updating availability for cache %s to %s", cacheName, newAvailabilityMode);
             ConsistentHash newPendingCH = currentTopology.getPendingCH();
             if (cancelRebalance) {
@@ -129,7 +133,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
                }
             }
             CacheTopology newTopology = new CacheTopology(currentTopology.getTopologyId() + 1,
-                  currentTopology.getRebalanceId(), currentTopology.getCurrentCH(), newPendingCH);
+                  currentTopology.getRebalanceId(), currentTopology.getCurrentCH(), newPendingCH, actualMembers);
             setCurrentTopology(newTopology);
             clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, newAvailabilityMode,
                   isTotalOrder(), isDistributed());
@@ -304,12 +308,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       }
    }
 
-   public void doHandleClusterView(List<Address> newClusterMembers) throws Exception {
+   public void doHandleClusterView() throws Exception {
       synchronized (this) {
          // TODO Clean up ClusterCacheStatus instances once they no longer have any members
          if (currentTopology == null)
             return;
 
+         List<Address> newClusterMembers = transport.getMembers();
          boolean cacheMembersModified = retainMembers(newClusterMembers);
          availabilityStrategy.onClusterViewChange(this, newClusterMembers);
 
@@ -336,7 +341,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d", cacheName, currentTopologyId);
          int newTopologyId = currentTopologyId + 1;
          ConsistentHash newCurrentCH = currentTopology.getPendingCH();
-         CacheTopology newTopology = new CacheTopology(newTopologyId, getCurrentTopology().getRebalanceId(), newCurrentCH, null);
+         CacheTopology newTopology = new CacheTopology(newTopologyId, getCurrentTopology().getRebalanceId(),
+               newCurrentCH, null, newCurrentCH.getMembers());
          setCurrentTopology(newTopology);
 
          clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode,
@@ -386,14 +392,17 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
 
          // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
-         List<Address> updateMembers = pruneInvalidMembers(currentCH.getMembers());
-         ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, updateMembers, getCapacityFactors());
+         List<Address> newCurrentMembers = pruneInvalidMembers(currentCH.getMembers());
+         ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
+         List<Address> actualMembers = newCurrentMembers;
          ConsistentHash newPendingCH = null;
          if (pendingCH != null) {
             List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());
             newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, getCapacityFactors());
+            actualMembers = newPendingMembers;
          }
-         CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, newCurrentCH, newPendingCH);
+         CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, newCurrentCH, newPendingCH,
+               actualMembers);
          setCurrentTopology(newTopology);
          newTopology.logRoutingTableInformation();
 
@@ -551,7 +560,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(
             joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
             initialMembers, getCapacityFactors());
-      CacheTopology initialTopology = new CacheTopology(0, 0, initialCH, null);
+      CacheTopology initialTopology = new CacheTopology(0, 0, initialCH, null, initialMembers);
       setCurrentTopology(initialTopology);
       setStableTopology(initialTopology);
       return initialTopology;
@@ -631,7 +640,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             log.tracef("The balanced CH is the same as the current CH, not rebalancing");
             return;
          }
-         CacheTopology newTopology = new CacheTopology(newTopologyId, newRebalanceId, currentCH, balancedCH);
+         CacheTopology newTopology = new CacheTopology(newTopologyId, newRebalanceId, currentCH, balancedCH,
+               balancedCH.getMembers());
          log.tracef("Updating cache %s topology for rebalance: %s", cacheName, newTopology);
          newTopology.logRoutingTableInformation();
          initRebalanceConfirmationCollector(newTopology);

@@ -120,6 +120,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
             try {
                assertOnAllCachesAndOwnership("k1", "value2");
             } catch (AssertionError e) {
+               log.debugf("Assertion failed once", e);
                return false;
             }
             return true;

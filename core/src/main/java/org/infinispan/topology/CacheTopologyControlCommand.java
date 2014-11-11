@@ -13,6 +13,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.List;
+
 /**
  * A control command for all cache membership/rebalance operations.
  * It is not a {@code CacheRpcCommand} because it needs to run on the coordinator even when
@@ -69,6 +71,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    private ConsistentHash currentCH;
    private ConsistentHash pendingCH;
    private AvailabilityMode availabilityMode;
+   private List<Address> actualMembers;
 
    private Throwable throwable;
    private int viewId;
@@ -123,6 +126,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       this.currentCH = cacheTopology.getCurrentCH();
       this.pendingCH = cacheTopology.getPendingCH();
       this.availabilityMode = availabilityMode;
+      this.actualMembers = cacheTopology.getActualMembers();
       this.viewId = viewId;
    }
 
@@ -165,13 +169,16 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
          // coordinator to member
          case CH_UPDATE:
-            localTopologyManager.handleTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH), availabilityMode, viewId);
+            localTopologyManager.handleTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
+                  pendingCH, actualMembers), availabilityMode, viewId);
             return null;
          case STABLE_TOPOLOGY_UPDATE:
-            localTopologyManager.handleStableTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH), viewId);
+            localTopologyManager.handleStableTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId,
+                  currentCH, pendingCH, actualMembers), viewId);
             return null;
          case REBALANCE_START:
-            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH, pendingCH), viewId);
+            localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
+                  pendingCH, actualMembers), viewId);
             return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest(viewId);
@@ -236,7 +243,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
    @Override
    public Object[] getParameters() {
       return new Object[]{cacheName, (byte) type.ordinal(), sender, joinInfo, topologyId, rebalanceId, currentCH,
-            pendingCH, availabilityMode, throwable, viewId};
+            pendingCH, availabilityMode, actualMembers, throwable, viewId};
    }
 
    @Override
@@ -252,6 +259,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       currentCH = (ConsistentHash) parameters[i++];
       pendingCH = (ConsistentHash) parameters[i++];
       availabilityMode = (AvailabilityMode) parameters[i++];
+      actualMembers = (List<Address>) parameters[i++];
       throwable = (Throwable) parameters[i++];
       viewId = (Integer) parameters[i++];
    }
@@ -268,6 +276,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             ", currentCH=" + currentCH +
             ", pendingCH=" + pendingCH +
             ", availabilityMode=" + availabilityMode +
+            ", actualMembers=" + actualMembers +
             ", throwable=" + throwable +
             ", viewId=" + viewId +
             '}';

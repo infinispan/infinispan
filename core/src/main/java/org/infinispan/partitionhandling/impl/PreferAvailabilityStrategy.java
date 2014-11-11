@@ -119,18 +119,18 @@ public class PreferAvailabilityStrategy implements AvailabilityStrategy {
       // request, and after they have the new view they can't process topology updates with the old view id.
       // Also cancel any pending rebalance by removing the pending CH, because we don't recover the rebalance
       // confirmation status (yet).
-      CacheTopology mergedTopology = maxTopology;
+      CacheTopology mergedTopology = null;
       if (maxTopology != null) {
          mergedTopology = new CacheTopology(maxTopologyId + 1, maxTopology.getRebalanceId(),
-               maxTopology.getCurrentCH(), null);
+               maxTopology.getCurrentCH(), null, maxTopology.getActualMembers());
       }
 
       context.updateTopologiesAfterMerge(mergedTopology, maxStableTopology, null);
 
       // First update the CHs to remove any nodes that left from the current topology
       List<Address> newMembers = context.getExpectedMembers();
-      List<Address> survivingMembers = new ArrayList<>(mergedTopology.getMembers());
-      if (survivingMembers.retainAll(newMembers)) {
+      List<Address> survivingMembers = new ArrayList<>(newMembers);
+      if (mergedTopology != null && survivingMembers.retainAll(mergedTopology.getMembers())) {
          checkForLostData(context, survivingMembers);
       }
       context.updateCurrentTopology(survivingMembers);

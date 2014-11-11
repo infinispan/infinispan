@@ -219,11 +219,11 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertFalse(stateConsumer.hasActiveTransfers());
 
       // node 4 leaves
-      stateConsumer.onTopologyUpdate(new CacheTopology(1, 1, ch2, null), false);
+      stateConsumer.onTopologyUpdate(new CacheTopology(1, 1, ch2, null, ch2.getMembers()), false);
       assertFalse(stateConsumer.hasActiveTransfers());
 
       // start a rebalance
-      stateConsumer.onTopologyUpdate(new CacheTopology(2, 2, ch2, ch3, ch23), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(2, 2, ch2, ch3, ch23, ch23.getMembers()), true);
       assertTrue(stateConsumer.hasActiveTransfers());
 
       // check that all segments have been requested
@@ -237,18 +237,18 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null), false);
+            stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers()), false);
             return null;
          }
       });
-      stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null), false);
+      stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers()), false);
       future.get();
       assertFalse(stateConsumer.hasActiveTransfers());
 
 
       // restart the rebalance
       requestedSegments.clear();
-      stateConsumer.onTopologyUpdate(new CacheTopology(4, 4, ch2, ch3, ch23), true);
+      stateConsumer.onTopologyUpdate(new CacheTopology(4, 4, ch2, ch3, ch23, ch23.getMembers()), true);
       assertTrue(stateConsumer.hasActiveTransfers());
       assertEquals(flatRequestedSegments, newSegments);
 

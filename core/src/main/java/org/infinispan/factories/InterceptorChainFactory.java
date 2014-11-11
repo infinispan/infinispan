@@ -4,16 +4,49 @@ package org.infinispan.factories;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.CompatibilityModeConfiguration;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.interceptors.*;
+import org.infinispan.interceptors.ActivationInterceptor;
+import org.infinispan.interceptors.BatchingInterceptor;
+import org.infinispan.interceptors.CacheLoaderInterceptor;
+import org.infinispan.interceptors.CacheMgmtInterceptor;
+import org.infinispan.interceptors.CacheWriterInterceptor;
+import org.infinispan.interceptors.CallInterceptor;
+import org.infinispan.interceptors.ClusteredActivationInterceptor;
+import org.infinispan.interceptors.ClusteredCacheLoaderInterceptor;
+import org.infinispan.interceptors.DeadlockDetectingInterceptor;
+import org.infinispan.interceptors.DistCacheWriterInterceptor;
+import org.infinispan.interceptors.EntryWrappingInterceptor;
+import org.infinispan.interceptors.GroupingInterceptor;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.InvalidationInterceptor;
+import org.infinispan.interceptors.InvocationContextInterceptor;
+import org.infinispan.interceptors.IsMarshallableInterceptor;
+import org.infinispan.interceptors.MarshalledValueInterceptor;
+import org.infinispan.interceptors.NotificationInterceptor;
+import org.infinispan.interceptors.TxInterceptor;
+import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.compat.TypeConverterInterceptor;
-import org.infinispan.interceptors.distribution.*;
+import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
+import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
+import org.infinispan.interceptors.distribution.L1TxInterceptor;
+import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
+import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
-import org.infinispan.interceptors.totalorder.*;
+import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
+import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
+import org.infinispan.interceptors.totalorder.TotalOrderStateTransferInterceptor;
+import org.infinispan.interceptors.totalorder.TotalOrderVersionedDistributionInterceptor;
+import org.infinispan.interceptors.totalorder.TotalOrderVersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.xsite.NonTransactionalBackupInterceptor;
 import org.infinispan.interceptors.xsite.OptimisticBackupInterceptor;
 import org.infinispan.interceptors.xsite.PessimisticBackupInterceptor;
@@ -84,13 +117,6 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
       interceptorChain.appendInterceptor(createInterceptor(new InvocationContextInterceptor(), InvocationContextInterceptor.class), false);
 
-      if (configuration.clustering().partitionHandling().enabled()
-            && (configuration.clustering().cacheMode().isDistributed()
-            || configuration.clustering().cacheMode().isReplicated())) {
-         interceptorChain.appendInterceptor(createInterceptor(new PartitionHandlingInterceptor(), PartitionHandlingInterceptor.class), false);
-      }
-
-
       CompatibilityModeConfiguration compatibility = configuration.compatibility();
       if (compatibility.enabled()) {
          Marshaller compatibilityMarshaller = compatibility.marshaller();
@@ -122,6 +148,14 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          }
          interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(), TransactionSynchronizerInterceptor.class), false);
       }
+
+      // The partition handling must run every time the state transfer interceptor retries a command (in non-transactional caches)
+      if (configuration.clustering().partitionHandling().enabled()
+            && (configuration.clustering().cacheMode().isDistributed()
+            || configuration.clustering().cacheMode().isReplicated())) {
+         interceptorChain.appendInterceptor(createInterceptor(new PartitionHandlingInterceptor(), PartitionHandlingInterceptor.class), false);
+      }
+
 
       //load total order interceptor
       if (isTotalOrder) {

@@ -146,7 +146,7 @@ public class InboundTransferTask {
                }
                return true;
             }
-            log.failedToRequestSegments(segmentsCopy, cacheName, source, new CacheException(response.toString()));
+            log.failedToRequestSegments(segmentsCopy, cacheName, source, new CacheException(String.valueOf(response)));
          } catch (CacheException e) {
             log.failedToRequestSegments(segmentsCopy, cacheName, source, e);
          }
