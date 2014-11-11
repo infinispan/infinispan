@@ -37,7 +37,7 @@ public class GreetingServiceIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan.cdi:" + Version.MODULE_SLOT + " services, org.infinispan.jcache:" + Version.MODULE_SLOT + " services").exportAsString();
+            .attribute("Dependencies", "org.infinispan.cdi:" + Version.getModuleSlot() + " services, org.infinispan.jcache:" + Version.getModuleSlot() + " services").exportAsString();
       return new StringAsset(manifest);
    }
 

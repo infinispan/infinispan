@@ -46,7 +46,7 @@ public class HotRodClientIT {
    }
 
    private static Asset manifest() {
-      String manifest = Descriptors.create(ManifestDescriptor.class).attribute("Dependencies", "org.infinispan.client.hotrod:" + Version.MODULE_SLOT + " services").exportAsString();
+      String manifest = Descriptors.create(ManifestDescriptor.class).attribute("Dependencies", "org.infinispan.client.hotrod:" + Version.getModuleSlot() + " services").exportAsString();
       return new StringAsset(manifest);
    }
 

@@ -5,10 +5,10 @@ This article shows how to use Infinispan with link:$$http://www.scala-lang.org/$
 Running the shell
 
 ----
- $ scala -cp infinispan-embedded-7.0.0.Final.jar:lib/jboss-transaction-api_1.1_spec-1.0.1.Final.jar:sample-configurations.xml
+ $ scala -cp infinispan-embedded-{infinispanversion}.0.Final.jar:lib/jboss-transaction-api_1.1_spec-1.0.1.Final.jar:sample-configurations.xml
 ----
 
-where infinispan-embedded-7.0.0.Final.jar, jboss-transaction-api_1.1_spec-1.0.1.Final.jar are shipped with the infinispan zip.
+where infinispan-embedded-{infinispanversion}.0.Final.jar, jboss-transaction-api_1.1_spec-1.0.1.Final.jar are shipped with the infinispan zip.
 
 .sample-configurations.xml
 [source,xml]
@@ -17,8 +17,8 @@ where infinispan-embedded-7.0.0.Final.jar, jboss-transaction-api_1.1_spec-1.0.1.
 
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:7.0 http://infinispan.org/schemas/infinispan-config-7.0.xsd"
-        xmlns="urn:infinispan:config:7.0">
+        xsi:schemaLocation="urn:infinispan:config:{infinispanversion} http://infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd"
+        xmlns="urn:infinispan:config:{infinispanversion}">
 
    <jgroups>
       <stack-file name="tcpStack" path="default-configs/default-jgroups-tcp.xml"/>
@@ -59,7 +59,7 @@ The following code shows how to start an Scala console that will allow commands 
 
 
 ----
- $ scala -cp infinispan-embedded-7.0.0.Final.jar:lib/jboss-transaction-api_1.1_spec-1.0.1.Final.jar:sample-configuration.xml
+ $ scala -cp infinispan-embedded-{infinispanversion}.0.Final.jar:lib/jboss-transaction-api_1.1_spec-1.0.1.Final.jar:sample-configuration.xml
 Welcome to Scala version 2.11.1 (Java HotSpot(TM) 64-Bit Server VM, Java 1.7.0_60).
 Type in expressions to have them evaluated.
 Type :help for more information.
@@ -68,7 +68,7 @@ scala> import org.infinispan._
 import org.infinispan._
 
 scala> println(Version.VERSION)
-7.0.0.Final
+{infinispanversion}.0.Final
 
 
 ----

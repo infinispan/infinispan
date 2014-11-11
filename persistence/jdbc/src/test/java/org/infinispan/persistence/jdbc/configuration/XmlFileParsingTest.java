@@ -1,6 +1,5 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
 import static org.testng.AssertJUnit.*;
 
 import java.io.ByteArrayInputStream;
@@ -12,6 +11,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -27,11 +27,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testStringKeyedJdbcStore() throws Exception {
-      String config = INFINISPAN_START_TAG +
+      String config = InfinispanStartTag.LATEST +
             "   <cache-container default-cache=\"default\">\n" +
             "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:7.0\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
+            "       <string-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ InfinispanStartTag.LATEST.majorMinor()+"\" key-to-string-mapper=\"DummyKey2StringMapper\" shared=\"true\" " +
             "                                preload=\"true\" read-only=\"true\" fetch-state=\"true\" purge=\"true\" singleton=\"false\" dialect=\"H2\">\n" +
             "         <connection-pool connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
             "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\" >\n" +
@@ -67,11 +67,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testBinaryKeyedJdbcStore() throws Exception {
-      String config = INFINISPAN_START_TAG +
+      String config = InfinispanStartTag.LATEST +
             "   <cache-container default-cache=\"default\">\n" +
             "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <binary-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:7.0\" read-only=\"true\" singleton=\"true\" dialect=\"H2\">\n" +
+            "       <binary-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ InfinispanStartTag.LATEST.majorMinor()+"\" read-only=\"true\" singleton=\"true\" dialect=\"H2\">\n" +
             "         <simple-connection connection-url=\"jdbc:h2:mem:infinispan;DB_CLOSE_DELAY=-1\" username=\"dbuser\" password=\"dbpass\" driver=\"org.h2.Driver\"/>\n" +
             "         <binary-keyed-table prefix=\"bucket\" fetch-size=\"34\" batch-size=\"128\">\n" +
             "           <id-column name=\"id\" type=\"BINARY\" />\n" +
@@ -101,11 +101,11 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testMixedKeyedJdbcStore() throws Exception {
-      String config = INFINISPAN_START_TAG +
+      String config = InfinispanStartTag.LATEST +
             "   <cache-container default-cache=\"default\">\n" +
             "      <local-cache name=\"default\">\n" +
             "     <persistence>\n" +
-            "       <mixed-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:7.0\" key-to-string-mapper=\"DummyKey2StringMapper\" singleton=\"true\" dialect=\"H2\">\n" +
+            "       <mixed-keyed-jdbc-store xmlns=\"urn:infinispan:config:store:jdbc:"+ InfinispanStartTag.LATEST.majorMinor()+"\" key-to-string-mapper=\"DummyKey2StringMapper\" singleton=\"true\" dialect=\"H2\">\n" +
             "         <data-source jndi-url=\"java:MyDataSource\" />\n" +
             "         <string-keyed-table prefix=\"entry\" fetch-size=\"34\" batch-size=\"128\">\n" +
             "           <id-column name=\"id\" type=\"VARCHAR\" />\n" +

@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.TakeOfflineConfiguration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
@@ -16,7 +17,6 @@ import java.io.IOException;
 
 import static org.infinispan.configuration.cache.XSiteStateTransferConfigurationBuilder.*;
 import static org.infinispan.test.TestingUtil.INFINISPAN_END_TAG;
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -33,7 +33,7 @@ public class XSiteStateTransferFileParsingTest extends SingleCacheManagerTest {
          new XSiteStateTransferConfiguration(DEFAULT_CHUNK_SIZE, DEFAULT_TIMEOUT, DEFAULT_MAX_RETRIES, DEFAULT_WAIT_TIME);
 
    private static final String FILE_NAME = "configs/xsite/xsite-state-transfer-test.xml";
-   private static final String XML_FORMAT = INFINISPAN_START_TAG +
+   private static final String XML_FORMAT = InfinispanStartTag.LATEST +
          "<jgroups>\n" +
          "  <stack-file name=\"udp\" path=\"jgroups-udp.xml\"/>\n" +
          "</jgroups>\n" +

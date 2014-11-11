@@ -301,7 +301,7 @@ SearchManager searchManager = Search.getSearchManager(cache);
 searchManager.getMassIndexer().start();
 ----
 
-TIP: This is also available as a `start` JMX operation on the link:$$http://docs.jboss.org/infinispan/7.0/apidocs/jmxComponents.html#MassIndexer$$[MassIndexer MBean]
+TIP: This is also available as a `start` JMX operation on the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/jmxComponents.html#MassIndexer[MassIndexer MBean]
 registered under the name `org.infinispan:type=Query,manager="{name-of-cache-manager}",cache="{name-of-cache}",component=MassIndexer`.
 
 === Obtaining query statistics
@@ -387,7 +387,7 @@ Constructing a query is a hierarchical process of composing multiple criteria an
 The simplest possible form of a query criteria is a restriction on the values of an entity attribute according to a
 filtering operator that accepts zero or more arguments. The entity attribute is specified by invoking the
 `having(String attributePath)` method of the query builder which returns an intermediate context object
-(link:$$http://docs.jboss.org/infinispan/7.0/apidocs/org/infinispan/query/dsl/FilterConditionEndContext.html$$[_FilterConditionEndContext_])
+(link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/query/dsl/FilterConditionEndContext.html[_FilterConditionEndContext_])
 that exposes all the available operators. Each of the methods defined by _FilterConditionEndContext_ is an operator that
 accepts an argument, except for `between` which has two arguments and `isNull` which has no arguments. The arguments are
 statically evaluated at the time the query is constructed, so if you're looking for a feature similar to SQL's

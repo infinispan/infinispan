@@ -62,7 +62,6 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    private val isTrace = isTraceEnabled
    private val byteBuffer = new ByteArrayOutputStream()
 
-
   override def decode(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
     try {
       super.decode(ctx, in, out)
@@ -269,7 +268,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       header.op match {
          case FlushAllRequest => flushAll(buffer, ch, isReadParams = false) // Without params
          case VersionRequest => {
-            val ret = new StringBuilder().append("VERSION ").append(Version.VERSION).append(CRLF)
+            val ret = new StringBuilder().append("VERSION ").append(Version.getVersion).append(CRLF)
             writeResponse(ch, ret)
          }
          case QuitRequest => closeChannel(ch)

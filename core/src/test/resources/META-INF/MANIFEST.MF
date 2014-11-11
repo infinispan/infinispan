@@ -1,0 +1,1 @@
+Implementation-Version: ${project.version}

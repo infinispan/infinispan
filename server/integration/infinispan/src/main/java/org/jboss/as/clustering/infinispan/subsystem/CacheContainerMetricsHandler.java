@@ -143,7 +143,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                     result.set(SecurityActions.getRunningCacheCount(cacheManager));
                     break;
                 case VERSION:
-                    result.set(Version.VERSION);
+                    result.set(Version.getVersion());
                     break;
                 default:
                     context.getFailureDescription().set(String.format("Unknown metric %s", metric));

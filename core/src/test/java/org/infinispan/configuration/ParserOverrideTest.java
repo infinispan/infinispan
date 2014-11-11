@@ -1,8 +1,8 @@
 package org.infinispan.configuration;
 
 import static org.infinispan.test.TestingUtil.JGROUPS_CONFIG;
-import static org.infinispan.test.TestingUtil.INFINISPAN_START_TAG;
 import static org.infinispan.test.TestingUtil.withCacheManager;
+
 
 
 
@@ -11,6 +11,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.Assert;
@@ -24,7 +25,7 @@ public class ParserOverrideTest {
     */
    public void testNamedCacheOverride() throws Exception {
       final String cacheName = "asyncRepl";
-      String xml1 = INFINISPAN_START_TAG + JGROUPS_CONFIG +
+      String xml1 = InfinispanStartTag.LATEST + JGROUPS_CONFIG +
             "<cache-container name=\"1\" default-cache=\"" + cacheName + "\">" +
             "   <replicated-cache name=\"" + cacheName + "\" mode=\"ASYNC\" async-marshalling=\"false\">\n" +
             "      <state-transfer enabled=\"false\"/>\n" +
@@ -34,7 +35,7 @@ public class ParserOverrideTest {
             "   </replicated-cache>\n" +
             "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
-      String xml2 = INFINISPAN_START_TAG + JGROUPS_CONFIG +
+      String xml2 = InfinispanStartTag.LATEST + JGROUPS_CONFIG +
             "<cache-container name=\"2\" default-cache=\"" + cacheName + "\">" +
             "   <replicated-cache name=\"" + cacheName + "\" mode=\"SYNC\" remote-timeout=\"30000\">\n" +
             "      <state-transfer enabled=\"true\"/>\n" +
@@ -72,7 +73,7 @@ public class ParserOverrideTest {
     * This test makes sure that both defaults are applied to a named cache
     */
    public void testDefaultCacheOverride() throws Exception {
-      String xml1 = INFINISPAN_START_TAG + JGROUPS_CONFIG +
+      String xml1 = InfinispanStartTag.LATEST + JGROUPS_CONFIG +
             "<cache-container name=\"1\" default-cache=\"default-cache\">" +
             "   <replicated-cache name=\"default-cache\" mode=\"ASYNC\" statistics=\"true\">\n" +
             "      <state-transfer enabled=\"false\"/>\n" +
@@ -82,7 +83,7 @@ public class ParserOverrideTest {
             "   </replicated-cache>\n" +
             "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
-      String xml2 = INFINISPAN_START_TAG + JGROUPS_CONFIG +
+      String xml2 = InfinispanStartTag.LATEST + JGROUPS_CONFIG +
             "<cache-container name=\"2\" default-cache=\"default-cache\">" +
             "   <replicated-cache name=\"default-cache\" mode=\"SYNC\" remote-timeout=\"30000\">\n" +
             "      <state-transfer enabled=\"true\"/>\n" +
@@ -123,7 +124,7 @@ public class ParserOverrideTest {
     */
    public void testDefaultAndNamedCacheOverride() throws Exception {
       final String cacheName = "ourCache";
-      String xml1 = INFINISPAN_START_TAG + JGROUPS_CONFIG +
+      String xml1 = InfinispanStartTag.LATEST + JGROUPS_CONFIG +
             "<cache-container name=\"1\" default-cache=\"default-cache\">" +
             "   <replicated-cache name=\"default-cache\" mode=\"ASYNC\" statistics=\"true\" deadlock-detection-spin=\"1221\">\n" +
             "      <state-transfer enabled=\"false\"/>\n" +
@@ -134,7 +135,7 @@ public class ParserOverrideTest {
             "   <replicated-cache name=\"" + cacheName + "\" mode=\"ASYNC\" queue-flush-interval=\"105\" queue-size=\"341\" statistics=\"true\" deadlock-detection-spin=\"1223\" />\n" +
             "</cache-container>" +
             TestingUtil.INFINISPAN_END_TAG;
-      String xml2 = INFINISPAN_START_TAG + JGROUPS_CONFIG +
+      String xml2 = InfinispanStartTag.LATEST + JGROUPS_CONFIG +
             "<cache-container name=\"2\" default-cache=\"default-cache\">" +
             "   <replicated-cache name=\"default-cache\" mode=\"SYNC\" deadlock-detection-spin=\"1222\" remote-timeout=\"30000\">\n" +
             "      <state-transfer enabled=\"true\"/>\n" +

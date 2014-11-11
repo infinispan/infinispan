@@ -41,7 +41,7 @@ public class InfinispanStoreJpaIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan:" + Version.MODULE_SLOT + " services, org.infinispan.persistence.jpa:" + Version.MODULE_SLOT + " services").exportAsString();
+            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services, org.infinispan.persistence.jpa:" + Version.getModuleSlot() + " services").exportAsString();
       return new StringAsset(manifest);
    }
 

@@ -584,7 +584,7 @@ public abstract class AbstractSingleNodeMemcachedIT {
         Map<String, String> stats = mc.getStats();
         String version = stats.get("version");
         assertNotNull(version);
-        assertTrue(version.startsWith(Version.MAJOR_MINOR));
+        assertTrue(version.startsWith(Version.getMajorMinor()));
     }
 
     @Test

@@ -4,6 +4,8 @@
             xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+  <bean id="restStoreConfigurationParser71" class="org.infinispan.persistence.rest.configuration.RestStoreConfigurationParser71"/>
+  <service ref="restStoreConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
   <bean id="restStoreConfigurationParser70" class="org.infinispan.persistence.rest.configuration.RestStoreConfigurationParser70"/>
   <service ref="restStoreConfigurationParser70" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
 

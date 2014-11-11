@@ -52,7 +52,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
 
    def testStaticStats(m: Method) {
        val stats = getStats(-1, -1)
-       assertEquals(stats._1.get("version"), Version.VERSION)
+       assertEquals(stats._1.get("version"), Version.getVersion)
     }
 
    def testTodoStats() {
@@ -219,7 +219,7 @@ class MemcachedStatsTest extends MemcachedSingleNodeTest {
       resp = send("stats boo boo2 boo3\r\n")
       assertClientError(resp)
    }
-   
+
    private def getStats(currentBytesRead: Int, currentBytesWritten: Int) = {
       val globalStats = client.getStats
       assertEquals(globalStats.size(), 1)

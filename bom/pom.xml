@@ -52,6 +52,8 @@
    </issueManagement>
 
    <properties>
+      <infinispan.codename>Guinness</infinispan.codename>
+      <infinispan.core.schema.version>7.1</infinispan.core.schema.version>
       
       <version.protostream>2.0.2.Final</version.protostream>
       <version.protobuf>2.6.0</version.protobuf>

@@ -16,13 +16,12 @@ import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 
 /**
  *
- * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
+ * @author Radim Vansa
  *
  */
 @Namespaces({
       @Namespace(uri = "urn:infinispan:config:soft-index:7.0",
                  root = SoftIndexFileStoreConfigurationParser70.ROOT_ELEMENT),
-      @Namespace(root = SoftIndexFileStoreConfigurationParser70.ROOT_ELEMENT)
 })
 public class SoftIndexFileStoreConfigurationParser70 implements ConfigurationParser {
    public static final String ROOT_ELEMENT = "soft-index-file-store";

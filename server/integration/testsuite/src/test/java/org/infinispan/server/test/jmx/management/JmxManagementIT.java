@@ -168,7 +168,7 @@ public class JmxManagementIT {
         assertNotEquals(0, getAttribute(provider, cacheManagerMBean, "NodeAddress").length());
         assertEquals(4, Integer.parseInt(getAttribute(provider, cacheManagerMBean, "RunningCacheCount")));
         assertNotEquals(0, getAttribute(provider, cacheManagerMBean, "PhysicalAddresses").length());
-        assertEquals(Version.VERSION, getAttribute(provider, cacheManagerMBean, "Version"));
+        assertEquals(Version.getVersion(), getAttribute(provider, cacheManagerMBean, "Version"));
         String names = getAttribute(provider, cacheManagerMBean, "DefinedCacheNames");
         assertTrue(names.contains("default") && names.contains("memcachedCache") &&
                 names.contains("hotRodTopologyCache"));

@@ -85,12 +85,22 @@ public class TestCacheManagerFactory {
       return fromStream(is, keepJmxDomainName);
    }
 
+   public static EmbeddedCacheManager fromXml(String xmlFile, boolean keepJmxDomainName, boolean defaultParserOnly) throws IOException {
+      InputStream is = new FileLookup().lookupFileStrict(
+            xmlFile, Thread.currentThread().getContextClassLoader());
+      return fromStream(is, keepJmxDomainName, defaultParserOnly);
+   }
+
    public static EmbeddedCacheManager fromStream(InputStream is) throws IOException {
       return fromStream(is, false);
    }
 
    public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName) throws IOException {
-      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader());
+      return fromStream(is, keepJmxDomainName, true);
+   }
+
+   public static EmbeddedCacheManager fromStream(InputStream is, boolean keepJmxDomainName, boolean defaultParsersOnly) throws IOException {
+      ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), defaultParsersOnly);
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
       return createClusteredCacheManager(holder, keepJmxDomainName);
    }

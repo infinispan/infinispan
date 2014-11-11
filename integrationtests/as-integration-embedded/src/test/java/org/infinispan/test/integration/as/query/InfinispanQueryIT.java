@@ -57,8 +57,8 @@ public class InfinispanQueryIT {
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
             .attribute("Dependencies",
-                    "org.infinispan:"       + Version.MODULE_SLOT + " services, "
-                  + "org.infinispan.query:" + Version.MODULE_SLOT + " services")
+                    "org.infinispan:"       + Version.getModuleSlot() + " services, "
+                  + "org.infinispan.query:" + Version.getModuleSlot() + " services")
                   .exportAsString();
       return new StringAsset(manifest);
    }

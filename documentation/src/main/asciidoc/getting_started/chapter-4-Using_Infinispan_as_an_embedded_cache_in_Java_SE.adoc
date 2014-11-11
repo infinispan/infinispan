@@ -132,8 +132,8 @@ $ mvn compile exec:java -Dexec.mainClass="org.infinispan.quickstart.embeddedcach
 ----
 <infinispan
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="urn:infinispan:config:7.0 http://www.infinispan.org/schemas/infinispan-config-7.0.xsd"
-        xmlns="urn:infinispan:config:7.0">
+        xsi:schemaLocation="urn:infinispan:config:{infinispanversion} http://www.infinispan.org/schemas/infinispan-config-{infinispanversion}.xsd"
+        xmlns="urn:infinispan:config:{infinispanversion}">
 
    <cache-container default-cache="default">
        <local-cache name="xml-configured-cache">

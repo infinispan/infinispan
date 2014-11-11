@@ -28,7 +28,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      String config = TestingUtil.INFINISPAN_START_TAG + "\n" +
+      String config = TestingUtil.InfinispanStartTag.LATEST + "\n" +
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "      <indexing index=\"LOCAL\">\n" +

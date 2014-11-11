@@ -52,8 +52,9 @@ public class SampleConfigFilesCorrectnessTest {
    public void testConfigWarnings() throws Exception {
       for (String aConfFile : getConfigFileNames()) {
          log.tracef("Analysing %s", aConfFile);
-         EmbeddedCacheManager dcm = TestCacheManagerFactory.fromXml(getRootFolder() + File.separator + aConfFile);
+         EmbeddedCacheManager dcm = null;
          try {
+            dcm = TestCacheManagerFactory.fromXml(getRootFolder() + File.separator + aConfFile, false, true);
             dcm.getCache();
             assert !appender.isFoundUnknownWarning() : String.format(
                   "Unknown warning discovered in file %s: %s",
@@ -62,6 +63,8 @@ public class SampleConfigFilesCorrectnessTest {
                dcm.getCache(cacheName);
                assert !appender.isFoundUnknownWarning();
             }
+         } catch (Exception e) {
+            throw new Exception("Could not parse '"+aConfFile+"'", e);
          } finally {
             TestingUtil.killCacheManagers(dcm);
          }

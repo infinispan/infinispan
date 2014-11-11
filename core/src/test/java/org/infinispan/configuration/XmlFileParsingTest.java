@@ -34,6 +34,7 @@ import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.tx.TestLookup;
 import org.infinispan.transaction.LockingMode;
@@ -69,7 +70,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testNoNamedCaches() throws Exception {
-      String config = INFINISPAN_START_TAG +
+      String config = InfinispanStartTag.LATEST +
             "<cache-container default-cache=\"default\">" +
             "   <transport cluster=\"demoCluster\"/>\n" +
             "   <replicated-cache name=\"default\">\n" +
@@ -93,24 +94,6 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       });
 
-   }
-
-   @Test(expectedExceptions = CacheConfigurationException.class)
-   public void testBackwardCompatibleInputCacheConfiguration() throws Exception {
-      // Read 4.0 configuration file against 4.1 schema
-      String config = INFINISPAN_START_TAG_40 +
-            "   <global>\n" +
-            "      <transport clusterName=\"demoCluster\"/>\n" +
-            "   </global>\n" +
-            "\n" +
-            "   <default>\n" +
-            "      <clustering mode=\"replication\">\n" +
-            "      </clustering>\n" +
-            "   </default>\n" +
-            TestingUtil.INFINISPAN_END_TAG;
-
-      InputStream is = new ByteArrayInputStream(config.getBytes());
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)));
    }
 
    public void testNoSchemaWithStuff() throws IOException {
@@ -137,7 +120,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
    }
 
    public void testCompatibility() throws Exception {
-      String config = INFINISPAN_START_TAG +
+      String config = InfinispanStartTag.LATEST +
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "   </local-cache>\n" +
@@ -154,7 +137,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          }
       });
 
-      config = INFINISPAN_START_TAG +
+      config = InfinispanStartTag.LATEST +
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "      <compatibility/>\n" +
@@ -172,7 +155,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
          }
       });
 
-      config = INFINISPAN_START_TAG +
+      config = InfinispanStartTag.LATEST +
             "<cache-container default-cache=\"default\">" +
             "   <local-cache name=\"default\">\n" +
             "      <compatibility marshaller=\"org.infinispan.commons.marshall.jboss.GenericJBossMarshaller\"/>\n" +

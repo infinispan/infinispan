@@ -150,32 +150,6 @@ def update_versions(base_dir, version):
   pieces = re.compile('[\.\-]').split(version)
   snapshot = pieces[3]=='SNAPSHOT'
   final = pieces[3]=='Final'
-  ## Now look for Version.java
-  version_java = "./core/src/main/java/org/infinispan/Version.java"
-  if os.path.isfile(version_java):
-    modified_files.append(version_java)
-    f_in = open(version_java)
-    f_out = open(version_java+".tmp", "w")
-    regexp = re.compile('\s*private static final (String (MAJOR|MINOR|MICRO|MODIFIER)|boolean SNAPSHOT)')
-    try:
-      for l in f_in:
-        if regexp.match(l):
-          if l.find('MAJOR') > -1:
-            f_out.write('   private static final String MAJOR = "%s";\n' % pieces[0])
-          elif l.find('MINOR') > -1:
-            f_out.write('   private static final String MINOR = "%s";\n' % pieces[1])
-          elif l.find('MICRO') > -1:
-            f_out.write('   private static final String MICRO = "%s";\n' % pieces[2])
-          elif l.find('MODIFIER') > -1:
-            f_out.write('   private static final String MODIFIER = "%s";\n' % pieces[3])
-          elif l.find('SNAPSHOT') > -1:
-            f_out.write('   private static final boolean SNAPSHOT = %s;\n' % ('true' if snapshot else 'false'))
-        else:
-          f_out.write(l)
-    finally:
-      f_in.close()
-      f_out.close()
-    os.rename(version_java+".tmp", version_java)
   
   # Now make sure this goes back into the repository.
   git.commit(modified_files, "'Release Script: update versions for %s'" % version)
