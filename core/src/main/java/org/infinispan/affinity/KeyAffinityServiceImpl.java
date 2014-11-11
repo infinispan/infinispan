@@ -199,8 +199,10 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    }
 
    public void handleCacheStopped(CacheStoppedEvent cse) {
-      log.tracef("Cache stopped, stopping the service: %s", cse);
-      stop();
+      if (this.cache.getName().equals(cse.getCacheName())) {
+         log.tracef("Cache stopped, stopping the service: %s", cse);
+         stop();
+      }
    }
 
 
