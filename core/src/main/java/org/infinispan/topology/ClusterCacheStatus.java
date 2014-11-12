@@ -525,7 +525,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (!isFirstMember && !memberJoined) {
             if (trace) log.tracef("Trying to add node %s to cache %s, but it is already a member: " +
                   "members = %s, joiners = %s", joiner, cacheName, expectedMembers, joiners);
-            return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode);
+            return new CacheStatusResponse(null, currentTopology, stableTopology, availabilityMode, clusterTopologyManager.isRebalancingEnabled());
          }
          if (isFirstMember) {
             // This node was the first to join. We need to install the initial CH
@@ -540,7 +540,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          availabilityStrategy.onJoin(this, joiner);
       }
 
-      return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode);
+      return new CacheStatusResponse(null, topologyBeforeRebalance, stableTopology, availabilityMode, clusterTopologyManager.isRebalancingEnabled());
    }
 
    protected CacheTopology createInitialCacheTopology() {

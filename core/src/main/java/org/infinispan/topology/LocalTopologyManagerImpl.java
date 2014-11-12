@@ -1,14 +1,5 @@
 package org.infinispan.topology;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
@@ -21,7 +12,6 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.partionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -33,6 +23,15 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
@@ -51,6 +50,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private ExecutorService asyncTransportExecutor;
    private GlobalComponentRegistry gcr;
    private TimeService timeService;
+   private ClusterTopologyManager clusterTopologyManager;
 
    private final ConcurrentMap<String, LocalCacheStatus> runningCaches = CollectionFactory.makeConcurrentMap();
    private volatile boolean running;
@@ -58,11 +58,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Inject
    public void inject(Transport transport,
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                      GlobalComponentRegistry gcr, TimeService timeService) {
+                      GlobalComponentRegistry gcr, TimeService timeService, ClusterTopologyManager clusterTopologyManager) {
       this.transport = transport;
       this.asyncTransportExecutor = asyncTransportExecutor;
       this.gcr = gcr;
       this.timeService = timeService;
+      this.clusterTopologyManager = clusterTopologyManager;
    }
 
    // Arbitrary value, only need to start after JGroupsTransport
@@ -105,6 +106,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
                if (initialStatus != null) {
                   handleTopologyUpdate(cacheName, initialStatus.getCacheTopology(), initialStatus.getAvailabilityMode(), viewId);
                   handleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId);
+                  clusterTopologyManager.setRebalancingEnabled(initialStatus.isRebalancingEnabled());
                   return initialStatus.getCacheTopology();
                }
             } catch (Exception e) {
@@ -154,12 +156,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       Map<String, CacheStatusResponse> response = new HashMap<String, CacheStatusResponse>();
       for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
          String cacheName = e.getKey();
+
          LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
          AvailabilityMode availabilityMode = cacheStatus.getPartitionHandlingManager() != null ?
                cacheStatus.getPartitionHandlingManager().getAvailabilityMode() : null;
          response.put(e.getKey(), new CacheStatusResponse(cacheStatus.getJoinInfo(),
                cacheStatus.getCurrentTopology(), cacheStatus.getStableTopology(),
-               availabilityMode));
+               availabilityMode, clusterTopologyManager.isRebalancingEnabled()));
       }
       return response;
    }
