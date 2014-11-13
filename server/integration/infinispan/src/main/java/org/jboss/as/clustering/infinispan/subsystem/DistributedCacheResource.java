@@ -22,20 +22,13 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE;
-
-import org.jboss.as.clustering.infinispan.InfinispanMessages;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelOnlyWriteAttributeHandler;
-import org.jboss.as.controller.ModelVersion;
-import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.client.helpers.MeasurementUnit;
+import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
@@ -68,16 +61,6 @@ public class DistributedCacheResource extends SharedCacheResource {
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(2))
-                    .build();
-
-    @Deprecated
-    static final SimpleAttributeDefinition VIRTUAL_NODES =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.VIRTUAL_NODES, ModelType.INT, true)
-                    .setXmlName(Attribute.VIRTUAL_NODES.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(1))
-                    .setDeprecated(ModelVersion.create(1, 4, 0))
                     .build();
 
     static final SimpleAttributeDefinition SEGMENTS =
@@ -113,6 +96,10 @@ public class DistributedCacheResource extends SharedCacheResource {
                 CacheRemove.INSTANCE, resolvePathHandler, runtimeRegistration);
     }
 
+    protected DistributedCacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd cacheAddHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
+        super(pathElement, descriptionResolver, cacheAddHandler, removeHandler, resolvePathHandler, runtimeRegistration);
+    }
+
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
@@ -126,19 +113,5 @@ public class DistributedCacheResource extends SharedCacheResource {
             // register writable attributes available only at runtime
             resourceRegistration.registerReadWriteAttribute(REBALANCING, RebalancingAttributeHandler.INSTANCE, RebalancingAttributeHandler.INSTANCE);
         }
-
-        // Attribute virtual-nodes has been deprecated, so not to break management API, attempt to use it will fail.
-        final OperationStepHandler virtualNodesWriteHandler = new ModelOnlyWriteAttributeHandler(VIRTUAL_NODES) {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                if (operation.hasDefined(VALUE) && operation.get(VALUE).asInt() != 1) {
-                    throw InfinispanMessages.MESSAGES.attributeDeprecated(ModelKeys.VIRTUAL_NODES);
-                }
-                context.stepCompleted();
-            }
-        };
-
-        // Legacy attributes
-        resourceRegistration.registerReadWriteAttribute(VIRTUAL_NODES, null, virtualNodesWriteHandler);
     }
 }

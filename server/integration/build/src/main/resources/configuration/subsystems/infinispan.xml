@@ -17,7 +17,8 @@
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <transaction mode="NONE" />
             </local-cache>
-            <local-cache name="namedCache" start="EAGER" />
+            <local-cache-configuration name="simple" start="EAGER" />
+            <local-cache name="namedCache" configuration="simple"/>
          </cache-container>
          <cache-container name="security">
          </cache-container>

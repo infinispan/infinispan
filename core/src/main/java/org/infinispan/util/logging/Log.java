@@ -1327,11 +1327,21 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Could not find the specified JGroups configuration file '%s'", id = 365)
    CacheConfigurationException jgroupsConfigurationNotFound(String cfg);
-   
+
    @Message(value = "Unable to add a 'null' Custom Cache Store", id = 366)
    IllegalArgumentException unableToAddNullCustomStore();
 
    @LogMessage(level = ERROR)
    @Message(value = "There was an issue with topology update for topology: %s", id = 367)
    void topologyUpdateError(int topologyId, @Cause Throwable t);
+
+   @Message(value = "Attempted to start a cache using configuration template '%s'", id = 368)
+   CacheConfigurationException templateConfigurationStartAttempt(String cacheName);
+
+   @Message(value = "No such template '%s' when declaring '%s'", id = 369)
+   CacheConfigurationException undeclaredConfiguration(String extend, String name);
+
+   @Message(value = "Cannot use configuration '%s' as a template", id = 370)
+   CacheConfigurationException noConfiguration(String extend);
 }
+

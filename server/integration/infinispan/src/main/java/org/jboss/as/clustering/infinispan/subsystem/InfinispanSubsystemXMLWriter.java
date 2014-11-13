@@ -33,6 +33,8 @@ import org.jboss.staxmapper.XMLElementWriter;
 import org.jboss.staxmapper.XMLExtendedStreamWriter;
 
 import javax.xml.stream.XMLStreamException;
+
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -122,85 +124,63 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writer.writeEndElement();
                 }
 
+                // first we write the configuration templates
+                if (container.hasDefined(ModelKeys.CONFIGURATIONS)) {
+                    ModelNode configurations = container.get(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME);
+                    if (configurations.isDefined()) {
+                        for (String cacheType : Arrays.asList(ModelKeys.LOCAL_CACHE_CONFIGURATION, ModelKeys.INVALIDATION_CACHE_CONFIGURATION,
+                                ModelKeys.REPLICATED_CACHE_CONFIGURATION, ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION)) {
+                            processCacheElements(writer, configurations, cacheType);
+                        }
+                    }
+                }
+
+                // then the concrete caches
+                for (String cacheType : Arrays.asList(ModelKeys.LOCAL_CACHE, ModelKeys.INVALIDATION_CACHE,
+                        ModelKeys.REPLICATED_CACHE, ModelKeys.DISTRIBUTED_CACHE)) {
+                    processCacheElements(writer, container, cacheType);
+                }
                 // write any existent cache types
-                if (container.get(ModelKeys.LOCAL_CACHE).isDefined()) {
-                    for (Property localCacheEntry : container.get(ModelKeys.LOCAL_CACHE).asPropertyList()) {
-                        String localCacheName = localCacheEntry.getName();
-                        ModelNode localCache = localCacheEntry.getValue();
-
-                        writer.writeStartElement(Element.LOCAL_CACHE.getLocalName());
-                        // write identifier before other attributes
-                        writer.writeAttribute(Attribute.NAME.getLocalName(), localCacheName);
-
-                        processCommonCacheAttributesElements(writer, localCache);
-
-                        writer.writeEndElement();
-                    }
-                }
-
-                if (container.get(ModelKeys.INVALIDATION_CACHE).isDefined()) {
-                    for (Property invalidationCacheEntry : container.get(ModelKeys.INVALIDATION_CACHE).asPropertyList()) {
-                        String invalidationCacheName = invalidationCacheEntry.getName();
-                        ModelNode invalidationCache = invalidationCacheEntry.getValue();
-
-                        writer.writeStartElement(Element.INVALIDATION_CACHE.getLocalName());
-                        // write identifier before other attributes
-                        writer.writeAttribute(Attribute.NAME.getLocalName(), invalidationCacheName);
-
-                        processCommonClusteredCacheAttributes(writer, invalidationCache);
-                        processCommonCacheAttributesElements(writer, invalidationCache);
-
-                        writer.writeEndElement();
-                    }
-                }
-
-                if (container.get(ModelKeys.REPLICATED_CACHE).isDefined()) {
-                    for (Property replicatedCacheEntry : container.get(ModelKeys.REPLICATED_CACHE).asPropertyList()) {
-                        String replicatedCacheName = replicatedCacheEntry.getName();
-                        ModelNode replicatedCache = replicatedCacheEntry.getValue();
-
-                        writer.writeStartElement(Element.REPLICATED_CACHE.getLocalName());
-                        // write identifier before other attributes
-                        writer.writeAttribute(Attribute.NAME.getLocalName(), replicatedCacheName);
-
-                        processCommonClusteredCacheAttributes(writer, replicatedCache);
-                        processCommonCacheAttributesElements(writer, replicatedCache);
-
-                        writer.writeEndElement();
-                    }
-                }
-
-                if (container.get(ModelKeys.DISTRIBUTED_CACHE).isDefined()) {
-                    for (Property distributedCacheEntry : container.get(ModelKeys.DISTRIBUTED_CACHE).asPropertyList()) {
-                        String distributedCacheName = distributedCacheEntry.getName();
-                        ModelNode distributedCache = distributedCacheEntry.getValue();
-
-                        writer.writeStartElement(Element.DISTRIBUTED_CACHE.getLocalName());
-                        // write identifier before other attributes
-                        writer.writeAttribute(Attribute.NAME.getLocalName(), distributedCacheName);
-                        // distributed cache attributes
-                        this.writeOptional(writer, Attribute.OWNERS, distributedCache, ModelKeys.OWNERS);
-                        this.writeOptional(writer, Attribute.SEGMENTS, distributedCache, ModelKeys.SEGMENTS);
-                        this.writeOptional(writer, Attribute.CAPACITY_FACTOR, distributedCache, ModelKeys.CAPACITY_FACTOR);
-                        this.writeOptional(writer, Attribute.L1_LIFESPAN, distributedCache, ModelKeys.L1_LIFESPAN);
-
-                        processCommonClusteredCacheAttributes(writer, distributedCache);
-                        processCommonCacheAttributesElements(writer, distributedCache);
-
-                        writer.writeEndElement();
-                    }
-                }
                 writer.writeEndElement();
             }
         }
         writer.writeEndElement();
     }
 
+    private void processCacheElements(XMLExtendedStreamWriter writer, ModelNode container, String cacheType)
+            throws XMLStreamException {
+        if (container.get(cacheType).isDefined()) {
+            for (Property cacheEntry : container.get(cacheType).asPropertyList()) {
+                String cacheName = cacheEntry.getName();
+                ModelNode cache = cacheEntry.getValue();
+
+                writer.writeStartElement(Element.forName(cacheType).getLocalName());
+                // write identifier and inheritance before other attributes
+                writer.writeAttribute(Attribute.NAME.getLocalName(), cacheName);
+                this.writeOptional(writer, Attribute.CONFIGURATION, cache, ModelKeys.CONFIGURATION);
+
+                if (cacheType.startsWith(ModelKeys.DISTRIBUTED_CACHE)) {
+                    this.writeOptional(writer, Attribute.OWNERS, cache, ModelKeys.OWNERS);
+                    this.writeOptional(writer, Attribute.SEGMENTS, cache, ModelKeys.SEGMENTS);
+                    this.writeOptional(writer, Attribute.CAPACITY_FACTOR, cache, ModelKeys.CAPACITY_FACTOR);
+                    this.writeOptional(writer, Attribute.L1_LIFESPAN, cache, ModelKeys.L1_LIFESPAN);
+                }
+
+                if (!cacheType.startsWith(ModelKeys.LOCAL_CACHE)) {
+                    processCommonClusteredCacheAttributes(writer, cache);
+                }
+
+                processCommonCacheAttributesElements(writer, cache);
+                writer.writeEndElement();
+            }
+        }
+    }
+
     private void processCommonClusteredCacheAttributes(XMLExtendedStreamWriter writer, ModelNode cache)
             throws XMLStreamException {
 
         this.writeOptional(writer, Attribute.ASYNC_MARSHALLING, cache, ModelKeys.ASYNC_MARSHALLING);
-        this.writeRequired(writer, Attribute.MODE, cache, ModelKeys.MODE);
+        this.writeOptional(writer, Attribute.MODE, cache, ModelKeys.MODE);
         this.writeOptional(writer, Attribute.QUEUE_SIZE, cache, ModelKeys.QUEUE_SIZE);
         this.writeOptional(writer, Attribute.QUEUE_FLUSH_INTERVAL, cache, ModelKeys.QUEUE_FLUSH_INTERVAL);
         this.writeOptional(writer, Attribute.REMOTE_TIMEOUT, cache, ModelKeys.REMOTE_TIMEOUT);

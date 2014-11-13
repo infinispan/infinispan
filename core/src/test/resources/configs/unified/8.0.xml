@@ -159,5 +159,63 @@
       <local-cache name="store-as-binary">
          <store-as-binary keys="true" values="false"/>
       </local-cache>
+      
+      <!-- template configurations -->
+      <local-cache-configuration name="local-template" start="EAGER" module="org.infinispan" statistics="true">
+         <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
+         <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />
+         <eviction max-entries="20000" strategy="LIRS"/>
+         <expiration interval="10000" lifespan="10" max-idle="10"/>
+         <persistence passivation="false">
+            <file-store path="path" relative-to="jboss.server.temp.dir" shared="true" singleton="false" fetch-state="false" preload="true" purge="false">
+               <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
+            </file-store>
+         </persistence>
+      </local-cache-configuration>
+      <local-cache name="local-instance" configuration="local-template"/>
+      
+      <invalidation-cache-configuration name="invalidation-template" mode="ASYNC" queue-flush-interval="10" queue-size="1000" start="LAZY" async-marshalling="true" statistics="true">
+         <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
+         <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
+         <eviction max-entries="20500" strategy="LRU"/>
+         <expiration interval="10500" lifespan="11" max-idle="11"/>
+      </invalidation-cache-configuration>
+      <invalidation-cache name="invalidation-instance" configuration="invalidation-template" />
+      
+      <replicated-cache-configuration name="repl-template" mode="ASYNC" queue-flush-interval="11" queue-size="1500" start="EAGER"  async-marshalling="false" statistics="true">
+         <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
+         <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
+         <eviction max-entries="21000" strategy="FIFO"/>
+         <expiration interval="11000" lifespan="12" max-idle="12"/>
+         <persistence>
+            <cluster-loader remote-timeout="35000" preload="true"/>
+         </persistence>
+         <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
+      </replicated-cache-configuration>
+      <replicated-cache name="repl-instance" configuration="repl-template">
+         <locking acquire-timeout="32000"/>
+      </replicated-cache>
+      
+      <distributed-cache-configuration name="dist-template" mode="SYNC" l1-lifespan="1200000" owners="4"
+                         remote-timeout="35000" start="EAGER" segments="2" async-marshalling="false" statistics="true"
+                         consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory">
+         <backups>
+            <backup site="NYC" failure-policy="WARN" strategy="SYNC" timeout="12500" enabled="false">
+               <state-transfer chunk-size="600" timeout="2400000"/>
+            </backup>
+            <backup site="SFO" failure-policy="IGNORE" strategy="ASYNC" timeout="13000" enabled="true"/>
+            <backup site="LON" failure-policy="FAIL" strategy="SYNC" timeout="13500" enabled="true">
+               <take-offline after-failures="3" min-wait="10000"/>
+            </backup>
+         </backups>
+         <backup-for remote-cache="users" remote-site="LON"/>
+         <locking acquire-timeout="31500" concurrency-level="3500" isolation="READ_COMMITTED" striping="true"/>
+         <transaction mode="FULL_XA" stop-timeout="61500" locking="OPTIMISTIC"/>
+         <eviction max-entries="21500" strategy="UNORDERED"/>
+         <expiration interval="11500" lifespan="13" max-idle="13"/>
+         <partition-handling enabled="true"/>
+         <state-transfer enabled="true" timeout="60500" chunk-size="10500" />
+      </distributed-cache-configuration>
+      <distributed-cache name="dist-instance" configuration="dist-template" />
    </cache-container>
 </infinispan>

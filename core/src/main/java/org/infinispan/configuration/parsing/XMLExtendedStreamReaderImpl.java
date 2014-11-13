@@ -2,6 +2,7 @@ package org.infinispan.configuration.parsing;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
@@ -299,6 +300,11 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
    @Override
    public String getPIData() {
       return streamReader.getPIData();
+   }
+
+   @Override
+   public String[] getListAttributeValue(int i) {
+      return getAttributeValue(i).split("\\s+");
    }
 
    // private members

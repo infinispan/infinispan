@@ -23,16 +23,28 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.OperationFailedException;
+import org.jboss.dmr.ModelNode;
 
 /**
- * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
+ * Base class for clustered template add operations
+ *
+ * @author Tristan Tarrant
  */
-public class ReplicatedCacheAdd extends SharedStateCacheAdd {
+public abstract class ClusteredCacheTemplateAdd extends CacheAdd {
 
-    static final ReplicatedCacheAdd INSTANCE = new ReplicatedCacheAdd(false);
-    static final ReplicatedCacheAdd CONFIGURATION_INSTANCE = new ReplicatedCacheAdd(true);
 
-    private ReplicatedCacheAdd(boolean template) {
-        super(CacheMode.REPL_SYNC, template);
+    ClusteredCacheTemplateAdd(CacheMode mode) {
+        super(mode, true);
+    }
+
+    @Override
+    void populate(ModelNode fromModel, ModelNode toModel) throws OperationFailedException {
+        super.populate(fromModel, toModel);
+
+        for(AttributeDefinition attribute : ClusteredCacheResource.CLUSTERED_CACHE_ATTRIBUTES) {
+            attribute.validateAndSet(fromModel, toModel);
+        }
     }
 }

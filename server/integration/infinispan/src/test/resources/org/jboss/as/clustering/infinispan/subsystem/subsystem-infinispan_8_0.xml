@@ -4,7 +4,7 @@
     </cache-container>
     <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" eviction-executor="infinispan-eviction" jndi-name="java:global/infinispan/maximal" listener-executor="infinispan-listener" replication-queue-executor="infinispan-repl-queue" module="org.infinispan" statistics="false">
         <transport cluster="maximal-cluster" executor="transport-executor" total-order-executor="total-order-executor" remote-command-executor="remote-command-executor" lock-timeout="120000" stack="tcp" strict-peer-to-peer="false"/>
-        <local-cache name="local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
+        <local-cache-configuration name="local-configuration" batching="false" start="EAGER" module="org.infinispan" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="LIRS"/>
@@ -14,30 +14,8 @@
                 <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
             </file-store>
             <indexing index="LOCAL" auto-config="true"/>
-        </local-cache>
-        <local-cache name="leveldb-stored" batching="false" start="EAGER" module="org.infinispan" statistics="true">
-            <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED"/>
-            <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <leveldb-store path="leveldb-store" block-size="4096" cache-size="50000" clear-threshold="100000">
-                <expiration path="leveldb-store-expired" queue-size="2000"/>
-                <compression type="SNAPPY"/>
-                <implementation/>
-            </leveldb-store>
-        </local-cache>
-        <local-cache name="reststore-local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
-            <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
-            <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
-            <eviction max-entries="20000" strategy="LIRS"/>
-            <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
-            <rest-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" shared="true" singleton="false" append-cache-name-to-path="false" name="rest-store">
-                <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
-                <connection-pool connection-timeout="10000" max-connections-per-host="6" max-total-connections="10" buffer-size="30000" socket-timeout="10000" tcp-no-delay="true" />
-                <remote-server outbound-socket-binding="rest-server-1" />
-            </rest-store>
-            <indexing index="LOCAL" />
-        </local-cache>
-        <invalidation-cache name="invalid" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER" async-marshalling="true"  statistics="true">
+        </local-cache-configuration>
+        <invalidation-cache-configuration name="invalid-configuration" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER" async-marshalling="true"  statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_UNCOMMITTED" striping="true"/>
             <transaction mode="NON_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="LRU"/>
@@ -48,8 +26,8 @@
                 <remote-server outbound-socket-binding="hotrod-server-2" />
             </remote-store>
             <indexing index="NONE" />
-        </invalidation-cache>
-        <replicated-cache name="repl" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER"  async-marshalling="false" statistics="false">
+        </invalidation-cache-configuration>
+        <replicated-cache-configuration name="repl-configuration" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER"  async-marshalling="false" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="SERIALIZABLE" striping="true"/>
             <transaction mode="NON_DURABLE_XA" stop-timeout="60000" locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="FIFO"/>
@@ -62,18 +40,8 @@
                 <property name="location">${java.io.tmpdir}</property>
             </store>
             <indexing index="LOCAL" auto-config="true"/>
-        </replicated-cache>
-        <replicated-cache name="repl2" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER"  async-marshalling="false" statistics="true">
-            <locking acquire-timeout="30000" concurrency-level="2000" isolation="SERIALIZABLE" striping="true"/>
-            <transaction mode="NON_DURABLE_XA" stop-timeout="60000" locking="OPTIMISTIC"/>
-            <eviction max-entries="20000" strategy="FIFO"/>
-            <expiration interval="10000" lifespan="10" max-idle="10"/>
-            <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
-            <store class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false" name="custom-cache-loader"/>
-            <store name="duplicate-loader" class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false"/>
-            <indexing index="LOCAL" auto-config="true"/>
-        </replicated-cache>
-        <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="20" async-marshalling="true" statistics="false">
+        </replicated-cache-configuration>
+        <distributed-cache-configuration name="dist-configuration" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="20" async-marshalling="true" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED" striping="true"/>
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="UNORDERED"/>
@@ -114,7 +82,43 @@
                 <backup site="NYC" strategy="SYNC"/>
                 <backup site="SFO" strategy="ASYNC"/>
             </backups>
-        </distributed-cache>
+        </distributed-cache-configuration>
+        <local-cache name="local" configuration="local-configuration" />
+        <local-cache name="leveldb-stored" batching="false" start="EAGER" module="org.infinispan" statistics="true">
+            <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED"/>
+            <expiration interval="10000" lifespan="10" max-idle="10"/>
+            <leveldb-store path="leveldb-store" block-size="4096" cache-size="50000" clear-threshold="100000">
+                <expiration path="leveldb-store-expired" queue-size="2000"/>
+                <compression type="SNAPPY"/>
+                <implementation/>
+            </leveldb-store>
+        </local-cache>
+        <local-cache name="reststore-local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
+            <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
+            <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
+            <eviction max-entries="20000" strategy="LIRS"/>
+            <expiration interval="10000" lifespan="10" max-idle="10"/>
+            <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
+            <rest-store fetch-state="false" passivation="false" path="path" preload="true" purge="false" shared="true" singleton="false" append-cache-name-to-path="false" name="rest-store">
+                <write-behind flush-lock-timeout="2" modification-queue-size="2048" shutdown-timeout="20000" thread-pool-size="1" />
+                <connection-pool connection-timeout="10000" max-connections-per-host="6" max-total-connections="10" buffer-size="30000" socket-timeout="10000" tcp-no-delay="true" />
+                <remote-server outbound-socket-binding="rest-server-1" />
+            </rest-store>
+            <indexing index="LOCAL" />
+        </local-cache>
+        <invalidation-cache name="invalid" configuration="invalid-configuration" />
+        <replicated-cache name="repl" configuration="repl-configuration"/>
+        <replicated-cache name="repl2" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER"  async-marshalling="false" statistics="true">
+            <locking acquire-timeout="30000" concurrency-level="2000" isolation="SERIALIZABLE" striping="true"/>
+            <transaction mode="NON_DURABLE_XA" stop-timeout="60000" locking="OPTIMISTIC"/>
+            <eviction max-entries="20000" strategy="FIFO"/>
+            <expiration interval="10000" lifespan="10" max-idle="10"/>
+            <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
+            <store class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false" name="custom-cache-loader"/>
+            <store name="duplicate-loader" class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false"/>
+            <indexing index="LOCAL" auto-config="true"/>
+        </replicated-cache>
+        <distributed-cache name="dist" configuration="dist-configuration"/>
         <distributed-cache name="dist2" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4"
                            remote-timeout="35000" start="EAGER" segments="20" capacity-factor="2.0"
                            async-marshalling="true" statistics="true">

@@ -29,6 +29,7 @@ import static org.jboss.as.clustering.infinispan.subsystem.StoreWriteBehindResou
 import static org.jboss.as.clustering.infinispan.subsystem.TransportResource.TRANSPORT_ATTRIBUTES;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
@@ -53,6 +54,8 @@ import org.jboss.msc.service.ServiceController;
  * @author William Burns (c) 2013 Red Hat Inc.
  */
 public class CacheConfigOperationHandlers {
+
+    static final OperationStepHandler CONFIGURATIONS_ADD = new CacheConfigConfigurationsAdd();
 
     static final OperationStepHandler TRANSPORT_ADD = new CacheConfigAdd(TRANSPORT_ATTRIBUTES);
     static final OperationStepHandler CONTAINER_SECURITY_ADD = new CacheConfigAdd();
@@ -79,21 +82,29 @@ public class CacheConfigOperationHandlers {
      * by indicating reload required.
      */
     public static class CacheConfigAdd extends AbstractAddStepHandler  {
-        private final AttributeDefinition[] attributes;
-
         CacheConfigAdd() {
-            this.attributes = new AttributeDefinition[0];
+            super();
         }
 
         CacheConfigAdd(final AttributeDefinition[] attributes) {
-            this.attributes = attributes;
+            super(attributes);
         }
 
         @Override
-        protected void populateModel(ModelNode operation, ModelNode model) throws OperationFailedException {
-            for (AttributeDefinition attr : attributes) {
-                attr.validateAndSet(operation, model);
-            }
+        protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers) throws OperationFailedException {
+            super.performRuntime(context, operation, model, verificationHandler, newControllers);
+            // once we add a cache configuration, we need to restart all the services for the changes to take effect
+            context.reloadRequired();
+        }
+    }
+
+    public static class CacheConfigConfigurationsAdd extends AbstractAddStepHandler  {
+        CacheConfigConfigurationsAdd() {
+            super();
+        }
+
+        CacheConfigConfigurationsAdd(final AttributeDefinition[] attributes) {
+            super(attributes);
         }
 
         @Override

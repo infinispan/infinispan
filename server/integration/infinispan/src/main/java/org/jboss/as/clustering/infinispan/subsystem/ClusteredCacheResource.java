@@ -54,11 +54,13 @@ public class ClusteredCacheResource extends CacheResource {
 
     // the attribute definition for the cache mode
     static final SimpleAttributeDefinition MODE =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.MODE, ModelType.STRING, false)
+            new SimpleAttributeDefinitionBuilder(ModelKeys.MODE, ModelType.STRING, true)
                     .setXmlName(Attribute.MODE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new EnumValidator<>(Mode.class, false, true))
+                    .setDefaultValue(new ModelNode().set(Mode.SYNC.name()))
+                    .setAlternatives(ModelKeys.CONFIGURATION)
+                    .setValidator(new EnumValidator<>(Mode.class, true, true))
                     .build();
 
     static final SimpleAttributeDefinition QUEUE_FLUSH_INTERVAL =

@@ -9,6 +9,11 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
    }
 
    @Override
+   public ConfigurationChildBuilder template(boolean template) {
+      return builder.template(template);
+   }
+
+   @Override
    public ClusteringConfigurationBuilder clustering() {
       return builder.clustering();
    }
