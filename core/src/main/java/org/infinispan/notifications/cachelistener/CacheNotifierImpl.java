@@ -27,6 +27,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.*;
 import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
+import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
 import org.infinispan.notifications.cachelistener.cluster.RemoteClusterListener;
@@ -51,6 +52,7 @@ import org.infinispan.util.logging.LogFactory;
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+
 import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
@@ -139,6 +141,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    private DistributionManager distributionManager;
    private EntryRetriever<K, V> entryRetriever;
    private InternalEntryFactory entryFactory;
+   private ClusterEventManager<K, V> eventManager;
 
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<Object, UUID>();
 
@@ -179,7 +182,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    void injectDependencies(Cache<K, V> cache, ClusteringDependentLogic clusteringDependentLogic,
                            TransactionManager transactionManager, Configuration config,
                            DistributionManager distributionManager, EntryRetriever<K ,V> entryRetriever,
-                           InternalEntryFactory entryFactory) {
+                           InternalEntryFactory entryFactory, ClusterEventManager<K, V> eventManager) {
       this.cache = cache;
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.transactionManager = transactionManager;
@@ -187,6 +190,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       this.distributionManager = distributionManager;
       this.entryRetriever = entryRetriever;
       this.entryFactory = entryFactory;
+      this.eventManager = eventManager;
    }
 
    @Override
@@ -262,6 +266,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          configureEvent(e, key, value, pre, ctx, command, null, null);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryCreatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         if (!ctx.isInTxScope()) {
+            eventManager.sendEvents();
+         }
       }
    }
 
@@ -273,6 +280,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          configureEvent(e, key, value, pre, ctx, command, previousValue, previousMetadata);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryModifiedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         if (!ctx.isInTxScope()) {
+            eventManager.sendEvents();
+         }
       }
    }
 
@@ -285,6 +295,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryRemovedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         if (!ctx.isInTxScope()) {
+            eventManager.sendEvents();
+         }
       }
    }
 
@@ -463,6 +476,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          e.setTransactionId(transaction);
          e.setTransactionSuccessful(successful);
          for (CacheEntryListenerInvocation<K, V> listener : transactionCompletedListeners) listener.invoke(e);
+         if (ctx.isInTxScope()) {
+            if (successful) {
+               eventManager.sendEvents();
+            } else {
+               eventManager.dropEvents();
+            }
+         }
       }
    }
 
@@ -582,13 +602,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             if (listener.isClustered()) {
                callables.add(new ClusterListenerReplicateCallable(listener.getIdentifier(),
                                                                   cache.getCacheManager().getAddress(), listener.getFilter(),
-                                                                  listener.getConverter()));
+                                                                  listener.getConverter(), listener.isSync()));
                enlistedAlready.add(listener.getTarget());
             }
             else if (listener.getTarget() instanceof RemoteClusterListener) {
                RemoteClusterListener lcl = (RemoteClusterListener)listener.getTarget();
                callables.add(new ClusterListenerReplicateCallable(lcl.getId(), lcl.getOwnerAddress(), listener.getFilter(),
-                                                                  listener.getConverter()));
+                                                                  listener.getConverter(), listener.isSync()));
                enlistedAlready.add(listener.getTarget());
             }
          }
@@ -660,7 +680,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                   log.tracef("Replicating cluster listener to other nodes %s for cluster listener with id %s",
                              members, generatedId);
                }
-               Callable callable = new ClusterListenerReplicateCallable(generatedId, ourAddress, filter, converter);
+               Callable callable = new ClusterListenerReplicateCallable(generatedId, ourAddress, filter, converter, l.sync());
                for (Address member : members) {
                   if (!member.equals(ourAddress)) {
                      decs.submit(member, callable);
@@ -865,7 +885,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                      handler = currentQueue;
                   }
                }
-               returnValue = new ClusteredListenerInvocation<K, V>(invocation, handler, filter, converter, onlyPrimary, identifier);
+               returnValue = new ClusteredListenerInvocation<K, V>(invocation, handler, filter, converter, onlyPrimary, 
+                     identifier, sync);
             } else {
 //               TODO: this is removed until non cluster listeners are supported
 //               QueueingSegmentListener handler = segmentHandler.get(identifier);
@@ -879,13 +900,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 //               returnValue = new NonClusteredListenerInvocation(invocation, handler, filter, converter, onlyPrimary,
 //                                                                identifier);
                returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, onlyPrimary, clustered,
-                                                                  identifier);
+                                                                  identifier, sync);
             }
          } else {
             // If no includeCurrentState just use the base listener invocation which immediately passes all notifications
             // off
             returnValue = new BaseCacheEntryListenerInvocation(invocation, filter, converter, onlyPrimary, clustered,
-                                                               identifier);
+                                                               identifier, sync);
          }
          return returnValue;
       }
@@ -899,8 +920,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                                  QueueingSegmentListener<K, V, Event<K, V>> handler,
                                                 CacheEventFilter<? super K, ? super V> filter,
                                                 CacheEventConverter<? super K, ? super V, ?> converter,
-                                                boolean onlyPrimary, UUID identifier) {
-         super(invocation, filter, converter, onlyPrimary, false, identifier);
+                                                boolean onlyPrimary, UUID identifier, boolean sync) {
+         super(invocation, filter, converter, onlyPrimary, false, identifier, sync);
          this.handler = handler;
       }
 
@@ -923,8 +944,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       public ClusteredListenerInvocation(ListenerInvocation<Event<K, V>> invocation, QueueingSegmentListener handler,
                                        CacheEventFilter<? super K, ? super V> filter,
                                        CacheEventConverter<? super K, ? super V, ?> converter, boolean onlyPrimary,
-                                       UUID identifier)  {
-         super(invocation, filter, converter, onlyPrimary, true, identifier);
+                                       UUID identifier, boolean sync)  {
+         super(invocation, filter, converter, onlyPrimary, true, identifier, sync);
          this.handler = handler;
       }
 
@@ -950,18 +971,20 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       protected final boolean onlyPrimary;
       protected final boolean clustered;
       protected final UUID identifier;
+      protected final boolean sync;
 
 
       protected BaseCacheEntryListenerInvocation(ListenerInvocation<Event<K, V>> invocation,
                                                  CacheEventFilter<? super K, ? super V> filter,
                                               CacheEventConverter<? super K, ? super V, ?> converter, boolean onlyPrimary,
-                                              boolean clustered, UUID identifier)  {
+                                              boolean clustered, UUID identifier, boolean sync)  {
          this.invocation = invocation;
          this.filter = filter;
          this.converter = converter;
          this.onlyPrimary = onlyPrimary;
          this.clustered = clustered;
          this.identifier = identifier;
+         this.sync = sync;
       }
 
       @Override
@@ -1106,6 +1129,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             returnedEvent = event;
          }
          return returnedEvent;
+      }
+
+      @Override
+      public boolean isSync() {
+         return sync;
       }
    }
 

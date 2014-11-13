@@ -40,18 +40,21 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
    private transient CacheManagerNotifier cacheManagerNotifier;
    private transient DistributedExecutorService distExecutor;
    private transient Address ourAddress;
+   private transient ClusterEventManager<K, V> eventManager;
 
    private final UUID identifier;
    private final CacheEventFilter<K, V> filter;
    private final CacheEventConverter<K, V, ?> converter;
    private final Address origin;
+   private final boolean sync;
 
    public ClusterListenerReplicateCallable(UUID identifier, Address origin, CacheEventFilter<K, V> filter,
-                                           CacheEventConverter<K, V, ?> converter) {
+                                           CacheEventConverter<K, V, ?> converter, boolean sync) {
       this.identifier = identifier;
       this.origin = origin;
       this.filter = filter;
       this.converter = converter;
+      this.sync = sync;
    }
 
    @Override
@@ -62,6 +65,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
             CacheManagerNotifier.class);
       distExecutor = SecurityActions.getDefaultExecutorService(cache);
       ourAddress = cache.getCacheManager().getAddress();
+      eventManager = cache.getAdvancedCache().getComponentRegistry().getComponent(ClusterEventManager.class);
    }
 
    @Override
@@ -84,8 +88,11 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                }
                if (!alreadyInstalled) {
                   RemoteClusterListener listener = new RemoteClusterListener(identifier, origin, distExecutor, cacheNotifier,
-                                                                           cacheManagerNotifier);
-                  cacheNotifier.addListener(listener, filter != null ? new CompositeCacheEventFilter(new PostCacheEventFilter(), filter) : null, converter);
+                                                                           cacheManagerNotifier, eventManager, sync);
+                  // We only need to use the post cache event filter when a filter is provided, since the remote cluster listener
+                  // will ignore pre events anyways.  This is mostly so a user filter is not notified of the pre event.
+                  cacheNotifier.addListener(listener, 
+                        filter != null ? new CompositeCacheEventFilter(new PostCacheEventFilter(), filter) : null, converter);
                   cacheManagerNotifier.addListener(listener);
                   // It is possible the member is now gone after registered, if so we have to remove just to be sure
                   if (!cacheManager.getMembers().contains(origin)) {
@@ -130,6 +137,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
             output.writeBoolean(false);
             output.writeObject(object.converter);
          }
+         output.writeBoolean(object.sync);
       }
 
       @Override
@@ -144,7 +152,8 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
          } else {
             converter = (CacheEventConverter)input.readObject();
          }
-         return new ClusterListenerReplicateCallable(id, address, filter, converter);
+         boolean sync = input.readBoolean();
+         return new ClusterListenerReplicateCallable(id, address, filter, converter, sync);
       }
 
       @Override

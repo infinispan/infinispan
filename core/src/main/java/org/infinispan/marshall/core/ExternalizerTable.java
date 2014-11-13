@@ -1,5 +1,13 @@
 package org.infinispan.marshall.core;
 
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
+
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.atomic.impl.AtomicHashMapDelta;
@@ -71,6 +79,7 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
+import org.infinispan.notifications.cachelistener.cluster.MultiClusterEventCallable;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterAsConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterAsKeyValueFilter;
 import org.infinispan.notifications.cachelistener.filter.ConverterAsCacheEventConverter;
@@ -103,14 +112,6 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
-
-import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * The externalizer table maintains information necessary to be able to map a particular type with the corresponding
@@ -337,6 +338,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new NullValueConverter.Externalizer());
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer());
       addInternalExternalizer(new ManagerStatusResponse.Externalizer());
+      addInternalExternalizer(new MultiClusterEventCallable.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

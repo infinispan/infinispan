@@ -136,4 +136,5 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int NULL_VALUE_CONVERTER = 139;
    int ACCEPT_ALL_KEY_VALUE_FILTER = 140;
    int MANAGER_STATUS_RESPONSE = 141;
+   int MULTI_CLUSTER_EVENT_CALLABLE = 142;
 }
