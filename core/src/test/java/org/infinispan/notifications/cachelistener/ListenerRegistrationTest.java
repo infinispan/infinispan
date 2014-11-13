@@ -11,6 +11,7 @@ import org.infinispan.notifications.IncorrectListenerException;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
+import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.AssertJUnit.*;
+
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -32,7 +34,8 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(CacheMode.LOCAL);
       notifier.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
-                           mock(DistributionManager.class), mock(EntryRetriever.class), new InternalEntryFactoryImpl());
+                           mock(DistributionManager.class), mock(EntryRetriever.class), new InternalEntryFactoryImpl(),
+                           mock(ClusterEventManager.class));
       return notifier;
    }
 

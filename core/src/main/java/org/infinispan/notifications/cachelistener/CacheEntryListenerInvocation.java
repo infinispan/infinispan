@@ -1,14 +1,12 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyValueFilter;
+import java.util.UUID;
+
+import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
+import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.impl.ListenerInvocation;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.Event;
-
-import java.util.UUID;
 
 /**
  * Additional listener methods specific to caches.
@@ -22,6 +20,8 @@ public interface CacheEntryListenerInvocation<K, V> extends ListenerInvocation<E
    void invokeNoChecks(CacheEntryEvent<K, V> event, boolean skipQueue, boolean skipConverter);
 
    boolean isClustered();
+
+   boolean isSync();
 
    UUID getIdentifier();
 

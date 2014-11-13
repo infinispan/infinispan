@@ -1,27 +1,30 @@
 package org.infinispan.notifications.cachelistener.cluster;
 
+import static org.testng.Assert.assertEquals;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.infinispan.Cache;
+import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.util.concurrent.jdk7backported.ThreadLocalRandom;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.transaction.TransactionMode;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.Test;
-
-import java.util.Queue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * Stress test that simultates multiple writers to different cache nodes to verify cluster listener is notified
@@ -34,14 +37,26 @@ import static org.testng.Assert.assertEquals;
 public class ClusterListenerStressTest extends MultipleCacheManagersTest {
    protected final static String CACHE_NAME = "cluster-listener";
    protected final static String KEY = "ClusterListenerStressTestKey";
+   private static final int NUM_NODES = 3;
 
    protected ConfigurationBuilder builderUsed;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      builderUsed = new ConfigurationBuilder();
-      builderUsed.clustering().cacheMode(CacheMode.DIST_SYNC);
-      createClusteredCaches(3, CACHE_NAME, builderUsed);
+      Configuration distConfig = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false).build();
+      for (int i = 0; i < NUM_NODES; i++) {
+         GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+         gcb.globalJmxStatistics().allowDuplicateDomains(true);
+         gcb.transport().defaultTransport().nodeName(TestResourceTracker.getNameForIndex(i));
+         BlockingThreadPoolExecutorFactory remoteExecutorFactory = new BlockingThreadPoolExecutorFactory(
+               10, 1, 0, 60000);
+         gcb.transport().remoteCommandThreadPool().threadPoolFactory(remoteExecutorFactory);
+         EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build());
+         registerCacheManager(cm);
+         cm.defineConfiguration(CACHE_NAME, distConfig);
+         log.infof("Started cache manager %s", cm.getAddress());
+      }
+      waitForClusterToForm(CACHE_NAME);
    }
 
    @Listener(clustered = true)
@@ -81,10 +96,21 @@ public class ClusterListenerStressTest extends MultipleCacheManagersTest {
    @Test
    public void runStressTestMultipleWriters() throws ExecutionException, InterruptedException {
       Cache<String, Integer> cache0 = cache(0, CACHE_NAME);
+      Cache<String, Integer> cache1 = cache(1, CACHE_NAME);
+      Cache<String, Integer> cache2 = cache(2, CACHE_NAME);
 
       ClusterListenerAggregator listener = new ClusterListenerAggregator();
       cache0.addListener(listener);
+      cache0.addListener(listener);
+      cache0.addListener(listener);
+      
+      cache1.addListener(listener);
+      cache1.addListener(listener);
+      
+      cache2.addListener(listener);
 
+      long begin = System.currentTimeMillis();
+      
       int threadCount = 10;
       final CountDownLatch latch = new CountDownLatch(threadCount);
       Callable<CreateModifyRemovals> callable = new Callable<CreateModifyRemovals>() {
@@ -98,9 +124,9 @@ public class ClusterListenerStressTest extends MultipleCacheManagersTest {
             int removalCount = 0;
             for (int i = 0; i < 1000; i++) {
                int random = ThreadLocalRandom.current().nextInt(0, 23);
-               boolean key = random > 11;
+               boolean key = (random & 1) == 1;
                int cache = random / 8;
-               int operation = random % 4;
+               int operation = random & 3;
                Cache<String, Integer> cacheToUse = cache(cache, CACHE_NAME);
                String keyToUse = key ? KEY : KEY + "2";
                // 0 - regular put operation (detects if create modify)
@@ -135,9 +161,9 @@ public class ClusterListenerStressTest extends MultipleCacheManagersTest {
                   case 3:
                      prevValue = cacheToUse.get(keyToUse);
                      if (prevValue != null) {
-                        if (cacheToUse.remove(keyToUse, prevValue)) {
-                           removalCount++;
-                        }
+                        cacheToUse.remove(keyToUse, prevValue);
+                        // We always notify on a removal even if it didn't remove it!
+                        removalCount++;
                      }
                      break;
                   default:
@@ -163,9 +189,13 @@ public class ClusterListenerStressTest extends MultipleCacheManagersTest {
          modifyCount += cmr.modifyCount;
          removalCount += cmr.removalCount;
       }
+      
+      int listenerCount = 6;
 
-      assertEquals(listener.creationCount.get(), creationCount);
-      assertEquals(listener.modifyCount.get(), modifyCount);
-      assertEquals(listener.removalCount.get(), removalCount);
+      assertEquals(listener.creationCount.get(), creationCount * listenerCount);
+      assertEquals(listener.modifyCount.get(), modifyCount * listenerCount);
+      assertEquals(listener.removalCount.get(), removalCount * listenerCount);
+      
+      System.out.println("Took " + (System.currentTimeMillis() - begin) + " milliseconds");
    }
 }

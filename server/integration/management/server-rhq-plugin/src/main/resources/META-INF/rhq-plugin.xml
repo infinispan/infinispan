@@ -315,6 +315,12 @@
                 <c:simple-property name="jndi-name" required="false" type="string" readOnly="true"
                                    description="The jndi name to which to bind this cache container"/>
                 <c:simple-property name="start" required="false" type="string" readOnly="true" defaultValue="LAZY"
+-                                   description="The cache container start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
+-                   <c:property-options>
+-                       <c:option value="EAGER"/>
+-                   </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="start" required="false" type="string" readOnly="true" defaultValue="LAZY"
                                    description="The cache container start mode, which can be EAGER (immediate start) or LAZY (on-demand start).">
                     <c:property-options>
                         <c:option value="LAZY"/>
