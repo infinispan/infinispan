@@ -1,21 +1,24 @@
 package org.infinispan.cli.interpreter;
 
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.testng.AssertJUnit.assertEquals;
-
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.statetransfer.CommitManager;
+import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.xsite.AbstractTwoSitesTest;
 import org.infinispan.xsite.statetransfer.XSiteStateProvider;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 import org.testng.annotations.Test;
+
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author Tristan Tarrant
@@ -75,9 +78,36 @@ public class SiteStatementTest extends AbstractTwoSitesTest {
       assertInterpreterOutput(nycInterpreter, nycSessionId, "site --cancelreceive LON;", "ok");
    }
 
+   public void testSiteWithoutBackups() throws Exception {
+      final String cacheName = "no-backups";
+      withCacheManager(new CacheManagerCallable(new DefaultCacheManager()) {
+         @Override
+         public void call() {
+            ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL);
+            builder.sites().disableBackups(true);
+            cm.defineConfiguration(cacheName, builder.build());
+            Cache cache = cm.getCache(cacheName);
+            Interpreter interpreter = cache.getAdvancedCache().getComponentRegistry().getComponent(Interpreter.class);
+            String sessionId = interpreter.createSessionId(cacheName);
+            try {
+               assertInterpreterError(interpreter, sessionId, "site --status;",
+                                      "ISPN019033: The cache '" + cacheName + "' has no backups configured.");
+            } catch (Exception e) {
+               throw new RuntimeException(e);
+            }
+         }
+      });
+
+   }
+
    private void assertInterpreterOutput(Interpreter interpreter, String sessionId, String command, String output) throws Exception {
       Map<String, String> result = interpreter.execute(sessionId, command);
       assertEquals(output, result.get(ResultKeys.OUTPUT.toString()));
+   }
+
+   private void assertInterpreterError(Interpreter interpreter, String sessionId, String command, String output) throws Exception {
+      Map<String, String> result = interpreter.execute(sessionId, command);
+      assertEquals(output, result.get(ResultKeys.ERROR.toString()));
    }
 
    private Interpreter interpreter(String site, int cache) {
