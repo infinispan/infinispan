@@ -25,7 +25,7 @@ public class SiteStatement implements Statement {
 
    static enum Options {
       OFFLINE, ONLINE, STATUS, PUSH, CANCELPUSH, CANCELRECEIVE, PUSHSTATUS, CLEARPUSHSTATUS, SENDINGSITE
-   };
+   }
 
    final private SiteData siteData;
    final private List<Option> options;
@@ -40,6 +40,9 @@ public class SiteStatement implements Statement {
       Cache<Object, Object> cache = session.getCache(siteData != null ? siteData.getCacheName() : null);
       String siteName = siteData != null ? siteData.getSiteName() : null;
       XSiteAdminOperations xsiteAdmin = cache.getAdvancedCache().getComponentRegistry().getComponent(XSiteAdminOperations.class);
+      if (xsiteAdmin == null) {
+         throw log.noBackupsForCache(cache.getName());
+      }
       for (Option opt : options) {
          switch (opt.toEnum(Options.class)) {
          case STATUS: {

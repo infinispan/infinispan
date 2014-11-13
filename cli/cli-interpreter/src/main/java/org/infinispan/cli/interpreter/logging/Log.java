@@ -124,4 +124,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "The %s statement requires the ClusterPrincipalMapper", id = 19032)
    StatementException noClusterPrincipalMapper(String stmt);
+
+   @Message(value = "The cache '%s' has no backups configured.", id = 19033)
+   StatementException noBackupsForCache(String cacheName);
 }
