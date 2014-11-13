@@ -1,5 +1,9 @@
 package org.infinispan.server.test.security.cache;
 
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGet;
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_LOGIN;
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.ADMIN_PASSWD;
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.READER_LOGIN;
@@ -10,10 +14,6 @@ import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTe
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.TEST_SERVER_NAME;
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.WRITER_LOGIN;
 import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.WRITER_PASSWD;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.testReadNonExistent;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.testSize;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.testWrite;
-import static org.infinispan.server.test.client.hotrod.security.HotRodSaslAuthTestBase.testWriteRead;
 
 import java.security.PrivilegedActionException;
 import java.util.HashMap;
@@ -103,38 +103,38 @@ public class ClusteredCacheAuthMd5IT {
    @Test
    public void testAdmin() throws PrivilegedActionException, LoginException {
       RemoteCache<String, String> cache = getRemoteCacheFor(ADMIN_LOGIN);
-      testWriteRead(cache);
+      testPutGet(cache);
       testSize(cache);
    }
 
    @Test
    public void testReaderRead() throws PrivilegedActionException, LoginException {
       RemoteCache<String, String> cache = getRemoteCacheFor(READER_LOGIN);
-      testReadNonExistent(cache);
+      testGetNonExistent(cache);
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
    public void testReaderWrite() throws PrivilegedActionException, LoginException {
       RemoteCache<String, String> cache = getRemoteCacheFor(READER_LOGIN);
-      testWrite(cache);
+      testPut(cache);
    }
 
    @Test
    public void testWriterWrite() throws PrivilegedActionException, LoginException {
       RemoteCache<String, String> cache = getRemoteCacheFor(WRITER_LOGIN);
-      testWrite(cache);
+      testPut(cache);
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
    public void testWriterWriteRead() throws PrivilegedActionException, LoginException {
       RemoteCache<String, String> cache = getRemoteCacheFor(WRITER_LOGIN);
-      testWriteRead(cache);
+      testPutGet(cache);
    }
 
    @Test
    public void testSupervisorWriteRead() throws PrivilegedActionException, LoginException {
       RemoteCache<String, String> cache = getRemoteCacheFor(SUPERVISOR_LOGIN);
-      testWriteRead(cache);
+      testPutGet(cache);
       testSize(cache);
    } 
    

@@ -1,8 +1,9 @@
 package org.infinispan.server.test.client.hotrod.security;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testGetNonExistent;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testSize;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPut;
+import static org.infinispan.server.test.client.hotrod.security.HotRodAuthzOperationTests.testPutGet;
 
 import java.security.PrivilegedActionException;
 
@@ -64,7 +65,7 @@ public abstract class HotRodSaslAuthTestBase {
          remoteCacheManager.stop();
       }
    }
-   
+
    protected void initialize(Subject subj) throws PrivilegedActionException {
       final Configuration config = getRemoteCacheManagerConfig(subj);
       remoteCacheManager = new RemoteCacheManager(config, true);
@@ -102,85 +103,41 @@ public abstract class HotRodSaslAuthTestBase {
    }
 
    @Test
-   public void testAdmin() throws PrivilegedActionException, LoginException {
+   public void testAdmin() throws Exception {
       initAsAdmin();
-      testWriteRead();
-      testSize();
+      testPutGet(remoteCache);
+      testSize(remoteCache);
    }
 
    @Test
-   public void testReaderRead() throws PrivilegedActionException, LoginException {
+   public void testSupervisor() throws Exception {
+      initAsSupervisor();
+      testPutGet(remoteCache);
+      testSize(remoteCache);
+   }
+
+   @Test
+   public void testWriter() throws Exception {
+      initAsWriter();
+      testPut(remoteCache);
+   }
+
+   @Test
+   public void testReader() throws Exception {
       initAsReader();
-      testReadNonExistent();
+      testGetNonExistent(remoteCache);
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
    public void testReaderWrite() throws PrivilegedActionException, LoginException {
       initAsReader();
-      testWrite();
-   }
-
-   @Test
-   public void testWriterWrite() throws PrivilegedActionException, LoginException {
-      initAsWriter();
-      testWrite();
+      testPut(remoteCache);
    }
 
    @Test(expected = org.infinispan.client.hotrod.exceptions.HotRodClientException.class)
    public void testWriterWriteRead() throws PrivilegedActionException, LoginException {
       initAsWriter();
-      testWriteRead();
-   }
-
-   @Test
-   public void testSupervisorWriteRead() throws PrivilegedActionException, LoginException {
-      initAsSupervisor();
-      testWriteRead();
-      testSize();
-   }
-
-   protected void testReadNonExistent() {
-      assertEquals(null, remoteCache.get("nonExistentKey"));
-   }
-
-   protected void testRead() {
-      assertTrue(remoteCache.containsKey(TEST_KEY));
-      assertEquals(TEST_VALUE, remoteCache.get(TEST_KEY));
-   }
-
-   protected void testWrite() {
-      assertNull(remoteCache.put(TEST_KEY, TEST_VALUE));
-   }
-   
-   protected void testSize() {
-      assertTrue(remoteCache.size() > 0);
-   }
-
-   protected void testWriteRead() {
-      testWrite();
-      testRead();
-   } 
-   
-   public static void testReadNonExistent(RemoteCache<String, String> remoteCache) {
-      assertEquals(null, remoteCache.get("nonExistentKey"));
-   }
-
-   public static void testRead(RemoteCache<String, String> remoteCache) {
-      assertTrue(remoteCache.containsKey(TEST_KEY));
-      assertEquals(TEST_VALUE, remoteCache.get(TEST_KEY));
-   }
-
-   public static void testWrite(RemoteCache<String, String> remoteCache) {
-      assertNull(remoteCache.put(TEST_KEY, TEST_VALUE));
-   }
-   
-   public static void testSize(RemoteCache<String, String> remoteCache) {
-      assertTrue(remoteCache.size() > 0);
-   }
-
-   public static void testWriteRead(RemoteCache<String, String> remoteCache) {
-      testWrite(remoteCache);
-      testRead(remoteCache);
+      testPutGet(remoteCache);
    }
 
 }

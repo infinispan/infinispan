@@ -3,7 +3,6 @@ package org.infinispan.notifications.cachelistener.cluster;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
-import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -16,7 +15,6 @@ import org.infinispan.notifications.cachelistener.filter.CompositeCacheEventFilt
 import org.infinispan.notifications.cachelistener.filter.PostCacheEventFilter;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -62,7 +60,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
       cacheNotifier = cache.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
       cacheManagerNotifier = cache.getCacheManager().getGlobalComponentRegistry().getComponent(
             CacheManagerNotifier.class);
-      distExecutor = new DefaultExecutorService(cache, new WithinThreadExecutor());
+      distExecutor = SecurityActions.getDefaultExecutorService(cache);
       ourAddress = cache.getCacheManager().getAddress();
    }
 
