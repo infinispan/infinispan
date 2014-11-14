@@ -359,7 +359,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                            return super.add(kcEntry);
                         }
                      };
-                     ParallelIterableMap.KeyValueAction<? super K, InternalCacheEntry<? super K, ? super V>> action =
+                     ParallelIterableMap.KeyValueAction<? super K, CacheEntry<? super K, ? super V>> action =
                            new MapAction(identifier, segmentsToUse, inDoubtSegmentsToUse, batchSize, converter, handler,
                                          queue);
 
@@ -419,9 +419,25 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                            for (K key : listener.activatedKeys) {
                               // If we didn't process it already we have to look it up
                               if (!processedKeys.contains(key)) {
-                                 CacheEntry<K, C> entry = (CacheEntry<K, C>) advancedCache.getCacheEntry(key);
+                                 CacheEntry<K, V> entry = advancedCache.getCacheEntry(key);
                                  if (entry != null) {
-                                    queue.add(entry);
+                                    // We don't want to modify the entry itself
+                                    CacheEntry<K, V> clone = entry.clone();
+                                    if (filter != null) {
+                                       if (converter == null && filter instanceof KeyValueFilterConverter) {
+                                          C converted = ((KeyValueFilterConverter<K, V, C>)filter).filterAndConvert(
+                                                key, clone.getValue(), clone.getMetadata());
+                                          if (converted != null) {
+                                             clone.setValue((V) converted);
+                                          } else {
+                                             continue;
+                                          }
+                                       }
+                                       else if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
+                                          continue;
+                                       }
+                                    }
+                                    action.apply(clone.getKey(), clone);
                                  }
                               }
                            }
@@ -1116,7 +1132,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       }
    }
 
-   private class MapAction<K, V, C> implements ParallelIterableMap.KeyValueAction<K, InternalCacheEntry<K, V>> {
+   private class MapAction<K, V, C> implements ParallelIterableMap.KeyValueAction<K, CacheEntry<K, V>> {
       final UUID identifier;
       final Set<Integer> segments;
       final int batchSize;
@@ -1138,7 +1154,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       }
 
       @Override
-      public void apply(K k, InternalCacheEntry<K, V> kvInternalCacheEntry) {
+      public void apply(K k, CacheEntry<K, V> kvInternalCacheEntry) {
          ConsistentHash hash = getCurrentHash();
          if (segments.contains(hash.getSegment(k))) {
             CacheEntry<K, C> clone = (CacheEntry<K, C>)kvInternalCacheEntry.clone();

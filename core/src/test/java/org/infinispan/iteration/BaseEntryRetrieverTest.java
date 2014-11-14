@@ -183,24 +183,5 @@ public abstract class BaseEntryRetrieverTest extends BaseSetupEntryRetrieverTest
          }
       }
    }
-
-   protected static class StringTruncator implements Converter<Object, String, String>, Serializable {
-      private final int beginning;
-      private final int length;
-
-      public StringTruncator(int beginning, int length) {
-         this.beginning = beginning;
-         this.length = length;
-      }
-
-      @Override
-      public String convert(Object key, String value, Metadata metadata) {
-         if (value != null && value.length() > beginning + length) {
-            return value.substring(beginning, beginning + length);
-         } else {
-            return value;
-         }
-      }
-   }
 }
 
