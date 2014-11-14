@@ -1,7 +1,7 @@
 package org.infinispan.security.actions;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.topology.LocalTopologyManagerImpl;
 
 /**

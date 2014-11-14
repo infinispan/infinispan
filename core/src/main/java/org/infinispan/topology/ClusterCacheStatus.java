@@ -5,7 +5,7 @@ import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
-import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partionhandling.impl.AvailabilityStrategyContext;
 import org.infinispan.registry.impl.ClusterRegistryImpl;

@@ -17,7 +17,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.Merged;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
-import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partionhandling.impl.PreferAvailabilityStrategy;
 import org.infinispan.partionhandling.impl.PreferConsistencyStrategy;

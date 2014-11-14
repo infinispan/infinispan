@@ -1,7 +1,6 @@
 package org.infinispan.partitionhandling;
 
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 

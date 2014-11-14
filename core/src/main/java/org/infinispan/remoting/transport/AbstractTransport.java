@@ -3,7 +3,7 @@ package org.infinispan.remoting.transport;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.partionhandling.AvailabilityException;
+import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;

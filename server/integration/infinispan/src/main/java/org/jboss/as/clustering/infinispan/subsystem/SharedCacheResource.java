@@ -22,7 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;

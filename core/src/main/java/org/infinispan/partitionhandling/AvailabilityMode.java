@@ -1,4 +1,4 @@
-package org.infinispan.partionhandling;
+package org.infinispan.partitionhandling;
 
 /**
 * @author Mircea Markus

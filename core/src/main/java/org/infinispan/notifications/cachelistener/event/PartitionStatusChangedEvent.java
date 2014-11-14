@@ -1,6 +1,6 @@
 package org.infinispan.notifications.cachelistener.event;
 
-import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.AvailabilityMode;
 
 /**
  * The event passed in to methods annotated with
