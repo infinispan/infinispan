@@ -9,9 +9,11 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -54,6 +56,51 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       assertEquals("Unable to pushState to 'NO_SITE'. Incorrect site name: NO_SITE", operations.pushState("NO_SITE"));
       assertTrue(operations.getRunningStateTransfer().isEmpty());
       assertNoStateTransferInSendingSite(LON);
+   }
+
+   public void testCancelStateTransfer() throws InterruptedException {
+      takeSiteOffline(LON, NYC);
+      assertOffline(LON, NYC);
+      assertNoStateTransferInReceivingSite(NYC);
+      assertNoStateTransferInSendingSite(LON);
+
+      //NYC is offline... lets put some initial data in
+      //we have 2 nodes in each site and the primary owner sends the state. Lets try to have more key than the chunk
+      //size in order to each site to send more than one chunk.
+      final int amountOfData = chunkSize(LON) * 4;
+      for (int i = 0; i < amountOfData; ++i) {
+         cache(LON, 0).put(key(i), value(0));
+      }
+
+      //check if NYC is empty
+      assertInSite(NYC, new AssertCondition<Object, Object>() {
+         @Override
+         public void assertInCache(Cache<Object, Object> cache) {
+            assertTrue(cache.isEmpty());
+         }
+      });
+
+      ControlledTransport controllerTransport = replaceTransport(cache(LON, 0));
+      controllerTransport.blockBefore(XSiteStatePushCommand.class);
+
+      startStateTransfer(LON, NYC);
+
+      controllerTransport.waitForCommandToBlock();
+      assertEquals(XSiteAdminOperations.SUCCESS, extractComponent(cache(LON, 0), XSiteAdminOperations.class).cancelPushState(NYC));
+
+      controllerTransport.stopBlocking();
+
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
+         }
+      }, TimeUnit.SECONDS.toMillis(30));
+
+      assertNoStateTransferInReceivingSite(NYC);
+      assertNoStateTransferInSendingSite(LON);
+
+      assertEquals(XSiteStateTransferManager.STATUS_CANCELED, extractComponent(cache(LON, 0), XSiteAdminOperations.class).getPushStateStatus().get(NYC));
    }
 
    public void testStateTransferWithClusterIdle() throws InterruptedException {
@@ -177,6 +224,11 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
 
    public void testRemoveNonExisting() throws Exception {
       testConcurrentOperation(Operation.REMOVE_NON_EXISTING);
+   }
+
+   @Override
+   protected void adaptLONConfiguration(BackupConfigurationBuilder builder) {
+      builder.stateTransfer().chunkSize(2).timeout(2000);
    }
 
    private void testStateTransferWithConcurrentOperation(final Operation operation, final boolean performBeforeState)
@@ -514,6 +566,13 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
             return extractComponent(cache, XSiteStateProvider.class).getCurrentStateSending().isEmpty();
          }
       }, timeout, unit);
+   }
+
+   private ControlledTransport replaceTransport(Cache<?, ?> cache) {
+      Transport current = extractGlobalComponent(cache.getCacheManager(), Transport.class);
+      ControlledTransport controlled = new ControlledTransport(current);
+      replaceComponent(cache.getCacheManager(), Transport.class, controlled, true);
+      return controlled;
    }
 
    private static enum Operation {
