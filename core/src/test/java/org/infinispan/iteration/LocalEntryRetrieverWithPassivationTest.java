@@ -15,7 +15,6 @@ import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
-import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.TestingUtil;
@@ -43,47 +42,38 @@ import static org.testng.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 
 /**
- * Test to verify distributed entry behavior when a loader with passivation is present
+ * Test to verify distributed entry behavior when a loader with passivation is present in local mode
  *
  * @author wburns
  * @since 7.0
  */
-@Test(groups = "functional", testName = "distexec.DistributedEntryRetrieverWithPassivationTest")
-public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntryRetrieverTest {
-   public DistributedEntryRetrieverWithPassivationTest() {
-      this(false, CacheMode.DIST_SYNC);
-   }
+@Test(groups = "functional", testName = "distexec.LocalEntryRetrieverWithPassivationTest")
+public class LocalEntryRetrieverWithPassivationTest extends DistributedEntryRetrieverWithPassivationTest {
+   protected final static String CACHE_NAME = "DistributedEntryRetrieverWithPassivationTest";
+   protected ConfigurationBuilder builderUsed;
    
-   protected DistributedEntryRetrieverWithPassivationTest(boolean tx, CacheMode mode) {
-      super(tx, mode);
+   public LocalEntryRetrieverWithPassivationTest() {
+      super(false, CacheMode.LOCAL);
    }
-   
-   @Override
-   protected void enhanceConfiguration(ConfigurationBuilder builder) {
-      builder.clustering().hash().numOwners(1);
-      builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(CACHE_NAME);
-   }
-   
+
    @Test
    public void testConcurrentActivation() throws InterruptedException, ExecutionException, TimeoutException {
-      final Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
-      Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
-      Cache<MagicKey, String> cache2 = cache(2, CACHE_NAME);
+      final Cache<Object, String> cache = cache(0, CACHE_NAME);
 
-      Map<MagicKey, String> originalValues = new HashMap<MagicKey, String>();
-      originalValues.put(new MagicKey(cache0), "cache0");
-      originalValues.put(new MagicKey(cache1), "cache1");
-      originalValues.put(new MagicKey(cache2), "cache2");
+      Map<Object, String> originalValues = new HashMap<>();
+      originalValues.put(cache.toString() + 1, "cache0");
+      originalValues.put(cache.toString() + 2, "cache1");
+      originalValues.put(cache.toString() + 3, "cache2");
 
-      final MagicKey loaderKey = new MagicKey(cache0);
+      final Object loaderKey = cache.toString() + " in loader";
       final String loaderValue = "loader0";
 
-      cache0.putAll(originalValues);
+      cache.putAll(originalValues);
 
       // Put this in after the cache has been updated
       originalValues.put(loaderKey, loaderValue);
 
-      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache0, PersistenceManager.class);
+      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       DummyInMemoryStore store = persistenceManager.getStores(DummyInMemoryStore.class).iterator().next();
 
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
@@ -92,7 +82,7 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
          store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
-         pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);
+         pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);
 
          Future<Void> future = fork(new Callable<Void>() {
 
@@ -102,23 +92,23 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
                checkPoint.awaitStrict("pre_process_on_all_stores_invoked", 10, TimeUnit.SECONDS);
 
                // Now force the entry to be moved to the in memory
-               assertEquals(loaderValue, cache0.get(loaderKey));
+               assertEquals(loaderValue, cache.get(loaderKey));
 
                checkPoint.triggerForever("pre_process_on_all_stores_released");
                return null;
             }
          });
 
-         EntryRetriever<MagicKey, String> retriever = cache1.getAdvancedCache().getComponentRegistry().getComponent(
+         EntryRetriever<String, String> retriever = cache.getAdvancedCache().getComponentRegistry().getComponent(
                EntryRetriever.class);
 
-         Iterator<CacheEntry<MagicKey, String>> iterator = retriever.retrieveEntries(null, null, null, null);
+         Iterator<CacheEntry<String, String>> iterator = retriever.retrieveEntries(null, null, null, null);
 
          // we need this count since the map will replace same key'd value
          int count = 0;
-         Map<MagicKey, String> results = new HashMap<MagicKey, String>();
+         Map<String, String> results = new HashMap<>();
          while (iterator.hasNext()) {
-            Map.Entry<MagicKey, String> entry = iterator.next();
+            Map.Entry<String, String> entry = iterator.next();
             results.put(entry.getKey(), entry.getValue());
             count++;
          }
@@ -128,7 +118,7 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
          }
          sm.stop();
       }
@@ -136,21 +126,19 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
    
    @Test
    public void testConcurrentActivationWithFilter() throws InterruptedException, ExecutionException, TimeoutException {
-      final Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
-      Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
-      Cache<MagicKey, String> cache2 = cache(2, CACHE_NAME);
+      final Cache<Object, String> cache = cache(0, CACHE_NAME);
 
-      Map<MagicKey, String> originalValues = new HashMap<MagicKey, String>();
-      originalValues.put(new MagicKey(cache0), "cache0");
-      originalValues.put(new MagicKey(cache1), "cache1");
-      originalValues.put(new MagicKey(cache2), "cache2");
+      Map<Object, String> originalValues = new HashMap<>();
+      originalValues.put(cache.toString() + 1, "cache0");
+      originalValues.put(cache.toString() + 2, "cache1");
+      originalValues.put(cache.toString() + 3, "cache2");
 
-      final MagicKey loaderKey = new MagicKey(cache0);
+      final Object loaderKey = cache.toString() + " in loader";
       final String loaderValue = "loader0";
-      
-      cache0.putAll(originalValues);
 
-      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache0, PersistenceManager.class);
+      cache.putAll(originalValues);
+
+      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       DummyInMemoryStore store = persistenceManager.getStores(DummyInMemoryStore.class).iterator().next();
 
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
@@ -159,7 +147,7 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
          store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
-         pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);
+         pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);
 
          Future<Void> future = fork(new Callable<Void>() {
 
@@ -169,25 +157,25 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
                checkPoint.awaitStrict("pre_process_on_all_stores_invoked", 10, TimeUnit.SECONDS);
 
                // Now force the entry to be moved to the in memory
-               assertEquals(loaderValue, cache0.get(loaderKey));
+               assertEquals(loaderValue, cache.get(loaderKey));
 
                checkPoint.triggerForever("pre_process_on_all_stores_released");
                return null;
             }
          });
 
-         EntryRetriever<MagicKey, String> retriever = cache1.getAdvancedCache().getComponentRegistry().getComponent(
+         EntryRetriever<String, String> retriever = cache.getAdvancedCache().getComponentRegistry().getComponent(
                EntryRetriever.class);
 
-         Iterator<CacheEntry<MagicKey, String>> iterator = retriever.retrieveEntries(
+         Iterator<CacheEntry<String, String>> iterator = retriever.retrieveEntries(
                      new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Immutables
                            .immutableSetCopy(originalValues.keySet()), true)), null, null, null);
 
          // we need this count since the map will replace same key'd value
          int count = 0;
-         Map<MagicKey, String> results = new HashMap<MagicKey, String>();
+         Map<String, String> results = new HashMap<>();
          while (iterator.hasNext()) {
-            Map.Entry<MagicKey, String> entry = iterator.next();
+            Map.Entry<String, String> entry = iterator.next();
             results.put(entry.getKey(), entry.getValue());
             count++;
          }
@@ -198,7 +186,7 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
          }
          sm.stop();
       }
@@ -206,24 +194,22 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
    
    @Test
    public void testConcurrentActivationWithConverter() throws InterruptedException, ExecutionException, TimeoutException {
-      final Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
-      Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
-      Cache<MagicKey, String> cache2 = cache(2, CACHE_NAME);
+      final Cache<Object, String> cache = cache(0, CACHE_NAME);
 
-      Map<MagicKey, String> originalValues = new HashMap<MagicKey, String>();
-      originalValues.put(new MagicKey(cache0), "cache0");
-      originalValues.put(new MagicKey(cache1), "cache1");
-      originalValues.put(new MagicKey(cache2), "cache2");
+      Map<Object, String> originalValues = new HashMap<>();
+      originalValues.put(cache.toString() + 1, "cache0");
+      originalValues.put(cache.toString() + 2, "cache1");
+      originalValues.put(cache.toString() + 3, "cache2");
 
-      final MagicKey loaderKey = new MagicKey(cache0);
+      final Object loaderKey = cache.toString() + " in loader";
       final String loaderValue = "loader0";
-      
-      cache0.putAll(originalValues);
+
+      cache.putAll(originalValues);
       
       // Put this in after the cache has been updated
       originalValues.put(loaderKey, loaderValue);
 
-      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache0, PersistenceManager.class);
+      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
       DummyInMemoryStore store = persistenceManager.getStores(DummyInMemoryStore.class).iterator().next();
 
       TestObjectStreamMarshaller sm = new TestObjectStreamMarshaller();
@@ -232,7 +218,7 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
          store.write(new MarshalledEntryImpl(loaderKey, loaderValue, null, sm));
 
          final CheckPoint checkPoint = new CheckPoint();
-         pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);
+         pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);
 
          Future<Void> future = fork(new Callable<Void>() {
 
@@ -242,36 +228,36 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
                checkPoint.awaitStrict("pre_process_on_all_stores_invoked", 10, TimeUnit.SECONDS);
 
                // Now force the entry to be moved to the in memory
-               assertEquals(loaderValue, cache0.get(loaderKey));
+               assertEquals(loaderValue, cache.get(loaderKey));
 
                checkPoint.triggerForever("pre_process_on_all_stores_released");
                return null;
             }
          });
 
-         EntryRetriever<MagicKey, String> retriever = cache1.getAdvancedCache().getComponentRegistry().getComponent(
+         EntryRetriever<String, String> retriever = cache.getAdvancedCache().getComponentRegistry().getComponent(
                EntryRetriever.class);
 
-         Iterator<CacheEntry<MagicKey, String>> iterator = retriever.retrieveEntries(null, new StringTruncator(1, 3), null, null);
+         Iterator<CacheEntry<String, String>> iterator = retriever.retrieveEntries(null, new StringTruncator(1, 3), null, null);
 
          // we need this count since the map will replace same key'd value
          int count = 0;
-         Map<MagicKey, String> results = new HashMap<MagicKey, String>();
+         Map<String, String> results = new HashMap<>();
          while (iterator.hasNext()) {
-            Map.Entry<MagicKey, String> entry = iterator.next();
+            Map.Entry<String, String> entry = iterator.next();
             results.put(entry.getKey(), entry.getValue());
             count++;
          }
          // We shouldn't have found the value in the loader
          assertEquals(count, 4);
-         for (Map.Entry<MagicKey, String> entry : originalValues.entrySet()) {
+         for (Map.Entry<Object, String> entry : originalValues.entrySet()) {
             assertEquals(entry.getValue().substring(1, 4), results.get(entry.getKey()));
          }
 
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
          }
          sm.stop();
       }
@@ -307,28 +293,26 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
     */
    @Test
    public void testConcurrentPassivation() throws InterruptedException, ExecutionException, TimeoutException {
-      final Cache<MagicKey, String> cache0 = cache(0, CACHE_NAME);
-      Cache<MagicKey, String> cache1 = cache(1, CACHE_NAME);
-      Cache<MagicKey, String> cache2 = cache(2, CACHE_NAME);
+      final Cache<Object, String> cache = cache(0, CACHE_NAME);
 
-      Map<MagicKey, String> originalValues = new HashMap<MagicKey, String>();
-      originalValues.put(new MagicKey(cache0), "cache0");
-      originalValues.put(new MagicKey(cache1), "cache1");
-      originalValues.put(new MagicKey(cache2), "cache2");
+      Map<String, String> originalValues = new HashMap<>();
+      originalValues.put(cache.toString() + 1, "cache0");
+      originalValues.put(cache.toString() + 2, "cache1");
+      originalValues.put(cache.toString() + 3, "cache2");
 
-      final MagicKey loaderKey = new MagicKey(cache0);
+      final String loaderKey = cache.toString() + " loader-value";
       final String loaderValue = "loader0";
 
       // Make sure this is in the cache to begin with
       originalValues.put(loaderKey, loaderValue);
 
-      cache0.putAll(originalValues);
+      cache.putAll(originalValues);
 
       PersistenceManager pm = null;
 
       try {
          final CheckPoint checkPoint = new CheckPoint();
-         pm = waitUntilAboutToProcessStoreTask(cache0, checkPoint);
+         pm = waitUntilAboutToProcessStoreTask(cache, checkPoint);
 
          Future<Void> future = fork(new Callable<Void>() {
 
@@ -338,23 +322,23 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
                checkPoint.awaitStrict("pre_process_on_all_stores_invoked", 1000, TimeUnit.SECONDS);
 
                // Now force the entry to be moved to loader
-               TestingUtil.extractComponent(cache0, PassivationManager.class).passivate(new ImmortalCacheEntry(loaderKey, loaderValue));
+               TestingUtil.extractComponent(cache, PassivationManager.class).passivate(new ImmortalCacheEntry(loaderKey, loaderValue));
 
                checkPoint.triggerForever("pre_process_on_all_stores_released");
                return null;
             }
          });
 
-         EntryRetriever<MagicKey, String> retriever = cache1.getAdvancedCache().getComponentRegistry().getComponent(
+         EntryRetriever<String, String> retriever = cache.getAdvancedCache().getComponentRegistry().getComponent(
                EntryRetriever.class);
 
-         Iterator<CacheEntry<MagicKey, String>> iterator = retriever.retrieveEntries(null, null, null, null);
+         Iterator<CacheEntry<String, String>> iterator = retriever.retrieveEntries(null, null, null, null);
 
          // we need this count since the map will replace same key'd value
          int count = 0;
-         Map<MagicKey, String> results = new HashMap<MagicKey, String>();
+         Map<String, String> results = new HashMap<>();
          while (iterator.hasNext()) {
-            Map.Entry<MagicKey, String> entry = iterator.next();
+            Map.Entry<String, String> entry = iterator.next();
             results.put(entry.getKey(), entry.getValue());
             count++;
          }
@@ -364,7 +348,7 @@ public class DistributedEntryRetrieverWithPassivationTest extends BaseSetupEntry
          future.get(10, TimeUnit.SECONDS);
       } finally {
          if (pm != null) {
-            TestingUtil.replaceComponent(cache0, PersistenceManager.class, pm, true);
+            TestingUtil.replaceComponent(cache, PersistenceManager.class, pm, true);
          }
       }
    }

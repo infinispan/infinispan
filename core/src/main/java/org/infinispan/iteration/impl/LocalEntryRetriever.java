@@ -326,9 +326,25 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                      for (K key : listener.activatedKeys) {
                         // If we didn't process it already we have to look it up
                         if (!processedKeys.contains(key)) {
-                           CacheEntry<K, C> entry = (CacheEntry<K, C>) advancedCache.getCacheEntry(key);
+                           CacheEntry<K, V> entry = advancedCache.getCacheEntry(key);
                            if (entry != null) {
-                              queue.add(entry);
+                              // We don't want to modify the entry itself
+                              CacheEntry<K, V> clone = entry.clone();
+                              if (filter != null) {
+                                 if (usedConverter == null && filter instanceof KeyValueFilterConverter) {
+                                    C converted = ((KeyValueFilterConverter<K, V, C>)filter).filterAndConvert(
+                                          key, clone.getValue(), clone.getMetadata());
+                                    if (converted != null) {
+                                       clone.setValue((V) converted);
+                                    } else {
+                                       continue;
+                                    }
+                                 }
+                                 else if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
+                                    continue;
+                                 }
+                              }
+                              action.apply(clone.getKey(), clone);
                            }
                         }
                      }
@@ -349,7 +365,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       return iterator;
    }
 
-   private class MapAction<C> implements ParallelIterableMap.KeyValueAction<K, InternalCacheEntry<K, V>> {
+   private class MapAction<C> implements ParallelIterableMap.KeyValueAction<K, CacheEntry<K, V>> {
       final Converter<? super K, ? super V, ? extends C> converter;
       final Queue<CacheEntry<K, C>> queue;
       final int batchSize;
@@ -366,7 +382,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       }
 
       @Override
-      public void apply(K k, InternalCacheEntry<K, V> kvInternalCacheEntry) {
+      public void apply(K k, CacheEntry<K, V> kvInternalCacheEntry) {
          CacheEntry<K, C> clone = (CacheEntry<K, C>)kvInternalCacheEntry.clone();
          if (converter != null) {
             C value = converter.convert(k, kvInternalCacheEntry.getValue(), kvInternalCacheEntry.getMetadata());
