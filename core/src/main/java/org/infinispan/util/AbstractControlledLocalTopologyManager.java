@@ -3,7 +3,7 @@ package org.infinispan.util;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.partionhandling.impl.PartitionHandlingManager;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;

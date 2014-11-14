@@ -1,4 +1,4 @@
-package org.infinispan.partionhandling.impl;
+package org.infinispan.partitionhandling.impl;
 
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;

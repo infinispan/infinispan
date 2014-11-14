@@ -5,7 +5,7 @@ import java.util.Map;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.partionhandling.impl.PartitionHandlingManager;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 
 /**
  * Runs on every node and handles the communication with the {@link ClusterTopologyManager}.

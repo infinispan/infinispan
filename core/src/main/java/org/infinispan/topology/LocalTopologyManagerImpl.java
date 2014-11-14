@@ -22,7 +22,7 @@ import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.infinispan.partionhandling.impl.PartitionHandlingManager;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
