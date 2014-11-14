@@ -15,6 +15,7 @@ public interface XSiteStateTransferManager {
 
    public static final String STATUS_OK = "OK";
    public static final String STATUS_ERROR = "ERROR";
+   public static final String STATUS_CANCELED = "CANCELED";
 
    /**
     * It receives the notifications from local site when some node finishes pushing the state to the remote site.

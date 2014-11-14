@@ -20,7 +20,7 @@ import static org.testng.AssertJUnit.*;
  * @author Pedro Ruivo
  * @since 7.0
  */
-@Test(groups = "functional", testName = "xsite.statetransfer.BackupForStateTransferTest")
+@Test(groups = "xsite", testName = "xsite.statetransfer.BackupForStateTransferTest")
 public class BackupForStateTransferTest extends AbstractTwoSitesTest {
 
    private static final String LON_BACKUP_CACHE_NAME = "lonBackup";

@@ -165,13 +165,20 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
    @Override
    public void cancelPushState(String siteName) throws Throwable {
+      if (!siteCollector.containsKey(siteName)) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Tried to cancel push state to '%s' but it does not exist.", siteName);
+         }
+         return;
+      }
       final XSiteBackup xSiteBackup = findSite(siteName);
       if (xSiteBackup == null) {
          throw new IllegalArgumentException("Site " + siteName + " not found!");
       }
       controlStateTransferOnLocalSite(CANCEL_SEND, siteName);
       controlStateTransferOnRemoteSite(xSiteBackup, FINISH_RECEIVE, null);
-
+      siteCollector.remove(siteName);
+      status.put(siteName, STATUS_CANCELED);
    }
 
    @Override
