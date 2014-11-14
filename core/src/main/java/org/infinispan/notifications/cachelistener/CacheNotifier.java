@@ -9,8 +9,7 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.ClassLoaderAwareFilteringListenable;
 import org.infinispan.notifications.ClassLoaderAwareListenable;
-import org.infinispan.notifications.FilteringListenable;
-import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.GlobalTransaction;
 

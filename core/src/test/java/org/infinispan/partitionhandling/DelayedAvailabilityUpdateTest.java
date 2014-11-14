@@ -2,8 +2,6 @@ package org.infinispan.partitionhandling;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.partionhandling.AvailabilityException;
-import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.Log;

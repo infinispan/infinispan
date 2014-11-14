@@ -1,10 +1,8 @@
 package org.infinispan.topology;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.partionhandling.AvailabilityMode;
-import org.infinispan.partionhandling.impl.AvailabilityStrategyContext;
+import org.infinispan.partitionhandling.AvailabilityMode;
 
 import java.io.IOException;
 import java.io.ObjectInput;

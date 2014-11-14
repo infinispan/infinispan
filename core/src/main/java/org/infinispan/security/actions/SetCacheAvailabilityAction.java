@@ -1,7 +1,7 @@
 package org.infinispan.security.actions;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.AvailabilityMode;
 
 /**
  * SetCacheAvailabilityAction.

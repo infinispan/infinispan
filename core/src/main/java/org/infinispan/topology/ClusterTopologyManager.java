@@ -1,9 +1,8 @@
 package org.infinispan.topology;
 
-import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.partionhandling.AvailabilityMode;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 
 /**

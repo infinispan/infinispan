@@ -9,8 +9,6 @@ import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.iteration.EntryIterable;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.partionhandling.AvailabilityException;
-import org.infinispan.partionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
