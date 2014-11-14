@@ -38,7 +38,7 @@ public class CacheStatusResponse implements Serializable {
    }
 
    /**
-    * @see org.infinispan.partionhandling.impl.AvailabilityStrategyContext#getStableTopology()
+    * @see org.infinispan.partitionhandling.impl.AvailabilityStrategyContext#getStableTopology()
     */
    public CacheTopology getStableTopology() {
       return stableTopology;

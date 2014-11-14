@@ -2,8 +2,8 @@ package org.infinispan.factories;
 
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.partionhandling.impl.PartitionHandlingManager;
-import org.infinispan.partionhandling.impl.PartitionHandlingManagerImpl;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManagerImpl;
 
 /**
  * @author Dan Berindei

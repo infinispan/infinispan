@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 /**
  * This annotation should be used on methods that need to be notified when the
  * {@link org.infinispan.partitionhandling.AvailabilityMode} in use by the
- * {@link org.infinispan.partionhandling.impl.PartitionHandlingManager} changes due to a change in cluster topology.
+ * {@link org.infinispan.partitionhandling.impl.PartitionHandlingManager} changes due to a change in cluster topology.
  * This is only fired in a {@link CacheMode#DIST_SYNC}, {@link CacheMode#DIST_ASYNC}, {@link CacheMode#REPL_SYNC} or
  * {@link CacheMode#REPL_ASYNC} configured cache.
  * <p/>

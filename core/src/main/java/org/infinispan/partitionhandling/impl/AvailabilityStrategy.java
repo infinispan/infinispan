@@ -1,4 +1,4 @@
-package org.infinispan.partionhandling.impl;
+package org.infinispan.partitionhandling.impl;
 
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;

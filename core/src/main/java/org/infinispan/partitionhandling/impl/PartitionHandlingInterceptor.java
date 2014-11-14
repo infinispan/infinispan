@@ -1,4 +1,4 @@
-package org.infinispan.partionhandling.impl;
+package org.infinispan.partitionhandling.impl;
 
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;

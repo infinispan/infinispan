@@ -17,7 +17,7 @@ import org.infinispan.interceptors.totalorder.*;
 import org.infinispan.interceptors.xsite.NonTransactionalBackupInterceptor;
 import org.infinispan.interceptors.xsite.OptimisticBackupInterceptor;
 import org.infinispan.interceptors.xsite.PessimisticBackupInterceptor;
-import org.infinispan.partionhandling.impl.PartitionHandlingInterceptor;
+import org.infinispan.partitionhandling.impl.PartitionHandlingInterceptor;
 import org.infinispan.statetransfer.StateTransferInterceptor;
 import org.infinispan.statetransfer.TransactionSynchronizerInterceptor;
 import org.infinispan.transaction.LockingMode;
