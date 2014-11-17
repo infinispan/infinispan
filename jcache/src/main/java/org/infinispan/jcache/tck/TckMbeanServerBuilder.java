@@ -1,4 +1,4 @@
-package org.infinispan.jcache.test.tck;
+package org.infinispan.jcache.tck;
 
 import com.sun.jmx.mbeanserver.JmxMBeanServer;
 

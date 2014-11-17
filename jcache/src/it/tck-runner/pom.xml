@@ -22,7 +22,7 @@
       <CacheImpl>org.infinispan.jcache.JCache</CacheImpl>
       <CacheEntryImpl>org.infinispan.jcache.JCacheEntry</CacheEntryImpl>
       <CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</CacheInvocationContextImpl>
-      <javax.management.builder.initial>org.infinispan.jcache.test.tck.TckMbeanServerBuilder</javax.management.builder.initial>
+      <javax.management.builder.initial>org.infinispan.jcache.tck.TckMbeanServerBuilder</javax.management.builder.initial>
       <org.jsr107.tck.management.agentId>TckMbeanServer</org.jsr107.tck.management.agentId>
    </properties>
 
@@ -53,8 +53,8 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.weld.se</groupId>
-         <artifactId>weld-se</artifactId>
+         <groupId>javax.cache</groupId>
+         <artifactId>cdi-weld-annotations-test-harness</artifactId>
          <scope>test</scope>
       </dependency>
 
@@ -124,9 +124,6 @@
                      <value>org.infinispan.jcache.test.tck.DummyTestListener</value>
                   </property>
                </properties>
-               <excludes>
-                  <exclude>**/ClientServerTest.java</exclude>
-               </excludes>
             </configuration>
             <dependencies>
                <dependency>
