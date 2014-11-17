@@ -83,7 +83,7 @@ public class TransactionTable {
    public static final int CACHE_STOPPED_TOPOLOGY_ID = -1;
    private static final Log log = LogFactory.getLog(TransactionTable.class);
 
-   private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
+   private ConcurrentMap<TransactionId, LocalTransaction> localTransactions;
    private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
    private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
 
@@ -222,7 +222,7 @@ public class TransactionTable {
    }
 
    public void failureCompletingTransaction(Transaction tx) {
-      final LocalTransaction localTransaction = localTransactions.get(tx);
+      final LocalTransaction localTransaction = localTransactions.get(new TransactionId(tx));
       if (localTransaction != null) {
          removeLocalTransaction(localTransaction);
       }
@@ -234,7 +234,7 @@ public class TransactionTable {
     * @param tx if null false is returned
     */
    public boolean containsLocalTx(Transaction tx) {
-      return tx != null && localTransactions.containsKey(tx);
+      return tx != null && localTransactions.containsKey(new TransactionId(tx));
    }
 
    public int getMinTopologyId() {
@@ -331,13 +331,13 @@ public class TransactionTable {
     * If none exists, will be created first.
     */
    public LocalTransaction getOrCreateLocalTransaction(Transaction transaction, TxInvocationContext ctx) {
-      LocalTransaction current = localTransactions.get(transaction);
+      LocalTransaction current = localTransactions.get(new TransactionId(transaction));
       if (current == null) {
          Address localAddress = rpcManager != null ? rpcManager.getTransport().getAddress() : null;
          GlobalTransaction tx = txFactory.newGlobalTransaction(localAddress, false);
          current = txFactory.newLocalTransaction(transaction, tx, ctx.isImplicitTransaction(), currentTopologyId);
          log.tracef("Created a new local transaction: %s", current);
-         localTransactions.put(transaction, current);
+         localTransactions.put(new TransactionId(transaction), current);
          globalToLocalTransactions.put(current.getGlobalTransaction(), current);
          notifier.notifyTransactionRegistered(tx, ctx);
       }
@@ -353,10 +353,11 @@ public class TransactionTable {
    }
 
    protected final LocalTransaction removeLocalTransactionInternal(Transaction tx) {
-      LocalTransaction localTx = localTransactions.get(tx);
+      final TransactionId transactionId = new TransactionId(tx);
+      LocalTransaction localTx = localTransactions.get(transactionId);
       if (localTx != null) {
          globalToLocalTransactions.remove(localTx.getGlobalTransaction());
-         localTransactions.remove(tx);
+         localTransactions.remove(transactionId);
          releaseResources(localTx);
       }
       return localTx;
@@ -406,7 +407,7 @@ public class TransactionTable {
    }
 
    public LocalTransaction getLocalTransaction(Transaction tx) {
-      return localTransactions.get(tx);
+      return localTransactions.get(new TransactionId(tx));
    }
 
    public boolean containRemoteTx(GlobalTransaction globalTransaction) {
@@ -567,5 +568,37 @@ public class TransactionTable {
             log.errorf(e, "Failed to cleanup completed transactions: %s", e.getMessage());
          }
       }
-   }   
+   }
+
+   private static class TransactionId {
+      private Transaction transaction;
+      private int hash;
+
+      public TransactionId(Transaction transaction) {
+         this.transaction = transaction;
+         hash = this.transaction != null ? System.identityHashCode(this.transaction) : 0;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+
+         TransactionId that = (TransactionId) o;
+
+         return transaction != null ? transaction.equals(that.transaction) : that.transaction == null;
+      }
+
+      public int hashCode() {
+         return hash;
+      }
+
+      @Override
+      public String toString() {
+         return "TransactionId{" +
+               "transaction=" + transaction +
+               ", hash=" + hash +
+               '}';
+      }
+   }
 }
