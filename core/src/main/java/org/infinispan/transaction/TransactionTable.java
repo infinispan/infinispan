@@ -6,6 +6,8 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.IdentityEquivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
@@ -113,7 +115,11 @@ public class TransactionTable {
    @SuppressWarnings("unused")
    private void start() {
       final int concurrencyLevel = configuration.locking().concurrencyLevel();
-      localTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
+      //use the IdentityEquivalence because some Transaction implementation does not have a stable hash code function
+      //and it can cause some leaks in the concurrent map.
+      localTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel,
+                                                              new IdentityEquivalence<Transaction>(),
+                                                              AnyEquivalence.<LocalTransaction>getInstance());
       globalToLocalTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
       if (configuration.clustering().cacheMode().isClustered()) {
          minTopologyRecalculationLock = new ReentrantLock();
