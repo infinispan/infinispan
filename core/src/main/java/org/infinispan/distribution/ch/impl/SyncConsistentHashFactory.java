@@ -327,6 +327,16 @@ public class SyncConsistentHashFactory implements ConsistentHashFactory<DefaultC
       }
    }
 
+   @Override
+   public boolean equals(Object other) {
+      return other != null && other.getClass() == getClass();
+   }
+
+   @Override
+   public int hashCode() {
+      return -10007;
+   }
+
    public static class Externalizer extends AbstractExternalizer<SyncConsistentHashFactory> {
 
       @Override

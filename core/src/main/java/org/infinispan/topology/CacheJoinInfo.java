@@ -75,6 +75,55 @@ public class CacheJoinInfo {
    }
 
    @Override
+   public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + Float.floatToIntBits(capacityFactor);
+      result = prime * result + ((consistentHashFactory == null) ? 0 : consistentHashFactory.hashCode());
+      result = prime * result + (distributed ? 1231 : 1237);
+      result = prime * result + ((hashFunction == null) ? 0 : hashFunction.hashCode());
+      result = prime * result + numOwners;
+      result = prime * result + numSegments;
+      result = prime * result + (int) (timeout ^ (timeout >>> 32));
+      result = prime * result + (totalOrder ? 1231 : 1237);
+      return result;
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      CacheJoinInfo other = (CacheJoinInfo) obj;
+      if (Float.floatToIntBits(capacityFactor) != Float.floatToIntBits(other.capacityFactor))
+         return false;
+      if (consistentHashFactory == null) {
+         if (other.consistentHashFactory != null)
+            return false;
+      } else if (!consistentHashFactory.equals(other.consistentHashFactory))
+         return false;
+      if (distributed != other.distributed)
+         return false;
+      if (hashFunction == null) {
+         if (other.hashFunction != null)
+            return false;
+      } else if (!hashFunction.equals(other.hashFunction))
+         return false;
+      if (numOwners != other.numOwners)
+         return false;
+      if (numSegments != other.numSegments)
+         return false;
+      if (timeout != other.timeout)
+         return false;
+      if (totalOrder != other.totalOrder)
+         return false;
+      return true;
+   }
+
+   @Override
    public String toString() {
       return "CacheJoinInfo{" +
             "consistentHashFactory=" + consistentHashFactory +

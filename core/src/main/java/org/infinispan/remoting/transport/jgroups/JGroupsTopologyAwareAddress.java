@@ -1,6 +1,7 @@
 package org.infinispan.remoting.transport.jgroups;
 
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.jgroups.util.ExtendedUUID;
@@ -68,9 +69,14 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
       return getMachineId() == null ? addr.getMachineId() == null : getMachineId().equals(addr.getMachineId());
    }
 
-   public static final class Externalizer implements AdvancedExternalizer<JGroupsTopologyAwareAddress> {
+   public static final class Externalizer extends InstanceReusingAdvancedExternalizer<JGroupsTopologyAwareAddress> {
+      
+      public Externalizer() {
+         super(false);
+      }
+      
       @Override
-      public void writeObject(ObjectOutput output, JGroupsTopologyAwareAddress address) throws IOException {
+      public void doWriteObject(ObjectOutput output, JGroupsTopologyAwareAddress address) throws IOException {
          try {
             org.jgroups.util.Util.writeAddress(address.address, output);
          } catch (Exception e) {
@@ -79,7 +85,7 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
       }
 
       @Override
-      public JGroupsTopologyAwareAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public JGroupsTopologyAwareAddress doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          try {
             ExtendedUUID jgroupsAddress = (ExtendedUUID) org.jgroups.util.Util.readAddress(unmarshaller);
             return new JGroupsTopologyAwareAddress(jgroupsAddress);

@@ -11,6 +11,6 @@ import org.infinispan.commons.hash.MurmurHash3;
  */
 public class ConsistentHashV2 extends ConsistentHashV1 {
    public ConsistentHashV2() {
-      hash = new MurmurHash3();
+      hash = MurmurHash3.getInstance();
    }
 }

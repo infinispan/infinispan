@@ -24,15 +24,20 @@ import org.infinispan.partitionhandling.impl.PreferConsistencyStrategy;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -159,6 +164,60 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
       cacheStatus.doConfirmRebalance(node, topologyId);
    }
+   
+   private static class CacheTopologyFilterReuser implements ResponseFilter {
+      Map<CacheTopology, CacheTopology> seenTopologies = new HashMap<>();
+      Map<CacheJoinInfo, CacheJoinInfo> seenInfos = new HashMap<>();
+      
+      @Override
+      public boolean isAcceptable(Response response, Address sender) {
+         if (response.isSuccessful() && response.isValid()) {
+            Map<String, CacheStatusResponse> value = (Map<String, CacheStatusResponse>) ((SuccessfulResponse)response).getResponseValue();
+            for (Entry<String, CacheStatusResponse> entry : value.entrySet()) {
+               CacheStatusResponse csr = entry.getValue();
+               CacheTopology cacheTopology = csr.getCacheTopology();
+               CacheTopology stableTopology = csr.getStableTopology();
+               
+               CacheTopology replaceCacheTopology = seenTopologies.get(cacheTopology);
+               if (replaceCacheTopology == null) {
+                  seenTopologies.put(cacheTopology, cacheTopology);
+                  replaceCacheTopology = cacheTopology;
+               }
+               
+               CacheTopology replaceStableTopology = null;
+               // If the don't equal check if we replace - note stableTopology can be null
+               if (!cacheTopology.equals(stableTopology)) {
+                  replaceStableTopology = seenTopologies.get(stableTopology);
+                  if (replaceStableTopology == null) {
+                     seenTopologies.put(stableTopology, stableTopology);
+                  }
+                  
+               } else {
+                  // Since they were equal replace it with the cache topology we are going to use
+                  replaceStableTopology = replaceCacheTopology != null ? replaceCacheTopology : cacheTopology;
+               }
+               
+               CacheJoinInfo info = csr.getCacheJoinInfo();
+               CacheJoinInfo replaceInfo = seenInfos.get(info);
+               if (replaceInfo == null) {
+                  seenInfos.put(info, info);
+               }
+               
+               if (replaceCacheTopology != null || replaceStableTopology != null || replaceInfo != null) {
+                  entry.setValue(new CacheStatusResponse(replaceInfo != null ? replaceInfo : info, 
+                        replaceCacheTopology != null ? replaceCacheTopology : cacheTopology, 
+                        replaceStableTopology != null ? replaceStableTopology : stableTopology, csr.getAvailabilityMode()));
+               }
+            }
+         }
+         return true;
+      }
+      
+      @Override
+      public boolean needMoreResponses() {
+         return true;
+      }
+   }
 
    @Override
    public void handleClusterView(boolean mergeView, int newViewId) {
@@ -237,7 +296,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private void recoverClusterStatus(int newViewId, boolean isMergeView, List<Address> clusterMembers) throws Exception {
       ReplicableCommand command = new CacheTopologyControlCommand(null,
             CacheTopologyControlCommand.Type.GET_STATUS, transport.getAddress(), newViewId);
-      Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout(), false, false);
+      Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout(), false, false, 
+            new CacheTopologyFilterReuser());
 
       log.debugf("Got %d status responses. members are %s", statusResponses.size(), clusterMembers);
       Map<String, Map<Address, CacheStatusResponse>> responsesByCache = new HashMap<>();
@@ -283,14 +343,19 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private Map<Address, Object> executeOnClusterSync(final ReplicableCommand command, final int timeout,
-                                                     boolean totalOrder, boolean distributed)
+         boolean totalOrder, boolean distributed) throws Exception {
+      return executeOnClusterSync(command, timeout, totalOrder, distributed, null);
+   }
+   
+   private Map<Address, Object> executeOnClusterSync(final ReplicableCommand command, final int timeout,
+                                                     boolean totalOrder, boolean distributed, final ResponseFilter filter)
          throws Exception {
       // first invoke remotely
 
       if (totalOrder) {
          Map<Address, Response> responseMap = transport.invokeRemotely(transport.getMembers(), command,
                                                                        ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-                                                                       timeout, false, null, totalOrder, distributed);
+                                                                       timeout, false, filter, totalOrder, distributed);
          Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
          for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
             Address address = entry.getKey();
@@ -308,7 +373,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          @Override
          public Map<Address, Response> call() throws Exception {
             return transport.invokeRemotely(null, command,
-                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null, false, false);
+                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, filter, false, false);
          }
       });
 

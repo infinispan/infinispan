@@ -1,7 +1,7 @@
 package org.infinispan.distribution.ch.impl;
 
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -147,10 +147,46 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return sb.toString();
    }
 
-   public static class Externalizer extends AbstractExternalizer<ReplicatedConsistentHash> {
+   @Override
+   public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((hashFunction == null) ? 0 : hashFunction.hashCode());
+      result = prime * result + ((members == null) ? 0 : members.hashCode());
+      result = prime * result + Arrays.hashCode(primaryOwners);
+      return result;
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      ReplicatedConsistentHash other = (ReplicatedConsistentHash) obj;
+      if (hashFunction == null) {
+         if (other.hashFunction != null)
+            return false;
+      } else if (!hashFunction.equals(other.hashFunction))
+         return false;
+      if (members == null) {
+         if (other.members != null)
+            return false;
+      } else if (!members.equals(other.members))
+         return false;
+      if (!Arrays.equals(primaryOwners, other.primaryOwners))
+         return false;
+      return true;
+   }
+
+
+
+   public static class Externalizer extends InstanceReusingAdvancedExternalizer<ReplicatedConsistentHash> {
 
       @Override
-      public void writeObject(ObjectOutput output, ReplicatedConsistentHash ch) throws IOException {
+      public void doWriteObject(ObjectOutput output, ReplicatedConsistentHash ch) throws IOException {
          output.writeObject(ch.hashFunction);
          output.writeObject(ch.members);
          output.writeObject(ch.primaryOwners);
@@ -158,7 +194,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
       @Override
       @SuppressWarnings("unchecked")
-      public ReplicatedConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public ReplicatedConsistentHash doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          Hash hashFunction = (Hash) unmarshaller.readObject();
          List<Address> members = (List<Address>) unmarshaller.readObject();
          int[] primaryOwners = (int[]) unmarshaller.readObject();
