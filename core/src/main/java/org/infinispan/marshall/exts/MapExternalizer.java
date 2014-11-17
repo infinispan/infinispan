@@ -3,6 +3,7 @@ package org.infinispan.marshall.exts;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashMap;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Util;
@@ -24,7 +25,7 @@ import java.util.TreeMap;
  * @author Galder Zamarreño
  * @since 4.0
  */
-public class MapExternalizer extends AbstractExternalizer<Map> {
+public class MapExternalizer extends InstanceReusingAdvancedExternalizer<Map> {
    private static final int HASHMAP = 0;
    private static final int TREEMAP = 1;
    private static final int FASTCOPYHASHMAP = 2;
@@ -39,7 +40,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    }
 
    @Override
-   public void writeObject(ObjectOutput output, Map map) throws IOException {
+   public void doWriteObject(ObjectOutput output, Map map) throws IOException {
       int number = numbers.get(map.getClass(), -1);
       output.write(number);
       switch (number) {
@@ -59,7 +60,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    }
 
    @Override
-   public Map readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+   public Map doReadObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
       Map subject = null;
       switch (magicNumber) {

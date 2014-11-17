@@ -52,7 +52,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    private static final Object[] EMPTY_ARRAY = new Object[0];
    private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
 
-      private final Hash hash = new MurmurHash3();
+      private final Hash hash = MurmurHash3.getInstance();
 
       @Override
       public int compare(Object o1, Object o2) {

@@ -591,6 +591,16 @@ public class DefaultConsistentHashFactory implements ConsistentHashFactory<Defau
       }
    }
 
+   @Override
+   public boolean equals(Object other) {
+      return other != null && other.getClass() == getClass();
+   }
+
+   @Override
+   public int hashCode() {
+      return 3853;
+   }
+
    public static class Externalizer extends AbstractExternalizer<DefaultConsistentHashFactory> {
 
       @Override

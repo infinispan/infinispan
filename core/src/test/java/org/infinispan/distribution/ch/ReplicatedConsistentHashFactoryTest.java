@@ -38,7 +38,7 @@ public class ReplicatedConsistentHashFactoryTest {
       List<Address> c = Arrays.asList(C);
 
       for (int segments : testSegments) {
-         ReplicatedConsistentHash ch = factory.create(new MurmurHash3(), 0, segments, a, null);
+         ReplicatedConsistentHash ch = factory.create(MurmurHash3.getInstance(), 0, segments, a, null);
          checkDistribution(ch);
 
          ch = factory.updateMembers(ch, ab, null);

@@ -19,7 +19,7 @@ public class HashFunctionTest extends AbstractInfinispanTest {
    }
 
    public void testMurmurHash3Consistency() {
-      testHashConsistency(new MurmurHash3());
+      testHashConsistency(MurmurHash3.getInstance());
    }
 
    private void testHashConsistency(Hash hash) {

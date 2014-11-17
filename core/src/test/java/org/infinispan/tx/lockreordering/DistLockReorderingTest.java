@@ -35,7 +35,7 @@ public class DistLockReorderingTest extends MultipleCacheManagersTest {
    void buildKeys() {
       int node = (int) (System.nanoTime() % 2);
       /** this is what's used for inducing ordering */
-      MurmurHash3 hashFunction = new MurmurHash3();
+      MurmurHash3 hashFunction = MurmurHash3.getInstance();
       keys = new ArrayList<Integer>(2);
       final Object firstKey = getKeyForCache(node);
       keys.add(firstKey);
