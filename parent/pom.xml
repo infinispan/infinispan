@@ -396,6 +396,11 @@
             <classifier>tests</classifier>
          </dependency>
          <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cdi-weld-annotations-test-harness</artifactId>
+            <version>${version.javax.cache.cache-tests}</version>
+         </dependency>
+         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>jstl</artifactId>
             <version>${version.jstl}</version>
@@ -600,12 +605,6 @@
          <dependency>
             <groupId>org.jboss.weld</groupId>
             <artifactId>weld-core</artifactId>
-            <version>${version.weld}</version>
-            <scope>test</scope>
-         </dependency>
-         <dependency>
-            <groupId>org.jboss.weld.se</groupId>
-            <artifactId>weld-se</artifactId>
             <version>${version.weld}</version>
             <scope>test</scope>
          </dependency>
