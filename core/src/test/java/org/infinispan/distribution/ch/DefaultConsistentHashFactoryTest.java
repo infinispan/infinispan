@@ -48,7 +48,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       float[][] capacityFactors = {null, {1}, {2}, {1, 100}, {2, 0, 1}};
 
       ConsistentHashFactory <DefaultConsistentHash> chf = createConsistentHashFactory();
-      Hash hashFunction = new MurmurHash3();
+      Hash hashFunction = MurmurHash3.getInstance();
 
       for (int nn : numNodes) {
          List<Address> nodes = new ArrayList<Address>(nn);
@@ -362,7 +362,7 @@ public class DefaultConsistentHashFactoryTest extends AbstractInfinispanTest {
       TestAddress C = new TestAddress(2, "C");
       TestAddress D = new TestAddress(3, "D");
 
-      DefaultConsistentHash ch1 = chf.create(new MurmurHash3(), 2, 60, Arrays.<Address>asList(A), null);
+      DefaultConsistentHash ch1 = chf.create(MurmurHash3.getInstance(), 2, 60, Arrays.<Address>asList(A), null);
       //System.out.println(ch1);
 
       DefaultConsistentHash ch2 = chf.updateMembers(ch1, Arrays.<Address>asList(A, B), null);

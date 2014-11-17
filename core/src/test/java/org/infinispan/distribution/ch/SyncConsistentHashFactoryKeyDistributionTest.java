@@ -59,7 +59,7 @@ public class SyncConsistentHashFactoryKeyDistributionTest extends AbstractInfini
    public static final double[] PERCENTILES = { .999 };
 
    protected DefaultConsistentHash createConsistentHash(int numSegments, int numOwners, List<Address> members) {
-      MurmurHash3 hash = new MurmurHash3();
+      MurmurHash3 hash = MurmurHash3.getInstance();
       ConsistentHashFactory<DefaultConsistentHash> chf = new SyncConsistentHashFactory();
       DefaultConsistentHash ch = chf.create(hash, numOwners, numSegments, members, null);
       return ch;

@@ -16,6 +16,7 @@ import net.jcip.annotations.Immutable;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -314,10 +315,10 @@ public class DefaultConsistentHash implements ConsistentHash {
       return capacityFactors;
    }
 
-   public static class Externalizer extends AbstractExternalizer<DefaultConsistentHash> {
+   public static class Externalizer extends InstanceReusingAdvancedExternalizer<DefaultConsistentHash> {
 
       @Override
-      public void writeObject(ObjectOutput output, DefaultConsistentHash ch) throws IOException {
+      public void doWriteObject(ObjectOutput output, DefaultConsistentHash ch) throws IOException {
          output.writeInt(ch.numSegments);
          output.writeInt(ch.numOwners);
          output.writeObject(ch.members);
@@ -328,7 +329,7 @@ public class DefaultConsistentHash implements ConsistentHash {
 
       @Override
       @SuppressWarnings("unchecked")
-      public DefaultConsistentHash readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public DefaultConsistentHash doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          int numSegments = unmarshaller.readInt();
          int numOwners = unmarshaller.readInt();
          List<Address> members = (List<Address>) unmarshaller.readObject();

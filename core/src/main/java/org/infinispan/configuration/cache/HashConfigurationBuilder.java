@@ -19,7 +19,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    private static final Log log = LogFactory.getLog(HashConfigurationBuilder.class);
 
    private ConsistentHashFactory consistentHashFactory;
-   private Hash hash = new MurmurHash3();
+   private Hash hash = MurmurHash3.getInstance();
    private int numOwners = 2;
    // With the default consistent hash factory, this default gives us an even spread for clusters
    // up to 6 members and the difference between nodes stays under 20% up to 12 members.

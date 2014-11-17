@@ -327,7 +327,7 @@ class MurmurHash2Compat extends HashFunction {
 }
 
 class MurmurHash3 extends HashFunction {
-   org.infinispan.commons.hash.MurmurHash3 h = new org.infinispan.commons.hash.MurmurHash3();
+   org.infinispan.commons.hash.MurmurHash3 h = org.infinispan.commons.hash.MurmurHash3.getInstance();
    public String functionName() {
       return "MurmurHash3";
    }

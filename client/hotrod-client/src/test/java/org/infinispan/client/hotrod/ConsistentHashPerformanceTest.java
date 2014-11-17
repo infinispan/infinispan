@@ -71,6 +71,6 @@ public class ConsistentHashPerformanceTest {
 
 
       dch.init(map, 2, 10024);
-      dch.setHash(new MurmurHash3());
+      dch.setHash(MurmurHash3.getInstance());
    }
 }

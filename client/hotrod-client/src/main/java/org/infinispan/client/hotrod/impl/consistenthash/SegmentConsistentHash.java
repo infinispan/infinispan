@@ -13,7 +13,7 @@ import java.util.Set;
  */
 public final class SegmentConsistentHash implements ConsistentHash {
 
-   private final Hash hash = new MurmurHash3();
+   private final Hash hash = MurmurHash3.getInstance();
    private SocketAddress[][] segmentOwners;
    private int segmentSize;
 

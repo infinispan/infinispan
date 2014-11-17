@@ -324,13 +324,13 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    private void assertAllLocationsWithRebalance(int numOwners) {
-      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers, capacityFactors);
+      ch = chf.create(MurmurHash3.getInstance(), numOwners, numSegments, chMembers, capacityFactors);
 
       List<Address> membersWithLoad = computeNodesWithLoad(chMembers);
       assertAllLocations(numOwners, membersWithLoad);
       assertDistribution(numOwners, membersWithLoad);
 
-      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers.subList(0, 1), capacityFactors);
+      ch = chf.create(MurmurHash3.getInstance(), numOwners, numSegments, chMembers.subList(0, 1), capacityFactors);
       assertAllLocations(numOwners, chMembers.subList(0, 1));
 
       for (int i = 2; i <= chMembers.size(); i++) {
@@ -497,7 +497,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
    }
 
    protected void updateConsistentHash(int numOwners) {
-      ch = chf.create(new MurmurHash3(), numOwners, numSegments, chMembers, null);
+      ch = chf.create(MurmurHash3.getInstance(), numOwners, numSegments, chMembers, null);
       log.debugf("Created CH with numOwners %d, members %s", numOwners, chMembers);
    }
 }

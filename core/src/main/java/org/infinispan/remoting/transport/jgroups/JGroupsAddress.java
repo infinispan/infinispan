@@ -5,7 +5,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -58,9 +58,14 @@ public class JGroupsAddress implements Address {
       return address.compareTo(oa.address);
    }
 
-   public static final class Externalizer extends AbstractExternalizer<JGroupsAddress> {
+   public static final class Externalizer extends InstanceReusingAdvancedExternalizer<JGroupsAddress> {
+      
+      public Externalizer() {
+         super(false);
+      }
+      
       @Override
-      public void writeObject(ObjectOutput output, JGroupsAddress address) throws IOException {
+      public void doWriteObject(ObjectOutput output, JGroupsAddress address) throws IOException {
          try {
             org.jgroups.util.Util.writeAddress(address.address, output);
          } catch (Exception e) {
@@ -69,7 +74,7 @@ public class JGroupsAddress implements Address {
       }
 
       @Override
-      public JGroupsAddress readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public JGroupsAddress doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          try {
             org.jgroups.Address address = org.jgroups.util.Util.readAddress(unmarshaller);
             return new JGroupsAddress(address);

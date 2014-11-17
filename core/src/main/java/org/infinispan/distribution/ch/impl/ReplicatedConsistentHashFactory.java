@@ -148,6 +148,16 @@ public class ReplicatedConsistentHashFactory implements ConsistentHashFactory<Re
       return new ReplicatedConsistentHash(ch1.getHashFunction(), unionMembers, primaryOwners);
    }
 
+   @Override
+   public boolean equals(Object other) {
+      return other != null && other.getClass() == getClass();
+   }
+
+   @Override
+   public int hashCode() {
+      return -6053;
+   }
+
    public static class Externalizer extends AbstractExternalizer<ReplicatedConsistentHashFactory> {
 
       @Override

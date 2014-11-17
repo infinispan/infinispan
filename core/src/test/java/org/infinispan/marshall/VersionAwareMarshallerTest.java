@@ -306,12 +306,12 @@ public class VersionAwareMarshallerTest extends AbstractInfinispanTest {
       oldAddresses.add(a1);
       oldAddresses.add(a2);
       DefaultConsistentHashFactory chf = new DefaultConsistentHashFactory();
-      DefaultConsistentHash oldCh = chf.create(new MurmurHash3(), 2, 3, oldAddresses, null);
+      DefaultConsistentHash oldCh = chf.create(MurmurHash3.getInstance(), 2, 3, oldAddresses, null);
       List<Address> newAddresses = new ArrayList<Address>();
       newAddresses.add(a1);
       newAddresses.add(a2);
       newAddresses.add(a3);
-      DefaultConsistentHash newCh = chf.create(new MurmurHash3(), 2, 3, newAddresses, null);
+      DefaultConsistentHash newCh = chf.create(MurmurHash3.getInstance(), 2, 3, newAddresses, null);
       StateRequestCommand c14 = new StateRequestCommand(cacheName, StateRequestCommand.Type.START_STATE_TRANSFER, a1, 99, null);
       byte[] bytes = marshaller.objectToByteBuffer(c14);
       marshaller.objectFromByteBuffer(bytes);
