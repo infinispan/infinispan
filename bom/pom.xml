@@ -54,12 +54,14 @@
    <properties>
       <infinispan.codename>Guinness</infinispan.codename>
       <infinispan.core.schema.version>7.1</infinispan.core.schema.version>
-      
+
+      <!-- Versions for dependencies -->
       <version.protostream>2.0.2.Final</version.protostream>
       <version.protobuf>2.6.0</version.protobuf>
       <version.protoparser>3.1.4</version.protoparser>
       <version.aesh>0.33.7</version.aesh>
       <version.antlr>3.4</version.antlr>
+      <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.commons.pool>1.6</version.commons.pool>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
@@ -95,7 +97,7 @@
 
    <dependencyManagement>
       <dependencies>
-         
+         <!-- Infinispan module versions -->
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
@@ -227,7 +229,7 @@
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
          </dependency>
-         
+         <!-- Infinispan aggregate jars -->
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-embedded</artifactId>
@@ -304,7 +306,7 @@
             <artifactId>hibernate-core</artifactId>
             <version>${version.hibernate.core}</version>
          </dependency>
-         
+         <!-- Infinispan RHQ module dependencies -->
          <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-domain</artifactId>
@@ -336,7 +338,7 @@
             <artifactId>rhq-core-native-system</artifactId>
             <version>${version.rhq}</version>
          </dependency>
-         
+         <!-- Infinispan Query module dependencies -->
          <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-engine</artifactId>
@@ -352,7 +354,12 @@
             <artifactId>hibernate-search-serialization-avro</artifactId>
             <version>${version.hibernate.search}</version>
          </dependency>
-         
+          <dependency>
+              <groupId>org.hibernate</groupId>
+              <artifactId>hibernate-entitymanager</artifactId>
+              <version>${version.hibernate.core}</version>
+          </dependency>
+         <!-- Infinispan Remote Query module dependencies -->
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
@@ -411,6 +418,12 @@
             <groupId>commons-pool</groupId>
             <artifactId>commons-pool</artifactId>
             <version>${version.commons.pool}</version>
+         </dependency>
+         <!-- Other dependencies -->
+         <dependency>
+            <groupId>com.mchange</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>${version.c3p0}</version>
          </dependency>
       </dependencies>
    </dependencyManagement>
