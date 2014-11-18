@@ -377,7 +377,7 @@ class DryRunUploader(DryRun):
 
 def maven_build_distribution(version):
   """Builds the distribution in the current working dir"""
-  mvn_commands = [["clean"], ["install", "-Pjmxdoc"],["install", "-Pgenerate-schema-doc"], ["deploy", "-Pdistribution,extras"]]
+  mvn_commands = [["clean"], ["install"], ["deploy", "-Pdistribution"]]
     
   for c in mvn_commands:
     c.append("-Dmaven.test.skip.exec=true")

@@ -104,7 +104,6 @@ TIP: Maven places it's output in `target/`
 | `mvn install -DskipTests` |Installs the artifacts in your local repo for use by other projects/modules, including inter-module dependencies within the same project.
 | `mvn install -P distribution` | In addition to install, will also use Maven's assembly plugin to build ZIP files for distribution (in target/distribution ). Contents of various distribution are controlled by the files in src/main/resources/assemblies . 
 | `mvn deploy` |Builds and deploy the project to the JBoss snapshots repository.
-| `mvn -Pgenerate-schema-doc install -DskipTests -pl core` |Builds the configuration reference HTML file, often followed up with `firefox core/target/xsd_doc`
 | `mvn install -P-extras` |Avoids the extras profile disables the enforce plugin, generation of source jars and OSGI bundleconstruction, hence making builds run faster. Clearly, this option should not be used when making a release or publishing a snapshot.
 |===============
 
