@@ -20,12 +20,15 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
+import javax.management.ObjectName;
 import java.io.IOException;
+import java.util.Arrays;
 
 import static org.infinispan.commons.util.Util.read;
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
 import static org.infinispan.server.test.util.ITestUtils.invokeOperation;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -63,12 +66,23 @@ public class RemoteQueryDescriptorIT {
       String[] fileContents = {read(getClass().getResourceAsStream("/sample_bank_account/bank.proto"))};
 
       invoke(getJmxConnection(server1), "registerProtofiles", fileNames, fileContents);
+
+      Object errors = getAttribute(getJmxConnection(server1), "filesWithErrors");
+      assertNull(errors);
+
+      Object protofileNames = getAttribute(getJmxConnection(server1), "protofileNames");
+      assertTrue(protofileNames instanceof String[]);
+      assertTrue(Arrays.asList((String[]) protofileNames).contains("/sample_bank_account/bank.proto"));
    }
 
    private void assertRegisteredOn(RemoteInfinispanServer server) throws Exception {
-      Object proto = invoke(getJmxConnection(server), "displayProtofile", "sample_bank_account/bank.proto");
+      Object proto = invoke(getJmxConnection(server), "getProtofile", "sample_bank_account/bank.proto");
      
       assertTrue(proto.toString().contains("message User"));
+   }
+
+   private Object getAttribute(MBeanServerConnectionProvider provider, String attrName) throws Exception {
+      return provider.getConnection().getAttribute(new ObjectName(MBEAN), attrName);
    }
 
    private Object invoke(MBeanServerConnectionProvider provider, String opName, Object... params) throws Exception {

@@ -1,17 +1,20 @@
 package org.infinispan.query.remote;
 
 /**
- * MBean interface for ProtobufMetadataManager.
+ * MBean interface for ProtobufMetadataManager,suitable for building invocation proxies with one of the {@link
+ * javax.management.JMX#newMBeanProxy} methods.
  *
  * @author anistor@redhat.com
  * @author gustavonalle
  * @since 6.1
+ * @deprecated Replaced by {@link org.infinispan.query.remote.client.ProtobufMetadataManagerMBean}
  */
-public interface ProtobufMetadataManagerMBean {
+@Deprecated
+public interface ProtobufMetadataManagerMBean extends org.infinispan.query.remote.client.ProtobufMetadataManagerMBean {
 
-   void registerProtofile(String name, String contents) throws Exception;
-
-   void registerProtofiles(String[] name, String[] contents) throws Exception;
-
-   String displayProtofile(String name);
+   /**
+    * @deprecated Replaced by {@link org.infinispan.query.remote.client.ProtobufMetadataManagerMBean#getProtofile}
+    */
+   @Deprecated
+   String displayProtofile(String fileName);
 }

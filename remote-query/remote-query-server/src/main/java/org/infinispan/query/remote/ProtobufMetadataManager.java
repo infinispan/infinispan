@@ -12,6 +12,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -21,6 +22,7 @@ import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.AnnotationElement;
 import org.infinispan.query.remote.client.MarshallerRegistration;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerMBean;
 import org.infinispan.query.remote.indexing.IndexingMetadata;
 import org.infinispan.query.remote.indexing.IndexingMetadataCreator;
 import org.infinispan.transaction.LockingMode;
@@ -31,26 +33,21 @@ import javax.management.MBeanException;
 import javax.management.ObjectName;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * A clustered repository of protobuf descriptors. All protobuf types and their marshallers must be registered with this
+ * A clustered repository of protobuf definition files. All protobuf types and their marshallers must be registered with this
  * repository before being used.
  *
  * @author anistor@redhat.com
  * @since 7.0
  */
 @Scope(Scopes.GLOBAL)
-@MBean(objectName = ProtobufMetadataManager.OBJECT_NAME,
+@MBean(objectName = ProtobufMetadataManagerMBean.OBJECT_NAME,
        description = "Component that acts as a manager and container for Protocol Buffers message type definitions in the scope of a CacheManger.")
-public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
-
-   public static final String OBJECT_NAME = "ProtobufMetadataManager";
-
-   /**
-    * The name of the Protobuf definitions cache.
-    */
-   public static final String PROTOBUF_METADATA_CACHE_NAME = "___protobuf_metadata";
+public final class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
 
    private Cache<String, String> protobufSchemaCache;
 
@@ -135,7 +132,15 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
       serCtx.registerMarshaller(marshaller);
    }
 
+   @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register Protofile")
+   @Override
+   public void registerProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String fileName,
+                                 @Parameter(name = "contents", description = "contents of the file") String contents) {
+      getCache().put(fileName, contents);
+   }
+
    @ManagedOperation(description = "Registers a set of Protobuf definition files", displayName = "Register Protofiles")
+   @Override
    public void registerProtofiles(@Parameter(name = "fileNames", description = "names of the protofiles") String[] names,
                                   @Parameter(name = "fileContents", description = "content of the files") String[] contents)
          throws Exception {
@@ -149,14 +154,50 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
       getCache().putAll(files);
    }
 
-   @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register Protofile")
-   public void registerProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String name,
-                                 @Parameter(name = "contents", description = "contents of the file") String contents) {
-      getCache().put(name, contents);
+   @ManagedAttribute(description = "The names of all Protobuf files", displayName = "Protofile Names")
+   @Override
+   public String[] getProtofileNames() {
+      Set<String> fileNames = new HashSet<String>();
+      for (String k : getCache().keySet()) {
+         if (k.endsWith(PROTO_KEY_SUFFIX)) {
+            fileNames.add(k);
+         }
+      }
+      return fileNames.toArray(new String[fileNames.size()]);
+   }
+
+   @ManagedOperation(description = "Get the contents of a protobuf definition file", displayName = "Get Protofile")
+   @Override
+   public String getProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String fileName) {
+      if (!fileName.endsWith(PROTO_KEY_SUFFIX)) {
+         throw new IllegalArgumentException("The file name must have \".proto\" suffix");
+      }
+      return getCache().get(fileName);
+   }
+
+   @ManagedAttribute(description = "The names of the files that have errors, if any", displayName = "Files With Errors")
+   @Override
+   public String[] getFilesWithErrors() {
+      String filesWithErrors = getCache().get(ERRORS_KEY_SUFFIX);
+      if (filesWithErrors == null) {
+         return null;
+      }
+      return filesWithErrors.split("\n");
+   }
+
+   @ManagedOperation(description = "Obtains the errors associated with a protobuf definition file", displayName = "Get Errors For A File")
+   @Override
+   public String getFileErrors(@Parameter(name = "fileName", description = "the name of the .proto file") String fileName) {
+      if (!fileName.endsWith(PROTO_KEY_SUFFIX)) {
+         throw new IllegalArgumentException("The file name must have \".proto\" suffix");
+      }
+      return getCache().get(fileName + ERRORS_KEY_SUFFIX);
    }
 
    /**
-    * This method is deprecated. Use one of the alternative methods from ProtobufMetadataManagerMBean.
+    * This method is deprecated. Use one of the alternative methods from {@link ProtobufMetadataManagerMBean}: {@link
+    * ProtobufMetadataManagerMBean#registerProtofile(String name, String contents)} or {@link
+    * ProtobufMetadataManagerMBean#registerProtofiles(String[] name, String[] contents)}.
     */
    @Deprecated
    public void registerProtofiles(String... classPathResources) throws Exception {
@@ -169,12 +210,13 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
       getCache().putAll(files);
    }
 
+   /**
+    * @deprecated Replaced by {@link ProtobufMetadataManager#getProtofile}
+    */
+   @Deprecated
    @ManagedOperation(description = "Display a protobuf definition file", displayName = "Display Protofile")
    public String displayProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String fileName) {
-      if (!fileName.endsWith(".proto")) {
-         throw new IllegalArgumentException("The file name must have \".proto\" suffix");
-      }
-      return getCache().get(fileName);
+      return getProtofile(fileName);
    }
 
    SerializationContext getSerializationContext() {

@@ -22,6 +22,7 @@ import org.infinispan.protostream.DescriptorParserException;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.descriptors.FileDescriptor;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.logging.Log;
 
 import java.io.IOException;
@@ -36,19 +37,9 @@ import java.util.TreeSet;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor {
+public final class ProtobufMetadataManagerInterceptor extends BaseCustomInterceptor implements ProtobufMetadataManagerConstants {
 
    private static final Log log = LogFactory.getLog(ProtobufMetadataManagerInterceptor.class, Log.class);
-
-   /**
-    * All error status keys end with this suffix.
-    */
-   public static final String ERRORS_KEY_SUFFIX = ".errors";
-
-   /**
-    * All protobuf definition source files end with this suffix.
-    */
-   public static final String PROTO_KEY_SUFFIX = ".proto";
 
    private CommandsFactory commandsFactory;
 
