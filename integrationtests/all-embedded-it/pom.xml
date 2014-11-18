@@ -31,39 +31,60 @@
          <artifactId>infinispan-embedded</artifactId>
       </dependency>
       <dependency>
-         <groupId>org.jboss.spec</groupId>
-         <artifactId>jboss-javaee-6.0</artifactId>
-         <version>1.0.0.Final</version>
-         <type>pom</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
          <scope>provided</scope>
       </dependency>
+      <!-- JPA test dependencies -->
+       <dependency>
+           <groupId>org.hibernate</groupId>
+           <artifactId>hibernate-entitymanager</artifactId>
+           <scope>provided</scope>
+       </dependency>
+       <!-- JDBC test dependecies -->
+       <dependency>
+           <groupId>com.mchange</groupId>
+           <artifactId>c3p0</artifactId>
+           <scope>provided</scope>
+       </dependency>
       <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
          <version>4.11</version>
          <scope>test</scope>
       </dependency>
-      <dependency>
-         <groupId>org.jboss.weld</groupId>
-         <artifactId>weld-core</artifactId>
-         <version>1.1.13.Final</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.arquillian.junit</groupId>
-         <artifactId>arquillian-junit-container</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.arquillian.container</groupId>
-         <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-         <version>1.0.0.CR8</version>
-         <scope>test</scope>
-      </dependency>
    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>h2</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>com.h2database</groupId>
+                    <artifactId>h2</artifactId>
+                    <version>1.4.180</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <connection.url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</connection.url>
+                                <driver.class>org.h2.Driver</driver.class>
+                                <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
+                                <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
