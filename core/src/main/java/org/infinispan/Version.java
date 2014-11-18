@@ -14,8 +14,8 @@ import java.io.ByteArrayOutputStream;
 public class Version {
 
    private static final String MAJOR = "7";
-   private static final String MINOR = "0";
-   private static final String MICRO = "2";
+   private static final String MINOR = "1";
+   private static final String MICRO = "0";
    private static final String MODIFIER = "SNAPSHOT";
    private static final boolean SNAPSHOT = true;
 
