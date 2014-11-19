@@ -25,7 +25,7 @@
                <executions>
                   <execution>
                      <id>mrproper</id>
-                     <phase>pre-package</phase>
+                     <phase>prepare-package</phase>
                      <goals>
                         <goal>clean</goal>
                      </goals>
