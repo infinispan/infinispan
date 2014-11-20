@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
@@ -20,6 +21,12 @@ public interface Codec {
     * returns an updated header parameters.
     */
    HeaderParams writeHeader(Transport transport, HeaderParams params);
+
+   /**
+    * Writes client listener parameters
+    */
+   void writeClientListenerParams(Transport transport, ClientListener clientListener,
+         byte[][] filterFactoryParams, byte[][] converterFactoryParams);
 
    /**
     * Reads a response header from the transport and returns the status

@@ -18,7 +18,6 @@ class HotRodFilterEventsTest extends HotRodSingleNodeTest {
 
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
       val server = startHotRodServer(cacheManager)
-      server.getClientListenerRegistry.setDefaultMarshaller(None)
       server.addCacheEventFilterFactory("static-filter-factory", new StaticKeyValueFilterFactory(Array[Byte](1, 2, 3)))
       server.addCacheEventFilterFactory("dynamic-filter-factory", new DynamicKeyValueFilterFactory())
       server

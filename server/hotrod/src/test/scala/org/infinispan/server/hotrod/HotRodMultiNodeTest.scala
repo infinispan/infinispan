@@ -114,7 +114,7 @@ abstract class HotRodMultiNodeTest extends MultipleCacheManagersTest {
 
    protected def createCacheConfig: ConfigurationBuilder
 
-   protected def protocolVersion: Byte = 20
+   protected def protocolVersion: Byte = 21
 
    protected def nodeCount: Int = 2
 }

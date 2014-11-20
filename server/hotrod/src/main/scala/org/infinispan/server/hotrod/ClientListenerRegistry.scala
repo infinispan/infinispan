@@ -17,8 +17,7 @@ import org.infinispan.notifications.cachelistener.annotation.{CacheEntryCreated,
 import org.infinispan.notifications.cachelistener.event._
 import org.infinispan.notifications.cachelistener.filter._
 import org.infinispan.notifications.cachelistener.event.Event.Type
-import org.infinispan.server.hotrod.ClientListenerRegistry.{BinaryConverter, BinaryFilter}
-import org.infinispan.server.hotrod.Events.{CustomEvent, KeyEvent, KeyWithVersionEvent}
+import org.infinispan.server.hotrod.Events.{CustomRawEvent, CustomEvent, KeyEvent, KeyWithVersionEvent}
 import org.infinispan.server.hotrod.OperationResponse._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.logging.Log
@@ -29,21 +28,19 @@ import scala.collection.JavaConversions._
  * @author Galder Zamarreño
  */
 class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends Log {
+   import ClientListenerRegistry._
+
    private val messageId = new AtomicLong()
    private val eventSenders = new EquivalentConcurrentHashMapV8[Bytes, AnyRef](
       ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance())
 
-   private var defaultMarshaller: Option[Marshaller] = Some(new GenericJBossMarshaller)
-   @volatile private var marshaller: Option[Marshaller] = None
+   @volatile private var marshaller: Option[Marshaller] = Some(new GenericJBossMarshaller())
    private val cacheEventFilterFactories = CollectionFactory.makeConcurrentMap[String, CacheEventFilterFactory](4, 0.9f, 16)
    private val cacheEventConverterFactories = CollectionFactory.makeConcurrentMap[String, CacheEventConverterFactory](4, 0.9f, 16)
 
-   def setDefaultMarshaller(marshaller: Option[Marshaller]): Unit = {
-      this.defaultMarshaller = marshaller
-   }
-
    def setEventMarshaller(eventMarshaller: Option[Marshaller]): Unit = {
-      marshaller = eventMarshaller
+      // Set a custom marshaller or reset to default if none
+      marshaller = eventMarshaller.orElse(Some(new GenericJBossMarshaller()))
    }
 
    def addCacheEventFilterFactory(name: String, factory: CacheEventFilterFactory): Unit = {
@@ -63,18 +60,18 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    }
 
    def addClientListener(ch: Channel, h: HotRodHeader, listenerId: Bytes, cache: Cache,
-           includeState: Boolean, filterFactory: NamedFactory, converterFactory: NamedFactory): Unit = {
-      val isCustom = converterFactory.isDefined
-      val clientEventSender = ClientEventSender(includeState, ch, h.version, cache, listenerId, isCustom)
-      val filterParams = unmarshallParams(filterFactory)
-      val converterParams = unmarshallParams(converterFactory)
+           includeState: Boolean, filterFactory: NamedFactory, converterFactory: NamedFactory, useRawData: Boolean): Unit = {
+      val eventType = ClientEventType.apply(converterFactory.isDefined, useRawData, h.version)
+      val clientEventSender = ClientEventSender(includeState, ch, h.version, cache, listenerId, eventType)
+      val filterParams = unmarshallParams(filterFactory, useRawData)
+      val converterParams = unmarshallParams(converterFactory, useRawData)
       val compatEnabled = cache.getCacheConfiguration.compatibility().enabled()
 
       val filter =
          for {
             namedFactory <- filterFactory
          } yield {
-            findFactory(namedFactory._1, compatEnabled, cacheEventFilterFactories, "key/value filter")
+            findFactory(namedFactory._1, compatEnabled, cacheEventFilterFactories, "key/value filter", useRawData)
                .getFilter[Bytes, Bytes](filterParams.toArray)
          }
 
@@ -82,7 +79,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
          for {
             namedFactory <- converterFactory
          } yield {
-            findFactory(namedFactory._1, compatEnabled, cacheEventConverterFactories, "converter")
+            findFactory(namedFactory._1, compatEnabled, cacheEventConverterFactories, "converter", useRawData)
                .getConverter[Bytes, Bytes, Bytes](converterParams.toArray)
          }
 
@@ -90,33 +87,30 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       cache.addListener(clientEventSender, filter.orNull, converter.orNull)
    }
 
-   def findFactory[T](name: String, compatEnabled: Boolean, factories: ConcurrentMap[String, T], factoryType: String): T = {
+   def findFactory[T](name: String, compatEnabled: Boolean, factories: ConcurrentMap[String, T], factoryType: String, useRawData: Boolean): T = {
       val factory = Option(factories.get(name)).getOrElse(
          throw new MissingFactoryException(s"Listener $factoryType factory '$name' not found in server"))
 
-      (selectMarshaller(), compatEnabled) match {
-         case (None, _) => factory
-         case (_, true) => factory
-         case (Some(m), false) => toBinaryFactory(factory, m.getClass)
-      }
+      if (useRawData || compatEnabled)
+         factory
+      else
+         marshaller.map(m => createFactory(factory, m.getClass)).getOrElse(factory)
    }
 
-   private def selectMarshaller(): Option[Marshaller] = marshaller.orElse(defaultMarshaller)
-
-   def toBinaryFactory[T](factory: T, marshallerClass: Class[_ <: Marshaller]): T = {
+   def createFactory[T](factory: T, marshallerClass: Class[_ <: Marshaller]): T = {
       factory match {
-         case c: CacheEventConverterFactory => new BinaryConverterFactory(c, marshallerClass).asInstanceOf[T]
-         case f: CacheEventFilterFactory => new BinaryFilterFactory(f, marshallerClass).asInstanceOf[T]
+         case c: CacheEventConverterFactory => new UnmarshallConverterFactory(c, marshallerClass).asInstanceOf[T]
+         case f: CacheEventFilterFactory => new UnmarshallFilterFactory(f, marshallerClass).asInstanceOf[T]
       }
    }
 
-   private def unmarshallParams(factory: NamedFactory): Iterable[AnyRef] = {
+   private def unmarshallParams(factory: NamedFactory, useRawData: Boolean): Iterable[AnyRef] = {
       factory match {
          case Some(namedFactory) =>
             namedFactory._2.map { paramBytes =>
-               selectMarshaller() match {
-                  case None => paramBytes
-                  case Some(m) => m.objectFromByteBuffer(paramBytes)
+               (useRawData, marshaller) match {
+                  case (false, Some(m)) => m.objectFromByteBuffer(paramBytes)
+                  case _ => paramBytes
                }
             }
          case None => List.empty
@@ -138,14 +132,14 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
    }
 
    @Listener(clustered = true, includeCurrentState = true)
-   private class StatefulClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, isCustom: Boolean)
-           extends BaseClientEventSender(ch, listenerId, version, isCustom)
+   private class StatefulClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType)
+           extends BaseClientEventSender(ch, listenerId, version, targetEventType)
 
    @Listener(clustered = true, includeCurrentState = false)
-   private class StatelessClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, isCustom: Boolean)
-           extends BaseClientEventSender(ch, listenerId, version, isCustom)
+   private class StatelessClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType)
+           extends BaseClientEventSender(ch, listenerId, version, targetEventType)
 
-   private abstract class BaseClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, isCustom: Boolean) {
+   private abstract class BaseClientEventSender(ch: Channel, listenerId: Bytes, version: Byte, targetEventType: ClientEventType) {
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
@@ -167,6 +161,8 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
                case Type.CACHE_ENTRY_REMOVED =>
                   val removedEvent = event.asInstanceOf[CacheEntryRemovedEvent[_, _]]
                   !event.isPre && removedEvent.getOldValue != null
+               case _ =>
+                  throw unexpectedEvent(event)
             }
          }
       }
@@ -186,19 +182,34 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
          // Embedded listener event implementation implements all interfaces,
          // so can't pattern match on the event instance itself. Instead, pattern
          // match on the type and the cast down to the expected event instance type
+         targetEventType match {
+            case Plain =>
+               event.getType match {
+                  case Type.CACHE_ENTRY_CREATED | Type.CACHE_ENTRY_MODIFIED =>
+                     val (op, isRetried) = getEventResponseType(event)
+                     keyWithVersionEvent(key, dataVersion, op, isRetried)
+                  case Type.CACHE_ENTRY_REMOVED =>
+                     KeyEvent(version, messageId.get(), listenerId, getEventResponseType(event)._2, key)
+                  case _ =>
+                     throw unexpectedEvent(event)
+               }
+            case CustomPlain =>
+               val (op, isRetried) = getEventResponseType(event)
+               CustomEvent(version, messageId.get(), op, listenerId, isRetried, value)
+            case CustomRaw =>
+               val (op, isRetried) = getEventResponseType(event)
+               CustomRawEvent(version, messageId.get(), op, listenerId, isRetried, value)
+         }
+      }
+
+      private def getEventResponseType(event: CacheEntryEvent[_, _]): (OperationResponse, Boolean) = {
          event.getType match {
             case Type.CACHE_ENTRY_CREATED =>
-               val isRetried = event.asInstanceOf[CacheEntryCreatedEvent[_, _]].isCommandRetried
-               if (isCustom) createCustomEvent(value, CacheEntryCreatedEventResponse, isRetried)
-               else keyWithVersionEvent(key, dataVersion, CacheEntryCreatedEventResponse, isRetried)
+               (CacheEntryCreatedEventResponse, event.asInstanceOf[CacheEntryCreatedEvent[_, _]].isCommandRetried)
             case Type.CACHE_ENTRY_MODIFIED =>
-               val isRetried = event.asInstanceOf[CacheEntryModifiedEvent[_, _]].isCommandRetried
-               if (isCustom) createCustomEvent(value, CacheEntryModifiedEventResponse, isRetried)
-               else keyWithVersionEvent(key, dataVersion, CacheEntryModifiedEventResponse, isRetried)
+               (CacheEntryModifiedEventResponse, event.asInstanceOf[CacheEntryModifiedEvent[_, _]].isCommandRetried)
             case Type.CACHE_ENTRY_REMOVED =>
-               val isRetried = event.asInstanceOf[CacheEntryRemovedEvent[_, _]].isCommandRetried
-               if (isCustom) createCustomEvent(value, CacheEntryRemovedEventResponse, isRetried)
-               else keyEvent(key, isRetried)
+               (CacheEntryRemovedEventResponse, event.asInstanceOf[CacheEntryRemovedEvent[_, _]].isCommandRetried)
             case _ => throw unexpectedEvent(event)
          }
       }
@@ -207,30 +218,22 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
          KeyWithVersionEvent(version, messageId.get(), op, listenerId, isRetried, key, dataVersion)
       }
 
-      private def keyEvent(key: Bytes, isRetried: Boolean): KeyEvent =
-         KeyEvent(version, messageId.get(), listenerId, isRetried, key)
-
-      private def createCustomEvent(value: Bytes, op: OperationResponse, isRetried: Boolean): CustomEvent = {
-         // Event's value contains the transformed payload that should be sent
-         // It takes advantage of the converter logic existing in cluster listeners
-         CustomEvent(version, messageId.get(), op, listenerId, isRetried, value)
-      }
    }
 
    object ClientEventSender {
       def apply(includeState: Boolean, ch: Channel, version: Byte,
-              cache: Cache, listenerId: Bytes, isCustom: Boolean): AnyRef = {
+              cache: Cache, listenerId: Bytes, eventType: ClientEventType): AnyRef = {
          val compatibility = cache.getCacheConfiguration.compatibility()
          (includeState, compatibility.enabled()) match {
             case (false, false) =>
-               new StatelessClientEventSender(ch, listenerId, version, isCustom)
+               new StatelessClientEventSender(ch, listenerId, version, eventType)
             case (true, false) =>
-               new StatefulClientEventSender(ch, listenerId, version, isCustom)
+               new StatefulClientEventSender(ch, listenerId, version, eventType)
             case (false, true) =>
-               val delegate = new StatelessClientEventSender(ch, listenerId, version, isCustom)
+               val delegate = new StatelessClientEventSender(ch, listenerId, version, eventType)
                new StatelessCompatibilityClientEventSender(delegate, HotRodTypeConverter(compatibility.marshaller()))
             case (true, true) =>
-               val delegate = new StatelessClientEventSender(ch, listenerId, version, isCustom)
+               val delegate = new StatelessClientEventSender(ch, listenerId, version, eventType)
                new StatefulCompatibilityClientEventSender(delegate, HotRodTypeConverter(compatibility.marshaller()))
          }
       }
@@ -263,27 +266,42 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       }
    }
 
-   private class BinaryFilterFactory(filterFactory: CacheEventFilterFactory, marshallerClass: Class[_ <: Marshaller])
+   private class UnmarshallFilterFactory(filterFactory: CacheEventFilterFactory, marshallerClass: Class[_ <: Marshaller])
            extends CacheEventFilterFactory {
       override def getFilter[K, V](params: Array[AnyRef]): CacheEventFilter[K, V] = {
-         new BinaryFilter(filterFactory.getFilter(params), marshallerClass)
+         new UnmarshallFilter(filterFactory.getFilter(params), marshallerClass)
             .asInstanceOf[CacheEventFilter[K, V]]
       }
    }
 
-   private class BinaryConverterFactory(converterFactory: CacheEventConverterFactory, marshallerClass: Class[_ <: Marshaller])
+   private class UnmarshallConverterFactory(converterFactory: CacheEventConverterFactory, marshallerClass: Class[_ <: Marshaller])
            extends CacheEventConverterFactory {
       override def getConverter[K, V, C](params: Array[AnyRef]): CacheEventConverter[K, V, C] = {
-         new BinaryConverter(converterFactory.getConverter(params), marshallerClass)
+         new UnmarshallConverter(converterFactory.getConverter(params), marshallerClass)
                  .asInstanceOf[CacheEventConverter[K, V, C]] // ugly but it works :|
       }
    }
 
 }
 
-object ClientListenerRegistry {
+object ClientListenerRegistry extends Constants {
 
-   class BinaryFilter(val filter: CacheEventFilter[AnyRef, AnyRef], val marshallerClass: Class[_ <: Marshaller])
+   sealed trait ClientEventType
+   case object Plain extends ClientEventType
+   case object CustomPlain extends ClientEventType
+   case object CustomRaw extends ClientEventType
+
+   object ClientEventType {
+      def apply(isCustom: Boolean, useRawData: Boolean, version: Byte): ClientEventType = {
+         (isCustom, useRawData) match {
+            case (true, true) if version >= VERSION_21 => CustomRaw
+            case (true, _) => CustomPlain
+            case (false, _) => Plain
+         }
+      }
+   }
+
+   class UnmarshallFilter(val filter: CacheEventFilter[AnyRef, AnyRef], val marshallerClass: Class[_ <: Marshaller])
            extends CacheEventFilter[Bytes, Bytes] {
       val marshaller = marshallerClass.newInstance()
 
@@ -295,23 +313,23 @@ object ClientListenerRegistry {
       }
    }
 
-   class BinaryFilterExternalizer extends AbstractExternalizer[BinaryFilter] {
-      override def writeObject(output: ObjectOutput, obj: BinaryFilter): Unit = {
+   class UnmarshallFilterExternalizer extends AbstractExternalizer[UnmarshallFilter] {
+      override def writeObject(output: ObjectOutput, obj: UnmarshallFilter): Unit = {
          output.writeObject(obj.filter)
          output.writeObject(obj.marshallerClass)
       }
 
-      override def readObject(input: ObjectInput): BinaryFilter = {
+      override def readObject(input: ObjectInput): UnmarshallFilter = {
          val filter = input.readObject().asInstanceOf[CacheEventFilter[AnyRef, AnyRef]]
          val marshallerClass = input.readObject().asInstanceOf[Class[_ <: Marshaller]]
-         new BinaryFilter(filter, marshallerClass)
+         new UnmarshallFilter(filter, marshallerClass)
       }
 
       override def getTypeClasses = setAsJavaSet(
-         Set[java.lang.Class[_ <: BinaryFilter]](classOf[BinaryFilter]))
+         Set[java.lang.Class[_ <: UnmarshallFilter]](classOf[UnmarshallFilter]))
    }
 
-   class BinaryConverter(val converter: CacheEventConverter[AnyRef, AnyRef, AnyRef], val marshallerClass: Class[_ <: Marshaller])
+   class UnmarshallConverter(val converter: CacheEventConverter[AnyRef, AnyRef, AnyRef], val marshallerClass: Class[_ <: Marshaller])
            extends CacheEventConverter[Bytes, Bytes, Bytes] {
       val marshaller = marshallerClass.newInstance()
 
@@ -324,20 +342,20 @@ object ClientListenerRegistry {
       }
    }
 
-   class BinaryConverterExternalizer extends AbstractExternalizer[BinaryConverter] {
-      override def writeObject(output: ObjectOutput, obj: BinaryConverter): Unit = {
+   class UnmarshallConverterExternalizer extends AbstractExternalizer[UnmarshallConverter] {
+      override def writeObject(output: ObjectOutput, obj: UnmarshallConverter): Unit = {
          output.writeObject(obj.converter)
          output.writeObject(obj.marshallerClass)
       }
 
-      override def readObject(input: ObjectInput): BinaryConverter = {
+      override def readObject(input: ObjectInput): UnmarshallConverter = {
          val converter = input.readObject().asInstanceOf[CacheEventConverter [AnyRef, AnyRef, AnyRef]]
          val marshallerClass = input.readObject().asInstanceOf[Class[_ <: Marshaller]]
-         new BinaryConverter(converter, marshallerClass)
+         new UnmarshallConverter(converter, marshallerClass)
       }
 
       override def getTypeClasses = setAsJavaSet(
-         Set[java.lang.Class[_ <: BinaryConverter]](classOf[BinaryConverter]))
+         Set[java.lang.Class[_ <: UnmarshallConverter]](classOf[UnmarshallConverter]))
    }
 
 }

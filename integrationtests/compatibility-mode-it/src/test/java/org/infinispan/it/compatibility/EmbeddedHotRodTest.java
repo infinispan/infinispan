@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventLogListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
@@ -356,13 +357,13 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          eventListener.expectNoEvents();
          remote.put(1, "one");
          assertEquals("one", embedded.get(1));
-         eventListener.expectOnlyCreatedCustomEvent(1, "one");
+         eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
          remote.put(1, "new-one");
          assertEquals("new-one", embedded.get(1));
-         eventListener.expectOnlyModifiedCustomEvent(1, "new-one");
+         eventListener.expectOnlyModifiedCustomEvent(new CustomEvent(1, "new-one"));
          remote.remove(1);
          assertNull(embedded.get(1));
-         eventListener.expectOnlyRemovedCustomEvent(1, null);
+         eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(1, null));
       } finally {
          remote.removeClientListener(eventListener);
       }
@@ -377,16 +378,16 @@ public class EmbeddedHotRodTest extends AbstractInfinispanTest {
          eventListener.expectNoEvents();
          remote.put(1, "one");
          assertEquals("one", embedded.get(1));
-         eventListener.expectOnlyCreatedCustomEvent(1, "one");
+         eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
          remote.put(2, "two");
          assertEquals("two", embedded.get(2));
-         eventListener.expectOnlyCreatedCustomEvent(2, null);
+         eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(2, null));
          remote.remove(1);
          assertNull(embedded.get(1));
-         eventListener.expectOnlyRemovedCustomEvent(1, null);
+         eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(1, null));
          remote.remove(2);
          assertNull(embedded.get(2));
-         eventListener.expectOnlyRemovedCustomEvent(2, null);
+         eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(2, null));
       } finally {
          remote.removeClientListener(eventListener);
       }

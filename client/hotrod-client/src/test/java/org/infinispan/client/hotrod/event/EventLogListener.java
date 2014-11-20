@@ -8,20 +8,22 @@ import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.container.versioning.NumericVersion;
-import org.infinispan.notifications.cachelistener.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.notifications.cachelistener.filter.NamedFactory;
 import org.junit.Assert;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.test.TestingUtil.assertAnyEquals;
 import static org.testng.AssertJUnit.*;
 
 @ClientListener
@@ -130,17 +132,17 @@ public class EventLogListener<K> {
       switch (type) {
          case CLIENT_CACHE_ENTRY_CREATED:
             ClientCacheEntryCreatedEvent createdEvent = pollEvent(type);
-            Assert.assertEquals(key, createdEvent.getKey());
-            assertEquals(serverDataVersion(cache, key), createdEvent.getVersion());
+            assertAnyEquals(key, createdEvent.getKey());
+            assertAnyEquals(serverDataVersion(cache, key), createdEvent.getVersion());
             break;
          case CLIENT_CACHE_ENTRY_MODIFIED:
             ClientCacheEntryModifiedEvent modifiedEvent = pollEvent(type);
-            Assert.assertEquals(key, modifiedEvent.getKey());
-            assertEquals(serverDataVersion(cache, key), modifiedEvent.getVersion());
+            assertAnyEquals(key, modifiedEvent.getKey());
+            assertAnyEquals(serverDataVersion(cache, key), modifiedEvent.getVersion());
             break;
          case CLIENT_CACHE_ENTRY_REMOVED:
             ClientCacheEntryRemovedEvent removedEvent = pollEvent(type);
-            Assert.assertEquals(key, removedEvent.getKey());
+            assertAnyEquals(key, removedEvent.getKey());
             break;
       }
       Assert.assertEquals(0, queue(type).size());
@@ -202,10 +204,15 @@ public class EventLogListener<K> {
       public StaticFilteredEventLogListener(boolean compatibility) { super(compatibility); }
    }
 
+   @ClientListener(filterFactoryName = "raw-static-filter-factory", useRawData = true)
+   public static class RawStaticFilteredEventLogListener<K> extends EventLogListener<K> {
+      public RawStaticFilteredEventLogListener() {}
+      public RawStaticFilteredEventLogListener(boolean compatibility) { super(compatibility); }
+   }
+
    @ClientListener(filterFactoryName = "static-filter-factory", includeCurrentState = true)
    public static class StaticFilteredEventLogWithStateListener<K> extends EventLogListener<K> {
       public StaticFilteredEventLogWithStateListener() {}
-      public StaticFilteredEventLogWithStateListener(boolean compatibility) { super(compatibility); }
    }
 
    @ClientListener(filterFactoryName = "dynamic-filter-factory")
@@ -217,7 +224,6 @@ public class EventLogListener<K> {
    @ClientListener(filterFactoryName = "dynamic-filter-factory", includeCurrentState = true)
    public static class DynamicFilteredEventLogWithStateListener<K> extends EventLogListener<K> {
       public DynamicFilteredEventLogWithStateListener() {}
-      public DynamicFilteredEventLogWithStateListener(boolean compatibility) { super(compatibility); }
    }
 
    @NamedFactory(name = "static-filter-factory")
@@ -235,7 +241,6 @@ public class EventLogListener<K> {
             return staticKey.equals(key);
          }
       }
-
    }
 
    @NamedFactory(name = "dynamic-filter-factory")
@@ -260,5 +265,21 @@ public class EventLogListener<K> {
       }
    }
 
+   @NamedFactory(name = "raw-static-filter-factory")
+   public static class RawStaticCacheEventFilterFactory implements CacheEventFilterFactory {
+      @Override
+      public CacheEventFilter<byte[], byte[]> getFilter(final Object[] params) {
+         return new RawStaticCacheEventFilter();
+      }
+
+      static class RawStaticCacheEventFilter implements CacheEventFilter<byte[], byte[]>, Serializable {
+         final byte[] staticKey = new byte[]{3, 75, 0, 0, 0, 2}; // key integer `2`, as marshalled by GenericJBossMarshaller
+         @Override
+         public boolean accept(byte[] key, byte[] previousValue, Metadata previousMetadata, byte[] value,
+               Metadata metadata, EventType eventType) {
+            return Arrays.equals(key, staticKey);
+         }
+      }
+   }
 
 }

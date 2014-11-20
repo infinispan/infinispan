@@ -69,4 +69,24 @@ object Events {
       }
    }
 
+   case class CustomRawEvent(
+         override val version: Byte,
+         override val messageId: Long,
+         override val op: OperationResponse,
+         override val listenerId: Bytes,
+         override val isRetried: Boolean,
+         eventData: Bytes)
+         extends Event(version, messageId, op, listenerId, isRetried) {
+      override def toString: String = {
+         new StringBuilder().append("CustomRawEvent").append("{")
+               .append("version=").append(version)
+               .append(", messageId=").append(messageId)
+               .append(", op=").append(op)
+               .append(", listenerId=").append(Util.toStr(listenerId, false))
+               .append(", event=").append(Util.toStr(eventData, false))
+               .append(", isRetried=").append(isRetried)
+               .append("}").toString()
+      }
+   }
+
 }

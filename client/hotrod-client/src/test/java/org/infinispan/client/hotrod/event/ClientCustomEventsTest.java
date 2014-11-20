@@ -5,9 +5,12 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClie
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventLogListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventWithStateLogListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.RawStaticConverterFactory;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.RawStaticCustomEventLogListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogWithStateListener;
@@ -27,6 +30,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
       server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());
       server.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory());
+      server.addCacheEventConverterFactory("raw-static-converter-factory", new RawStaticConverterFactory());
       return server;
    }
 
@@ -38,11 +42,11 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             RemoteCache<Integer, String> cache = rcm.getCache();
             eventListener.expectNoEvents();
             cache.put(1, "one");
-            eventListener.expectOnlyCreatedCustomEvent(1, "one");
+            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
             cache.put(1, "newone");
-            eventListener.expectOnlyModifiedCustomEvent(1, "newone");
+            eventListener.expectOnlyModifiedCustomEvent(new CustomEvent(1, "newone"));
             cache.remove(1);
-            eventListener.expectOnlyRemovedCustomEvent(1, null);
+            eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(1, null));
          }
       });
    }
@@ -65,9 +69,9 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             RemoteCache<Integer, String> cache = rcm.getCache();
             eventListener.expectNoEvents();
             cache.put(1, "one");
-            eventListener.expectOnlyCreatedCustomEvent(1, "one");
+            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
             cache.put(2, "two");
-            eventListener.expectOnlyCreatedCustomEvent(2, null);
+            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(2, null));
          }
       });
    }
@@ -79,7 +83,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       withClientListener(staticEventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            staticEventListener.expectOnlyCreatedCustomEvent(1, "one");
+            staticEventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
          }
       });
       final DynamicCustomEventWithStateLogListener dynamicEventListener = new DynamicCustomEventWithStateLogListener();
@@ -87,7 +91,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       withClientListener(dynamicEventListener, null, new Object[]{2}, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            dynamicEventListener.expectOnlyCreatedCustomEvent(2, null);
+            dynamicEventListener.expectOnlyCreatedCustomEvent(new CustomEvent(2, null));
          }
       });
    }
@@ -111,6 +115,26 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
          }
       });
    }
+
+   public void testRawCustomEvents() {
+      final RawStaticCustomEventLogListener eventListener = new RawStaticCustomEventLogListener();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            RemoteCache<Integer, String> cache = rcm.getCache();
+            eventListener.expectNoEvents();
+            cache.put(1, "one");
+            // 1 = [3,75,0,0,0,1], "one" = [3,62,3,111,110,101]
+            eventListener.expectOnlyCreatedCustomEvent(new byte[]{3, 75, 0, 0, 0, 1, 3, 62, 3, 111, 110, 101});
+            cache.put(1, "newone");
+            // "newone" = [3,62,6,110,101,119,111,110,101]
+            eventListener.expectOnlyModifiedCustomEvent(new byte[]{3, 75, 0, 0, 0, 1, 3, 62, 6, 110, 101, 119, 111, 110, 101});
+            cache.remove(1);
+            eventListener.expectOnlyRemovedCustomEvent(new byte[]{3, 75, 0, 0, 0, 1});
+         }
+      });
+   }
+
 
    @ClientListener(converterFactoryName = "non-existing-test-converter-factory")
    public static class NonExistingConverterFactoryListener extends CustomEventLogListener {}
