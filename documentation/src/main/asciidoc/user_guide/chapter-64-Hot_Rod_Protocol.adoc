@@ -8,6 +8,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.3]
 * link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.4]
 * link:$$#_hot_rod_protocol_2_0$$[Hot Rod Protocol 2.0]
+* link:$$#_hot_rod_protocol_2_1$$[Hot Rod Protocol 2.1]
 
 ===== Hot Rod Protocol 1.0
 
@@ -1002,11 +1003,6 @@ protocol version will be introduced to accommodate this.
 .Infinispan versions
 TIP: This version of the protocol is implemented since Infinispan 7.0.0.Final.
 
-TIP: Starting with this protocol version, the previous limitation of having to
-interact with defined cache names has been dropped. From now on, clients can
-interact with caches, whose names, are not necessarily defined in the cache
-configuration.
-
 ====== Request Header
 
 The request header no longer contains `Transaction Type` and `Transaction ID`
@@ -1364,6 +1360,61 @@ If command is retried, it returns `1`, otherwise `0`.
 converter implementation logic.
 |==============================================================================
 
+===== Hot Rod Protocol 2.1
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 7.1.0.Final.
+
+====== Request Header
+
+The `version` field in the header is updated to `21`.
+
+====== Operations
+
+.Add client listener for remote events
+
+An extra byte parameter is added at the end which indicates whether the client
+prefers client listener to work with raw binary data for filter/converter
+callbacks. If using raw data, its value is `1` otherwise `0`.
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Request header
+| Listener ID   | byte array   | ...
+| Include state | byte         | ...
+| Key/value filter factory parameter count | byte | ...
+| ... | |
+| Converter factory name | string | ...
+| Converter factory parameter count | byte | ...
+| ... | |
+| Use raw data | byte | If filter/converter parameters should be raw binary,
+then `1`, otherwise `0`.
+|==============================================================================
+
+.Custom event
+
+Starting with Hot Rod 2.1, custom events can return raw data that the Hot Rod
+client should not try to unmarshall before passing it on to the user. The way
+this is transmitted to the Hot Rod client is by sending `2` as the custom
+event marker. So, the format of the custom event remains like this:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Header | variable | Event header with event specific operation code
+| Listener ID | byte array | Listener for which this event is directed
+| Custom marker | byte | Custom event marker. For custom events whose event
+data needs to be unmarshalled before returning to user the value is `1`. For
+custom events that need to return the event data as-is to the user, the value
+is `2`.
+| Event data | byte array | Custom event data. If the custom marker is `1`,
+the bytes represent the marshalled version of the instance returned by the
+converter. If custom marker is `2`, it represents the byte array, as returned
+by the converter.
+|==============================================================================
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash

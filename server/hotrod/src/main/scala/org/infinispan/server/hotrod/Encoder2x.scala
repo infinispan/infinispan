@@ -10,7 +10,7 @@ import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.util.BulkUtil
 import scala.collection.JavaConversions._
 import scala.collection.mutable
-import org.infinispan.server.hotrod.Events.{CustomEvent, KeyEvent, Event, KeyWithVersionEvent}
+import org.infinispan.server.hotrod.Events._
 import scala.collection.mutable.ListBuffer
 import org.infinispan.remoting.rpc.RpcManager
 
@@ -41,6 +41,10 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
             writeRangedBytes(k.key, buf)
          case c: CustomEvent =>
             buf.writeByte(1) // custom marker
+            buf.writeByte(if (c.isRetried) 1 else 0)
+            writeRangedBytes(c.eventData, buf)
+         case c: CustomRawEvent =>
+            buf.writeByte(2) // custom raw marker
             buf.writeByte(if (c.isRetried) 1 else 0)
             writeRangedBytes(c.eventData, buf)
       }

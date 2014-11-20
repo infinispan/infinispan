@@ -82,11 +82,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
 
       HeaderParams params = writeHeader(transport, ADD_CLIENT_LISTENER_REQUEST);
       transport.writeArray(listenerId);
-      transport.writeByte((short)(clientListener.includeCurrentState() ? 1 : 0));
-
-      writeNamedFactory(transport, clientListener.filterFactoryName(), filterFactoryParams);
-      writeNamedFactory(transport, clientListener.converterFactoryName(), converterFactoryParams);
-
+      codec.writeClientListenerParams(transport, clientListener, filterFactoryParams, converterFactoryParams);
       transport.flush();
 
       listenerNotifier.addClientListener(this);
@@ -108,20 +104,6 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
       } while (either.type() == Either.Type.RIGHT);
 
       return either.left();
-   }
-
-   private void writeNamedFactory(Transport transport, String factoryName, byte[][] params) {
-      transport.writeString(factoryName);
-      if (!factoryName.isEmpty()) {
-         // A named factory was written, how many parameters?
-         if (params != null) {
-            transport.writeByte((short) params.length);
-            for (byte[] param : params)
-               transport.writeArray(param);
-         } else {
-            transport.writeByte((short) 0);
-         }
-      }
    }
 
    private ClientListener extractClientListener() {

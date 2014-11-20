@@ -95,6 +95,7 @@ import org.jgroups.protocols.DELAY;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
 import org.jgroups.stack.ProtocolStack;
+import org.testng.AssertJUnit;
 
 public class TestingUtil {
    private static final Log log = LogFactory.getLog(TestingUtil.class);
@@ -1442,6 +1443,13 @@ public class TestingUtil {
          set.add(new TestingUtil.TestPrincipal(principal));
       }
       return new Subject(true, set, InfinispanCollections.emptySet(), InfinispanCollections.emptySet());
+   }
+
+   static public void assertAnyEquals(Object expected, Object actual) {
+      if (expected instanceof byte[] && actual instanceof byte[])
+         AssertJUnit.assertArrayEquals((byte[]) expected, (byte[]) actual);
+      else
+         AssertJUnit.assertEquals(expected, actual);
    }
 
    public static class TestPrincipal implements Principal, Serializable {

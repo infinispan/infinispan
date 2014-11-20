@@ -46,7 +46,7 @@ import org.infinispan.server.core.transport.SaslQopHandler
  * @author Galder Zamarreño
  * @since 7.0
  */
-object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log {
+object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log with Constants {
 
    import OperationResponse._
    import ProtocolFlag._
@@ -333,11 +333,15 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          }
          case AddClientListenerRequest =>
             val listenerId = readRangedBytes(buffer)
-            val includeState = if (buffer.readByte() == 0) false else true
+            val includeState = buffer.readByte() == 1
             val filterFactoryInfo = readNamedFactory(buffer)
             val converterFactoryInfo = readNamedFactory(buffer)
+            val useRawData = h.version match {
+               case VERSION_21 => buffer.readByte() == 1
+               case _ => false
+            }
             val reg = server.getClientListenerRegistry
-            reg.addClientListener(ch, h, listenerId, cache, includeState, filterFactoryInfo, converterFactoryInfo)
+            reg.addClientListener(ch, h, listenerId, cache, includeState, filterFactoryInfo, converterFactoryInfo, useRawData)
             createSuccessResponse(h, null)
          case RemoveClientListenerRequest =>
             val listenerId = readRangedBytes(buffer)

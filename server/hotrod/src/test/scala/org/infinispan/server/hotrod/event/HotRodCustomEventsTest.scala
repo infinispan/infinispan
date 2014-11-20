@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod.event
 
 import java.lang.reflect.Method
-import org.infinispan.filter.Converter
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.metadata.Metadata
 import org.infinispan.server.hotrod.test.HotRodTestingUtil._
@@ -18,7 +17,6 @@ class HotRodCustomEventsTest extends HotRodSingleNodeTest {
 
    override protected def createStartHotRodServer(cacheManager: EmbeddedCacheManager): HotRodServer = {
       val server = HotRodTestingUtil.startHotRodServer(cacheManager)
-      server.getClientListenerRegistry.setDefaultMarshaller(None)
       server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory)
       server.addCacheEventConverterFactory("dynamic-converter-factory", new DynamicConverterFactory)
       server

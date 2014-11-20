@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.protocol;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
 import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
@@ -45,6 +46,28 @@ public class Codec20 implements Codec, HotRodConstants {
    @Override
    public HeaderParams writeHeader(Transport transport, HeaderParams params) {
       return writeHeader(transport, params, HotRodConstants.VERSION_20);
+   }
+
+   @Override
+   public void writeClientListenerParams(Transport transport, ClientListener clientListener,
+         byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
+      transport.writeByte((short)(clientListener.includeCurrentState() ? 1 : 0));
+      writeNamedFactory(transport, clientListener.filterFactoryName(), filterFactoryParams);
+      writeNamedFactory(transport, clientListener.converterFactoryName(), converterFactoryParams);
+   }
+
+   private void writeNamedFactory(Transport transport, String factoryName, byte[][] params) {
+      transport.writeString(factoryName);
+      if (!factoryName.isEmpty()) {
+         // A named factory was written, how many parameters?
+         if (params != null) {
+            transport.writeByte((short) params.length);
+            for (byte[] param : params)
+               transport.writeArray(param);
+         } else {
+            transport.writeByte((short) 0);
+         }
+      }
    }
 
    protected HeaderParams writeHeader(
@@ -106,7 +129,7 @@ public class Codec20 implements Codec, HotRodConstants {
       return readPartialEvent(transport, expectedListenerId, marshaller, eventTypeId);
    }
 
-   private ClientEvent readPartialEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller, short eventTypeId) {
+   protected ClientEvent readPartialEvent(Transport transport, byte[] expectedListenerId, Marshaller marshaller, short eventTypeId) {
       short status = transport.readByte();
       transport.readByte(); // ignore, no topology expected
       ClientEvent.Type eventType;
@@ -183,7 +206,7 @@ public class Codec20 implements Codec, HotRodConstants {
       }
    }
 
-   private ClientEvent createRemovedEvent(final Object key, final boolean isRetried) {
+   protected ClientEvent createRemovedEvent(final Object key, final boolean isRetried) {
       return new ClientCacheEntryRemovedEvent() {
          @Override public Object getKey() { return key; }
          @Override public Type getType() { return Type.CLIENT_CACHE_ENTRY_REMOVED; }
@@ -195,7 +218,7 @@ public class Codec20 implements Codec, HotRodConstants {
       };
    }
 
-   private ClientCacheEntryModifiedEvent createModifiedEvent(final Object key, final long dataVersion, final boolean isRetried) {
+   protected ClientCacheEntryModifiedEvent createModifiedEvent(final Object key, final long dataVersion, final boolean isRetried) {
       return new ClientCacheEntryModifiedEvent() {
          @Override public Object getKey() { return key; }
          @Override public long getVersion() { return dataVersion; }
@@ -209,7 +232,7 @@ public class Codec20 implements Codec, HotRodConstants {
       };
    }
 
-   private ClientCacheEntryCreatedEvent<Object> createCreatedEvent(final Object key, final long dataVersion, final boolean isRetried) {
+   protected ClientCacheEntryCreatedEvent<Object> createCreatedEvent(final Object key, final long dataVersion, final boolean isRetried) {
       return new ClientCacheEntryCreatedEvent<Object>() {
          @Override public Object getKey() { return key; }
          @Override public long getVersion() { return dataVersion; }
@@ -223,7 +246,7 @@ public class Codec20 implements Codec, HotRodConstants {
       };
    }
 
-   private ClientCacheEntryCustomEvent<Object> createCustomEvent(final Object eventData, final ClientEvent.Type eventType, final boolean isRetried) {
+   protected ClientCacheEntryCustomEvent<Object> createCustomEvent(final Object eventData, final ClientEvent.Type eventType, final boolean isRetried) {
       return new ClientCacheEntryCustomEvent<Object>() {
          @Override public Object getEventData() { return eventData; }
          @Override public Type getType() { return eventType; }

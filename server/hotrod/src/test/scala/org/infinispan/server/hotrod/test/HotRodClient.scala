@@ -266,9 +266,9 @@ class HotRodClient(host: String, port: Int, val defaultCacheName: String, rspTim
    }
 
    def addClientListener(listener: TestClientListener, includeState: Boolean,
-           filterFactory: NamedFactory, converterFactory: NamedFactory): TestResponse = {
+           filterFactory: NamedFactory, converterFactory: NamedFactory, useRawData: Boolean): TestResponse = {
       val op = new AddClientListenerOp(0xA0, protocolVersion, defaultCacheName,
-         1, 0, listener.getId, includeState, filterFactory, converterFactory)
+         1, 0, listener.getId, includeState, filterFactory, converterFactory, useRawData)
       val handler = ch.pipeline.last.asInstanceOf[ClientHandler]
       handler.addClientListener(listener)
       writeOp(op)
@@ -322,6 +322,8 @@ private class Encoder(protocolVersion: Byte) extends MessageToByteEncoder[Object
             buffer.writeByte(if (op.includeState) 1 else 0)
             writeNamedFactory(op.filterFactory, buffer)
             writeNamedFactory(op.converterFactory, buffer)
+            if (protocolVersion >= 21)
+               buffer.writeByte(if (op.useRawData) 1 else 0)
          case op: RemoveClientListenerOp =>
             writeHeader(op, buffer)
             writeRangedBytes(op.listenerId, buffer)
@@ -563,7 +565,7 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
             val listenerId = readRangedBytes(buf)
             val isCustom = buf.readByte()
             val isRetried = if (buf.readByte() == 1) true else false
-            if (isCustom == 1) {
+            if (isCustom == 1 || isCustom == 2) {
                val eventData = readRangedBytes(buf)
                new TestCustomEvent(client.protocolVersion, id, client.defaultCacheName, opCode, listenerId, isRetried, eventData)
             } else {
@@ -831,7 +833,8 @@ class AddClientListenerOp(override val magic: Int,
         val listenerId: Bytes,
         val includeState: Boolean,
         val filterFactory: NamedFactory,
-        val converterFactory: NamedFactory)
+        val converterFactory: NamedFactory,
+        val useRawData: Boolean)
         extends Op(magic, version, 0x25, cacheName, null, 0, 0, null, 0, 0,
            clientIntel, topologyId)
 

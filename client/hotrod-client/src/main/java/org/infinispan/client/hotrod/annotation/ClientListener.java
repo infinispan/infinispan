@@ -44,6 +44,23 @@ public @interface ClientListener {
    String converterFactoryName() default "";
 
    /**
+    * This option affects the type of the parameters received by a configured
+    * filter and/or converter. If using raw data, filter and/or converter
+    * classes receive raw binary arrays as parameters instead of unmarshalled
+    * instances, which is the default. On top of that, when raw data is
+    * enabled, custom events produced by the converters are expected to be
+    * byte arrays. This option is useful when trying to avoid marshalling
+    * costs involved in unmarshalling data to pass to filter/converter
+    * callbacks or costs involved in marshalling custom event POJOs.
+    * Using raw data also helps with potential classloading issues related to
+    * loading callback parameter classes or custom event POJOs. By using raw
+    * data, there's no need for class sharing between the server and client.
+    * By default, using raw binary data for filter/converter callbacks is
+    * disabled.
+    */
+   boolean useRawData() default false;
+
+   /**
     * This flag enables cached state to be sent back to remote clients when
     * either adding a cache listener for the first time, or when the node where
     * a remote listener is registered changes. When enabled, state is sent

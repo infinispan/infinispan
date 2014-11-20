@@ -389,9 +389,9 @@ object HotRodTestingUtil extends Log {
       new JBossMarshaller().objectFromByteBuffer(key).asInstanceOf[T]
 
    def withClientListener(filterFactory: NamedFactory = None, converterFactory: NamedFactory = None,
-           includeState: Boolean = false)(fn: () => Unit)
+           includeState: Boolean = false, useRawData: Boolean = true)(fn: () => Unit)
            (implicit listener: TestClientListener, client: HotRodClient): Unit = {
-      assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory), Success)
+      assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory, useRawData), Success)
       try {
          fn()
       } finally {
@@ -400,9 +400,10 @@ object HotRodTestingUtil extends Log {
    }
 
    def withClientListener(client: HotRodClient, listener: TestClientListener,
-           includeState: Boolean, filterFactory: NamedFactory, converterFactory: NamedFactory)
+           includeState: Boolean, filterFactory: NamedFactory, converterFactory: NamedFactory,
+           useRawData: Boolean)
            (fn: () => Unit): Unit = {
-      assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory), Success)
+      assertStatus(client.addClientListener(listener, includeState, filterFactory, converterFactory, useRawData), Success)
       try {
          fn()
       } finally {

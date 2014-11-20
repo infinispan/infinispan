@@ -3,12 +3,14 @@ package org.infinispan.client.hotrod.event;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.event.EventLogListener.DynamicCacheEventFilterFactory;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogWithStateListener;
-import org.infinispan.client.hotrod.event.EventLogListener.DynamicCacheEventFilterFactory;
+import org.infinispan.client.hotrod.event.EventLogListener.RawStaticFilteredEventLogListener;
+import org.infinispan.client.hotrod.event.EventLogListener.RawStaticCacheEventFilterFactory;
+import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogWithStateListener;
-import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
@@ -27,6 +29,7 @@ public class ClientFilterEventsTest extends SingleHotRodServerTest {
       HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
       server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory());
       server.addCacheEventFilterFactory("dynamic-filter-factory", new DynamicCacheEventFilterFactory());
+      server.addCacheEventFilterFactory("raw-static-filter-factory", new RawStaticCacheEventFilterFactory());
       return server;
    }
 
@@ -140,6 +143,25 @@ public class ClientFilterEventsTest extends SingleHotRodServerTest {
    public void testNonExistingConverterFactoryCustomEvents() {
       NonExistingFilterFactoryListener eventListener = new NonExistingFilterFactoryListener();
       withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager));
+   }
+
+   public void testRawFilteredEvents() {
+      final RawStaticFilteredEventLogListener<Integer> eventListener = new RawStaticFilteredEventLogListener<>();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            RemoteCache<Integer, String> cache = rcm.getCache();
+            eventListener.expectNoEvents();
+            cache.put(1, "one");
+            eventListener.expectNoEvents();
+            cache.put(2, "two");
+            eventListener.expectOnlyCreatedEvent(2, cache());
+            cache.remove(1);
+            eventListener.expectNoEvents();
+            cache.remove(2);
+            eventListener.expectOnlyRemovedEvent(2, cache());
+         }
+      });
    }
 
    @ClientListener(filterFactoryName = "non-existing-test-filter-factory")

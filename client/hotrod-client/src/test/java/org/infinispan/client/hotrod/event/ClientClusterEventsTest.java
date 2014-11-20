@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
@@ -110,13 +111,13 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
             RemoteCache<Integer, String> c3 = client(2).getCache();
             eventListener.expectNoEvents();
             c3.put(1, "one");
-            eventListener.expectOnlyCreatedCustomEvent(1, "one");
+            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
             c3.put(2, "two");
-            eventListener.expectOnlyCreatedCustomEvent(2, "two");
+            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(2, "two"));
             c3.remove(1);
-            eventListener.expectOnlyRemovedCustomEvent(1, null);
+            eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(1, null));
             c3.remove(2);
-            eventListener.expectOnlyRemovedCustomEvent(2, null);
+            eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(2, null));
          }
       });
    }

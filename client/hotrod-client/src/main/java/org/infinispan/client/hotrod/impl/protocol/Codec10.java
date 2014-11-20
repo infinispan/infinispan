@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
@@ -38,6 +39,12 @@ public class Codec10 implements Codec {
    @Override
    public HeaderParams writeHeader(Transport transport, HeaderParams params) {
       return writeHeader(transport, params, HotRodConstants.VERSION_10);
+   }
+
+   @Override
+   public void writeClientListenerParams(Transport transport, ClientListener clientListener,
+         byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
+      // No-op
    }
 
    protected HeaderParams writeHeader(
