@@ -1,6 +1,5 @@
 package org.infinispan.container;
 
-import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.VersioningScheme;
@@ -263,9 +262,18 @@ public class EntryFactoryImpl implements EntryFactory {
 
    private InternalCacheEntry getFromContainer(Object key, boolean forceFetch) {
       final boolean isLocal = distributionManager == null || distributionManager.getLocality(key).isLocal();
-      final InternalCacheEntry ice = isL1Enabled || isLocal || forceFetch ? container.get(key) : null;
-      if (trace) log.tracef("Retrieved from container %s (isL1Enabled=%s, isLocal=%s)", ice, isL1Enabled, isLocal);
-      return ice;
+      if (isLocal || forceFetch) {
+         final InternalCacheEntry ice = container.get(key);
+         if (trace) log.tracef("Retrieved from container %s (forceFetch=%s, isLocal=%s)", ice, forceFetch, isLocal);
+         return ice;
+      } else if (isL1Enabled) {
+         final InternalCacheEntry ice = container.get(key);
+         final boolean isL1Entry = ice != null && ice.isL1Entry();
+         if (trace) log.tracef("Retrieved from container %s (L1 is enabled, isL1Entry=%s)", ice, isL1Entry);
+         return isL1Entry ? ice : null;
+      }
+      if (trace) log.trace("Didn't retrieve from container.");
+      return null;
    }
 
    private MVCCEntry newMvccEntryForPut(

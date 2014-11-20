@@ -143,4 +143,14 @@ public interface InternalEntryFactory {
     * @param <V> The value type for the entry
     */
    <K, V> CacheEntry<K, V> copy(CacheEntry<K, V> cacheEntry);
+
+   /**
+    * Creates a L1 entry.
+    *
+    * @param <K> The key type for the entry
+    * @param <V> The value type for the entry
+    * @param key
+    *@param value @return a new {@link org.infinispan.container.entries.InternalCacheEntry}
+    */
+   <K, V> InternalCacheEntry<K, V> createL1(K key, V value, Metadata metadata);
 }
