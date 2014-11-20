@@ -10,7 +10,7 @@ import java.io.IOException;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class MarshallerRegistration {
+public final class MarshallerRegistration {
 
    public static final String QUERY_PROTO_RES = "/org/infinispan/query/remote/client/query.proto";
    public static final String MESSAGE_PROTO_RES = "/org/infinispan/protostream/message-wrapping.proto";
@@ -20,7 +20,7 @@ public class MarshallerRegistration {
       fileDescriptorSource.addProtoFile(QUERY_PROTO_RES, MarshallerRegistration.class.getResourceAsStream(QUERY_PROTO_RES));
       fileDescriptorSource.addProtoFile(MESSAGE_PROTO_RES, MarshallerRegistration.class.getResourceAsStream(MESSAGE_PROTO_RES));
       ctx.registerProtoFiles(fileDescriptorSource);
-      ctx.registerMarshaller(new QueryRequestMarshaller());
-      ctx.registerMarshaller(new QueryResponseMarshaller());
+      ctx.registerMarshaller(new QueryRequest.Marshaller());
+      ctx.registerMarshaller(new QueryResponse.Marshaller());
    }
 }

@@ -16,7 +16,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class RemoteValueWrapperInterceptor extends BaseTypeConverterInterceptor {
+public final class RemoteValueWrapperInterceptor extends BaseTypeConverterInterceptor {
 
    private final ProtobufValueWrapperTypeConverter protobufTypeConverter = new ProtobufValueWrapperTypeConverter();
 

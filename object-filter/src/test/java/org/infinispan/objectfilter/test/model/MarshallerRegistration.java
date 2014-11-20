@@ -10,7 +10,7 @@ import java.io.IOException;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class MarshallerRegistration {
+public final class MarshallerRegistration {
 
    public static final String PROTOBUF_RES = "/org/infinispan/objectfilter/test/model/test_model.proto";
 

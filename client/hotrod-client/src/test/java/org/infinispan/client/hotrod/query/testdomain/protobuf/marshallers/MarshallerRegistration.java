@@ -10,7 +10,7 @@ import java.io.IOException;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class MarshallerRegistration {
+public final class MarshallerRegistration {
 
    public static final String PROTOBUF_RES = "/sample_bank_account/bank.proto";
 
