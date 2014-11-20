@@ -1,7 +1,7 @@
 package org.infinispan.query.backend;
 
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.Flag;
@@ -59,7 +59,7 @@ public enum IndexModificationStrategy {
     * @param cfg
     * @return the appropriate IndexModificationStrategy
     */
-   public static IndexModificationStrategy configuredStrategy(SearchFactoryIntegrator searchFactory, Configuration cfg) {
+   public static IndexModificationStrategy configuredStrategy(SearchIntegrator searchFactory, Configuration cfg) {
       if ("manual".equals(((SearchFactoryImplementor) searchFactory).getIndexingStrategy())) {
          return MANUAL;
       }

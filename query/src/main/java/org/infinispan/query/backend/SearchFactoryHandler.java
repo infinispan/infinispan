@@ -1,7 +1,7 @@
 package org.infinispan.query.backend;
 
 import org.hibernate.search.backend.spi.Worker;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,20 +10,20 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.infinispan.query.backend.TransactionHelper.Operation;
 
 /**
- * Wrapper around SearchFactoryIntegrator with guards to allow concurrent access
+ * Wrapper around SearchIntegrator with guards to allow concurrent access
  *
  * @author gustavonalle
  * @since 7.0
  */
 final class SearchFactoryHandler {
 
-   private final SearchFactoryIntegrator searchFactory;
+   private final SearchIntegrator searchFactory;
    private final ReadIntensiveClusterRegistryWrapper<String, Class<?>, Boolean> clusterRegistry;
    private final TransactionHelper transactionHelper;
 
    private final ReentrantLock mutating = new ReentrantLock();
 
-   SearchFactoryHandler(final SearchFactoryIntegrator searchFactory,
+   SearchFactoryHandler(final SearchIntegrator searchFactory,
                         final ReadIntensiveClusterRegistryWrapper<String, Class<?>, Boolean> clusterRegistry,
                         final TransactionHelper transactionHelper) {
       this.searchFactory = searchFactory;
@@ -91,7 +91,7 @@ final class SearchFactoryHandler {
       }
    }
 
-   public SearchFactoryIntegrator getSearchFactory() {
+   public SearchIntegrator getSearchFactory() {
       return searchFactory;
    }
 

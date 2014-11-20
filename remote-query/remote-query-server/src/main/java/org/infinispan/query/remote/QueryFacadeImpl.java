@@ -12,7 +12,7 @@ import org.hibernate.search.bridge.builtin.StringBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
 import org.hibernate.search.bridge.builtin.impl.TwoWayString2FieldBridgeAdaptor;
 import org.hibernate.search.query.dsl.QueryBuilder;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.objectfilter.Matcher;
@@ -119,7 +119,7 @@ public class QueryFacadeImpl implements QueryFacade {
     */
    private QueryResponse executeQuery(AdvancedCache<byte[], byte[]> cache, SerializationContext serCtx, QueryRequest request) {
       final SearchManager searchManager = Search.getSearchManager(cache);
-      final SearchFactoryIntegrator searchFactory = (SearchFactoryIntegrator) searchManager.getSearchFactory();
+      final SearchIntegrator searchFactory = (SearchIntegrator) searchManager.getSearchFactory();
       final QueryCache queryCache = ComponentRegistryUtils.getQueryCache(cache);  // optional component
 
       LuceneQueryParsingResult parsingResult;
@@ -190,7 +190,7 @@ public class QueryFacadeImpl implements QueryFacade {
       return response;
    }
 
-   private LuceneQueryParsingResult parseQuery(AdvancedCache<byte[], byte[]> cache, final SerializationContext serCtx, String queryString, SearchFactoryIntegrator searchFactory) {
+   private LuceneQueryParsingResult parseQuery(AdvancedCache<byte[], byte[]> cache, final SerializationContext serCtx, String queryString, SearchIntegrator searchFactory) {
       LuceneProcessingChain processingChain;
       if (cache.getCacheConfiguration().compatibility().enabled()) {
          final QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
