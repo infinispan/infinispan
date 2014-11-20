@@ -3,7 +3,7 @@ package org.infinispan.query.clustered.commandworkers;
 import java.util.UUID;
 
 import org.hibernate.search.query.engine.spi.HSQuery;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.query.clustered.QueryBox;
@@ -24,7 +24,7 @@ public abstract class ClusteredQueryCommandWorker {
 
    private QueryBox queryBox;
 
-   private SearchFactoryIntegrator searchFactory;
+   private SearchIntegrator searchFactory;
 
    // the query
    protected HSQuery query;
@@ -49,10 +49,10 @@ public abstract class ClusteredQueryCommandWorker {
       return queryBox;
    }
 
-   protected SearchFactoryIntegrator getSearchFactory() {
+   protected SearchIntegrator getSearchFactory() {
       if (searchFactory == null) {
          ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-         searchFactory = cr.getComponent(SearchFactoryIntegrator.class);
+         searchFactory = cr.getComponent(SearchIntegrator.class);
       }
 
       return searchFactory;

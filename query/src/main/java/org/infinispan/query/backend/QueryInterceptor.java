@@ -4,7 +4,7 @@ import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
@@ -65,7 +65,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class QueryInterceptor extends CommandInterceptor {
 
    private final IndexModificationStrategy indexingMode;
-   private final SearchFactoryIntegrator searchFactory;
+   private final SearchIntegrator searchFactory;
    private final KeyTransformationHandler keyTransformationHandler = new KeyTransformationHandler();
    private final KnownClassesRegistryListener registryListener = new KnownClassesRegistryListener();
    private final AtomicBoolean stopping = new AtomicBoolean(false);
@@ -88,7 +88,7 @@ public final class QueryInterceptor extends CommandInterceptor {
       return log;
    }
 
-   public QueryInterceptor(SearchFactoryIntegrator searchFactory, IndexModificationStrategy indexingMode) {
+   public QueryInterceptor(SearchIntegrator searchFactory, IndexModificationStrategy indexingMode) {
       this.searchFactory = searchFactory;
       this.indexingMode = indexingMode;
    }
@@ -267,7 +267,7 @@ public final class QueryInterceptor extends CommandInterceptor {
       return keyTransformationHandler;
    }
 
-   public SearchFactoryIntegrator getSearchFactory() {
+   public SearchIntegrator getSearchFactory() {
       return searchFactory;
    }
 

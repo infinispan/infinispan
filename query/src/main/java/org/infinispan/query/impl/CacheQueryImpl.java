@@ -15,7 +15,7 @@ import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.hibernate.search.query.engine.spi.FacetManager;
 import org.hibernate.search.query.engine.spi.HSQuery;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
@@ -47,12 +47,12 @@ public class CacheQueryImpl implements CacheQuery {
    protected HSQuery hSearchQuery;
    private ProjectionConverter projectionConverter;
 
-   public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, AdvancedCache<?, ?> cache,
+   public CacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory, AdvancedCache<?, ?> cache,
          KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
        this(luceneQuery, searchFactory, cache, keyTransformationHandler, null, classes);
    }
 
-   public CacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory, AdvancedCache<?, ?> cache,
+   public CacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory, AdvancedCache<?, ?> cache,
                          KeyTransformationHandler keyTransformationHandler, TimeoutExceptionFactory timeoutExceptionFactory,
                          Class<?>... classes) {
       this.keyTransformationHandler = keyTransformationHandler;

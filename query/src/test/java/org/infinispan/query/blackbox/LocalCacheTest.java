@@ -24,7 +24,7 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.hibernate.search.filter.FullTextFilter;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.engine.spi.SearchFactoryImplementor;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -699,7 +699,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
     */
    private void assertIndexingKnows(Cache<Object, Object> cache, Class... types) {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      SearchFactoryImplementor searchFactoryIntegrator = (SearchFactoryImplementor) cr.getComponent(SearchFactoryIntegrator.class);
+      SearchFactoryImplementor searchFactoryIntegrator = (SearchFactoryImplementor) cr.getComponent(SearchIntegrator.class);
       assertNotNull(searchFactoryIntegrator);
       Map<Class<?>, EntityIndexBinding> indexBindingForEntity = searchFactoryIntegrator.getIndexBindings();
       assertNotNull(indexBindingForEntity);

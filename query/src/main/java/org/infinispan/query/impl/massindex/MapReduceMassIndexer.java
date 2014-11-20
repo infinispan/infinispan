@@ -2,7 +2,7 @@ package org.infinispan.query.impl.massindex;
 
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.distexec.mapreduce.MapReduceTask;
 import org.infinispan.query.MassIndexer;
@@ -15,9 +15,9 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 public class MapReduceMassIndexer implements MassIndexer {
 
    private final AdvancedCache<Object, Object> cache;
-   private final SearchFactoryIntegrator searchFactory;
+   private final SearchIntegrator searchFactory;
 
-   public MapReduceMassIndexer(AdvancedCache cache, SearchFactoryIntegrator searchFactory) {
+   public MapReduceMassIndexer(AdvancedCache cache, SearchIntegrator searchFactory) {
       this.cache = cache;
       this.searchFactory = searchFactory;
    }

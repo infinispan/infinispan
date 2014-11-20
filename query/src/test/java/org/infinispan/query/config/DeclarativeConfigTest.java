@@ -4,7 +4,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
 import org.hibernate.search.indexes.spi.IndexManager;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.impl.RAMDirectoryProvider;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
@@ -63,7 +63,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
 
    @Test(dependsOnMethods="simpleIndexTest") //depends as otherwise the Person index is not initialized yet
    public void testPropertiesWhereRead() {
-      SearchFactoryIntegrator searchFactory = TestQueryHelperFactory.extractSearchFactory(cache);
+      SearchIntegrator searchFactory = TestQueryHelperFactory.extractSearchFactory(cache);
       EntityIndexBinding indexBindingForEntity = searchFactory.getIndexBinding(Person.class);
       IndexManager[] managers = indexBindingForEntity.getIndexManagers();
       assertEquals(1, managers.length);

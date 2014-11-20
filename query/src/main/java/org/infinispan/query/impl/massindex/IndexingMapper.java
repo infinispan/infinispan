@@ -8,7 +8,7 @@ import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.impl.SimpleInitializer;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.distexec.mapreduce.Collector;
@@ -23,7 +23,7 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 public final class IndexingMapper implements Mapper<Object, Object, Object, LuceneWork> {
 
    private AdvancedCache cache;
-   private SearchFactoryIntegrator searchFactory;
+   private SearchIntegrator searchFactory;
    private QueryInterceptor queryInterceptor;
    private KeyTransformationHandler keyTransformationHandler;
    private DefaultMassIndexerProgressMonitor progressMonitor;

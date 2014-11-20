@@ -8,7 +8,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Version;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -52,9 +52,9 @@ public class TestQueryHelperFactory {
       return cacheQuery;
    }
    
-   public static SearchFactoryIntegrator extractSearchFactory(Cache cache) {
+   public static SearchIntegrator extractSearchFactory(Cache cache) {
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      SearchFactoryIntegrator component = componentRegistry.getComponent(SearchFactoryIntegrator.class);
+      SearchIntegrator component = componentRegistry.getComponent(SearchIntegrator.class);
       assertNotNull(component);
       return component;
    }

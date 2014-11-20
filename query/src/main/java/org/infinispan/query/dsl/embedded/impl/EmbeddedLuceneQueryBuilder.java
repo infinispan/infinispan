@@ -4,7 +4,7 @@ import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
 import org.hibernate.hql.lucene.LuceneQueryParsingResult;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.embedded.LuceneQuery;
 import org.infinispan.query.dsl.impl.BaseQueryBuilder;
@@ -60,7 +60,7 @@ final class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
    }
 
    private LuceneQueryParsingResult parse(String jpqlString) {
-      SearchFactoryIntegrator searchFactory = searchManager.getSearchFactory();
+      SearchIntegrator searchFactory = searchManager.getSearchFactory();
       LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver).buildProcessingChainForClassBasedEntities();
       QueryParser queryParser = new QueryParser();
       return queryParser.parseQuery(jpqlString, processingChain);

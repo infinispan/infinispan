@@ -55,7 +55,7 @@ public class DefaultCacheInheritancePreventedTest {
    }
 
    /**
-    * Verifies that the SearchFactoryIntegrator is or is not registered as expected
+    * Verifies that the SearchIntegrator is or is not registered as expected
     * @param expected true if you expect indexing to be enabled
     * @param cache the cache to extract indexing from
     */

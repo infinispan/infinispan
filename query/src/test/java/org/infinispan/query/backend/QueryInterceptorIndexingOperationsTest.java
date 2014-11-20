@@ -6,7 +6,7 @@ import org.apache.lucene.store.Directory;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -140,7 +140,7 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
 
    private Directory initializeAndExtractDirectory(Cache cache) {
       QueryInterceptor queryInterceptor = extractComponent(cache, QueryInterceptor.class);
-      SearchFactoryIntegrator searchFactory = queryInterceptor.getSearchFactory();
+      SearchIntegrator searchFactory = queryInterceptor.getSearchFactory();
       searchFactory.addClasses(Entity1.class, Entity2.class);
       DirectoryBasedIndexManager indexManager = (DirectoryBasedIndexManager) searchFactory.getIndexBinding(Entity1.class).getIndexManagers()[0];
       return indexManager.getDirectoryProvider().getDirectory();

@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.hibernate.search.exception.ErrorContext;
 import org.hibernate.search.exception.ErrorHandler;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
@@ -32,7 +32,7 @@ public class StaticTestingErrorHandler implements ErrorHandler {
 
    public static void assertAllGood(Cache cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      SearchFactoryIntegrator searchFactory = searchManager.getSearchFactory();
+      SearchIntegrator searchFactory = searchManager.getSearchFactory();
       ErrorHandler errorHandler = searchFactory.getErrorHandler();
       Assert.assertNotNull(errorHandler);
       Assert.assertTrue(errorHandler instanceof StaticTestingErrorHandler);

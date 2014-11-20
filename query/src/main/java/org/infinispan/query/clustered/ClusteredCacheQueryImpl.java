@@ -12,7 +12,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.hibernate.search.exception.SearchException;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.commons.marshall.Marshaller;
@@ -47,7 +47,7 @@ public class ClusteredCacheQueryImpl extends CacheQueryImpl {
 
    private Marshaller marshaller;
 
-   public ClusteredCacheQueryImpl(Query luceneQuery, SearchFactoryIntegrator searchFactory,
+   public ClusteredCacheQueryImpl(Query luceneQuery, SearchIntegrator searchFactory,
             ExecutorService asyncExecutor, AdvancedCache<?, ?> cache, KeyTransformationHandler keyTransformationHandler, Class<?>... classes) {
       super(luceneQuery, searchFactory, cache, keyTransformationHandler, classes);
       this.asyncExecutor = asyncExecutor;

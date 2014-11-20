@@ -7,7 +7,7 @@ import org.apache.lucene.search.Query;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
@@ -34,7 +34,7 @@ import org.infinispan.query.spi.SearchManagerImplementor;
 public class SearchManagerImpl implements SearchManagerImplementor {
 
    private final AdvancedCache<?, ?> cache;
-   private final SearchFactoryIntegrator searchFactory;
+   private final SearchIntegrator searchFactory;
    private final QueryInterceptor queryInterceptor;
    private final QueryCache queryCache;
    private TimeoutExceptionFactory timeoutExceptionFactory;
@@ -44,7 +44,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
       this.cache = cache;
-      this.searchFactory = ComponentRegistryUtils.getComponent(cache, SearchFactoryIntegrator.class);
+      this.searchFactory = ComponentRegistryUtils.getComponent(cache, SearchIntegrator.class);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.queryCache = ComponentRegistryUtils.getQueryCache(cache);
    }
@@ -114,7 +114,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
     * @see org.infinispan.query.SearchManager#getSearchFactory()
     */
    @Override @Deprecated
-   public SearchFactoryIntegrator getSearchFactory() {
+   public SearchIntegrator getSearchFactory() {
       return searchFactory;
    }
 

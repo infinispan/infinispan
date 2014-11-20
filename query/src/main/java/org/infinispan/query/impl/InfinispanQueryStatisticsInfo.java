@@ -1,6 +1,6 @@
 package org.infinispan.query.impl;
 
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
 
 import java.util.Map;
@@ -16,7 +16,7 @@ import java.util.Set;
  */
 public class InfinispanQueryStatisticsInfo implements InfinispanQueryStatisticsInfoMBean {
 
-   private final SearchFactoryIntegrator sf;
+   private final SearchIntegrator sf;
    private final LongAdder searchQueryExecutionCount = new LongAdder();
    private final LongAdder searchQueryTotalTime = new LongAdder();
    private volatile long searchQueryExecutionMaxTime = 0;
@@ -25,7 +25,7 @@ public class InfinispanQueryStatisticsInfo implements InfinispanQueryStatisticsI
    private volatile long objectLoadingExecutionMaxTime = 0;
    private final LongAdder objectLoadedCount = new LongAdder();
 
-   public InfinispanQueryStatisticsInfo(SearchFactoryIntegrator sf) {
+   public InfinispanQueryStatisticsInfo(SearchIntegrator sf) {
       this.sf = sf;
    }
 

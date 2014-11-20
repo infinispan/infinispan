@@ -1,6 +1,6 @@
 package org.infinispan.query.blackbox;
 
-import org.hibernate.search.spi.SearchFactoryIntegrator;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -34,7 +34,7 @@ public class SearchFactoryShutdownTest extends AbstractInfinispanTest {
                .addProperty("lucene_version", "LUCENE_CURRENT");
          cc = TestCacheManagerFactory.createCacheManager(cfg);
          Cache<?, ?> cache = cc.getCache();
-         SearchFactoryIntegrator sfi = TestingUtil.extractComponent(cache, SearchFactoryIntegrator.class);
+         SearchIntegrator sfi = TestingUtil.extractComponent(cache, SearchIntegrator.class);
 
          assert ! sfi.isStopped();
 
