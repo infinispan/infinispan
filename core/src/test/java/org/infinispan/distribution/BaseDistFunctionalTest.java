@@ -8,7 +8,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.L1InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
+import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.InterceptorChain;
@@ -160,7 +162,7 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
             assert ice instanceof ImmortalCacheEntry : "Fail on owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
          } else {
             if (allowL1) {
-               assert ice == null || ice instanceof MortalCacheEntry : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
+               assert ice == null || ice instanceof L1InternalCacheEntry : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + safeType(ice);
             } else {
                assert ice == null : "Fail on non-owner cache " + addressOf(c) + ": dc.get(" + key + ") returned " + ice + "!";
             }

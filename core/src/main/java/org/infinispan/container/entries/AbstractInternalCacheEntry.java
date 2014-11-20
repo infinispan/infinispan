@@ -126,6 +126,11 @@ public abstract class AbstractInternalCacheEntry implements InternalCacheEntry {
    }
 
    @Override
+   public boolean isL1Entry() {
+      return false;
+   }
+
+   @Override
    public String toString() {
       return getClass().getSimpleName() + "{" +
             "key=" + key +
