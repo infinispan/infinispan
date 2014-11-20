@@ -41,7 +41,7 @@ public class TestQueryHelperFactory {
    }
    
    public static Version getLuceneVersion() {
-      return Version.LUCENE_4_10_1; //Change as needed
+      return Version.LATEST; //Change as needed
    }
 
    public static CacheQuery createCacheQuery(Cache m_cache, String fieldName, String searchString) throws ParseException {

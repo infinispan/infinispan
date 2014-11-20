@@ -38,7 +38,7 @@ public class DemoActions {
    /** The MAIN_FIELD */
    private static final String MAIN_FIELD = "myField";
 
-   private static final Version luceneVersion = Version.LUCENE_4_10_1;
+   private static final Version luceneVersion = Version.LATEST;
 
    /** The Analyzer used in all methods **/
    private static final Analyzer analyzer = new StandardAnalyzer();

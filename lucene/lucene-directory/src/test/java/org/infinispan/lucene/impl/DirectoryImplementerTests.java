@@ -112,7 +112,7 @@ public class DirectoryImplementerTests extends SingleCacheManagerTest {
    public void testConfigureAsyncDeletes() throws Exception {
       Cache cache = cacheManager.getCache();
       Directory dir = null;
-      Version version = Version.LUCENE_4_10_1;
+      Version version = Version.LATEST;
       IndexWriterConfig iwc = new IndexWriterConfig(version, new StandardAnalyzer());
       iwc.setMaxBufferedDocs(2);
       IndexWriter indexWriter = null;

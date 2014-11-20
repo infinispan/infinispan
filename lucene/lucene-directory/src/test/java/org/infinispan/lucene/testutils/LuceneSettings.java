@@ -21,7 +21,7 @@ import org.apache.lucene.util.Version;
  */
 public class LuceneSettings {
 
-   public static final Version LUCENE_VERSION = Version.LUCENE_4_10_1;
+   public static final Version LUCENE_VERSION = Version.LATEST;
 
    public static final Analyzer analyzer = new SimpleAnalyzer();
 
