@@ -7,6 +7,7 @@
     <major-minor version="${project.version}" property="infinispan.slot" prefix="ispn-"/>
     <major-minor version="${version.lucene}" property="lucene4.slot"/>
     <major-minor version="${version.hibernate.search}" property="hibernate.search.slot"/>
+    <major-minor version="${version.hibernate_dep.infinispan}" prefix="ispn-" property="hibernate_dep.infinispan.slot"/>
 
     <target name="clean">
         <delete dir="${output.dir}" />
@@ -28,6 +29,7 @@
             <filter token="infinispan.slot" value="${infinispan.slot}" />
             <filter token="lucene4.slot" value="${lucene4.slot}" />
             <filter token="hibernate.search.slot" value="${hibernate.search.slot}" />
+            <filter token="hibernate_dep.infinispan.slot" value="${hibernate_dep.infinispan.slot}" />
         </filterset>
 
         <module-def name="org.antlr.antlr-runtime" slot="${infinispan.slot}">
@@ -37,7 +39,7 @@
         <module-def name="org.infinispan" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-core" />
         </module-def>
-
+        
         <module-def name="org.infinispan.persistence.jdbc" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-cachestore-jdbc" />
         </module-def>
@@ -144,6 +146,16 @@
             <maven-resource group="com.squareup" artifact="protoparser" />
         </module-def>
     </target>
+    
+    <!-- Modelus aliases to satisfy dependencies -->
+    <condition property="build.module.aliases">
+        <not>
+            <equals arg1="${infinispan.slot}" arg2="${hibernate_dep.infinispan.slot}"/>
+        </not>
+    </condition>
+    <target name="module-aliases" if="build.module.aliases">
+        <module-def name="org.infinispan" slot="${hibernate_dep.infinispan.slot}" module.src="org.infinispan.main-hibernate-alias" />  		
+    </target>
 
-    <target name="all" depends="clean, copy-files, modules" />
+    <target name="all" depends="clean, copy-files, modules, module-aliases" />
 </project>
