@@ -285,7 +285,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private Object localGet(InvocationContext ctx, Object key, boolean isWrite,
          FlagAffectedCommand command, boolean isGetCacheEntry) throws Throwable {
-      InternalCacheEntry ice = dataContainer.get(key);
+      InternalCacheEntry ice = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
       if (ice != null) {
          if (isWrite && isPessimisticCache && ctx.isInTxScope()) {
             ((TxInvocationContext) ctx).addAffectedKey(key);

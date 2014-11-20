@@ -78,7 +78,18 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
 
    protected boolean isValueAvailableLocally(ConsistentHash consistentHash, Object key) {
       final boolean isLocal = consistentHash.isKeyLocalToNode(rpcManager.getAddress(), key);
-      return isLocal || (isL1Enabled && dataContainer.containsKey(key));
+      final InternalCacheEntry ice = dataContainer.get(key);
+      return isLocal || (isL1Enabled && ice != null && ice.isL1Entry());
+   }
+
+   protected InternalCacheEntry fetchValueLocallyIfAvailable(ConsistentHash consistentHash, Object key) {
+      if (consistentHash.isKeyLocalToNode(rpcManager.getAddress(), key)) {
+         return dataContainer.get(key);
+      } else if (isL1Enabled) {
+         InternalCacheEntry entry = dataContainer.get(key);
+         return entry != null && entry.isL1Entry() ? entry : null;
+      }
+      return null;
    }
 
    /**
