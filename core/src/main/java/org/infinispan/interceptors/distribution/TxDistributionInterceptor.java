@@ -280,7 +280,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          if (isNeedReliableReturnValues(command) || command.isConditional())
             return true;
       }
-      return shouldFetchRemoteValuesForWriteSkewCheck(ctx, command) || command.hasFlag(Flag.DELTA_WRITE);
+      return !command.hasFlag(Flag.CACHE_MODE_LOCAL) && (shouldFetchRemoteValuesForWriteSkewCheck(ctx, command) || command.hasFlag(Flag.DELTA_WRITE));
    }
 
    private Object localGet(InvocationContext ctx, Object key, boolean isWrite,
