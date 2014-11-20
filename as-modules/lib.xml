@@ -12,12 +12,13 @@
         <attribute name="name"/>
         <attribute name="slot" default="main"/>
         <attribute name="src" default="${module.repo.src.dir}" />
+        <attribute name="module.src" default="@{name}" />
         <element name="resources" implicit="yes" optional="yes"/>
 
         <sequential>
             <echo message="Initializing module -> @{name}"/>
             <!-- Figure out the correct module path -->
-            <define-module-dir name="@{name}" slot="@{slot}"/>
+            <define-module-dir name="@{name}" slot="@{slot}" src="@{module.src}"/>
 
             <delete dir="${module.repo.output.dir}/${current.module.path}" quiet="true" />
 
@@ -85,17 +86,22 @@
     <scriptdef name="define-module-dir" language="javascript">
         <attribute name="name"/>
         <attribute name="slot"/>
+        <attribute name="src"/>
         <![CDATA[
             name = attributes.get("name");
             name = name.split(".").join("/");
+            src = attributes.get("src");
+            src = src.split(".").join("/");
             if (name) {
               self.log("Use JDK8 method to build module names");
             } else {
               name = attributes.get("name");
               name = name.replace(".", "/");
+              src = attributes.get("src");
+              src = src.replace(".", "/");
               self.log("Use JDK7 method to build module names");
             }
-            project.setProperty("source.module.path", name + "/main");
+            project.setProperty("source.module.path", src + "/main");
             project.setProperty("current.module.path", name + "/" + attributes.get("slot"));
         ]]>
     </scriptdef>
