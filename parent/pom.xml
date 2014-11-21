@@ -116,7 +116,7 @@
       <version.hibernate.annotations>3.5.6-Final</version.hibernate.annotations>
       <version.hibernate.core>4.3.6.Final</version.hibernate.core>
       <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
-      <version.hibernate.hql.parser>1.1.0.Alpha3</version.hibernate.hql.parser>
+      <version.hibernate.hql.parser>1.1.0.Beta1</version.hibernate.hql.parser>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
