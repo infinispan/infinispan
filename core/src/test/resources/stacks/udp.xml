@@ -38,7 +38,7 @@
 
    <MERGE3/>
    <FD_SOCK sock_conn_timeout="3000"/>
-   <FD_ALL interval="1000" timeout="3000" timeout_check_interval="1000"/>
+   <FD_ALL interval="1000" timeout="4000" timeout_check_interval="1000"/>
    <VERIFY_SUSPECT timeout="1000"/>
 
    <pbcast.NAKACK2

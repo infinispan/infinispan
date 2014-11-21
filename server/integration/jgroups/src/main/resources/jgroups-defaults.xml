@@ -92,6 +92,8 @@
     <MERGE3/>
     <FD_SOCK/>
     <FD timeout="6000" max_tries="5" msg_counts_as_heartbeat="false"/>
+    <FD_ALL2 interval="3000" timeout="15000"/>
+    <FD_ALL interval="3000" timeout="15000" timeout_check_interval="3000"/>
     <VERIFY_SUSPECT timeout="3000"/>
     <BARRIER/>
     <pbcast.NAKACK use_mcast_xmit="true"
