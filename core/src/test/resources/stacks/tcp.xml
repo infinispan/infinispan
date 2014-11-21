@@ -54,7 +54,7 @@
        configured this way to speed up unit testing, since we know all nodes run in the same JVM
        and hence failure detections will be very quick.
           -->
-   <FD timeout="1000" max_tries="3"/>
+   <FD_ALL interval="1000" timeout="4000" timeout_check_interval="1000"/>
    <VERIFY_SUSPECT timeout="1000"/>
 
    <pbcast.NAKACK2
