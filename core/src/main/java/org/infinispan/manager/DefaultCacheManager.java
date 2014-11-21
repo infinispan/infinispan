@@ -60,6 +60,8 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.security.impl.PrincipalRoleMapperContextImpl;
 import org.infinispan.security.impl.SecureCacheImpl;
+import org.infinispan.stats.CacheContainerStats;
+import org.infinispan.stats.impl.CacheContainerStatsImpl;
 import org.infinispan.util.CyclicDependencyException;
 import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.logging.Log;
@@ -122,6 +124,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    private volatile boolean stopping;
    private final AuthorizationHelper authzHelper;
    private final DependencyGraph<String> cacheDependencyGraph = new DependencyGraph<>();
+   private final CacheContainerStats stats;
 
    /**
     * Constructs and starts a default instance of the CacheManager, using configuration defaults.  See {@link org.infinispan.configuration.cache.Configuration Configuration}
@@ -210,6 +213,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       this.defaultConfiguration = defaultConfiguration == null ? new ConfigurationBuilder().build() : defaultConfiguration;
       this.globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
       this.authzHelper = new AuthorizationHelper(this.globalConfiguration.security(), AuditContext.CACHEMANAGER, this.globalConfiguration.globalJmxStatistics().cacheManagerName());
+      this.stats = new CacheContainerStatsImpl(this);
       if (start)
          start();
    }
@@ -287,6 +291,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
          globalComponentRegistry = new GlobalComponentRegistry(globalConfiguration, this, caches.keySet());
          authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
+         stats = new CacheContainerStatsImpl(this);
       } catch (CacheConfigurationException ce) {
          throw ce;
       } catch (RuntimeException re) {
@@ -329,6 +334,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
       globalComponentRegistry = new GlobalComponentRegistry(this.globalConfiguration, this, caches.keySet());
       authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
+      stats = new CacheContainerStatsImpl(this);
       if (start)
          start();
    }
@@ -899,5 +905,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @ManagedAttribute(description = "Global configuration properties", displayName = "Global configuration properties", dataType = DataType.TRAIT, displayType = DisplayType.SUMMARY)
    public Properties getGlobalConfigurationAsProperties() {
       return new PropertyFormatter().format(globalConfiguration);
+   }
+
+   @Override
+   public CacheContainerStats getStats() {
+      return stats;
    }
 }
