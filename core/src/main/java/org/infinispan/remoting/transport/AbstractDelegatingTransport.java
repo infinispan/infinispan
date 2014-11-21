@@ -1,5 +1,9 @@
 package org.infinispan.remoting.transport;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
@@ -8,10 +12,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Designed to be overwrite.
@@ -39,6 +39,11 @@ public abstract class AbstractDelegatingTransport implements Transport {
       beforeInvokeRemotely(rpcCommand);
       Map<Address, Response> result = actual.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
       return afterInvokeRemotely(rpcCommand, result);
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
+      return actual.invokeRemotely(rpcCommands, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
    }
 
    @Override

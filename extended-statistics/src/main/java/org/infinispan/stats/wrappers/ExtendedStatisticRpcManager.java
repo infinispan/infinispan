@@ -1,5 +1,12 @@
 package org.infinispan.stats.wrappers;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.infinispan.stats.container.ExtendedStatistic.*;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
@@ -26,13 +33,6 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.util.Buffer;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.*;
 
 /**
  * Takes statistics about the RPC invocations.
@@ -177,6 +177,15 @@ public class ExtendedStatisticRpcManager implements RpcManager {
       long start = timeService.time();
       Map<Address, Response> responseMap = actual.invokeRemotely(recipients, rpc, options);
       updateStats(rpc, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS), recipients);
+      return responseMap;
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
+      long start = timeService.time();
+      Map<Address, Response> responseMap = actual.invokeRemotely(rpcs, options);
+      // TODO
+      updateStats(null, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS), recipients);
       return responseMap;
    }
 

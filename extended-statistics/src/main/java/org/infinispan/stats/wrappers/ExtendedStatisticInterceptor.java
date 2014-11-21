@@ -1,6 +1,16 @@
 package org.infinispan.stats.wrappers;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.infinispan.stats.container.ExtendedStatistic.*;
+import static org.infinispan.stats.percentiles.PercentileStatistic.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Arrays;
+
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetManyCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -25,23 +35,14 @@ import org.infinispan.stats.CacheStatisticManager;
 import org.infinispan.stats.ExtendedStatisticNotFoundException;
 import org.infinispan.stats.container.ExtendedStatistic;
 import org.infinispan.stats.logging.Log;
-import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.WriteSkewException;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.LogFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Arrays;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.*;
-import static org.infinispan.stats.percentiles.PercentileStatistic.*;
 
 /**
  * Take the statistics about relevant visitable commands.
@@ -98,6 +99,36 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
          cacheStatisticManager.add(ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                                    getGlobalTransaction(ctx), ctx.isOriginLocal());
          cacheStatisticManager.increment(NUM_GET, getGlobalTransaction(ctx), ctx.isOriginLocal());
+      } else {
+         retVal = invokeNextInterceptor(ctx, command);
+      }
+      return retVal;
+   }
+
+   @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      if (log.isTraceEnabled()) {
+         log.tracef("Visit GetMany command %s. Is it in transaction scope? %s. Is it local? %s", command,
+               ctx.isInTxScope(), ctx.isOriginLocal());
+      }
+      Object retVal;
+      if (ctx.isInTxScope()) {
+         long start = timeService.time();
+         retVal = invokeNextInterceptor(ctx, command);
+         long end = timeService.time();
+         initStatsIfNecessary(ctx);
+         int numRemote = 0;
+         for (Object key : command.getKeys()) {
+            if (isRemote(key)) numRemote++;
+         }
+         if (numRemote > 0) {
+            cacheStatisticManager.add(NUM_REMOTE_GET, numRemote, getGlobalTransaction(ctx), ctx.isOriginLocal());
+            cacheStatisticManager.add(REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
+                  getGlobalTransaction(ctx), ctx.isOriginLocal());
+         }
+         cacheStatisticManager.add(ALL_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
+               getGlobalTransaction(ctx), ctx.isOriginLocal());
+         cacheStatisticManager.add(NUM_GET, command.getKeys().size(), getGlobalTransaction(ctx), ctx.isOriginLocal());
       } else {
          retVal = invokeNextInterceptor(ctx, command);
       }

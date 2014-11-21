@@ -148,6 +148,16 @@ public interface CommandsFactory {
    GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags);
 
    /**
+    * Builds a GetManyCommand
+    * @param keys keys to get
+    * @param flags Command flags provided by cache
+    * @param returnEntries boolean indicating whether entire cache entries are
+    *                      returned, otherwise return just the value parts
+    * @return a GetKeyValueCommand
+    */
+   GetManyCommand buildGetManyCommand(Set<?> keys, Set<Flag> flags, boolean returnEntries);
+
+   /**
     * Builds a KeySetCommand
     * @param flags Command flags provided by cache
     * @return a KeySetCommand
@@ -273,6 +283,13 @@ public interface CommandsFactory {
     * @return a ClusteredGetCommand
     */
    ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx);
+
+   /**
+    * Builds a ClusteredGetManyCommand, which is a remote lookup command
+    * @param keys key to look up
+    * @return a ClusteredGetManyCommand
+    */
+   ClusteredGetManyCommand buildClusteredGetManyCommand(Object[] keys, Set<Flag> flags, GlobalTransaction gtx);
 
    /**
     * Builds a LockControlCommand to control explicit remote locking

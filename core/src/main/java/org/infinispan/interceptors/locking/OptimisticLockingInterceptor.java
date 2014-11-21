@@ -8,6 +8,9 @@ import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetManyCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -98,6 +101,23 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          //locks need to be released in this situation as they might have been acquired from L1.
          if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
       }
+   }
+
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      markKeyAsRead(ctx, command, true);
+      return super.visitGetKeyValueCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      if (needToMarkReads && ctx.isInTxScope()) {
+         TxInvocationContext tctx = (TxInvocationContext) ctx;
+         for (Object key : command.getKeys()) {
+            tctx.getCacheTransaction().addReadKey(key);
+         }
+      }
+      return super.visitGetManyCommand(ctx, command);
    }
 
    @Override

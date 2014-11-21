@@ -40,6 +40,15 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      assertNonTransactional(ctx);
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         lockManager.unlockAll(ctx);//possibly needed because of L1 locks being acquired
+      }
+   }
+
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {

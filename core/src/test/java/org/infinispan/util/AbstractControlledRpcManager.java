@@ -1,5 +1,9 @@
 package org.infinispan.util;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.remoting.RpcException;
@@ -14,10 +18,6 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Common rpc manager controls
@@ -144,6 +144,14 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
       beforeInvokeRemotely(rpc);
       Map<Address, Response> responses = realOne.invokeRemotely(recipients, rpc, options);
       return afterInvokeRemotely(rpc, responses);
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
+      log.trace("ControlledRpcManager.invokeRemotely6");
+      // TODO before and after
+      Map<Address, Response> responses = realOne.invokeRemotely(rpcs, options);
+      return responses;
    }
 
    @Override

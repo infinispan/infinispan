@@ -175,6 +175,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
+   public GetManyCommand buildGetManyCommand(Set<?> keys, Set<Flag> flags, boolean returnEntries) {
+      return actual.buildGetManyCommand(keys, flags, returnEntries);
+   }
+
+   @Override
    public KeySetCommand buildKeySetCommand(Set<Flag> flags) {
       return actual.buildKeySetCommand(flags);
    }
@@ -247,6 +252,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx) {
       return actual.buildClusteredGetCommand(key, flags, acquireRemoteLock, gtx);
+   }
+
+   @Override
+   public ClusteredGetManyCommand buildClusteredGetManyCommand(Object[] keys, Set<Flag> flags, GlobalTransaction gtx) {
+      return actual.buildClusteredGetManyCommand(keys, flags, gtx);
    }
 
    @Override

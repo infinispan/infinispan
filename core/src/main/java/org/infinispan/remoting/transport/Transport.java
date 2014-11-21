@@ -1,5 +1,9 @@
 package org.infinispan.remoting.transport;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -13,10 +17,6 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.util.logging.Log;
 import org.infinispan.xsite.XSiteBackup;
 import org.infinispan.xsite.XSiteReplicateCommand;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * An interface that provides a communication link with remote caches.  Also allows remote caches to invoke commands on
@@ -72,6 +72,11 @@ public interface Transport extends Lifecycle {
     */
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                          ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception;
+
+   Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout,
+                                         boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder,
+                                         boolean anycast) throws Exception;
+
 
    BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception;
 

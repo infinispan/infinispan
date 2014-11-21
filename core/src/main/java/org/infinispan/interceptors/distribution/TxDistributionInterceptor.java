@@ -5,6 +5,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetManyCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -20,6 +21,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
@@ -40,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKey;
 import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
 import static org.infinispan.util.DeltaCompositeKeyUtil.getAffectedKeysFromContext;
@@ -154,6 +157,61 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }
       }
       return returnValue;
+   }
+
+   @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      Map<Object, Object> map = (Map<Object, Object>) invokeNextInterceptor(ctx, command);
+      if (map == null) map = command.createMap();
+      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)
+            || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+            || command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+         return map;
+      }
+
+      Set<Object> requestedKeys = new HashSet<>(command.getKeys().size());
+      for (Object key : command.getKeys()) {
+         //if the cache entry has the value lock flag set, skip the remote get.
+         CacheEntry entry = ctx.lookupEntry(key);
+         boolean skipRemoteGet = entry != null && entry.skipLookup();
+
+         // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
+         // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
+         // the entry is mapped to the local node.
+         if (!skipRemoteGet && !map.containsKey(key) && ctx.isOriginLocal()) {
+            // TODO: what about the deltaCompositeKey? It's kind of messy, where should we use the composite key
+            //       and where the regular one?
+            //key = filterDeltaCompositeKey(key);
+            boolean shouldFetchFromRemote = false;
+            if (entry == null || entry.isNull()) {
+               ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
+               shouldFetchFromRemote = !isValueAvailableLocally(ch, key);
+               if (!shouldFetchFromRemote && getLog().isTraceEnabled()) {
+                  getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
+               }
+            }
+            if (shouldFetchFromRemote) {
+               requestedKeys.add(key);
+            } else if (!ctx.isEntryRemovedInContext(key)) {
+               // TODO: I am not sure why should we try the local get again
+               Object localValue = localGet(ctx, key, false, command, command.isReturnEntries());
+               if (localValue != null) {
+                  map.put(key, localValue);
+               }
+            }
+         }
+      }
+      if (!requestedKeys.isEmpty()) {
+         if (trace) {
+            log.tracef("Fetching entries for keys %s from remote nodes", requestedKeys);
+         }
+         Map<Object, InternalCacheEntry> remotelyRetrieved = retrieveFromRemoteSources(requestedKeys, ctx, command.getFlags());
+         command.setRemotelyFetched(remotelyRetrieved);
+         for (InternalCacheEntry entry : remotelyRetrieved.values()) {
+            map.put(entry.getKey(), command.isReturnEntries() ? entry : entry.getValue());
+         }
+      }
+      return map;
    }
 
    protected void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {

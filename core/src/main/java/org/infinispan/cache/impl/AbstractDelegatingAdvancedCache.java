@@ -200,6 +200,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public Map<K, CacheEntry<K, V>> getManyCacheEntries(Set<K> keys) {
+      return cache.getManyCacheEntries(keys);
+   }
+
+   @Override
    public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
       return cache.filterEntries(filter);
    }
