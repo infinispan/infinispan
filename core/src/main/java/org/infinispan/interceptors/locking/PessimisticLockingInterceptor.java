@@ -4,6 +4,10 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetManyCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -64,6 +68,25 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             acquireRemoteIfNeeded(ctx, command, cdl.localNodeIsPrimaryOwner(command.getKey()));
             long lockTimeout = getLockAcquisitionTimeout(command, false);
             lockKeyAndCheckOwnership(ctx, command.getKey(), lockTimeout, false);
+         }
+         return invokeNextInterceptor(ctx, command);
+      } catch (Throwable t) {
+         releaseLocksOnFailureBeforePrepare(ctx);
+         throw t;
+      } finally {
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
+      }
+   }
+
+   @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      try {
+         if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
+            // TODO: implement locking here
+            throw new UnsupportedOperationException("Force write lock for GetMany not implemented");
+            // acquireRemoteIfNeeded(ctx, command.getKeys(), command);
+            // long lockTimeout = getLockAcquisitionTimeout(command, false);
+            // lockKeyAndCheckOwnership(ctx, command.getKeys(), lockTimeout, false);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable t) {

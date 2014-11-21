@@ -465,6 +465,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
+   public Map<K, V> getMany(Set<K> keys) {
+      // TODO
+      throw new UnsupportedOperationException("getAll is TODO");
+   }
+
+   @Override
    public void clear() {
       assertRemoteCacheManagerIsStarted();
       ClearOperation op = operationsFactory.newClearOperation() ;

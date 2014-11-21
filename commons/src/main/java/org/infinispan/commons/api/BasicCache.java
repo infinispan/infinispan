@@ -1,6 +1,7 @@
 package org.infinispan.commons.api;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
@@ -199,4 +200,13 @@ public interface BasicCache<K, V> extends AsyncCache<K, V>, ConcurrentMap<K, V>,
     */
    @Override
    V remove(Object key);
+
+   /**
+    * Retrieves a map of key-value mappings at once. The key set must not
+    * be modified during execution of this method.
+    *
+    * @param keys
+    * @return
+    */
+   Map<K, V> getMany(Set<K> keys);
 }

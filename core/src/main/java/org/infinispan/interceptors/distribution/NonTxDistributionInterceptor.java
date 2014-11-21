@@ -3,6 +3,7 @@ package org.infinispan.interceptors.distribution;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetManyCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.RemoteFetchingCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -36,6 +37,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Non-transactional interceptor used by distributed caches that support concurrent writes.
@@ -88,6 +91,62 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private Object computeGetReturn(InternalCacheEntry entry, boolean returnEntry) {
       if (!returnEntry && entry != null)
+         return entry.getValue();
+      return entry;
+   }
+
+   @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      Map<Object, Object> map;
+      try {
+         Object returnValue = invokeNextInterceptor(ctx, command);
+         if (command.hasFlag(Flag.CACHE_MODE_LOCAL)
+               || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
+               || command.hasFlag(Flag.IGNORE_RETURN_VALUES)
+               || !ctx.isOriginLocal()) {
+            return returnValue;
+         }
+         map = returnValue == null ? command.createMap() : (Map<Object, Object>) returnValue;
+         ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
+
+         // TODO: moving the data from one collection to another too often
+         // TODO: we are using Set in order to promote uniqueness of keys, though, List would be less complicated
+         Set<Object> requestedKeys = new HashSet<>();
+         for (Object key : command.getKeys()) {
+            CacheEntry entry = ctx.lookupEntry(key);
+            if (entry == null || entry.isNull()) {
+               if (!isValueAvailableLocally(ch, key)) {
+                  // TODO: custom policy for primary owners only/staggered gets
+                  requestedKeys.add(key);
+               } else {
+                  if (trace) {
+                     log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
+                  }
+                  InternalCacheEntry localEntry = localGetCacheEntry(ctx, key, false, command);
+                  // TODO: shouldn't we copy the entry as GetManyCommand.perform does?
+                  map.put(key, command.isReturnEntries() ? localEntry : localEntry.getValue());
+               }
+            }
+         }
+         if (!requestedKeys.isEmpty()) {
+            if (trace) {
+               log.tracef("Fetching entries for keys %s from remote nodes", requestedKeys);
+            }
+            Map<Object, InternalCacheEntry> remotelyRetrieved = retrieveFromRemoteSources(requestedKeys, ctx, command.getFlags());
+            command.setRemotelyFetched(remotelyRetrieved);
+            for (InternalCacheEntry entry : remotelyRetrieved.values()) {
+               map.put(entry.getKey(), command.isReturnEntries() ? entry : entry.getValue());
+            }
+         }
+         return map;
+      } catch (SuspectException e) {
+         // retrieveFromRemoteSources should swallow SuspectExceptions
+         throw new IllegalStateException("Unexpected SuspectException", e);
+      }
+   }
+
+   private Object computeGetReturn(InternalCacheEntry entry, GetKeyValueCommand command) {
+      if (!command.isReturnEntry() && entry != null)
          return entry.getValue();
       return entry;
    }

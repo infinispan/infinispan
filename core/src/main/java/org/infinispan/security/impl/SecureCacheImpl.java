@@ -1,5 +1,13 @@
 package org.infinispan.security.impl;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.AdvancedCache;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
@@ -30,15 +38,6 @@ import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.security.SecureCache;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * SecureCacheImpl.
@@ -526,6 +525,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public Map<K, V> getMany(Set<K> keys) {
+      authzManager.checkPermission(AuthorizationPermission.BULK_READ);
+      return delegate.getMany(keys);
+   }
+
+   @Override
    public LockManager getLockManager() {
       authzManager.checkPermission(AuthorizationPermission.WRITE);
       return delegate.getLockManager();
@@ -642,6 +647,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public CacheEntry getCacheEntry(K key) {
       authzManager.checkPermission(AuthorizationPermission.READ);
       return delegate.getCacheEntry(key);
+   }
+
+   @Override
+   public Map<K, CacheEntry<K, V>> getManyCacheEntries(Set<K> keys) {
+      authzManager.checkPermission(AuthorizationPermission.BULK_READ);
+      return delegate.getManyCacheEntries(keys);
    }
 
    @Override

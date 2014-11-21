@@ -1,6 +1,9 @@
 package org.infinispan.stats.topK;
 
+import java.util.Map;
+
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetManyCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
@@ -17,8 +20,6 @@ import org.infinispan.stats.wrappers.TopKeyLockManager;
 import org.infinispan.transaction.WriteSkewException;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Map;
 
 /**
  * Intercepts the VisitableCommands to calculate the corresponding top-key values.
@@ -42,6 +43,18 @@ public class CacheUsageInterceptor extends BaseCustomInterceptor {
       }
       return invokeNextInterceptor(ctx, command);
    }
+
+   @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
+         for (Object key : command.getKeys()) {
+            streamSummaryContainer.addGet(key, isRemote(key));
+         }
+      }
+      return invokeNextInterceptor(ctx, command);
+   }
+
+   // TODO: implement visitPutMapCommand
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {

@@ -6,6 +6,9 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -62,6 +65,17 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
          return visitNonTxDataWriteCommand(ctx, command);
       }
       return visitDataWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      try {
+         return super.visitGetManyCommand(ctx, command);
+      } finally {
+         //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
+         //locks need to be released in this situation as they might have been acquired from L1.
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
+      }
    }
 
    @Override

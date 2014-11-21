@@ -4,6 +4,7 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetManyCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -125,6 +126,51 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       return null;
    }
 
+
+   @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      Set<Object> keys = command.getKeys();
+      TypeConverter<Object, Object, Object, Object> converter =
+            determineTypeConverter(command.getFlags());
+      if (ctx.isOriginLocal()) {
+         Set<Object> boxedKeys = new HashSet<>(keys.size()); // TODO better set impl
+         for (Object key : keys) {
+            boxedKeys.add(converter.boxKey(key));
+         }
+         command.setKeys(boxedKeys);
+      }
+      Object ret = invokeNextInterceptor(ctx, command);
+      if (ret != null) {
+         if (command.isReturnEntries()) {
+            Map<Object, CacheEntry> map = (Map<Object, CacheEntry>) ret;
+            Map<Object, Object> unboxed = command.createMap();
+            for (Map.Entry<Object, CacheEntry> entry : map.entrySet()) {
+               CacheEntry cacheEntry = entry.getValue();
+               if (command.getRemotelyFetched() == null || !command.getRemotelyFetched().containsKey(entry.getKey())) {
+                  unboxed.put(entry.getKey(), entryFactory.create(entry.getKey(),
+                        converter.unboxValue(cacheEntry.getValue()),
+                        cacheEntry.getMetadata(), cacheEntry.getLifespan(), cacheEntry.getMaxIdle()));
+               } else {
+                  unboxed.put(entry.getKey(), cacheEntry);
+               }
+            }
+            return unboxed;
+         } else {
+            Map<Object, Object> map = (Map<Object, Object>) ret;
+            Map<Object, Object> unboxed = command.createMap();
+            for (Map.Entry<Object, Object> entry : map.entrySet()) {
+               if (command.getRemotelyFetched() == null || !command.getRemotelyFetched().containsKey(entry.getKey())) {
+                  unboxed.put(entry.getKey(), converter.unboxValue(entry.getValue()));
+               } else {
+                  unboxed.put(entry.getKey(), entry.getValue());
+               }
+            }
+            return unboxed;
+         }
+      }
+
+      return null;
+   }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {

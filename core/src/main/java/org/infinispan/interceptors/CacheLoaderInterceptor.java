@@ -11,6 +11,7 @@ import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetManyCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -103,6 +104,17 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       return visitDataCommand(ctx, command);
+   }
+
+
+   @Override
+   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+      if (enabled) {
+         for (Object key : command.getKeys()) {
+            loadIfNeededAndUpdateStats(ctx, key, command);
+         }
+      }
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override

@@ -249,6 +249,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
+   public GetManyCommand buildGetManyCommand(Set<?> keys, Set<Flag> flags, boolean returnEntries) {
+      return new GetManyCommand(keys, flags, returnEntries, entryFactory);
+   }
+
+   @Override
    public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, Set<Flag> flags) {
       return new PutMapCommand(map, notifier, metadata, flags);
    }
