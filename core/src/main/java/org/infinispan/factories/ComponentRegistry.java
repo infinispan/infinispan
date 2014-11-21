@@ -18,6 +18,7 @@ import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.stats.ClusterCacheStats;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -308,6 +309,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       commandsFactory = getLocalComponent(CommandsFactory.class);
       stateTransferLock = getOrCreateComponent(StateTransferLock.class);
       inboundInvocationHandler = getOrCreateComponent(PerCacheInboundInvocationHandler.class);
+      getOrCreateComponent(ClusterCacheStats.class);  //no need to save ref to a field, just initialize component
    }
 
    @Override
