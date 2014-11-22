@@ -50,6 +50,11 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-cachestore-remote</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cachestore-rest</artifactId>
       </dependency>
 
@@ -107,6 +112,12 @@
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-rhq-plugin</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-extended-statistics</artifactId>
          <version>${project.version}</version>
       </dependency>
    </dependencies>
