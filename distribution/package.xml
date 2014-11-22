@@ -27,7 +27,7 @@
       <base-distribution dir="${output.dir}" type="all" />
 
       <copy todir="${output.dir}">
-         <fileset file="${org.infinispan:infinispan-remote:jar}" />
+         <file file="${org.infinispan:infinispan-remote:jar}" />
          <mapper type="flatten" />
       </copy>
 
@@ -66,14 +66,14 @@
          <mkdir dir="@{dir}" />
          <!-- Core JARs -->
          <copy todir="@{dir}">
-            <fileset file="${org.infinispan:infinispan-embedded:jar}" />
-            <fileset file="${org.infinispan:infinispan-embedded-query:jar}" />
+            <file file="${org.infinispan:infinispan-embedded:jar}" />
+            <file file="${org.infinispan:infinispan-embedded-query:jar}" />
             <mapper type="flatten" />
          </copy>
          <mkdir dir="@{dir}/lib" />
          <copy todir="@{dir}/lib">
-            <fileset file="${javax.cache:cache-api:jar}" />
-            <fileset file="${org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar}" />
+            <file file="${javax.cache:cache-api:jar}" />
+            <file file="${org.jboss.spec.javax.transaction:jboss-transaction-api_1.1_spec:jar}" />
             <mapper type="flatten" />
          </copy>
          <!-- Common files -->
@@ -164,7 +164,7 @@
       <sequential>
          <mkdir dir="@{dir}/@{target}" />
          <copy todir="@{dir}/@{target}" failonerror="true">
-            <fileset file="${org.infinispan:@{artifact}:jar}" />
+            <file file="${org.infinispan:@{artifact}:jar}" />
             <mapper type="flatten" />
          </copy>
          <!-- Optionally copy the dependencies and classpath descriptor -->
