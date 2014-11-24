@@ -17,6 +17,7 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.responses.ResponseGenerator;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.totalorder.TotalOrderManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
@@ -310,6 +311,10 @@ public class ComponentRegistry extends AbstractComponentRegistry {
 
    public final TotalOrderManager getTotalOrderManager() {
       return totalOrderManager;
+   }
+
+   public final TransactionTable getTransactionTable() {
+      return getComponent(org.infinispan.transaction.impl.TransactionTable.class);
    }
 
 }
