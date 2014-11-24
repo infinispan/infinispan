@@ -80,6 +80,7 @@
                   <configuration>
                      <artifactSet>
                         <excludes>
+                           <exclude>org.infinispan:infinispan-remote</exclude>
                            <exclude>log4j:log4j:jar:</exclude>
                            <exclude>net.jcip:jcip-annotations:jar:</exclude>
                            <exclude>org.jboss.spec.javax.interceptor:jboss-interceptors-api_1.1_spec:jar:</exclude>
