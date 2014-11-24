@@ -41,6 +41,7 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionSynchronizationRegistry;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -63,7 +64,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 4.0
  */
 @Listener
-public class TransactionTable {
+public class TransactionTable implements org.infinispan.transaction.TransactionTable {
 
    public static final int CACHE_STOPPED_TOPOLOGY_ID = -1;
    /**
@@ -164,6 +165,25 @@ public class TransactionTable {
             }
          }, interval, interval, TimeUnit.MILLISECONDS);
       }
+   }
+
+   @Override
+   public GlobalTransaction getGlobalTransaction(Transaction transaction) {
+      if (transaction == null) {
+         throw new NullPointerException("Transaction must not be null.");
+      }
+      LocalTransaction localTransaction = localTransactions.get(transaction);
+      return localTransaction != null ? localTransaction.getGlobalTransaction() : null;
+   }
+
+   @Override
+   public Collection<GlobalTransaction> getLocalGlobalTransaction() {
+      return Collections.unmodifiableCollection(globalToLocalTransactions.keySet());
+   }
+
+   @Override
+   public Collection<GlobalTransaction> getRemoteGlobalTransaction() {
+      return Collections.unmodifiableCollection(remoteTransactions.keySet());
    }
 
    @Stop
