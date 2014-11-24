@@ -6,7 +6,7 @@
                 </server-identities>
                 <authentication>
                     <truststore path="truststore_server.jks" relative-to="jboss.server.config.dir" keystore-password="secret"/>
-                    <ldap connection="ldap_connection" recursive="true" base-dn="ou=People,dc=infinispan,dc=org">
+                    <ldap connection="ldaps_connection" recursive="true" base-dn="ou=People,dc=infinispan,dc=org">
                         <username-filter attribute="uid" />
                     </ldap>
                 </authentication>
