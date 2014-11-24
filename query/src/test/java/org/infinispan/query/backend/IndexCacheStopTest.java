@@ -129,6 +129,15 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
       assertEquals(cacheManager.getStatus(), ComponentStatus.TERMINATED);
    }
 
+   @Test
+   public void testStartAndStopWithEmptyCache() throws CyclicDependencyException {
+      EmbeddedCacheManager cacheManager = createClusteredCacheManager(getIndexedConfig());
+      cacheManager.getCache();
+      cacheManager.stop();
+
+      assertEquals(cacheManager.getStatus(), ComponentStatus.TERMINATED);
+   }
+
    private void startAndIndexData(String cacheName, CacheContainer cacheContainer) {
       Cache<Integer, Person> cache;
       if (cacheName == null) {
