@@ -430,8 +430,40 @@ The query would be stored under "AccountRegion" cache instance and users could c
 </property>
 ----
 
+==== Handling custom identifiers types
+
+When custom identifier types are used in Hibernate/JPA entities, specially in
+the case of composite identifiers, the resulting cache keys can end up holding
+references to `SessionFactory` instances. Serializing those properly in a
+clustered environment depends on being able to resolve the proper
+`SessionFactory` reference on deserialization, which can happen based on UUID
+(same JVM) or name (across JVMs).
+
+When the resolution does not succeed, it's common to see errors similar to this:
+
+[source,java]
+----
+java.io.InvalidObjectException: Could not find a SessionFactory [uuid=0d0cdf26-dfe6-4285-9725-dfaa4821ecba,name=null]
+    at org.hibernate.internal.SessionFactoryImpl.locateSessionFactoryOnDeserialization(SessionFactoryImpl.java:1781)
+    at org.hibernate.internal.SessionFactoryImpl.readResolve(SessionFactoryImpl.java:1761)
+----
+
+The way to get around these error is by locking down the name of the `SessionFactory`
+across JVMs. This can be done by adding the following properties in the
+clustered application's configuration:
+
+[source,java]
+----
+hibernate.session_factory_name = MySessionFactory
+hibernate.session_factory_name_is_jndi = false
+----
+
+TIP: These properties are not necessary if deploying in JBoss Application
+Server, Wildfly or EAP containers, since the integration code already populates
+session factory name based on deployment unit information.
+
 ==== Integration with JBoss Application Server
-In JBoss Application Server 7, Infinispan is the default second level cache provider and you can find details about its configuration link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=8094254$$[the AS7 JPA reference guide] . 
+In JBoss Application Server 7, Infinispan is the default second level cache provider and you can find details about its configuration link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=8094254$$[the AS7 JPA reference guide] .
 
 Infinispan based Hibernate 2LC was developed as part of Hibernate 3.5 release and so it currently only works within AS 6 or higher. Hibernate 3.5 is not designed to work with AS/EAP 5.x or lower. To be able to run Infinispan based Hibernate 2LC in a lower AS version such as 5.1, the Infinispan 2LC module would require porting to Hibernate 3.3.
 
