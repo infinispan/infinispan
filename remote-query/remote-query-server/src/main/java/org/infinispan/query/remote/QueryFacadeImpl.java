@@ -119,7 +119,7 @@ public class QueryFacadeImpl implements QueryFacade {
     */
    private QueryResponse executeQuery(AdvancedCache<byte[], byte[]> cache, SerializationContext serCtx, QueryRequest request) {
       final SearchManager searchManager = Search.getSearchManager(cache);
-      final SearchIntegrator searchFactory = (SearchIntegrator) searchManager.getSearchFactory();
+      final SearchIntegrator searchFactory = searchManager.getSearchFactory();
       final QueryCache queryCache = ComponentRegistryUtils.getQueryCache(cache);  // optional component
 
       LuceneQueryParsingResult parsingResult;
