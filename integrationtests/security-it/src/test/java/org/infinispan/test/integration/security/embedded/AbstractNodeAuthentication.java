@@ -11,6 +11,8 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.container.test.api.Deployer;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
@@ -35,6 +37,8 @@ public abstract class AbstractNodeAuthentication {
    protected static final String CACHE_NAME = "replicatedCache";
    protected static final String TEST_ITEM_KEY = "test_key";
    protected static final String TEST_ITEM_VALUE = "test_value";
+   
+   private static final Log LOG = LogFactory.getLog(AbstractNodeAuthentication.class);
 
    @ArquillianResource
    protected ContainerController controller;
@@ -105,9 +109,19 @@ public abstract class AbstractNodeAuthentication {
    public void stopJoiningNodes() throws Exception {
       deployer.undeploy(getJoiningNodeName());
       deployer.undeploy(COORDINATOR_NODE);
-      controller.stop(getJoiningNodeName());
+      try {
+         controller.stop(getJoiningNodeName());
+      } catch(Exception e) {
+         LOG.warn("Joining node stop failed with %s", e.getCause());
+         controller.kill(getJoiningNodeName());
+      }
+      try {
+         controller.stop(COORDINATOR_NODE);
+      } catch(Exception e) {
+         LOG.warn("Coordinator node stop failed with %s", e.getCause());
+         controller.kill(COORDINATOR_NODE);
+      }
       assertFalse(controller.isStarted(getJoiningNodeName()));
-      controller.stop(COORDINATOR_NODE);
       assertFalse(controller.isStarted(COORDINATOR_NODE));
    }
 
