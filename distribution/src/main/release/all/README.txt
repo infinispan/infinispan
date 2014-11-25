@@ -16,6 +16,8 @@ and all additional optional modules.
         will need to add Hibernate to your dependencies).
    * infinispan-embedded-query.jar: add this jar to your application if
      you need query capabilities
+   * infinispan-cli.jar: provides the command-line interface functionality
+     (you can use "bin/ispn-cli.sh" to launch it). 
    * modules: this directory contains additional optional modules. Some of 
      these modules require external dependencies which are listed in a
      runtime-classpath.txt file alongside each module's jar.
@@ -29,7 +31,7 @@ and all additional optional modules.
 Requirements
 ------------
 
-Infinispan needs a JDK 6 compliant Java virtual machine.
+Infinispan needs a JDK 7 compliant Java virtual machine.
 
 Problems
 --------
