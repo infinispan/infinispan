@@ -2,7 +2,7 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath ${ISPN_HOME}/modules/cli/*.jar
+add_classpath ${ISPN_HOME}/*.jar
 
 add_jvm_args $JVM_PARAMS
 
