@@ -41,6 +41,10 @@
         
     </description>
 
+    <properties>
+        <infinispan.test.parallel.threads>1</infinispan.test.parallel.threads>
+    </properties>
+
     <developers>
         <developer>
             <id>obergner</id>
