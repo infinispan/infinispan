@@ -176,6 +176,7 @@
       <version.maven.scala>2.15.2</version.maven.scala>
       <version.maven.surefire>2.17</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
+      <version.metainf-services>1.5</version.metainf-services>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
       <version.asm>3.3.1</version.asm>
       <version.pax.url>2.2.0</version.pax.url>
@@ -954,6 +955,12 @@
               <artifactId>guava</artifactId>
               <version>${version.guava}</version>
           </dependency>
+          <dependency>
+              <groupId>org.kohsuke.metainf-services</groupId>
+              <artifactId>metainf-services</artifactId>
+              <version>${version.metainf-services}</version>
+              <optional>true</optional>
+          </dependency>
       </dependencies>
    </dependencyManagement>
    <dependencies>
@@ -1224,6 +1231,7 @@
                               <goals>
                                  <goal>testCompile</goal>
                                  <goal>compile</goal>
+                                 <goal>script</goal>
                               </goals>
                            </pluginExecutionFilter>
                            <action>
@@ -1325,6 +1333,41 @@
                       <goals>
                          <goal>compile</goal>
                       </goals>
+                   </execution>
+                   <execution>
+                      <id>generate-blueprint</id>
+                      <phase>prepare-package</phase>
+                      <goals>
+                         <goal>script</goal>
+                      </goals>
+                      <configuration>
+                         <keepGeneratedScript>true</keepGeneratedScript>
+                         <!-- Expose all services from META-INF/services to target OSGI-INF/blueprint/blueprint.xml -->
+                         <script>
+                           <![CDATA[
+                             import scala.io.Source
+                             import java.io.{File, PrintWriter}
+                             val serviceDir = new File(project.getBuild().getOutputDirectory() + "/META-INF/services")
+                             if (serviceDir.exists && serviceDir.listFiles.length != 0) {
+                                val services =
+                                   for (file <- serviceDir.listFiles; line <- Source.fromFile(file).getLines())
+                                   yield {
+                                          val beanName = line.substring(line.lastIndexOf(".") + 1).toLowerCase
+                                          "<bean id=\"" + beanName + "\" class=\"" + line + "\"/>" + "\n" +
+                                          "<service ref=\"" + beanName + "\" interface=\"" + file.getName + "\"/>\n"
+                                         }
+                                val targetBlueprint = new File(project.getBuild().getOutputDirectory() + "/OSGI-INF/blueprint/blueprint.xml")
+                                val input = Source.fromFile(targetBlueprint).getLines.mkString("\n")
+                                val output = new PrintWriter(targetBlueprint)
+                                try {
+                                   output.println(input.replace("${services}", services.toArray.mkString("\n")))
+                                } finally {
+                                   output.close
+                                }
+                             }
+                           ]]>
+                         </script>
+                      </configuration>
                    </execution>
                 </executions>
                 <configuration>

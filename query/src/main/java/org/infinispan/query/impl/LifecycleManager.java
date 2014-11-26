@@ -60,6 +60,7 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 import java.util.Set;
 
@@ -74,6 +75,7 @@ import static org.infinispan.query.impl.IndexPropertyInspector.*;
  *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
+@MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
 public class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);

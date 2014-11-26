@@ -10,6 +10,7 @@ import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser71;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.persistence.jdbc.DatabaseType;
+import org.kohsuke.MetaInfServices;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -22,6 +23,7 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  * @author Galder Zamarreño
  * @since 7.1
  */
+@MetaInfServices
 @Namespaces({
     @Namespace(uri = "urn:infinispan:config:store:jdbc:7.1", root = "string-keyed-jdbc-store"),
     @Namespace(root = "string-keyed-jdbc-store"),

@@ -43,10 +43,41 @@
          <artifactId>commons-httpclient</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
+      </dependency>
    </dependencies>
 
    <build>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+         </resource>
+         <resource>
+            <directory>${project.build.outputDirectory}</directory>
+         </resource>
+      </resources>
       <plugins>
+         <plugin>
+            <groupId>org.scala-tools</groupId>
+            <artifactId>maven-scala-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>default</id>
+                  <phase>none</phase>
+               </execution>
+               <execution>
+                  <id>compile</id>
+                  <phase>none</phase>
+               </execution>
+               <execution>
+                  <id>test-compile</id>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.mortbay.jetty</groupId>
             <artifactId>jetty-maven-plugin</artifactId>

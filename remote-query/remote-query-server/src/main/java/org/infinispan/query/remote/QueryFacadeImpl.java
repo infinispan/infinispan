@@ -36,6 +36,7 @@ import org.infinispan.query.remote.indexing.IndexingMetadata;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.server.core.QueryFacade;
 import org.infinispan.util.KeyValuePair;
+import org.kohsuke.MetaInfServices;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
+@MetaInfServices
 public class QueryFacadeImpl implements QueryFacade {
 
    /**

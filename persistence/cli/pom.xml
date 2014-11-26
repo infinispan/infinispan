@@ -23,16 +23,46 @@
          <groupId>org.codehaus.jackson</groupId>
          <artifactId>jackson-mapper-asl</artifactId>
       </dependency>
-
       <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-cli-interpreter</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
+      </dependency>
    </dependencies>
 
    <build>
+      <resources>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+         </resource>
+         <resource>
+            <directory>${project.build.outputDirectory}</directory>
+         </resource>
+      </resources>
       <plugins>
+         <plugin>
+            <groupId>org.scala-tools</groupId>
+            <artifactId>maven-scala-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>default</id>
+                  <phase>none</phase>
+               </execution>
+               <execution>
+                  <id>compile</id>
+                  <phase>none</phase>
+               </execution>
+               <execution>
+                  <id>test-compile</id>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
@@ -49,7 +79,6 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
-               
                <argLine>
                   -Dcom.sun.management.jmxremote=true
                   -Djava.rmi.server.hostname=localhost

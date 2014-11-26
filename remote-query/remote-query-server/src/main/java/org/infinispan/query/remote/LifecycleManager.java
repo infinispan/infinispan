@@ -25,6 +25,7 @@ import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.indexing.RemoteValueWrapperInterceptor;
 import org.infinispan.query.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
@@ -34,6 +35,7 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 6.0
  */
+@MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
 public class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);

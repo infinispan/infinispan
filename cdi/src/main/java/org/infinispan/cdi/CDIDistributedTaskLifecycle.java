@@ -10,7 +10,9 @@ import javax.enterprise.inject.spi.InjectionTarget;
 import org.infinispan.Cache;
 import org.infinispan.cdi.util.BeanManagerProvider;
 import org.infinispan.distexec.spi.DistributedTaskLifecycle;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices
 public class CDIDistributedTaskLifecycle implements
          DistributedTaskLifecycle {
 

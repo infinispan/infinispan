@@ -11,6 +11,7 @@ import org.infinispan.configuration.parsing.Parser70;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -20,6 +21,7 @@ import javax.xml.stream.XMLStreamException;
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  *
  */
+@MetaInfServices
 @Namespaces({
       @Namespace(uri = "urn:infinispan:config:store:leveldb:7.0", root = "leveldb-store"),
 })

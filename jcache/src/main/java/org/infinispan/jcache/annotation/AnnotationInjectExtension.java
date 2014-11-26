@@ -7,6 +7,7 @@ import javax.cache.annotation.CacheResult;
 import javax.enterprise.event.Observes;
 import javax.enterprise.inject.spi.BeforeBeanDiscovery;
 import javax.enterprise.inject.spi.Extension;
+import org.kohsuke.MetaInfServices;
 
 /**
  * CDI extension to register additional interceptor bindings
@@ -15,6 +16,7 @@ import javax.enterprise.inject.spi.Extension;
  * @author Pete Muir
  * @since 5.3
  */
+@MetaInfServices
 public class AnnotationInjectExtension implements Extension {
 
    void registerInterceptorBindings(@Observes BeforeBeanDiscovery event) {

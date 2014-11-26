@@ -4,7 +4,6 @@
             xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-  <bean id="softIndexFileStoreConfigurationParser71" class="org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationParser71"/>
-  <service ref="softIndexFileStoreConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+${services}
 
 </blueprint>

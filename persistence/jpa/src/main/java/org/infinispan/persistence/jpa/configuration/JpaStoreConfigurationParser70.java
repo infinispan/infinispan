@@ -9,6 +9,7 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser70;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.kohsuke.MetaInfServices;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -16,6 +17,7 @@ import javax.xml.stream.XMLStreamException;
 /**
  * @author Galder Zamarreño
  */
+@MetaInfServices
 @Namespaces({
       @Namespace(uri = "urn:infinispan:config:store:jpa:7.0", root = "jpa-store"),
 })

@@ -12,6 +12,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Galder Zamarreño
  * @since // TODO
  */
+@MetaInfServices
 public class CLInterfaceTargetMigrator implements TargetMigrator {
 
    private static final Log log = LogFactory.getLog(CLInterfaceTargetMigrator.class);

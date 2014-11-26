@@ -8,11 +8,13 @@ import org.infinispan.Cache;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapperFieldBridge;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
+import org.kohsuke.MetaInfServices;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
+@MetaInfServices
 public class ProgrammaticSearchMappingProviderImpl implements ProgrammaticSearchMappingProvider {
 
    @Override

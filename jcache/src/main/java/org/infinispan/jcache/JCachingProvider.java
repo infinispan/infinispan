@@ -2,6 +2,7 @@ package org.infinispan.jcache;
 
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 import javax.cache.CacheManager;
 import javax.cache.configuration.OptionalFeature;
@@ -19,6 +20,7 @@ import java.util.WeakHashMap;
  * @author Galder Zamarreño
  * @since 5.3
  */
+@MetaInfServices
 @SuppressWarnings("unused")
 public class JCachingProvider implements CachingProvider {
 

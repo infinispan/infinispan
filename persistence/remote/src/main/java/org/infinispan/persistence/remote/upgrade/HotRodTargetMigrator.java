@@ -18,7 +18,9 @@ import org.infinispan.persistence.remote.configuration.RemoteStoreConfiguration;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices
 public class HotRodTargetMigrator implements TargetMigrator {
    private static final String MIGRATION_MANAGER_HOT_ROD_KNOWN_KEYS = "___MigrationManager_HotRod_KnownKeys___";
 
