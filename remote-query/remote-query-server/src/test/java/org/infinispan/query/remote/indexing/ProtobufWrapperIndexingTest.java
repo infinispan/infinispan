@@ -38,14 +38,12 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
             .indexing().index(Index.ALL)
             .addProperty("default.directory_provider", "ram")
             .addProperty("lucene_version", "LUCENE_CURRENT");
-
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(cfg);
-      cacheManager.getCache(); //TODO this ensures the GlobalComponentRegistry is initialised right now, but it's not the cleanest way
-      MarshallerRegistration.registerMarshallers(ProtobufMetadataManager.getSerializationContext(cacheManager));
-      return cacheManager;
+      return TestCacheManagerFactory.createCacheManager(cfg);
    }
 
    public void testIndexingWithWrapper() throws Exception {
+      MarshallerRegistration.registerMarshallers(ProtobufMetadataManager.getSerializationContext(cacheManager));
+
       // Store some test data:
       ProtobufValueWrapper wrapper1 = new ProtobufValueWrapper(createMarshalledUser("Adrian", "Nistor"));
       ProtobufValueWrapper wrapper2 = new ProtobufValueWrapper(createMarshalledUser("John", "Batman"));
@@ -69,6 +67,9 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
 
       List<Object> list = sm.getQuery(luceneQuery).list();
       assertEquals(1, list.size());
+      ProtobufValueWrapper pvw = (ProtobufValueWrapper) list.get(0);
+      User unwrapped = (User) ProtobufUtil.fromWrappedByteArray(ProtobufMetadataManager.getSerializationContextInternal(cacheManager), pvw.getBinary());
+      assertEquals("Adrian", unwrapped.getName());
 
       // an alternative approach ...
 
