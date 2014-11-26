@@ -3,7 +3,9 @@ package org.infinispan.distexec.mapreduce.spi;
 import org.infinispan.Cache;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices
 public class DefaultMapReduceTaskLifecycle implements MapReduceTaskLifecycle {
 
    @Override

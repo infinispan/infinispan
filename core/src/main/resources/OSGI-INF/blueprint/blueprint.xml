@@ -4,6 +4,9 @@
             xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+  <bean id="parser71" class="org.infinispan.configuration.parsing.Parser71"/>
+  <service ref="parser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+
   <bean id="parser70" class="org.infinispan.configuration.parsing.Parser70"/>
   <service ref="parser70" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
 

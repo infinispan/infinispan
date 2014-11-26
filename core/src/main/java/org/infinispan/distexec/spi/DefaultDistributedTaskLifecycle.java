@@ -3,7 +3,9 @@ package org.infinispan.distexec.spi;
 import java.util.concurrent.Callable;
 
 import org.infinispan.Cache;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices
 public class DefaultDistributedTaskLifecycle implements DistributedTaskLifecycle {
 
    @Override

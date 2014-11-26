@@ -10,8 +10,9 @@ import org.infinispan.cdi.util.BeanManagerProvider;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle;
+import org.kohsuke.MetaInfServices;
 
-
+@MetaInfServices
 public class CDIMapReduceTaskLifecycle implements MapReduceTaskLifecycle {
   
    @Override

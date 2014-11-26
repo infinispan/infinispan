@@ -40,6 +40,7 @@ import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -60,6 +61,7 @@ import static org.infinispan.factories.KnownComponentNames.*;
  * @author Galder Zamarreño
  * @since 7.1
  */
+@MetaInfServices
 @Namespaces({
       @Namespace(uri = "urn:infinispan:config:7.1", root = "infinispan"),
       @Namespace(root = "infinispan")
