@@ -13,12 +13,14 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser70;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.kohsuke.MetaInfServices;
 
 /**
  *
  * @author Radim Vansa
  *
  */
+@MetaInfServices
 @Namespaces({
       @Namespace(uri = "urn:infinispan:config:soft-index:7.0",
                  root = SoftIndexFileStoreConfigurationParser70.ROOT_ELEMENT),

@@ -12,6 +12,7 @@ import org.infinispan.cdi.util.defaultbean.DefaultBeanHolder;
 import org.infinispan.cdi.util.defaultbean.Installed;
 import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 /**
  * The Infinispan CDI extension class.
@@ -19,6 +20,8 @@ import org.infinispan.commons.logging.LogFactory;
  * @author Pete Muir
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
+
+@MetaInfServices
 public class InfinispanExtension implements Extension {
    private static final Log log = LogFactory.getLog(InfinispanExtension.class, Log.class);
    private final InfinispanExtensionEmbedded embeddedExtension;

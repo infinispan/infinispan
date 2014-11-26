@@ -4,12 +4,14 @@ import org.infinispan.Cache;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle;
+import org.kohsuke.MetaInfServices;
 
 /**
  * Initializes the custom Map Reduce tasks we use to rebuild indexes
  *  
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
  */
+@MetaInfServices
 public class MapReduceInitializer implements MapReduceTaskLifecycle {
 
    @Override

@@ -11,6 +11,7 @@ import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.upgrade.TargetMigrator;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -18,6 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@MetaInfServices
 public class RestTargetMigrator implements TargetMigrator {
    private static final Log log = LogFactory.getLog(RestTargetMigrator.class, Log.class);
 

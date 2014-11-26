@@ -9,6 +9,7 @@ import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
 import org.infinispan.configuration.parsing.Parser70;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
+import org.kohsuke.MetaInfServices;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -20,6 +21,7 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  * @author Galder Zamarreño
  * @since 7.0
  */
+@MetaInfServices
 @Namespaces({
       @Namespace(uri = "urn:infinispan:config:store:cli:7.0", root = "cli-loader"),
 })

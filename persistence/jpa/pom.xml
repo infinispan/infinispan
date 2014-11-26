@@ -32,8 +32,29 @@
                <exclude>features.xml</exclude>
             </excludes>
          </resource>
+         <resource>
+            <directory>${project.build.outputDirectory}</directory>
+         </resource>
       </resources>
       <plugins>
+         <plugin>
+            <groupId>org.scala-tools</groupId>
+            <artifactId>maven-scala-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>default</id>
+                  <phase>none</phase>
+               </execution>
+               <execution>
+                  <id>compile</id>
+                  <phase>none</phase>
+               </execution>
+               <execution>
+                  <id>test-compile</id>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
@@ -113,6 +134,11 @@
          <groupId>org.osgi</groupId>
          <artifactId>org.osgi.compendium</artifactId>
          <scope>provided</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
       </dependency>
    </dependencies>
 

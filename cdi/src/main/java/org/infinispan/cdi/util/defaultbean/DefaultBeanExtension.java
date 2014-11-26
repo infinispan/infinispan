@@ -39,6 +39,7 @@ import org.infinispan.cdi.util.Synthetic;
 import org.infinispan.cdi.util.annotatedtypebuilder.AnnotatedTypeBuilder;
 import org.infinispan.cdi.util.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 /**
  * Registers beans annotated @DefaultBean
@@ -54,6 +55,8 @@ import org.infinispan.commons.logging.LogFactory;
  *
  * @author Stuart Douglas
  */
+
+@MetaInfServices
 public class DefaultBeanExtension implements Extension {
 
     private static final String QUALIFIER_NAMEPSACE = "org.infinispan.cdi.defaultbean";

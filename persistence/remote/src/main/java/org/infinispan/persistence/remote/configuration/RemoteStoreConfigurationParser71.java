@@ -13,6 +13,7 @@ import org.infinispan.configuration.parsing.Parser71;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.persistence.remote.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -25,6 +26,7 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  * @author Galder Zamarreño
  * @since 7.1
  */
+@MetaInfServices
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:store:remote:7.1", root = "remote-store"),
    @Namespace(root = "remote-store")

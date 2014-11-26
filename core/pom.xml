@@ -92,6 +92,12 @@
          <artifactId>howl</artifactId>
          <scope>test</scope>
       </dependency>
+
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
+      </dependency>
       
    </dependencies>
 
@@ -113,6 +119,9 @@
             <excludes>
                <exclude>features.xml</exclude>
             </excludes>
+         </resource>
+         <resource>
+            <directory>${project.build.outputDirectory}</directory>
          </resource>
       </resources>
       <pluginManagement>
@@ -177,6 +186,10 @@
          </plugins>
       </pluginManagement>
       <plugins>
+         <plugin>
+            <groupId>org.scala-tools</groupId>
+            <artifactId>maven-scala-plugin</artifactId>
+         </plugin>
          <plugin>
             <groupId>org.jboss.maven.plugins</groupId>
             <artifactId>maven-injection-plugin</artifactId>
