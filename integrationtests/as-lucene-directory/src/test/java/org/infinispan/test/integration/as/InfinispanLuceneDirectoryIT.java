@@ -61,7 +61,7 @@ public class InfinispanLuceneDirectoryIT {
    private Directory directory;
    private EmbeddedCacheManager cacheManager;
    private Cache<?, ?> cache;
-   private static final org.apache.lucene.util.Version LUCENE_VERSION = org.apache.lucene.util.Version.LUCENE_4_10_1;
+   private static final org.apache.lucene.util.Version LUCENE_VERSION = org.apache.lucene.util.Version.LATEST;
 
    @Before
    public void setup() {
