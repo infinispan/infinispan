@@ -44,7 +44,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
@@ -160,7 +160,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
     private static URL find(String resource, ClassLoader... loaders) {
         for (ClassLoader loader : loaders) {
             if (loader != null) {
-                URL url = new FileLookup().lookupFileLocation(resource, loader);
+                URL url = FileLookupFactory.newInstance().lookupFileLocation(resource, loader);
                 if (url != null) {
                     return url;
                 }

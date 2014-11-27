@@ -2,6 +2,7 @@ package org.infinispan.jcache;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -135,7 +136,7 @@ public class JCacheManager implements CacheManager {
    private ConfigurationBuilderHolder getConfigurationBuilderHolder(
          ClassLoader classLoader) {
       try {
-         FileLookup fileLookup = new FileLookup();
+         FileLookup fileLookup = FileLookupFactory.newInstance();
          InputStream configurationStream = uri.isAbsolute()
                ? fileLookup.lookupFileStrict(uri, classLoader)
                : fileLookup.lookupFileStrict(uri.toString(), classLoader);

@@ -9,7 +9,7 @@ import javax.management.ObjectName;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
-import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
@@ -34,7 +34,7 @@ public class DistributedMassIndexingViaJmxTest extends DistributedMassIndexingTe
    protected void createCacheManagers() throws Throwable {
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       for (int i = 0; i < NUM_NODES; i++) {
-         InputStream is = new FileLookup().lookupFileStrict(
+         InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
                "dynamic-indexing-distribution.xml",
                Thread.currentThread().getContextClassLoader());
          ParserRegistry parserRegistry = new ParserRegistry(
