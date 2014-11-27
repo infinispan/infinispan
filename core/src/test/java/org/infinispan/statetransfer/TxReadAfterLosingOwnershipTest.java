@@ -33,11 +33,19 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
 
 
    public void testOwnershipLostWithPut() throws Exception {
-      doOwnershipLostTest(Operation.PUT);
+      doOwnershipLostTest(Operation.PUT, false);
    }
 
    public void testOwnershipLostWithRemove() throws Exception {
-      doOwnershipLostTest(Operation.REMOVE);
+      doOwnershipLostTest(Operation.REMOVE, false);
+   }
+
+   public void testOwnershipLostWithPutOnOwner() throws Exception {
+      doOwnershipLostTest(Operation.PUT, true);
+   }
+
+   public void testOwnershipLostWithRemoveOnOwner() throws Exception {
+      doOwnershipLostTest(Operation.REMOVE, true);
    }
 
    @Override
@@ -62,7 +70,7 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       return false;
    }
 
-   private void doOwnershipLostTest(Operation operation) throws ExecutionException, InterruptedException {
+   private void doOwnershipLostTest(Operation operation, boolean onOwner) throws ExecutionException, InterruptedException {
       log.debug("Initialize cache");
       cache(0).put("key", "value0");
       assertCachesKeyValue("key", "value0");
@@ -86,8 +94,8 @@ public class TxReadAfterLosingOwnershipTest extends MultipleCacheManagersTest {
       listener.notifier.await();
 
       log.debug("Set a new value");
-      //we change the value in the old owner
-      operation.update(cache(1));
+      //we change the value in the old owner if onOwner is false
+      operation.update(onOwner ? cache(0) : cache(1));
 
       //we check the value in the primary owner and old owner (cache(2) has not started yet)
       assertCachesKeyValue("key", operation.finalValue(), cache(0), cache(1));

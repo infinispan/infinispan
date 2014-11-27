@@ -75,6 +75,11 @@ public interface InternalCacheEntry<K, V> extends CacheEntry<K, V>, Cloneable {
    void reincarnate(long now);
 
    /**
+    * @return {@code true} if the entry is a L1 entry.
+    */
+   boolean isL1Entry();
+
+   /**
     * Creates a representation of this entry as an {@link org.infinispan.container.entries.InternalCacheValue}. The main
     * purpose of this is to provide a representation that does <i>not</i> have a reference to the key. This is useful in
     * situations where the key is already known or stored elsewhere, making serialization and deserialization more

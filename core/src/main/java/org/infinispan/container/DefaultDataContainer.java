@@ -18,6 +18,7 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -162,12 +163,19 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Override
    public void put(K k, V v, Metadata metadata) {
+      boolean l1Entry = false;
+      if (metadata instanceof L1WriteSynchronizer.L1Metadata) {
+         metadata = ((L1WriteSynchronizer.L1Metadata) metadata).metadata();
+         l1Entry = true;
+      }
       InternalCacheEntry<K, V> e = entries.get(k);
 
       if (trace) {
          log.tracef("Creating new ICE for writing. Existing=%s, metadata=%s, new value=%s", e, metadata, v);
       }
-      if (e != null) {
+      if (l1Entry) {
+         e = entryFactory.createL1(k, v, metadata);
+      } else if (e != null) {
          e = entryFactory.update(e, v, metadata);
       } else {
          // this is a brand-new entry
