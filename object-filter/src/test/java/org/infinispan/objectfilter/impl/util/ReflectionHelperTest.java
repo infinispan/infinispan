@@ -2,6 +2,7 @@ package org.infinispan.objectfilter.impl.util;
 
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -41,10 +42,12 @@ public class ReflectionHelperTest {
    private static abstract class W extends Q {
    }
 
+   @SuppressWarnings("unused")
    private static class A<T extends Base> {
       T[] array;
       Float[] array2;
       float[] array3;
+      Collection<T>[] array4;
       List<Integer> list;
       List<List<Integer>> list2;
       List<Base> list3;
@@ -76,6 +79,7 @@ public class ReflectionHelperTest {
       assertEquals(Base.class, ReflectionHelper.getAccessor(A.class, "array").getPropertyType());
       assertEquals(Float.class, ReflectionHelper.getAccessor(A.class, "array2").getPropertyType());
       assertEquals(float.class, ReflectionHelper.getAccessor(A.class, "array3").getPropertyType());
+      assertEquals(Collection.class, ReflectionHelper.getAccessor(A.class, "array4").getPropertyType());
 
       assertEquals(Integer.class, ReflectionHelper.getAccessor(A.class, "list").getPropertyType());
       assertEquals(List.class, ReflectionHelper.getAccessor(A.class, "list2").getPropertyType());
