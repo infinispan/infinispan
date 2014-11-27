@@ -16,6 +16,7 @@ import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -172,7 +173,7 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
 
    @Test
    public void testSchema() throws Exception {
-      FileLookup lookup = new FileLookup();
+      FileLookup lookup = FileLookupFactory.newInstance();
       URL schemaFile = lookup.lookupFileLocation(String.format("schema/infinispan-config-%s.xsd", Version.getMajorMinor()), Thread.currentThread().getContextClassLoader());
       Source xmlFile = new StreamSource(lookup.lookupFile(String.format("configs/unified/%s.xml", Version.getMajorMinor()), Thread.currentThread().getContextClassLoader()));
       SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaFile).newValidator().validate(xmlFile);
