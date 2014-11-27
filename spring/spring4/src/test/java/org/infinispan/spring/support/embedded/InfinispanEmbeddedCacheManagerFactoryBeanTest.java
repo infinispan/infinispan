@@ -42,7 +42,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldCreateACacheManagerEvenIfNoDefaultConfigurationLocationHasBeenSet()
          throws Exception {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
       withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
@@ -68,7 +68,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
       final Resource infinispanConfig = new ClassPathResource(NAMED_ASYNC_CACHE_CONFIG_LOCATION,
                                                               getClass());
 
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.setConfigurationFileLocation(infinispanConfig);
       objectUnderTest.afterPropertiesSet();
 
@@ -103,7 +103,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldReportTheCorrectObjectType()
          throws Exception {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
       withCacheManager(new CacheManagerCallable(objectUnderTest.getObject()) {
@@ -124,7 +124,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
     */
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldDeclareItselfToOnlyProduceSingletons() {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
 
       assertTrue("isSingleton() should always return true. However, it returned false",
                  objectUnderTest.isSingleton());
@@ -140,7 +140,7 @@ public class InfinispanEmbeddedCacheManagerFactoryBeanTest {
    @Test
    public final void infinispanEmbeddedCacheManagerFactoryBeanShouldStopTheCreateEmbeddedCacheManagerWhenBeingDestroyed()
          throws Exception {
-      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new TestInfinispanEmbeddedCacheManagerFactoryBean();
+      final InfinispanEmbeddedCacheManagerFactoryBean objectUnderTest = new InfinispanEmbeddedCacheManagerFactoryBean();
       objectUnderTest.afterPropertiesSet();
 
       final EmbeddedCacheManager embeddedCacheManager = objectUnderTest.getObject();

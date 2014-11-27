@@ -11,7 +11,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * <p>
@@ -61,16 +60,8 @@ public class AbstractEmbeddedCacheManagerFactory {
             builder = new ConfigurationBuilder();
          }
 
-         return createCacheManager(gcb, builder);
+         return new DefaultCacheManager(gcb.build(), builder.build());
       }
-   }
-
-   protected EmbeddedCacheManager createCacheManager(InputStream is) throws IOException {
-      return new DefaultCacheManager(is);
-   }
-
-   protected EmbeddedCacheManager createCacheManager(GlobalConfigurationBuilder globalBuilder, ConfigurationBuilder builder) {
-      return new DefaultCacheManager(globalBuilder.build(), builder.build());
    }
 
    // ------------------------------------------------------------------------
