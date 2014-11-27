@@ -72,7 +72,7 @@ public class RemoteQueryDescriptorIT {
 
       Object protofileNames = getAttribute(getJmxConnection(server1), "protofileNames");
       assertTrue(protofileNames instanceof String[]);
-      assertTrue(Arrays.asList((String[]) protofileNames).contains("/sample_bank_account/bank.proto"));
+      assertTrue(Arrays.asList((String[]) protofileNames).contains("sample_bank_account/bank.proto"));
    }
 
    private void assertRegisteredOn(RemoteInfinispanServer server) throws Exception {
