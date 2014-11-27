@@ -49,6 +49,7 @@
                   <configuration>
                      <artifactSet>
                         <excludes>
+                           <exclude>org.infinispan:infinispan-embedded-query</exclude>
                            <exclude>log4j:log4j:jar:</exclude>
                            <exclude>org.infinispan:infinispan-commons</exclude>
                            <exclude>org.infinispan:infinispan-core</exclude>

@@ -20,20 +20,6 @@
          <plugins>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-clean-plugin</artifactId>
-               <version>2.6.1</version>
-               <executions>
-                  <execution>
-                     <id>mrproper</id>
-                     <phase>prepare-package</phase>
-                     <goals>
-                        <goal>clean</goal>
-                     </goals>
-                  </execution>
-               </executions>
-            </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-shade-plugin</artifactId>
                <version>2.3</version>
             </plugin>

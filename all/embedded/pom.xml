@@ -114,6 +114,7 @@
                   <configuration>
                      <artifactSet>
                         <excludes>
+                           <exclude>org.infinispan:infinispan-embedded</exclude>
                            <exclude>org.fusesource.hawtjni:hawtjni-runtime:jar:</exclude>
                            <exclude>org.fusesource.leveldbjni:leveldbjni:jar:</exclude>
                            <exclude>org.iq80.leveldb:leveldb-api:jar:</exclude>
