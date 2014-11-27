@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 /**
@@ -105,7 +106,7 @@ public class ComponentMetadataRepo {
    public void initialize(Iterable<ModuleMetadataFileFinder> moduleMetadataFiles, ClassLoader cl) {
       // First init core module metadata
       try {
-         readMetadata(new FileLookup().lookupFileLocation("infinispan-core-component-metadata.dat", cl));
+         readMetadata(FileLookupFactory.newInstance().lookupFileLocation("infinispan-core-component-metadata.dat", cl));
       } catch (Exception e) {
          throw new CacheException("Unable to load component metadata!", e);
       }
@@ -113,7 +114,7 @@ public class ComponentMetadataRepo {
       // Now the modules
       for (ModuleMetadataFileFinder finder: moduleMetadataFiles) {
          try {
-            readMetadata(new FileLookup().lookupFileLocation(finder.getMetadataFilename(), cl));
+            readMetadata(FileLookupFactory.newInstance().lookupFileLocation(finder.getMetadataFilename(), cl));
          } catch (Exception e) {
             throw new CacheException("Unable to load component metadata in file " + finder.getMetadataFilename(), e);
          }

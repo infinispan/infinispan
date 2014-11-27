@@ -13,6 +13,7 @@ import javax.xml.stream.XMLStreamException;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -80,7 +81,7 @@ public class TestCacheManagerFactory {
    }
 
    public static EmbeddedCacheManager fromXml(String xmlFile, boolean keepJmxDomainName) throws IOException {
-      InputStream is = new FileLookup().lookupFileStrict(
+      InputStream is = FileLookupFactory.newInstance().lookupFileStrict(
             xmlFile, Thread.currentThread().getContextClassLoader());
       return fromStream(is, keepJmxDomainName);
    }

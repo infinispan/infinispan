@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -24,7 +25,7 @@ public class CacheBuilder {
    }
 
    private String findConfigFile(String configFile) {
-      FileLookup fl = new FileLookup();
+      FileLookup fl = FileLookupFactory.newInstance();
       if (configFile != null) {
          InputStream inputStream = fl.lookupFile(configFile, Thread.currentThread().getContextClassLoader());
          try {

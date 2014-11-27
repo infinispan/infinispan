@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.configuration.ConnectionFactoryConfiguration;
 import org.infinispan.persistence.jdbc.configuration.PooledConnectionFactoryConfiguration;
@@ -64,8 +65,8 @@ public class PooledConnectionFactory extends ConnectionFactory {
    }
 
    private void logFileOverride(ClassLoader classLoader) {
-      URL propsUrl = new FileLookup().lookupFileLocation("c3p0.properties", classLoader);
-      URL xmlUrl = new FileLookup().lookupFileLocation("c3p0-config.xml", classLoader);
+      URL propsUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0.properties", classLoader);
+      URL xmlUrl = FileLookupFactory.newInstance().lookupFileLocation("c3p0-config.xml", classLoader);
       if (log.isDebugEnabled() && propsUrl != null) {
          log.debugf("Found 'c3p0.properties' in classpath: %s", propsUrl);
       }

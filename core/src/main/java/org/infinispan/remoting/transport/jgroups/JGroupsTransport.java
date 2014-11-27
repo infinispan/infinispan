@@ -27,6 +27,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
@@ -337,8 +338,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    // This is per CM, so the CL in use should be the CM CL
    private void buildChannel() {
-	  FileLookup fileLookup = new FileLookup();
-	  
+	  FileLookup fileLookup = FileLookupFactory.newInstance();
+
       // in order of preference - we first look for an external JGroups file, then a set of XML
       // properties, and
       // finally the legacy JGroups String properties.
