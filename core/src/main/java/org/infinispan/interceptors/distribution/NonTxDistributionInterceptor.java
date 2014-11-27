@@ -48,8 +48,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                InternalCacheEntry remoteEntry = remoteGetCacheEntry(ctx, key, command);
                returnValue = computeGetReturn(remoteEntry, command);
             }
-            if (returnValue == null && isValueAvailableLocally(dm.getReadConsistentHash(), key)) {
-               InternalCacheEntry localEntry = localGetCacheEntry(ctx, key, false, command);
+            if (returnValue == null) {
+               InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
+               if (localEntry != null) {
+                  wrapInternalCacheEntry(localEntry, ctx, key, false, command);
+               }
                returnValue = computeGetReturn(localEntry, command);
             }
          }
@@ -139,15 +142,20 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    private InternalCacheEntry localGetCacheEntry(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
       InternalCacheEntry ice = dataContainer.get(key);
       if (ice != null) {
-         if (!ctx.replaceValue(key, ice))  {
-            if (isWrite)
-               entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
-            else
-               ctx.putLookedUpEntry(key, ice);
-         }
+         wrapInternalCacheEntry(ice, ctx, key, isWrite, command);
          return ice;
       }
       return null;
+   }
+
+   private void wrapInternalCacheEntry(InternalCacheEntry ice, InvocationContext ctx, Object key, boolean isWrite,
+                                       FlagAffectedCommand command) {
+      if (!ctx.replaceValue(key, ice))  {
+         if (isWrite)
+            entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
+         else
+            ctx.putLookedUpEntry(key, ice);
+      }
    }
 
    private InternalCacheEntry remoteGetCacheEntry(InvocationContext ctx, Object key, GetKeyValueCommand command) throws Throwable {
