@@ -251,13 +251,15 @@ public final class ReflectionHelper {
       String propertyNameSuffix = Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
       try {
          Method m = clazz.getDeclaredMethod("get" + propertyNameSuffix);
-         if (Modifier.isPublic(m.getModifiers()) && !m.getReturnType().equals(Void.class)) {
+         if (Modifier.isPublic(m.getModifiers()) && !m.isSynthetic() && !m.isBridge()
+               && !m.getReturnType().equals(Void.class)) {
             return getMethodAccessor(m);
          }
       } catch (NoSuchMethodException e) {
          try {
             Method m = clazz.getDeclaredMethod("is" + propertyNameSuffix);
-            if (Modifier.isPublic(m.getModifiers()) && (m.getReturnType().equals(boolean.class) || m.getReturnType().equals(Boolean.class))) {
+            if (Modifier.isPublic(m.getModifiers()) && !m.isSynthetic() && !m.isBridge()
+                  && (m.getReturnType().equals(boolean.class) || m.getReturnType().equals(Boolean.class))) {
                return getMethodAccessor(m);
             }
          } catch (NoSuchMethodException e1) {
@@ -268,7 +270,7 @@ public final class ReflectionHelper {
       // try field access
       try {
          Field f = clazz.getDeclaredField(propertyName);
-         if (f != null) {
+         if (f != null && !f.isSynthetic()) {
             return getFieldAccessor(f);
          }
       } catch (NoSuchFieldException e) {
@@ -309,8 +311,12 @@ public final class ReflectionHelper {
             return type.getComponentType();
          }
          GenericArrayType genericArrayType = (GenericArrayType) genericType;
-         TypeVariable genericComponentType = (TypeVariable) genericArrayType.getGenericComponentType();
-         return (Class) genericComponentType.getBounds()[0];
+         Type genericComponentType = genericArrayType.getGenericComponentType();
+         if (genericComponentType instanceof ParameterizedType) {
+            return (Class) ((ParameterizedType) genericComponentType).getRawType();
+         } else {
+            return (Class) ((TypeVariable) genericComponentType).getBounds()[0];
+         }
       } else if (Collection.class.isAssignableFrom(type)) {
          return determineCollectionElementType(genericType);
       } else if (Map.class.isAssignableFrom(type)) {
