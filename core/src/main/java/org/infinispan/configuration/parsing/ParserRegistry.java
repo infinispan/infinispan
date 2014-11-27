@@ -21,6 +21,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.FileLookup;
+import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.ServiceFinder;
 import org.infinispan.commons.util.Util;
 import org.infinispan.util.logging.Log;
@@ -70,7 +71,7 @@ public class ParserRegistry implements NamespaceMappingParser {
    }
 
    public ConfigurationBuilderHolder parseFile(String filename) throws IOException {
-      FileLookup fileLookup = new FileLookup();
+      FileLookup fileLookup = FileLookupFactory.newInstance();
       InputStream is = fileLookup.lookupFile(filename, cl.get());
       if (is == null) {
          throw new FileNotFoundException(filename);
