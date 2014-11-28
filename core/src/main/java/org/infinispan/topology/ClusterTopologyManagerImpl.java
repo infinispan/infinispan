@@ -32,21 +32,19 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.util.logging.LogFactory.CLUSTER;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.util.logging.LogFactory.CLUSTER;
 
 /**
  * The {@code ClusterTopologyManager} implementation.
@@ -102,6 +100,26 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       cacheManagerNotifier.addListener(viewListener);
       // The listener already missed the initial view
       handleClusterView(false, transport.getViewId());
+
+      if (!isCoordinator) {
+         ReplicableCommand command = new CacheTopologyControlCommand(null,
+               CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(),
+               transport.getViewId());
+         Address coordinator = transport.getCoordinator();
+         Map<Address, Response> responseMap = null;
+         try {
+            responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
+                  command, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), true, null, false, false);
+            Response response = responseMap.get(coordinator);
+            if (response instanceof SuccessfulResponse) {
+               isRebalancingEnabled = ((Boolean) ((SuccessfulResponse) response).getResponseValue());
+            } else {
+               log.errorReadingRebalancingStatus(transport.getCoordinator(), null);
+            }
+         } catch (Exception e) {
+            log.errorReadingRebalancingStatus(transport.getCoordinator(), e);
+         }
+      }
    }
 
    @Stop(priority = 100)
@@ -175,8 +193,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       @Override
       public boolean isAcceptable(Response response, Address sender) {
          if (response.isSuccessful() && response.isValid()) {
-            Map<String, CacheStatusResponse> value = (Map<String, CacheStatusResponse>) ((SuccessfulResponse)response).getResponseValue();
-            for (Entry<String, CacheStatusResponse> entry : value.entrySet()) {
+            ManagerStatusResponse value = (ManagerStatusResponse) ((SuccessfulResponse)response).getResponseValue();
+            for (Entry<String, CacheStatusResponse> entry : value.getCaches().entrySet()) {
                CacheStatusResponse csr = entry.getValue();
                CacheTopology cacheTopology = csr.getCacheTopology();
                CacheTopology stableTopology = csr.getStableTopology();
@@ -302,17 +320,18 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private void recoverClusterStatus(int newViewId, boolean isMergeView, List<Address> clusterMembers) throws Exception {
       ReplicableCommand command = new CacheTopologyControlCommand(null,
             CacheTopologyControlCommand.Type.GET_STATUS, transport.getAddress(), newViewId);
-      Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout(), false, false, 
+      Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout(), false, false,
             new CacheTopologyFilterReuser());
 
       log.debugf("Got %d status responses. members are %s", statusResponses.size(), clusterMembers);
       Map<String, Map<Address, CacheStatusResponse>> responsesByCache = new HashMap<>();
+      boolean recoveredRebalancingStatus = true;
       for (Map.Entry<Address, Object> responseEntry : statusResponses.entrySet()) {
          Address sender = responseEntry.getKey();
-         Map<String, CacheStatusResponse> nodeStatus = (Map<String, CacheStatusResponse>) responseEntry.getValue();
-         for (Map.Entry<String, CacheStatusResponse> statusEntry : nodeStatus.entrySet()) {
+         ManagerStatusResponse nodeStatus = (ManagerStatusResponse) responseEntry.getValue();
+         recoveredRebalancingStatus &= nodeStatus.isRebalancingEnabled();
+         for (Map.Entry<String, CacheStatusResponse> statusEntry : nodeStatus.getCaches().entrySet()) {
             String cacheName = statusEntry.getKey();
-
             Map<Address, CacheStatusResponse> cacheResponses = responsesByCache.get(cacheName);
             if (cacheResponses == null) {
                cacheResponses = new HashMap<>();
@@ -322,6 +341,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          }
       }
 
+      isRebalancingEnabled = recoveredRebalancingStatus;
       for (Map.Entry<String, Map<Address, CacheStatusResponse>> e : responsesByCache.entrySet()) {
          ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(e.getKey());
          cacheStatus.doMergePartitions(e.getValue(), clusterMembers, isMergeView);
