@@ -4,6 +4,8 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -124,6 +126,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return visitDataReadCommand(ctx, command);
+   }
+   @Override
+   public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      return visitDataReadCommand(ctx, command);
+   }
+
+   private final Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       try {
          entryFactory.wrapEntryForReading(ctx, command.getKey(), null);
          return invokeNextInterceptor(ctx, command);

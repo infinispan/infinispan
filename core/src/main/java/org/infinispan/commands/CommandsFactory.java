@@ -12,6 +12,7 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
@@ -136,11 +137,17 @@ public interface CommandsFactory {
     * Builds a GetKeyValueCommand
     * @param key key to get
     * @param flags Command flags provided by cache
-    * @param returnEntry boolean indicating whether entire cache entry is
-    *                    returned, otherwise return just the value part
     * @return a GetKeyValueCommand
     */
-   GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags, boolean returnEntry);
+   GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags);
+
+   /**
+    * Builds a GetCacheEntryCommand
+    * @param key key to get
+    * @param flags Command flags provided by cache
+    * @return a GetCacheEntryCommand
+    */
+   GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags);
 
    /**
     * Builds a KeySetCommand
@@ -467,4 +474,5 @@ public interface CommandsFactory {
     * @return the GetKeysInGroup created.
     */
    GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName);
+
 }

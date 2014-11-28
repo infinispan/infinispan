@@ -1,10 +1,9 @@
 package org.infinispan.commands.remote;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
-import org.infinispan.commands.Visitor;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.InternalEntryFactory;
@@ -17,8 +16,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
@@ -104,7 +101,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements LocalFlagAffe
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
       Set<Flag> commandFlags = EnumSet.of(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
       if (this.flags != null) commandFlags.addAll(this.flags);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, commandFlags, true);
+      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, commandFlags);
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
       CacheEntry cacheEntry = (CacheEntry) invoker.invoke(invocationContext, command);
       if (cacheEntry == null) {

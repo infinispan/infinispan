@@ -5,6 +5,7 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -101,13 +102,19 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
          throw cleanLocksAndRethrow(ctx, te);
       }
    }
-   
+
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       markKeyAsRead(ctx, command, true);
       return super.visitGetKeyValueCommand(ctx, command);
    }
-   
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      markKeyAsRead(ctx, command, true);
+      return super.visitGetCacheEntryCommand(ctx, command);
+   }
+
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       try {

@@ -16,6 +16,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
@@ -169,8 +170,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags, boolean returnEntry) {
-      return actual.buildGetKeyValueCommand(key, flags, returnEntry);
+   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
+      return actual.buildGetKeyValueCommand(key, flags);
    }
 
    @Override
@@ -376,4 +377,10 @@ public class ControlledCommandFactory implements CommandsFactory {
    public GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName) {
       return actual.buildGetKeysInGroupCommand(flags, groupName);
    }
+
+   @Override
+   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags) {
+      return actual.buildGetCacheEntryCommand(key, explicitFlags);
+   }
+
 }

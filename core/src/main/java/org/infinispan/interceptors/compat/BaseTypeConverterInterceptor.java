@@ -2,6 +2,7 @@ package org.infinispan.interceptors.compat;
 
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -72,26 +73,37 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       }
       Object ret = invokeNextInterceptor(ctx, command);
       if (ret != null) {
-         if (command.isReturnEntry()) {
-            CacheEntry entry = (CacheEntry) ret;
-            Object returnValue = entry.getValue();
-            if (command.getRemotelyFetchedValue() == null) {
-               returnValue = converter.unboxValue(entry.getValue());
-            }
-            // Create a copy of the entry to avoid modifying the internal entry
-            return entryFactory.create(
-                  entry.getKey(), returnValue, entry.getMetadata(),
-                  entry.getLifespan(), entry.getMaxIdle());
-         } else {
-            if (command.getRemotelyFetchedValue() == null) {
-               return converter.unboxValue(ret);
-            }
-            return ret;
+         if (command.getRemotelyFetchedValue() == null) {
+            return converter.unboxValue(ret);
          }
+         return ret;
       }
-
       return null;
    }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      Object key = command.getKey();
+      TypeConverter<Object, Object, Object, Object> converter =
+            determineTypeConverter(command.getFlags());
+      if (ctx.isOriginLocal()) {
+         command.setKey(converter.boxKey(key));
+      }
+      Object ret = invokeNextInterceptor(ctx, command);
+      if (ret != null) {
+         CacheEntry entry = (CacheEntry) ret;
+         Object returnValue = entry.getValue();
+         if (command.getRemotelyFetchedValue() == null) {
+            returnValue = converter.unboxValue(entry.getValue());
+         }
+         // Create a copy of the entry to avoid modifying the internal entry
+         return entryFactory.create(
+               entry.getKey(), returnValue, entry.getMetadata(),
+               entry.getLifespan(), entry.getMaxIdle());
+      }
+      return null;
+   }
+
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {

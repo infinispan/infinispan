@@ -3,6 +3,7 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.ValuesCommand;
@@ -112,9 +113,19 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      if (enabled) {
+         Object key;
+         if ((key = command.getKey()) != null) {
+            loadIfNeededAndUpdateStats(ctx, key, command);
+         }
+      }
+      return invokeNextInterceptor(ctx, command);
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       if (enabled) {
          Object key;
          if ((key = command.getKey()) != null) {
