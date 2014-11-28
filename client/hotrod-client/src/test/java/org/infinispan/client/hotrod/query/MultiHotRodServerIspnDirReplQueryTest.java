@@ -22,11 +22,9 @@ public class MultiHotRodServerIspnDirReplQueryTest extends MultiHotRodServerIspn
       createHotRodServers(2, defaultConfiguration);
 
       ConfigurationBuilder builder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
-      builder.indexing().index(Index.LOCAL)
-            .addProperty("default.directory_provider", "infinispan")
-            .addProperty("default.exclusive_index_use", "false")
-            //.addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+      builder.indexing()
+            .index(Index.LOCAL)
+            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
 
       for (EmbeddedCacheManager cm : cacheManagers) {
          cm.defineConfiguration(TEST_CACHE, builder.build());
