@@ -9,9 +9,7 @@ import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
-import org.infinispan.topology.CacheStatusResponse;
-
-import java.util.Map;
+import org.infinispan.topology.ManagerStatusResponse;
 
 /**
  * Class to be extended to allow some control over the local topology manager when testing Infinispan.
@@ -46,7 +44,7 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
-   public final Map<String, CacheStatusResponse> handleStatusRequest(int viewId) {
+   public final ManagerStatusResponse handleStatusRequest(int viewId) {
       return delegate.handleStatusRequest(viewId);
    }
 

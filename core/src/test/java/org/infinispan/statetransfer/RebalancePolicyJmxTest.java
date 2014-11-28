@@ -7,12 +7,13 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.topology.ClusterTopologyManager;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
 import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+import java.util.Arrays;
 
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.testng.Assert.assertEquals;
@@ -51,7 +52,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       return gcb;
    }
 
-   public void testRebalanceSuspend() throws Exception {
+   public void testJoinAndLeaveWithRebalanceSuspended() throws Exception {
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       String domain0 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
       ObjectName ltmName0 = TestingUtil.getCacheManagerObjectName(domain0, "DefaultCacheManager", "LocalTopologyManager");
@@ -76,6 +77,12 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r2"), getConfigurationBuilder());
       cache(2);
       cache(3);
+
+      // Check that rebalance is suspended on the new nodes
+      ClusterTopologyManager ctm2 = TestingUtil.extractGlobalComponent(manager(2), ClusterTopologyManager.class);
+      assertFalse(ctm2.isRebalancingEnabled());
+      ClusterTopologyManager ctm3 = TestingUtil.extractGlobalComponent(manager(3), ClusterTopologyManager.class);
+      assertFalse(ctm3.isRebalancingEnabled());
 
       // Check that no rebalance happened after 1 second
       Thread.sleep(1000);
