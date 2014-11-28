@@ -3,6 +3,7 @@ package org.infinispan.distribution;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
@@ -315,7 +316,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
 
          // Add a barrier to block the get from being retrieved on the primary owner
          CyclicBarrier ownerGetBarrier = new CyclicBarrier(2);
-         addBlockingInterceptor(ownerCache, ownerGetBarrier, GetKeyValueCommand.class, getL1InterceptorClass(),
+         addBlockingInterceptor(ownerCache, ownerGetBarrier, GetCacheEntryCommand.class, getL1InterceptorClass(),
                                 false);
 
          // This should be retrieved from the backup owner

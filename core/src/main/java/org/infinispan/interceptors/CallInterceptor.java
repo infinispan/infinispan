@@ -3,6 +3,8 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -70,16 +72,22 @@ public class CallInterceptor extends CommandInterceptor {
       if (trace) log.trace("Executing command: " + command + ".");
       Object ret = command.perform(ctx);
       if (ret != null) {
-         if (command.isReturnEntry())
-            notifyCacheEntryVisit(ctx, command, ((CacheEntry) ret).getValue());
-         else
-            notifyCacheEntryVisit(ctx, command, ret);
+         notifyCacheEntryVisit(ctx, command, ret);
       }
-
       return ret;
    }
 
-   private void notifyCacheEntryVisit(InvocationContext ctx, GetKeyValueCommand command, Object value) {
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      if (trace) log.trace("Executing command: " + command + ".");
+      Object ret = command.perform(ctx);
+      if (ret != null) {
+         notifyCacheEntryVisit(ctx, command, ((CacheEntry) ret).getValue());
+      }
+      return ret;
+   }
+
+   private void notifyCacheEntryVisit(InvocationContext ctx, AbstractDataCommand command, Object value) {
       Object key = command.getKey();
       notifier.notifyCacheEntryVisited(key, value, true, ctx, command);
       notifier.notifyCacheEntryVisited(key, value, false, ctx, command);

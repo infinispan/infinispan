@@ -1,7 +1,9 @@
 package org.infinispan.partitionhandling.impl;
 
 import org.infinispan.commands.LocalFlagAffectedCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -95,7 +97,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       Object key = command.getKey();
       Object result;
       try {
@@ -109,7 +111,30 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
             throw e;
          }
       }
+      postOperationPartitionCheck(ctx, command, key, result);
+      return result;
+   }
 
+   @Override
+   public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      Object key = command.getKey();
+      Object result;
+      try {
+         result = super.visitGetCacheEntryCommand(ctx, command);
+      } catch (RpcException e) {
+         if (performPartitionCheck(ctx, command)) {
+            // We must have received an AvailabilityException from one of the owners.
+            // There is no way to verify the cause here, but there isn't any other way to get an invalid get response.
+            throw getLog().degradedModeKeyUnavailable(key);
+         } else {
+            throw e;
+         }
+      }
+      postOperationPartitionCheck(ctx, command, key, result);
+      return result;
+   }
+
+   private Object postOperationPartitionCheck(InvocationContext ctx, AbstractDataCommand command, Object key, Object result) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          // We do the availability check after the read, because the cache may have entered degraded mode
          // while we were reading from a remote node.
@@ -126,7 +151,6 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
             }
          }
       }
-
       // TODO We can still return a stale value if the other partition stayed active without us and we haven't entered degraded mode yet.
       return result;
    }

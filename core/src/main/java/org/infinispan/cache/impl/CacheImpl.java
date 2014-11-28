@@ -9,6 +9,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
@@ -386,7 +387,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final boolean containsKey(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, false);
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags);
       Object response = invoker.invoke(ctx, command);
       return response != null;
    }
@@ -418,14 +419,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    final V get(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, false);
+      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags);
       return (V) invoker.invoke(ctx, command);
    }
 
    public final CacheEntry getCacheEntry(Object key, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, 1);
-      GetKeyValueCommand command = commandsFactory.buildGetKeyValueCommand(key, explicitFlags, true);
+      GetCacheEntryCommand command = commandsFactory.buildGetCacheEntryCommand(key, explicitFlags);
       Object ret = invoker.invoke(ctx, command);
       return (CacheEntry) ret;
    }

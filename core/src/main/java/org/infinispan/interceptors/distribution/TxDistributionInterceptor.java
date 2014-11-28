@@ -4,6 +4,8 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -123,38 +125,48 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return visitGetCommand(ctx, command, false);
-   }
-
-   private Object visitGetCommand(InvocationContext ctx, GetKeyValueCommand command,
-         boolean isGetCacheEntry) throws Throwable {
       try {
-         Object returnValue = invokeNextInterceptor(ctx, command);
-
-         //if the cache entry has the value lock flag set, skip the remote get.
-         CacheEntry entry = ctx.lookupEntry(command.getKey());
-         boolean skipRemoteGet = entry != null && entry.skipLookup();
-
-         // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
-         // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
-         // the entry is mapped to the local node.
-         if (!skipRemoteGet && returnValue == null && ctx.isOriginLocal()) {
-            Object key = filterDeltaCompositeKey(command.getKey());
-            if (needsRemoteGet(ctx, command)) {
-               InternalCacheEntry ice = remoteGet(ctx, key, false, command);
-               if (ice != null) {
-                  returnValue = ice.getValue();
-               }
-            }
-            if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
-               returnValue = localGet(ctx, key, false, command, isGetCacheEntry);
-            }
-         }
-         return returnValue;
+         return visitGetCommand(ctx, command, false);
       } catch (SuspectException e) {
          // retry
          return visitGetKeyValueCommand(ctx, command);
       }
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      try {
+         return visitGetCommand(ctx, command, false);
+      } catch (SuspectException e) {
+         // retry
+         return visitGetCacheEntryCommand(ctx, command);
+      }
+   }
+
+   private Object visitGetCommand(InvocationContext ctx, AbstractDataCommand command,
+      boolean isGetCacheEntry) throws Throwable {
+      Object returnValue = invokeNextInterceptor(ctx, command);
+
+      //if the cache entry has the value lock flag set, skip the remote get.
+      CacheEntry entry = ctx.lookupEntry(command.getKey());
+      boolean skipRemoteGet = entry != null && entry.skipLookup();
+
+      // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
+      // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
+      // the entry is mapped to the local node.
+      if (!skipRemoteGet && returnValue == null && ctx.isOriginLocal()) {
+         Object key = filterDeltaCompositeKey(command.getKey());
+         if (needsRemoteGet(ctx, command)) {
+            InternalCacheEntry ice = remoteGet(ctx, key, false, command);
+            if (ice != null) {
+               returnValue = ice.getValue();
+            }
+         }
+         if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
+            returnValue = localGet(ctx, key, false, command, isGetCacheEntry);
+         }
+      }
+      return returnValue;
    }
 
    protected void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {

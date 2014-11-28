@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.locking;
 
 import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -58,6 +59,17 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
          return super.visitGetKeyValueCommand(ctx, command);
+      } finally {
+         //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
+         //locks need to be released in this situation as they might have been acquired from L1.
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
+      }
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      try {
+         return super.visitGetCacheEntryCommand(ctx, command);
       } finally {
          //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
          //locks need to be released in this situation as they might have been acquired from L1.

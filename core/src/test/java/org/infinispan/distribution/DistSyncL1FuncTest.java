@@ -1,7 +1,7 @@
 package org.infinispan.distribution;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -248,7 +248,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
       // Add a barrier to block the owner from receiving the get command from the non owner
       CyclicBarrier ownerGetBarrier = new CyclicBarrier(2);
-      addBlockingInterceptor(ownerCache, ownerGetBarrier, GetKeyValueCommand.class, L1NonTxInterceptor.class, false);
+      addBlockingInterceptor(ownerCache, ownerGetBarrier, GetCacheEntryCommand.class, L1NonTxInterceptor.class, false);
 
       // Add a barrier to block the backup owner from committing the write to memory
       CyclicBarrier backupOwnerWriteBarrier = new CyclicBarrier(2);
@@ -333,7 +333,7 @@ public class DistSyncL1FuncTest extends BaseDistSyncL1Test {
 
       // Add a barrier to block the get from being retrieved on the backup owner
       CyclicBarrier backupGetBarrier = new CyclicBarrier(2);
-      addBlockingInterceptor(backupOwnerCache, backupGetBarrier, GetKeyValueCommand.class, L1NonTxInterceptor.class,
+      addBlockingInterceptor(backupOwnerCache, backupGetBarrier, GetCacheEntryCommand.class, L1NonTxInterceptor.class,
                              false);
 
       try {
