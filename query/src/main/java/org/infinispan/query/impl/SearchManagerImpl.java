@@ -139,4 +139,9 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       return searchFactory.getAnalyzer(clazz);
    }
 
+   @Override
+   public void purge(Class<?> entityType) {
+     queryInterceptor.purgeIndex(entityType);
+   }
+
 }
