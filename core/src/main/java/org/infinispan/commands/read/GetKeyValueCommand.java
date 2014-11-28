@@ -6,8 +6,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
 
@@ -22,8 +20,6 @@ import static org.infinispan.commons.util.Util.toStr;
  */
 public class GetKeyValueCommand extends AbstractDataCommand {
    public static final byte COMMAND_ID = 4;
-   private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
    private InternalCacheEntry remotelyFetchedValue;
    // TODO: These two instance variables specific to getCacheEntry, optimise
    private boolean returnEntry;
@@ -48,33 +44,19 @@ public class GetKeyValueCommand extends AbstractDataCommand {
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry == null || entry.isNull()) {
-         if (trace) {
-            log.trace("Entry not found");
-         }
          return null;
       }
       if (entry.isRemoved()) {
-         if (trace) {
-            log.tracef("Entry has been deleted and is of type %s", entry.getClass().getSimpleName());
-         }
          return null;
       }
 
       // Get cache entry instead of value
       if (returnEntry) {
          CacheEntry copy = entryFactory.copy(entry);
-         if (trace) {
-            log.tracef("Found entry %s", entry);
-            log.tracef("Returning copied entry %s", copy);
-         }
-
          return copy;
       }
 
       final Object value = entry.getValue();
-      if (trace) {
-         log.tracef("Found value %s", toStr(value));
-      }
       return value;
    }
 
