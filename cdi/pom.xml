@@ -129,8 +129,22 @@
          <artifactId>slf4j-jdk14</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
+      </dependency>
    </dependencies>
    <build>
+      <resources>
+         <resource>
+            <directory>${project.build.outputDirectory}</directory>
+            <filtering>false</filtering>
+            <includes>
+               <include>**/*</include>
+            </includes>
+         </resource>
+      </resources>
       <plugins>
          
          <plugin>

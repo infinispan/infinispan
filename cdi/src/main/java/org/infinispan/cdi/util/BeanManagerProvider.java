@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
-
+import org.kohsuke.MetaInfServices;
 
 
 /**
@@ -41,6 +41,7 @@ import java.util.logging.Logger;
  * This is the only way to guarantee to get the right
  * BeanManager in more complex Container scenarios.</p>
  */
+@MetaInfServices
 public class BeanManagerProvider implements Extension
 {
     private static final Logger  LOG = Logger.getLogger(BeanManagerProvider.class.getName());
