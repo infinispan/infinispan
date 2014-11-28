@@ -239,9 +239,9 @@ Configuring Infinispan with chained cache stores is simple too:
 [source,java]
 ----
 Configuration config = new ConfigurationBuilder()
-      .loaders()
-        .shared(false).passivation(false).preload(false)
-        .addFileCacheStore().location("/tmp").streamBufferSize(1800).async().enable().threadPoolSize(20).build();
+      .persistence().passivation(false)
+      .addSingleFileStore().location("/tmp").async().enable()
+      .preload(false).shared(false).threadPoolSize(20).build();
 ----
 
 ==== Advanced programmatic configuration
