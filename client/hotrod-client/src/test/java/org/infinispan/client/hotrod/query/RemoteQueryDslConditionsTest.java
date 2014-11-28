@@ -23,6 +23,7 @@ import org.infinispan.query.dsl.embedded.QueryDslConditionsTest;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.ModelFactory;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.query.remote.ProtobufMetadataManagerInterceptor;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
@@ -86,6 +87,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManager.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
+      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerInterceptor.ERRORS_KEY_SUFFIX));
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));

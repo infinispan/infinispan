@@ -19,6 +19,7 @@ import org.infinispan.protostream.sampledomain.marshallers.UserMarshaller;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.query.remote.ProtobufMetadataManagerInterceptor;
 import org.infinispan.server.test.category.Osgi;
 import org.infinispan.server.test.util.osgi.KarafTestSupport;
 import org.junit.After;
@@ -41,9 +42,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.ops4j.pax.exam.CoreOptions.maven;
 
 /**
@@ -125,6 +124,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       Bundle sampleDomainDefinitionBundle = getInstalledBundle("org.infinispan.protostream.sample-domain-definition");
       String file = Util.read(bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
       metadataCache.put("sample_bank_account/bank.proto", file);
+      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerInterceptor.ERRORS_KEY_SUFFIX));
 
       // register schemas and marshallers on client
       SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(manager);

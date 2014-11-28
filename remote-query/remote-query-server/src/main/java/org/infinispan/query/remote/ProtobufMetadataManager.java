@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A clustered repository of protobuf descriptors. All protobuf types and their marshallers must be registered with this
+ * A clustered repository of protobuf definition files. All protobuf types and their marshallers must be registered with this
  * repository before being used.
  *
  * @author anistor@redhat.com
@@ -43,7 +43,7 @@ import java.util.Map;
 @Scope(Scopes.GLOBAL)
 @MBean(objectName = ProtobufMetadataManager.OBJECT_NAME,
        description = "Component that acts as a manager and container for Protocol Buffers message type definitions in the scope of a CacheManger.")
-public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
+public final class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
 
    public static final String OBJECT_NAME = "ProtobufMetadataManager";
 
@@ -136,6 +136,7 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
    }
 
    @ManagedOperation(description = "Registers a set of Protobuf definition files", displayName = "Register Protofiles")
+   @Override
    public void registerProtofiles(@Parameter(name = "fileNames", description = "names of the protofiles") String[] names,
                                   @Parameter(name = "fileContents", description = "content of the files") String[] contents)
          throws Exception {
@@ -150,13 +151,16 @@ public class ProtobufMetadataManager implements ProtobufMetadataManagerMBean {
    }
 
    @ManagedOperation(description = "Registers a Protobuf definition file", displayName = "Register Protofile")
+   @Override
    public void registerProtofile(@Parameter(name = "fileName", description = "the name of the .proto file") String name,
                                  @Parameter(name = "contents", description = "contents of the file") String contents) {
       getCache().put(name, contents);
    }
 
    /**
-    * This method is deprecated. Use one of the alternative methods from ProtobufMetadataManagerMBean.
+    * This method is deprecated. Use one of the alternative methods from {@link ProtobufMetadataManagerMBean}: {@link
+    * ProtobufMetadataManagerMBean#registerProtofile(String name, String contents)} or {@link
+    * ProtobufMetadataManagerMBean#registerProtofiles(String[] name, String[] contents)}.
     */
    @Deprecated
    public void registerProtofiles(String... classPathResources) throws Exception {

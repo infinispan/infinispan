@@ -1,7 +1,8 @@
 package org.infinispan.query.remote;
 
 /**
- * MBean interface for ProtobufMetadataManager.
+ * MBean interface for ProtobufMetadataManager,suitable for building invocation proxies with one of the {@link
+ * javax.management.JMX#newMBeanProxy} methods.
  *
  * @author anistor@redhat.com
  * @author gustavonalle
