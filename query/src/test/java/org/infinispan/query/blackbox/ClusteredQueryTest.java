@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -251,6 +252,15 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       assertEquals(4, cacheQuery.getResultSize());
       Person result = (Person) results.get(0);
       assertEquals(45, result.getAge());
+      StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
+   }
+
+   public void testQueryAll() throws ParseException {
+      populateCache();
+      CacheQuery clusteredQuery = Search.getSearchManager(cacheAMachine1)
+            .getClusteredQuery(new MatchAllDocsQuery(), Person.class);
+
+      assertEquals(4, clusteredQuery.list().size());
       StaticTestingErrorHandler.assertAllGood(cacheAMachine1, cacheAMachine2);
    }
 

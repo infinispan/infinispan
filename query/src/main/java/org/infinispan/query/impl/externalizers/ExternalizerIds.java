@@ -34,4 +34,6 @@ public interface ExternalizerIds {
    Integer LUCENE_FIELD_SCORE_DOC = 1610;
 
    Integer FILTER_RESULT = 1611;
+
+   Integer LUCENE_QUERY_MATCH_ALL = 1612;
 }
