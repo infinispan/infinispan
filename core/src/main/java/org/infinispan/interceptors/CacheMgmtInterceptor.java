@@ -1,6 +1,8 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -26,7 +28,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
+
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -83,7 +87,14 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+   public final Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return visitDataReadCommand(ctx, command);
+   }
+   @Override
+   public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      return visitDataReadCommand(ctx, command);
+   }
+   private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       long start = 0;
       boolean statisticsEnabled = getStatisticsEnabled(command);
       if (statisticsEnabled)

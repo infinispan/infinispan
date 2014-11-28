@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -168,7 +169,20 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
          try {
             return invokeNextInterceptor(ctx, command);
          } finally {
-            getLog().debug("visit Get");
+            getLog().debug("visit GetKeyValueCommand");
+            if (!ctx.isOriginLocal() && blockRemoteGet != null) {
+               getLog().debug("Remote Get Received... blocking...");
+               blockRemoteGet.await();
+            }
+         }
+      }
+
+      @Override
+      public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+         try {
+            return invokeNextInterceptor(ctx, command);
+         } finally {
+            getLog().debug("visit GetCacheEntryCommand");
             if (!ctx.isOriginLocal() && blockRemoteGet != null) {
                getLog().debug("Remote Get Received... blocking...");
                blockRemoteGet.await();

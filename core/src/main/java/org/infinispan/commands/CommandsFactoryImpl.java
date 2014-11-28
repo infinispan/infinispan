@@ -15,6 +15,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
@@ -247,9 +248,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags, boolean returnEntry) {
-      // TODO: This could be optimised, with a separate class for GetCacheEntryCommand that takes entryFactory, avoiding normal gets getting extra instance variable
-      return new GetKeyValueCommand(key, flags, returnEntry, entryFactory);
+   public GetKeyValueCommand buildGetKeyValueCommand(Object key, Set<Flag> flags) {
+      return new GetKeyValueCommand(key, flags);
    }
 
    @Override
@@ -629,4 +629,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName) {
       return new GetKeysInGroupCommand(flags, groupName).setGroupManager(groupManager);
    }
+
+   @Override
+   public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags) {
+      return new GetCacheEntryCommand(key, explicitFlags, entryFactory);
+   }
+
 }

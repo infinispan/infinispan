@@ -2,6 +2,7 @@ package org.infinispan.distribution;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -311,9 +312,9 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
       // Add a barrier to block the owner/backupowner from going further after retrieving the value before coming back into the L1
       // interceptor
       CyclicBarrier getBarrier = new CyclicBarrier(3);
-      ownerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier, GetKeyValueCommand.class, true, false),
+      ownerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier, GetCacheEntryCommand.class, true, false),
                                                         getL1InterceptorClass());
-      backupOwnerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier, GetKeyValueCommand.class, true, false),
+      backupOwnerCache.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(getBarrier, GetCacheEntryCommand.class, true, false),
                                                        getL1InterceptorClass());
 
       try {

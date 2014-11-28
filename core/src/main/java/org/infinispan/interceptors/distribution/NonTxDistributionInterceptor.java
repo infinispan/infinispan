@@ -1,7 +1,10 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.RemoteFetchingCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -41,32 +44,47 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
       try {
-         Object returnValue = invokeNextInterceptor(ctx, command);
-         if (returnValue == null) {
-            Object key = command.getKey();
-            if (needsRemoteGet(ctx, command)) {
-               InternalCacheEntry remoteEntry = remoteGetCacheEntry(ctx, key, command);
-               returnValue = computeGetReturn(remoteEntry, command);
-            }
-            if (returnValue == null) {
-               InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
-               if (localEntry != null) {
-                  wrapInternalCacheEntry(localEntry, ctx, key, false, command);
-               }
-               returnValue = computeGetReturn(localEntry, command);
-            }
-         }
-         return returnValue;
-      } catch (SuspectException e) {
-         // retry
+         return visitRemoteFetchingCommand(ctx, command, false);
+      }
+      catch (SuspectException e) {
+         //retry
          return visitGetKeyValueCommand(ctx, command);
       }
    }
 
-   private Object computeGetReturn(InternalCacheEntry entry, GetKeyValueCommand command) {
-      if (!command.isReturnEntry() && entry != null)
-         return entry.getValue();
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      try {
+         return visitRemoteFetchingCommand(ctx, command, true);
+      }
+      catch (SuspectException e) {
+         //retry
+         return visitGetCacheEntryCommand(ctx, command);
+      }
+   }
 
+   private <T extends AbstractDataCommand & RemoteFetchingCommand> Object visitRemoteFetchingCommand(InvocationContext ctx, T command, boolean returnEntry) throws Throwable {
+      Object returnValue = invokeNextInterceptor(ctx, command);
+      if (returnValue == null) {
+         Object key = command.getKey();
+         if (needsRemoteGet(ctx, command)) {
+            InternalCacheEntry remoteEntry = remoteGetCacheEntry(ctx, key, command);
+            returnValue = computeGetReturn(remoteEntry, command, returnEntry);
+         }
+         if (returnValue == null) {
+            InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
+            if (localEntry != null) {
+               wrapInternalCacheEntry(localEntry, ctx, key, false, command);
+            }
+            returnValue = computeGetReturn(localEntry, command, returnEntry);
+         }
+      }
+      return returnValue;
+   }
+
+   private Object computeGetReturn(InternalCacheEntry entry, AbstractDataCommand command, boolean returnEntry) {
+      if (!returnEntry && entry != null)
+         return entry.getValue();
       return entry;
    }
 
@@ -158,14 +176,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   private InternalCacheEntry remoteGetCacheEntry(InvocationContext ctx, Object key, GetKeyValueCommand command) throws Throwable {
+   private <T extends FlagAffectedCommand & RemoteFetchingCommand> InternalCacheEntry remoteGetCacheEntry(InvocationContext ctx, Object key, T command) throws Throwable {
       if (trace) log.tracef("Doing a remote get for key %s", key);
       InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command, false);
       command.setRemotelyFetchedValue(ice);
-      if (ice != null)
-         return ice;
-
-      return null;
+      return ice;
    }
 
    protected boolean needValuesFromPreviousOwners(InvocationContext ctx, WriteCommand command) {

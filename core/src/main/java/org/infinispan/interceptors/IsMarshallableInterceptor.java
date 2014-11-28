@@ -2,6 +2,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -72,6 +73,14 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
       if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
          checkMarshallable(key);
       return super.visitGetKeyValueCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      Object key = command.getKey();
+      if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
+         checkMarshallable(key);
+      return super.visitGetCacheEntryCommand(ctx, command);
    }
 
    @Override

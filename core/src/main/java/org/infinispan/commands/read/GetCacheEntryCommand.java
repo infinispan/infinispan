@@ -1,61 +1,54 @@
 package org.infinispan.commands.read;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.Set;
+
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
-import java.util.Set;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
- * Implements functionality defined by {@link org.infinispan.Cache#get(Object)} and
- * {@link org.infinispan.Cache#containsKey(Object)} operations
+ * Used to fetch a full CacheEntry rather than just the value.
+ * This functionality was originally incorporated into GetKeyValueCommand.
  *
- * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
- * @since 4.0
+ * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
+ * @since 7.1
  */
-public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFetchingCommand {
+public final class GetCacheEntryCommand extends AbstractDataCommand implements RemoteFetchingCommand {
 
-   public static final byte COMMAND_ID = 4;
-   private static final Log log = LogFactory.getLog(GetKeyValueCommand.class);
-   private static final boolean trace = log.isTraceEnabled();
+   public static final byte COMMAND_ID = 45;
 
+   private InternalEntryFactory entryFactory;
    private InternalCacheEntry remotelyFetchedValue;
 
-   public GetKeyValueCommand(Object key, Set<Flag> flags) {
+   public GetCacheEntryCommand(Object key, Set<Flag> flags, InternalEntryFactory entryFactory) {
       this.key = key;
       this.flags = flags;
+      this.entryFactory = entryFactory;
    }
 
-   public GetKeyValueCommand() {
+   public GetCacheEntryCommand() {
    }
 
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitGetKeyValueCommand(ctx, this);
+      return visitor.visitGetCacheEntryCommand(ctx, this);
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry == null || entry.isNull()) {
-         if (trace) {
-            log.trace("Entry not found");
-         }
          return null;
       }
       if (entry.isRemoved()) {
-         if (trace) {
-            log.tracef("Entry has been deleted and is of type %s", entry.getClass().getSimpleName());
-         }
          return null;
       }
-      return entry.getValue();
+      return entryFactory.copy(entry);
    }
 
    @Override
@@ -64,16 +57,10 @@ public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFet
    }
 
    @Override
-   @SuppressWarnings("unchecked")
    public void setParameters(int commandId, Object[] parameters) {
       if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
       key = parameters[0];
       flags = (Set<Flag>) parameters[1];
-   }
-
-   @Override
-   public Object[] getParameters() {
-      return new Object[]{key, Flag.copyWithoutRemotableFlags(flags)};
    }
 
    /**
@@ -92,9 +79,14 @@ public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFet
       return remotelyFetchedValue;
    }
 
+   @Override
+   public Object[] getParameters() {
+      return new Object[]{key, Flag.copyWithoutRemotableFlags(flags)};
+   }
+
    public String toString() {
       return new StringBuilder()
-            .append("GetKeyValueCommand {key=")
+            .append("GetCacheEntryCommand {key=")
             .append(toStr(key))
             .append(", flags=").append(flags)
             .append("}")
