@@ -1212,4 +1212,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Finished local rebalance for cache %s on node %s, topology id = %d", id = 328)
    void rebalanceCompleted(String cacheName, Address node, int topologyId);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to read rebalancing status from coordinator %s", id = 329)
+   void errorReadingRebalancingStatus(Address coordinator, @Cause Exception e);
 }

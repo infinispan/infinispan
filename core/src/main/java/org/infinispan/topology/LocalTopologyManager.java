@@ -45,7 +45,7 @@ public interface LocalTopologyManager {
     * @param viewId
     */
    // TODO Add a new class to hold the CacheJoinInfo and the CacheTopology
-   Map<String, CacheStatusResponse> handleStatusRequest(int viewId);
+   ManagerStatusResponse handleStatusRequest(int viewId);
 
    /**
     * Updates the current and/or pending consistent hash, without transferring any state.

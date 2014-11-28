@@ -135,4 +135,5 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int KEY_VALUE_FILTER_AS_CACHE_EVENT_FILTER = 138;
    int NULL_VALUE_CONVERTER = 139;
    int ACCEPT_ALL_KEY_VALUE_FILTER = 140;
+   int MANAGER_STATUS_RESPONSE = 141;
 }

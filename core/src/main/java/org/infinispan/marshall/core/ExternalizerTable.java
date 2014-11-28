@@ -55,11 +55,12 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyValueFilter;
+import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.NullValueConverter;
 import org.infinispan.marshall.exts.ArrayExternalizers;
+import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
 import org.infinispan.marshall.exts.EnumSetExternalizer;
 import org.infinispan.marshall.exts.ListExternalizer;
-import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
 import org.infinispan.marshall.exts.MapExternalizer;
 import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
 import org.infinispan.marshall.exts.SetExternalizer;
@@ -70,7 +71,6 @@ import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerReplicateCallable;
-import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterAsConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterAsKeyValueFilter;
 import org.infinispan.notifications.cachelistener.filter.ConverterAsCacheEventConverter;
@@ -89,6 +89,7 @@ import org.infinispan.statetransfer.TransactionInfo;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.topology.ManagerStatusResponse;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.InDoubtTxInfoImpl;
@@ -335,6 +336,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new KeyValueFilterAsCacheEventFilter.Externalizer());
       addInternalExternalizer(new NullValueConverter.Externalizer());
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer());
+      addInternalExternalizer(new ManagerStatusResponse.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

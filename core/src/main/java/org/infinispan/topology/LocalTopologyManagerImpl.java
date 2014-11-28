@@ -149,18 +149,30 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    // called by the coordinator
    @Override
-   public Map<String, CacheStatusResponse> handleStatusRequest(int viewId) {
-      Map<String, CacheStatusResponse> response = new HashMap<String, CacheStatusResponse>();
+   public ManagerStatusResponse handleStatusRequest(int viewId) {
+      Map<String, CacheStatusResponse> caches = new HashMap<String, CacheStatusResponse>();
       for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
          String cacheName = e.getKey();
          LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
          AvailabilityMode availabilityMode = cacheStatus.getPartitionHandlingManager() != null ?
                cacheStatus.getPartitionHandlingManager().getAvailabilityMode() : null;
-         response.put(e.getKey(), new CacheStatusResponse(cacheStatus.getJoinInfo(),
+         caches.put(e.getKey(), new CacheStatusResponse(cacheStatus.getJoinInfo(),
                cacheStatus.getCurrentTopology(), cacheStatus.getStableTopology(),
                availabilityMode));
       }
-      return response;
+
+      boolean rebalancingEnabled = true;
+      // Avoid adding a direct dependency to the ClusterTopologyManager
+      ReplicableCommand command = new CacheTopologyControlCommand(null,
+            CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(),
+            transport.getViewId());
+      try {
+         gcr.wireDependencies(command);
+         rebalancingEnabled = (Boolean) ((SuccessfulResponse) command.perform(null)).getResponseValue();
+      } catch (Throwable t) {
+         log.warn("Failed to obtain the rebalancing status", t);
+      }
+      return new ManagerStatusResponse(caches, rebalancingEnabled);
    }
 
    @Override
