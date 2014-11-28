@@ -1,6 +1,7 @@
 package org.infinispan.query.backend;
 
 import org.apache.lucene.index.SegmentInfos;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -14,6 +15,9 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
+import org.infinispan.query.queries.faceting.Car;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.CacheManagerCallable;
 import org.testng.annotations.AfterMethod;
@@ -42,6 +46,8 @@ public class QueryInterceptorTest {
 
    private final Person person1 = new Person("p1", "b1", 12);
    private final Person person2 = new Person("p2", "b2", 22);
+   private final Car car1 = new Car("subaru", "blue", 200);
+   private final Car car2 = new Car("lamborghini", "yellow", 230);
 
    @BeforeMethod
    protected void setup() throws Exception {
@@ -118,6 +124,34 @@ public class QueryInterceptorTest {
 
    }
 
+   @Test
+   public void shouldDeleteSingleIndex() throws Exception {
+     withCacheManager(new CacheManagerCallable(createCacheManager(MAX_CACHE_ENTRIES)) {
+         @Override
+         public void call() {
+            Cache<String, Object> cache = cm.getCache();
+            cache.put("P1", person1);
+            cache.put("P2", person2);
+            cache.put("C1", car1);
+            cache.put("C2", car2);
+            SearchManager searchManager = Search.getSearchManager(cache);
+
+            assertEquals(2, countIndex(Car.class, cache));
+            assertEquals(2, countIndex(Person.class, cache));
+
+            searchManager.purge(Car.class);
+            assertEquals(0, countIndex(Car.class, cache));
+            assertEquals(2, countIndex(Person.class, cache));
+
+            searchManager.purge(Person.class);
+            assertEquals(0, countIndex(Car.class, cache));
+            assertEquals(0, countIndex(Person.class, cache));
+         }
+      });
+
+
+   }
+
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
       return new DefaultCacheManager(
             new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build(),
@@ -133,6 +167,9 @@ public class QueryInterceptorTest {
       );
    }
 
+   private int countIndex(Class<?> entityType, Cache<?,?> cache) {
+      return Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), entityType).getResultSize();
+   }
 
    private static final class LuceneIndexTracker {
 

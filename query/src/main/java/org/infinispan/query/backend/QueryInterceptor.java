@@ -202,6 +202,18 @@ public final class QueryInterceptor extends CommandInterceptor {
       purgeAllIndexes(null);
    }
 
+   public void purgeIndex(Class<?> entityType) {
+      purgeIndex(null, entityType);
+   }
+
+   private void purgeIndex(TransactionContext transactionContext, Class<?> entityType) {
+      transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
+      if(clusterRegistry.get(entityType) && searchFactoryHandler.isIndexed(entityType)) {
+         performSearchWorks(searchWorkCreator.createPerEntityTypeWorks((Class<Object>) entityType, WorkType.PURGE_ALL), transactionContext);
+      }
+
+   }
+
    private void purgeAllIndexes(TransactionContext transactionContext) {
       transactionContext = transactionContext == null ? makeTransactionalEventContext() : transactionContext;
       for (Class c : clusterRegistry.keys()) {

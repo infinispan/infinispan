@@ -101,4 +101,11 @@ public interface SearchManager {
     */
    Analyzer getAnalyzer(Class<?> clazz);
 
+   /**
+    * Remove all entities of particular class from the index.
+    *
+    * @param entityType The class of the entity to remove.
+    */
+   void purge(Class<?> entityType);
+
 }
