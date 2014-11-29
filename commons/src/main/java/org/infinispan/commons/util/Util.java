@@ -1,13 +1,5 @@
 package org.infinispan.commons.util;
 
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.CacheException;
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.logging.Log;
-import org.infinispan.commons.logging.LogFactory;
-import org.infinispan.commons.marshall.Marshaller;
-
-import javax.naming.Context;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -26,6 +18,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.security.Principal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -33,10 +26,20 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import javax.naming.Context;
+import javax.security.auth.Subject;
+
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.CacheException;
+import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * General utility methods used throughout the Infinispan code base.
@@ -776,6 +779,16 @@ public final class Util {
          hashCode = 31 * hashCode + bytes[i];
 
       return hashCode;
+   }
+   
+   /**
+    * 
+    * Prints {@link Subject}'s principals as a one-liner 
+    * (as opposed to default Subject's <code>toString()</code> method, which prints every principal on separate line).
+    * 
+    */
+   public static String prettyPrintSubject(Subject subject) {
+      return (subject == null) ? "null" : "Subject with principal(s): " + toStr(subject.getPrincipals());
    }
 
 }
