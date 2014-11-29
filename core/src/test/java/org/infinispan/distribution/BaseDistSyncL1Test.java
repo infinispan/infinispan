@@ -50,10 +50,6 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
 
    protected IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
 
-   public BaseDistSyncL1Test() {
-      cleanup = CleanupPhase.AFTER_METHOD;
-   }
-
    @Override
    protected ConfigurationBuilder buildConfiguration() {
       ConfigurationBuilder builder = super.buildConfiguration();
