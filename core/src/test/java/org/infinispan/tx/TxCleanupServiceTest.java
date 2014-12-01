@@ -12,35 +12,34 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
+import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.mocks.ControlledCommandFactory;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
- * Test for https://issues.jboss.org/browse/ISPN-2383.
- *
- * A single execution of this test (or multiple for that reason)
- * might not verify the tested condition( that is  a transaction is not lost when the main owner of the single key it
- * touched has changed as a result of a node joining). That is because the key is generated before the new node to join
- * so we have no guarantees that the key will map to the new joiner (this is what we want to test). Running the test
- * several times significantly increases the chances for this happen.
+ * Test for https://issues.jboss.org/browse/ISPN-2383
  */
 @CleanupAfterMethod
-@Test(groups = "functional", testName = "tx.TxCleanupServiceTest", invocationCount = 10)
+@Test(groups = "functional", testName = "tx.TxCleanupServiceTest")
 public class TxCleanupServiceTest extends MultipleCacheManagersTest {
    private static final int TX_COUNT = 1;
    private ConfigurationBuilder dcc;
+   private ControlledConsistentHashFactory consistentHashFactory;
 
    @Override
    protected void createCacheManagers() throws Throwable {
       dcc = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, true);
       dcc.transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      dcc.clustering().hash().numOwners(1).stateTransfer().fetchInMemoryState(true);
+      consistentHashFactory = new ControlledConsistentHashFactory(1);
+      dcc.clustering().hash().numOwners(1).numSegments(1).consistentHashFactory(consistentHashFactory);
       createCluster(dcc, 2);
       waitForClusterToForm();
    }
@@ -56,7 +55,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       log.tracef("ViewId before %s", viewId);
 
       //fork it into another thread as this is going to block in commit
-      fork(new Callable<Object>() {
+      Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
             for (int i = 0; i < TX_COUNT; i++) {
@@ -83,6 +82,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
 
 
       //now add a one new member
+      consistentHashFactory.setOwnerIndexes(2);
       addClusterEnabledCacheManager(dcc);
       waitForClusterToForm();
 
@@ -100,7 +100,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
       }
 
       log.tracef("Number of migrated tx is %s", migratedTx.size());
-      if (migratedTx.size() == 0) return;
+      assertEquals(TX_COUNT, migratedTx.size());
 
       eventually(new Condition() {
          @Override
@@ -111,6 +111,8 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
 
       log.trace("Releasing the gate");
       ccf.gate.open();
+
+      future.get(10, TimeUnit.SECONDS);
 
       eventually(new Condition() {
          @Override
