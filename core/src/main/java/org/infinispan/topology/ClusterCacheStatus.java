@@ -384,6 +384,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             log.tracef("Cache %s no longer has any members, removing topology", cacheName);
             setCurrentTopology(null);
             setStableTopology(null);
+            if (isRebalanceInProgress()) {
+               removeRebalanceConfirmationCollector();
+            }
             // TODO Remove the cache from the cache status map in ClusterTopologyManagerImpl instead
             return;
          }
