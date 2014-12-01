@@ -16,6 +16,8 @@
 
    <properties>
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
+      <intermediary_jar_name>intermediary-${project.build.finalName}</intermediary_jar_name>
+      <intermediary_jar_path>${project.build.directory}/${intermediary_jar_name}.jar</intermediary_jar_path>
    </properties>
 
    <dependencies>
@@ -74,11 +76,13 @@
             <artifactId>maven-shade-plugin</artifactId>
             <executions>
                <execution>
+                  <id>none-default</id>
                   <phase>package</phase>
                   <goals>
                      <goal>shade</goal>
                   </goals>
                   <configuration>
+                     <finalName>${intermediary_jar_name}</finalName>
                      <artifactSet>
                         <excludes>
                            <exclude>org.infinispan:infinispan-remote</exclude>
@@ -102,17 +106,6 @@
                         </relocation>
                      </relocations>
                      <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                           <manifestEntries>
-                              <Implementation-Title>${project.description}</Implementation-Title>
-                              <Implementation-Vendor>JBoss, a division of Red Hat</Implementation-Vendor>
-                              <Implementation-Vendor-Id>${project.groupId}</Implementation-Vendor-Id>
-                              <Implementation-Version>${project.version}</Implementation-Version>
-                              <Specification-Title>${project.description}</Specification-Title>
-                              <Specification-Vendor>JBoss, a division of Red Hat</Specification-Vendor>
-                              <Specification-Version>${project.version}</Specification-Version>
-                           </manifestEntries>
-                        </transformer>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.DontIncludeResourceTransformer">
                            <resources>
                               <resource>blueprint.xml</resource>
@@ -129,34 +122,14 @@
             </executions>
          </plugin>
          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>unpack</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>unpack</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>${project.groupId}</groupId>
-                           <artifactId>${project.artifactId}</artifactId>
-                           <version>${project.version}</version>
-                           <type>jar</type>
-                           <overWrite>true</overWrite>
-                        </artifactItem>
-                     </artifactItems>
-                     <outputDirectory>${project.build.outputDirectory}</outputDirectory>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
             <groupId>org.apache.felix</groupId>
             <artifactId>maven-bundle-plugin</artifactId>
             <executions>
+               <execution>
+                  <id>default-bundle</id>
+                  <phase>none</phase>
+               </execution>
+
                <execution>
                   <id>bundle-package</id>
                   <phase>package</phase>
@@ -164,8 +137,9 @@
                      <goal>bundle</goal>
                   </goals>
                   <configuration>
-                     <excludeDependencies>*</excludeDependencies>
                      <instructions>
+                        <!-- Inline the jar created by the maven-shade-plugin. -->
+                        <Include-Resource>@${project.build.directory}/${intermediary_jar_name}.jar</Include-Resource>
                         <!-- Define packages from dependencies, exported further by current bundle -->
                         <_exportcontents>
                            org.infinispan.client.hotrod.*,
@@ -206,6 +180,11 @@
                            <file>target/classes/features.xml</file>
                            <type>xml</type>
                            <classifier>features</classifier>
+                        </artifact>
+                        <artifact>
+                           <file>target/${project.build.finalName}-shaded-sources.jar</file>
+                           <type>jar</type>
+                           <classifier>sources</classifier>
                         </artifact>
                      </artifacts>
                   </configuration>
