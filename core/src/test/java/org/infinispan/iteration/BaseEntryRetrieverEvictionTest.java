@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.LockSupport;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -37,12 +38,12 @@ public abstract class BaseEntryRetrieverEvictionTest extends BaseSetupEntryRetri
       }
 
       int expectedTime = 2;
-      long beforeInsert = System.nanoTime();
       // Now we insert a value that will expire in 2 seconds
       cache.put("expired", "this shouldn't be returned", expectedTime, TimeUnit.SECONDS);
 
       // We have to wait the time limit to make sure it is evicted before proceeding
-      waitUntil(beforeInsert + TimeUnit.SECONDS.toNanos(2) + 50);
+      long afterInsert = System.nanoTime();
+      waitUntil(afterInsert + TimeUnit.SECONDS.toNanos(expectedTime));
 
       cache.getAdvancedCache().filterEntries(new KeyFilterAsKeyValueFilter<Object, String>(
             new CollectionKeyFilter<>(Collections.emptySet())));
@@ -58,7 +59,7 @@ public abstract class BaseEntryRetrieverEvictionTest extends BaseSetupEntryRetri
 
    private void waitUntil(long expectedTime) throws InterruptedException {
       while (expectedTime - System.nanoTime() > 0) {
-          Thread.sleep(100);
+          LockSupport.parkUntil(expectedTime);
       }
    }
 }
