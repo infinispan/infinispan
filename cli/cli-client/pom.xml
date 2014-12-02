@@ -53,9 +53,19 @@
          <type>test-jar</type>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
+      </dependency>
    </dependencies>
 
    <build>
+      <resources>
+         <resource>
+            <directory>${basedir}/src/main/resources</directory>
+         </resource>
+      </resources>
       <plugins>
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>

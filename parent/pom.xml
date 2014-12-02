@@ -1309,16 +1309,17 @@
                 <artifactId>maven-scala-plugin</artifactId>
                 <version>${version.maven.scala}</version>
                 <executions>
+                   <!-- Executions are disabled by default. They're only enabled in modules that require them -->
                    <execution>
                       <id>compile</id>
-                      <phase>compile</phase>
+                      <phase>none</phase> <!-- compile -->
                       <goals>
                          <goal>compile</goal>
                       </goals>
                    </execution>
                    <execution>
                       <id>test-compile</id>
-                      <phase>test-compile</phase>
+                      <phase>none</phase> <!-- test-compile -->
                       <goals>
                          <goal>testCompile</goal>
                       </goals>
@@ -1329,14 +1330,14 @@
                       </configuration>
                    </execution>
                    <execution>
-                      <phase>process-resources</phase>
+                      <phase>none</phase> <!-- process-resources -->
                       <goals>
                          <goal>compile</goal>
                       </goals>
                    </execution>
                    <execution>
                       <id>generate-blueprint</id>
-                      <phase>prepare-package</phase>
+                      <phase>none</phase>
                       <goals>
                          <goal>script</goal>
                       </goals>

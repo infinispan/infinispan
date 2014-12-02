@@ -4,7 +4,9 @@ import org.infinispan.cli.CommandBuffer;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.impl.CommandBufferImpl;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices(org.infinispan.cli.commands.Command.class)
 public class Ping extends AbstractServerCommand {
 
    @Override

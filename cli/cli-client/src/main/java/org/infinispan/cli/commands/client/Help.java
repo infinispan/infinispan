@@ -11,7 +11,9 @@ import org.infinispan.cli.commands.Command;
 import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.shell.Completer;
 import org.infinispan.cli.shell.Man2Ansi;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices(org.infinispan.cli.commands.Command.class)
 public class Help extends AbstractCommand {
 
    @Override

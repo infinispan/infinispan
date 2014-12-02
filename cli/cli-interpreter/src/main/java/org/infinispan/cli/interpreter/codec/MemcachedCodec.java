@@ -6,6 +6,7 @@ import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.server.memcached.MemcachedValue;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 /**
  *
@@ -14,6 +15,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 5.2
  */
+@MetaInfServices(org.infinispan.cli.interpreter.codec.Codec.class)
 public class MemcachedCodec extends AbstractCodec {
    private static final Log log = LogFactory.getLog(Interpreter.class, Log.class);
    private Charset UTF8 = Charset.forName("UTF-8");

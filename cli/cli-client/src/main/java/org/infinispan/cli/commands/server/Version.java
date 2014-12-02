@@ -2,7 +2,9 @@ package org.infinispan.cli.commands.server;
 
 import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.ProcessedCommand;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices(org.infinispan.cli.commands.Command.class)
 public class Version extends AbstractServerCommand {
 
    @Override

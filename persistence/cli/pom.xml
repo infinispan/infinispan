@@ -47,16 +47,8 @@
             <artifactId>maven-scala-plugin</artifactId>
             <executions>
                <execution>
-                  <id>default</id>
-                  <phase>none</phase>
-               </execution>
-               <execution>
-                  <id>compile</id>
-                  <phase>none</phase>
-               </execution>
-               <execution>
-                  <id>test-compile</id>
-                  <phase>none</phase>
+                  <id>generate-blueprint</id>
+                  <phase>prepare-package</phase>
                </execution>
             </executions>
          </plugin>

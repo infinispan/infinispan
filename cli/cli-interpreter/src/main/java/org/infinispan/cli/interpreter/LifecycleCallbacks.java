@@ -13,7 +13,9 @@ import org.infinispan.jmx.JmxUtil;
 import org.infinispan.jmx.ResourceDMBean;
 import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
 public class LifecycleCallbacks extends AbstractModuleLifecycle {
    private static final Log log = LogFactory.getLog(LifecycleCallbacks.class, Log.class);
 

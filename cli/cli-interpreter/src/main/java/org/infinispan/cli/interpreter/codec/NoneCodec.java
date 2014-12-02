@@ -1,5 +1,6 @@
 package org.infinispan.cli.interpreter.codec;
 
+import org.kohsuke.MetaInfServices;
 /**
  *
  * NoneCodec. This codec leaves keys/values as is without applying any transformation
@@ -8,6 +9,7 @@ package org.infinispan.cli.interpreter.codec;
  * @author Tristan Tarrant
  * @since 5.2
  */
+@MetaInfServices(org.infinispan.cli.interpreter.codec.Codec.class)
 public class NoneCodec extends AbstractCodec {
 
    @Override
