@@ -916,9 +916,10 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             }
          };
 
-         Address target = getOwningTask().getTaskFailoverPolicy().failover(fc);
+         Address failoverTarget = getOwningTask().getTaskFailoverPolicy().failover(fc);
+         log.distributedTaskFailover(fc.executionFailureLocation(), failoverTarget, cause);
          DistributedTaskPart<V> part = createDistributedTaskPart(owningTask, distCommand,
-               getInputKeys(), target, failedOverCount);
+               getInputKeys(), failoverTarget, failedOverCount);
          part.execute();
          return part.get(timeout, unit);
       }

@@ -1216,4 +1216,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to read rebalancing status from coordinator %s", id = 329)
    void errorReadingRebalancingStatus(Address coordinator, @Cause Exception e);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Distributed task failed at %s. The task is failing over to be executed at %s", id = 330)
+   void distributedTaskFailover(Address failedAtAddress, Address failoverTarget, @Cause Exception e);
 }
