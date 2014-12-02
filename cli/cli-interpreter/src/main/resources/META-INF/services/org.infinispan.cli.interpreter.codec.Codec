@@ -1,4 +1,0 @@
-org.infinispan.cli.interpreter.codec.NoneCodec
-org.infinispan.cli.interpreter.codec.HotRodCodec
-org.infinispan.cli.interpreter.codec.MemcachedCodec
-org.infinispan.cli.interpreter.codec.RestCodec

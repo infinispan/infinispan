@@ -5,7 +5,9 @@ import java.util.List;
 import org.infinispan.cli.Context;
 import org.infinispan.cli.commands.ProcessedCommand;
 import org.infinispan.cli.shell.Completer;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices(org.infinispan.cli.commands.Command.class)
 public class Info extends AbstractServerCommand {
 
    @Override

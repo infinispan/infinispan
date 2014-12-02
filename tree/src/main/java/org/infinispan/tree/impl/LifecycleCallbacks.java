@@ -6,6 +6,7 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.tree.Fqn;
 import org.infinispan.tree.Fqn.Externalizer;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.kohsuke.MetaInfServices;
 
 import java.util.Map;
 
@@ -18,6 +19,7 @@ import java.util.Map;
  * @author Galder Zamarreño
  * @since 5.0
  */
+@MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
 public class LifecycleCallbacks extends AbstractModuleLifecycle {
 
    @Override

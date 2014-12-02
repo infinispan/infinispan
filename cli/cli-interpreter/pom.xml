@@ -92,10 +92,30 @@
          <artifactId>jetty-embedded</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
+         <optional>true</optional>
+      </dependency>
    </dependencies>
 
    <build>
+      <resources>
+         <resource>
+            <directory>${basedir}/src/main/resources</directory>
+         </resource>
+      </resources>
       <plugins>
+         <plugin>
+            <groupId>org.scala-tools</groupId>
+            <artifactId>maven-scala-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>generate-blueprint</id>
+                  <phase>prepare-package</phase>
+               </execution>
+            </executions>
+         </plugin>
          <plugin>
             <groupId>org.antlr</groupId>
             <artifactId>antlr3-maven-plugin</artifactId>
@@ -108,6 +128,11 @@
                   <Export-Package>
                      ${project.groupId}.cli.interpreter.*;version=${project.version};-split-package:=error
                   </Export-Package>
+                  <Include-Resource>
+                     {maven-resources},
+                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
+                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
+                  </Include-Resource>
                </instructions>
             </configuration>
          </plugin>

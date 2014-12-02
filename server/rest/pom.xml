@@ -23,6 +23,19 @@
          <plugin>
             <groupId>org.scala-tools</groupId>
             <artifactId>maven-scala-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>compile</id>
+                  <phase>compile</phase>
+               </execution>
+               <execution>
+                  <id>test-compile</id>
+                  <phase>test-compile</phase>
+               </execution>
+               <execution>
+                  <phase>process-resources</phase>
+               </execution>
+            </executions>
          </plugin>
          <plugin>
             <groupId>org.mortbay.jetty</groupId>
@@ -31,7 +44,6 @@
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
             <configuration>
-               
                <attachClasses>true</attachClasses>
             </configuration>
          </plugin>

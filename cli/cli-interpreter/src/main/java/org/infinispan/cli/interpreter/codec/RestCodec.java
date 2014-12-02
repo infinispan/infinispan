@@ -3,6 +3,7 @@ package org.infinispan.cli.interpreter.codec;
 import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.remoting.MIMECacheEntry;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 /**
  * RestCodec.
@@ -10,6 +11,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 5.2
  */
+@MetaInfServices(org.infinispan.cli.interpreter.codec.Codec.class)
 public class RestCodec extends AbstractCodec {
    public static final Log log = LogFactory.getLog(RestCodec.class, Log.class);
 

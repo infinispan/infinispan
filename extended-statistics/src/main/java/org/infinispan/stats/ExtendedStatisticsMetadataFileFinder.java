@@ -1,11 +1,14 @@
 package org.infinispan.stats;
 
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
+import org.kohsuke.MetaInfServices;
 
 /**
  * @author Pedro Ruivo
  * @since 6.0
  */
+
+@MetaInfServices
 public class ExtendedStatisticsMetadataFileFinder implements ModuleMetadataFileFinder {
    @Override
    public String getMetadataFilename() {

@@ -1,7 +1,9 @@
 package org.infinispan.cli.interpreter;
 
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
+import org.kohsuke.MetaInfServices;
 
+@MetaInfServices
 public class InterpreterMetadataFileFinder implements ModuleMetadataFileFinder {
 
    @Override

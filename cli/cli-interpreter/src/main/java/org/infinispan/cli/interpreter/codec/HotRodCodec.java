@@ -4,6 +4,7 @@ import org.infinispan.cli.interpreter.logging.Log;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.util.logging.LogFactory;
+import org.kohsuke.MetaInfServices;
 
 /**
  * HotRodCodec.
@@ -11,6 +12,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 5.2
  */
+@MetaInfServices(org.infinispan.cli.interpreter.codec.Codec.class)
 public class HotRodCodec extends AbstractCodec {
    public static final Log log = LogFactory.getLog(HotRodCodec.class, Log.class);
    Marshaller marshaller = new GenericJBossMarshaller(); // FIXME: assumes that clients will marshall using this
