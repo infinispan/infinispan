@@ -66,6 +66,11 @@
          <scope>test</scope>
       </dependency>
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-embedded</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+      <dependency>
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-core</artifactId>
          <scope>test</scope>
@@ -249,7 +254,6 @@
                </properties>
             </configuration>
             <executions>
-               
                <execution>
                   <id>default-test</id>
                   <phase>test</phase>
