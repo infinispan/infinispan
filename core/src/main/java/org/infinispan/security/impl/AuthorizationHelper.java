@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.security.auth.Subject;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.AuthorizationConfiguration;
 import org.infinispan.configuration.global.GlobalSecurityConfiguration;
 import org.infinispan.registry.ClusterRegistry;
@@ -73,7 +74,7 @@ public class AuthorizationHelper {
                }
             } catch (SecurityException e) {
                audit.audit(subject, context, name, perm, AuditResponse.DENY);
-               throw log.unauthorizedAccess(String.valueOf(subject), perm.toString());
+               throw log.unauthorizedAccess(Util.prettyPrintSubject(subject), perm.toString());
             }
          }
       }
