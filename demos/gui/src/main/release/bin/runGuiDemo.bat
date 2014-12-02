@@ -3,15 +3,17 @@
 setlocal enabledelayedexpansion
 set ISPN_HOME=%~dp0
 set ISPN_HOME="%ISPN_HOME%.."
+set DEMO_HOME=%ISPN_HOME%\demos\gui
 
-for %%i in (%ISPN_HOME%\*.jar) do (
-   set CP=%CP%;%%i
-)
-set /p CP=<%ISPN_HOME%\demos\gui\etc\runtime-classpath.txt
-set CP=%CP::=;%
-set CP=%ISPN_HOME%\demos\gui\etc;%CP%
+set CP=
+for %%i in (%ISPN_HOME%\*.jar) do call :append_to_cp %%i
+
+set /p RUNTIME_CP=<%DEMO_HOME%\etc\runtime-classpath.txt
+set CP=%RUNTIME_CP::=;%;%CP%
+
+set CP=%DEMO_HOME%\etc;%CP%
 set CP=%CP:$ISPN_HOME=!ISPN_HOME!%
-set CP=%ISPN_HOME%\demos\gui\infinispan-gui-demo.jar;%CP%
+set CP=%DEMO_HOME%\infinispan-gui-demo.jar;%CP%
 rem echo libs: %CP%
 
 :test
@@ -20,3 +22,9 @@ netstat -an | findstr ":%TESTPORT% "
 if %ERRORLEVEL%==0 goto test
 
 java -cp "%CP%" -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=%TESTPORT% -Djgroups.bind_addr=127.0.0.1 -Djava.net.preferIPv4Stack=true -Dlog4j.configuration=%ISPN_HOME%\configs\log4j\log4j.xml -Dsun.nio.ch.bugLevel="" org.infinispan.demo.InfinispanDemo
+
+goto :eof
+
+:append_to_cp
+set CP=%CP%;%1
+goto :eof
