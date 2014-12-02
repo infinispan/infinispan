@@ -42,8 +42,7 @@ public abstract class BaseEntryRetrieverEvictionTest extends BaseSetupEntryRetri
       cache.put("expired", "this shouldn't be returned", expectedTime, TimeUnit.SECONDS);
 
       // We have to wait the time limit to make sure it is evicted before proceeding
-      long afterInsert = System.nanoTime();
-      waitUntil(afterInsert + TimeUnit.SECONDS.toNanos(expectedTime));
+      Thread.sleep(TimeUnit.SECONDS.toMillis(expectedTime) + 50);
 
       cache.getAdvancedCache().filterEntries(new KeyFilterAsKeyValueFilter<Object, String>(
             new CollectionKeyFilter<>(Collections.emptySet())));
@@ -55,11 +54,5 @@ public abstract class BaseEntryRetrieverEvictionTest extends BaseSetupEntryRetri
       }
 
       assertEquals(valuesInserted, results);
-   }
-
-   private void waitUntil(long expectedTime) throws InterruptedException {
-      while (expectedTime - System.nanoTime() > 0) {
-          LockSupport.parkUntil(expectedTime);
-      }
    }
 }
