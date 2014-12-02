@@ -720,6 +720,7 @@ public class TestingUtil {
          TransactionManager txm = TestingUtil.getTransactionManager(cache);
          if (txm == null) return;
          try {
+            if (txm.getTransaction() == null) return;
             txm.rollback();
          }
          catch (Exception e) {
