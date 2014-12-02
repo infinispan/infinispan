@@ -98,7 +98,7 @@ Explanation of the configuration options:
 
 * `shared` (false by default) indicates that the cache loader is shared among different cache instances, for example where all instances in a cluster use the same JDBC settings to talk to the same remote, shared database. Setting this to true prevents repeated and unnecessary writes of the same data to the cache loader by different cache instances.
 
-* `purge`(false by default) empties the specified cache loader (if `read-only` is false) when the cache loader starts up.
+* `purge` (false by default) empties the specified cache loader (if `read-only` is false) when the cache loader starts up.
 
 * `read-only` (false by default) prevents new data to be persisted to the store.
 
@@ -639,8 +639,8 @@ A cluster cache loader can be used as a non-blocking (partial) alternative to _s
 ----
 
 ConfigurationBuilder b = new ConfigurationBuilder();
-b.loaders()
-    .addClusterCacheLoader()
+b.persistence()
+    .addClusterLoader()
     .remoteCallTimeout(500);
 
 ----
@@ -676,7 +676,7 @@ receive invocations via the CLI can be found in the
 ----
 
 ConfigurationBuilder b = new ConfigurationBuilder();
-b.loaders()
+b.persistence()
     .addStore(CLInterfaceLoaderConfigurationBuilder.class)
     .connectionString("jmx://1.2.3.4:4444/MyCacheManager/myCache");
 
