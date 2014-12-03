@@ -1440,6 +1440,7 @@
                   <Export-Package>${project.groupId}.*;version=${project.version};-split-package:=error</Export-Package>
                   <_consumer-policy>${bnd.consumer.policy}</_consumer-policy>
                   <_provider-policy>${bnd.provider.policy}</_provider-policy>
+                  <Include-Resource>{maven-resources}</Include-Resource>
                </instructions>
             </configuration>
          </plugin>

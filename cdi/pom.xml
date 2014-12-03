@@ -140,9 +140,6 @@
          <resource>
             <directory>${project.basedir}/src/main/resources</directory>
          </resource>
-         <resource>
-            <directory>${project.build.outputDirectory}</directory>
-         </resource>
       </resources>
       <plugins>
          
@@ -168,6 +165,11 @@
                   <Export-Package>
                      ${project.groupId}.cdi.*;version=${project.version};-split-package:=error
                   </Export-Package>
+                  <Include-Resource>
+                     {maven-resources},
+                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
+                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
+                  </Include-Resource>
                </instructions>
             </configuration>
          </plugin>

@@ -120,9 +120,6 @@
                <exclude>features.xml</exclude>
             </excludes>
          </resource>
-         <resource>
-            <directory>${project.build.outputDirectory}</directory>
-         </resource>
       </resources>
       <pluginManagement>
          <plugins>
@@ -228,9 +225,12 @@
                   <Import-Package>
                   !sun.reflect,
                   *
-                  
                   </Import-Package>
-                  
+                  <Include-Resource>
+                     {maven-resources},
+                     /META-INF/services=${project.basedir}/target/classes/META-INF/services,
+                     /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
+                  </Include-Resource>
                   <DynamicImport-Package>*</DynamicImport-Package>
                </instructions>
             </configuration>
