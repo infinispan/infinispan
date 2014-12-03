@@ -166,7 +166,7 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
          log.trace("Possible leaked threads at the end of the test suite:");
          for (Map.Entry<Thread, StackTraceElement[]> s : Thread.getAllStackTraces().entrySet()) {
             Thread thread = s.getKey();
-            if (thread.getName().startsWith("TestNG")
+            if (thread.getName().startsWith("testng-")
                   || seenThreads != null && seenThreads.contains(thread.getName() + "-" + thread.getId() + "-" + thread.hashCode())) {
                continue;
             }

@@ -258,6 +258,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             return;
 
          if (mustRecoverClusterStatus) {
+            // Clean up leftover cache status information from the last time we were coordinator.
+            // E.g. if the local node was coordinator, started a rebalance, and then lost coordinator
+            // status because of a merge, the existing cache statuses may have a rebalance in progress.
+            cacheStatusMap.clear();
             try {
                recoverClusterStatus(newViewId, mergeView, transport.getMembers());
                mustRecoverClusterStatus = false;
