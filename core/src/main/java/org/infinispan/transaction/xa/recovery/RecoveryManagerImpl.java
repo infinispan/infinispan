@@ -7,6 +7,7 @@ import org.infinispan.commands.remote.recovery.GetInDoubtTxInfoCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -127,7 +128,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
       //todo make sure this gets broad casted or at least flushed
       if (rpcManager != null) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(xid, gtx);
-         rpcManager.invokeRemotely(lockOwners, ftc, rpcManager.getDefaultRpcOptions(sync, false));
+         rpcManager.invokeRemotely(lockOwners, ftc, rpcManager.getDefaultRpcOptions(sync, DeliverOrder.NONE));
       }
       removeRecoveryInformation(xid);
    }
@@ -136,7 +137,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
    public void removeRecoveryInformationFromCluster(Collection<Address> where, long internalId, boolean sync) {
       if (rpcManager != null) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(internalId);
-         rpcManager.invokeRemotely(where, ftc, rpcManager.getDefaultRpcOptions(sync, false));
+         rpcManager.invokeRemotely(where, ftc, rpcManager.getDefaultRpcOptions(sync, DeliverOrder.NONE));
       }
       removeRecoveryInformation(internalId);
    }

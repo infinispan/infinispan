@@ -19,6 +19,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.RemoteException;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ClusteredGetResponseValidityFilter;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -106,7 +107,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
       get.setWrite(isWrite);
 
-      RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, false);
+      RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(ResponseMode.WAIT_FOR_VALID_RESPONSE, DeliverOrder.NONE);
       int lastTopologyId = -1;
       InternalCacheEntry value = null;
       while (value == null) {
@@ -121,12 +122,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          if (lastTopologyId < currentTopologyId) {
             // Cache topology has changed or it is the first time.
             lastTopologyId = currentTopologyId;
-            targets = new ArrayList<Address>(cacheTopology.getReadConsistentHash().locateOwners(key));
+            targets = new ArrayList<>(cacheTopology.getReadConsistentHash().locateOwners(key));
          } else if (lastTopologyId == currentTopologyId && cacheTopology.getPendingCH() != null) {
             // Same topologyId, but the owners could have already installed the next topology
             // Lets try with pending consistent owners (the read owners in the next topology)
             lastTopologyId = currentTopologyId + 1;
-            targets = new ArrayList<Address>(cacheTopology.getPendingCH().locateOwners(key));
+            targets = new ArrayList<>(cacheTopology.getPendingCH().locateOwners(key));
             // Remove already contacted nodes
             targets.removeAll(cacheTopology.getReadConsistentHash().locateOwners(key));
             if (targets.isEmpty()) {

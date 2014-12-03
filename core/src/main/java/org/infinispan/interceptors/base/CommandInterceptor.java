@@ -14,7 +14,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -23,7 +22,7 @@ import org.infinispan.util.logging.LogFactory;
  * intercept invocations on {@link VisitableCommand}s.
  * <p/>
  * Commands are either created by the {@link CacheImpl} (for invocations on the {@link Cache} public interface), or
- * by the {@link InboundInvocationHandler} for remotely originating invocations, and are passed up the interceptor chain
+ * by the {@link org.infinispan.remoting.inboundhandler.InboundInvocationHandler} for remotely originating invocations, and are passed up the interceptor chain
  * by using the {@link InterceptorChain} helper class.
  * <p/>
  * When writing interceptors, authors can either override a specific visitXXX() method (such as {@link

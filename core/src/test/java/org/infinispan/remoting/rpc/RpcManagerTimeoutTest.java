@@ -2,16 +2,17 @@ package org.infinispan.remoting.rpc;
 
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -73,19 +74,19 @@ public class RpcManagerTimeoutTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      builder.transaction().transactionProtocol(TransactionProtocol.TOTAL_ORDER);
       createClusteredCaches(4, CACHE_NAME, builder);
       waitForClusterToForm(CACHE_NAME);
    }
 
    private void doTest(ResponseFilter filter, boolean totalOrder, boolean broadcast) {
       RpcManager rpcManager = advancedCache(0, CACHE_NAME).getRpcManager();
-      RpcOptionsBuilder builder = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
-            .timeout(1000, TimeUnit.MILLISECONDS)
-            .totalOrder(totalOrder);
+      RpcOptionsBuilder builder = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS, totalOrder ? DeliverOrder.TOTAL : DeliverOrder.NONE)
+            .timeout(1000, TimeUnit.MILLISECONDS);
       ArrayList<Address> recipients = null;
       if (!broadcast) {
          List<Address> members = rpcManager.getMembers();
-         recipients = new ArrayList<Address>(2);
+         recipients = new ArrayList<>(2);
          recipients.add(members.get(2));
          recipients.add(members.get(3));
       }

@@ -15,13 +15,15 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.context.Flag;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
@@ -73,8 +75,8 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    @BeforeClass
    public void setUp() {
       executorService = new DummyTaskCountExecutorService();
-      BlockingTaskAwareExecutorService remoteExecutorService = new BlockingTaskAwareExecutorServiceImpl(executorService,
-                                                                                                        TIME_SERVICE);
+      final BlockingTaskAwareExecutorService remoteExecutorService = new BlockingTaskAwareExecutorServiceImpl(executorService,
+                                                                                                              TIME_SERVICE);
       ConfigurationBuilder builder = getDefaultCacheConfiguration(false);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
       cacheManager = createClusteredCacheManager(builder);
@@ -88,12 +90,14 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       } else {
          Assert.fail("Expected a JGroups Transport");
       }
+      ComponentRegistry registry = cache.getAdvancedCache().getComponentRegistry();
+      registry.registerComponent(remoteExecutorService, KnownComponentNames.REMOTE_COMMAND_EXECUTOR);
+      registry.rewire();
+      GlobalComponentRegistry globalRegistry = cache.getCacheManager().getGlobalComponentRegistry();
+      globalRegistry.registerComponent(remoteExecutorService, KnownComponentNames.REMOTE_COMMAND_EXECUTOR);
+      globalRegistry.rewire();
+
       commandsFactory = extractCommandsFactory(cache);
-      TestingUtil.replaceField(remoteExecutorService, "remoteCommandsExecutor", commandAwareRpcDispatcher,
-                               CommandAwareRpcDispatcher.class);
-      TestingUtil.replaceField(remoteExecutorService, "remoteCommandsExecutor",
-                               extractGlobalComponent(cacheManager, InboundInvocationHandler.class),
-                               InboundInvocationHandlerImpl.class);
 
       GetKeyValueCommand getKeyValueCommand =
             new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet(), false, new InternalEntryFactoryImpl());
@@ -102,7 +106,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
                                    new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet(), AnyEquivalence.getInstance());
 
       //populate commands
-      blockingCacheRpcCommand = new ReduceCommand<Object, Object>("task", null, cacheName, null);
+      blockingCacheRpcCommand = new ReduceCommand<>("task", null, cacheName, null);
       nonBlockingCacheRpcCommand = new ClusteredGetCommand("key", cacheName, null, false, null, null);
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, null, 0);
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
@@ -188,6 +192,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
          return null;
       }
       Message message = new Message(null, from, buffer.getBuf(), buffer.getOffset(), buffer.getLength());
+      message.setFlag(Message.Flag.NO_TOTAL_ORDER);
       if (oob) {
          message.setFlag(Message.Flag.OOB);
       }

@@ -1,5 +1,7 @@
 package org.infinispan.remoting.rpc;
 
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -12,26 +14,37 @@ public class RpcOptions {
 
    private final long timeout;
    private final TimeUnit unit;
-   private final boolean fifoOrder;
-   private final boolean totalOrder;
    private final ResponseFilter responseFilter;
    private final ResponseMode responseMode;
+   private final DeliverOrder deliverOrder;
    private final boolean skipReplicationQueue;
 
+   /**
+    * @deprecated use instead {@link #RpcOptions(long, java.util.concurrent.TimeUnit, ResponseFilter, ResponseMode,
+    * boolean, org.infinispan.remoting.inboundhandler.DeliverOrder)}
+    */
+   @Deprecated
    public RpcOptions(long timeout, TimeUnit unit, ResponseFilter responseFilter,
                      ResponseMode responseMode, boolean skipReplicationQueue, boolean fifoOrder, boolean totalOrder) {
+      this(timeout, unit, responseFilter, responseMode, skipReplicationQueue,
+           totalOrder ? DeliverOrder.TOTAL : (fifoOrder ? DeliverOrder.PER_SENDER : DeliverOrder.NONE));
+   }
+
+   public RpcOptions(long timeout, TimeUnit unit, ResponseFilter responseFilter, ResponseMode responseMode,
+                     boolean skipReplicationQueue, DeliverOrder deliverOrder) {
       if (unit == null) {
          throw new IllegalArgumentException("TimeUnit cannot be null");
       } else if (responseMode == null) {
          throw new IllegalArgumentException("ResponseMode cannot be null");
+      } else if (deliverOrder == null) {
+         throw new IllegalArgumentException("DeliverMode cannot be null");
       }
       this.timeout = timeout;
       this.unit = unit;
-      this.fifoOrder = fifoOrder;
-      this.totalOrder = totalOrder;
       this.responseFilter = responseFilter;
       this.responseMode = responseMode;
       this.skipReplicationQueue = skipReplicationQueue;
+      this.deliverOrder = deliverOrder;
    }
 
    /**
@@ -42,29 +55,40 @@ public class RpcOptions {
    }
 
    /**
-    * @return  the {@link TimeUnit} in which the timeout value is.
+    * @return the {@link TimeUnit} in which the timeout value is.
     */
    public TimeUnit timeUnit() {
       return unit;
    }
 
    /**
-    * @return  {@code true} if the message is to be delivered in FIFO order.
+    * @return {@code true} if the message is to be delivered in FIFO order.
+    * @deprecated use instead {@link #deliverOrder()}.
     */
+   @Deprecated
    public boolean fifoOrder() {
-      return fifoOrder;
+      return deliverOrder == DeliverOrder.PER_SENDER;
    }
 
    /**
-    * @return  {@code true} if the message is to be delivered in total order.
+    * @return {@code true} if the message is to be delivered in total order.
+    * @deprecated use instead {@link #deliverOrder()}.
     */
+   @Deprecated
    public boolean totalOrder() {
-      return totalOrder;
+      return deliverOrder == DeliverOrder.TOTAL;
+   }
+
+   /**
+    * @return the {@link org.infinispan.remoting.inboundhandler.DeliverOrder}.
+    */
+   public DeliverOrder deliverOrder() {
+      return deliverOrder;
    }
 
    /**
     * @return the {@link ResponseFilter} to be used. Default is {@code null} meaning waiting for all or none responses
-    *         depending if the remote invocation is synchronous or asynchronous respectively.
+    * depending if the remote invocation is synchronous or asynchronous respectively.
     */
    public ResponseFilter responseFilter() {
       return responseFilter;
@@ -79,8 +103,8 @@ public class RpcOptions {
 
    /**
     * @return if {@code true}, the remote invocation will never be dispatch to the {@link
-    *         org.infinispan.remoting.ReplicationQueue}. However, only asynchronous remote invocation may be dispatched
-    *         to the {@link org.infinispan.remoting.ReplicationQueue}.
+    * org.infinispan.remoting.ReplicationQueue}. However, only asynchronous remote invocation may be dispatched to the
+    * {@link org.infinispan.remoting.ReplicationQueue}.
     */
    public boolean skipReplicationQueue() {
       return skipReplicationQueue;
@@ -95,8 +119,7 @@ public class RpcOptions {
 
       if (skipReplicationQueue != options.skipReplicationQueue) return false;
       if (timeout != options.timeout) return false;
-      if (fifoOrder != options.fifoOrder) return false;
-      if (totalOrder != options.totalOrder) return false;
+      if (deliverOrder != options.deliverOrder) return false;
       if (responseFilter != null ? !responseFilter.equals(options.responseFilter) : options.responseFilter != null)
          return false;
       if (responseMode != options.responseMode) return false;
@@ -109,8 +132,7 @@ public class RpcOptions {
    public int hashCode() {
       int result = (int) (timeout ^ (timeout >>> 32));
       result = 31 * result + unit.hashCode();
-      result = 31 * result + (fifoOrder ? 1 : 0);
-      result = 31 * result + (totalOrder ? 1 : 0);
+      result = 31 * result + deliverOrder.hashCode();
       result = 31 * result + (responseFilter != null ? responseFilter.hashCode() : 0);
       result = 31 * result + responseMode.hashCode();
       result = 31 * result + (skipReplicationQueue ? 1 : 0);
@@ -122,8 +144,7 @@ public class RpcOptions {
       return "RpcOptions{" +
             "timeout=" + timeout +
             ", unit=" + unit +
-            ", fifoOrder=" + fifoOrder +
-            ", totalOrder=" + totalOrder +
+            ", deliverOrder=" + deliverOrder +
             ", responseFilter=" + responseFilter +
             ", responseMode=" + responseMode +
             ", skipReplicationQueue=" + skipReplicationQueue +

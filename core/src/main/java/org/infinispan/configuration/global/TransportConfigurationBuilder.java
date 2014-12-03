@@ -33,6 +33,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    private Properties properties = new Properties();
    private final ThreadPoolConfigurationBuilder transportThreadPool;
    private final ThreadPoolConfigurationBuilder remoteCommandThreadPool;
+   @Deprecated
    private final ThreadPoolConfigurationBuilder totalOrderThreadPool;
 
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
@@ -179,6 +180,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
       return remoteCommandThreadPool;
    }
 
+   @Deprecated
    public ThreadPoolConfigurationBuilder totalOrderThreadPool() {
       return totalOrderThreadPool;
    }

@@ -119,12 +119,12 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       StateSequencer ss = new StateSequencer();
       ss.logicalThread("main", "main:st_in_progress", "main:2nd_node_left", "main:cluster_unavailable", "main:after_cluster_unavailable");
 
-      advanceOnInboundRpc(ss, manager(a1),
+      advanceOnInboundRpc(ss, advancedCache(a1),
             matchCommand(StateResponseCommand.class).matchCount(0).build())
             .before("main:st_in_progress", "main:cluster_unavailable");
       // When the coordinator node stops gracefully there are two rebalance operations, one with the old coord
       // and one with the new coord. The second
-      advanceOnInboundRpc(ss, manager(a1),
+      advanceOnInboundRpc(ss, advancedCache(a1),
             matchCommand(StateResponseCommand.class).matchCount(1).build())
             .before("main:after_cluster_unavailable");
 

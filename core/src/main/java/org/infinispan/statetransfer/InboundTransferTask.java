@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -35,12 +36,12 @@ public class InboundTransferTask {
    /**
     * All access to fields {@code segments} and {@code finishedSegments} must bead done while synchronizing on {@code segments}.
     */
-   private final Set<Integer> segments = new HashSet<Integer>();
+   private final Set<Integer> segments = new HashSet<>();
 
    /**
     * All access to fields {@code segments} and {@code finishedSegments} must bead done while synchronizing on {@code segments}.
     */
-   private final Set<Integer> finishedSegments = new HashSet<Integer>();
+   private final Set<Integer> finishedSegments = new HashSet<>();
 
    private final Address source;
 
@@ -105,13 +106,13 @@ public class InboundTransferTask {
 
    public Set<Integer> getSegments() {
       synchronized (segments) {
-         return new HashSet<Integer>(segments);
+         return new HashSet<>(segments);
       }
    }
 
    public Set<Integer> getUnfinishedSegments() {
       synchronized (segments) {
-         Set<Integer> unfinishedSegments = new HashSet<Integer>(segments);
+         Set<Integer> unfinishedSegments = new HashSet<>(segments);
          unfinishedSegments.removeAll(finishedSegments);
          return unfinishedSegments;
       }
@@ -210,7 +211,7 @@ public class InboundTransferTask {
             StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId,
             cancelledSegments);
       try {
-         rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcManager.getDefaultRpcOptions(false, false));
+         rpcManager.invokeRemotely(Collections.singleton(source), cmd, rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
       } catch (Exception e) {
          // Ignore exceptions here, the worst that can happen is that the provider will send some extra state
          log.debugf("Caught an exception while cancelling state transfer for segments %s from %s",

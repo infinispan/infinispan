@@ -8,6 +8,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -204,6 +205,11 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    }
 
    @Override
+   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder) {
+      return actual.getRpcOptionsBuilder(responseMode, deliverOrder);
+   }
+
+   @Override
    public RpcOptions getDefaultRpcOptions(boolean sync) {
       return actual.getDefaultRpcOptions(sync);
    }
@@ -211,6 +217,11 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    @Override
    public RpcOptions getDefaultRpcOptions(boolean sync, boolean fifoOrder) {
       return actual.getDefaultRpcOptions(sync, fifoOrder);
+   }
+
+   @Override
+   public RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder) {
+      return actual.getDefaultRpcOptions(sync, deliverOrder);
    }
 
    @Override

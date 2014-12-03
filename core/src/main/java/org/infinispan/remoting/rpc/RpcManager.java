@@ -2,6 +2,7 @@ package org.infinispan.remoting.rpc;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
@@ -98,7 +99,7 @@ public interface RpcManager {
     *
     * @param rpc    command to execute remotely
     * @param future the future which will be passed back to the user
-    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.util.concurrent.NotifyingNotifiableFuture)}
+    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture)}
     */
    @Deprecated
    void broadcastRpcCommandInFuture(ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future);
@@ -111,7 +112,7 @@ public interface RpcManager {
     * @param rpc              command to execute remotely
     * @param usePriorityQueue if true, a priority queue is used
     * @param future           the future which will be passed back to the user
-    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.util.concurrent.NotifyingNotifiableFuture)}
+    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture)}
     */
    @Deprecated
    void broadcastRpcCommandInFuture(ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future);
@@ -150,7 +151,7 @@ public interface RpcManager {
     * @param recipients recipients to invoke remote call on
     * @param rpc        command to execute remotely
     * @param future     the future which will be passed back to the user
-    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.util.concurrent.NotifyingNotifiableFuture)}
+    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture)}
     */
    @Deprecated
    void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, NotifyingNotifiableFuture<Object> future);
@@ -164,28 +165,28 @@ public interface RpcManager {
     * @param rpc              command to execute remotely
     * @param usePriorityQueue if true, a priority queue is used
     * @param future           the future which will be passed back to the user
-    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.util.concurrent.NotifyingNotifiableFuture)}
+    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture)}
     */
    @Deprecated
    void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future);
 
    /**
     * The same as {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand,
-    * boolean, org.infinispan.util.concurrent.NotifyingNotifiableFuture)} except that you can specify a timeout.
+    * boolean, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture)} except that you can specify a timeout.
     *
     * @param recipients       recipients to invoke remote call on
     * @param rpc              command to execute remotely
     * @param usePriorityQueue if true, a priority queue is used
     * @param future           the future which will be passed back to the user
     * @param timeout          after which to give up (in millis)
-    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.util.concurrent.NotifyingNotifiableFuture)}
+    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture)}
     */
    @Deprecated
    void invokeRemotelyInFuture(final Collection<Address> recipients, final ReplicableCommand rpc, final boolean usePriorityQueue, final NotifyingNotifiableFuture<Object> future, final long timeout);
 
    /**
     * The same as {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand,
-    * boolean, org.infinispan.util.concurrent.NotifyingNotifiableFuture, long)} except that you can specify a response mode.
+    * boolean, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture, long)} except that you can specify a response mode.
     *
     * @param recipients       recipients to invoke remote call on
     * @param rpc              command to execute remotely
@@ -194,7 +195,7 @@ public interface RpcManager {
     * @param timeout          after which to give up (in millis)
     * @param ignoreLeavers    if {@code true}, recipients that leave or have already left the cluster are ignored
     *                         if {@code false}, a {@code SuspectException} is thrown when a leave is detected
-    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.util.concurrent.NotifyingNotifiableFuture)}
+    * @deprecated this method may be removed in the future. Use {@link #invokeRemotelyInFuture(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions, org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture)}
     */
    @Deprecated
    void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc,
@@ -265,40 +266,71 @@ public interface RpcManager {
    int getTopologyId();
 
    /**
-    * This method is equivalent to {@code getRpcOptionsBuilder(responseMode, true)}
+    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
+    * <p/>
+    * The {@link org.infinispan.remoting.rpc.RpcOptionsBuilder} is configured with the {@link org.infinispan.remoting.rpc.ResponseMode} and with
+    * {@link org.infinispan.remoting.inboundhandler.DeliverOrder#NONE} if the {@link
+    * org.infinispan.remoting.rpc.ResponseMode} is synchronous otherwise, with {@link
+    * org.infinispan.remoting.inboundhandler.DeliverOrder#PER_SENDER} if asynchronous.
     *
-    * @param responseMode
-    * @return  a new {@link RpcOptionsBuilder} with the default options, the response mode set by {@param responseMode}
-    *          and FIFO deliver order.
+    * @param responseMode the {@link org.infinispan.remoting.rpc.ResponseMode}.
+    * @return a new {@link RpcOptionsBuilder} with the default options. The response and deliver mode are set as
+    * described.
     */
    RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode);
 
    /**
-    * @param responseMode
-    * @param fifoOrder
-    * @return  a new {@link RpcOptionsBuilder} with the default options, the response mode set by {@param responseMode}
-    *          and the deliver order as fifo if the {@param fifoOrder} is {@code true}.
+    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
+    *
+    * @param responseMode the {@link org.infinispan.remoting.rpc.ResponseMode}.
+    * @param fifoOrder    {@code true} to set the deliver mode to {@link org.infinispan.remoting.inboundhandler.DeliverOrder#PER_SENDER}.
+    * @return a new {@link RpcOptionsBuilder} with the default options and the response mode and deliver mode set by the
+    * parameters.
+    * @deprecated use instead {@link #getRpcOptionsBuilder(ResponseMode, org.infinispan.remoting.inboundhandler.DeliverOrder)}.
     */
+   @Deprecated
    RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, boolean fifoOrder);
 
    /**
-    * See {@link #getDefaultRpcOptions(boolean, boolean)}.
+    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
     *
-    * It is equivalent to {@code getDefaultRpcOptions(sync, true)}
+    * @param responseMode the {@link org.infinispan.remoting.rpc.ResponseMode}.
+    * @param deliverOrder  the {@link org.infinispan.remoting.inboundhandler.DeliverOrder}.
+    * @return a new {@link RpcOptionsBuilder} with the default options and the response mode and deliver mode set by the
+    * parameters.
+    */
+   RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder);
+
+   /**
+    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
+    * <p/>
+    * The {@link org.infinispan.remoting.rpc.RpcOptionsBuilder} is configured with {@link
+    * org.infinispan.remoting.inboundhandler.DeliverOrder#NONE} if the {@param sync} is {@code true} otherwise, with
+    * {@link org.infinispan.remoting.inboundhandler.DeliverOrder#PER_SENDER}.
     *
     * @param sync {@code true} for Synchronous RpcOptions
-    * @return  the default Synchronous/Asynchronous RpcOptions
+    * @return the default Synchronous/Asynchronous RpcOptions
     */
    RpcOptions getDefaultRpcOptions(boolean sync);
 
    /**
-    * Builds a RpcOptions based on the parameters
+    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
     *
-    *
-    * @param sync       {@code true} for Synchronous RpcOptions
-    * @param fifoOrder
-    * @return  the default Synchronous/Asynchronous RpcOptions with the deliver order set by {@param fifoOrder}
+    * @param sync      {@code true} for Synchronous RpcOptions.
+    * @param fifoOrder {@code true} to set the deliver mode to {@link org.infinispan.remoting.inboundhandler.DeliverOrder#PER_SENDER}
+    * @return the default Synchronous/Asynchronous RpcOptions with the deliver order set by {@param fifoOrder}
+    * @deprecated use instead {@link #getDefaultRpcOptions(boolean, org.infinispan.remoting.inboundhandler.DeliverOrder)}
     */
+   @Deprecated
    RpcOptions getDefaultRpcOptions(boolean sync, boolean fifoOrder);
+
+   /**
+    * Creates a new {@link org.infinispan.remoting.rpc.RpcOptionsBuilder}.
+    *
+    * @param sync        {@code true} for Synchronous RpcOptions
+    * @param deliverOrder the {@link org.infinispan.remoting.inboundhandler.DeliverOrder} to use.
+    * @return the default Synchronous/Asynchronous RpcOptions with the deliver order set by the parameter.
+    */
+   RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder);
 
 }

@@ -13,14 +13,14 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
-import org.infinispan.remoting.InboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -36,7 +36,9 @@ import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.*;
 import static org.infinispan.container.versioning.InequalVersionComparisonResult.EQUAL;
-import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.replaceField;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -177,11 +179,9 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
 
    private ControllerInboundInvocationHandler injectControllerInboundInvocationHandler(Cache cache) {
       ControllerInboundInvocationHandler handler = new ControllerInboundInvocationHandler(
-            extractComponent(cache, InboundInvocationHandler.class));
-      replaceComponent(cache.getCacheManager(), InboundInvocationHandler.class, handler, true);
-      JGroupsTransport t = (JGroupsTransport) extractComponent(cache, Transport.class);
-      CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-      replaceField(handler, "inboundInvocationHandler", card, CommandAwareRpcDispatcher.class);
+            extractComponent(cache, PerCacheInboundInvocationHandler.class));
+      replaceComponent(cache, PerCacheInboundInvocationHandler.class, handler, true);
+      replaceField(handler, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
       return handler;
    }
 
@@ -266,7 +266,7 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
       @Override
       protected Map<Address, Response> afterInvokeRemotely(ReplicableCommand command, Map<Address, Response> responseMap) {
          if (responseMap != null) {
-            Map<Address, Response> newResponseMap = new LinkedHashMap<Address, Response>();
+            Map<Address, Response> newResponseMap = new LinkedHashMap<>();
             boolean containsLastResponseAddress = false;
             for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
                if (lastResponse.equals(entry.getKey())) {
@@ -282,25 +282,25 @@ public class ReplWriteSkewConsistencyTest extends MultipleCacheManagersTest {
             return newResponseMap;
          }
          log.debugf("Responses for command %s are null", command);
-         return responseMap;
+         return null;
       }
    }
 
-   private class ControllerInboundInvocationHandler implements InboundInvocationHandler {
+   private class ControllerInboundInvocationHandler implements PerCacheInboundInvocationHandler {
 
-      private final InboundInvocationHandler realOne;
+      private final PerCacheInboundInvocationHandler realOne;
       private volatile boolean discardRemoteGet;
 
-      private ControllerInboundInvocationHandler(InboundInvocationHandler realOne) {
+      private ControllerInboundInvocationHandler(PerCacheInboundInvocationHandler realOne) {
          this.realOne = realOne;
       }
 
       @Override
-      public void handle(CacheRpcCommand command, Address origin, org.jgroups.blocks.Response response, boolean preserveOrder) throws Throwable {
+      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
          if (discardRemoteGet && command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {
             return;
          }
-         realOne.handle(command, origin, response, preserveOrder);
+         realOne.handle(command, reply, order);
       }
    }
 

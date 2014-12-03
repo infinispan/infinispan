@@ -8,8 +8,8 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.ExternalizerTable;
-import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.InboundInvocationHandlerImpl;
+import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.ClusterTopologyManagerImpl;
 import org.infinispan.topology.LocalTopologyManager;
@@ -35,9 +35,7 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      if (componentType.equals(InboundInvocationHandler.class))
-         return (T) new InboundInvocationHandlerImpl();
-      else if (componentType.equals(RemoteCommandsFactory.class))
+      if (componentType.equals(RemoteCommandsFactory.class))
          return (T) new RemoteCommandsFactory();
       else if (componentType.equals(ExternalizerTable.class))
          return (T) new ExternalizerTable();
@@ -51,6 +49,8 @@ public class EmptyConstructorFactory extends AbstractComponentFactory implements
          return (T) new CancellationServiceImpl();
       else if (componentType.equals(TimeService.class)) {
          return (T) new DefaultTimeService();
+      } else if (componentType.equals(InboundInvocationHandler.class)) {
+         return (T) new GlobalInboundInvocationHandler();
       }
 
       throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());

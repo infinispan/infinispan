@@ -9,15 +9,13 @@ import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.jgroups.blocks.Response;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -25,7 +23,8 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.CountDownLatch;
 
-import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.replaceField;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -50,7 +49,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
 
       cache(0).put(key, INITIAL_VALUE);
 
-      final InboundInvocationHandler spyHandler = spyInvocationHandler(futureBackupOwnerCache);
+      final PerCacheInboundInvocationHandler spyHandler = spyInvocationHandler(futureBackupOwnerCache);
       final EntryFactory spyEntryFactory = spyEntryFactory(futureBackupOwnerCache);
 
       //it blocks the StateResponseCommand.class
@@ -67,7 +66,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
             }
             return invocation.callRealMethod();
          }
-      }).when(spyHandler).handle(any(CacheRpcCommand.class), any(Address.class), any(Response.class), anyBoolean());
+      }).when(spyHandler).handle(any(CacheRpcCommand.class), any(Reply.class), any(DeliverOrder.class));
 
       doAnswer(new Answer() {
          @Override
@@ -80,8 +79,6 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
       }).when(spyEntryFactory).wrapEntryForPut(any(InvocationContext.class), anyObject(),
                                                any(InternalCacheEntry.class), anyBoolean(),
                                                any(FlagAffectedCommand.class), anyBoolean());
-
-      replaceComponent(futureBackupOwnerCache.getCacheManager(), InboundInvocationHandler.class, spyHandler, true);
 
       fork(new Runnable() {
          @Override
@@ -112,11 +109,10 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
       return spy;
    }
 
-   private InboundInvocationHandler spyInvocationHandler(Cache cache) {
-      InboundInvocationHandler spy = Mockito.spy(extractComponent(cache, InboundInvocationHandler.class));
-      JGroupsTransport t = (JGroupsTransport) extractComponent(cache, Transport.class);
-      CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-      replaceField(spy, "inboundInvocationHandler", card, CommandAwareRpcDispatcher.class);
+   private PerCacheInboundInvocationHandler spyInvocationHandler(Cache cache) {
+      PerCacheInboundInvocationHandler spy = Mockito.spy(extractComponent(cache, PerCacheInboundInvocationHandler.class));
+      TestingUtil.replaceComponent(cache, PerCacheInboundInvocationHandler.class, spy, true);
+      replaceField(spy, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
       return spy;
    }
 

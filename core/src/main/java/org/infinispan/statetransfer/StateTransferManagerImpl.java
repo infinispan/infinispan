@@ -18,6 +18,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -282,7 +283,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             }
             // TODO find a way to forward the command async if it was received async
             // TxCompletionNotificationCommands are the only commands forwarded asynchronously, and they must be OOB
-            return rpcManager.invokeRemotely(newTargets, command, rpcManager.getDefaultRpcOptions(sync, false));
+            return rpcManager.invokeRemotely(newTargets, command, rpcManager.getDefaultRpcOptions(sync, DeliverOrder.NONE));
          }
       }
       return Collections.emptyMap();

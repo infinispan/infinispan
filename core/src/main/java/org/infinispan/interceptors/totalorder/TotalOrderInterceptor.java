@@ -43,7 +43,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
    @Inject
    public void inject(TransactionTable transactionTable, TotalOrderManager totalOrderManager,
                       ClusteringDependentLogic clusteringDependentLogic,
-                      @ComponentName(value = KnownComponentNames.TOTAL_ORDER_EXECUTOR)
+                      @ComponentName(value = KnownComponentNames.REMOTE_COMMAND_EXECUTOR)
                       BlockingTaskAwareExecutorService executorService) {
       this.transactionTable = transactionTable;
       this.totalOrderManager = totalOrderManager;

@@ -6,7 +6,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import javax.management.Attribute;
 import javax.management.MBeanServer;
@@ -18,6 +17,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -34,6 +34,7 @@ import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -153,14 +154,14 @@ public class RpcManagerMBeanTest extends MultipleCacheManagersTest {
       try {
          Address mockAddress1 = mock(Address.class);
          Address mockAddress2 = mock(Address.class);
-         List<Address> memberList = new ArrayList<Address>(2);
+         List<Address> memberList = new ArrayList<>(2);
          memberList.add(mockAddress1);
          memberList.add(mockAddress2);
          Transport transport = mock(Transport.class);
          when(transport.getMembers()).thenReturn(memberList);
          when(transport.getAddress()).thenReturn(null);
-         when(transport.invokeRemotely(any(Collection.class), any(ReplicableCommand.class), any(ResponseMode.class),
-               anyLong(), anyBoolean(), any(ResponseFilter.class), anyBoolean(), anyBoolean())).thenThrow(new RuntimeException());
+         when(transport.invokeRemotely(anyCollectionOf(Address.class), any(ReplicableCommand.class), any(ResponseMode.class),
+               anyLong(), any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean())).thenThrow(new RuntimeException());
          rpcManager.setTransport(transport);
          cache1.put("a5", "b5");
          assert false : "rpc manager should have thrown an exception";

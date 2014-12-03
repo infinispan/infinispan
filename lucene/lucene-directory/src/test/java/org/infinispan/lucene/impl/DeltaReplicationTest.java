@@ -16,18 +16,15 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.lucene.FileListCacheKey;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.testutils.LuceneSettings;
-import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.InboundInvocationHandlerImpl;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
-import org.jgroups.blocks.Response;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -56,14 +53,14 @@ public class DeltaReplicationTest extends MultipleCacheManagersTest {
       Cache<Object, Object> cache1 = cache(1);
       Directory dir = DirectoryBuilder.newDirectoryInstance(cache0, cache0, cache0, INDEX_NAME).create();
 
-      InboundInvocationHandlerDecorator handler = new InboundInvocationHandlerDecorator();
-      replaceOn(cache0, handler);
-      replaceOn(cache1, handler);
+      InboundInvocationHandlerDecorator handler0 = replaceOn(cache0);
+      InboundInvocationHandlerDecorator handler1 = replaceOn(cache1);
 
       writeSingleDocument(dir);
 
       assertFileListMatch(cache0, cache1, INDEX_NAME);
-      assertOnlyDeltasWereSent(handler, FileListCacheKey.class);
+      assertOnlyDeltasWereSent(handler0, FileListCacheKey.class);
+      assertOnlyDeltasWereSent(handler1, FileListCacheKey.class);
    }
 
    private void assertOnlyDeltasWereSent(InboundInvocationHandlerDecorator handler, Class<?> clazz) {
@@ -96,11 +93,12 @@ public class DeltaReplicationTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   private void replaceOn(Cache cache, InboundInvocationHandler replacement) {
-      replaceComponent(cache.getCacheManager(), InboundInvocationHandler.class, replacement, true);
-      JGroupsTransport t = (JGroupsTransport) extractComponent(cache, Transport.class);
-      CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-      replaceField(replacement, "inboundInvocationHandler", card, CommandAwareRpcDispatcher.class);
+   private InboundInvocationHandlerDecorator replaceOn(Cache cache) {
+      InboundInvocationHandlerDecorator decorator = new InboundInvocationHandlerDecorator(
+            extractComponent(cache, PerCacheInboundInvocationHandler.class));
+      replaceComponent(cache, PerCacheInboundInvocationHandler.class, decorator, true);
+      replaceField(decorator, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
+      return decorator;
    }
 
    private void writeSingleDocument(Directory dir) throws IOException {
@@ -111,11 +109,16 @@ public class DeltaReplicationTest extends MultipleCacheManagersTest {
       indexWriter.close();
    }
 
-   class InboundInvocationHandlerDecorator extends InboundInvocationHandlerImpl {
+   class InboundInvocationHandlerDecorator implements PerCacheInboundInvocationHandler {
       final Set<AbstractDataWriteCommand> writeCommands = new ConcurrentHashSet<>();
+      final PerCacheInboundInvocationHandler delegate;
+
+      InboundInvocationHandlerDecorator(PerCacheInboundInvocationHandler delegate) {
+         this.delegate = delegate;
+      }
 
       @Override
-      public void handle(CacheRpcCommand cmd, Address origin, Response response, boolean preserveOrder) throws Throwable {
+      public void handle(CacheRpcCommand cmd, Reply reply, DeliverOrder order) {
          if (cmd instanceof SingleRpcCommand) {
             SingleRpcCommand singleRpcCommand = (SingleRpcCommand) cmd;
             ReplicableCommand command = singleRpcCommand.getCommand();
@@ -123,7 +126,7 @@ public class DeltaReplicationTest extends MultipleCacheManagersTest {
                writeCommands.add((AbstractDataWriteCommand) command);
             }
          }
-         super.handle(cmd, origin, response, preserveOrder);
+         delegate.handle(cmd, reply, order);
       }
    }
 

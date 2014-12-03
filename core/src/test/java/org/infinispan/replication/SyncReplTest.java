@@ -1,20 +1,11 @@
 package org.infinispan.replication;
 
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyObject;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.*;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
-
-import java.util.List;
-
 import org.infinispan.Cache;
-import org.infinispan.commands.remote.CacheRpcCommand;
+import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
@@ -24,6 +15,15 @@ import org.infinispan.remoting.transport.Transport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
+
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyLong;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.anyCollectionOf;
+import static org.mockito.Mockito.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
@@ -40,7 +40,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testBasicOperation() {
-      Cache cache1 = cache(0, "replSync");
+      Cache<String, String> cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
 
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
@@ -59,7 +59,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testMultpleCachesOnSharedTransport() {
-      Cache cache1 = cache(0, "replSync");
+      Cache<String, String> cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
 
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
@@ -68,7 +68,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
 
       ConfigurationBuilder newConf = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       defineConfigurationOnAllManagers("newCache", newConf);
-      Cache altCache1 = manager(0).getCache("newCache");
+      Cache<String, String> altCache1 = manager(0).getCache("newCache");
       Cache altCache2 = manager(1).getCache("newCache");
 
       try {
@@ -95,7 +95,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       // strictPeerToPeer is now disabled by default
       boolean strictPeerToPeer = false;
 
-      Cache cache1 = cache(0, "replSync");
+      Cache<String, String> cache1 = cache(0, "replSync");
       Cache cache2 = cache(1, "replSync");
       assertClusterSize("Should only be 2  caches in the cluster!!!", 2);
       assert cache1.isEmpty();
@@ -104,7 +104,7 @@ public class SyncReplTest extends MultipleCacheManagersTest {
       ConfigurationBuilder newConf = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
 
       defineConfigurationOnAllManagers("newCache2", newConf);
-      Cache altCache1 = manager(0).getCache("newCache2");
+      Cache<String, String> altCache1 = manager(0).getCache("newCache2");
 
       try {
          assert altCache1.isEmpty();
@@ -130,8 +130,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testMixingSyncAndAsyncOnSameTransport() throws Exception {
-      Cache cache1 = cache(0, "replSync");
-      Cache cache2 = cache(1, "replSync");
+      Cache<String, String> cache1 = cache(0, "replSync");
+      cache(1, "replSync");
       waitForClusterToForm("replSync");
 
       Transport originalTransport = null;
@@ -141,8 +141,8 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          ConfigurationBuilder asyncCache = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, false);
          asyncCache.clustering().async().asyncMarshalling(true);
          defineConfigurationOnAllManagers("asyncCache", asyncCache);
-         Cache asyncCache1 = manager(0).getCache("asyncCache");
-         Cache asyncCache2 = manager(1).getCache("asyncCache");
+         Cache<String, String> asyncCache1 = manager(0).getCache("asyncCache");
+         manager(1).getCache("asyncCache");
          waitForClusterToForm("asyncCache");
 
          // this is shared by all caches managed by the cache manager
@@ -155,9 +155,9 @@ public class SyncReplTest extends MultipleCacheManagersTest {
 
          // check that the replication call was sync
          cache1.put("k", "v");
-         verify(mockTransport).invokeRemotely((List<Address>) anyObject(),
-                                              (CacheRpcCommand) anyObject(), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(),
-                                              anyBoolean(), (ResponseFilter) anyObject(), anyBoolean(), anyBoolean());
+         verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),
+                                              any(ReplicableCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(),
+                                              any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
 
          // resume to test for async
          asyncRpcManager = (RpcManagerImpl) TestingUtil.extractComponent(asyncCache1, RpcManager.class);
@@ -166,9 +166,9 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          reset(mockTransport);
 
          asyncCache1.put("k", "v");
-         verify(mockTransport).invokeRemotely((List<Address>) anyObject(),
-                                               (CacheRpcCommand) anyObject(), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
-                                               anyBoolean(), (ResponseFilter) anyObject(), anyBoolean(), anyBoolean());
+         verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),
+                                              any(ReplicableCommand.class), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
+                                              any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
       } finally {
          // replace original transport
          if (rpcManager != null)

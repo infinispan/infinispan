@@ -10,6 +10,7 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -48,7 +49,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
 
       @Override
       public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
-                                                   boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
+                                                   ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
          if (callOnStateResponseCommand != null && rpcCommand.getClass() == StateResponseCommand.class) {
             log.trace("Ignoring StateResponseCommand");
             try {
@@ -58,7 +59,7 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
             }
             return InfinispanCollections.emptyMap();
          }
-         return super.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
+         return super.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
       }
    }
 

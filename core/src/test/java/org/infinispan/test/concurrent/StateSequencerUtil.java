@@ -32,9 +32,9 @@ public class StateSequencerUtil {
     * Start decorating the {@code InboundInvocationHandler} on {@code cacheManager} to interact with a {@code StateSequencer}
     * when a {@code CacheRpcCommand} is received.
     */
-   public static InboundRpcSequencerAction advanceOnInboundRpc(StateSequencer stateSequencer, EmbeddedCacheManager cacheManager,
+   public static InboundRpcSequencerAction advanceOnInboundRpc(StateSequencer stateSequencer, Cache cache,
          CommandMatcher matcher) {
-      return new InboundRpcSequencerAction(stateSequencer, cacheManager, matcher);
+      return new InboundRpcSequencerAction(stateSequencer, cache, matcher);
    }
 
    /**

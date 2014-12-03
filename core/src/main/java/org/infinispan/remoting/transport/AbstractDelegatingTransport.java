@@ -1,6 +1,7 @@
 package org.infinispan.remoting.transport;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -30,6 +31,13 @@ public abstract class AbstractDelegatingTransport implements Transport {
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
       beforeInvokeRemotely(rpcCommand);
       Map<Address, Response> result = actual.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
+      return afterInvokeRemotely(rpcCommand, result);
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
+      beforeInvokeRemotely(rpcCommand);
+      Map<Address, Response> result = actual.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
       return afterInvokeRemotely(rpcCommand, result);
    }
 
