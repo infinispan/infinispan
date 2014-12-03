@@ -236,6 +236,9 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
          if (trace) log.tracef("Cache %s topology updated: %s, members = %s, joiners = %s",
                cacheName, currentTopology, expectedMembers, joiners);
+         if (newTopology != null) {
+            newTopology.logRoutingTableInformation();
+         }
       }
    }
 
@@ -272,7 +275,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
          rebalanceConfirmationCollector = new RebalanceConfirmationCollector(cacheName, newTopology.getTopologyId(),
                newTopology.getMembers());
-         setCurrentTopology(newTopology);
          return true;
       }
    }
@@ -393,6 +395,12 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
          // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
          List<Address> newCurrentMembers = pruneInvalidMembers(currentCH.getMembers());
+         if (newCurrentMembers.isEmpty()) {
+            // All the current members left, try to replace them with the joiners
+            createInitialCacheTopology();
+            return;
+         }
+
          ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
          List<Address> actualMembers = newCurrentMembers;
          ConsistentHash newPendingCH = null;
@@ -404,7 +412,6 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, newCurrentCH, newPendingCH,
                actualMembers);
          setCurrentTopology(newTopology);
-         newTopology.logRoutingTableInformation();
 
          clusterTopologyManager.broadcastTopologyUpdate(cacheName, newTopology, availabilityMode,
                isTotalOrder(), isDistributed());
@@ -617,6 +624,11 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          queuedRebalanceMembers = null;
          log.tracef("Rebalancing consistent hash for cache %s, members are %s", cacheName, newMembers);
 
+         if (cacheTopology == null) {
+            createInitialCacheTopology();
+            return;
+         }
+
          int newTopologyId = cacheTopology.getTopologyId() + 1;
          int newRebalanceId = cacheTopology.getRebalanceId() + 1;
          ConsistentHash currentCH = cacheTopology.getCurrentCH();
@@ -643,7 +655,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          CacheTopology newTopology = new CacheTopology(newTopologyId, newRebalanceId, currentCH, balancedCH,
                balancedCH.getMembers());
          log.tracef("Updating cache %s topology for rebalance: %s", cacheName, newTopology);
-         newTopology.logRoutingTableInformation();
+         setCurrentTopology(newTopology);
          initRebalanceConfirmationCollector(newTopology);
       }
 
