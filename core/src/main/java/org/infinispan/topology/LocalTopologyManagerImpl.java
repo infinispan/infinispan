@@ -90,16 +90,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       LocalCacheStatus cacheStatus = new LocalCacheStatus(joinInfo, stm, phm);
       runningCaches.put(cacheName, cacheStatus);
 
-      int viewId = transport.getViewId();
-      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
-            CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo, viewId);
       long timeout = joinInfo.getTimeout();
       long endTime = timeService.expectedEndTime(timeout, TimeUnit.MILLISECONDS);
       // Synchronize here to delay any rebalance until after we have received the initial cache topology.
       // This ensures that the cache will have a topology at the end of startup (with awaitInitialTransfer disabled).
       synchronized (cacheStatus) {
          while (true) {
+            int viewId = transport.getViewId();
             try {
+               ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+                       CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo, viewId);
                CacheStatusResponse initialStatus = (CacheStatusResponse) executeOnCoordinator(command, timeout);
                // Ignore null responses, that's what the current coordinator returns if is shutting down
                if (initialStatus != null) {

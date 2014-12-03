@@ -1,13 +1,5 @@
 package org.infinispan.statetransfer;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
@@ -26,6 +18,15 @@ import org.jgroups.protocols.DISCARD;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
@@ -210,7 +211,6 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       TestingUtil.waitForRehashToComplete(c2, c3, c4);
    }
 
-   @Test(groups = "unstable")
    public void testClusterRecoveryWithRebalance() throws Exception {
       // Compute the merge coordinator by sorting the JGroups addresses, the same way MERGE2/3 do
       List<Address> members = new ArrayList<Address>(manager(0).getMembers());
@@ -240,24 +240,14 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       if (mergeCoordIndex == 2) d3.setDiscardAll(false);
 
       int viewIdAfterSplit = mergeCoordManager.getTransport().getViewId();
-      final LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(mergeCoordManager,
-            LocalTopologyManager.class);
       final CheckPoint checkpoint = new CheckPoint();
-      LocalTopologyManager spyLocalTopologyManager = spy(localTopologyManager);
-      doAnswer(new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            int viewId = (Integer) invocation.getArguments()[2];
-            checkpoint.trigger("rebalance_" + viewId);
-            log.debugf("Blocking the REBALANCE_START command on the merge coordinator");
-            checkpoint.awaitStrict("merge", 30, TimeUnit.SECONDS);
-            return invocation.callRealMethod();
-         }
-      }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt());
-      TestingUtil.replaceComponent(mergeCoordManager, LocalTopologyManager.class, spyLocalTopologyManager, true);
+      blockRebalanceStart(mergeCoordManager, checkpoint, 2);
 
       final EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(defaultConfig,
             new TransportFlags().withFD(true).withMerge(true));
+      blockRebalanceStart(cm4, checkpoint, 2);
+      // Force the initialization of the transport
+      cm4.getCache(OTHER_CACHE_NAME);
       Future<Cache<Object,Object>> cacheFuture = fork(new Callable<Cache<Object, Object>>() {
          @Override
          public Cache<Object, Object> call() throws Exception {
@@ -266,7 +256,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       });
 
       log.debugf("Waiting for the REBALANCE_START command to reach the merge coordinator");
-      checkpoint.awaitStrict("rebalance_" + (viewIdAfterSplit + 1), 10, TimeUnit.SECONDS);
+      checkpoint.awaitStrict("rebalance_" + Arrays.asList(mergeCoordAddress, cm4.getAddress()), 10, TimeUnit.SECONDS);
 
       // merge the partitions
       log.debugf("Merging the cluster partitions");
@@ -277,6 +267,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       // wait for the JGroups merge
       long startTime = System.currentTimeMillis();
       TestingUtil.blockUntilViewsReceived(30000, cacheManagers);
+      TestingUtil.waitForRehashToComplete(caches(CACHE_NAME));
 
       // unblock the REBALANCE_START command
       log.debugf("Unblocking the REBALANCE_START command on the coordinator");
@@ -297,6 +288,27 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       Cache<Object, Object> c5 = cm5.getCache(CACHE_NAME);
       TestingUtil.blockUntilViewsReceived(30000, true, c1, c2, c3, c4, c5);
       TestingUtil.waitForRehashToComplete(c1, c2, c3, c4, c5);
+   }
+
+   protected void blockRebalanceStart(final EmbeddedCacheManager manager, final CheckPoint checkpoint, final int numMembers)
+         throws InterruptedException {
+      final LocalTopologyManager localTopologyManager = TestingUtil.extractGlobalComponent(manager,
+            LocalTopologyManager.class);
+      LocalTopologyManager spyLocalTopologyManager = spy(localTopologyManager);
+      doAnswer(new Answer<Object>() {
+         @Override
+         public Object answer(InvocationOnMock invocation) throws Throwable {
+            CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
+            List<Address> members = topology.getMembers();
+            checkpoint.trigger("rebalance_" + members);
+            if (members.size() == numMembers) {
+               log.debugf("Blocking the REBALANCE_START command with members %s on %s", members, manager.getAddress());
+               checkpoint.awaitStrict("merge", 30, TimeUnit.SECONDS);
+            }
+            return invocation.callRealMethod();
+         }
+      }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt());
+      TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLocalTopologyManager, true);
    }
 
    public void testAbruptLeaveAfterGetStatus() throws TimeoutException, InterruptedException {
