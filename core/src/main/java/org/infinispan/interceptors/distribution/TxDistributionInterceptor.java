@@ -23,6 +23,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
@@ -183,7 +184,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          final Collection<Address> affectedNodes = cdl.getOwners(filterDeltaCompositeKeys(command.getKeys()));
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes == null ? dm.getConsistentHash().getMembers() : affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
-         rpcManager.invokeRemotely(affectedNodes, command, rpcManager.getDefaultRpcOptions(true, false));
+         rpcManager.invokeRemotely(affectedNodes, command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -218,7 +219,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          // this method will return immediately if we're the only member (because exclude_self=true)
          RpcOptions rpcOptions;
          if (sync && command.isOnePhaseCommit()) {
-            rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false).build();
+            rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
          } else {
             rpcOptions = rpcManager.getDefaultRpcOptions(sync);
          }
@@ -233,7 +234,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          boolean syncRollback = cacheConfiguration.transaction().syncRollbackPhase();
          ResponseMode responseMode = syncRollback ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS;
-         rpcManager.invokeRemotely(getCommitNodes(ctx), command, rpcManager.getRpcOptionsBuilder(responseMode, false).build());
+         rpcManager.invokeRemotely(getCommitNodes(ctx), command, rpcManager.getRpcOptionsBuilder(responseMode, DeliverOrder.NONE).build());
       }
 
       return invokeNextInterceptor(ctx, command);
@@ -251,9 +252,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
       RpcOptions rpcOptions;
       if (syncCommitPhase) {
-         rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false  ).build();
+         rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
       } else {
-         rpcOptions = rpcManager.getDefaultRpcOptions(false, false);
+         rpcOptions = rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE);
       }
       rpcManager.invokeRemotely(recipients, command, rpcOptions);
    }

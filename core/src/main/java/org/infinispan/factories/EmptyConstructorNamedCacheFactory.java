@@ -117,7 +117,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
          } else if (componentType.equals(BackupSender.class)) {
             return (T) new BackupSenderImpl(globalConfiguration.sites().localSite());
          } else if (componentType.equals(TotalOrderManager.class)) {
-            return (T) new TotalOrderManager();
+            return isTransactional && configuration.transaction().transactionProtocol().isTotalOrder() ?
+                  (T) new TotalOrderManager() : null;
          } else if (componentType.equals(ByteBufferFactory.class)) {
             return (T) new ByteBufferFactoryImpl();
          } else if (componentType.equals(MarshalledEntryFactory.class)) {

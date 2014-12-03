@@ -17,6 +17,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.LocalInvocation;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -366,7 +367,7 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
    private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) throws Exception {
       commandsFactory.initializeReplicableCommand(command, false);
       final NotifyingNotifiableFuture<Map<Address, Response>> remoteFuture = new NotifyingFutureImpl<>();
-      rpcManager.invokeRemotelyInFuture(remoteFuture, null, command, rpcManager.getDefaultRpcOptions(true, false));
+      rpcManager.invokeRemotelyInFuture(remoteFuture, null, command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
       final Future<Response> localFuture = asyncExecutor.submit(
             LocalInvocation.newInstance(responseGenerator, command, commandsFactory, rpcManager.getAddress()));
       final Map<Address, Response> responseMap = new HashMap<>();

@@ -14,6 +14,7 @@ import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -409,7 +410,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          // this node is not the coordinator
          Address coordinator = transport.getCoordinator();
          Map<Address, Response> responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
-               command, ResponseMode.SYNCHRONOUS, timeout, true, null, false, false);
+               command, ResponseMode.SYNCHRONOUS, timeout, null, DeliverOrder.NONE, false);
          response = responseMap.get(coordinator);
       }
       if (response == null || !response.isSuccessful()) {
@@ -439,7 +440,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       } else {
          Address coordinator = transport.getCoordinator();
          // ignore the responses
-         transport.invokeRemotely(Collections.singleton(coordinator), command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, 0, true, null, false, false);
+         transport.invokeRemotely(Collections.singleton(coordinator), command,
+                                  ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, 0, null, DeliverOrder.NONE, false);
       }
    }
 
@@ -451,7 +453,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       if (totalOrder) {
          Map<Address, Response> responseMap = transport.invokeRemotely(null, command,
                ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-               timeout, false, null, totalOrder, distributed);
+               timeout, null, DeliverOrder.TOTAL, distributed);
          Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
          for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
             Address address = entry.getKey();
@@ -469,7 +471,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          @Override
          public Map<Address, Response> call() throws Exception {
             return transport.invokeRemotely(null, command,
-                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, true, null, false, false);
+                  ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, timeout, null, DeliverOrder.NONE, false);
          }
       });
 

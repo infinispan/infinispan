@@ -7,16 +7,14 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.manager.CacheContainer;
-import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.InboundInvocationHandlerImpl;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -25,7 +23,6 @@ import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -62,20 +59,14 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(configuration);
    }
 
-   private void injectListeningHandler(CacheContainer ecm, ListeningHandler lh) {
-      replaceComponent(ecm, InboundInvocationHandler.class, lh, true);
-      JGroupsTransport t = (JGroupsTransport) extractComponent(cache(0), Transport.class);
-      CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-      replaceField(lh, "inboundInvocationHandler", card, CommandAwareRpcDispatcher.class);
-   }
-
    public void testRehashOnJoin() throws InterruptedException {
       Cache<Object, Object> firstNode = cache(0);
       final CountDownLatch txsStarted = new CountDownLatch(3), txsReady = new CountDownLatch(3), joinEnded = new CountDownLatch(1), rehashStarted = new CountDownLatch(1);
-      ListeningHandler listeningHandler = new ListeningHandler(extractComponent(firstNode, InboundInvocationHandler.class), txsReady, joinEnded, rehashStarted);
-      injectListeningHandler(firstNode.getCacheManager(), listeningHandler);
+      ListeningHandler listeningHandler = new ListeningHandler(extractComponent(firstNode, PerCacheInboundInvocationHandler.class), txsReady, joinEnded, rehashStarted);
+      replaceComponent(firstNode, PerCacheInboundInvocationHandler.class, listeningHandler, true);
+      replaceField(listeningHandler, "inboundInvocationHandler", firstNode.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
 
-      assert firstNode.getAdvancedCache().getComponentRegistry().getComponent(InboundInvocationHandler.class) instanceof ListeningHandler;
+      assert firstNode.getAdvancedCache().getComponentRegistry().getComponent(PerCacheInboundInvocationHandler.class) instanceof ListeningHandler;
 
       for (int i = 0; i < 10; i++) firstNode.put("OLD" + i, "value");
 
@@ -88,7 +79,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       ic.addInterceptorAfter(ct, TxInterceptor.class);
 
 
-      Set<Thread> threads = new HashSet<Thread>();
+      Set<Thread> threads = new HashSet<>();
       threads.add(new Thread(ut, "Worker-UnpreparedDuringRehashTask"));
       threads.add(new Thread(pt, "Worker-PrepareDuringRehashTask"));
       threads.add(new Thread(ct, "Worker-CommitDuringRehashTask"));
@@ -109,8 +100,8 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       // start a new node!
       addClusterEnabledCacheManager(configuration);
 
-      ListeningHandler listeningHandler2 = new ListeningHandler(extractComponent(firstNode, InboundInvocationHandler.class), txsReady, joinEnded, rehashStarted);
-      injectListeningHandler(cacheManagers.get(1), listeningHandler);
+      ListeningHandler listeningHandler2 = new ListeningHandler(extractComponent(firstNode, PerCacheInboundInvocationHandler.class), txsReady, joinEnded, rehashStarted);
+      replaceComponent(cache(1), PerCacheInboundInvocationHandler.class, listeningHandler2, true);
 
       Cache<?, ?> joiner = cache(1);
 
@@ -273,11 +264,11 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }
    }
 
-   class ListeningHandler extends InboundInvocationHandlerImpl {
-      final InboundInvocationHandler delegate;
+   class ListeningHandler implements PerCacheInboundInvocationHandler {
+      final PerCacheInboundInvocationHandler delegate;
       final CountDownLatch txsReady, joinEnded, rehashStarted;
 
-      public ListeningHandler(InboundInvocationHandler delegate, CountDownLatch txsReady, CountDownLatch joinEnded, CountDownLatch rehashStarted) {
+      public ListeningHandler(PerCacheInboundInvocationHandler delegate, CountDownLatch txsReady, CountDownLatch joinEnded, CountDownLatch rehashStarted) {
          this.delegate = delegate;
          this.txsReady = txsReady;
          this.joinEnded = joinEnded;
@@ -285,14 +276,20 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void handle(CacheRpcCommand cmd, Address origin, org.jgroups.blocks.Response response, boolean preserveOrder) throws Throwable {
+      public void handle(CacheRpcCommand cmd, Reply reply, DeliverOrder order) {
          boolean notifyRehashStarted = false;
          if (cmd instanceof CacheTopologyControlCommand) {
             CacheTopologyControlCommand rcc = (CacheTopologyControlCommand) cmd;
             log.debugf("Intercepted command: %s", cmd);
             switch (rcc.getType()) {
                case REBALANCE_START:
-                  txsReady.await(10, SECONDS);
+                  try {
+                     txsReady.await(10, SECONDS);
+                  } catch (InterruptedException e) {
+                     Thread.currentThread().interrupt();
+                     reply.reply(new ExceptionResponse(e));
+                     return;
+                  }
                   notifyRehashStarted = true;
                   break;
                case CH_UPDATE:
@@ -302,7 +299,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
             }
          }
 
-         delegate.handle(cmd, origin, response, preserveOrder);
+         delegate.handle(cmd, reply, order);
          if (notifyRehashStarted) rehashStarted.countDown();
       }
    }

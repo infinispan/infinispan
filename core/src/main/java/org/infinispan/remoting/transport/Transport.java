@@ -6,6 +6,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.Lifecycle;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -45,11 +46,32 @@ public interface Transport extends Lifecycle {
     * @param anycast          used when {@param totalOrder} is {@code true}, it means that it must use TOA instead of TOB.
     * @return a map of responses from each member contacted.
     * @throws Exception in the event of problems.
+    * @deprecated use instead {@link #invokeRemotely(java.util.Collection, org.infinispan.commands.ReplicableCommand,
+    * org.infinispan.remoting.rpc.ResponseMode, long, org.infinispan.remoting.rpc.ResponseFilter,
+    * org.infinispan.remoting.inboundhandler.DeliverOrder, boolean)}
     */
+   @Deprecated
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                  boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder,
                                  boolean anycast) throws Exception;
 
+   /**
+    * Invokes an RPC call on other caches in the cluster.
+    *
+    * @param recipients     a list of Addresses to invoke the call on.  If this is null, the call is broadcast to the
+    *                       entire cluster.
+    * @param rpcCommand     the cache command to invoke
+    * @param mode           the response mode to use
+    * @param timeout        a timeout after which to throw a replication exception. implementations.
+    * @param responseFilter a response filter with which to filter out failed/unwanted/invalid responses.
+    * @param deliverOrder   the {@link org.infinispan.remoting.inboundhandler.DeliverOrder}.
+    * @param anycast        used when {@param totalOrder} is {@code true}, it means that it must use TOA instead of
+    *                       TOB.
+    * @return a map of responses from each member contacted.
+    * @throws Exception in the event of problems.
+    */
+   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
+                                         ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception;
 
    BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception;
 

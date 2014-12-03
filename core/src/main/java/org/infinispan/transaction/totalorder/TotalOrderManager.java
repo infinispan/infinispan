@@ -50,12 +50,12 @@ public class TotalOrderManager {
 
    public TotalOrderManager() {
       keysLocked = CollectionFactory.makeConcurrentMap();
-      clear = new AtomicReference<TotalOrderLatch>(null);
-      stateTransferInProgress = new AtomicReference<TotalOrderLatch>(null);
+      clear = new AtomicReference<>(null);
+      stateTransferInProgress = new AtomicReference<>(null);
    }
 
    @Inject
-   public void inject(@ComponentName(KnownComponentNames.TOTAL_ORDER_EXECUTOR) BlockingTaskAwareExecutorService totalOrderExecutor) {
+   public void inject(@ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService totalOrderExecutor) {
       this.totalOrderExecutor = totalOrderExecutor;
    }
 
@@ -147,7 +147,7 @@ public class TotalOrderManager {
       if (stateTransferInProgress.get() != null) {
          return Collections.emptyList();
       }
-      List<TotalOrderLatch> preparingTransactions = new ArrayList<TotalOrderLatch>(keysLocked.size());
+      List<TotalOrderLatch> preparingTransactions = new ArrayList<>(keysLocked.size());
       preparingTransactions.addAll(keysLocked.values());
       TotalOrderLatch clearBlock = clear.get();
       if (clearBlock != null) {

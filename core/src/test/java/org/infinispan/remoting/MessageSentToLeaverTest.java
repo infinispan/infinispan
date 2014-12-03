@@ -7,6 +7,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -54,14 +55,14 @@ public class MessageSentToLeaverTest extends AbstractInfinispanTest {
          PutKeyValueCommand cmd = cf.buildPutKeyValueCommand("k", "v2",
                new EmbeddedMetadata.Builder().build(), null);
 
-         Map<Address,Response> responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, false));
+         Map<Address,Response> responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
          assert responseMap.size() == 2;
 
          TestingUtil.killCacheManagers(cm2);
          TestingUtil.blockUntilViewsReceived(30000, false, c1, c3);
 
          try {
-            responseMap = rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, false));
+            rpcManager.invokeRemotely(addresses, cmd, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
             assert false: "invokeRemotely should have thrown an exception";
          } catch (SuspectException e) {
             // expected

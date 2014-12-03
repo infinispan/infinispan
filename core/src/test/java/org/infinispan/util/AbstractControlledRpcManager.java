@@ -3,6 +3,7 @@ package org.infinispan.util;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -187,6 +188,11 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    }
 
    @Override
+   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder) {
+      return realOne.getRpcOptionsBuilder(responseMode, deliverOrder);
+   }
+
+   @Override
    public RpcOptions getDefaultRpcOptions(boolean sync) {
       return realOne.getDefaultRpcOptions(sync);
    }
@@ -194,6 +200,11 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    @Override
    public RpcOptions getDefaultRpcOptions(boolean sync, boolean fifoOrder) {
       return realOne.getDefaultRpcOptions(sync, fifoOrder);
+   }
+
+   @Override
+   public RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder) {
+      return realOne.getDefaultRpcOptions(sync, deliverOrder);
    }
 
    @Override

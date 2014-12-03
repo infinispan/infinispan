@@ -1,31 +1,16 @@
 package org.infinispan.distribution.rehash;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.infinispan.AdvancedCache;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.manager.CacheContainer;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
@@ -34,27 +19,21 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.CommandMatcher;
 import org.infinispan.test.concurrent.StateSequencer;
-import org.infinispan.test.concurrent.StateSequencerUtil;
-import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.tx.dld.ControlledRpcManager;
 import org.infinispan.util.ControlledConsistentHashFactory;
-import org.jgroups.blocks.Response;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
 import static org.infinispan.test.concurrent.StateSequencerUtil.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertSame;
 
 /**
  * Start two rebalance operations by stopping two members of a cluster in sequence.
@@ -124,13 +103,19 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
 
       // Cache 0 didn't manage to request any segments yet, but it has registered all the inbound transfer tasks.
       // We'll pretend it got a StateResponseCommand with an older topology id.
-      InboundInvocationHandler iih = TestingUtil.extractGlobalComponent(manager(0), InboundInvocationHandler.class);
+      PerCacheInboundInvocationHandler handler = TestingUtil.extractComponent(cache(0), PerCacheInboundInvocationHandler.class);
       StateChunk stateChunk0 = new StateChunk(0, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
       StateChunk stateChunk1 = new StateChunk(1, Arrays.<InternalCacheEntry>asList(new ImmortalCacheEntry("k0", "v0")), true);
       StateResponseCommand stateResponseCommand = new StateResponseCommand(CacheContainer.DEFAULT_CACHE_NAME,
             address(1), initialTopologyId, Arrays.asList(stateChunk0, stateChunk1));
       // Call with preserveOrder = true to force the execution in the same thread
-      iih.handle(stateResponseCommand, address(3), null, true);
+      stateResponseCommand.setOrigin(address(3));
+      handler.handle(stateResponseCommand, new Reply() {
+         @Override
+         public void reply(Object returnValue) {
+            //no-op
+         }
+      }, DeliverOrder.PER_SENDER);
 
       sequencer.exit("st:simulate_old_response");
 
@@ -176,7 +161,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
             "st:resume_first_state_response", "st:after_first_state_response", "st:check_incomplete",
             "st:resume_second_state_request");
 
-      final AtomicReference<Address> firstResponseSender = new AtomicReference<Address>();
+      final AtomicReference<Address> firstResponseSender = new AtomicReference<>();
       CommandMatcher firstStateResponseMatcher = new CommandMatcher() {
          CommandMatcher realMatcher = matchCommand(StateResponseCommand.class).matchCount(0).build();
 
@@ -187,7 +172,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
             return true;
          }
       };
-      advanceOnInboundRpc(sequencer, manager(0), firstStateResponseMatcher)
+      advanceOnInboundRpc(sequencer, cache(0), firstStateResponseMatcher)
             .before("st:block_first_state_response", "st:resume_first_state_response")
             .after("st:after_first_state_response");
 
@@ -213,7 +198,6 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
             .before("st:block_second_state_request", "st:resume_second_state_request");
 
       final StateTransferManager stm0 = advancedCache(0).getComponentRegistry().getStateTransferManager();
-      final int initialTopologyId = stm0.getCacheTopology().getTopologyId();
 
       MagicKey k1 = new MagicKey("k1", cache(1));
       assertEquals(Arrays.asList(address(1), address(2), address(3)), stm0.getCacheTopology().getCurrentCH().locateOwners(k1));

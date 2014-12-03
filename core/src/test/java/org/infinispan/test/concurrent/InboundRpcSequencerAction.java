@@ -1,20 +1,22 @@
 package org.infinispan.test.concurrent;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.factories.GlobalComponentRegistry;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.InboundInvocationHandler;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.test.TestingUtil;
-import org.jgroups.blocks.Response;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
+import org.infinispan.remoting.inboundhandler.Reply;
+import org.infinispan.remoting.responses.ExceptionResponse;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
+
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.infinispan.test.TestingUtil.replaceField;
 
 /**
- * Replaces the {@link InboundInvocationHandler} with a wrapper that can interact with a {@link StateSequencer} when a
+ * Replaces the {@link org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler} with a wrapper that can interact with a {@link StateSequencer} when a
  * command that matches a {@link CommandMatcher} is invoked.
  *
  * @author Dan Berindei
@@ -22,13 +24,13 @@ import java.util.List;
  */
 public class InboundRpcSequencerAction {
    private final StateSequencer stateSequencer;
-   private final EmbeddedCacheManager cacheManager;
+   private final Cache<?,?> cache;
    private final CommandMatcher matcher;
-   private SequencerInboundInvocationHandler ourHandler;
+   private SequencerPerCacheInboundInvocationHandler ourHandler;
 
-   public InboundRpcSequencerAction(StateSequencer stateSequencer, EmbeddedCacheManager cacheManager, CommandMatcher matcher) {
+   public InboundRpcSequencerAction(StateSequencer stateSequencer, Cache cache, CommandMatcher matcher) {
       this.stateSequencer = stateSequencer;
-      this.cacheManager = cacheManager;
+      this.cache = cache;
       this.matcher = matcher;
    }
 
@@ -45,13 +47,10 @@ public class InboundRpcSequencerAction {
 
    private void replaceInboundInvocationHandler() {
       if (ourHandler == null) {
-         GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
-         InboundInvocationHandler handler = globalComponentRegistry.getComponent(InboundInvocationHandler.class);
-         ourHandler = new SequencerInboundInvocationHandler(handler, stateSequencer, matcher);
-         TestingUtil.replaceComponent(cacheManager, InboundInvocationHandler.class, ourHandler, true);
-         JGroupsTransport t = (JGroupsTransport) globalComponentRegistry.getComponent(Transport.class);
-         CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-         TestingUtil.replaceField(ourHandler, "inboundInvocationHandler", card, CommandAwareRpcDispatcher.class);
+         PerCacheInboundInvocationHandler handler = extractComponent(cache, PerCacheInboundInvocationHandler.class);
+         ourHandler = new SequencerPerCacheInboundInvocationHandler(handler, stateSequencer, matcher);
+         replaceComponent(cache, PerCacheInboundInvocationHandler.class, ourHandler, true);
+         replaceField(ourHandler, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
       }
    }
 
@@ -66,31 +65,32 @@ public class InboundRpcSequencerAction {
       return this;
    }
 
-   public static class SequencerInboundInvocationHandler implements InboundInvocationHandler {
+   public static class SequencerPerCacheInboundInvocationHandler implements PerCacheInboundInvocationHandler {
       private final StateSequencer stateSequencer;
       private final CommandMatcher matcher;
-      private final InboundInvocationHandler handler;
+      private final PerCacheInboundInvocationHandler handler;
       private volatile List<String> statesBefore;
       private volatile List<String> statesAfter;
 
-      public SequencerInboundInvocationHandler(InboundInvocationHandler handler, StateSequencer stateSequencer, CommandMatcher matcher) {
+      public SequencerPerCacheInboundInvocationHandler(PerCacheInboundInvocationHandler handler, StateSequencer stateSequencer, CommandMatcher matcher) {
          this.handler = handler;
          this.stateSequencer = stateSequencer;
          this.matcher = matcher;
       }
 
-
       @Override
-      public void handle(CacheRpcCommand command, Address origin, Response response, boolean preserveOrder) throws Throwable {
-         // Normally InboundInvocationHandlerImpl does this, but we want matchers to have access to the origin
-         command.setOrigin(origin);
-
+      public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
          boolean accepted = matcher.accept(command);
-         StateSequencerUtil.advanceMultiple(stateSequencer, accepted, statesBefore);
+         advance(accepted, statesBefore, reply);
          try {
-            handler.handle(command, origin, response, preserveOrder);
+            handler.handle(command, reply, order);
          } finally {
-            StateSequencerUtil.advanceMultiple(stateSequencer, accepted, statesAfter);
+            advance(accepted, statesAfter, new Reply() {
+               @Override
+               public void reply(Object returnValue) {
+                  //no-op
+               }
+            });
          }
       }
 
@@ -100,6 +100,17 @@ public class InboundRpcSequencerAction {
 
       public void afterStates(List<String> states) {
          this.statesAfter = StateSequencerUtil.listCopy(states);
+      }
+
+      private void advance(boolean accepted, List<String> states, Reply reply) {
+         try {
+            StateSequencerUtil.advanceMultiple(stateSequencer, accepted, states);
+         } catch (TimeoutException e) {
+            reply.reply(new ExceptionResponse(e));
+         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            reply.reply(new ExceptionResponse(e));
+         }
       }
    }
 }

@@ -1,5 +1,7 @@
 package org.infinispan.remoting.rpc;
 
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -12,17 +14,24 @@ public class RpcOptionsBuilder {
 
    private long timeout;
    private TimeUnit unit;
-   private boolean fifoOrder;
-   private boolean totalOrder;
+   private DeliverOrder deliverOrder;
    private ResponseFilter responseFilter;
    private ResponseMode responseMode;
    private boolean skipReplicationQueue;
 
+   /**
+    * @deprecated use instead {@link #RpcOptionsBuilder(long, java.util.concurrent.TimeUnit, ResponseMode,
+    * org.infinispan.remoting.inboundhandler.DeliverOrder)}
+    */
+   @Deprecated
    public RpcOptionsBuilder(long timeout, TimeUnit unit, ResponseMode responseMode, boolean fifoOrder) {
+      this(timeout, unit, responseMode, fifoOrder ? DeliverOrder.PER_SENDER : DeliverOrder.NONE);
+   }
+
+   public RpcOptionsBuilder(long timeout, TimeUnit unit, ResponseMode responseMode, DeliverOrder deliverOrder) {
       this.timeout = timeout;
       this.unit = unit;
-      this.fifoOrder = fifoOrder;
-      this.totalOrder = false;
+      this.deliverOrder = deliverOrder;
       this.responseFilter = null;
       this.responseMode = responseMode;
       this.skipReplicationQueue = false;
@@ -36,8 +45,7 @@ public class RpcOptionsBuilder {
    public RpcOptionsBuilder(RpcOptions template) {
       this.timeout = template.timeout();
       this.unit = template.timeUnit();
-      this.fifoOrder = template.fifoOrder();
-      this.totalOrder = template.totalOrder();
+      this.deliverOrder = template.deliverOrder();
       this.responseFilter = template.responseFilter();
       this.responseMode = template.responseMode();
       this.skipReplicationQueue = template.skipReplicationQueue();
@@ -72,19 +80,36 @@ public class RpcOptionsBuilder {
     * @param fifoOrder if {@code true}, it the message will be deliver in First In, First Out (FIFO) order with other
     *                  sent message with FIFO. Otherwise, the message is delivered as soon as it is received.
     * @return this instance
+    * @deprecated use instead {@link #deliverMode(org.infinispan.remoting.inboundhandler.DeliverOrder)}.
     */
+   @Deprecated
    public RpcOptionsBuilder fifoOrder(boolean fifoOrder) {
-      this.fifoOrder = fifoOrder;
+      if (deliverOrder != DeliverOrder.TOTAL) {
+         this.deliverOrder = fifoOrder ? DeliverOrder.PER_SENDER : DeliverOrder.NONE;
+      }
       return this;
    }
 
    /**
     * @param totalOrder if {@code true}, the message will be delivered by a global order, i.e., the same order in all
     *                   the nodes
-    * @return  this instance
+    * @return this instance
+    * @deprecated use instead {@link #deliverMode(org.infinispan.remoting.inboundhandler.DeliverOrder)}.
     */
+   @Deprecated
    public RpcOptionsBuilder totalOrder(boolean totalOrder) {
-      this.totalOrder = totalOrder;
+      if (totalOrder) {
+         this.deliverOrder = DeliverOrder.TOTAL;
+      }
+      return this;
+   }
+
+   /**
+    * @param deliverOrder the {@link org.infinispan.remoting.inboundhandler.DeliverOrder}.
+    * @return this instance.
+    */
+   public RpcOptionsBuilder deliverMode(DeliverOrder deliverOrder) {
+      this.deliverOrder = deliverOrder;
       return this;
    }
 
@@ -131,8 +156,7 @@ public class RpcOptionsBuilder {
     * @return an instance of {@link RpcOptions} with the current builder options
     */
    public final RpcOptions build() {
-      return new RpcOptions(timeout, unit, responseFilter, responseMode, skipReplicationQueue, fifoOrder,
-                            totalOrder);
+      return new RpcOptions(timeout, unit, responseFilter, responseMode, skipReplicationQueue, deliverOrder);
    }
 
    @Override
@@ -144,8 +168,7 @@ public class RpcOptionsBuilder {
 
       if (skipReplicationQueue != that.skipReplicationQueue) return false;
       if (timeout != that.timeout) return false;
-      if (fifoOrder != that.fifoOrder) return false;
-      if (totalOrder != that.totalOrder) return false;
+      if (deliverOrder != that.deliverOrder) return false;
       if (responseFilter != null ? !responseFilter.equals(that.responseFilter) : that.responseFilter != null)
          return false;
       if (responseMode != that.responseMode) return false;
@@ -158,8 +181,7 @@ public class RpcOptionsBuilder {
    public int hashCode() {
       int result = (int) (timeout ^ (timeout >>> 32));
       result = 31 * result + unit.hashCode();
-      result = 31 * result + (fifoOrder ? 1 : 0);
-      result = 31 * result + (totalOrder ? 1 : 0);
+      result = 31 * result + deliverOrder.hashCode();
       result = 31 * result + (responseFilter != null ? responseFilter.hashCode() : 0);
       result = 31 * result + (responseMode != null ? responseMode.hashCode() : 0);
       result = 31 * result + (skipReplicationQueue ? 1 : 0);
@@ -171,8 +193,7 @@ public class RpcOptionsBuilder {
       return "RpcOptionsBuilder{" +
             "timeout=" + timeout +
             ", unit=" + unit +
-            ", fifoOrder=" + fifoOrder +
-            ", totalOrder=" + totalOrder +
+            ", deliverOrder=" + deliverOrder +
             ", responseFilter=" + responseFilter +
             ", responseMode=" + responseMode +
             ", skipReplicationQueue=" + skipReplicationQueue +

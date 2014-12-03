@@ -1,18 +1,5 @@
 package org.infinispan.remoting.rpc;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-
-import java.text.NumberFormat;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -35,15 +22,26 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.jmx.annotations.Units;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.text.NumberFormat;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
  * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation,
@@ -72,24 +70,19 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    private ReplicationQueue replicationQueue;
    private ExecutorService asyncExecutor;
    private CommandsFactory cf;
-   private LocalTopologyManager localTopologyManager;
    private StateTransferManager stateTransferManager;
-   private String cacheName;
    private TimeService timeService;
 
    @Inject
-   public void injectDependencies(Transport t, Cache cache, Configuration cfg,
+   public void injectDependencies(Transport t, Configuration cfg,
                                   ReplicationQueue replicationQueue, CommandsFactory cf,
                                   @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
-                                  LocalTopologyManager localTopologyManager,
                                   StateTransferManager stateTransferManager, TimeService timeService) {
       this.t = t;
-      this.cacheName = cache.getName();
       this.configuration = cfg;
       this.replicationQueue = replicationQueue;
       this.asyncExecutor = e;
       this.cf = cf;
-      this.localTopologyManager = localTopologyManager;
       this.stateTransferManager = stateTransferManager;
       this.timeService = timeService;
    }
@@ -127,7 +120,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Override
    public final Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
-      RpcOptions options = getRpcOptionsBuilder(mode, !usePriorityQueue)
+      RpcOptions options = getRpcOptionsBuilder(mode, usePriorityQueue ? DeliverOrder.NONE : DeliverOrder.PER_SENDER)
             .timeout(timeout, TimeUnit.MILLISECONDS).responseFilter(responseFilter).build();
       return invokeRemotely(recipients, rpcCommand, options);
    }
@@ -221,7 +214,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       Callable<Object> c = new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            Object result = null;
+            Object result;
             try {
                result = invokeRemotely(recipients, rpc, true, usePriorityQueue, timeout, responseMode);
                future.notifyDone(result);
@@ -288,8 +281,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 //               }
 //            }
          Map<Address, Response> result = t.invokeRemotely(recipients, rpc, options.responseMode(), options.timeUnit().toMillis(options.timeout()),
-               !options.fifoOrder(), options.responseFilter(), options.totalOrder(),
-               configuration.clustering().cacheMode().isDistributed());
+               options.responseFilter(), options.deliverOrder(), configuration.clustering().cacheMode().isDistributed());
          if (statisticsEnabled) replicationCount.incrementAndGet();
          if (trace) log.tracef("Response(s) to %s is %s", rpc, result);
          return result;
@@ -342,7 +334,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       Callable<Object> c = new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            Object result = null;
+            Object result;
             try {
                result = invokeRemotely(recipients, rpc, options);
                future.notifyDone(result);
@@ -455,24 +447,33 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Override
    public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode) {
-      return getRpcOptionsBuilder(responseMode, true);
+      return getRpcOptionsBuilder(responseMode, responseMode.isSynchronous() ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
    }
 
    @Override
    public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, boolean fifoOrder) {
-      return new RpcOptionsBuilder(configuration.clustering().sync().replTimeout(), TimeUnit.MILLISECONDS, responseMode,
-                                   fifoOrder);
+      return getRpcOptionsBuilder(responseMode, fifoOrder ? DeliverOrder.PER_SENDER : DeliverOrder.NONE);
+   }
+
+   @Override
+   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder) {
+      return new RpcOptionsBuilder(configuration.clustering().sync().replTimeout(), TimeUnit.MILLISECONDS, responseMode, deliverOrder);
    }
 
    @Override
    public RpcOptions getDefaultRpcOptions(boolean sync) {
-      return getDefaultRpcOptions(sync, true);
+      return getDefaultRpcOptions(sync, sync ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
    }
 
    @Override
    public RpcOptions getDefaultRpcOptions(boolean sync, boolean fifoOrder) {
+      return getDefaultRpcOptions(sync, fifoOrder ? DeliverOrder.PER_SENDER : DeliverOrder.NONE);
+   }
+
+   @Override
+   public RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder) {
       return getRpcOptionsBuilder(sync ? ResponseMode.SYNCHRONOUS : ResponseMode.getAsyncResponseMode(configuration),
-                                  fifoOrder).build();
+                                  deliverOrder).build();
    }
 
    @Override

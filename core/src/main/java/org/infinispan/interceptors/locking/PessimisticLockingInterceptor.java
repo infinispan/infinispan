@@ -19,6 +19,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
@@ -303,7 +304,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          TxCompletionNotificationCommand command = cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
          final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();
-         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, rpcManager.getDefaultRpcOptions(true, false));
+         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
       }
    }
 

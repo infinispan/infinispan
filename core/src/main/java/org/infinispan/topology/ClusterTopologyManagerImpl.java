@@ -21,6 +21,7 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.AvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.PreferAvailabilityStrategy;
 import org.infinispan.partitionhandling.impl.PreferConsistencyStrategy;
+import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -388,7 +389,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       if (totalOrder) {
          Map<Address, Response> responseMap = transport.invokeRemotely(transport.getMembers(), command,
                                                                        ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
-                                                                       timeout, false, filter, totalOrder, distributed);
+                                                                       timeout, filter, DeliverOrder.TOTAL, distributed);
          Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
          for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
             Address address = entry.getKey();
@@ -406,7 +407,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          @Override
          public Map<Address, Response> call() throws Exception {
             return transport.invokeRemotely(null, command,
-                  ResponseMode.SYNCHRONOUS, timeout, true, filter, false, false);
+                  ResponseMode.SYNCHRONOUS, timeout, filter, DeliverOrder.NONE, false);
          }
       });
 
@@ -467,8 +468,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
       // invoke remotely
       try {
-         transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, timeout, true, null,
-               totalOrder, distributed);
+         DeliverOrder deliverOrder = totalOrder ? DeliverOrder.TOTAL : DeliverOrder.NONE;
+         transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, timeout, null,
+                                  deliverOrder, distributed);
       } catch (Exception e) {
          throw new CacheException("Failed to broadcast asynchronous command: " + command);
       }
