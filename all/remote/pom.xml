@@ -92,8 +92,40 @@
                            <exclude>org.osgi:org.osgi.compendium:jar:</exclude>
                         </excludes>
                      </artifactSet>
+                     <filters>
+                        <filter>
+                           <artifact>*:*</artifact>
+                           <excludes>
+                              <exclude>INSTALL.html</exclude>
+                              <exclude>LICENSE</exclude>
+                              <exclude>README</exclude>
+                              <exclude>META-INF/*.SF</exclude>
+                              <exclude>META-INF/*.DSA</exclude>
+                              <exclude>META-INF/*.RSA</exclude>
+                              <exclude>META-INF/ASL2.0</exclude>
+                              <exclude>META-INF/DEPENDENCIES</exclude>
+                              <exclude>META-INF/DEPENDENCIES.txt</exclude>
+                              <exclude>META-INF/LICENSE</exclude>
+                              <exclude>META-INF/LICENSE.txt</exclude>
+                              <exclude>META-INF/NOTICE</exclude>
+                              <exclude>META-INF/NOTICE.txt</exclude>
+                           </excludes>
+                        </filter>
+                     </filters>
                      <createSourcesJar>true</createSourcesJar>
                      <relocations>
+                        <relocation>
+                           <pattern>org.apache</pattern>
+                           <shadedPattern>infinispan.org.apache</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>com.google</pattern>
+                           <shadedPattern>infinispan.com.google</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>com.squareup</pattern>
+                           <shadedPattern>infinispan.com.squareup</shadedPattern>
+                        </relocation>
                         <relocation>
                            <pattern>org.jboss.logging</pattern>
                            <shadedPattern>infinispan.org.jboss.logging</shadedPattern>

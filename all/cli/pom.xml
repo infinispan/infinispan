@@ -35,6 +35,32 @@
                      <goal>shade</goal>
                   </goals>
                   <configuration>
+                     <createSourcesJar>true</createSourcesJar>
+                     <artifactSet>
+                        <excludes>
+                           <exclude>org.infinispan:infinispan-cli</exclude>
+                        </excludes>
+                     </artifactSet>
+                     <filters>
+                        <filter>
+                           <artifact>*:*</artifact>
+                           <excludes>
+                              <exclude>INSTALL.html</exclude>
+                              <exclude>LICENSE</exclude>
+                              <exclude>README</exclude>
+                              <exclude>META-INF/*.SF</exclude>
+                              <exclude>META-INF/*.DSA</exclude>
+                              <exclude>META-INF/*.RSA</exclude>
+                              <exclude>META-INF/ASL2.0</exclude>
+                              <exclude>META-INF/DEPENDENCIES</exclude>
+                              <exclude>META-INF/DEPENDENCIES.txt</exclude>
+                              <exclude>META-INF/LICENSE</exclude>
+                              <exclude>META-INF/LICENSE.txt</exclude>
+                              <exclude>META-INF/NOTICE</exclude>
+                              <exclude>META-INF/NOTICE.txt</exclude>
+                           </excludes>
+                        </filter>
+                     </filters>
                      <transformers>
                         <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                            <mainClass>org.infinispan.cli.Main</mainClass>
