@@ -6,6 +6,8 @@
 
     <bean id="parser71" class="org.infinispan.configuration.parsing.Parser71"/>
     <service ref="parser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+    <bean id="parser70" class="org.infinispan.configuration.parsing.Parser70"/>
+    <service ref="parser70" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
 
     <bean id="defaultMapReduceTaskLifecycle" class="org.infinispan.distexec.mapreduce.spi.DefaultMapReduceTaskLifecycle"/>
     <service ref="defaultMapReduceTaskLifecycle" interface="org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycle"/>
@@ -15,20 +17,30 @@
 
     <bean id="jdbcStoreConfigurationParser71" class="org.infinispan.persistence.jdbc.configuration.JdbcStoreConfigurationParser71"/>
     <service ref="jdbcStoreConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+    <bean id="jdbcStoreConfigurationParser70" class="org.infinispan.persistence.jdbc.configuration.JdbcStoreConfigurationParser70"/>
+    <service ref="jdbcStoreConfigurationParser70" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+    
+    <bean id="jpaStoreConfigurationParser71" class="org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationParser71"/>
+    <service ref="jpaStoreConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+    <bean id="jpaStoreConfigurationParser70" class="org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationParser70"/>
+    <service ref="jpaStoreConfigurationParser70" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+    <bean id="jpaStoreLifecycleManager" class="org.infinispan.persistence.jpa.impl.JpaStoreLifecycleManager"/>
+    <service ref="jpaStoreLifecycleManager" interface="org.infinispan.lifecycle.ModuleLifecycle"/>
 
     <bean id="levelDBStoreConfigurationParser71" class="org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationParser71"/>
     <service ref="levelDBStoreConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+    <bean id="levelDBStoreConfigurationParser70" class="org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationParser70"/>
+    <service ref="levelDBStoreConfigurationParser70" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
 
     <bean id="remoteStoreConfigurationParser71" class="org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser71"/>
     <service ref="remoteStoreConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
-
-    <bean id="hotRodTargetMigrator" class="org.infinispan.persistence.remote.upgrade.HotRodTargetMigrator"/>
-    <service ref="hotRodTargetMigrator" interface="org.infinispan.upgrade.TargetMigrator"/>
-
-    <bean id="clInterfaceLoaderConfigurationParser71" class="org.infinispan.persistence.cli.configuration.CLInterfaceLoaderConfigurationParser71"/>
-    <service ref="clInterfaceLoaderConfigurationParser71" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
-
-    <bean id="clInterfaceTargetMigrator" class="org.infinispan.persistence.cli.upgrade.CLInterfaceTargetMigrator"/>
-    <service ref="clInterfaceTargetMigrator" interface="org.infinispan.upgrade.TargetMigrator"/>
+    <bean id="remoteStoreConfigurationParser70" class="org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationParser70"/>
+    <service ref="remoteStoreConfigurationParser70" interface="org.infinispan.configuration.parsing.ConfigurationParser"/>
+    
+    <bean id="riverProviderDescriptor" class="org.jboss.marshalling.river.RiverProviderDescriptor"/>
+    <service ref="riverProviderDescriptor" interface="org.jboss.marshalling.ProviderDescriptor"/>
+    
+    <bean id="serialProviderDescriptor" class="org.jboss.marshalling.serial.SerialProviderDescriptor"/>
+    <service ref="serialProviderDescriptor" interface="org.jboss.marshalling.ProviderDescriptor"/>
   
 </blueprint>
