@@ -47,9 +47,9 @@
       <module>server/rest</module>
       <module>client/hotrod-client</module>
       <module>all</module>
+      <module>all/remote</module>
       <module>all/embedded</module>
       <module>all/embedded-query</module>
-      <module>all/remote</module>
       <module>all/cli</module>
       <module>rhq-plugin</module>
       <module>osgi</module>
