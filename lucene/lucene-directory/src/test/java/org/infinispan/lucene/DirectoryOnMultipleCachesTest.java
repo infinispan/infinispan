@@ -1,18 +1,10 @@
 package org.infinispan.lucene;
 
-import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
-import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
-import static org.infinispan.lucene.CacheTestSupport.optimizeIndex;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.apache.lucene.store.Directory;
 import org.infinispan.Cache;
 import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.impl.FileListCacheValue;
+import org.infinispan.lucene.testutils.TestSegmentReadLocker;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.TestingUtil;
 import org.testng.AssertJUnit;
@@ -20,10 +12,19 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
+import static org.infinispan.lucene.CacheTestSupport.optimizeIndex;
+import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
+
+
 /**
- * Verifies the Index can be spread across three different caches;
- * this is useful so that each cache can be configured independently
- * to better match the intended usage (like avoiding a CacheStore for volatile locking data).
+ * Verifies the Index can be spread across three different caches; this is useful so that each cache can be configured
+ * independently to better match the intended usage (like avoiding a CacheStore for volatile locking data).
  *
  * @author Sanne Grinovero
  */
@@ -53,7 +54,10 @@ public class DirectoryOnMultipleCachesTest {
       assert metadataCache != chunkCache;
       assert chunkCache != lockCache;
       assert lockCache != metadataCache;
-      Directory dir = DirectoryBuilder.newDirectoryInstance(metadataCache, chunkCache, lockCache, "testingIndex").chunkSize(100).create();
+      String indexName = "testingIndex";
+      TestSegmentReadLocker testSegmentReadLocker = new TestSegmentReadLocker(lockCache, chunkCache, metadataCache, indexName);
+      Directory dir = DirectoryBuilder.newDirectoryInstance(metadataCache, chunkCache, lockCache, indexName)
+            .overrideSegmentReadLocker(testSegmentReadLocker).chunkSize(100).create();
       writeTextToIndex(dir, 0, "hello world");
       assertTextIsFoundInIds(dir, "hello", 0);
       writeTextToIndex(dir, 1, "hello solar system");
@@ -64,7 +68,7 @@ public class DirectoryOnMultipleCachesTest {
       dir.close();
    }
 
-   @Test(dependsOnMethods="testRunningOnMultipleCaches")
+   @Test(dependsOnMethods = "testRunningOnMultipleCaches")
    public void verifyIntendedChunkCachesUsage() {
       int chunks = 0;
       for (Object key : chunkCache.keySet()) {
@@ -76,7 +80,7 @@ public class DirectoryOnMultipleCachesTest {
       assert chunks != 0;
    }
 
-   @Test(dependsOnMethods="testRunningOnMultipleCaches")
+   @Test(dependsOnMethods = "testRunningOnMultipleCaches")
    public void verifyIntendedLockCachesUsage() {
       final List<Object> keysThatShouldBeRemoved = new ArrayList<Object>();
       //all locks should be cleared now, so if any value is left it should be equal to one.
@@ -109,7 +113,7 @@ public class DirectoryOnMultipleCachesTest {
                              keysThatShouldBeRemoved.isEmpty());
    }
 
-   @Test(dependsOnMethods="testRunningOnMultipleCaches")
+   @Test(dependsOnMethods = "testRunningOnMultipleCaches")
    public void verifyIntendedMetadataCachesUsage() {
       int metadata = 0;
       int filelists = 0;
@@ -118,12 +122,10 @@ public class DirectoryOnMultipleCachesTest {
          if (key.getClass().equals(org.infinispan.lucene.FileListCacheKey.class)) {
             filelists++;
             AssertJUnit.assertEquals(FileListCacheValue.class, value.getClass());
-         }
-         else if (key.getClass().equals(FileCacheKey.class)) {
+         } else if (key.getClass().equals(FileCacheKey.class)) {
             metadata++;
             AssertJUnit.assertEquals(FileMetadata.class, value.getClass());
-         }
-         else {
+         } else {
             AssertJUnit.fail("unexpected type of key in metadata cache: " + key.getClass());
          }
       }
