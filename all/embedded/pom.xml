@@ -49,6 +49,12 @@
          <artifactId>infinispan-cachestore-leveldb</artifactId>
          <optional>true</optional>
       </dependency>
+      
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cachestore-remote</artifactId>
+         <optional>true</optional>
+      </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
@@ -210,7 +216,6 @@
                      <goal>bundle</goal>
                   </goals>
                </execution>
-
                <execution>
                   <id>bundle-package</id>
                   <phase>package</phase>
@@ -220,7 +225,10 @@
                   <configuration>
                      <instructions>
                         <!-- Inline the jar created by the maven-shade-plugin.  -->
-                        <Include-Resource>@${intermediary_jar_path}</Include-Resource>
+                        <Include-Resource>
+                           @${intermediary_jar_path},
+                           /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
+                        </Include-Resource>
                         <!-- Define packages from dependencies, exported further by current bundle -->
                         <_exportcontents>
                            org.infinispan.*,
