@@ -54,6 +54,12 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-remote</artifactId>
          <optional>true</optional>
+         <exclusions>
+            <exclusion>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-client-hotrod</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>
@@ -86,7 +92,6 @@
          <optional>true</optional>
       </dependency>
 
-      
       <dependency>
          <groupId>org.jboss.spec.javax.transaction</groupId>
          <artifactId>jboss-transaction-api_1.1_spec</artifactId>
@@ -119,6 +124,12 @@
       <dependency>
          <groupId>org.osgi</groupId>
          <artifactId>org.osgi.compendium</artifactId>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-remote</artifactId>
          <scope>provided</scope>
       </dependency>
    </dependencies>
@@ -181,12 +192,34 @@
                               <exclude>META-INF/beans.xml</exclude>
                            </excludes>
                         </filter>
+                        <filter>
+                           <artifact>*:*</artifact>
+                           <excludes>
+                              <exclude>INSTALL.html</exclude>
+                              <exclude>LICENSE</exclude>
+                              <exclude>README</exclude>
+                              <exclude>META-INF/*.SF</exclude>
+                              <exclude>META-INF/*.DSA</exclude>
+                              <exclude>META-INF/*.RSA</exclude>
+                              <exclude>META-INF/ASL2.0</exclude>
+                              <exclude>META-INF/DEPENDENCIES</exclude>
+                              <exclude>META-INF/DEPENDENCIES.txt</exclude>
+                              <exclude>META-INF/LICENSE</exclude>
+                              <exclude>META-INF/LICENSE.txt</exclude>
+                              <exclude>META-INF/NOTICE</exclude>
+                              <exclude>META-INF/NOTICE.txt</exclude>
+                           </excludes>
+                        </filter>
                      </filters>
                      <createSourcesJar>true</createSourcesJar>
                      <relocations>
                         <relocation>
-                           <pattern>com.google.common</pattern>
-                           <shadedPattern>infinispan.com.google.common</shadedPattern>
+                           <pattern>com.google</pattern>
+                           <shadedPattern>infinispan.com.google</shadedPattern>
+                        </relocation>
+                        <relocation>
+                           <pattern>org.iq80</pattern>
+                           <shadedPattern>infinispan.org.iq80</shadedPattern>
                         </relocation>
                         <relocation>
                            <pattern>org.jboss.logging</pattern>
