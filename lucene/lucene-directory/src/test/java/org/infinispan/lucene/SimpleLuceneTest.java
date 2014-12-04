@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.lucene.directory.DirectoryBuilder;
+import org.infinispan.lucene.testutils.TestSegmentReadLocker;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
@@ -41,12 +42,14 @@ public class SimpleLuceneTest extends MultipleCacheManagersTest {
    }
 
    @Test
+   @SuppressWarnings("unchecked")
    public void testIndexWritingAndFinding() throws IOException {
       final String indexName = "indexName";
       final Cache<?,?> cache0 = cache(0, "lucene");
       final Cache<?,?> cache1 = cache(1, "lucene");
-      Directory dirA = DirectoryBuilder.newDirectoryInstance(cache0, cache0, cache0, indexName).create();
-      Directory dirB = DirectoryBuilder.newDirectoryInstance(cache1, cache1, cache1, indexName).create();
+      TestSegmentReadLocker testSegmentReadLocker = new TestSegmentReadLocker((Cache<Object, Integer>) cache0, cache0, cache0, indexName);
+      Directory dirA = DirectoryBuilder.newDirectoryInstance(cache0, cache0, cache0, indexName).overrideSegmentReadLocker(testSegmentReadLocker).create();
+      Directory dirB = DirectoryBuilder.newDirectoryInstance(cache1, cache1, cache1, indexName).overrideSegmentReadLocker(testSegmentReadLocker).create();
       writeTextToIndex(dirA, 0, "hi from node A");
       assertTextIsFoundInIds(dirA, "hi", 0);
       assertTextIsFoundInIds(dirB, "hi", 0);
