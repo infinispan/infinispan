@@ -507,7 +507,7 @@ Or, if you are using XML:
 
 ===== Advanced Interface
 
-NOTE: This interface is available since Infinispan {infinispanversion}
+NOTE: This interface is available since Infinispan 7.0.0.
 
 +AdvancedCache+ allows to interact with the keys belonging to a group. It is possible to return the +Set+ of keys
 belonging to a group and remove all the keys of the group. Below is the interface available:
@@ -722,7 +722,7 @@ enter degraded mode instead:
 - If at least one segment has lost all its owners (meaning at least
   _numOwners_ nodes left since the last rebalance ended), the partition enters
   degraded mode.
-- If the partition does not contain a simple majority (50% + 1) of the nodes
+- If the partition does not contain a simple majority of the nodes (floor(numNodes/2) + 1)
   in the _latest stable topology_, the partition also enters degraded mode.
 - Otherwise the partition keeps functioning normally, and it starts a rebalance.
 
@@ -817,11 +817,12 @@ cache enters a different mode called _unavailable_.
 
 Just like degraded mode, unavailable mode only allows access to keys that
 are fully owned by the live members, and requests to access partially-owned
-keys throw `AvailabilityException`. The difference between the two modes is
-that the cluster will never recover from unavailable mode by itself. For now,
-the only way to exit unavailable mode is to restart the entire cluster. In the
-future it will be possible to force the cluster to become available with a
-JMX call or from the server console.
+keys throw `AvailabilityException`.
+The difference between the two modes is that the cluster will never recover
+from unavailable mode by itself.
+There are two ways to exit unavailable mode: restart the entire cluster,
+or by forcing the availability mode back to AVAILABLE
+<<partition-handling-monitoring,via JMX>>.
 
 [[partition-handling-configuration]]
 ==== Configuration for partition handling functionality
@@ -837,7 +838,7 @@ In order to enable partition handling within the XML configuration:
 </distributed-cache>
 ----
 
-Unless the cache is distributed, the configuration is ignored.
+Unless the cache is distributed or replicated, the configuration is ignored.
 
 The same can be achieved programmatically:
 [source,java]
@@ -846,6 +847,30 @@ ConfigurationBuilder dcc = new ConfigurationBuilder();
 dcc.clustering().partitionHandling().enabled(true);
 ----
 
-Note: there are plans to add JMX monitoring operations in order to forcefully migrate
-a cluster form degraded or unavailable state back to available, at the cost of consistency.
+[[partition-handling-monitoring]]
+==== Monitoring and administration
+
+The availability mode of a cache is exposed in JMX as an attribute in the
+link:http://docs.jboss.org/infinispan/7.0/apidocs/jmxComponents.html#Cache[Cache MBean].
+The attribute is writable, allowing an administrator to forcefully migrate
+a cache from degraded or unavailable state back to available (at the cost of
+consistency).
+
+The availability mode is also accessible via the
+link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/AdvancedCache.html[AdvancedCache]
+interface:
+
+[source,java]
+----
+AdvancedCache ac = cache.getAdvancedCache();
+
+// Read the availability
+boolean available = ac.getAvailability() == AvailabilityMode.AVAILABLE;
+
+// Change the availability
+if (!available) {
+   ac.setAvailability(AvailabilityMode.AVAILABLE);
+}
+----
+
 
