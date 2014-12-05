@@ -196,7 +196,7 @@ public class LockManagerImpl implements LockManager {
             key = ((MarshalledValue) key).get();
          }
          throw log.unableToAcquireLock(Util.prettyPrintTime(timeoutMillis), key, ctx.getLockOwner(), owner,
-               ctx.getOrigin());
+               ctx.isOriginLocal() ? "local" : ctx.getOrigin().toString());
       }
    }
 
