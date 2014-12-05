@@ -21,7 +21,7 @@ public class Version {
    private static final int PATCH_MASK = 0x00003f;
 
    public static final String PROJECT_NAME = "Infinispan";
-   public static final String CODENAME = "Guinness";
+   public static final String CODENAME = "Hoptimus Prime";
 
    private static final Version INSTANCE = new Version();
 
