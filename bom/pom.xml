@@ -55,6 +55,11 @@
       <infinispan.codename>Guinness</infinispan.codename>
       <infinispan.core.schema.version>7.1</infinispan.core.schema.version>
 
+      <version.java>1.7</version.java>
+
+      <!-- Versions for plugins -->
+      <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
+      
       <!-- Versions for dependencies -->
       <version.protostream>2.0.2.Final</version.protostream>
       <version.protobuf>2.6.0</version.protobuf>
@@ -427,4 +432,24 @@
          </dependency>
       </dependencies>
    </dependencyManagement>
+
+   <build>
+      <pluginManagement>
+         <plugins>
+            <plugin>
+               <artifactId>maven-compiler-plugin</artifactId>
+               <version>${version.maven-compiler-plugin}</version>
+               <configuration>
+                  <source>${version.java}</source>
+                  <target>${version.java}</target>
+                  <encoding>UTF-8</encoding>
+                  <excludes>
+                     <exclude>**/package-info.java</exclude>
+                  </excludes>
+                  <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
+               </configuration>
+            </plugin>
+         </plugins>
+      </pluginManagement>
+   </build>
 </project>

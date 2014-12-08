@@ -1120,7 +1120,7 @@
                <version>2.7.1</version>
                <configuration>
                   <minimumTokens>100</minimumTokens>
-                  <targetJdk>1.7</targetJdk>
+                  <targetJdk>${version.java}</targetJdk>
                   <linkXref>false</linkXref>
                   <sourceEncoding>utf-8</sourceEncoding>
                </configuration>
@@ -1201,7 +1201,7 @@
                            <pluginExecutionFilter>
                               <groupId>org.apache.maven.plugins</groupId>
                               <artifactId>maven-antrun-plugin</artifactId>
-                              <versionRange>[1.7,)</versionRange>
+                              <versionRange>[${version.java},)</versionRange>
                               <goals>
                                  <goal>run</goal>
                               </goals>
@@ -1403,7 +1403,7 @@
                   <configuration>
                      <rules>
                         <requireJavaVersion>
-                           <version>[1.7,)</version>
+                           <version>[${version.java},)</version>
                         </requireJavaVersion>
                         <requireMavenVersion>
                            <version>[3.0.5,)</version>
@@ -1472,22 +1472,6 @@
                   </configuration>
                </execution>
             </executions>
-         </plugin>
-         
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <version>3.1</version>
-            <configuration>
-               <source>1.7</source>
-               <target>1.7</target>
-               <encoding>UTF-8</encoding>
-               <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files</compilerArgument>
-               
-               <excludes>
-                  <exclude>**/package-info.java</exclude>
-               </excludes>
-            </configuration>
          </plugin>
          
          <plugin>

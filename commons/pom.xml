@@ -63,19 +63,9 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-               <source>1.7</source>
-               <target>1.7</target>
-               <encoding>UTF-8</encoding>
-               <compilerArgument>-AtranslationFilesPath=${project.basedir}/target/generated-translation-files
-               </compilerArgument>
+            <configuration combine.children="append">
                <compilerArgument>-XDignore.symbol.file</compilerArgument>
-               
                <fork>true</fork>
-               
-               <excludes>
-                  <exclude>**/package-info.java</exclude>
-               </excludes>
             </configuration>
          </plugin>
          <plugin>
