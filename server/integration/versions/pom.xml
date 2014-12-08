@@ -517,7 +517,7 @@
                   <configuration>
                      <rules>
                         <requireJavaVersion>
-                           <version>[1.7,)</version>
+                           <version>[${version.java},)</version>
                         </requireJavaVersion>
                         <requireMavenVersion>
                            <version>[3.0.5,)</version>
