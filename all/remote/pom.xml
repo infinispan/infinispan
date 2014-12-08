@@ -74,13 +74,6 @@
                <include>features.xml</include>
             </includes>
          </resource>
-         <resource>
-            <directory>${project.basedir}/target/classes</directory>
-            <filtering>false</filtering>
-            <includes>
-               <include>**/*</include>
-            </includes>
-         </resource>
       </resources>
       <plugins>
          <plugin>
@@ -184,7 +177,10 @@
                   <configuration>
                      <instructions>
                         <!-- Inline the jar created by the maven-shade-plugin. -->
-                        <Include-Resource>@${project.build.directory}/${intermediary_jar_name}.jar</Include-Resource>
+                        <Include-Resource>
+                           @${intermediary_jar_path},
+                           /features.xml=${project.basedir}/target/classes/features.xml
+                        </Include-Resource>
                         <!-- Define packages from dependencies, exported further by current bundle -->
                         <_exportcontents>
                            org.infinispan.client.hotrod.*,

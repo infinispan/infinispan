@@ -145,13 +145,6 @@
                <include>OSGI-INF/blueprint/blueprint.xml</include>
             </includes>
          </resource>
-         <resource>
-            <directory>${project.basedir}/target/classes</directory>
-            <filtering>false</filtering>
-            <includes>
-               <include>**/*</include>
-            </includes>
-         </resource>
       </resources>
       <plugins>
          <plugin>
@@ -261,7 +254,8 @@
                         <!-- Inline the jar created by the maven-shade-plugin.  -->
                         <Include-Resource>
                            @${intermediary_jar_path},
-                           /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml
+                           /OSGI-INF/blueprint/blueprint.xml=${project.basedir}/target/classes/OSGI-INF/blueprint/blueprint.xml,
+                           /features.xml=${project.basedir}/target/classes/features.xml
                         </Include-Resource>
                         <!-- Define packages from dependencies, exported further by current bundle -->
                         <_exportcontents>
