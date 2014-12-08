@@ -80,6 +80,17 @@
       <version.scala>${version.scala.major}.2</version.scala>
       <version.scala.xml>1.0.2</version.scala.xml>
       <version.xstream>1.4.7</version.xstream>
+      <version.c3p0>0.9.5-pre8</version.c3p0>
+      <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
+      <version.hibernate.core>4.3.6.Final</version.hibernate.core>
+      <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
+      <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
+      <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
+      <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
+      <version.hibernate_dep.classmate>0.5.4</version.hibernate_dep.classmate>
+      <version.hibernate_dep.hibernate-commons-annotations>4.0.5.Final</version.hibernate_dep.hibernate-commons-annotations>
+      <version.hibernate_dep.jandex>1.1.0.Final</version.hibernate_dep.jandex>
+      <version.hibernate_dep.javaassist>3.18.1-GA</version.hibernate_dep.javaassist>
    </properties>
 
    <distributionManagement>
