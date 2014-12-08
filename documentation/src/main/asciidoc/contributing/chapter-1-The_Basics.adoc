@@ -76,34 +76,38 @@ This is tested on Eclipse, IntelliJ IDEA and Netbeans.
 ===== Eclipse 
 Before we import the project, we need to clone the project as described above.
 
-$$1.$$ Install the m2eclipse plugin if you have not already installed it. This is bundled with Eclipse from version "Indigo" 3.7. 
+. Install the m2eclipse plugin if you have not already installed it. This is bundled with Eclipse from version "Indigo" 3.7. 
 For older versions follow instructions on link:$$http://eclipse.org/m2e/$$[].
 
-$$2.$$ Import the Infinispan maven project. Select File -> Import in your eclipse workbench. Select the Existing Maven Project importer. 
-
+. Import the Infinispan maven project. Select File -> Import in your eclipse workbench. Select the Existing Maven Project importer.
++
 image::images/import_maven1.png[]
 
-$$3.$$ Select the root directory of your Infinispan checkout. 
-
+. Select the root directory of your Infinispan checkout.
++
 image::images/import_maven2.png[]
 
-$$4.$$ Select Infinispan modules that you want to import.
+. Select Infinispan modules that you want to import.
 
-$$5.$$ Finally, from Infinispan 5.0 onwards, annotation processing is used to allow log messages to be internationalized.  This processing can be done directly from Eclipse as part of compilation but it requires some set up:
+. Finally, from Infinispan 5.0 onwards, annotation processing is used to allow log messages to be internationalized.  This processing can be done directly from Eclipse as part of compilation but it requires some set up:
 
-$$5.1.$$  Open the properties for infinispan-core and locate Annotation Processing 
+..  Open the properties for infinispan-core and locate Annotation Processing 
 
-$$5.2.$$  Tick Enable project specific settings 
+..  Tick Enable project specific settings 
 
-$$5.3.$$  Enter `target/generated-sources/annotations` as the `Generated source` directory 
-
+..  Enter `target/generated-sources/annotations` as the `Generated source` directory
++
 image::images/ann_proc_eclipse.png[]
 
-$$6.$$ Code Formatting. From the menu Window -> Preferences -> Java -> Code Style -> Formatter. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/formatter.xml$$[formatter.xml]
+. Code Formatting. From the menu Window -> Preferences -> Java -> Code Style -> Formatter. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/formatter.xml$$[formatter.xml]
 
-$$7.$$ Code templates. From the menu Window -> Preferences -> Java -> Code Style -> Code Templates. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/codetemplates.xml$$[codetemplates.xml] 
+. Code templates. From the menu Window -> Preferences -> Java -> Code Style -> Code Templates. Import link:$$https://raw.github.com/infinispan/infinispan/master/ide-settings/eclipse/codetemplates.xml$$[codetemplates.xml] 
 
-Some modules use Scala, if you plan contributing to one of these modules it's worth installing the link:$$http://www.scala-lang.org/node/94$$[Scala tools] . 
+Some modules use Scala, if you plan contributing to one of these modules it's worth installing the link:$$http://scala-ide.org/$$[Scala IDE]. After installing it you need to add "Scala Nature" to a few project of the projects (from the project context menu Configuration -> Add Scala Nature), at the moment these projects are:
+. infinispan-server-core
+. infinispan-server-hotrod
+. infinispan-server-memcached
+. infinispan-server-rest
 
 ===== IntelliJ IDEA
 ====== Importing
