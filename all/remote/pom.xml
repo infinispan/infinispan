@@ -46,6 +46,18 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-cdi</artifactId>
+         <optional>true</optional>
+         <exclusions>
+            <exclusion>
+               <groupId>org.infinispan</groupId>
+               <artifactId>infinispan-core</artifactId>
+            </exclusion>
+         </exclusions>
+      </dependency>
+
+      <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
          <optional>true</optional>
@@ -185,6 +197,8 @@
                         </Export-Package>
                         <Import-Package>
                            !infinispan.*,
+                           !org.infinispan.*,
+                           !javax.*,
                            !sun.misc,
                            !sun.reflect,
                            !net.jcip.annotations,
