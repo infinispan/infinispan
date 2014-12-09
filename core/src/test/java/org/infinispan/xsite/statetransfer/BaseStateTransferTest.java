@@ -101,6 +101,34 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
       assertNoStateTransferInSendingSite(LON);
 
       assertEquals(XSiteStateTransferManager.STATUS_CANCELED, extractComponent(cache(LON, 0), XSiteAdminOperations.class).getPushStateStatus().get(NYC));
+
+      controllerTransport.blockBefore(XSiteStatePushCommand.class);
+
+      startStateTransfer(LON, NYC);
+
+      controllerTransport.waitForCommandToBlock();
+      assertEquals(XSiteStateTransferManager.STATUS_SENDING, extractComponent(cache(LON, 0), XSiteAdminOperations.class).getPushStateStatus().get(NYC));
+      controllerTransport.stopBlocking();
+
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return extractComponent(cache(LON, 0), XSiteAdminOperations.class).getRunningStateTransfer().isEmpty();
+         }
+      }, TimeUnit.SECONDS.toMillis(30));
+
+      assertNoStateTransferInReceivingSite(NYC);
+      assertNoStateTransferInSendingSite(LON);
+
+      //check if all data is visible
+      assertInSite(NYC, new AssertCondition<Object, Object>() {
+         @Override
+         public void assertInCache(Cache<Object, Object> cache) {
+            for (int i = 0; i < amountOfData; ++i) {
+               assertEquals(value(0), cache.get(key(i)));
+            }
+         }
+      });
    }
 
    public void testStateTransferWithClusterIdle() throws InterruptedException {
