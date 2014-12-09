@@ -1,6 +1,7 @@
 package org.infinispan.query.test;
 
 import org.hibernate.search.annotations.*;
+import org.hibernate.search.bridge.builtin.IntegerBridge;
 import org.hibernate.search.bridge.builtin.StringBridge;
 
 import java.io.Serializable;
@@ -20,7 +21,7 @@ public class Person implements Serializable {
    private String name;
    @Field(store = Store.YES)
    private String blurb;
-   @Field(store = Store.YES, analyze=Analyze.NO)
+   @Field(store = Store.YES, analyze = Analyze.NO, bridge = @FieldBridge(impl = IntegerBridge.class))
    private int age;
    @Field(store = Store.YES, analyze = Analyze.NO)
    @DateBridge(resolution = Resolution.DAY)

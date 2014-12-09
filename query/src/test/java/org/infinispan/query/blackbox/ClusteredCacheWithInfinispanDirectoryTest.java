@@ -1,6 +1,6 @@
 package org.infinispan.query.blackbox;
 
-import org.hibernate.search.infinispan.InfinispanIntegration;
+import org.hibernate.search.infinispan.spi.InfinispanIntegration;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;

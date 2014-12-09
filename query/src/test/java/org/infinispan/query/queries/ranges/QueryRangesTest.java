@@ -15,9 +15,11 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Tests verifying that query ranges work properly.
@@ -26,6 +28,10 @@ import java.util.Locale;
  */
 @Test(groups = {"functional", "smoke"}, testName = "query.queries.ranges.QueryRangesTest")
 public class QueryRangesTest extends SingleCacheManagerTest {
+
+   private final static TimeZone GMT = TimeZone.getTimeZone("GMT");
+   private final Calendar neutralCalendar = Calendar.getInstance(GMT, Locale.ROOT);
+
    private Person person1;
    private Person person2;
    private Person person3;
@@ -396,9 +402,18 @@ public class QueryRangesTest extends SingleCacheManagerTest {
    protected Date formatDate(String dateString) {
       Date date = null;
       try {
-         date = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).parse(dateString);
+         date = new SimpleDateFormat("MMMM d, yyyy", Locale.ROOT).parse(dateString);
       } catch (java.text.ParseException e) {
          throw new IllegalArgumentException("Unable to parse date.", e);
+      }
+      //Make sure it's timezone neutral:
+      synchronized(neutralCalendar) {
+         neutralCalendar.setTime(date);
+         neutralCalendar.set(Calendar.HOUR_OF_DAY, 0);
+         neutralCalendar.set(Calendar.MINUTE, 0);
+         neutralCalendar.set(Calendar.SECOND, 0);
+         neutralCalendar.set(Calendar.MILLISECOND, 0);
+         date = neutralCalendar.getTime();
       }
       return date;
    }

@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 
 /**
  * The main IndexingBackend implementations are the one forwarding to another node, and the one applying to the local node.

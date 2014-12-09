@@ -6,7 +6,7 @@ import java.util.List;
 
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;

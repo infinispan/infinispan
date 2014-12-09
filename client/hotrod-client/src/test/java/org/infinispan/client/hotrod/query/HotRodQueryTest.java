@@ -168,7 +168,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       assertUser1(list.get(0));
    }
 
-   @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQLLUCN000005:.*", description = "See https://issues.jboss.org/browse/ISPN-4423")
+   @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQL1000005:.*", description = "See https://issues.jboss.org/browse/ISPN-4423")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 

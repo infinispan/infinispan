@@ -7,7 +7,7 @@ import org.hibernate.search.bridge.spi.ConversionContext;
 import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
-import org.hibernate.search.impl.SimpleInitializer;
+import org.hibernate.search.spi.DefaultInstanceInitializer;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -60,7 +60,7 @@ public final class IndexingMapper implements Mapper<Object, Object, Object, Luce
             value,
             idInString,
             idInString,
-            SimpleInitializer.INSTANCE,
+            DefaultInstanceInitializer.DEFAULT_INITIALIZER,
             conversionContext
       );
       try {

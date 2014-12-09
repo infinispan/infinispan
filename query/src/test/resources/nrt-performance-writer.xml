@@ -23,6 +23,7 @@
 
             <!-- Default is to write on FSDirectory; to write in a dedicated cache uncomment: -->
             <!-- Write indexes in Infinispan
+             N.B. In this case you will probably want to change the ​locking_strategy as well
             <property name="default.directory_provider">infinispan</property>
             <property name="default.chunk_size">128000</property>
             <property name="default.metadata_cachename">LuceneIndexesMetadataOWR</property>

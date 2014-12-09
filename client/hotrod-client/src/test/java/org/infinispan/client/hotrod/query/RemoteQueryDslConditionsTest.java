@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.query;
 
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
-import org.hibernate.search.indexes.impl.IndexManagerHolder;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -108,11 +107,10 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
    public void testIndexPresence() {
-      SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) org.infinispan.query.Search.getSearchManager(cache).getSearchFactory();
-      IndexManagerHolder indexManagerHolder = searchFactory.getIndexManagerHolder();
+      SearchIntegrator searchIntegrator = org.infinispan.query.Search.getSearchManager(cache).getSearchFactory();
 
-      assertTrue(searchFactory.getIndexedTypes().contains(ProtobufValueWrapper.class));
-      assertNotNull(indexManagerHolder.getIndexManager(ProtobufValueWrapper.class.getName()));
+      assertTrue(searchIntegrator.getIndexedTypes().contains(ProtobufValueWrapper.class));
+      assertNotNull(searchIntegrator.getIndexManager(ProtobufValueWrapper.class.getName()));
    }
 
    @Override
@@ -132,7 +130,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       q.list();
    }
 
-   @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQLLUCN000005:.*", description = "see https://issues.jboss.org/browse/ISPN-4423")
+   @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQL100005:.*", description = "see https://issues.jboss.org/browse/ISPN-4423")
    @Override
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = getQueryFactory();

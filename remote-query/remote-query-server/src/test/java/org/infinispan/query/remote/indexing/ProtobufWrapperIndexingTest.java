@@ -1,8 +1,8 @@
 package org.infinispan.query.remote.indexing;
 
 import org.apache.lucene.search.Query;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.query.engine.spi.EntityInfo;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -53,8 +53,8 @@ public class ProtobufWrapperIndexingTest extends SingleCacheManagerTest {
 
       SearchManager sm = Search.getSearchManager(cache);
 
-      SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) sm.getSearchFactory();
-      assertNotNull(searchFactory.getIndexManagerHolder().getIndexManager(ProtobufValueWrapper.class.getName()));
+      SearchIntegrator searchFactory = sm.getSearchFactory();
+      assertNotNull(searchFactory.getIndexManager(ProtobufValueWrapper.class.getName()));
 
       Query luceneQuery = sm.buildQueryBuilderForClass(ProtobufValueWrapper.class)
             .get()
