@@ -8,7 +8,7 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 /**
  * Component present on a backup site that manages the backup information and logic.
  *
- * @see BackupReceiverImpl
+ * @see ClusteredCacheBackupReceiver
  * @author Mircea Markus
  * @since 5.2
  */
