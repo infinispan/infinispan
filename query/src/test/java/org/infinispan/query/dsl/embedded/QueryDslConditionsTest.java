@@ -11,8 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.hibernate.hql.ParsingException;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
-import org.hibernate.search.indexes.impl.IndexManagerHolder;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.FilterConditionEndContext;
@@ -167,20 +166,19 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIndexPresence() {
-      SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) Search.getSearchManager((Cache) getCacheForQuery()).getSearchFactory();
-      IndexManagerHolder indexManagerHolder = searchFactory.getIndexManagerHolder();
+      SearchIntegrator searchIntegrator = Search.getSearchManager((Cache) getCacheForQuery()).getSearchFactory();
 
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getUserImplClass()));
-      assertNotNull(indexManagerHolder.getIndexManager(getModelFactory().getUserImplClass().getName()));
+      assertTrue(searchIntegrator.getIndexedTypes().contains(getModelFactory().getUserImplClass()));
+      assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getUserImplClass().getName()));
 
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getAccountImplClass()));
-      assertNotNull(indexManagerHolder.getIndexManager(getModelFactory().getAccountImplClass().getName()));
+      assertTrue(searchIntegrator.getIndexedTypes().contains(getModelFactory().getAccountImplClass()));
+      assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getAccountImplClass().getName()));
 
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getTransactionImplClass()));
-      assertNotNull(indexManagerHolder.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
+      assertTrue(searchIntegrator.getIndexedTypes().contains(getModelFactory().getTransactionImplClass()));
+      assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
 
-      assertFalse(searchFactory.getIndexedTypes().contains(getModelFactory().getAddressImplClass()));
-      assertNull(indexManagerHolder.getIndexManager(getModelFactory().getAddressImplClass().getName()));
+      assertFalse(searchIntegrator.getIndexedTypes().contains(getModelFactory().getAddressImplClass()));
+      assertNull(searchIntegrator.getIndexManager(getModelFactory().getAddressImplClass().getName()));
    }
 
    public void testQueryFactoryType() {
@@ -211,7 +209,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQLLUCN000002: The type org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS has no indexed property named notes.")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL100002: The type org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS has no indexed property named notes.")
    public void testEqNonIndexed() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -656,7 +654,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQLLUCN000005:.*")
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL100005:.*")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = getQueryFactory();
 

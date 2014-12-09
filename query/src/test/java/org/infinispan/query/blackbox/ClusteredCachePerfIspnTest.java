@@ -29,7 +29,6 @@ public class ClusteredCachePerfIspnTest extends ClusteredCacheTest {
             .addProperty("default.indexwriter.merge_factor", "30")
             .addProperty("default.indexwriter.merge_max_size", "1024")
             .addProperty("default.indexwriter.ram_buffer_size", "64")
-            .addProperty("default.​locking_strategy", "native")
             .addProperty("default.sharding_strategy.nbr_of_shards", "6");
 
       enhanceConfig(cacheCfg);

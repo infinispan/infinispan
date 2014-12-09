@@ -10,7 +10,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
 import org.apache.lucene.store.LockFactory;
 import org.apache.lucene.store.LockObtainFailedException;
-import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.infinispan.commons.CacheException;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;

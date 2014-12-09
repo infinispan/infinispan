@@ -30,8 +30,6 @@
             <property name="default.indexwriter.merge_max_size">1024</property>
             <!-- IndexWriter flush buffer size in MB -->
             <property name="default.indexwriter.ram_buffer_size">64</property>
-            <!-- Make sure to use native locking -->
-            <property name="default.​locking_strategy">native</property>
             <!-- Enable sharding on writers -->
             <property name="default.sharding_strategy.nbr_of_shards">6</property>
             <!-- Enable error safety net -->

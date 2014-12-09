@@ -7,9 +7,9 @@ import java.io.InputStream;
 import java.util.List;
 
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
-import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.indexes.spi.IndexManager;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.DirectoryProvider;
 import org.hibernate.search.store.impl.RAMDirectoryProvider;
 import org.infinispan.Cache;
@@ -97,7 +97,7 @@ public class MultipleCachesTest extends SingleCacheManagerTest {
       assertEquals(75, p.getAge());
 
       SearchManager queryFactory = Search.getSearchManager(indexedCache);
-      SearchFactoryImplementor searchImpl = (SearchFactoryImplementor) queryFactory.getSearchFactory();
+      SearchIntegrator searchImpl = queryFactory.getSearchFactory();
       IndexManager[] indexManagers = searchImpl.getIndexBinding(Person.class).getIndexManagers();
       assert indexManagers != null && indexManagers.length == 1;
       DirectoryBasedIndexManager directory = (DirectoryBasedIndexManager)indexManagers[0];
