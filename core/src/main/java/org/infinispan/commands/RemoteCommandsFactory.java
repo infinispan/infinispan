@@ -11,7 +11,7 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.ClusteredGetManyCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -265,8 +265,8 @@ public class RemoteCommandsFactory {
             case EntryResponseCommand.COMMAND_ID:
                command = new EntryResponseCommand(cacheName);
                break;
-            case ClusteredGetManyCommand.COMMAND_ID:
-               command = new ClusteredGetManyCommand(cacheName);
+            case ClusteredGetAllCommand.COMMAND_ID:
+               command = new ClusteredGetAllCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

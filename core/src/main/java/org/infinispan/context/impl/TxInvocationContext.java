@@ -52,7 +52,7 @@ public interface TxInvocationContext<T extends AbstractCacheTransaction> extends
    /**
     * Registers a new participant with the transaction.
     */
-   void addAllAffectedKeys(Collection<Object> keys);
+   void addAllAffectedKeys(Collection<?> keys);
 
    void addAffectedKey(Object key);
 

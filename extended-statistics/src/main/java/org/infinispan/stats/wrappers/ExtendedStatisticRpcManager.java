@@ -4,8 +4,10 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.infinispan.stats.container.ExtendedStatistic.*;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -184,8 +186,11 @@ public class ExtendedStatisticRpcManager implements RpcManager {
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
       long start = timeService.time();
       Map<Address, Response> responseMap = actual.invokeRemotely(rpcs, options);
-      // TODO
-      updateStats(null, options.responseMode().isSynchronous(), timeService.timeDuration(start, NANOSECONDS), recipients);
+      for (Entry<Address, ReplicableCommand> entry : rpcs.entrySet()) {
+         // TODO: This is giving a time for all rpcs combined...
+         updateStats(entry.getValue(), options.responseMode().isSynchronous(),
+               timeService.timeDuration(start, NANOSECONDS), Collections.singleton(entry.getKey()));
+      }
       return responseMap;
    }
 

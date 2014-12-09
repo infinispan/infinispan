@@ -149,7 +149,7 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
       log.trace("ControlledRpcManager.invokeRemotely6");
-      // TODO before and after
+      // TODO: left blank until we need to implement
       Map<Address, Response> responses = realOne.invokeRemotely(rpcs, options);
       return responses;
    }

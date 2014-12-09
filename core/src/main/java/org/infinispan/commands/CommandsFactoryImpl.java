@@ -17,12 +17,14 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
@@ -249,8 +251,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public GetManyCommand buildGetManyCommand(Set<?> keys, Set<Flag> flags, boolean returnEntries) {
-      return new GetManyCommand(keys, flags, returnEntries, entryFactory);
+   public GetAllCommand buildGetAllCommand(Collection<?> keys,
+         Set<Flag> flags, boolean returnEntries) {
+      return new GetAllCommand(keys, flags, returnEntries, entryFactory);
    }
 
    @Override
@@ -484,6 +487,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
             GetKeysInGroupCommand getKeysInGroupCommand = (GetKeysInGroupCommand) c;
             getKeysInGroupCommand.setGroupManager(groupManager);
             break;
+         case ClusteredGetAllCommand.COMMAND_ID:
+            ClusteredGetAllCommand clusteredGetManyCommand = (ClusteredGetAllCommand) c;
+            clusteredGetManyCommand.init(icf, this, entryFactory, interceptorChain, txTable,
+                  configuration.dataContainer().keyEquivalence());
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -495,7 +503,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags, GlobalTransaction gtx) {
+   public LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
       return new LockControlCommand(keys, cacheName, flags, gtx);
    }
 
@@ -505,7 +513,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags) {
+   public LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags) {
       return new LockControlCommand(keys,  cacheName, flags, null);
    }
 
@@ -635,6 +643,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags) {
       return new GetCacheEntryCommand(key, explicitFlags, entryFactory);
+   }
+
+   @Override
+   public ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
+      return new ClusteredGetAllCommand(cacheName, keys, flags, gtx, configuration.dataContainer().keyEquivalence());
    }
 
 }

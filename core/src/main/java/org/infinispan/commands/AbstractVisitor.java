@@ -7,7 +7,7 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
@@ -92,7 +92,7 @@ public abstract class AbstractVisitor implements Visitor {
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 

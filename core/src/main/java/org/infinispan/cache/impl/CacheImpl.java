@@ -10,7 +10,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
@@ -438,24 +438,25 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public Map<K, V> getMany(Set<K> keys) {
-      return getMany(keys, null, null);
+   public Map<K, V> getAll(Set<?> keys) {
+      return getAll(keys, null, null);
    }
 
-   public final Map<K, V> getMany(Set<K> keys, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   public final Map<K, V> getAll(Set<?> keys, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, keys.size());
-      GetManyCommand command = commandsFactory.buildGetManyCommand(keys, explicitFlags, false);
+      GetAllCommand command = commandsFactory.buildGetAllCommand(keys, explicitFlags, false);
       return (Map<K, V>) invoker.invoke(ctx, command);
    }
 
    @Override
-   public Map<K, CacheEntry<K, V>> getManyCacheEntries(Set<K> keys) {
-      return getManyCacheEntries(keys, null, null);
+   public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
+      return getAllCacheEntries(keys, null, null);
    }
 
-   public final Map<K, CacheEntry<K, V>> getManyCacheEntries(Set<K> keys, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   public final Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys,
+         EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, keys.size());
-      GetManyCommand command = commandsFactory.buildGetManyCommand(keys, explicitFlags, true);
+      GetAllCommand command = commandsFactory.buildGetAllCommand(keys, explicitFlags, true);
       return (Map<K, CacheEntry<K, V>>) invoker.invoke(ctx, command);
    }
 

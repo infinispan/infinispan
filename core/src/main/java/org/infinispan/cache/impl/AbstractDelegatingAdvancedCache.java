@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Similar to {@link org.infinispan.cache.impl.AbstractDelegatingCache}, but for {@link AdvancedCache}.
@@ -195,13 +196,18 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
+   public Map<K, V> getAll(Set<?> keys) {
+      return cache.getAll(keys);
+   }
+
+   @Override
    public CacheEntry<K, V> getCacheEntry(K key) {
       return cache.getCacheEntry(key);
    }
 
    @Override
-   public Map<K, CacheEntry<K, V>> getManyCacheEntries(Set<K> keys) {
-      return cache.getManyCacheEntries(keys);
+   public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
+      return cache.getAllCacheEntries(keys);
    }
 
    @Override

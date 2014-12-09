@@ -11,10 +11,9 @@ import java.util.Set;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -170,13 +169,16 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (wrapKeys) {
          Set<Object> marshalledKeys = new HashSet<>();
-         for (Object key : command.getKeys())
-         if (!isTypeExcluded(key.getClass())) {
-            MarshalledValue mv = createMarshalledValue(key, ctx);
-            marshalledKeys.add(mv);
+         for (Object key : command.getKeys()) {
+            if (!isTypeExcluded(key.getClass())) {
+               MarshalledValue mv = createMarshalledValue(key, ctx);
+               marshalledKeys.add(mv);
+            } else {
+               marshalledKeys.add(key);
+            }
          }
          command.setKeys(marshalledKeys);
       }

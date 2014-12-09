@@ -78,7 +78,7 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
    }
 
    @Override
-   public final void addAllAffectedKeys(Collection<Object> keys) {
+   public final void addAllAffectedKeys(Collection<?> keys) {
       if (keys != null && !keys.isEmpty()) {
          cacheTransaction.addAllAffectedKeys(keys);
       }

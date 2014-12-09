@@ -7,7 +7,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -79,21 +79,20 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       try {
          if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
-            // TODO: implement locking here
-            throw new UnsupportedOperationException("Force write lock for GetMany not implemented");
-            // acquireRemoteIfNeeded(ctx, command.getKeys(), command);
-            // long lockTimeout = getLockAcquisitionTimeout(command, false);
-            // lockKeyAndCheckOwnership(ctx, command.getKeys(), lockTimeout, false);
+            acquireRemoteIfNeeded(ctx, command.getKeys(), command);
+            final TxInvocationContext txContext = (TxInvocationContext) ctx;
+            long lockTimeout = getLockAcquisitionTimeout(command, false);
+            for (Object key : command.getKeys()) {
+               lockAndRegisterBackupLock(txContext, key, lockTimeout, false);
+            }
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable t) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw t;
-      } finally {
-         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
       }
    }
 
@@ -206,7 +205,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       }
    }
 
-   private void acquireRemoteIfNeeded(InvocationContext ctx, Set<Object> keys, FlagAffectedCommand command) throws Throwable {
+   private void acquireRemoteIfNeeded(InvocationContext ctx, Collection<?> keys, FlagAffectedCommand command) throws Throwable {
       if (ctx.isOriginLocal() && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();

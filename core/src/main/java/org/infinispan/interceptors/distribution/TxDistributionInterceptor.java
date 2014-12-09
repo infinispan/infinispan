@@ -5,7 +5,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -160,10 +160,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       Map<Object, Object> map = (Map<Object, Object>) invokeNextInterceptor(ctx, command);
       if (map == null) map = command.createMap();
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)
+      if (!ctx.isOriginLocal() || command.hasFlag(Flag.CACHE_MODE_LOCAL)
             || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
             || command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
          return map;
@@ -178,7 +178,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
          // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
          // the entry is mapped to the local node.
-         if (!skipRemoteGet && !map.containsKey(key) && ctx.isOriginLocal()) {
+         if (!skipRemoteGet && map.get(key) == null) {
             // TODO: what about the deltaCompositeKey? It's kind of messy, where should we use the composite key
             //       and where the regular one?
             //key = filterDeltaCompositeKey(key);
@@ -193,7 +193,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             if (shouldFetchFromRemote) {
                requestedKeys.add(key);
             } else if (!ctx.isEntryRemovedInContext(key)) {
-               // TODO: I am not sure why should we try the local get again
+               // Try again locally in case if we now are an owner for a key
                Object localValue = localGet(ctx, key, false, command, command.isReturnEntries());
                if (localValue != null) {
                   map.put(key, localValue);
@@ -205,10 +205,30 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          if (trace) {
             log.tracef("Fetching entries for keys %s from remote nodes", requestedKeys);
          }
-         Map<Object, InternalCacheEntry> remotelyRetrieved = retrieveFromRemoteSources(requestedKeys, ctx, command.getFlags());
-         command.setRemotelyFetched(remotelyRetrieved);
-         for (InternalCacheEntry entry : remotelyRetrieved.values()) {
-            map.put(entry.getKey(), command.isReturnEntries() ? entry : entry.getValue());
+         Map<Object, InternalCacheEntry> previouslyRetrieved = command.getRemotelyFetched();
+         Map<Object, InternalCacheEntry> justRetrieved = retrieveFromRemoteSources(
+               requestedKeys, ctx, command.getFlags());
+         if (previouslyRetrieved != null) {
+            previouslyRetrieved.putAll(justRetrieved);
+         } else {
+            command.setRemotelyFetched(justRetrieved);
+         }
+         for (Entry<Object, InternalCacheEntry> entry : justRetrieved.entrySet()) {
+            Object key = entry.getKey();
+            InternalCacheEntry value = entry.getValue();
+            map.put(entry.getKey(), command.isReturnEntries() ? value : value != null ? value.getValue() : null);
+            if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
+               ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(
+                     key, value.getMetadata().version());
+            }
+
+            if (!ctx.replaceValue(key, value)) {
+               ctx.putLookedUpEntry(key, value);
+               if (ctx.isInTxScope()) {
+                  ((TxInvocationContext) ctx).getCacheTransaction().replaceVersionRead(
+                        key, value.getMetadata().version());
+               }
+            }
          }
       }
       return map;

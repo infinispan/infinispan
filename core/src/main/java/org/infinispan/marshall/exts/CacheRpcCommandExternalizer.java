@@ -15,7 +15,7 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.ClusteredGetManyCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
@@ -88,7 +88,7 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                TotalOrderVersionedPrepareCommand.class, TotalOrderCommitCommand.class,
                TotalOrderVersionedCommitCommand.class, TotalOrderRollbackCommand.class,
                XSiteStateTransferControlCommand.class, XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
-               EntryRequestCommand.class, EntryResponseCommand.class, ClusteredGetManyCommand.class);
+               EntryRequestCommand.class, EntryResponseCommand.class, ClusteredGetAllCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;
