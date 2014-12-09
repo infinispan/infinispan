@@ -15,6 +15,7 @@ public interface XSiteStateTransferManager {
 
    public static final String STATUS_OK = "OK";
    public static final String STATUS_ERROR = "ERROR";
+   public static final String STATUS_SENDING = "SENDING";
    public static final String STATUS_CANCELED = "CANCELED";
 
    /**

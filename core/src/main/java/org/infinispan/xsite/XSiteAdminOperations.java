@@ -256,7 +256,7 @@ public class XSiteAdminOperations {
       Map<String, String> map = new HashMap<String, String>();
       try {
          for (String siteName : getRunningStateTransfer()) {
-            map.put(siteName, "SENDING");
+            map.put(siteName, XSiteStateTransferManager.STATUS_SENDING);
          }
          map.putAll(stateTransferManager.getClusterStatus());
          return map;

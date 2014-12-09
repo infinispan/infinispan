@@ -131,6 +131,9 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
          throw new Exception(format("X-Site state transfer to '%s' already started!", siteName));
       }
 
+      //clear the previous status
+      status.remove(siteName);
+
       try {
          controlStateTransferOnRemoteSite(xSiteBackup, StateTransferControl.START_RECEIVE, null);
          if (!stateTransferManager.isStateTransferInProgress()) {
