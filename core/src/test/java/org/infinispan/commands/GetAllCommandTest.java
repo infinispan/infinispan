@@ -1,10 +1,13 @@
 package org.infinispan.commands;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,49 +21,41 @@ import org.testng.annotations.Test;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 @Test(groups = "functional")
-public abstract class GetManyCommandTest extends MultipleCacheManagersTest {
+public abstract class GetAllCommandTest extends MultipleCacheManagersTest {
 
    private final CacheMode cacheMode;
    private final boolean transactional;
    private final int numNodes = 4;
    private final int numEntries = 100;
 
-   protected GetManyCommandTest(CacheMode cacheMode, boolean transactional) {
+   protected GetAllCommandTest(CacheMode cacheMode, boolean transactional) {
       this.cacheMode = cacheMode;
       this.transactional = transactional;
+      this.cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   @Test(groups = "functional")
-   public static class DistNonTx extends GetManyCommandTest {
-      protected DistNonTx() {
-         super(CacheMode.DIST_SYNC, false);
+   public void testGetManyKeyNotPresent() {
+      for (int i = 0; i < numEntries; ++i)
+         advancedCache(i % numNodes).put("key" + i, "value" + i);
+      List<Cache<String, String>> caches = caches();
+      for (Cache<String, String> cache : caches) {
+         Map<String, String> result = cache.getAdvancedCache().getAll(Collections.singleton("not-present"));
+         assertTrue(result.containsKey("not-present"));
+         assertNull(result.get("not-presnt"));
       }
    }
 
-   @Test(groups = "functional")
-   public static class DistTx extends GetManyCommandTest {
-      protected DistTx() {
-         super(CacheMode.DIST_SYNC, true);
-      }
+   protected void amendConfiguration(ConfigurationBuilder builder) {
    }
 
-   @Test(groups = "functional")
-   public static class ReplNonTx extends GetManyCommandTest {
-      protected ReplNonTx() {
-         super(CacheMode.REPL_SYNC, false);
-      }
-   }
-
-   @Test(groups = "functional")
-   public static class ReplTx extends GetManyCommandTest {
-      protected ReplTx() {
-         super(CacheMode.REPL_SYNC, true);
-      }
+   static void enableCompatibility(ConfigurationBuilder builder) {
+      builder.compatibility().enable();
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder dcc = getDefaultClusteredCacheConfig(cacheMode, transactional);
+      amendConfiguration(dcc);
       createCluster(dcc, numNodes);
       waitForClusterToForm();
    }
@@ -82,7 +77,7 @@ public abstract class GetManyCommandTest extends MultipleCacheManagersTest {
          Set<Object> immutableKeys = Collections.unmodifiableSet(mutableKeys);
 
          for (Cache<Object, Object> cache : caches()) {
-            Map<Object, Object> result = cache.getMany(immutableKeys);
+            Map<Object, Object> result = cache.getAdvancedCache().getAll(immutableKeys);
             assertEquals(result, expected);
          }
       }

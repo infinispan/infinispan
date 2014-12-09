@@ -10,7 +10,7 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -110,14 +110,14 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (needToMarkReads && ctx.isInTxScope()) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
          for (Object key : command.getKeys()) {
             tctx.getCacheTransaction().addReadKey(key);
          }
       }
-      return super.visitGetManyCommand(ctx, command);
+      return super.visitGetAllCommand(ctx, command);
    }
 
    @Override

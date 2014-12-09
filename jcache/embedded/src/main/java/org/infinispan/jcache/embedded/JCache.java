@@ -203,17 +203,14 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          return InfinispanCollections.emptyMap();
       }
 
-      /**
-       * TODO: Just an idea here to consider down the line: if keys.size() is big (TBD...), each of
-       * this get calls could maybe be swapped by getAsync() in order to paralelise the retrieval of
-       * entries. It'd be interesting to do a small performance test to see after which number of
-       * elements doing it in paralel becomes more efficient than sequential :)
-       */
-      Map<K, V> result = new HashMap<K, V>(keys.size());
-      for (K key : keys) {
-         V value = get(key);
-         if (value != null) {
-            result.put(key, value);
+      AdvancedCache<K, V> cache = configuration.isReadThrough() ? this.cache : 
+         this.skipCacheLoadCache;
+      Map<K, V> result = cache.getAll(keys);
+      Iterator<Map.Entry<K, V>> entryIterator = result.entrySet().iterator();
+      while (entryIterator.hasNext()) {
+         Map.Entry<K , V> entry = entryIterator.next();
+         if (entry.getValue() == null) {
+            entryIterator.remove();
          }
       }
       return result;

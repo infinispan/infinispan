@@ -4,7 +4,7 @@ import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -128,12 +128,12 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
 
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
-      Set<Object> keys = command.getKeys();
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      Collection<?> keys = command.getKeys();
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
       if (ctx.isOriginLocal()) {
-         Set<Object> boxedKeys = new HashSet<>(keys.size()); // TODO better set impl
+         Set<Object> boxedKeys = new HashSet<>(keys.size());
          for (Object key : keys) {
             boxedKeys.add(converter.boxKey(key));
          }
@@ -146,12 +146,16 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
             Map<Object, Object> unboxed = command.createMap();
             for (Map.Entry<Object, CacheEntry> entry : map.entrySet()) {
                CacheEntry cacheEntry = entry.getValue();
-               if (command.getRemotelyFetched() == null || !command.getRemotelyFetched().containsKey(entry.getKey())) {
-                  unboxed.put(entry.getKey(), entryFactory.create(entry.getKey(),
-                        converter.unboxValue(cacheEntry.getValue()),
-                        cacheEntry.getMetadata(), cacheEntry.getLifespan(), cacheEntry.getMaxIdle()));
+               if (cacheEntry == null) {
+                  unboxed.put(entry.getKey(), null);
                } else {
-                  unboxed.put(entry.getKey(), cacheEntry);
+                  if (command.getRemotelyFetched() == null || !command.getRemotelyFetched().containsKey(entry.getKey())) {
+                     unboxed.put(entry.getKey(), entryFactory.create(entry.getKey(),
+                           converter.unboxValue(cacheEntry.getValue()),
+                           cacheEntry.getMetadata(), cacheEntry.getLifespan(), cacheEntry.getMaxIdle()));
+                  } else {
+                     unboxed.put(entry.getKey(), cacheEntry);
+                  }
                }
             }
             return unboxed;
@@ -159,10 +163,11 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
             Map<Object, Object> map = (Map<Object, Object>) ret;
             Map<Object, Object> unboxed = command.createMap();
             for (Map.Entry<Object, Object> entry : map.entrySet()) {
+               Object value = entry == null ? null : entry.getValue();
                if (command.getRemotelyFetched() == null || !command.getRemotelyFetched().containsKey(entry.getKey())) {
-                  unboxed.put(entry.getKey(), converter.unboxValue(entry.getValue()));
+                  unboxed.put(entry.getKey(), entry == null ? null : converter.unboxValue(value));
                } else {
-                  unboxed.put(entry.getKey(), entry.getValue());
+                  unboxed.put(entry.getKey(), value);
                }
             }
             return unboxed;

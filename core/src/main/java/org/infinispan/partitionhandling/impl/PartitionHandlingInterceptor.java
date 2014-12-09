@@ -5,7 +5,7 @@ import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -181,10 +181,10 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       Map<Object, Object> result;
       try {
-         result = (Map<Object, Object>) super.visitGetManyCommand(ctx, command);
+         result = (Map<Object, Object>) super.visitGetAllCommand(ctx, command);
       } catch (RpcException e) {
          if (performPartitionCheck(ctx, command)) {
             // We must have received an AvailabilityException from one of the owners.
@@ -212,7 +212,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
             missingKeys.removeAll(result.keySet());
             for (Iterator<Object> it = missingKeys.iterator(); it.hasNext();) {
                Object key = it.next();
-               if (InfinispanCollections.containsAny(transport.getMembers(), cdl.getOwners(key))) {
+               if (InfinispanCollections.containsAny(transport.getMembers(), distributionManager.locate(key))) {
                   it.remove();
                }
             }

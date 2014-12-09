@@ -169,6 +169,22 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
    }
 
+   /**
+    * Runs a command on each node for each entry in the provided map.
+    * NOTE: if ignoreLeavers is true and the node is suspected while executing this 
+    * method will return a RspList containing for that node a value of ExceptionResponse
+    * containing the SuspectException
+    * 
+    * @param commands The commands and where to run them
+    * @param mode The response mode to determine how many members must return
+    * @param timeout How long to wait before timing out
+    * @param oob Whether these should be submitted using out of band thread pool
+    * @param asyncMarshalling If marshalling should be done asynchronously
+    * @param ignoreLeavers Whether to ignore leavers.  If this is true and a node leaves
+    *        it will send back a response of SuspectException
+    * @return The responses that came back in the provided time
+    * @throws InterruptedException
+    */
    public RspList<Object> invokeRemoteCommands(final Map<Address, ReplicableCommand> commands, final ResponseMode mode, final long timeout,
                                                final boolean oob, boolean asyncMarshalling, final boolean ignoreLeavers) throws InterruptedException {
       if (asyncMarshalling) {
@@ -549,7 +565,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                   prettyPrintTime(timeout), target));
          } catch (ExecutionException e) {
             if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
-               log.tracef(formatString("Ignoring node %s that left during the remote call", target));
+               retval.addRsp(target, new ExceptionResponse((SuspectedException) e.getCause()));
             } else {
                throw wrapThrowableInException(e.getCause());
             }

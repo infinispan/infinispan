@@ -8,7 +8,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -85,14 +85,12 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
-      if (isStoreAsBinary()) {
-         for (Object key : command.getKeys()) {
-            if (getMightGoRemote(ctx, key, command))
-               checkMarshallable(key);
-         }
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      for (Object key : command.getKeys()) {
+         if (isStoreAsBinary() || getMightGoRemote(ctx, key, command))
+            checkMarshallable(key);
       }
-      return super.visitGetManyCommand(ctx, command);
+      return super.visitGetAllCommand(ctx, command);
    }
 
    @Override

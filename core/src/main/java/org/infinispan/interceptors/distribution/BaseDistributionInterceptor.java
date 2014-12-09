@@ -12,14 +12,13 @@ import java.util.concurrent.ExecutionException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.ClusteredGetManyCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -200,99 +199,73 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return null;
    }
 
-   protected Map<Object, InternalCacheEntry> retrieveFromRemoteSources(Set<Object> requestedKeys, InvocationContext ctx, Set<Flag> flags) throws Throwable {
+   protected Map<Object, InternalCacheEntry> retrieveFromRemoteSources(Set<?> requestedKeys, InvocationContext ctx, Set<Flag> flags) throws Throwable {
       GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
       ConsistentHash ch = cacheTopology.getReadConsistentHash();
 
       Map<Address, List<Object>> ownerKeys = new HashMap<>();
       for (Object key : requestedKeys) {
-         for (Address owner : ch.locateOwners(key)) {
-            List<Object> requestedKeysFromNode = ownerKeys.get(owner);
-            if (requestedKeysFromNode == null) {
-               ownerKeys.put(owner, requestedKeysFromNode = new ArrayList<>());
-            }
-            requestedKeysFromNode.add(key);
+         Address owner = ch.locatePrimaryOwner(key);
+         List<Object> requestedKeysFromNode = ownerKeys.get(owner);
+         if (requestedKeysFromNode == null) {
+            ownerKeys.put(owner, requestedKeysFromNode = new ArrayList<>());
          }
+         requestedKeysFromNode.add(key);
       }
 
       Map<Address, ReplicableCommand> commands = new HashMap<>();
       for (Map.Entry<Address, List<Object>> entry : ownerKeys.entrySet()) {
-         Object[] keys = entry.getValue().toArray();
-         ClusteredGetManyCommand getMany = cf.buildClusteredGetManyCommand(keys, flags, gtx);
+         List<Object> keys = entry.getValue();
+         ClusteredGetAllCommand getMany = cf.buildClusteredGetAllCommand(keys, flags, gtx);
          commands.put(entry.getKey(), getMany);
          if (trace) {
             log.tracef("Sending %s to %s", getMany, entry.getKey());
          }
       }
 
-      RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false);
+      RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(
+            ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE);
       RpcOptions options = rpcOptionsBuilder.build();
       Map<Address, Response> responses = rpcManager.invokeRemotely(commands, options);
 
       Map<Object, InternalCacheEntry> entries = new HashMap<>();
-      if (responses != null) {
-         for (Map.Entry<Address, Response> entry : responses.entrySet()) {
-            updateWithValues(((ClusteredGetManyCommand) commands.get(entry.getKey())).getKeys(), entry.getValue(), entries);
-         }
+      for (Map.Entry<Address, Response> entry : responses.entrySet()) {
+         updateWithValues(((ClusteredGetAllCommand) commands.get(entry.getKey())).getKeys(), 
+               entry.getValue(), entries);
       }
 
-      int originallyRequestedKeys = requestedKeys.size();
-      if (trace) {
-         log.tracef("Requested %d keys, retrieved %d entries: %s", originallyRequestedKeys, entries.size(), entries);
-      }
-      if (entries.size() == originallyRequestedKeys) {
-         return entries;
-      }
-      // we did not get all keys, let's broadcast request to all nodes - performance hit, but this happens only after
-      // topology change
-      for (Object key : entries.keySet()) {
-         requestedKeys.remove(key);
-      }
-      Object[] keys = requestedKeys.toArray();
-      ClusteredGetManyCommand getMany = cf.buildClusteredGetManyCommand(keys, flags, gtx);
-//      RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, false);
-
-      responses = rpcManager.invokeRemotely(null, getMany, options /*rpcOptionsBuilder.build()*/);
-      updateWithValues(keys, responses, entries);
-
-      if (entries.size() != originallyRequestedKeys) {
-         // TODO should we loop & try several times?
-         throw new CacheException("Cannot retrieve some keys");
-      }
       return entries;
    }
 
-   private void updateWithValues(Object[] keys, Map<Address, Response> responses, Map<Object, InternalCacheEntry> entries)
+   private void updateWithValues(List<Object> keys, Map<Address, Response> responses, Map<Object, InternalCacheEntry> entries)
          throws InterruptedException, ExecutionException {
       for (Response r : responses.values()) {
          updateWithValues(keys, r, entries);
       }
    }
 
-   private void updateWithValues(Object[] keys, Response r, Map<Object, InternalCacheEntry> entries) {
+   private void updateWithValues(List<?> keys, Response r, Map<Object, InternalCacheEntry> entries) {
       if (r instanceof SuccessfulResponse) {
          SuccessfulResponse response = (SuccessfulResponse) r;
-         InternalCacheValue[] values = (InternalCacheValue[]) response.getResponseValue();
-         for (int i = 0; i < keys.length; ++i) {
-            if (values[i] != null) {
-               InternalCacheEntry ice = values[i].toInternalCacheEntry(keys[i]);
-               if (rvrl != null) {
-                  rvrl.remoteValueFound(ice);
+         List<InternalCacheValue> values = (List<InternalCacheValue>) response.getResponseValue();
+         // Only process if we got a return value - this can happen if the node is shutting
+         // down when it received the request
+         if (values != null) {
+            for (int i = 0; i < keys.size(); ++i) {
+               InternalCacheValue icv = values.get(i);
+               if (icv != null) {
+                  Object key = keys.get(i);
+                  Object value = icv.getValue();
+                  if (value == null) {
+                     entries.put(key, null);
+                  } else {
+                     InternalCacheEntry ice = icv.toInternalCacheEntry(key);
+                     entries.put(key, ice);
+                  }
                }
-               entries.put(keys[i], ice);
             }
          }
-      }
-   }
-
-   private static class KeysRequest {
-      public final NotifyingFuture<Map<Address, Response>> future;
-      public final Object[] keys;
-
-      private KeysRequest(NotifyingFuture<Map<Address, Response>> future, Object[] keys) {
-         this.future = future;
-         this.keys = keys;
       }
    }
 

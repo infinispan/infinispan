@@ -19,6 +19,7 @@ import org.infinispan.jmx.JmxUtil;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
+import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -36,6 +37,7 @@ import org.jgroups.Event;
 import org.jgroups.JChannel;
 import org.jgroups.MembershipListener;
 import org.jgroups.MergeView;
+import org.jgroups.SuspectedException;
 import org.jgroups.UpHandler;
 import org.jgroups.View;
 import org.jgroups.blocks.RequestOptions;
@@ -52,6 +54,7 @@ import org.jgroups.util.TopologyUUID;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
@@ -61,6 +64,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.Condition;
@@ -591,6 +596,75 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          responses = retval;
       }
       return responses;
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
+         long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast)
+         throws Exception {
+      if (rpcCommands == null || rpcCommands.isEmpty()) {
+         // don't send if recipients list is empty
+         log.trace("Destination list is empty: no need to send message");
+         return InfinispanCollections.emptyMap();
+      }
+
+      if (trace)
+         log.tracef("commands=%s, mode=%s, timeout=%s", rpcCommands, mode, timeout);
+      boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
+      List<Address> members = getMembers();
+
+      Map<org.jgroups.Address, ReplicableCommand> forJGroups = new HashMap<>();
+      for (Map.Entry<Address, ReplicableCommand> entry : rpcCommands.entrySet()) {
+         if (!members.contains(entry.getKey())) {
+            if (mode.isSynchronous() && ignoreLeavers) {
+               throw new SuspectException("One or more nodes have left the cluster while replicating commands " + rpcCommands);
+            }
+         } else {
+            forJGroups.put(toJGroupsAddress(entry.getKey()), entry.getValue());
+         }
+      }
+      boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
+      if (!usePriorityQueue && (ResponseMode.SYNCHRONOUS == mode || ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS == mode))
+         usePriorityQueue = true;
+
+      RspList<Object> rsps = dispatcher.invokeRemoteCommands(forJGroups, toJGroupsMode(mode), timeout,
+               usePriorityQueue, asyncMarshalling, ignoreLeavers);
+
+      if (mode.isAsynchronous() || rsps == null)
+         return InfinispanCollections.emptyMap();// async case
+
+      Set<Address> suspectedAddresses = new HashSet<>();
+      Map<Address, Response> retval = new HashMap<Address, Response>(rsps.size());
+      boolean noValidResponses = true;
+      for (Entry<org.jgroups.Address, Rsp<Object>> entry : rsps.entrySet()) {
+         Rsp<Object> rsp = entry.getValue();
+         Object value = rsp.getValue();
+         if (value instanceof ExceptionResponse) {
+            ExceptionResponse exceptionResponse = (ExceptionResponse) value;
+            if (exceptionResponse.getException() instanceof SuspectedException) {
+               suspectedAddresses.add(fromJGroupsAddress(entry.getKey()));
+               continue;
+            }
+         }
+         noValidResponses &= parseResponseAndAddToResponseList(value,
+               rsp.getException(), retval, rsp.wasSuspected(), rsp.wasReceived(),
+               fromJGroupsAddress(rsp.getSender()), responseFilter != null, ignoreLeavers);
+      }
+
+      if (noValidResponses) {
+         boolean throwException;
+         // It is possible for their to be no valid response if we ignored leavers and 
+         // all of our targets left
+         if (ignoreLeavers) {
+            // If all the targets were suspected we didn't have a timeout
+            throwException = !suspectedAddresses.containsAll(rpcCommands.keySet());
+         } else {
+            throwException = true;
+         }
+         if (throwException)
+            throw new TimeoutException("Timed out waiting for valid responses!");
+      }
+      return retval;
    }
 
    @Override

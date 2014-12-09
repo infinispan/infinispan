@@ -2,6 +2,7 @@ package org.infinispan.commands.read;
 
 import static org.infinispan.commons.util.Util.toStr;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -14,7 +15,9 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -24,14 +27,15 @@ import org.infinispan.util.logging.LogFactory;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 // TODO: revise the command hierarchy, e.g. this should not implement MetadataAwareCommand
-public class GetManyCommand extends AbstractFlagAffectedCommand {
+public class GetAllCommand extends AbstractFlagAffectedCommand {
    public static final byte COMMAND_ID = 44;
-   private static final Log log = LogFactory.getLog(GetManyCommand.class);
+   private static final Log log = LogFactory.getLog(GetAllCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private Set<Object> keys;
+   private Collection<?> keys;
    private boolean returnEntries;
-   // TODO: primary only/staggered gets policy
+   private ConsistentHash ch;
+   private Address localAddress;
 
    // TODO: remotely fetched are because of compatibility - can't we just always return InternalCacheEntry and have
    //       the unboxing executed as the topmost interceptor?
@@ -39,16 +43,20 @@ public class GetManyCommand extends AbstractFlagAffectedCommand {
 
    private /* transient */ InternalEntryFactory entryFactory;
 
-   public GetManyCommand(Set<?> keys, Set<Flag> flags, boolean returnEntries, InternalEntryFactory entryFactory) {
-      this.keys = (Set<Object>) keys;
+   public GetAllCommand(Collection<?> keys, Set<Flag> flags,
+         boolean returnEntries, InternalEntryFactory entryFactory) {
+      this.keys = keys;
       this.flags = flags;
       this.returnEntries = returnEntries;
       this.entryFactory = entryFactory;
    }
 
+   GetAllCommand() {
+   }
+
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitGetManyCommand(ctx, this);
+      return visitor.visitGetAllCommand(ctx, this);
    }
 
    @Override
@@ -58,7 +66,8 @@ public class GetManyCommand extends AbstractFlagAffectedCommand {
 
    @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
-      return false;
+      // TODO: this should only be ignored when it is ran in a remote context
+      return status != ComponentStatus.RUNNING && status != ComponentStatus.INITIALIZING;
    }
 
    @Override
@@ -66,22 +75,39 @@ public class GetManyCommand extends AbstractFlagAffectedCommand {
       Map<Object, Object> map = createMap();
       for (Object key : keys) {
          CacheEntry entry = ctx.lookupEntry(key);
-         if (entry == null || entry.isNull()) {
+         if (entry == null) {
             if (trace) {
                log.tracef("Entry for key %s not found", key);
             }
+            // Only put null values as null if we own that key
+            if (ch == null || ch.isKeyLocalToNode(localAddress, key)) {
+               map.put(key, null);
+            }
+            continue;
+         }
+         if (entry.isNull()) {
+            if (trace) {
+               log.tracef("Entry for key %s is null in current context", key);
+            }
+            map.put(key, null);
             continue;
          }
          if (entry.isRemoved()) {
             if (trace) {
                log.tracef("Entry for key %s has been deleted and is of type %s", key, entry.getClass().getSimpleName());
             }
+            map.put(key, null);
             continue;
          }
 
          // Get cache entry instead of value
          if (returnEntries) {
-            CacheEntry copy = entryFactory.copy(entry);
+            CacheEntry copy;
+            if (ctx.isOriginLocal()) {
+               copy = entryFactory.copy(entry);
+            } else {
+               copy = entry;
+            }
             if (trace) {
                log.tracef("Found entry %s -> %s", key, entry);
                log.tracef("Returning copied entry %s", copy);
@@ -131,7 +157,6 @@ public class GetManyCommand extends AbstractFlagAffectedCommand {
    }
 
    public <V> Map<Object, V> createMap() {
-      // TODO: HashMap is not optimal for serialization
       return new HashMap<>();
    }
 
@@ -141,19 +166,29 @@ public class GetManyCommand extends AbstractFlagAffectedCommand {
       return set;
    }
 
-   public Set<Object> getKeys() {
+   public Collection<?> getKeys() {
       return keys;
    }
 
-   public void setKeys(Set<Object> keys) {
+   public void setKeys(Collection<?> keys) {
       this.keys = keys;
    }
+
    public Map<Object, InternalCacheEntry> getRemotelyFetched() {
       return remotelyFetched;
    }
 
    public void setRemotelyFetched(Map<Object, InternalCacheEntry> remotelyFetched) {
       this.remotelyFetched = remotelyFetched;
+   }
+
+   public void setConsistentHashAndAddress(ConsistentHash ch, Address localAddress) {
+      this.ch = ch;
+      this.localAddress = localAddress;
+   }
+
+   public ConsistentHash getConsistentHash() {
+      return ch;
    }
 
    @Override

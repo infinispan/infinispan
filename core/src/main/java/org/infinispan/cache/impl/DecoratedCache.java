@@ -427,6 +427,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public Map<K, V> getAll(Set<?> keys) {
+      return cacheImplementation.getAll(keys, flags, classLoader.get());
+   }
+
+   @Override
    public V put(K key, V value) {
       return cacheImplementation.put(key, value, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }

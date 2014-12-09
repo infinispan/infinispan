@@ -10,7 +10,7 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -106,7 +106,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (log.isTraceEnabled()) {
          log.tracef("Visit GetMany command %s. Is it in transaction scope? %s. Is it local? %s", command,
                ctx.isInTxScope(), ctx.isOriginLocal());
@@ -121,6 +121,9 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
          for (Object key : command.getKeys()) {
             if (isRemote(key)) numRemote++;
          }
+         // TODO: tbh this seems like it doesn't work properly for statistics as each
+         // one will have the duration of all the time for all gets...  Maybe do an average
+         // instead ?  Either way this isn't very indicative
          if (numRemote > 0) {
             cacheStatisticManager.add(NUM_REMOTE_GET, numRemote, getGlobalTransaction(ctx), ctx.isOriginLocal());
             cacheStatisticManager.add(REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),

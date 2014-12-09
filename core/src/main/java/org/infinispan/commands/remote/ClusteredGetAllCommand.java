@@ -1,18 +1,17 @@
 package org.infinispan.commands.remote;
 
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.context.Flag;
@@ -30,12 +29,12 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
-public class ClusteredGetManyCommand extends LocalFlagAffectedRpcCommand {
-   public static final byte COMMAND_ID = 45;
-   private static final Log log = LogFactory.getLog(ClusteredGetManyCommand.class);
+public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
+   public static final byte COMMAND_ID = 46;
+   private static final Log log = LogFactory.getLog(ClusteredGetAllCommand.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   private Object[] keys; // using array here for efficiency, and for having the keys ordered to optimize return values
+   private List<?> keys;
    private GlobalTransaction gtx;
 
    private InvocationContextFactory icf;
@@ -43,21 +42,27 @@ public class ClusteredGetManyCommand extends LocalFlagAffectedRpcCommand {
    private InterceptorChain invoker;
    private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
-   private Equivalence keyEquivalence;
+   private Equivalence<? super K> keyEquivalence;
 
-   public ClusteredGetManyCommand(String cacheName) {
+   ClusteredGetAllCommand() {
+      super(null, null);
+   }
+
+   public ClusteredGetAllCommand(String cacheName) {
       super(cacheName, null);
    }
 
-   public ClusteredGetManyCommand(String cacheName, Object[] keys, Set<Flag> flags, GlobalTransaction gtx, Equivalence keyEquivalence) {
+   public ClusteredGetAllCommand(String cacheName, List<?> keys, Set<Flag> flags,
+         GlobalTransaction gtx, Equivalence<? super K> keyEquivalence) {
       super(cacheName, flags);
       this.keys = keys;
       this.gtx = gtx;
       this.keyEquivalence = keyEquivalence;
    }
 
-   public void init(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
-                    InterceptorChain interceptorChain, TransactionTable txTable, Equivalence keyEquivalence) {
+   public void init(InvocationContextFactory icf, CommandsFactory commandsFactory,
+         InternalEntryFactory entryFactory, InterceptorChain interceptorChain,
+         TransactionTable txTable, Equivalence<? super K> keyEquivalence) {
       this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;
@@ -66,28 +71,36 @@ public class ClusteredGetManyCommand extends LocalFlagAffectedRpcCommand {
       this.keyEquivalence = keyEquivalence;
    }
 
+   @SuppressWarnings("unchecked")
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       acquireLocksIfNeeded();
       // make sure the get command doesn't perform a remote call
       // as our caller is already calling the ClusteredGetCommand on all the relevant nodes
-      Set<Flag> commandFlags = EnumSet.of(Flag.SKIP_REMOTE_LOOKUP, Flag.CACHE_MODE_LOCAL);
-      if (this.flags != null) commandFlags.addAll(this.flags);
-      GetManyCommand command = commandsFactory.buildGetManyCommand(createSet(keys), commandFlags, true);
+      GetAllCommand command = commandsFactory.buildGetAllCommand(keys, flags, true);
       InvocationContext invocationContext = icf.createRemoteInvocationContextForCommand(command, getOrigin());
-      Map<Object, ? extends CacheEntry> map = (Map<Object, ? extends CacheEntry>) invoker.invoke(invocationContext, command);
+      Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) invoker.invoke(invocationContext, command);
       if (trace) log.trace("Found: " + map);
 
-      //this might happen if the value was fetched from a cache loader
-      InternalCacheValue[] values = new InternalCacheValue[keys.length];
-      for (int i = 0; i < keys.length; ++i) {
-         CacheEntry entry = map.get(keys[i]);
-         if (entry == null) {
-            values[i] = null;
-         } else if (entry instanceof InternalCacheEntry) {
-            values[i] = ((InternalCacheEntry) entry).toInternalCacheValue();
+      if (map == null) {
+         return null;
+      }
+
+      List<InternalCacheValue<V>> values = new ArrayList<>(keys.size());
+      for (Object key : keys) {
+         if (map.containsKey(key)) {
+            CacheEntry<K, V> entry = map.get(key);
+            InternalCacheValue<V> value;
+            if (entry instanceof InternalCacheEntry) {
+               value = ((InternalCacheEntry<K, V>) entry).toInternalCacheValue();
+            } else if (entry != null) {
+               value = entryFactory.createValue(entry);
+            } else {
+               value = new ImmortalCacheValue(null);
+            }
+            values.add(value);
          } else {
-            values[i] = entryFactory.createValue(entry);
+            values.add(null);
          }
       }
       return values;
@@ -95,13 +108,13 @@ public class ClusteredGetManyCommand extends LocalFlagAffectedRpcCommand {
 
    private void acquireLocksIfNeeded() throws Throwable {
       if (hasFlag(Flag.FORCE_WRITE_LOCK)) {
-         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(createSet(keys), flags, gtx);
+         LockControlCommand lockControlCommand = commandsFactory.buildLockControlCommand(keys, flags, gtx);
          lockControlCommand.init(invoker, icf, txTable);
          lockControlCommand.perform(null);
       }
    }
 
-   public Object[] getKeys() {
+   public List<?> getKeys() {
       return keys;
    }
 
@@ -115,9 +128,10 @@ public class ClusteredGetManyCommand extends LocalFlagAffectedRpcCommand {
       return new Object[] { keys, flags, gtx };
    }
 
+   @SuppressWarnings("unchecked")
    @Override
    public void setParameters(int commandId, Object[] parameters) {
-      this.keys = (Object[]) parameters[0];
+      this.keys = (List<Object>) parameters[0];
       this.flags = (Set<Flag>) parameters[1];
       this.gtx = (GlobalTransaction) parameters[2];
    }
@@ -127,59 +141,49 @@ public class ClusteredGetManyCommand extends LocalFlagAffectedRpcCommand {
       return true;
    }
 
-   private Set<Object> createSet(Object[] elements) {
-      HashSet<Object> set = new HashSet<>(elements.length);
-      for (Object element : elements) set.add(element);
-      return set;
-   }
-
    @Override
    public String toString() {
       final StringBuilder sb = new StringBuilder("ClusteredGetManyCommand{");
-      sb.append("keys=").append(Arrays.toString(keys));
+      sb.append("keys=").append(keys);
       sb.append(", flags=").append(flags);
       sb.append('}');
       return sb.toString();
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ClusteredGetManyCommand that = (ClusteredGetManyCommand) o;
-
-      if (gtx != null ? !gtx.equals(that.gtx) : that.gtx != null) return false;
-      if (keyEquivalence != null ? !keyEquivalence.equals(that.keyEquivalence) : that.keyEquivalence != null)
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
          return false;
-
+      if (getClass() != obj.getClass())
+         return false;
+      ClusteredGetAllCommand<?, ?> other = (ClusteredGetAllCommand<?, ?>) obj;
+      if (gtx == null) {
+         if (other.gtx != null)
+            return false;
+      } else if (!gtx.equals(other.gtx))
+         return false;
+      if (keyEquivalence == null) {
+         if (other.keyEquivalence != null)
+            return false;
+      } else if (!keyEquivalence.equals(other.keyEquivalence))
+         return false;
       if (keys == null) {
-         return that.keys == null;
-      } else if (that.keys == null) {
+         if (other.keys != null)
+            return false;
+      } else if (!keys.equals(other.keys))
          return false;
-      } else if (keys.length != that.keys.length) {
-         return false;
-      } else {
-         Set<Object> myKeys = CollectionFactory.makeSet(keyEquivalence);
-         for (Object key : that.keys) {
-            if (!myKeys.contains(key)) {
-               return false;
-            }
-         }
-      }
-
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = 0;
-      // we need hashCode regardless of key order
-      for (Object key : keys) {
-         result = result ^ key.hashCode();
-      }
-      result = 31 * result + (gtx != null ? gtx.hashCode() : 0);
-      result = 31 * result + (keyEquivalence != null ? keyEquivalence.hashCode() : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((gtx == null) ? 0 : gtx.hashCode());
+      result = prime * result + ((keyEquivalence == null) ? 0 : keyEquivalence.hashCode());
+      result = prime * result + ((keys == null) ? 0 : keys.hashCode());
       return result;
    }
 }

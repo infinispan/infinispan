@@ -4,10 +4,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;

@@ -13,7 +13,7 @@ import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -142,17 +142,14 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       try {
          for (Object key : command.getKeys()) {
             entryFactory.wrapEntryForReading(ctx, key, null);
          }
          return invokeNextInterceptor(ctx, command);
       } finally {
-         //needed because entries might be added in L1
-         if (!ctx.isInTxScope()) {
-            commitContextEntries(ctx, command, null);
-         } else {
+         if (ctx.isInTxScope()) {
             for (Object key : command.getKeys()) {
                CacheEntry entry = ctx.lookupEntry(key);
                if (entry != null) {

@@ -3,7 +3,7 @@ package org.infinispan.stats.topK;
 import java.util.Map;
 
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.context.InvocationContext;
@@ -39,16 +39,16 @@ public class CacheUsageInterceptor extends BaseCustomInterceptor {
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
 
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
-         streamSummaryContainer.addGet(command.getKey(), isRemote(command.getKey()));
+         streamSummaryContainer.addGet(command.getKey(), command.getRemotelyFetchedValue() != null);
       }
       return invokeNextInterceptor(ctx, command);
    }
 
    @Override
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (streamSummaryContainer.isEnabled() && ctx.isOriginLocal()) {
          for (Object key : command.getKeys()) {
-            streamSummaryContainer.addGet(key, isRemote(key));
+            streamSummaryContainer.addGet(key, command.getRemotelyFetched().containsKey(key));
          }
       }
       return invokeNextInterceptor(ctx, command);

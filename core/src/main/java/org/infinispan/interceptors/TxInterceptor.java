@@ -13,7 +13,7 @@ import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetManyCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
@@ -318,11 +318,12 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
    }
 
    @Override
-<<<<<<< HEAD
    public final Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-=======
-   public Object visitGetManyCommand(InvocationContext ctx, GetManyCommand command) throws Throwable {
->>>>>>> Implemented transactional version and most of the interceptors where it makes sense
+      return enlistReadAndInvokeNext(ctx, command);
+   }
+   
+   @Override
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       return enlistReadAndInvokeNext(ctx, command);
    }
 

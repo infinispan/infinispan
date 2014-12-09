@@ -267,7 +267,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
       affectedKeys.add(key);
    }
 
-   public void addAllAffectedKeys(Collection<Object> keys) {
+   public void addAllAffectedKeys(Collection<?> keys) {
       initAffectedKeys();
       affectedKeys.addAll(keys);
    }

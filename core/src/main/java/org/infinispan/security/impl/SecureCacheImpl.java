@@ -525,9 +525,9 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public Map<K, V> getMany(Set<K> keys) {
+   public Map<K, V> getAll(Set<?> keys) {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
-      return delegate.getMany(keys);
+      return delegate.getAll(keys);
    }
 
    @Override
@@ -650,9 +650,9 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public Map<K, CacheEntry<K, V>> getManyCacheEntries(Set<K> keys) {
+   public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
-      return delegate.getManyCacheEntries(keys);
+      return delegate.getAllCacheEntries(keys);
    }
 
    @Override
