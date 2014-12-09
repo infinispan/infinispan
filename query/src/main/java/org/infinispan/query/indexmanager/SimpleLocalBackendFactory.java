@@ -4,7 +4,7 @@ import java.util.Properties;
 
 import org.hibernate.search.backend.BackendFactory;
 import org.hibernate.search.backend.spi.BackendQueueProcessor;
-import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.spi.WorkerBuildContext;
 
 /**

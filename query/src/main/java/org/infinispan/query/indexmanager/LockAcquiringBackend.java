@@ -7,7 +7,7 @@ import java.util.concurrent.BlockingQueue;
 
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 

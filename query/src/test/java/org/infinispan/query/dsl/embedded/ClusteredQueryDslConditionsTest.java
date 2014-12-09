@@ -1,7 +1,6 @@
 package org.infinispan.query.dsl.embedded;
 
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
-import org.hibernate.search.indexes.impl.IndexManagerHolder;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -66,19 +65,18 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
    }
 
    private void checkIndexPresence(Cache cache) {
-      SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) Search.getSearchManager(cache).getSearchFactory();
-      IndexManagerHolder indexManagerHolder = searchFactory.getIndexManagerHolder();
+      SearchIntegrator searchFactory = Search.getSearchManager(cache).getSearchFactory();
 
       assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getUserImplClass()));
-      assertNotNull(indexManagerHolder.getIndexManager(getModelFactory().getUserImplClass().getName()));
+      assertNotNull(searchFactory.getIndexManager(getModelFactory().getUserImplClass().getName()));
 
       assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getAccountImplClass()));
-      assertNotNull(indexManagerHolder.getIndexManager(getModelFactory().getAccountImplClass().getName()));
+      assertNotNull(searchFactory.getIndexManager(getModelFactory().getAccountImplClass().getName()));
 
       assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getTransactionImplClass()));
-      assertNotNull(indexManagerHolder.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
+      assertNotNull(searchFactory.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
 
       assertFalse(searchFactory.getIndexedTypes().contains(getModelFactory().getAddressImplClass()));
-      assertNull(indexManagerHolder.getIndexManager(getModelFactory().getAddressImplClass().getName()));
+      assertNull(searchFactory.getIndexManager(getModelFactory().getAddressImplClass().getName()));
    }
 }

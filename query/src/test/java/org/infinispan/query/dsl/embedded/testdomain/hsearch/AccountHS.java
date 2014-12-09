@@ -1,8 +1,11 @@
 package org.infinispan.query.dsl.embedded.testdomain.hsearch;
 
 import org.hibernate.search.annotations.Analyze;
+import org.hibernate.search.annotations.DateBridge;
+import org.hibernate.search.annotations.EncodingType;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Resolution;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 
@@ -23,6 +26,7 @@ public class AccountHS implements Account, Serializable {
    private String description;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
+   @DateBridge(encoding=EncodingType.STRING, resolution=Resolution.MILLISECOND)
    private Date creationDate;
 
    public int getId() {
