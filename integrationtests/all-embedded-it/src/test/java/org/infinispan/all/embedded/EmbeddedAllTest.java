@@ -1,11 +1,11 @@
 package org.infinispan.all.embedded;
 
 import org.infinispan.Cache;
+import org.infinispan.all.embedded.util.EmbeddedUtils;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfigurationBuilder;
@@ -16,11 +16,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import javax.transaction.TransactionManager;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 
@@ -54,7 +49,7 @@ public class EmbeddedAllTest {
 
    @AfterClass
    public static void cleanUp() {
-      killCacheManagers(true, manager, manager2);
+      EmbeddedUtils.killCacheManagers(true, manager, manager2);
    }
 
    @Test
@@ -186,78 +181,5 @@ public class EmbeddedAllTest {
       // survived?
       assertEquals(value1, cache.get(key1));
       assertEquals(value2, cache.get(key2));
-   }
-
-   private static void killCacheManagers(boolean clear, EmbeddedCacheManager... cacheManagers) {
-      // stop the caches first so that stopping the cache managers doesn't trigger a rehash
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         try {
-            killCaches(clear, getRunningCaches(cm));
-         } catch (Throwable e) {
-            log.warn("Problems stopping cache manager " + cm, e);
-         }
-      }
-      for (EmbeddedCacheManager cm : cacheManagers) {
-         try {
-            if (cm != null) cm.stop();
-         } catch (Throwable e) {
-            log.warn("Problems killing cache manager " + cm, e);
-         }
-      }
-   }
-
-   /**
-    * Kills a cache - stops it and rolls back any associated txs
-    */
-   private static void killCaches(boolean clear, Collection<Cache> caches) {
-      for (Cache c : caches) {
-         try {
-            if (c != null && c.getStatus() == ComponentStatus.RUNNING) {
-               TransactionManager tm = c.getAdvancedCache().getTransactionManager();
-               if (tm != null) {
-                  try {
-                     tm.rollback();
-                  }
-                  catch (Exception e) {
-                     // don't care
-                  }
-               }
-               if (c.getAdvancedCache().getRpcManager() != null) {
-                  log.tracef("Cache contents on %s before stopping: %s", c.getAdvancedCache().getRpcManager().getAddress(), c.entrySet());
-               } else {
-                  log.tracef("Cache contents before stopping: %s", c.entrySet());
-               }
-               if (clear) {
-                  try {
-                     c.clear();
-                  } catch (Exception ignored) {}
-               }
-               c.stop();
-            }
-         }
-         catch (Throwable t) {
-            log.tracef("Problems with killing caches: %s", t.getStackTrace());
-         }
-      }
-   }
-
-   private static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
-      Set<Cache> running = new HashSet<Cache>();
-      if (cacheContainer == null || !cacheContainer.getStatus().allowInvocations())
-         return running;
-
-      for (String cacheName : cacheContainer.getCacheNames()) {
-         if (cacheContainer.isRunning(cacheName)) {
-            Cache c = cacheContainer.getCache(cacheName);
-            if (c.getStatus().allowInvocations()) running.add(c);
-         }
-      }
-
-      if (cacheContainer.isDefaultRunning()) {
-         Cache defaultCache = cacheContainer.getCache();
-         if (defaultCache.getStatus().allowInvocations()) running.add(defaultCache);
-      }
-
-      return running;
    }
 }

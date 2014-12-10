@@ -1,0 +1,108 @@
+package sample_bank_account;
+
+option java_package = "com.example.generated_by_protoc";
+option java_outer_classname = "BankProtos";
+
+/**
+ * @Indexed(true)
+ */
+message User {
+
+   /**
+    * @IndexedField(index=true, store=true)
+    */
+   required int32 id = 1;
+
+   /**
+    * @IndexedField()
+    */
+   repeated int32 accountIds = 2;
+
+   /**
+    * @IndexedField
+    */
+   required string name = 3;
+
+   /**
+    * @IndexedField
+    */
+   required string surname = 4;
+
+   message Address {
+      required string street = 1;
+      required string postCode = 2;
+   }
+
+   /**
+    * @IndexedField
+    */
+   repeated Address addresses = 5;     //a repeated field cannot be marked required
+
+   /**
+    * @IndexedField
+    */
+   optional int32 age = 6;   // persisting age instead of birth date is not ideal but is ok for our sample code
+
+   enum Gender {
+      MALE = 0;    //NOTE: It seem negative values are accepted too!
+      FEMALE = 1;
+   }
+
+   /**
+    * @IndexedField
+    */
+   optional Gender gender = 7;
+
+   optional string notes = 8;
+}
+
+/**
+ * @Indexed
+ */
+message Account {
+
+   /**
+    * @IndexedField
+    */
+   required int32 id = 1;
+
+   /**
+    * @IndexedField
+    */
+   optional string description = 2 [default = "Checking account"];
+
+   /**
+    * @IndexedField
+    */
+   required fixed64 creationDate = 3;
+
+   message Limits {
+       optional double maxDailyLimit = 1;
+   }
+
+   /**
+    * @IndexedField
+    */
+   optional Limits limits = 4;
+
+   /**
+    * @IndexedField
+    */
+   repeated bytes blurb = 5;
+}
+
+/**
+ *
+ */
+message int_array {
+   repeated int32 theArray = 1;
+}
+
+/**
+ *
+ */
+message user_list {
+   repeated User theList = 1;
+}
+
+
