@@ -1,6 +1,6 @@
 package org.infinispan.topology;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.marshall.core.Ids;
 
 import java.io.IOException;
@@ -40,15 +40,15 @@ public class ManagerStatusResponse implements Serializable {
             '}';
    }
 
-   public static class Externalizer extends AbstractExternalizer<ManagerStatusResponse> {
+   public static class Externalizer extends InstanceReusingAdvancedExternalizer<ManagerStatusResponse> {
       @Override
-      public void writeObject(ObjectOutput output, ManagerStatusResponse cacheStatusResponse) throws IOException {
+      public void doWriteObject(ObjectOutput output, ManagerStatusResponse cacheStatusResponse) throws IOException {
          output.writeObject(cacheStatusResponse.caches);
          output.writeBoolean(cacheStatusResponse.rebalancingEnabled);
       }
 
       @Override
-      public ManagerStatusResponse readObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
+      public ManagerStatusResponse doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          Map<String, CacheStatusResponse> caches = (Map<String, CacheStatusResponse>) unmarshaller.readObject();
          boolean rebalancingEnabled = unmarshaller.readBoolean();
          return new ManagerStatusResponse(caches, rebalancingEnabled);
