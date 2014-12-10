@@ -1,4 +1,4 @@
-<subsystem xmlns="urn:jboss:domain:jgroups:1.1" default-stack="maximal">
+<subsystem xmlns="urn:infinispan:server:jgroups:7.0" default-stack="maximal">
     <stack name="maximal">
         <transport type="TCP" socket-binding="jgroups-tcp" diagnostics-socket-binding="jgroups-diagnostics" default-executor="jgroups" oob-executor="jgroups-oob" timer-executor="jgroups-timer" shared="false" thread-factory="jgroups-thread-factory"
         machine="machine1" rack="rack1" site="site1" >
@@ -14,6 +14,11 @@
         <protocol type="BARRIER"/>
         <protocol type="pbcast.NAKACK2"/>
         <protocol type="UNICAST3"/>
+        <protocol type="ENCRYPT">
+            <property name="key_store_name">${infinispan.jgroups.subsystem.property}/server.keystore</property>
+            <property name="store_password">password</property>
+            <property name="alias">myalias</property>
+        </protocol>
         <protocol type="pbcast.STABLE"/>
         <protocol type="pbcast.GMS"/>
         <protocol type="MFC"/>
