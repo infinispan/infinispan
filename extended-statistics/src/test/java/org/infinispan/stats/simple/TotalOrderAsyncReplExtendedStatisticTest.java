@@ -1,7 +1,7 @@
 package org.infinispan.stats.simple;
 
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.stats.BaseClusteredExtendedStatisticTest;
+import org.infinispan.stats.BaseTotalOrderClusteredExtendedStatisticsTest;
 import org.testng.annotations.Test;
 
 /**
@@ -9,9 +9,9 @@ import org.testng.annotations.Test;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "stats.simple.TotalOrderAsyncReplExtendedStatisticTest")
-public class TotalOrderAsyncReplExtendedStatisticTest extends BaseClusteredExtendedStatisticTest {
+public class TotalOrderAsyncReplExtendedStatisticTest extends BaseTotalOrderClusteredExtendedStatisticsTest {
 
-   protected TotalOrderAsyncReplExtendedStatisticTest() {
-      super(CacheMode.REPL_ASYNC, false, false, true);
+   public TotalOrderAsyncReplExtendedStatisticTest() {
+      super(CacheMode.REPL_ASYNC, false, false);
    }
 }
