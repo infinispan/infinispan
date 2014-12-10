@@ -107,6 +107,7 @@ public class ClusteredCacheResource extends CacheResource  {
 
         if (runtimeRegistration) {
             CacheMetricsHandler.INSTANCE.registerClusteredMetrics(resourceRegistration);
+            ClusteredCacheMetricsHandler.INSTANCE.registerClusteredMetrics(resourceRegistration);
         }
     }
 

@@ -1,5 +1,6 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.jboss.as.clustering.infinispan.subsystem.ClusteredCacheMetricsHandler.ClusteredCacheMetrics;
 import org.jboss.as.controller.descriptions.StandardResourceDescriptionResolver;
 
 import java.util.HashMap;
@@ -198,5 +199,9 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(ModelKeys.IMPLEMENTATION, null);
         sharedAttributeResolver.put(ModelKeys.COMPRESSION, null);
         sharedAttributeResolver.put(ModelKeys.LEVELDB_STORE, null);
+
+        for (ClusteredCacheMetrics key : ClusteredCacheMetricsHandler.ClusteredCacheMetrics.values()) {
+           sharedAttributeResolver.put(key.definition.getName(), "clustered-cache");
+        }
     }
 }
