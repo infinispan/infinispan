@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.infinispan.SecurityActions;
+import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.Version;
 import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
@@ -38,7 +39,23 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         CREATED_CACHE_COUNT(MetricKeys.CREATED_CACHE_COUNT, ModelType.INT, true, true),
         MEMBERS(MetricKeys.MEMBERS, ModelType.INT, true, true),
         CLUSTER_SIZE(MetricKeys.CLUSTER_SIZE, ModelType.INT, true, true),
-        VERSION(MetricKeys.VERSION, ModelType.INT, true, true);
+        VERSION(MetricKeys.VERSION, ModelType.INT, true, true),
+
+        // see org.infinispan.stats.CacheContainerStats
+        AVERAGE_READ_TIME(MetricKeys.AVERAGE_READ_TIME, ModelType.LONG, true),
+        AVERAGE_WRITE_TIME(MetricKeys.AVERAGE_WRITE_TIME, ModelType.LONG, true),
+        AVERAGE_REMOVE_TIME(MetricKeys.AVERAGE_REMOVE_TIME, ModelType.LONG, true),
+        ELAPSED_TIME(MetricKeys.ELAPSED_TIME, ModelType.LONG, true),
+        EVICTIONS(MetricKeys.EVICTIONS, ModelType.LONG, true),
+        HIT_RATIO(MetricKeys.HIT_RATIO, ModelType.DOUBLE, true),
+        HITS(MetricKeys.HITS, ModelType.LONG, true),
+        MISSES(MetricKeys.MISSES, ModelType.LONG, true),
+        NUMBER_OF_ENTRIES(MetricKeys.NUMBER_OF_ENTRIES, ModelType.INT, true),
+        READ_WRITE_RATIO(MetricKeys.READ_WRITE_RATIO, ModelType.DOUBLE, true),
+        REMOVE_HITS(MetricKeys.REMOVE_HITS, ModelType.LONG, true),
+        REMOVE_MISSES(MetricKeys.REMOVE_MISSES, ModelType.LONG, true),
+        STORES(MetricKeys.STORES, ModelType.LONG, true),
+        TIME_SINCE_RESET(MetricKeys.TIME_SINCE_RESET, ModelType.LONG, true);
 
         private static final Map<String, CacheManagerMetrics> MAP = new HashMap<String, CacheManagerMetrics>();
 
@@ -93,6 +110,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
 
         CacheManagerMetrics metric = CacheManagerMetrics.getStat(attrName);
         ModelNode result = new ModelNode();
+        CacheContainerStats stats = cacheManager.getStats();
 
         if (metric == null) {
             context.getFailureDescription().set(String.format("Unknown metric %s", attrName));
@@ -145,6 +163,48 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                 case VERSION:
                     result.set(Version.getVersion());
                     break;
+                case AVERAGE_READ_TIME:
+                   result.set(stats.getAverageReadTime());
+                   break;
+                case AVERAGE_WRITE_TIME:
+                   result.set(stats.getAverageWriteTime());
+                   break;
+                case AVERAGE_REMOVE_TIME:
+                   result.set(stats.getAverageRemoveTime());
+                   break;
+                case ELAPSED_TIME:
+                   result.set(stats.getTimeSinceStart());
+                   break;
+                case EVICTIONS:
+                   result.set(stats.getEvictions());
+                   break;
+                case HIT_RATIO:
+                   result.set(stats.getHitRatio());
+                   break;
+                case HITS:
+                   result.set(stats.getHits());
+                   break;
+                case MISSES:
+                   result.set(stats.getMisses());
+                   break;
+                case NUMBER_OF_ENTRIES:
+                   result.set(stats.getCurrentNumberOfEntries());
+                   break;
+                case READ_WRITE_RATIO:
+                   result.set(stats.getReadWriteRatio());
+                   break;
+                case REMOVE_HITS:
+                   result.set(stats.getHits());
+                   break;
+                case REMOVE_MISSES:
+                   result.set(stats.getRemoveMisses());
+                   break;
+                case STORES:
+                   result.set(stats.getStores());
+                   break;
+                case TIME_SINCE_RESET:
+                   result.set(stats.getTimeSinceStart());
+                   break;
                 default:
                     context.getFailureDescription().set(String.format("Unknown metric %s", metric));
                     break;
