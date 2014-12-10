@@ -205,7 +205,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         Transport transportConfig = new Transport(type);
         transportConfig.setShared(shared);
         transportConfig.setTopology(site, rack, machine);
-        initProtocolProperties(transport, transportConfig);
+        initProtocolProperties(context, transport, transportConfig);
 
         Relay relayConfig = null;
         List<Map.Entry<String, Injector<ChannelFactory>>> stacks = new LinkedList<Map.Entry<String, Injector<ChannelFactory>>>();
@@ -213,7 +213,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
             final ModelNode relay = model.get(ModelKeys.RELAY, ModelKeys.RELAY_NAME);
             final String siteName = RelayResourceDefinition.SITE.resolveModelAttribute(context, relay).asString();
             relayConfig = new Relay(siteName);
-            initProtocolProperties(relay, relayConfig);
+            initProtocolProperties(context, relay, relayConfig);
             if (relay.hasDefined(ModelKeys.REMOTE_SITE)) {
                 List<RemoteSiteConfiguration> remoteSites = relayConfig.getRemoteSites();
                 for (Property remoteSiteProperty : relay.get(ModelKeys.REMOTE_SITE).asPropertyList()) {
@@ -236,7 +236,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
             final String securityRealm = SaslResourceDefinition.SECURITY_REALM.resolveModelAttribute(context, sasl).asString();
             final String mech = SaslResourceDefinition.MECH.resolveModelAttribute(context, sasl).asString();
             saslConfig = new Sasl(securityRealm, mech, clusterRole);
-            initProtocolProperties(sasl, saslConfig);
+            initProtocolProperties(context, sasl, saslConfig);
         }
 
         // set up the protocol stack Protocol objects
@@ -246,7 +246,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
             ModelNode protocol = protocolProperty.getValue();
             final String protocolType = (resolvedValue = ProtocolResourceDefinition.TYPE.resolveModelAttribute(context, protocol)).isDefined() ? resolvedValue.asString() : null;
             Protocol protocolConfig = new Protocol(protocolType);
-            initProtocolProperties(protocol, protocolConfig);
+            initProtocolProperties(context, protocol, protocolConfig);
             stackConfig.getProtocols().add(protocolConfig);
             final String protocolSocketBinding = (resolvedValue = ProtocolResourceDefinition.SOCKET_BINDING.resolveModelAttribute(context, protocol)).isDefined() ? resolvedValue.asString() : null;
             protocolSocketBindings.add(new AbstractMap.SimpleImmutableEntry<Protocol, String>(protocolConfig, protocolSocketBinding));
@@ -321,7 +321,7 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
         return builder.install();
     }
 
-    private void initProtocolProperties(ModelNode protocol, Protocol protocolConfig) {
+    private void initProtocolProperties(OperationContext context, ModelNode protocol, Protocol protocolConfig) throws OperationFailedException {
 
         Map<String, String> properties = protocolConfig.getProperties();
         // properties are a child resource of protocol
@@ -332,9 +332,8 @@ public class ProtocolStackAdd extends AbstractAddStepHandler implements Descript
                 //       "relative-to" => {"value" => "fred"},
                 //   }
                 String propertyName = property.getName();
-                Property complexValue = property.getValue().asProperty();
-                String propertyValue = complexValue.getValue().asString();
-                properties.put(propertyName, propertyValue);
+                ModelNode propertyValue = PropertyResourceDefinition.VALUE.resolveModelAttribute(context, property.getValue());
+                properties.put(propertyName, propertyValue.asString());
             }
        }
     }
