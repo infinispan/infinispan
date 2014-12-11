@@ -128,7 +128,7 @@ Cache<String, String> cache = manager.getCache(newCacheName);
 
 ----
 
-Refer to link:http://docs.jboss.org/infinispan/{infinispan-version}/apidocs/org/infinispan/manager/CacheManager.html[CacheManager] , link:http://docs.jboss.org/infinispan/{infinispan-version}/apidocs/org/infinispan/configuration/cache/ConfigurationBuilder.html[ConfigurationBuilder] , link:http://docs.jboss.org/infinispan/{infinispan-version}/apidocs/org/infinispan/configuration/cache/Configuration.html[Configuration] , and link:http://docs.jboss.org/infinispan/{infinispan-version}/apidocs/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration] javadocs for more details.
+Refer to link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/manager/CacheManager.html[CacheManager] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/configuration/cache/ConfigurationBuilder.html[ConfigurationBuilder] , link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/configuration/cache/Configuration.html[Configuration] , and link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/configuration/global/GlobalConfiguration.html[GlobalConfiguration] javadocs for more details.
 
 ==== ConfigurationBuilder Programmatic Configuration API
 However, users do not have to first read an XML based configuration and then modify it in runtime; they can start from scratch using only programmatic API.
@@ -151,7 +151,7 @@ GlobalConfiguration globalConfig = new GlobalConfigurationBuilder().transport()
 
 ----
 
-Sometimes you might also want to enable collection of link:http://docs.jboss.org/infinispan/{infinispan-version}/apidocs/jmxComponents.html[global JMX statistics]
+Sometimes you might also want to enable collection of link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/jmxComponents.html[global JMX statistics]
 at cache manager level or get information about the transport. To enable global JMX statistics simply do:
 
 [source,java]
@@ -273,7 +273,7 @@ Configuration config = new ConfigurationBuilder()
 
 ----
 
-For information on the individual configuration options, please check the link:http://docs.jboss.org/infinispan/{infinispan-version}/configdocs/[configuration guide] .
+For information on the individual configuration options, please check the link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/[configuration guide] .
 
 ===  Configuration Migration Tools
 Infinispan has a number of scripts for importing configurations from other cache and data grid products.
