@@ -16,6 +16,8 @@ import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.modules.plugins.jbossas7.ASConnection;
 import org.rhq.modules.plugins.jbossas7.ConfigurationWriteDelegate;
 import org.rhq.modules.plugins.jbossas7.CreateResourceDelegate;
@@ -35,6 +37,13 @@ import java.util.Set;
  */
 public class IspnCacheComponent extends MetricsRemappingComponent<IspnCacheComponent> implements CreateChildResourceFacet {
     static final String FLAVOR = "_flavor";
+    protected ResourceContext<IspnCacheComponent> context;
+
+    @Override
+    public void start(ResourceContext<IspnCacheComponent> context) throws InvalidPluginConfigurationException, Exception {
+        this.context = context;
+        super.start(context);
+    }
 
    /**
     * Get the availability check based on if the cache is actually running or not
@@ -142,7 +151,9 @@ public class IspnCacheComponent extends MetricsRemappingComponent<IspnCacheCompo
 
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
-        Configuration config = super.loadResourceConfiguration();
+        ConfigurationDefinition configDef = context.getResourceType().getResourceConfigurationDefinition();
+        ConfigurationLoadDelegate delegate = new ConfigurationLoadDelegate(configDef, getASConnection(), getAddress(), true);
+        Configuration config = delegate.loadResourceConfiguration();
         String f = getCacheFlavorFromPath();
         PropertySimple flavor = new PropertySimple(FLAVOR, f);
         config.put(flavor);
