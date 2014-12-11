@@ -183,6 +183,11 @@
             <artifactId>commons-dbcp</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

@@ -98,6 +98,7 @@
       <version.apache.ds>2.0.0-M15</version.apache.ds>
       <version.arquillian>1.1.5.Final</version.arquillian>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
+      <version.aspectj.aspectjweaver>1.8.1</version.aspectj.aspectjweaver>
       <version.avro>1.7.6</version.avro>
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
@@ -161,7 +162,7 @@
       <version.snappy>1.0.5</version.snappy>
       <version.solder>3.1.0.Final</version.solder>
       <version.spring3>3.2.9.RELEASE</version.spring3>
-       <version.spring4>4.1.0.RELEASE</version.spring4>
+      <version.spring4>4.1.0.RELEASE</version.spring4>
       <version.spymemcached>2.5</version.spymemcached>
       <version.testng>6.8.8</version.testng>
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
@@ -456,6 +457,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>${version.commons.compress}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${version.aspectj.aspectjweaver}</version>
          </dependency>
          <dependency>
             <groupId>commons-codec</groupId>

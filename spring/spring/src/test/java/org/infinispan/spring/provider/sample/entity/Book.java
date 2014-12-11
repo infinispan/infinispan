@@ -1,4 +1,6 @@
-package org.infinispan.spring.provider.sample;
+package org.infinispan.spring.provider.sample.entity;
+
+import java.io.Serializable;
 
 /**
  * Book.
@@ -6,7 +8,7 @@ package org.infinispan.spring.provider.sample;
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @since 5.1
  */
-public class Book {
+public class Book implements Serializable {
 
    private Integer id;
 
@@ -17,6 +19,17 @@ public class Book {
    private String title;
 
    public Book() {
+   }
+
+   public Book(String isbn, String author, String title) {
+      this(null, isbn, author, title);
+   }
+
+   public Book(Integer id, String isbn, String author, String title) {
+      this.id = id;
+      this.isbn = isbn;
+      this.author = author;
+      this.title = title;
    }
 
    public Integer getId() {

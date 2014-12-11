@@ -1,15 +1,17 @@
-package org.infinispan.spring.provider.sample;
+package org.infinispan.spring.provider.sample.dao;
+
+import org.infinispan.spring.provider.sample.entity.Book;
 
 /**
  * <p>
- * A simple, woefully incomplete {@code DAO} for storing, retrieving and removing {@link Book
+ * A simple, woefully incomplete {@code DAO} for storing, retrieving and removing {@link org.infinispan.spring.provider.sample.entity.Book
  * <code>Books</code>}.
  * </p>
  *
  * @author <a href="mailto:olaf DOT bergner AT gmx DOT de">Olaf Bergner</a>
  * @since 5.1
  */
-public interface BookDao {
+public interface BaseBookDao {
 
    /**
     * <p>
@@ -33,14 +35,22 @@ public interface BookDao {
 
    /**
     * <p>
-    * Store the provided {@code book}. Depending on whether {@code book} has already been store
-    * before this method will either perform an {@code insert} or an {@code update}. Return the
-    * stored book.
+    * Update provided {@code book} and return its updated version.
     * </p>
     *
     * @param book
-    *           The book to store
-    * @return The stored book
+    *           The book to update
+    * @return Updated book
     */
-   Book storeBook(Book book);
+   Book updateBook(Book book);
+
+   /**
+    * <p>
+    * Create new book and return it. If the book already exists, throw exception.
+    * </p>
+    *
+    * @param book The book to create
+    * @return Created book.
+    */
+   Book createBook(Book book);
 }
