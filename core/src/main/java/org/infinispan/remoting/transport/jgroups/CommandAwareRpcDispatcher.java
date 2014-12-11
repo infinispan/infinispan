@@ -265,7 +265,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    }
 
    private void executeCommandFromRemoteSite(final ReplicableCommand cmd, final Message req, final org.jgroups.blocks.Response response) throws Throwable {
-      handler.handleFromRemoteSite((SiteAddress) req.getSrc(), (XSiteReplicateCommand) cmd, new Reply() {
+      SiteAddress siteAddress = (SiteAddress) req.getSrc();
+      ((XSiteReplicateCommand) cmd).setOriginSite(siteAddress.getSite());
+      handler.handleFromRemoteSite(siteAddress.getSite(), (XSiteReplicateCommand) cmd, new Reply() {
          @Override
          public void reply(Object returnValue) {
             CommandAwareRpcDispatcher.this.reply(response, returnValue);
