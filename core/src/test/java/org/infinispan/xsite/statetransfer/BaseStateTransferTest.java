@@ -15,8 +15,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.ControlledTransport;
 import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.xsite.AbstractTwoSitesTest;
@@ -33,8 +31,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.AssertJUnit.*;
+import static org.infinispan.test.TestingUtil.extractComponent;
+import static org.infinispan.test.TestingUtil.extractGlobalComponent;
+import static org.infinispan.test.TestingUtil.replaceComponent;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests the cross-site replication with concurrent operations checking for consistency.
@@ -923,9 +927,6 @@ public abstract class BaseStateTransferTest extends AbstractTwoSitesTest {
          BackupReceiverRepository delegate = extractGlobalComponent(cacheContainer, BackupReceiverRepository.class);
          BackupReceiverRepositoryWrapper wrapper = new BackupReceiverRepositoryWrapper(delegate, listener);
          replaceComponent(cacheContainer, BackupReceiverRepository.class, wrapper, true);
-         JGroupsTransport t = (JGroupsTransport) extractGlobalComponent(cacheContainer, Transport.class);
-         CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-         replaceField(wrapper, "backupReceiverRepository", card, CommandAwareRpcDispatcher.class);
          return wrapper;
       }
    }

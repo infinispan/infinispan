@@ -3,9 +3,6 @@ package org.infinispan.xsite.statetransfer.failures;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
-import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.util.BlockingLocalTopologyManager;
 import org.infinispan.xsite.BackupReceiver;
@@ -24,7 +21,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.infinispan.test.TestingUtil.*;
+import static org.infinispan.test.TestingUtil.WrapFactory;
+import static org.infinispan.test.TestingUtil.wrapGlobalComponent;
 import static org.infinispan.util.BlockingLocalTopologyManager.replaceTopologyManager;
 
 /**
@@ -78,7 +76,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                           new WrapFactory<BackupReceiverRepository, BackupReceiverRepository, CacheContainer>() {
                              @Override
                              public BackupReceiverRepository wrap(final CacheContainer wrapOn, final BackupReceiverRepository current) {
-                                BackupReceiverRepositoryDelegator delegator = new BackupReceiverRepositoryDelegator(current) {
+                                return new BackupReceiverRepositoryDelegator(current) {
 
                                    private final Set<Address> addressSet = new HashSet<>();
 
@@ -110,10 +108,6 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                                       };
                                    }
                                 };
-                                JGroupsTransport t = (JGroupsTransport) extractGlobalComponent(wrapOn, Transport.class);
-                                CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-                                replaceField(delegator, "backupReceiverRepository", card, CommandAwareRpcDispatcher.class);
-                                return delegator;
                              }
                           }, true);
 
@@ -154,7 +148,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                           new WrapFactory<BackupReceiverRepository, BackupReceiverRepository, CacheContainer>() {
                              @Override
                              public BackupReceiverRepository wrap(final CacheContainer wrapOn, final BackupReceiverRepository current) {
-                                BackupReceiverRepositoryDelegator delegator = new BackupReceiverRepositoryDelegator(current) {
+                                return new BackupReceiverRepositoryDelegator(current) {
                                    @Override
                                    public BackupReceiver getBackupReceiver(String originSiteName, String cacheName) {
                                       return new BackupReceiverDelegator(super.getBackupReceiver(originSiteName, cacheName)) {
@@ -166,10 +160,6 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                                       };
                                    }
                                 };
-                                JGroupsTransport t = (JGroupsTransport) extractGlobalComponent(wrapOn, Transport.class);
-                                CommandAwareRpcDispatcher card = t.getCommandAwareRpcDispatcher();
-                                replaceField(delegator, "backupReceiverRepository", card, CommandAwareRpcDispatcher.class);
-                                return delegator;
                              }
                           }, true);
 

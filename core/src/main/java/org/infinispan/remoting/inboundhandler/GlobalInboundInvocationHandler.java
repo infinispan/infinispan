@@ -20,7 +20,6 @@ import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.BackupReceiver;
 import org.infinispan.xsite.BackupReceiverRepository;
 import org.infinispan.xsite.XSiteReplicateCommand;
-import org.jgroups.protocols.relay.SiteAddress;
 
 import java.util.concurrent.ExecutorService;
 
@@ -91,12 +90,12 @@ public class GlobalInboundInvocationHandler implements InboundInvocationHandler 
    }
 
    @Override
-   public void handleFromRemoteSite(SiteAddress origin, XSiteReplicateCommand command, Reply reply, DeliverOrder order) {
+   public void handleFromRemoteSite(String origin, XSiteReplicateCommand command, Reply reply, DeliverOrder order) {
       if (trace) {
          log.tracef("Handling command %s from remote site %s", command, origin);
       }
 
-      BackupReceiver receiver = backupReceiverRepository.getBackupReceiver(origin.getSite(), command.getCacheName());
+      BackupReceiver receiver = backupReceiverRepository.getBackupReceiver(origin, command.getCacheName());
       Runnable runnable = create(command, receiver, reply);
       if (order.preserveOrder()) {
          runnable.run();

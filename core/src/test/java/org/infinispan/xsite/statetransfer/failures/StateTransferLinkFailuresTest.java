@@ -76,7 +76,6 @@ public class StateTransferLinkFailuresTest extends AbstractTwoSitesTest {
 
    public void testLinkBrokenDuringStateTransfer() {
       initBeforeTest();
-      initBeforeTest();
       List<ControllerTransport> transports = replaceTransportInSite(LON);
       for (ControllerTransport transport : transports) {
          transport.failAfterFirstChunk = true;
