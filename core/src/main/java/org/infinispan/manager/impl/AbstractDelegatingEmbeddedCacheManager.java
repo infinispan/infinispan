@@ -7,6 +7,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.stats.CacheContainerStats;
 
 import java.util.List;
 import java.util.Set;
@@ -169,5 +170,10 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    @Override
    public Set<Object> getListeners() {
       return cm.getListeners();
+   }
+
+   @Override
+   public CacheContainerStats getStats() {
+      return cm.getStats();
    }
 }

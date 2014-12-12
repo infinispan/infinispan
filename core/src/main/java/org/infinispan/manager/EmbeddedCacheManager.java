@@ -12,6 +12,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.Listenable;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.stats.CacheContainerStats;
 
 import java.util.List;
 import java.util.Set;
@@ -234,5 +235,13 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * @since 7.0
     */
    void addCacheDependency(String from, String to);
+
+   /**
+    * Returns statistics for this cache manager
+    *
+    * since 7.1
+    * @return statistics for this cache manager
+    */
+   CacheContainerStats getStats();
 
 }
