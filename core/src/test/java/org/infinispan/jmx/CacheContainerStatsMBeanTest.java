@@ -68,7 +68,7 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
       assertAttributeValue(mBeanServer, nodeStats, "NumberOfEntries", 4);
       assertAttributeValue(mBeanServer, nodeStats, "Stores", 4);
       assertAttributeValue(mBeanServer, nodeStats, "Evictions", 0);
-      assertAttributeValueGreaterThan(mBeanServer, nodeStats, "AverageWriteTime", 0);
+      assertAttributeValueGreaterThanOrEqual(mBeanServer, nodeStats, "AverageWriteTime", 0);
 
       cache1.remove("a1");
 
@@ -83,8 +83,7 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
       assertAttributeValue(mBeanServer, nodeStats, "NumberOfEntries", 7);
       assertAttributeValue(mBeanServer, nodeStats, "Stores", 8);
       assertAttributeValue(mBeanServer, nodeStats, "Evictions", 0);
-      assertAttributeValueGreaterThan(mBeanServer, nodeStats, "AverageWriteTime", 0);
-
+      assertAttributeValueGreaterThanOrEqual(mBeanServer, nodeStats, "AverageWriteTime", 0);
    }
 
    private void assertAttributeValue(MBeanServer mBeanServer, ObjectName oName, String attrName, long expectedValue)
@@ -94,10 +93,10 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
             + ", but received " + receivedVal;
    }
 
-   private void assertAttributeValueGreaterThan(MBeanServer mBeanServer, ObjectName oName, String attrName,
+   private void assertAttributeValueGreaterThanOrEqual(MBeanServer mBeanServer, ObjectName oName, String attrName,
          long valueToCompare) throws Exception {
       String receivedVal = mBeanServer.getAttribute(oName, attrName).toString();
-      assert Long.parseLong(receivedVal) > valueToCompare : "expecting " + receivedVal + " for " + attrName
+      assert Long.parseLong(receivedVal) >= valueToCompare : "expecting " + receivedVal + " for " + attrName
             + ", to be greater than" + valueToCompare;
    }
 }
