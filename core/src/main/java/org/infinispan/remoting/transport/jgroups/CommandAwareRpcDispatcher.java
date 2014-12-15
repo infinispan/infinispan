@@ -343,7 +343,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       msg.setBuffer(buf);
       encodeDeliverMode(msg, deliverOrder);
       //some issues with the new bundler. put back the DONT_BUNDLE flag.
-      if (mode != ResponseMode.GET_NONE) msg.setFlag(Message.Flag.DONT_BUNDLE);
+      if (deliverOrder == DeliverOrder.NONE || mode != ResponseMode.GET_NONE) msg.setFlag(Message.Flag.DONT_BUNDLE);
       if (rsvp) msg.setFlag(Message.Flag.RSVP);
 
       if (recipient != null) msg.setDest(recipient);

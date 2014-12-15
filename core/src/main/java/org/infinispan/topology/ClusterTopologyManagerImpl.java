@@ -110,7 +110,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          Map<Address, Response> responseMap = null;
          try {
             responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
-                  command, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), true, null, false, false);
+                  command, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
             Response response = responseMap.get(coordinator);
             if (response instanceof SuccessfulResponse) {
                isRebalancingEnabled = ((Boolean) ((SuccessfulResponse) response).getResponseValue());
