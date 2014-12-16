@@ -382,23 +382,33 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testPurgeExpired() throws Exception {
       assertIsEmpty();
       // Increased lifespan and idle timeouts to accommodate slower cache stores
-      long lifespan = 6000;
-      long idle = 4000;
+      // checking if cache store contains the entry right after inserting because
+      // some slower cache stores (seen on DB2) don't manage to entry all the entries
+      // before running out of lifespan making this test unpredictably fail on them.
+
+      long lifespan = 7000;
+      long idle = 5000;
+
       InternalCacheEntry ice1 = internalCacheEntry("k1", "v1", lifespan);
       cl.write(marshalledEntry(ice1));
+      assertContains("k1", true);
+
       InternalCacheEntry ice2 = internalCacheEntry("k2", "v2", -1, idle);
       cl.write(marshalledEntry(ice2));
+      assertContains("k2", true);
+
       InternalCacheEntry ice3 = internalCacheEntry("k3", "v3", lifespan, idle);
       cl.write(marshalledEntry(ice3));
+      assertContains("k3", true);
+
       InternalCacheEntry ice4 = internalCacheEntry("k4", "v4", -1, -1);
       cl.write(marshalledEntry(ice4)); // immortal entry
+      assertContains("k4", true);
+
       InternalCacheEntry ice5 = internalCacheEntry("k5", "v5", lifespan * 1000, idle * 1000);
       cl.write(marshalledEntry(ice5)); // long life mortal entry
-      assertContains("k1", true);
-      assertContains("k2", true);
-      assertContains("k3", true);
-      assertContains("k4", true);
       assertContains("k5", true);
+
 
       timeService.advance(lifespan + 1);
 
