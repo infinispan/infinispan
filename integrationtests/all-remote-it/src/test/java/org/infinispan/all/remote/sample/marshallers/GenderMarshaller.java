@@ -1,20 +1,24 @@
 package org.infinispan.all.remote.sample.marshallers;
 
-import org.infinispan.all.remote.sample.classes.User;
+import org.infinispan.all.remote.sample.testdomain.User;
 import org.infinispan.protostream.EnumMarshaller;
 
 /**
  * @author anistor@redhat.com
+ * @since 7.0
  */
 public class GenderMarshaller implements EnumMarshaller<User.Gender> {
+
    @Override
-   public Class<? extends User.Gender> getJavaClass() {
+   public Class<User.Gender> getJavaClass() {
       return User.Gender.class;
    }
+
    @Override
    public String getTypeName() {
       return "sample_bank_account.User.Gender";
    }
+
    @Override
    public User.Gender decode(int enumValue) {
       switch (enumValue) {
@@ -23,8 +27,9 @@ public class GenderMarshaller implements EnumMarshaller<User.Gender> {
          case 1:
             return User.Gender.FEMALE;
       }
-      return null; // unknown value
+      return null;  // unknown value
    }
+
    @Override
    public int encode(User.Gender gender) {
       switch (gender) {

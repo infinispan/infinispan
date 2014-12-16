@@ -1,33 +1,41 @@
 package org.infinispan.all.remote.sample.marshallers;
 
-import org.infinispan.all.remote.sample.classes.Address;
+import java.io.IOException;
+
+import org.infinispan.all.remote.sample.AddressPB;
 import org.infinispan.protostream.MessageMarshaller;
 
-import java.io.IOException;
 /**
  * @author anistor@redhat.com
+ * @since 7.0
  */
-public class AddressMarshaller implements MessageMarshaller<Address> {
+public class AddressMarshaller implements MessageMarshaller<AddressPB> {
+
    @Override
    public String getTypeName() {
       return "sample_bank_account.User.Address";
    }
+
    @Override
-   public Class<? extends Address> getJavaClass() {
-      return Address.class;
+   public Class<AddressPB> getJavaClass() {
+      return AddressPB.class;
    }
+
    @Override
-   public Address readFrom(ProtoStreamReader reader) throws IOException {
+   public AddressPB readFrom(ProtoStreamReader reader) throws IOException {
       String street = reader.readString("street");
       String postCode = reader.readString("postCode");
-      Address address = new Address();
+
+      AddressPB address = new AddressPB();
       address.setStreet(street);
       address.setPostCode(postCode);
       return address;
    }
+
    @Override
-   public void writeTo(ProtoStreamWriter writer, Address address) throws IOException {
+   public void writeTo(ProtoStreamWriter writer, AddressPB address) throws IOException {
       writer.writeString("street", address.getStreet());
       writer.writeString("postCode", address.getPostCode());
    }
 }
+

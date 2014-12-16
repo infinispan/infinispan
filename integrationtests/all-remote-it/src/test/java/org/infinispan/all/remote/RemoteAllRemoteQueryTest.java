@@ -1,8 +1,19 @@
 package org.infinispan.all.remote;
 
-import org.infinispan.all.remote.sample.classes.Address;
-import org.infinispan.all.remote.sample.classes.User;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
+import org.infinispan.all.remote.sample.AddressPB;
+import org.infinispan.all.remote.sample.UserPB;
 import org.infinispan.all.remote.sample.marshallers.MarshallerRegistration;
+import org.infinispan.all.remote.sample.testdomain.Address;
+import org.infinispan.all.remote.sample.testdomain.User;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -16,12 +27,6 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 /**
  *
@@ -58,7 +63,7 @@ public class RemoteAllRemoteQueryTest {
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(
             ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", read("/bank.proto"));
+      metadataCache.put("sample_bank_account/bank.proto", read("/sample_bank_account//bank.proto"));
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       //initialize client-side serialization context
@@ -80,13 +85,13 @@ public class RemoteAllRemoteQueryTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(User.class)
+      Query query = qf.from(UserPB.class)
             .having("name").eq("Tom").toBuilder()
             .build();
       List<User> list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertEquals(User.class, list.get(0).getClass());
+      assertEquals(UserPB.class, list.get(0).getClass());
       assertUser(list.get(0));
    }
 
@@ -97,13 +102,13 @@ public class RemoteAllRemoteQueryTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(User.class)
+      Query query = qf.from(UserPB.class)
             .having("addresses.postCode").eq("1234").toBuilder()
             .build();
       List<User> list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertEquals(User.class, list.get(0).getClass());
+      assertEquals(UserPB.class, list.get(0).getClass());
       assertUser(list.get(0));
    }
 
@@ -118,7 +123,7 @@ public class RemoteAllRemoteQueryTest {
 
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
-      Query query = qf.from(User.class)
+      Query query = qf.from(UserPB.class)
             .setProjection("name", "surname")
             .having("name").eq("Tom").toBuilder()
             .build();
@@ -131,13 +136,13 @@ public class RemoteAllRemoteQueryTest {
    }
 
    private User createUser1() {
-      User user = new User();
+      User user = new UserPB();
       user.setId(1);
       user.setName("Tom");
       user.setSurname("Cat");
       user.setGender(User.Gender.MALE);
       user.setAccountIds(Collections.singleton(12));
-      Address address = new Address();
+      Address address = new AddressPB();
       address.setStreet("Dark Alley");
       address.setPostCode("1234");
       user.setAddresses(Collections.singletonList(address));
@@ -145,12 +150,12 @@ public class RemoteAllRemoteQueryTest {
    }
 
    private User createUser2() {
-      User user = new User();
+      User user = new UserPB();
       user.setId(1);
       user.setName("Adrian");
       user.setSurname("Nistor");
       user.setGender(User.Gender.MALE);
-      Address address = new Address();
+      Address address = new AddressPB();
       address.setStreet("Old Street");
       address.setPostCode("XYZ");
       user.setAddresses(Collections.singletonList(address));
