@@ -21,10 +21,41 @@
             <type>pom</type>
             <scope>import</scope>
          </dependency>
+         <dependency>
+            <groupId>org.jboss.spec</groupId>
+            <artifactId>jboss-javaee-6.0</artifactId>
+            <version>1.0.0.Final</version>
+            <type>pom</type>
+            <scope>provided</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.arquillian.junit</groupId>
+            <artifactId>arquillian-junit-container</artifactId>
+            <version>1.1.5.Final</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.arquillian.container</groupId>
+            <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
+            <version>1.0.0.CR3</version>
+            <scope>test</scope>
+         </dependency>
+         <dependency>
+            <groupId>org.jboss.weld</groupId>
+            <artifactId>weld-core</artifactId>
+            <version>1.1.5.Final</version>
+            <scope>test</scope>
+         </dependency>
       </dependencies>
    </dependencyManagement>
 
    <dependencies>
+      <dependency>
+           <groupId>junit</groupId>
+           <artifactId>junit</artifactId>
+           <version>4.11</version>
+           <scope>test</scope>
+      </dependency>
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-embedded</artifactId>
@@ -46,12 +77,28 @@
            <artifactId>c3p0</artifactId>
            <scope>provided</scope>
        </dependency>
-      <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <version>4.11</version>
-         <scope>test</scope>
-      </dependency>
+       <!-- CDI stuff -->
+        <dependency>
+           <groupId>org.jboss.arquillian.junit</groupId>
+           <artifactId>arquillian-junit-container</artifactId>
+           <scope>test</scope>
+        </dependency>
+        <dependency>
+           <groupId>org.jboss.arquillian.container</groupId>
+           <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
+           <scope>test</scope>
+        </dependency>
+        <dependency>
+           <groupId>org.jboss.weld</groupId>
+           <artifactId>weld-core</artifactId>
+           <scope>test</scope>
+        </dependency>
+        <dependency>
+           <groupId>org.jboss.spec</groupId>
+           <artifactId>jboss-javaee-6.0</artifactId>
+           <type>pom</type>
+           <scope>provided</scope>
+        </dependency>
    </dependencies>
 
     <profiles>

@@ -1,6 +1,17 @@
 package org.infinispan.all.embedded.util;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.transaction.TransactionManager;
+
 import org.infinispan.Cache;
+import org.infinispan.cdi.ConfigureCache;
+import org.infinispan.cdi.event.AbstractEventBridge;
+import org.infinispan.cdi.event.cache.CacheEventBridge;
+import org.infinispan.cdi.event.cachemanager.CacheManagerEventBridge;
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.factories.ComponentRegistry;
@@ -9,12 +20,9 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.TransactionManager;
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.spec.JavaArchive;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 
 /**
  * Mini utils for infinispan-embedded integration tests.
@@ -138,5 +146,19 @@ public class EmbeddedUtils {
             }
          }
       }
+   }
+   
+   public static WebArchive getCDIBaseDeployment() {
+      return ShrinkWrap.create(WebArchive.class, "test.war")
+            .addAsWebInfResource(EmbeddedUtils.class.getResource("/beans.xml"), "beans.xml")
+            .addAsLibrary(
+                  ShrinkWrap.create(JavaArchive.class, "infinispan-cdi-emebedded.jar")
+                        .addPackage(ConfigureCache.class.getPackage())
+                        .addPackage(AbstractEventBridge.class.getPackage())
+                        .addPackage(CacheEventBridge.class.getPackage())
+                        .addPackage(CacheManagerEventBridge.class.getPackage())
+                        .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/beans.xml"), "beans.xml")
+                        .addAsManifestResource(ConfigureCache.class.getResource("/META-INF/services/javax.enterprise.inject.spi.Extension"), "services/javax.enterprise.inject.spi.Extension")
+            );
    }
 }
