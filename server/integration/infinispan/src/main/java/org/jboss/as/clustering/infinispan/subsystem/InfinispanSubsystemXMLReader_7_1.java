@@ -8,9 +8,11 @@ import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.parsing.ParseUtils;
 import org.jboss.dmr.ModelNode;
+import org.jboss.logging.Logger;
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
+import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
@@ -30,6 +32,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
  * @author Martin Gencur
  */
 public final class InfinispanSubsystemXMLReader_7_1 implements XMLElementReader<List<ModelNode>> {
+   private static final Logger log = Logger.getLogger(InfinispanSubsystemXMLReader_7_1.class);
 
     /**
      * {@inheritDoc}
@@ -330,6 +333,12 @@ public final class InfinispanSubsystemXMLReader_7_1 implements XMLElementReader<
             }
             case START: {
                 CacheResource.START.parseAndSetParameter(value, cache, reader);
+                if (!value.equalsIgnoreCase("EAGER")) {
+                   Location location = reader.getLocation();
+                   log.warnf("Ignoring start mode [%s] at [row,col] [%s, %s], as EAGER is the only supported mode", value, 
+                         location.getLineNumber(), location.getColumnNumber());
+                   cache.get(CacheResource.START.getName()).set("EAGER");
+                }
                 break;
             }
             case JNDI_NAME: {
