@@ -8,18 +8,13 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.READ_ATTRIBUTE_OPERATION;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringWriter;
-import java.net.URISyntaxException;
-import java.net.URL;
 
-import org.jboss.as.clustering.infinispan.InfinispanMessages;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.subsystem.test.AbstractSubsystemTest;
+import org.jboss.as.subsystem.test.AdditionalInitialization;
+import org.jboss.as.subsystem.test.KernelServicesBuilder;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -34,6 +29,15 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
 
     public OperationTestCaseBase() {
         super(InfinispanExtension.SUBSYSTEM_NAME, new InfinispanExtension());
+    }
+
+    KernelServicesBuilder createKernelServicesBuilder() {
+       return this.createKernelServicesBuilder(this.createAdditionalInitialization());
+    
+    }
+
+    AdditionalInitialization createAdditionalInitialization() {
+       return new JGroupsSubsystemInitialization();
     }
 
     // cache container access

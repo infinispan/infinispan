@@ -37,7 +37,7 @@
             </file-store>
          </persistence>
       </local-cache>
-      <invalidation-cache name="invalid" mode="ASYNC" queue-flush-interval="10" queue-size="1000" start="LAZY" async-marshalling="true" statistics="true">
+      <invalidation-cache name="invalid" mode="ASYNC" queue-flush-interval="10" queue-size="1000" start="EAGER" async-marshalling="true" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
          <eviction max-entries="20500" strategy="LRU"/>

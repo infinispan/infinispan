@@ -118,7 +118,7 @@ public class CacheResource extends SimpleResourceDefinition {
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .setValidator(new EnumValidator<StartMode>(StartMode.class, true, false))
-                    .setDefaultValue(new ModelNode().set(StartMode.LAZY.name()))
+                    .setDefaultValue(new ModelNode().set(StartMode.EAGER.name()))
                     .build();
 
     static final SimpleAttributeDefinition STATISTICS =
