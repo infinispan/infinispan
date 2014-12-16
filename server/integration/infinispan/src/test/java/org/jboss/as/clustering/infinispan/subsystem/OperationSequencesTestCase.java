@@ -26,7 +26,7 @@ public class OperationSequencesTestCase extends OperationTestCaseBase {
 
         // Parse and install the XML into the controller
         String subsystemXml = getSubsystemXml() ;
-        KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(subsystemXml).build();
+        KernelServices servicesA = createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
 
         ModelNode addContainerOp = getCacheContainerAddOperation("maximal2");
         ModelNode removeContainerOp = getCacheContainerRemoveOperation("maximal2");
@@ -52,6 +52,10 @@ public class OperationSequencesTestCase extends OperationTestCaseBase {
         // add the same local cache
         result = servicesA.executeOperation(addCacheOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
+
+        // remove the same local cache
+        result = servicesA.executeOperation(removeCacheOp);
+        Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
     }
 
     @Test
@@ -59,12 +63,11 @@ public class OperationSequencesTestCase extends OperationTestCaseBase {
 
         // Parse and install the XML into the controller
         String subsystemXml = getSubsystemXml() ;
-        KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(subsystemXml).build();
+        KernelServices servicesA = createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
 
         ModelNode addContainerOp = getCacheContainerAddOperation("maximal2");
         ModelNode removeContainerOp = getCacheContainerRemoveOperation("maximal2");
         ModelNode addCacheOp = getCacheAddOperation("maximal2", ModelKeys.LOCAL_CACHE, "fred");
-        ModelNode removeCacheOp = getCacheRemoveOperation("maximal2", ModelKeys.LOCAL_CACHE, "fred");
 
         // add a cache container
         ModelNode result = servicesA.executeOperation(addContainerOp);
@@ -84,52 +87,11 @@ public class OperationSequencesTestCase extends OperationTestCaseBase {
     }
 
     @Test
-    @BMRule(name="Test remove rollback operation",
-            targetClass="org.jboss.as.clustering.infinispan.subsystem.CacheContainerRemove",
-            targetMethod="removeExistingCacheServices",
-            targetLocation="AT ENTRY",
-            action="$1.setRollbackOnly()")
-    public void testCacheContainerRemoveRollback() throws Exception {
-
-        // Parse and install the XML into the controller
-        String subsystemXml = getSubsystemXml() ;
-        KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(subsystemXml).build();
-
-        ModelNode addContainerOp = getCacheContainerAddOperation("maximal2");
-        ModelNode removeContainerOp = getCacheContainerRemoveOperation("maximal2");
-        ModelNode addCacheOp = getCacheAddOperation("maximal2", ModelKeys.LOCAL_CACHE, "fred");
-
-        // add a cache container
-        ModelNode result = servicesA.executeOperation(addContainerOp);
-        Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
-
-        // add a local cache
-        result = servicesA.executeOperation(addCacheOp);
-        Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
-
-        // remove the cache container
-        // the remove has OperationContext.setRollbackOnly() injected
-        // and so is expected to fail
-        result = servicesA.executeOperation(removeContainerOp);
-        Assert.assertEquals(FAILED, result.get(OUTCOME).asString());
-
-        // need to check that all services are correctly re-installed
-        ServiceName containerServiceName = EmbeddedCacheManagerService.getServiceName("maximal2");
-
-        ServiceName cacheConfigurationServiceName = CacheConfigurationService.getServiceName("maximal2", "fred");
-        ServiceName cacheServiceName = CacheService.getServiceName("maximal2", "fred");
-
-        Assert.assertNotNull("cache container service not installed", servicesA.getContainer().getService(containerServiceName));
-        Assert.assertNotNull("cache configuration service not installed", servicesA.getContainer().getService(cacheConfigurationServiceName));
-        Assert.assertNotNull("cache service not installed", servicesA.getContainer().getService(cacheServiceName));
-    }
-
-    @Test
     public void testLocalCacheAddRemoveAddSequence() throws Exception {
 
         // Parse and install the XML into the controller
         String subsystemXml = getSubsystemXml() ;
-        KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(subsystemXml).build();
+        KernelServices servicesA = createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
 
         ModelNode addOp = getCacheAddOperation("maximal", ModelKeys.LOCAL_CACHE, "fred");
         ModelNode removeOp = getCacheRemoveOperation("maximal", ModelKeys.LOCAL_CACHE, "fred");
@@ -152,7 +114,7 @@ public class OperationSequencesTestCase extends OperationTestCaseBase {
 
         // Parse and install the XML into the controller
         String subsystemXml = getSubsystemXml() ;
-        KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(subsystemXml).build();
+        KernelServices servicesA = createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
 
         ModelNode addOp = getCacheAddOperation("maximal", ModelKeys.LOCAL_CACHE, "fred");
         ModelNode removeOp = getCacheRemoveOperation("maximal", ModelKeys.LOCAL_CACHE, "fred");
