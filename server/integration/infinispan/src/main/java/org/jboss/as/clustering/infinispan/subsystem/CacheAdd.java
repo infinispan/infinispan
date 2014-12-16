@@ -206,7 +206,12 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         // get model attributes
         ModelNode resolvedValue = null;
         final String jndiName = ((resolvedValue = CacheResource.JNDI_NAME.resolveModelAttribute(context, cacheModel)).isDefined()) ? resolvedValue.asString() : null;
-        final ServiceController.Mode initialMode = StartMode.valueOf(CacheResource.START.resolveModelAttribute(context, cacheModel).asString()).getMode();
+        StartMode startMode = StartMode.valueOf(CacheResource.START.resolveModelAttribute(context, cacheModel).asString());
+        if (startMode != StartMode.EAGER) {
+           log.warnf("Ignoring start mode [%s] of cache service [%s], as EAGER is the only supported mode", startMode, cacheName);
+           startMode = StartMode.EAGER;
+        }
+        final ServiceController.Mode initialMode = startMode.getMode();
 
         final ModuleIdentifier moduleId = (resolvedValue = CacheResource.CACHE_MODULE.resolveModelAttribute(context, cacheModel)).isDefined() ? ModuleIdentifier.fromString(resolvedValue.asString()) : null;
 
