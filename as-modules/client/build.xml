@@ -53,6 +53,10 @@
         <module-def name="com.squareup.protoparser" slot="${infinispan.slot}">
             <maven-resource group="com.squareup" artifact="protoparser" />
         </module-def>
+
+        <module-def name="org.javassist" slot="${infinispan.slot}">
+            <maven-resource group="org.javassist" artifact="javassist" />
+        </module-def>
     </target>
 
     <target name="all" depends="clean, copy-files, modules" />

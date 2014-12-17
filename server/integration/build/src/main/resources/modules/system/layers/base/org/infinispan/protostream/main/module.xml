@@ -28,6 +28,7 @@
     <dependencies>
         <module name="com.google.protobuf"/>
         <module name="com.squareup.protoparser"/>
+        <module name="org.javassist"/>
         <module name="org.jboss.logging"/>
     </dependencies>
 </module>

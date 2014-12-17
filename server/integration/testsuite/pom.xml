@@ -1080,7 +1080,7 @@
                 <suite.client.repl.phase>none</suite.client.repl.phase>
                 <suite.manual.exclude.groups />
                 <suite.manual.include.groups>org.infinispan.server.test.category.Osgi</suite.manual.include.groups>
-                <suite.manual.include>org/infinispan/server/test/client/hotrod/osgi/RemoteCacheOsgiIT.java</suite.manual.include>
+                <suite.manual.include>org/infinispan/server/test/client/hotrod/osgi/*IT.java</suite.manual.include>
             </properties>
             <build>
                 <plugins>
