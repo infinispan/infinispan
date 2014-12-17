@@ -36,6 +36,7 @@
     <xsl:param name="addKrbOpts">false</xsl:param>
     <xsl:param name="addKrbSecDomain">false</xsl:param>
     <xsl:param name="addSecRealm">false</xsl:param>
+    <xsl:param name="addVault">false</xsl:param>
     <xsl:param name="addConnection">false</xsl:param>
     <xsl:param name="trace">none</xsl:param>
 
@@ -178,11 +179,11 @@
     </xsl:template>
     
     <xsl:template match="p:extensions">
-        <xsl:if test="$addKrbOpts = 'false'">
-            <xsl:call-template name="copynode"/>
+        <xsl:call-template name="copynode"/> 
+        <xsl:if test="$addVault != 'false'">
+            <xsl:copy-of select="document($addVault)"/>
         </xsl:if>
         <xsl:if test="$addKrbOpts != 'false'">
-            <xsl:call-template name="copynode"/>
             <xsl:copy-of select="document($addKrbOpts)"/>
         </xsl:if>
     </xsl:template>
