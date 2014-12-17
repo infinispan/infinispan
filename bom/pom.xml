@@ -97,6 +97,8 @@
       <version.hibernate_dep.hibernate-commons-annotations>4.0.5.Final</version.hibernate_dep.hibernate-commons-annotations>
       <version.hibernate_dep.jandex>1.1.0.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javaassist>3.18.1-GA</version.hibernate_dep.javaassist>
+
+      <uberjar.deps.optional>true</uberjar.deps.optional>
    </properties>
 
    <distributionManagement>
@@ -464,8 +466,8 @@
          </plugins>
       </pluginManagement>
    </build>
-   
-   <profiles>
+
+  <profiles>
       <profile>
          <id>m2e</id>
          <activation>
@@ -473,6 +475,13 @@
                <name>m2e.version</name>
             </property>
          </activation>
+
+         <properties>
+            <!-- Eclipse doesn't handle well the dependency on uberjars for the modules which use them (e.g. demos).
+                 Mark the dependencies of the uberjar modules as not-optional when inside Eclipse. -->
+            <uberjar.deps.optional>false</uberjar.deps.optional>
+         </properties>
+
          <build>
             <pluginManagement>
                <plugins>

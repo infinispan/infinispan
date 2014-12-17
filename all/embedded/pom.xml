@@ -23,37 +23,37 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-core</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jdbc</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-jpa</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-leveldb</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
-      
+
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cachestore-remote</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
          <exclusions>
             <exclusion>
                <groupId>org.infinispan</groupId>
@@ -65,7 +65,7 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cdi</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
          <exclusions>
             <exclusion>
                <artifactId>infinispan-client-hotrod</artifactId>
@@ -77,26 +77,26 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-jcache</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.jgroups</groupId>
          <artifactId>jgroups</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.jboss.spec.javax.transaction</groupId>
          <artifactId>jboss-transaction-api_1.1_spec</artifactId>
       </dependency>
-      
+
       <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
