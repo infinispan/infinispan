@@ -19,7 +19,7 @@
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cli-client</artifactId>
          <version>${project.version}</version>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
    </dependencies>
 

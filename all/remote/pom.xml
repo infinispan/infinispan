@@ -24,31 +24,31 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-commons</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-client-hotrod</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-query-dsl</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-remote-query-client</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
 
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-cdi</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
          <exclusions>
             <exclusion>
                <groupId>org.infinispan</groupId>
@@ -60,7 +60,7 @@
       <dependency>
          <groupId>org.jboss.marshalling</groupId>
          <artifactId>jboss-marshalling-osgi</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
    </dependencies>
 

@@ -27,7 +27,7 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-query</artifactId>
-         <optional>true</optional>
+         <optional>${uberjar.deps.optional}</optional>
       </dependency>
    </dependencies>
 
