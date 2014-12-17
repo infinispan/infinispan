@@ -340,11 +340,12 @@ public class DefaultBeanExtension implements Extension {
             if (bean == null) {
                 bean = defaultProducerFields.get(e.getKey());
             }
-            if (duplicateDetectionMap.containsKey(e.getValue())) {
+            if (bean != null && duplicateDetectionMap.containsKey(e.getValue())) {
                 Bean<?> other = duplicateDetectionMap.get(e.getValue());
                 deploymentProblems.add(new RuntimeException("Two default beans with the same type and qualifiers: Type: " + e.getValue().getType() + " Qualifiers: " + e.getValue().getQualifiers() + " Beans are " + other.toString() + " and " + bean.toString()));
             }
-            duplicateDetectionMap.put(e.getValue(), bean);
+            if(bean != null)
+               duplicateDetectionMap.put(e.getValue(), bean);
         }
 
         // loop over all installed beans and see if they match any default beans
