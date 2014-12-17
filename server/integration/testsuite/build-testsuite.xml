@@ -116,6 +116,11 @@
             	<include name="*.conf"/>
             </fileset>
         </copy>
+        <copy todir="${server1.dist}/standalone/configuration/vault" overwrite="true">
+            <fileset dir="${resources.dir}/vault">
+            	<include name="*" />
+            </fileset>
+        </copy>
     </target>
 
     <target name="create-all-distros" depends="transform-distro1-configs" description="Create all Infinispan server home directories used in the testsuite">
@@ -243,7 +248,11 @@
                 <transform-rest-sec securityMode="READ_WRITE" authMethod="DIGEST" cacheContainer="security" securityDomain="digest_auth" modifyDigestSecDomain="true" in="@{in}"/>
             </rest-sec>
         </transform>
-        <transform in="clustered.xml" out="testsuite/clustered-with-encrypt.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml" addEncrypt="${other.parts}/jgroups-encrypt.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-with-encrypt.xml" 
+            modifyInfinispan="${infinispan.parts}/default-repl.xml" 
+            addEncrypt="${other.parts}/jgroups-encrypt.xml"
+            addVault="${other.parts}/vault.xml"
+            filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-filecs.xml" modifyInfinispan="${infinispan.parts}/filecachestore.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-eviction.xml" modifyInfinispan="${infinispan.parts}/eviction.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-customcs.xml" modifyInfinispan="${infinispan.parts}/customcs.xml" filtering="true"/>
@@ -305,7 +314,8 @@
                    hotrodAuth="${infinispan.parts}/hotrod-auth-ldap.xml"
                    hotrodEncrypt="${infinispan.parts}/hotrod-ssl.xml"
                    addSecRealm="${other.parts}/ldap-security-realm-with-ssl.xml"
-                   addConnection="${other.parts}/ldap-connection-ssl.xml"/>
+                   addConnection="${other.parts}/ldap-connection-ssl.xml"
+                   addVault="${other.parts}/vault.xml" />
         <transform in="clustered.xml" out="testsuite/hotrod-auth-krb.xml"
                    modifyInfinispan="${infinispan.parts}/clustered-secured.xml"
                    hotrodAuth="${infinispan.parts}/hotrod-auth-krb.xml"
@@ -320,18 +330,20 @@
                    addKrbSecDomain="${other.parts}/kerberos-security-domain.xml"/>    	
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-0.xml"  
     	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
-    	           addJGroupsSasl="${other.parts}/jgroups-sasl-md5-0.xml" />
+    	           addJGroupsSasl="${other.parts}/jgroups-sasl-md5-0.xml"
+                  addVault="${other.parts}/vault.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-md5-1.xml"  
     	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
-    	           addJGroupsSasl="${other.parts}/jgroups-sasl-md5-1.xml" />
+    	           addJGroupsSasl="${other.parts}/jgroups-sasl-md5-1.xml"
+                  addVault="${other.parts}/vault.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-0.xml"  
                    modifyInfinispan="${infinispan.parts}/default-repl.xml"
-        	   addJGroupsSasl="${other.parts}/jgroups-sasl-krb-0.xml"
+                  addJGroupsSasl="${other.parts}/jgroups-sasl-krb-0.xml"
     	           addKrbOpts="${other.parts}/kerberos-properties.xml"
     	           addKrbSecDomain="${other.parts}/kerberos-sec-domain-node0.xml" />
     	<transform in="clustered.xml" out="testsuite/clustered-with-sasl-krb-1.xml"  
     	           modifyInfinispan="${infinispan.parts}/default-repl.xml"
-    		   addJGroupsSasl="${other.parts}/jgroups-sasl-krb-1.xml"		
+                  addJGroupsSasl="${other.parts}/jgroups-sasl-krb-1.xml"		
     	           addKrbOpts="${other.parts}/kerberos-properties.xml"
     	           addKrbSecDomain="${other.parts}/kerberos-sec-domain-node1.xml" />
     </target>
@@ -362,6 +374,7 @@
     	<attribute name="hotrodEncrypt" default="false"/>
     	<attribute name="addKrbOpts" default="false"/>
     	<attribute name="addKrbSecDomain" default="false"/>
+        <attribute name="addVault" default="false"/>
     	<attribute name="addSecRealm" default="false"/>
     	<attribute name="addConnection" default="false"/>
         <element name="jdbc-conf" optional="yes"/>
@@ -381,6 +394,7 @@
             	<param name="addKrbOpts" expression="@{addKrbOpts}"/>
             	<param name="addKrbSecDomain" expression="@{addKrbSecDomain}"/>
             	<param name="addSecRealm" expression="@{addSecRealm}"/>
+                <param name="addVault" expression="@{addVault}"/>
             	<param name="addConnection" expression="@{addConnection}"/>
                 <param name="modifyMulticastAddress" expression="@{modifyMulticastAddress}"/>
                 <param name="modifyRemoteDestination" expression="@{modifyRemoteDestination}"/>
