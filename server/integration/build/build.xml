@@ -65,6 +65,7 @@
          <fileset file="${commons-pool:commons-pool:jar}" />
          <fileset file="${com.google.protobuf:protobuf-java:jar}" />
          <fileset file="${com.squareup:protoparser:jar}" />
+         <fileset file="${org.javassist:javassist:jar}" />
          <mapper type="flatten" />
       </copy>
       
@@ -102,6 +103,10 @@
 
       <module-def name="com.squareup.protoparser">
          <maven-resource group="com.squareup" artifact="protoparser" />
+      </module-def>
+
+      <module-def name="org.javassist">
+         <maven-resource group="org.javassist" artifact="javassist" />
       </module-def>
 
       <module-def name="com.jboss.datagrid" />

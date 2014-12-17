@@ -7,6 +7,7 @@
              and sample-domain-definition. These packages are also included in infinispan-remote uber-jar
              but are NOT exported further so we need to install them separately, just for the tests. -->
         <bundle>mvn:com.google.protobuf/protobuf-java/${version.protobuf}</bundle>
-        <bundle>wrap:mvn:com.squareup/protoparser/${version.org.infinispan.protostream}</bundle>
+        <bundle>wrap:mvn:com.squareup/protoparser/${version.protoparser}</bundle>
+        <bundle>wrap:mvn:org.javassist/javassist/${version.javassist}</bundle>
     </feature>
 </features>

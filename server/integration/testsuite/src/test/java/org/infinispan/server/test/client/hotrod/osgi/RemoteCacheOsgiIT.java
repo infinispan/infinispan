@@ -8,7 +8,9 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.annotations.ProtoSchemaBuilder;
 import org.infinispan.protostream.sampledomain.Address;
+import org.infinispan.protostream.sampledomain.Note;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.AccountMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.AddressMarshaller;
@@ -35,7 +37,6 @@ import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.options.RawUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
-import org.osgi.framework.Bundle;
 
 import java.io.File;
 import java.io.Serializable;
@@ -48,8 +49,9 @@ import static org.ops4j.pax.exam.CoreOptions.maven;
 /**
  * Simple test for RemoteCache running in OSGi (Karaf). Both basic put/get operations and remote
  * queries are tested.
- * 
+ *
  * @author mgencur
+ * @author anistor@redhat.com
  */
 @RunWith(PaxExam.class)
 @Category(Osgi.class)
@@ -117,19 +119,13 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
    public void testAttributeQuery() throws Exception {
       builder.marshaller(new ProtoStreamMarshaller());
       manager = new RemoteCacheManager(builder.build());
-      RemoteCache<Integer, User> cache = manager.getCache(INDEXED_CACHE);
-
-      // register schemas on server
-      RemoteCache<String, String> metadataCache = manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      Bundle sampleDomainDefinitionBundle = getInstalledBundle("org.infinispan.protostream.sample-domain-definition");
-      String file = Util.read(bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
-      metadataCache.put("sample_bank_account/bank.proto", file);
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      RemoteCache<Integer, Object> cache = manager.getCache(INDEXED_CACHE);
 
       // register schemas and marshallers on client
-      SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(manager);
+      String bankSchemaFile = Util.read(bundleContext.getBundle().getResource("/sample_bank_account/bank.proto").openStream());
       FileDescriptorSource fds = new FileDescriptorSource();
-      fds.addProtoFile("sample_bank_account/bank.proto", file);
+      fds.addProtoFile("sample_bank_account/bank.proto", bankSchemaFile);
+      SerializationContext ctx = ProtoStreamMarshaller.getSerializationContext(manager);
       ctx.registerProtoFiles(fds);
       ctx.registerMarshaller(new UserMarshaller());
       ctx.registerMarshaller(new GenderMarshaller());
@@ -138,21 +134,65 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       ctx.registerMarshaller(new LimitsMarshaller());
       ctx.registerMarshaller(new TransactionMarshaller());
 
+      ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
+      String testSchemaFile = protoSchemaBuilder.fileName("test.proto")
+            .addClass(User.class)
+            .build(ctx);
+
+      // register schemas on server
+      RemoteCache<String, String> metadataCache = manager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
+      metadataCache.put("sample_bank_account/bank.proto", bankSchemaFile);
+      metadataCache.put("test.proto", testSchemaFile);
+      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+
       cache.put(1, createUser1());
       cache.put(2, createUser2());
+      cache.put(3, createNote());
 
-      // get user back from remote cache and check its attributes
-      User fromCache = cache.get(1);
-      assertUser(fromCache);
+      // get User back from remote cache and check its attributes
+      User userFromCache = (User) cache.get(1);
+      assertUser(userFromCache);
 
-      // get user back from remote cache via query and check its attributes
+      // get Note back from remote cache and check its attributes
+      Note noteFromCache = (Note) cache.get(3);
+      assertNote(noteFromCache);
+
+      // get User back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(cache);
       Query query = qf.from(User.class).having("name").eq("Tom").toBuilder().build();
-      List<User> list = query.list();
+      List list = query.list();
       assertNotNull(list);
       assertEquals(1, list.size());
       assertEquals(User.class, list.get(0).getClass());
-      assertUser(list.get(0));
+      assertUser((User) list.get(0));
+
+      // get Note back from remote cache via query and check its attributes
+      query = qf.from(Note.class).having("author.name").eq("name").toBuilder().build();
+      list = query.list();
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertEquals(Note.class, list.get(0).getClass());
+      assertNote((Note) list.get(0));
+   }
+
+   private Note createNote() {
+      Note note = new Note();
+      note.setText("testing 123");
+      User author = new User();
+      author.setId(20);
+      author.setName("name");
+      author.setName("surname");
+      note.setAuthor(author);
+      return note;
+   }
+
+   private void assertNote(Note note) {
+      assertNotNull(note);
+      assertEquals("testing 123", note.getText());
+      assertNotNull(note.getAuthor());
+      assertEquals(20, note.getAuthor().getId());
+      assertEquals("name", note.getAuthor().getName());
+      assertEquals("surname", note.getAuthor().getSurname());
    }
 
    private User createUser1() {
@@ -171,7 +211,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
 
    private User createUser2() {
       User user = new User();
-      user.setId(1);
+      user.setId(2);
       user.setName("Adrian");
       user.setSurname("Nistor");
       user.setGender(User.Gender.MALE);
