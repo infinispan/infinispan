@@ -12,10 +12,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.impl.NearRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
@@ -25,6 +27,7 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.near.NearCacheService;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -148,7 +151,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private Marshaller marshaller;
    private TransportFactory transportFactory;
    private ExecutorService asyncExecutorService;
-   private ClientListenerNotifier listenerNotifier;
+   protected ClientListenerNotifier listenerNotifier;
 
    /**
     *
@@ -618,7 +621,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, Boolean forceReturnValueOverride) {
       synchronized (cacheName2RemoteCache) {
          if (!cacheName2RemoteCache.containsKey(cacheName)) {
-            RemoteCacheImpl<K, V> result = new RemoteCacheImpl<K, V>(this, cacheName);
+            RemoteCacheImpl<K, V> result = createRemoteCache(cacheName);
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? configuration.forceReturnValues() : forceReturnValueOverride);
             AtomicInteger topologyId = cacheName.isEmpty() ? defaultCacheTopologyId : new AtomicInteger(-1);
             startRemoteCache(rcc, topologyId);
@@ -630,6 +633,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
                   return null;
                }
             }
+            result.start();
             // If ping on startup is disabled, or cache is defined in server
             cacheName2RemoteCache.put(cacheName, rcc);
             return result;
@@ -637,6 +641,19 @@ public class RemoteCacheManager implements BasicCacheContainer {
             return (RemoteCache<K, V>) cacheName2RemoteCache.get(cacheName).remoteCache;
          }
       }
+   }
+
+   private <K, V> RemoteCacheImpl<K, V> createRemoteCache(String cacheName) {
+      if (configuration.nearCache().mode().enabled()) {
+         NearCacheService<K, V> srv = createNearCacheService(configuration.nearCache());
+         return new NearRemoteCache<K, V>(this, cacheName, srv);
+      } else {
+         return new RemoteCacheImpl<K, V>(this, cacheName);
+      }
+   }
+
+   protected <K, V> NearCacheService<K, V> createNearCacheService(NearCacheConfiguration cfg) {
+      return NearCacheService.create(cfg, listenerNotifier);
    }
 
    private <K, V> PingResult ping(RemoteCacheImpl<K, V> cache) {

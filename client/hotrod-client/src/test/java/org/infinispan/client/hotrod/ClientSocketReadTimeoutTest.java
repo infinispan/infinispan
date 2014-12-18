@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.CacheException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.impl.AbstractDelegatingEmbeddedCacheManager;
@@ -45,7 +46,7 @@ public class ClientSocketReadTimeoutTest extends SingleCacheManagerTest {
             latch);
       // cacheManager = TestCacheManagerFactory.createLocalCacheManager();
       // pass the config file to the cache
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
 
       remoteCacheManager = getRemoteCacheManager();

@@ -6,12 +6,12 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -75,7 +75,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
       cache = manager(0).getCache();
 
-      hotRodServer = TestHelper.startHotRodServer(manager(0));
+      hotRodServer = HotRodClientTestingUtil.startHotRodServer(manager(0));
 
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());

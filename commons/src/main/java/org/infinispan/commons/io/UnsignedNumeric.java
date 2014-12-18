@@ -69,6 +69,15 @@ public class UnsignedNumeric {
       out.write((byte) i);
    }
 
+   public static byte sizeUnsignedInt(int i) {
+      byte size = 1;
+      while ((i & ~0x7F) != 0) {
+         size += 1;
+         i >>>= 7;
+      }
+      return size;
+   }
+
    public static void writeUnsignedInt(java.nio.ByteBuffer out, int i) {
       while ((i & ~0x7F) != 0) {
          out.put((byte) ((i & 0x7f) | 0x80));

@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -33,8 +34,8 @@ public class HotRodServerStartStopTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(builder);
       addClusterEnabledCacheManager(builder);
 
-      hotRodServer1 = TestHelper.startHotRodServer(manager(0));
-      hotRodServer2 = TestHelper.startHotRodServer(manager(1));
+      hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
+      hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(manager(1));
 
       assert manager(0).getCache() != null;
       assert manager(1).getCache() != null;

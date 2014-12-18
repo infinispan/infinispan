@@ -2,11 +2,11 @@ package org.infinispan.client.hotrod.marshall;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AddressPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -44,7 +44,7 @@ public class ProtoStreamMarshallerTest extends SingleCacheManagerTest {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       cache = cacheManager.getCache();
 
-      hotRodServer = TestHelper.startHotRodServer(cacheManager);
+      hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.addServer().host("127.0.0.1").port(hotRodServer.getPort());

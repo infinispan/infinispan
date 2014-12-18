@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.transport.tcp.RequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -60,14 +61,14 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
       c3 = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration()).getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager(), c3.getCacheManager());
 
-      hotRodServer1 = TestHelper.startHotRodServer(c1.getCacheManager());
-      hotRodServer2 = TestHelper.startHotRodServer(c2.getCacheManager());
-      hotRodServer3 = TestHelper.startHotRodServer(c3.getCacheManager());
+      hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(c1.getCacheManager());
+      hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(c2.getCacheManager());
+      hotRodServer3 = HotRodClientTestingUtil.startHotRodServer(c3.getCacheManager());
 
       log.trace("Server 1 port: " + hotRodServer1.getPort());
       log.trace("Server 2 port: " + hotRodServer2.getPort());
       log.trace("Server 3 port: " + hotRodServer3.getPort());
-      String servers = TestHelper.getServersString(hotRodServer1, hotRodServer2, hotRodServer3);
+      String servers = HotRodClientTestingUtil.getServersString(hotRodServer1, hotRodServer2, hotRodServer3);
       log.trace("Server list is: " + servers);
       remoteCacheManager = new RemoteCacheManager(servers);
       remoteCache = remoteCacheManager.getCache();
@@ -108,7 +109,7 @@ public class RoundRobinBalancingIntegrationTest extends MultipleCacheManagersTes
    public void testAddNewHotrodServer() {
       c4 = TestCacheManagerFactory.createCacheManager(
             hotRodCacheConfiguration()).getCache();
-      hotRodServer4 = TestHelper.startHotRodServer(c4.getCacheManager());
+      hotRodServer4 = HotRodClientTestingUtil.startHotRodServer(c4.getCacheManager());
       registerCacheManager(c4.getCacheManager());
 
       List<SocketAddress> serverAddresses = new ArrayList<SocketAddress>();

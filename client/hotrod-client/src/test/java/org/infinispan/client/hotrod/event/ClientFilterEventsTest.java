@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicCacheEventFilterFactory;
 import org.infinispan.client.hotrod.event.EventLogListener.DynamicFilteredEventLogListener;
@@ -12,6 +11,7 @@ import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilte
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogWithStateListener;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -26,7 +26,7 @@ public class ClientFilterEventsTest extends SingleHotRodServerTest {
    @Override
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
-      HotRodServer server = TestHelper.startHotRodServer(cacheManager, builder);
+      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager, builder);
       server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory());
       server.addCacheEventFilterFactory("dynamic-filter-factory", new DynamicCacheEventFilterFactory());
       server.addCacheEventFilterFactory("raw-static-filter-factory", new RawStaticCacheEventFilterFactory());

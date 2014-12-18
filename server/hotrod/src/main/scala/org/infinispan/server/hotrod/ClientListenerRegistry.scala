@@ -79,12 +79,17 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
          for {
             namedFactory <- converterFactory
          } yield {
-            findFactory(namedFactory._1, compatEnabled, cacheEventConverterFactories, "converter", useRawData)
+            findConverterFactory(namedFactory._1, compatEnabled, cacheEventConverterFactories, "converter", useRawData)
                .getConverter[Bytes, Bytes, Bytes](converterParams.toArray)
          }
 
       eventSenders.put(listenerId, clientEventSender)
       cache.addListener(clientEventSender, filter.orNull, converter.orNull)
+   }
+
+   def findConverterFactory(name: String, compatEnabled: Boolean, factories: ConcurrentMap[String, CacheEventConverterFactory], factoryType: String, useRawData: Boolean): CacheEventConverterFactory = {
+      if (name == "___eager-key-value-version-converter") KeyValueVersionConverterFactorySingleton
+      else findFactory(name, compatEnabled, factories, factoryType, useRawData)
    }
 
    def findFactory[T](name: String, compatEnabled: Boolean, factories: ConcurrentMap[String, T], factoryType: String, useRawData: Boolean): T = {
@@ -285,6 +290,8 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
 }
 
 object ClientListenerRegistry extends Constants {
+
+   lazy val KeyValueVersionConverterFactorySingleton = new KeyValueVersionConverterFactory()
 
    sealed trait ClientEventType
    case object Plain extends ClientEventType

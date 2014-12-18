@@ -6,7 +6,6 @@ import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -51,7 +50,7 @@ public class HotRodEncodingTest extends SingleCacheManagerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       port = hotrodServer.getPort();
       remoteCacheManager = new RemoteCacheManager(
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()

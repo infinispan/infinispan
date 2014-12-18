@@ -18,5 +18,6 @@ object ExternalizerIds {
    val MIME_METADATA = 1105
    val BINARY_FILTER = 1106
    val BINARY_CONVERTER = 1107
+   val KEY_VALUE_VERSION_CONVERTER = 1108
 
 }

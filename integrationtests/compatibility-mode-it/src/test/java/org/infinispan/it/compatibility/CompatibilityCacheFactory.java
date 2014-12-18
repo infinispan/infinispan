@@ -23,9 +23,9 @@ import org.mortbay.jetty.servlet.Context;
 import javax.servlet.ServletContext;
 import java.util.Collections;
 
-import static org.infinispan.client.hotrod.TestHelper.startHotRodServer;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.startMemcachedTextServer;
 import static org.infinispan.server.memcached.test.MemcachedTestingUtil.createMemcachedClient;

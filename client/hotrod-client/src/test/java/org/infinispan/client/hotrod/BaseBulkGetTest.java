@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -48,10 +49,10 @@ public abstract class BaseBulkGetTest extends MultipleCacheManagersTest {
 
       for (int i = 0; i < numServers; i++) {
          EmbeddedCacheManager cm = cacheManagers.get(i);
-         hotrodServers[i] = TestHelper.startHotRodServer(cm);
+         hotrodServers[i] = HotRodClientTestingUtil.startHotRodServer(cm);
       }
 
-      String servers = TestHelper.getServersString(hotrodServers);
+      String servers = HotRodClientTestingUtil.getServersString(hotrodServers);
 
       remoteCacheManager = new RemoteCacheManager(servers);
       remoteCache = remoteCacheManager.getCache();

@@ -9,7 +9,6 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -44,7 +43,7 @@ public class RemoteStoreMixedAccessTest extends AbstractInfinispanTest {
       serverCacheManager = TestCacheManagerFactory.createCacheManager(
             hotRodCacheConfiguration(serverBuilder));
       serverCache = serverCacheManager.getCache();
-      hrServer = TestHelper.startHotRodServer(serverCacheManager);
+      hrServer = HotRodClientTestingUtil.startHotRodServer(serverCacheManager);
 
       ConfigurationBuilder clientBuilder = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
       clientBuilder.persistence().addStore(RemoteStoreConfigurationBuilder.class)

@@ -4,6 +4,7 @@ import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -71,10 +72,10 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       c2 = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration()).getCache();
       registerCacheManager(c1.getCacheManager(), c2.getCacheManager());
 
-      hotRodServer1 = TestHelper.startHotRodServer(c1.getCacheManager());
-      hotRodServer2 = TestHelper.startHotRodServer(c2.getCacheManager());
+      hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(c1.getCacheManager());
+      hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(c2.getCacheManager());
 
-      String servers = TestHelper.getServersString(hotRodServer1, hotRodServer2);
+      String servers = HotRodClientTestingUtil.getServersString(hotRodServer1, hotRodServer2);
       Properties hotrodClientConf = new Properties();
       hotrodClientConf.setProperty(ConfigurationProperties.SERVER_LIST, servers);
       hotrodClientConf.setProperty("maxActive", "2");

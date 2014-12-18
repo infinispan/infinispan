@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -31,7 +32,7 @@ public class CacheManagerStoppedTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
       cacheManager.defineConfiguration(CACHE_NAME, hotRodCacheConfiguration().build());
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       remoteCacheManager = new RemoteCacheManager("localhost:" + hotrodServer.getPort(), true);
       return cacheManager;
    }

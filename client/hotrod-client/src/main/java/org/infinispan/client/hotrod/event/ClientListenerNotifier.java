@@ -135,6 +135,14 @@ public class ClientListenerNotifier {
       return null;
    }
 
+   public boolean isListenerConnected(Object listener) {
+      for (EventDispatcher dispatcher : clientListeners.values()) {
+         if (dispatcher.op.listener.equals(listener))
+            return !dispatcher.stopped;
+      }
+      return false; // if listener not present, is not active
+   }
+
    public Transport findTransport(byte[] listenerId) {
       EventDispatcher dispatcher = clientListeners.get(listenerId);
       if (dispatcher != null)
@@ -213,6 +221,7 @@ public class ClientListenerNotifier {
       final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
       final AddClientListenerOperation op;
       final Transport transport;
+      volatile boolean stopped = false;
 
       private EventDispatcher(AddClientListenerOperation op,
             Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables) {
@@ -234,16 +243,19 @@ public class ClientListenerNotifier {
                if (e.getCause() instanceof ClosedChannelException) {
                   // Channel closed, ignore and exit
                   log.debug("Channel closed, exiting event reader thread");
+                  stopped = true;
                   return;
                } else if (clientEvent != null) {
                   log.unexpectedErrorConsumingEvent(clientEvent, e);
                }  else {
                   log.unrecoverableErrorReadingEvent(e, transport.getRemoteSocketAddress());
+                  stopped = true;
                   return; // Server is likely gone!
                }
             } catch (CancelledKeyException e) {
                // Cancelled key exceptions are also thrown when the channel has been closed
                log.debug("Key cancelled, most likely channel closed, exiting event reader thread");
+               stopped = true;
                return;
             } catch (Throwable t) {
                if (clientEvent != null)

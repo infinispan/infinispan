@@ -1,8 +1,8 @@
 package org.infinispan.spring.support.remote;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -34,7 +34,7 @@ public class HotrodServerLifecycleBean implements InitializingBean, DisposableBe
       cacheManager = TestCacheManagerFactory.createCacheManager(false);
       cacheManager.getCache(remoteCacheName);
 
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("localhost").port(hotrodServer.getPort());
       remoteCacheManager = new RemoteCacheManager(builder.build());

@@ -562,6 +562,73 @@ missed, it could decide to clear any locally cached data when the fail over
 event is received, with the knowledge that after the fail over event, it will
 receive events for the contents of the entire cache.
 
+===== Near Caching
+
+The Java Hot Rod client can be optionally configured with a near cache, which
+means that the Hot Rod client can keep a local cache that stores recently used
+data. Enabling near caching can significantly improve the performance of read
+operations `get` and `getVersioned` since data can potentially be located
+locally within the Hot Rod client instead of having to go remote.
+
+To enable near caching, the user must decide how to configure the near cache
+to work, either `lazy` or `eager`.
+
+* Lazy near caching: In lazy mode, near cache is only populated upon retrievals
+from the server via calls to `get` or `getVersioned` operations. When near
+cached entries are updated or removed server-side, the cached near cache
+entries are eliminated. The advantage of lazy mode is that it's the most
+lightweight mode, but the downside is that if a key is requested after it's
+been modified, it'll have to be re-fetched from the server.
+
+* Eager near caching: In eager mode, the near cache is populated when
+`get`/`getVersioned` are called, and when new entries are created server side,
+and when entries are modified. The advantage of eager caching is that the near
+cache is eagerly updated without the need to call `get`/`getVersioned`
+operations. On top of that, when an entry is modified, the new value is
+directly sent to the client so that if a `get`/`getVersioned` operation is
+executed, the value is directly fetched from the near cache. The downside of
+eager mode is that it's a more heavyweight mode and hence takes up more
+resources in terms of bandwith.
+
+The Hot Rod client's near cache mode is configured using the `NearCacheMode`
+enumeration and calling:
+
+[source,java]
+----
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
+...
+
+// For lazy near caches
+ConfigurationBuilder lazy = new ConfigurationBuilder();
+lazy.nearCache().mode(NearCacheMode.LAZY);
+
+// For eager near caches
+ConfigurationBuilder eager = new ConfigurationBuilder();
+eager.nearCache().mode(NearCacheMode.EAGER);
+----
+
+By default near cache size is unbounded but this can be changed to set a
+maximum size in terms of number of entries for the near cache. When the
+maximum is reached, near cached entries are evicted using a least-recently-used
+(LRU) algorithm. Near cache's maximum size can be configured like this:
+
+[source,java]
+----
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+...
+
+// Sets 100 as the maximum number of entries to keep in the near cache
+ConfigurationBuilder builder = new ConfigurationBuilder();
+builder.nearCache().maxEntries(100);
+----
+
+NOTE: Near caches work the same way for local caches as they do for clustered
+caches, but in a clustered cache scenario, if the server node sending the near
+cache notifications to the Hot Rod client goes down, the Hot Rod client
+transparently fails over to another node in the cluster, clearing the near
+cache along the way.
+
 ===== Unsupported methods
 Some of the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html[Cache] methods are not being supported by the link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/client/hotrod/RemoteCache.html[RemoteCache] . Calling one of these methods results in an link:http://docs.oracle.com/javase/6/docs/api/java/lang/UnsupportedOperationException.html[UnsupportedOperationException] being thrown. Most of these methods do not make sense on the remote cache (e.g. listener management operations), or correspond to methods that are not supported by local cache as well (e.g. containsValue). Another set of unsupported operations are some of the atomic operations inherited from link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html[ConcurrentMap] :
 

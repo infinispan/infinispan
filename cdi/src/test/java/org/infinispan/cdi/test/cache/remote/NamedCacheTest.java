@@ -18,7 +18,7 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 import static org.infinispan.cdi.test.testutil.Deployments.baseDeployment;
-import static org.infinispan.client.hotrod.TestHelper.startHotRodServer;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.startHotRodServer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
 

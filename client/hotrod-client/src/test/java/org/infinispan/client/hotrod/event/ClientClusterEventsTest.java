@@ -2,7 +2,6 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
@@ -10,7 +9,6 @@ import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEve
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilterFactory;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
-import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
@@ -20,17 +18,11 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.Collection;
-import java.util.Set;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClientListener;
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 @Test(groups = "functional", testName = "client.hotrod.event.ClientClusterEventsTest")
@@ -48,7 +40,7 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
       EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder);
       HotRodServerConfigurationBuilder serverBuilder = new HotRodServerConfigurationBuilder();
-      HotRodServer server = TestHelper.startHotRodServer(cm, serverBuilder);
+      HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder);
       server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory());
       server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());
       servers.add(server);
@@ -127,7 +119,7 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       HotRodServer server = server(0);
       builder.addServers(server.getHost() + ":" + server.getPort());
-      builder.balancingStrategy(FirstServerAvailableBalancer.class);
+      builder.balancingStrategy(StickyServerLoadBalancingStrategy.class);
       RemoteCacheManager newClient = new RemoteCacheManager(builder.build());
       try {
          WithStateEventLogListener<Integer> withStateEventLogListener = new WithStateEventLogListener<>();
@@ -140,7 +132,7 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
          c.put(1, "one");
          withStateEventLogListener.expectOnlyCreatedEvent(1, cache(0));
          withoutStateEventLogListener.expectOnlyCreatedEvent(1, cache(0));
-         findServerAndKill(FirstServerAvailableBalancer.serverToKill);
+         findServerAndKill(newClient, servers, cacheManagers);
          c.put(2, "two");
          withoutStateEventLogListener.expectFailoverEvent();
          withStateEventLogListener.expectFailoverEvent();
@@ -150,45 +142,6 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
          c.remove(2);
       } finally {
          killRemoteCacheManager(newClient);
-      }
-   }
-
-   private void findServerAndKill(InetSocketAddress addr) {
-      for (HotRodServer server : servers) {
-         if (server.getPort() == addr.getPort()) {
-            HotRodClientTestingUtil.killServers(server);
-            TestingUtil.killCacheManagers(server.getCacheManager());
-            cacheManagers.remove(server.getCacheManager());
-            TestingUtil.blockUntilViewsReceived(50000, false, cacheManagers);
-         }
-      }
-   }
-
-   public static class FirstServerAvailableBalancer implements FailoverRequestBalancingStrategy {
-      static Log log = LogFactory.getLog(FirstServerAvailableBalancer.class);
-      static InetSocketAddress serverToKill;
-      private final RoundRobinBalancingStrategy delegate = new RoundRobinBalancingStrategy();
-
-      @Override
-      public void setServers(Collection<SocketAddress> servers) {
-         log.info("Set servers: " + servers);
-         delegate.setServers(servers);
-         serverToKill = (InetSocketAddress) servers.iterator().next();
-      }
-
-      @Override
-      public SocketAddress nextServer(Set<SocketAddress> failedServers) {
-         if (failedServers != null && !failedServers.isEmpty())
-            return delegate.nextServer(failedServers);
-         else {
-            log.info("Select " + serverToKill + " for load balancing");
-            return serverToKill;
-         }
-      }
-
-      @Override
-      public SocketAddress nextServer() {
-         return nextServer(null);
       }
    }
 

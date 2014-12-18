@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -47,7 +48,7 @@ public class HeavyLoadConnectionPoolingTest extends SingleCacheManagerTest {
       // make sure all operations take at least 100 msecs
       cache.getAdvancedCache().addInterceptor(new ConstantDelayTransportInterceptor(100), 0);
 
-      hotRodServer = TestHelper.startHotRodServer(cacheManager);
+      hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
 
       Properties hotrodClientConf = new Properties();
       hotrodClientConf.setProperty("infinispan.client.hotrod.server_list", "localhost:"+hotRodServer.getPort());

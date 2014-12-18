@@ -63,13 +63,14 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private Class<? extends TransportFactory> transportFactory = TcpTransportFactory.class;
    private int valueSizeEstimate = ConfigurationProperties.DEFAULT_VALUE_SIZE;
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
-
+   private final NearCacheConfigurationBuilder nearCache;
 
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<ClassLoader>(Thread.currentThread().getContextClassLoader());
       this.connectionPool = new ConnectionPoolConfigurationBuilder(this);
       this.asyncExecutorFactory = new ExecutorFactoryConfigurationBuilder(this);
       this.security = new SecurityConfigurationBuilder(this);
+      this.nearCache = new NearCacheConfigurationBuilder(this);
    }
 
    @Override
@@ -180,6 +181,10 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       return this;
    }
 
+   public NearCacheConfigurationBuilder nearCache() {
+      return nearCache;
+   }
+
    @Override
    public ConfigurationBuilder pingOnStartup(boolean pingOnStartup) {
       this.pingOnStartup = pingOnStartup;
@@ -286,6 +291,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       connectionPool.validate();
       asyncExecutorFactory.validate();
       security.validate();
+      nearCache.validate();
       if (maxRetries < 0) {
          throw log.invalidMaxRetries(maxRetries);
       }
@@ -304,11 +310,11 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       if (marshaller == null) {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
                consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-               valueSizeEstimate, maxRetries);
+               valueSizeEstimate, maxRetries, nearCache.create());
       } else {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
                consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-               valueSizeEstimate, maxRetries);
+               valueSizeEstimate, maxRetries, nearCache.create());
       }
    }
 
@@ -351,6 +357,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       this.transportFactory = template.transportFactory();
       this.valueSizeEstimate = template.valueSizeEstimate();
       this.maxRetries = template.maxRetries();
+      this.nearCache.read(template.nearCache());
       return this;
    }
 }

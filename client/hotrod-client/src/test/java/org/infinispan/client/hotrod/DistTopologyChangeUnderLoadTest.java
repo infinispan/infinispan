@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -14,6 +15,7 @@ import java.net.SocketAddress;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getLoadBalancer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -41,7 +43,7 @@ public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
 
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager(getCacheConfiguration());
       registerCacheManager(cm);
-      TestHelper.startHotRodServer(cm);
+      HotRodClientTestingUtil.startHotRodServer(cm);
       waitForClusterToForm();
       TestingUtil.waitForRehashToComplete(cm.getCache(), cache(0));
 
@@ -51,8 +53,8 @@ public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
       TestingUtil.killCacheManagers(cm);
       TestingUtil.waitForRehashToComplete(cache(0));
 
-      TcpTransportFactory transportFactory = TestingUtil.extractField(client(0), "transportFactory");
-      SocketAddress[] servers = ((RoundRobinBalancingStrategy) transportFactory.getBalancer(RemoteCacheManager.cacheNameBytes())).getServers();
+      RoundRobinBalancingStrategy strategy = getLoadBalancer(client(0));
+      SocketAddress[] servers = strategy.getServers();
 
       putHammer.stop = true;
       putHammerFuture.get();
