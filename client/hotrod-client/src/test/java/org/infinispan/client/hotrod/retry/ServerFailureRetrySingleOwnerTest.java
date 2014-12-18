@@ -1,7 +1,7 @@
 package org.infinispan.client.hotrod.retry;
 
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.notifications.Listener;
@@ -41,7 +41,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
 
    public void testRetryReplaceWithVersion() {
       final ErrorInducingListener listener = new ErrorInducingListener();
-      final byte[] key = TestHelper.getKeyForServer(hotRodServer1);
+      final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.putIfAbsent(key, 1));
       final VersionedValue versioned = remoteCache.getVersioned(key);
       assertEquals(1, versioned.getValue());
@@ -58,7 +58,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
 
    public void testRetryRemoveWithVersion() {
       final ErrorInducingListener listener = new ErrorInducingListener();
-      final byte[] key = TestHelper.getKeyForServer(hotRodServer1);
+      final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.putIfAbsent(key, 1));
       final VersionedValue versioned = remoteCache.getVersioned(key);
       assertEquals(1, versioned.getValue());
@@ -75,7 +75,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
 
    public void testRetryRemove() {
       final ErrorInducingListener listener = new ErrorInducingListener();
-      final byte[] key = TestHelper.getKeyForServer(hotRodServer1);
+      final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.putIfAbsent(key, 1));
       withListener(listener, new Runnable() {
          @Override
@@ -90,7 +90,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
 
    public void testRetryReplace() {
       final ErrorInducingListener listener = new ErrorInducingListener();
-      final byte[] key = TestHelper.getKeyForServer(hotRodServer1);
+      final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.putIfAbsent(key, 1));
       withListener(listener, new Runnable() {
          @Override
@@ -105,7 +105,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
 
    public void testRetryPutIfAbsent() {
       final ErrorInducingListener listener = new ErrorInducingListener();
-      final byte[] key = TestHelper.getKeyForServer(hotRodServer1);
+      final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       withListener(listener, new Runnable() {
          @Override
          public void run() {
@@ -119,7 +119,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
 
    public void testRetryPutOnNonEmpty() {
       final ErrorInducingListener listener = new ErrorInducingListener();
-      final byte[] key = TestHelper.getKeyForServer(hotRodServer1);
+      final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       assertNull(remoteCache.put(key, 1));
       withListener(listener, new Runnable() {
          @Override
@@ -134,7 +134,7 @@ public class ServerFailureRetrySingleOwnerTest extends AbstractRetryTest {
 
    public void testRetryPutOnEmpty() {
       final ErrorInducingListener listener = new ErrorInducingListener();
-      final byte[] key = TestHelper.getKeyForServer(hotRodServer1);
+      final byte[] key = HotRodClientTestingUtil.getKeyForServer(hotRodServer1);
       withListener(listener, new Runnable() {
          @Override
          public void run() {

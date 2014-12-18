@@ -6,7 +6,6 @@ import org.infinispan.Cache;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -46,7 +45,7 @@ public class UpgradeTest extends AbstractInfinispanTest {
             TestCacheManagerFactory.getDefaultCacheConfiguration(false));
       sourceContainer = TestCacheManagerFactory.createCacheManager(serverBuilder);
       sourceServerCache = sourceContainer.getCache();
-      sourceServer = TestHelper.startHotRodServer(sourceContainer);
+      sourceServer = HotRodClientTestingUtil.startHotRodServer(sourceContainer);
 
       ConfigurationBuilder targetConfigurationBuilder = hotRodCacheConfiguration(
             TestCacheManagerFactory.getDefaultCacheConfiguration(false));
@@ -54,7 +53,7 @@ public class UpgradeTest extends AbstractInfinispanTest {
 
       targetContainer = TestCacheManagerFactory.createCacheManager(targetConfigurationBuilder);
       targetServerCache = targetContainer.getCache();
-      targetServer = TestHelper.startHotRodServer(targetContainer);
+      targetServer = HotRodClientTestingUtil.startHotRodServer(targetContainer);
 
       sourceRemoteCacheManager = new RemoteCacheManager(
             new org.infinispan.client.hotrod.configuration.ConfigurationBuilder()

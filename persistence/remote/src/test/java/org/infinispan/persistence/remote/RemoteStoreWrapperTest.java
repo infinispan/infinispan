@@ -3,7 +3,6 @@ package org.infinispan.persistence.remote;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationBuilder;
@@ -40,9 +39,9 @@ public class RemoteStoreWrapperTest extends AbstractInfinispanTest {
       serverCacheManager = TestCacheManagerFactory
             .createCacheManager(hotRodCacheConfiguration(serverBuilder));
       serverCache = serverCacheManager.getCache();
-      sourceServer = TestHelper.startHotRodServer(serverCacheManager);
+      sourceServer = HotRodClientTestingUtil.startHotRodServer(serverCacheManager);
 
-      remoteSourceCacheManager = TestHelper.getRemoteCacheManager(sourceServer);
+      remoteSourceCacheManager = HotRodClientTestingUtil.getRemoteCacheManager(sourceServer);
       remoteSourceCacheManager.start();
       remoteSourceCache = remoteSourceCacheManager.getCache();
 
@@ -55,9 +54,9 @@ public class RemoteStoreWrapperTest extends AbstractInfinispanTest {
       targetCacheManager = TestCacheManagerFactory
             .createCacheManager(hotRodCacheConfiguration(clientBuilder));
       targetCache = targetCacheManager.getCache();
-      targetServer = TestHelper.startHotRodServer(targetCacheManager);
+      targetServer = HotRodClientTestingUtil.startHotRodServer(targetCacheManager);
 
-      remoteTargetCacheManager = TestHelper.getRemoteCacheManager(targetServer);
+      remoteTargetCacheManager = HotRodClientTestingUtil.getRemoteCacheManager(targetServer);
       remoteTargetCacheManager.start();
       remoteTargetCache = remoteTargetCacheManager.getCache();
    }

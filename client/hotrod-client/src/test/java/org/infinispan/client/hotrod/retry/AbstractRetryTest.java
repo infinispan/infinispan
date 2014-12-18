@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod.retry;
 import org.infinispan.AdvancedCache;
 import org.infinispan.client.hotrod.HitsAwareCacheManagersTest;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
@@ -18,6 +17,7 @@ import org.testng.annotations.AfterMethod;
 import java.net.SocketAddress;
 import java.util.Properties;
 
+import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getLoadBalancer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
 /**
@@ -55,11 +55,11 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       registerCacheManager(cm2);
       registerCacheManager(cm3);
 
-      hotRodServer1 = TestHelper.startHotRodServer(manager(0));
+      hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
       hrServ2CacheManager.put(getAddress(hotRodServer1), cm1);
-      hotRodServer2 = TestHelper.startHotRodServer(manager(1));
+      hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(manager(1));
       hrServ2CacheManager.put(getAddress(hotRodServer2), cm2);
-      hotRodServer3 = TestHelper.startHotRodServer(manager(2));
+      hotRodServer3 = HotRodClientTestingUtil.startHotRodServer(manager(2));
       hrServ2CacheManager.put(getAddress(hotRodServer3), cm3);
 
       waitForClusterToForm();
@@ -73,7 +73,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       remoteCacheManager = new RemoteCacheManager(clientConfig);
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
       tcpConnectionFactory = TestingUtil.extractField(remoteCacheManager, "transportFactory");
-      strategy = (RoundRobinBalancingStrategy) tcpConnectionFactory.getBalancer(RemoteCacheManager.cacheNameBytes());
+      strategy = getLoadBalancer(remoteCacheManager);
       addInterceptors();
 
       assert super.cacheManagers.size() == 3;

@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.util.concurrent.FutureListener;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
@@ -46,7 +47,7 @@ public class RemoteAsyncAPITest extends SingleCacheManagerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       Properties props = new Properties();
       props.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
       props.put("infinispan.client.hotrod.force_return_values","true");

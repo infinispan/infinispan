@@ -180,4 +180,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Unrecoverable error reading event from server %s, exiting event reader thread", id = 4043)
    void unrecoverableErrorReadingEvent(@Cause Throwable t, SocketAddress server);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Unable to read %s bytes %s", id = 4044)
+   void unableToUnmarshallBytesError(String element, String bytes, @Cause Exception e);
 }

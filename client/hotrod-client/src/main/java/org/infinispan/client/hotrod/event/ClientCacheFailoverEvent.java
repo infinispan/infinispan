@@ -11,6 +11,7 @@ package org.infinispan.client.hotrod.event;
  * can be used to rebuild any locally built cache.
  *
  * @author Galder Zamarreño
+ * @since 7.0
  */
 public interface ClientCacheFailoverEvent extends ClientEvent {
 

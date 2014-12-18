@@ -33,7 +33,7 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       cacheManager = TestCacheManagerFactory.createCacheManager(
             hotRodCacheConfiguration(getDefaultStandaloneCacheConfig(false)));
-      hotRodServer = TestHelper.startHotRodServer(cacheManager);
+      hotRodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       Properties hrClientConfig = new Properties();
       hrClientConfig.put("testWhileIdle", "false");
       hrClientConfig.put("minIdle","1");

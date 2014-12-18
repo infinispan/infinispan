@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -37,7 +38,7 @@ public class HotRodStatisticsTest {
       cacheContainer = TestCacheManagerFactory
             .createClusteredCacheManagerEnforceJmxDomain(getClass().getSimpleName(), cfg);
 
-      hotrodServer = TestHelper.startHotRodServer((EmbeddedCacheManager) cacheContainer);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer((EmbeddedCacheManager) cacheContainer);
       startTime = System.currentTimeMillis();
       rcm = new RemoteCacheManager("localhost", hotrodServer.getPort());
       remoteCache = rcm.getCache();

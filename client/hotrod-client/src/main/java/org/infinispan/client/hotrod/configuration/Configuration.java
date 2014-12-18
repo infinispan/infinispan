@@ -40,11 +40,12 @@ public class Configuration {
    private final Class<? extends TransportFactory> transportFactory;
    private final int valueSizeEstimate;
    private final int maxRetries;
+   private final NearCacheConfiguration nearCache;
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Class<? extends Marshaller> marshallerClass,
          boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
-         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries) {
+         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategy = balancingStrategy;
       this.maxRetries = maxRetries;
@@ -65,12 +66,13 @@ public class Configuration {
       this.tcpKeepAlive = tcpKeepAlive;
       this.transportFactory = transportFactory;
       this.valueSizeEstimate = valueSizeEstimate;
+      this.nearCache = nearCache;
    }
 
    Configuration(ExecutorFactoryConfiguration asyncExecutorFactory, Class<? extends RequestBalancingStrategy> balancingStrategy, ClassLoader classLoader,
          ConnectionPoolConfiguration connectionPool, int connectionTimeout, Class<? extends ConsistentHash>[] consistentHashImpl, boolean forceReturnValues, int keySizeEstimate, Marshaller marshaller,
          boolean pingOnStartup, String protocolVersion, List<ServerConfiguration> servers, int socketTimeout, SecurityConfiguration security, boolean tcpNoDelay, boolean tcpKeepAlive,
-         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries) {
+         Class<? extends TransportFactory> transportFactory, int valueSizeEstimate, int maxRetries, NearCacheConfiguration nearCache) {
       this.asyncExecutorFactory = asyncExecutorFactory;
       this.balancingStrategy = balancingStrategy;
       this.maxRetries = maxRetries;
@@ -91,6 +93,7 @@ public class Configuration {
       this.tcpKeepAlive = tcpKeepAlive;
       this.transportFactory = transportFactory;
       this.valueSizeEstimate = valueSizeEstimate;
+      this.nearCache = nearCache;
    }
 
    public ExecutorFactoryConfiguration asyncExecutorFactory() {
@@ -135,6 +138,10 @@ public class Configuration {
 
    public Class<? extends Marshaller> marshallerClass() {
       return marshallerClass;
+   }
+
+   public NearCacheConfiguration nearCache() {
+      return nearCache;
    }
 
    public boolean pingOnStartup() {
@@ -183,6 +190,7 @@ public class Configuration {
             + connectionPool + ", connectionTimeout=" + connectionTimeout + ", consistentHashImpl=" + Arrays.toString(consistentHashImpl) + ", forceReturnValues="
             + forceReturnValues + ", keySizeEstimate=" + keySizeEstimate + ", marshallerClass=" + marshallerClass + ", marshaller=" + marshaller + ", pingOnStartup="
             + pingOnStartup + ", protocolVersion=" + protocolVersion + ", servers=" + servers + ", socketTimeout=" + socketTimeout + ", security=" + security + ", tcpNoDelay=" + tcpNoDelay + ", tcpKeepAlive=" + tcpKeepAlive
-            + ", transportFactory=" + transportFactory + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries + "]";
+            + ", transportFactory=" + transportFactory + ", valueSizeEstimate=" + valueSizeEstimate + ", maxRetries=" + maxRetries
+            + "nearCache=" + nearCache + "]";
    }
 }

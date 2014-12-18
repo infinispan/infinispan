@@ -39,7 +39,7 @@ public class RemoteCacheManagerTest extends SingleCacheManagerTest {
    @Override
    protected void setup() throws Exception {
       super.setup();
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       port = hotrodServer.getPort();
       remoteCacheManager = null;
    }

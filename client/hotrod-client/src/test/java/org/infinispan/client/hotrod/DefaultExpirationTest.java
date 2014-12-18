@@ -39,7 +39,7 @@ public class DefaultExpirationTest extends SingleCacheManagerTest {
    protected void setup() throws Exception {
       super.setup();
       //pass the config file to the cache
-      hotrodServer = TestHelper.startHotRodServer(cacheManager);
+      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
       log.info("Started server on port: " + hotrodServer.getPort());
       remoteCacheManager = getRemoteCacheManager();
       remoteCache = remoteCacheManager.getCache();

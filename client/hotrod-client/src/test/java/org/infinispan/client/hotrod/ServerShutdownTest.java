@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.CacheManagerCallable;
@@ -25,7 +26,7 @@ public class ServerShutdownTest {
                   hotRodCacheConfiguration())) {
          @Override
          public void call() {
-            HotRodServer hotrodServer = TestHelper.startHotRodServer(cm);
+            HotRodServer hotrodServer = HotRodClientTestingUtil.startHotRodServer(cm);
             try {
                withRemoteCacheManager(new RemoteCacheManagerCallable(
                      new RemoteCacheManager("localhost", hotrodServer.getPort())) {
@@ -49,7 +50,7 @@ public class ServerShutdownTest {
                   hotRodCacheConfiguration())) {
          @Override
          public void call() {
-            HotRodServer hotrodServer = TestHelper.startHotRodServer(cm);
+            HotRodServer hotrodServer = HotRodClientTestingUtil.startHotRodServer(cm);
             try {
                withRemoteCacheManager(new RemoteCacheManagerCallable(
                      new RemoteCacheManager("localhost", hotrodServer.getPort())) {

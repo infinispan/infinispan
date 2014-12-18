@@ -5,6 +5,7 @@ import org.infinispan.factories.GlobalComponentRegistry
 import org.infinispan.server.core.ExternalizerIds._
 import org.infinispan.configuration.global.GlobalConfiguration
 import org.infinispan.server.hotrod.ClientListenerRegistry.{UnmarshallConverterExternalizer, UnmarshallFilterExternalizer}
+import org.infinispan.server.hotrod.KeyValueVersionConverterFactory.KeyValueVersionConverter
 
 /**
  * Module lifecycle callbacks implementation that enables module specific
@@ -20,6 +21,7 @@ class LifecycleCallbacks extends AbstractModuleLifecycle {
       externalizers.put(SERVER_ADDRESS, new ServerAddress.Externalizer)
       externalizers.put(BINARY_FILTER, new UnmarshallFilterExternalizer())
       externalizers.put(BINARY_CONVERTER, new UnmarshallConverterExternalizer())
+      externalizers.put(KEY_VALUE_VERSION_CONVERTER, new KeyValueVersionConverter.Externalizer())
    }
 
 }

@@ -4,7 +4,6 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
-import org.infinispan.client.hotrod.TestHelper;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -49,7 +48,7 @@ public class RemoteStoreTest extends BaseStoreTest {
       gcr.registerComponent(timeService, TimeService.class);
       gcr.rewire();
       localCacheManager.getCache(REMOTE_CACHE).getAdvancedCache().getComponentRegistry().rewire();
-      hrServer = TestHelper.startHotRodServer(localCacheManager);
+      hrServer = HotRodClientTestingUtil.startHotRodServer(localCacheManager);
 
       ConfigurationBuilder builder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false);

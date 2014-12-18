@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod;
 
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.DistributionManager;
@@ -61,11 +62,11 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       addClusterEnabledCacheManager(builder);
       addClusterEnabledCacheManager(builder);
 
-      hotRodServer1 = TestHelper.startHotRodServer(manager(0));
+      hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
       hrServ2CacheManager.put(new InetSocketAddress(hotRodServer1.getHost(), hotRodServer1.getPort()), manager(0));
-      hotRodServer2 = TestHelper.startHotRodServer(manager(1));
+      hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(manager(1));
       hrServ2CacheManager.put(new InetSocketAddress(hotRodServer2.getHost(), hotRodServer2.getPort()), manager(1));
-      hotRodServer3 = TestHelper.startHotRodServer(manager(2));
+      hotRodServer3 = HotRodClientTestingUtil.startHotRodServer(manager(2));
       hrServ2CacheManager.put(new InetSocketAddress(hotRodServer3.getHost(), hotRodServer3.getPort()), manager(2));
 
       assert manager(0).getCache() != null;

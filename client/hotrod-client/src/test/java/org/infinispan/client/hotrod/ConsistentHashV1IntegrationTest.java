@@ -5,6 +5,7 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.retry.DistributionRetryTest;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -53,10 +54,10 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       addClusterEnabledCacheManager(builder);
       addClusterEnabledCacheManager(builder);
 
-      hotRodServer1 = TestHelper.startHotRodServer(manager(0));
-      hotRodServer2 = TestHelper.startHotRodServer(manager(1));
-      hotRodServer3 = TestHelper.startHotRodServer(manager(2));
-      hotRodServer4 = TestHelper.startHotRodServer(manager(3));
+      hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
+      hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(manager(1));
+      hotRodServer3 = HotRodClientTestingUtil.startHotRodServer(manager(2));
+      hotRodServer4 = HotRodClientTestingUtil.startHotRodServer(manager(3));
 
 
       waitForClusterToForm();
@@ -137,7 +138,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
       final int topologyIdBeforeJoin = clientTopologyId.get();
       log.tracef("Starting test with client topology id %d", topologyIdBeforeJoin);
       EmbeddedCacheManager cm5 = addClusterEnabledCacheManager(buildConfiguration());
-      HotRodServer hotRodServer5 = TestHelper.startHotRodServer(cm5);
+      HotRodServer hotRodServer5 = HotRodClientTestingUtil.startHotRodServer(cm5);
 
       // Rebalancing to include the joiner will increment the topology id by 2
       eventually(new Condition() {
