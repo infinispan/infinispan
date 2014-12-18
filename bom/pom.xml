@@ -474,6 +474,7 @@
                               <artifactId>maven-bundle-plugin</artifactId>
                               <versionRange>[2.4.0,)</versionRange>
                               <goals>
+                                 <goal>bundle</goal>
                                  <goal>cleanVersions</goal>
                               </goals>
                            </pluginExecutionFilter>
