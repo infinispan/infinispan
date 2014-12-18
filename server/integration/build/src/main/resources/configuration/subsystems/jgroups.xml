@@ -39,12 +39,12 @@
        <stack name="s3">
            <transport type="TCP" socket-binding="jgroups-tcp"/>
            <protocol type='S3_PING'>
-               <property name="location">${jgroups.s3.bucket}</property>
-               <property name="access_key">${jgroups.s3.access_key}</property>
-               <property name="secret_access_key">${jgroups.s3.secret_access_key}</property>
-               <property name="pre_signed_delete_url">${jgroups.s3.pre_signed_delete_url}</property>
-               <property name="pre_signed_put_url">${jgroups.s3.pre_signed_put_url}</property>
-               <property name="prefix">${jgroups.s3.prefix}</property>
+               <property name="location">${jgroups.s3.bucket:UNSPECIFIED_S3_BUCKET}</property>
+               <property name="access_key">${jgroups.s3.access_key:UNSPECIFIED_S3_ACCESS_KEY}</property>
+               <property name="secret_access_key">${jgroups.s3.secret_access_key:UNSPECIFIED_S3_SECRET_ACCESS_KEY}</property>
+               <property name="pre_signed_delete_url">${jgroups.s3.pre_signed_delete_url:UNSPECIFIED_S3_PRESIGNED_DELETE_URL}</property>
+               <property name="pre_signed_put_url">${jgroups.s3.pre_signed_put_url:UNSPECIFIED_S3_PRESIGNED_PUT_URL}</property>
+               <property name="prefix">${jgroups.s3.prefix:UNSPECIFIED_S3_PREFIX}</property>
            </protocol>
            <protocol type="MERGE3"/>
            <protocol type="FD_SOCK" socket-binding="jgroups-tcp-fd"/>
