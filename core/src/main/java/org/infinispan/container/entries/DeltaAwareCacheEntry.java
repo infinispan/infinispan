@@ -23,20 +23,20 @@ import static org.infinispan.container.entries.DeltaAwareCacheEntry.Flags.*;
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @since 5.1
  */
-public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
+public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, StateChangingEntry {
    private static final Log log = LogFactory.getLog(DeltaAwareCacheEntry.class);
    private static final boolean trace = log.isTraceEnabled();
 
-   protected Object key;
-   protected CacheEntry wrappedEntry;
+   protected K key;
+   protected CacheEntry<K, DeltaAware> wrappedEntry;
    protected DeltaAware value, oldValue;
    protected final List<Delta> deltas;
    protected byte flags = 0;
 
    // add Map representing uncommitted changes
-   protected AtomicHashMap<?, ?> uncommittedChanges;
+   protected AtomicHashMap<K, ?> uncommittedChanges;
 
-   public DeltaAwareCacheEntry(Object key, DeltaAware value, CacheEntry wrappedEntry) {
+   public DeltaAwareCacheEntry(K key, DeltaAware value, CacheEntry<K, DeltaAware> wrappedEntry) {
       setValid(true);
       this.key = key;
       this.value = value;
@@ -134,18 +134,18 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public final Object getKey() {
+   public final K getKey() {
       return key;
    }
 
    @Override
-   public final Object getValue() {
+   public final DeltaAware getValue() {
       return value;
    }
 
    @Override
-   public final Object setValue(Object value) {
-      Object oldValue = this.value;
+   public final DeltaAware setValue(DeltaAware value) {
+      DeltaAware oldValue = this.value;
       this.value = (DeltaAware) value;
       return oldValue;
    }
@@ -156,47 +156,51 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public final void commit(final DataContainer container, final Metadata metadata) {
+   public final void commit(final DataContainer<K, DeltaAware> container, final Metadata metadata) {
       //If possible, we now ensure copy-on-write semantics. This way, it can ensure the correct transaction isolation.
       //note: we want to merge/copy to/from the data container value.
-      container.compute(key, new DataContainer.ComputeAction() {
+      container.compute(key, new DataContainer.ComputeAction<K, DeltaAware>() {
          @Override
-         public InternalCacheEntry compute(Object key, InternalCacheEntry oldEntry, InternalEntryFactory factory) {
-            InternalCacheEntry newEntry = oldEntry;
+         public InternalCacheEntry<K, DeltaAware> compute(K key, InternalCacheEntry<K, DeltaAware> oldEntry, InternalEntryFactory factory) {
+            InternalCacheEntry<K, DeltaAware> newEntry = oldEntry;
             DeltaAware containerValue = oldEntry == null ? null : (DeltaAware) oldEntry.getValue();
             if (containerValue != null && containerValue != value) {
                value = containerValue;
             }
-            if (value != null && !deltas.isEmpty()) {
-               final boolean makeCopy = value instanceof CopyableDeltaAware;
-               if (makeCopy) {
-                  value = ((CopyableDeltaAware) value).copy();
-               }
-               for (Delta delta : deltas) {
-                  delta.merge(value);
-               }
-               if (makeCopy) {
-                  //create or update existing entry.
-                  newEntry = oldEntry == null ?
-                        factory.create(key, value, extractMetadata(null, metadata)) :
-                        factory.update(oldEntry, value, extractMetadata(oldEntry, metadata));
-               }
-               value.commit();
-               if (wrappedEntry != null) {
-                  wrappedEntry.setChanged(!makeCopy);
+            // If we were removed then only apply the deltas
+            if (!deltas.isEmpty()) {
+               // If we were created don't use the original value
+               if (isCreated()) {
+                  value = null;
+                  for (Delta delta : deltas) {
+                     value = delta.merge(value);
+                  }
+                  value.commit();
+                  newEntry = factory.create(key, value, extractMetadata(null, metadata));
+               } else if (value != null) {
+                  final boolean makeCopy = value instanceof CopyableDeltaAware;
+                  if (makeCopy) {
+                     value = ((CopyableDeltaAware) value).copy();
+                  }
+                  for (Delta delta : deltas) {
+                     delta.merge(value);
+                  }
+                  if (makeCopy) {
+                     //create or update existing entry.
+                     newEntry = oldEntry == null ?
+                           factory.create(key, value, extractMetadata(null, metadata)) :
+                           factory.update(oldEntry, value, extractMetadata(oldEntry, metadata));
+                  }
+                  value.commit();
                }
             }
             reset();
-            // only do stuff if there are changes.
-            if (wrappedEntry != null) {
-               wrappedEntry.commit(container, metadata);
-            }
             return newEntry;
          }
       });
    }
 
-   private Metadata extractMetadata(CacheEntry entry, Metadata provided) {
+   private Metadata extractMetadata(CacheEntry<K, DeltaAware> entry, Metadata provided) {
       if (provided != null) {
          return provided;
       } else if (wrappedEntry != null) {
@@ -343,7 +347,7 @@ public class DeltaAwareCacheEntry implements CacheEntry, StateChangingEntry {
    }
 
    @Override
-   public DeltaAwareCacheEntry clone() {
+   public DeltaAwareCacheEntry<K> clone() {
       try {
          return (DeltaAwareCacheEntry) super.clone();
       } catch (CloneNotSupportedException e) {

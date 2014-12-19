@@ -213,17 +213,25 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       if (value instanceof Delta) {
          // magic
          Delta dv = (Delta) value;
-         DeltaAware toMergeWith = null;
-         if (entryValue instanceof CopyableDeltaAware) {
-            toMergeWith = ((CopyableDeltaAware) entryValue).copy();
-         } else if (entryValue instanceof DeltaAware) {
-            toMergeWith = (DeltaAware) entryValue;
+         if (e.isRemoved()) {
+            e.setRemoved(false);
+            e.setCreated(true);
+            e.setValid(true);
+            e.setValue(dv.merge(null));
+         } else {
+            DeltaAware toMergeWith = null;
+            if (entryValue instanceof CopyableDeltaAware) {
+               toMergeWith = ((CopyableDeltaAware) entryValue).copy();
+            } else if (entryValue instanceof DeltaAware) {
+               toMergeWith = (DeltaAware) entryValue;
+            }
+            e.setValue(dv.merge(toMergeWith));
          }
-         e.setValue(dv.merge(toMergeWith));
          o = entryValue;
       } else {
          o = e.setValue(value);
          if (e.isRemoved()) {
+            e.setCreated(true);
             e.setRemoved(false);
             e.setValid(true);
             o = null;
