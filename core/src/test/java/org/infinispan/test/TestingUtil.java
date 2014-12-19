@@ -41,7 +41,6 @@ import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.ReplicationQueue;
-import org.infinispan.test.fwk.DISCARD2;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -1101,15 +1100,6 @@ public class TestingUtil {
       Channel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
       DISCARD discard = new DISCARD();
-      ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
-      return discard;
-   }
-
-   public static DISCARD2 getDiscard2ForCache(Cache<?, ?> c) throws Exception {
-      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
-      Channel ch = jgt.getChannel();
-      ProtocolStack ps = ch.getProtocolStack();
-      DISCARD2 discard = new DISCARD2();
       ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
       return discard;
    }
