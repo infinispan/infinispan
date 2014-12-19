@@ -360,7 +360,13 @@ public class EntryFactoryImpl implements EntryFactory {
    }
    
    private DeltaAwareCacheEntry createWrappedDeltaEntry(Object key, DeltaAware deltaAware, CacheEntry entry) {
-      return new DeltaAwareCacheEntry(key,deltaAware, entry);
+      DeltaAwareCacheEntry deltaAwareCacheEntry = new DeltaAwareCacheEntry(key,deltaAware, entry);
+      // Set the delta aware entry to created so it ignores the previous value and only merges new deltas when it is
+      // committed
+      if (entry != null && entry.isCreated()) {
+         deltaAwareCacheEntry.setCreated(true);
+      }
+      return deltaAwareCacheEntry;
    }
 
    private void updateMetadata(MVCCEntry entry, Metadata providedMetadata) {

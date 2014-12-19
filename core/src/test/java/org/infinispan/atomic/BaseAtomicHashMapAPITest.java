@@ -12,10 +12,12 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.DummyTransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.TimeoutException;
+import org.junit.Assert;
 import org.testng.annotations.Test;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,6 +45,7 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configurationBuilder.clustering().hash().numSegments(60);
       configurationBuilder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL).transactionManagerLookup(new DummyTransactionManagerLookup())
             .lockingMode(LockingMode.PESSIMISTIC)
@@ -197,8 +200,14 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
          f.get(10, TimeUnit.SECONDS);
          fail("We should have received a wrapped TimeoutException");
       } catch (ExecutionException e) {
-         // We should have gotten a timeout exception since lock was held in other transaction
-         assertTrue(e.getCause() instanceof TimeoutException);
+         Throwable t = e;
+         do {
+            // We should have gotten a timeout exception since lock was held in other transaction
+            if (t instanceof TimeoutException) {
+               break;
+            }
+         } while ((t = t.getCause()) != null);
+         assertNotNull("We should have found a TimeoutException!", t);
       }
 
       tm(0, "atomic").commit();
@@ -561,6 +570,49 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
       assertMap(expectedMap, map2);
    }
 
+   public void testInsertDeleteInsertCycle() throws Exception {
+      final Cache<MagicKey, Object> cache2 = cache(1, "atomic");
+      testInsertDeleteCycle(new MagicKey(cache2));
+   }
+   
+   public void testInsertDeleteInsertCyclePrimaryOwner() throws Exception {
+      final Cache<MagicKey, Object> cache1 = cache(0, "atomic");
+      testInsertDeleteCycle(new MagicKey(cache1));
+   }
+
+   private void testInsertDeleteCycle(MagicKey key) throws Exception {
+      final Cache<MagicKey, Object> cache1 = cache(0, "atomic");
+      final Cache<MagicKey, Object> cache2 = cache(1, "atomic");
+
+      assertSize(cache1, 0);
+      assertSize(cache2, 0);
+
+      {
+         TestingUtil.getTransactionManager(cache1).begin();
+         Map<String, Object> am = createAtomicMap(cache1, key);
+         am.put("k1", "v1");
+         TestingUtil.getTransactionManager(cache1).commit();
+      }
+      {
+         TestingUtil.getTransactionManager(cache1).begin();
+         Map<String, Object> am = createAtomicMap(cache1, key);
+         am.put("k3", "v3");
+         removeAtomicMap(cache1, key); //!
+         am = createAtomicMap(cache1, key);
+         am.put("k2", "v2");
+         TestingUtil.getTransactionManager(cache1).commit();
+      }
+      final boolean fails;
+      {
+         TestingUtil.getTransactionManager(cache1).begin();
+         Map<String, Object> am = createAtomicMap(cache1, key);
+         //'k1' should no longer exist as we had killed the whole am instance in previous transaction
+         fails = am.containsKey("k1");
+         TestingUtil.getTransactionManager(cache1).commit();
+      }
+      Assert.assertFalse(fails);
+   }
+
    public void testDuplicateValue() {
       final Cache<String, Object> cache = cache(0, "atomic");
       assertSize(cache, 0);
@@ -733,4 +785,9 @@ public abstract class BaseAtomicHashMapAPITest extends MultipleCacheManagersTest
    protected final <CK, K, V> Map<K, V> createAtomicMap(Cache<CK, Object> cache, CK key) {
       return createAtomicMap(cache, key, true);
    }
+
+   protected <CK> void removeAtomicMap(Cache<CK, Object> cache, CK key) {
+      AtomicMapLookup.removeAtomicMap(cache, key);
+   }
+
 }
