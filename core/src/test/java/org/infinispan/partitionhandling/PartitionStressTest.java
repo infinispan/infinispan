@@ -7,12 +7,12 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
-import org.infinispan.test.fwk.DISCARD2;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
+import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -46,9 +46,9 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
    }
 
    public void testWriteDuringPartition() throws Exception {
-      DISCARD2[] discards = new DISCARD2[NUM_NODES];
+      DISCARD[] discards = new DISCARD[NUM_NODES];
       for (int i = 0; i < NUM_NODES; i++) {
-         discards[i] = TestingUtil.getDiscard2ForCache(cache(i));
+         discards[i] = TestingUtil.getDiscardForCache(cache(i));
       }
 
       final List<Future<Object>> futures = new ArrayList<>(NUM_NODES);
