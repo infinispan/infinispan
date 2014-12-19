@@ -98,6 +98,7 @@ public class ReplWriteSkewAtomicMapAPITest extends RepeatableReadAtomicMapAPITes
 
    private ConfigurationBuilder configuration() {
       ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
+      configurationBuilder.clustering().hash().numSegments(60);
       configurationBuilder.transaction()
             .transactionMode(TransactionMode.TRANSACTIONAL)
             .lockingMode(LockingMode.OPTIMISTIC)

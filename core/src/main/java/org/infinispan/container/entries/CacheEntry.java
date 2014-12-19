@@ -98,7 +98,7 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
     *
     * @param container data container to commit to
     */
-   void commit(DataContainer container, Metadata metadata);
+   void commit(DataContainer<K, V> container, Metadata metadata);
 
    /**
     * Rolls back changes
