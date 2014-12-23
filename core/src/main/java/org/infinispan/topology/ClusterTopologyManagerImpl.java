@@ -502,6 +502,15 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public void setRebalancingEnabled(boolean enabled) {
+      if (enabled) {
+         if (!isRebalancingEnabled) {
+            CLUSTER.rebalancingEnabled();
+         }
+      } else {
+         if (isRebalancingEnabled) {
+            CLUSTER.rebalancingSuspended();
+         }
+      }
       isRebalancingEnabled = enabled;
       for (ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
          cacheStatus.setRebalanceEnabled(enabled);
