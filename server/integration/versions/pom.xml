@@ -37,6 +37,7 @@
       <version.org.slf4j>1.7.2</version.org.slf4j>
       <version.org.wildfly>8.1.0.Final</version.org.wildfly>
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
+      <version.antrun.maven.plugin>1.8</version.antrun.maven.plugin>
       <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
       <version.org.infinispan.protostream>3.0.0.Alpha2</version.org.infinispan.protostream>
       <version.protobuf>2.6.0</version.protobuf>
@@ -497,6 +498,11 @@
    <build>
       <pluginManagement>
          <plugins>
+            <plugin>
+               <groupId>org.apache.maven.plugins</groupId>
+               <artifactId>maven-antrun-plugin</artifactId>
+               <version>${version.antrun.maven.plugin}</version>
+            </plugin>
             <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>xml-maven-plugin</artifactId>
