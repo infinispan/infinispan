@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @param <TypeMetadata> is either java.lang.Class or com.google.protobuf.Descriptors.Descriptor
+ * @param <TypeMetadata> is either java.lang.Class or org.infinispan.protostream.descriptors.Descriptor
  * @author anistor@redhat.com
  * @since 7.0
  */
