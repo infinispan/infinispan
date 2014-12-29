@@ -1,7 +1,6 @@
 package org.infinispan.server.test.query;
 
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
-import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
@@ -16,7 +15,6 @@ import org.junit.Before;
 
 import java.io.IOException;
 
-import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
 import static org.junit.Assert.assertFalse;
 
 /**
@@ -32,7 +30,6 @@ public abstract class RemoteQueryBaseIT {
 
    protected RemoteCacheManager remoteCacheManager;
    protected RemoteCache<Integer, User> remoteCache;
-   protected MBeanServerConnectionProvider jmxConnectionProvider;
    protected RemoteCacheManagerFactory rcmFactory;
 
    protected RemoteQueryBaseIT(String cacheContainerName, String cacheName) {
@@ -44,7 +41,6 @@ public abstract class RemoteQueryBaseIT {
 
    @Before
    public void setUp() throws Exception {
-      jmxConnectionProvider = new MBeanServerConnectionProvider(getServer().getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);
       rcmFactory = new RemoteCacheManagerFactory();
       ConfigurationBuilder clientBuilder = new ConfigurationBuilder();
       clientBuilder.addServer()
