@@ -11,31 +11,30 @@ import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterProcessingChain<TypeMetadata> implements AstProcessingChain<FilterParsingResult> {
+public final class FilterProcessingChain<TypeMetadata> implements AstProcessingChain<FilterParsingResult<TypeMetadata>> {
 
-   private final QueryResolverProcessor resolverProcessor;
-   private final QueryRendererProcessor rendererProcessor;
-   private final FilterRendererDelegate rendererDelegate;
+   private final List<AstProcessor> astProcessors;
+   private final FilterRendererDelegate<TypeMetadata> rendererDelegate;
 
-   private FilterProcessingChain(QueryResolverProcessor resolverProcessor, QueryRendererProcessor rendererProcessor, FilterRendererDelegate rendererDelegate) {
-      this.resolverProcessor = resolverProcessor;
-      this.rendererProcessor = rendererProcessor;
+   private FilterProcessingChain(QueryResolverProcessor resolverProcessor, QueryRendererProcessor rendererProcessor, FilterRendererDelegate<TypeMetadata> rendererDelegate) {
+      astProcessors = Arrays.asList(resolverProcessor, rendererProcessor);
       this.rendererDelegate = rendererDelegate;
    }
 
    @Override
    public Iterator<AstProcessor> iterator() {
-      return Arrays.asList(resolverProcessor, rendererProcessor).iterator();
+      return astProcessors.iterator();
    }
 
    @Override
-   public FilterParsingResult getResult() {
+   public FilterParsingResult<TypeMetadata> getResult() {
       return rendererDelegate.getResult();
    }
 
