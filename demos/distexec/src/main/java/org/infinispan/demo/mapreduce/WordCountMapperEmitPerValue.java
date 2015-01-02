@@ -1,5 +1,6 @@
 package org.infinispan.demo.mapreduce;
 
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,6 +22,10 @@ public class WordCountMapperEmitPerValue implements Mapper<String, String, Strin
    public void map(String key, String value, Collector<String, Integer> c) {
       HashMap<String, Integer> results = new HashMap<String, Integer>();
       values++;
+
+      // Set Thread Name
+      Thread.currentThread().setName(String.format("MapperThread-%d", Thread.currentThread().getId()));
+
       /*
        * Split on punctuation or whitespace, except for ' and - to catch contractions and hyphenated
        * words
@@ -41,7 +46,8 @@ public class WordCountMapperEmitPerValue implements Mapper<String, String, Strin
       }
 
       if (values % 5000 == 0) {
-         System.out.printf(Thread.currentThread().toString() + " : Analyzed %s words in %s values\n", words, values);
+         System.out.printf("%tT %s Analyzed %s words in %s lines%n", Calendar.getInstance(), Thread.currentThread()
+               .toString(), words, values);
       }
    }
 }
