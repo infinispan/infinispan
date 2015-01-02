@@ -1,5 +1,7 @@
 package org.infinispan.demo.mapreduce;
 
+import java.util.Calendar;
+
 import org.infinispan.distexec.mapreduce.Collector;
 import org.infinispan.distexec.mapreduce.Mapper;
 
@@ -9,6 +11,9 @@ public class WordCountMapper implements Mapper<String, String, String, Integer> 
 
    @Override
    public void map(String key, String value, Collector<String, Integer> c) {
+      // Set Thread Name
+      Thread.currentThread().setName(String.format("MapperThread-%d", Thread.currentThread().getId()));
+
       chunks++;
       /*
        * Split on punctuation or whitespace, except for ' and - to catch contractions and hyphenated
@@ -25,6 +30,6 @@ public class WordCountMapper implements Mapper<String, String, String, Integer> 
       }
 
       if (chunks % 1000 == 0)
-         System.out.printf("Analyzed %s words in %s lines%n", words, chunks);
+         System.out.printf("%tT Analyzed %s words in %s lines%n", Calendar.getInstance(), words, chunks);
    }
 }
