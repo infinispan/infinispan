@@ -136,7 +136,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
 
       ProtoSchemaBuilder protoSchemaBuilder = new ProtoSchemaBuilder();
       String testSchemaFile = protoSchemaBuilder.fileName("test.proto")
-            .addClass(User.class)
+            .addClass(Note.class)
             .build(ctx);
 
       // register schemas on server
@@ -181,7 +181,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
       User author = new User();
       author.setId(20);
       author.setName("name");
-      author.setName("surname");
+      author.setSurname("surname");
       note.setAuthor(author);
       return note;
    }

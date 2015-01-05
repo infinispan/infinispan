@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<features>
-    <feature name="query-sample-domain" version="${project.version}">
-        <bundle>mvn:org.infinispan.protostream/sample-domain-implementation/${version.org.infinispan.protostream}</bundle>
-        <bundle>mvn:org.infinispan.protostream/sample-domain-definition/${version.org.infinispan.protostream}</bundle>
-        <!-- protobuf-java and protoparser packages are required by sample-domain-implementation
-             and sample-domain-definition. These packages are also included in infinispan-remote uber-jar
-             but are NOT exported further so we need to install them separately, just for the tests. -->
-        <bundle>mvn:com.google.protobuf/protobuf-java/${version.protobuf}</bundle>
-        <bundle>wrap:mvn:com.squareup/protoparser/${version.protoparser}</bundle>
-        <bundle>wrap:mvn:org.javassist/javassist/${version.javassist}</bundle>
-    </feature>
+<features xmlns="http://karaf.apache.org/xmlns/features/v1.0.0">
+   <repository>mvn:org.infinispan/infinispan-remote/${project.version}/xml/features</repository>
+
+   <feature name="query-sample-domain" version="${project.version}">
+      <feature version="${project.version}">infinispan-remote</feature>
+      <bundle>mvn:org.infinispan.protostream/sample-domain-implementation/${version.org.infinispan.protostream}</bundle>
+      <bundle>mvn:org.infinispan.protostream/sample-domain-definition/${version.org.infinispan.protostream}</bundle>
+   </feature>
 </features>

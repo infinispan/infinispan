@@ -61,7 +61,7 @@
       <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
 
       <!-- Versions for dependencies -->
-      <version.protostream>3.0.0.Alpha2</version.protostream>
+      <version.protostream>3.0.0.Alpha5</version.protostream>
       <version.protobuf>2.6.0</version.protobuf>
       <version.protoparser>3.1.4</version.protoparser>
       <version.javassist>3.18.1-GA</version.javassist>

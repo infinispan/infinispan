@@ -134,6 +134,10 @@
                            <shadedPattern>infinispan.com.google</shadedPattern>
                         </relocation>
                         <relocation>
+                           <pattern>javassist</pattern>
+                           <shadedPattern>infinispan.javassist</shadedPattern>
+                        </relocation>
+                        <relocation>
                            <pattern>com.squareup</pattern>
                            <shadedPattern>infinispan.com.squareup</shadedPattern>
                         </relocation>
