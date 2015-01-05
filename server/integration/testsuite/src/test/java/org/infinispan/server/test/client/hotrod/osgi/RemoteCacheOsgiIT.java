@@ -74,7 +74,7 @@ public class RemoteCacheOsgiIT extends KarafTestSupport {
                   .karafDistributionConfiguration()
                   .unpackDirectory(new File("target/pax"))
                   .frameworkUrl(
-                        maven().groupId("org.apache.karaf").artifactId("apache-karaf").type("zip")
+                        maven().groupId("org.apache.karaf").artifactId("apache-karaf").type("tar.gz")
                               .version(KARAF_VERSION)).karafVersion(KARAF_VERSION),
             KarafDistributionOption.features(maven().groupId("org.infinispan").artifactId("infinispan-remote")
                                                    .type("xml").classifier("features").versionAsInProject(), "infinispan-remote"),
