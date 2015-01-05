@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-bom</artifactId>
-   <version>7.0.3-SNAPSHOT</version>
+   <version>7.0.3.Final</version>
    <packaging>pom</packaging>
    <name>Infinispan BOM</name>
    <description>Infinispan BOM module</description>
@@ -57,10 +57,10 @@
 
       <version.java>1.7</version.java>
 
-      <!-- Versions for plugins -->
+      
       <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
       
-      <!-- Versions for dependencies -->
+      
       <version.protostream>2.0.2.Final</version.protostream>
       <version.protobuf>2.6.0</version.protobuf>
       <version.protoparser>3.1.4</version.protoparser>

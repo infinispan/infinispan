@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-all-parent</artifactId>
-      <version>7.0.3-SNAPSHOT</version>
+      <version>7.0.3.Final</version>
       <relativePath>../pom.xml</relativePath>
    </parent>
 
@@ -71,7 +71,7 @@
                               <resource>features.xml</resource>
                            </resources>
                         </transformer>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                      </transformers>
                   </configuration>
                </execution>
@@ -81,4 +81,3 @@
    </build>
 
 </project>
-
