@@ -186,7 +186,7 @@
                            org.infinispan.client.hotrod.*,
                            org.infinispan.commons.*,
                            org.infinispan.query.*,
-                           org.infinispan.protostream;version=${version.protostream}
+                           org.infinispan.protostream.*;version=${version.protostream}
                         </_exportcontents>
                         <Export-Package>
                            !${project.groupId}.*.logging
@@ -197,6 +197,7 @@
                            !javax.*,
                            !sun.misc,
                            !sun.reflect,
+                           !com.sun.jdi.*,
                            !net.jcip.annotations,
                            !org.jboss.logmanager,
                            !org.jboss.modules,
