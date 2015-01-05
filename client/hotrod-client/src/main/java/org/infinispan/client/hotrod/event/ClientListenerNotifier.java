@@ -8,7 +8,6 @@ import org.infinispan.client.hotrod.exceptions.TransportException;
 import org.infinispan.client.hotrod.impl.operations.AddClientListenerOperation;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.transport.Transport;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -31,7 +30,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Galder Zamarreño
@@ -105,13 +103,9 @@ public class ClientListenerNotifier {
 
    private void invokeFailoverEvent(EventDispatcher dispatcher) {
       List<ClientListenerInvocation> callbacks = dispatcher.invocables.get(ClientCacheFailover.class);
-      for (ClientListenerInvocation callback : callbacks) {
-         callback.invoke(new ClientCacheFailoverEvent() {
-            @Override
-            public Type getType() {
-               return Type.CLIENT_CACHE_FAILOVER;
-            }
-         });
+      if (callbacks != null) {
+         for (ClientListenerInvocation callback : callbacks)
+            callback.invoke(ClientEvents.mkCachefailoverEvent());
       }
    }
 

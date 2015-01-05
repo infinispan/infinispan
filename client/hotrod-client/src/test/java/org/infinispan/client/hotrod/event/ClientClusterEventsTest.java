@@ -122,22 +122,29 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       builder.balancingStrategy(StickyServerLoadBalancingStrategy.class);
       RemoteCacheManager newClient = new RemoteCacheManager(builder.build());
       try {
-         WithStateEventLogListener<Integer> withStateEventLogListener = new WithStateEventLogListener<>();
-         EventLogListener<Integer> withoutStateEventLogListener = new EventLogListener<>();
+         WithStateEventLogListener<Integer> statefulListener = new WithStateEventLogListener<>();
+         EventLogListener<Integer> statelessListener = new EventLogListener<>();
+         FailoverEventLogListener<Integer> failoverListener = new FailoverEventLogListener<>();
          RemoteCache<Integer, String> c = newClient.getCache();
          c.put(0, "zero");
          c.remove(0);
-         c.addClientListener(withoutStateEventLogListener);
-         c.addClientListener(withStateEventLogListener);
+         c.addClientListener(statelessListener);
+         c.addClientListener(statefulListener);
+         c.addClientListener(failoverListener);
          c.put(1, "one");
-         withStateEventLogListener.expectOnlyCreatedEvent(1, cache(0));
-         withoutStateEventLogListener.expectOnlyCreatedEvent(1, cache(0));
+         statefulListener.expectOnlyCreatedEvent(1, cache(0));
+         statelessListener.expectOnlyCreatedEvent(1, cache(0));
+         failoverListener.expectOnlyCreatedEvent(1, cache(0));
          findServerAndKill(newClient, servers, cacheManagers);
          c.put(2, "two");
-         withoutStateEventLogListener.expectFailoverEvent();
-         withStateEventLogListener.expectFailoverEvent();
-         withoutStateEventLogListener.expectNoEvents();
-         withStateEventLogListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
+         // Failover expectations
+         statelessListener.expectNoEvents();
+         statefulListener.expectFailoverEvent();
+         failoverListener.expectFailoverEvent();
+         // State expectations
+         statelessListener.expectNoEvents();
+         failoverListener.expectNoEvents();
+         statefulListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
          c.remove(1);
          c.remove(2);
       } finally {
@@ -146,6 +153,6 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
    }
 
    @ClientListener(includeCurrentState = true)
-   public static class WithStateEventLogListener<K> extends EventLogListener<K> {}
+   public static class WithStateEventLogListener<K> extends FailoverEventLogListener<K> {}
 
 }
