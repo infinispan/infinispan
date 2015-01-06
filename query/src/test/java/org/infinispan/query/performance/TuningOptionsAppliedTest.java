@@ -6,11 +6,10 @@ import org.apache.lucene.store.Directory;
 import org.hibernate.search.backend.configuration.impl.IndexWriterSetting;
 import org.hibernate.search.backend.spi.LuceneIndexingParameters;
 import org.hibernate.search.backend.spi.LuceneIndexingParameters.ParameterSet;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
-import org.hibernate.search.indexes.impl.IndexManagerHolder;
 import org.hibernate.search.indexes.impl.NRTIndexManager;
 import org.hibernate.search.indexes.spi.IndexManager;
-import org.hibernate.search.infinispan.impl.InfinispanDirectoryProvider;
+import org.hibernate.search.infinispan.spi.InfinispanDirectoryProvider;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.store.DirectoryProvider;
 import org.hibernate.search.store.impl.FSDirectoryProvider;
 import org.infinispan.Cache;
@@ -26,7 +25,7 @@ import org.testng.annotations.Test;
 
 /**
  * Verifies the options used for performance tuning are actually being applied to the Search engine
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.3
  */
@@ -36,7 +35,7 @@ public class TuningOptionsAppliedTest {
    public void verifyFSDirectoryOptions() throws IOException {
       EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.fromXml("nrt-performance-writer.xml");
       try {
-         SearchFactoryImplementor si = extractSearchFactoryImplementor(embeddedCacheManager);
+         SearchIntegrator si = extractSearchFactoryImplementor(embeddedCacheManager);
          NRTIndexManager nrti = verifyShardingOptions(si, 6);
          verifyIndexWriterOptions(nrti, 220, 4096, 30);
          verifyUsesFSDirectory(nrti);
@@ -49,7 +48,7 @@ public class TuningOptionsAppliedTest {
    public void verifyInfinispanDirectoryOptions() throws IOException, IllegalArgumentException, IllegalAccessException, SecurityException, NoSuchFieldException {
       EmbeddedCacheManager embeddedCacheManager = TestCacheManagerFactory.fromXml("nrt-performance-writer-infinispandirectory.xml");
       try {
-         SearchFactoryImplementor si = extractSearchFactoryImplementor(embeddedCacheManager);
+         SearchIntegrator si = extractSearchFactoryImplementor(embeddedCacheManager);
          NRTIndexManager nrti = verifyShardingOptions(si, 6);
          verifyIndexWriterOptions(nrti, 64, 1024, 30);
          verifyUsesInfinispanDirectory(nrti, 128000, embeddedCacheManager);
@@ -61,20 +60,19 @@ public class TuningOptionsAppliedTest {
       }
    }
 
-   private SearchFactoryImplementor extractSearchFactoryImplementor(EmbeddedCacheManager embeddedCacheManager) {
+   private SearchIntegrator extractSearchFactoryImplementor(EmbeddedCacheManager embeddedCacheManager) {
       Cache<Object, Object> cache = embeddedCacheManager.getCache("Indexed");
       cache.put("hey this type exists", new Person("id", "name", 3));
       SearchManager searchManager = Search.getSearchManager(cache);
-      return (SearchFactoryImplementor)searchManager.getSearchFactory();
+      return searchManager.getSearchFactory();
    }
 
-   private NRTIndexManager verifyShardingOptions(SearchFactoryImplementor searchFactory, int expectedShards) {
-      IndexManagerHolder allIndexesManager = searchFactory.getIndexManagerHolder();
+   private NRTIndexManager verifyShardingOptions(SearchIntegrator searchIntegrator, int expectedShards) {
       for (int i = 0; i < expectedShards; i++)
-         Assert.assertNotNull(allIndexesManager.getIndexManager("person."+i), "person."+i+" IndexManager missing!");
-      Assert.assertNull(allIndexesManager.getIndexManager("person."+expectedShards), "An IndexManager too much was created!");
+         Assert.assertNotNull(searchIntegrator.getIndexManager("person."+i), "person."+i+" IndexManager missing!");
+      Assert.assertNull(searchIntegrator.getIndexManager("person."+expectedShards), "An IndexManager too much was created!");
 
-      IndexManager indexManager = allIndexesManager.getIndexManager("person.0");
+      IndexManager indexManager = searchIntegrator.getIndexManager("person.0");
       Assert.assertTrue(indexManager instanceof NRTIndexManager);
       NRTIndexManager nrtIM = (NRTIndexManager)indexManager;
       return nrtIM;

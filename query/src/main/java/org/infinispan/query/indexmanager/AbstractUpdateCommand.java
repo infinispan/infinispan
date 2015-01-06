@@ -1,7 +1,7 @@
 package org.infinispan.query.indexmanager;
 
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.remote.BaseRpcCommand;
@@ -29,7 +29,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
 
    protected static final Log log = LogFactory.getLog(AbstractUpdateCommand.class, Log.class);
 
-   protected SearchFactoryImplementor searchFactory;
+   protected SearchIntegrator searchFactory;
    protected String indexName;
    protected byte[] serializedModel;
    protected QueryInterceptor queryInterceptor;
@@ -68,7 +68,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
       if (ci.getCacheManager().cacheExists(cacheName)) {
          Cache cache = ci.getCacheManager().getCache(cacheName);
          SearchManager searchManager = Search.getSearchManager(cache);
-         searchFactory = (SearchFactoryImplementor) searchManager.getSearchFactory();
+         searchFactory = searchManager.getSearchFactory();
          queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       }
       else {
@@ -80,7 +80,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
    public boolean canBlock() {
       return true;
    }
-   
+
    protected List<LuceneWork> transformKeysToStrings(final List<LuceneWork> luceneWorks) {
       ArrayList<LuceneWork> transformedWorks = new ArrayList<>(luceneWorks.size());
       for (LuceneWork lw : luceneWorks) {

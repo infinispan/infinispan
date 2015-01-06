@@ -27,7 +27,7 @@ public class IndexUpdateCommand extends AbstractUpdateCommand {
       if (queryInterceptor.isStopping()) {
          throw log.cacheIsStoppingNoCommandAllowed(cacheName);
       }
-      IndexManager indexManager = searchFactory.getIndexManagerHolder().getIndexManager(indexName);
+      IndexManager indexManager = searchFactory.getIndexManager(indexName);
       if (indexManager == null) {
          throw new SearchException("Unknown index referenced : " + indexName);
       }

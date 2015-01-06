@@ -1,13 +1,12 @@
 package org.infinispan.query.impl;
 
 import org.hibernate.search.cfg.Environment;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 
 import java.util.Properties;
 import java.util.Set;
 
-import static org.hibernate.search.infinispan.InfinispanIntegration.*;
+import static org.hibernate.search.infinispan.spi.InfinispanIntegration.*;
 
 /**
  * Extract useful information from indexing configuration

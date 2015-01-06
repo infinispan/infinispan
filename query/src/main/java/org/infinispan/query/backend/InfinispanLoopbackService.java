@@ -1,13 +1,13 @@
 package org.infinispan.query.backend;
 
-import org.hibernate.search.infinispan.CacheManagerService;
+import org.hibernate.search.infinispan.spi.CacheManagerService;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Simple wrapper to make the Cache ComponentRegistry and the CacheManager available to the
  * services managed by Hibernate Search.
- * 
+ *
  * @author Sanne Grinovero
  * @since 7.0
  */

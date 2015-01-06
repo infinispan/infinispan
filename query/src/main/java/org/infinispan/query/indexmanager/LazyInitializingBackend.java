@@ -4,14 +4,14 @@ import java.util.List;
 
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
-import org.hibernate.search.indexes.impl.DirectoryBasedIndexManager;
+import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 
 /**
  * This backend only triggers initialization of a different backend when
  * incoming indexing operations trigger it, then transfers the incoming
  * operations to the new backend.
  * Which backed is being selected depends on the cluster state.
- * 
+ *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
  * @since 7.0
  */

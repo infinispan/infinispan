@@ -1,7 +1,6 @@
 package org.infinispan.query.clustered.commandworkers;
 
 import org.apache.lucene.search.TopDocs;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.clustered.QueryResponse;
@@ -18,7 +17,7 @@ public class CQCreateLazyQuery extends ClusteredQueryCommandWorker {
 
    @Override
    public QueryResponse perform() {
-      query.afterDeserialise((SearchFactoryImplementor) getSearchFactory());
+      query.afterDeserialise(getSearchFactory());
       DocumentExtractor extractor = query.queryDocumentExtractor();
       int resultSize = query.queryResultSize();
 

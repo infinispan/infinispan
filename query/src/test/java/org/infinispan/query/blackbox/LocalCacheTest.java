@@ -22,8 +22,8 @@ import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.hibernate.search.filter.FullTextFilter;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
@@ -66,7 +66,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    protected String key2 = "BigGoat";
    protected String key3 = "MiniGoat";
    protected String anotherGrassEaterKey = "anotherGrassEaterKey";
-   
+
    public LocalCacheTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
@@ -254,7 +254,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       luceneQuery = queryParser.parse("Goat");
       cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
       found = cacheQuery.list();
-      
+
       assert found.size() == 1 : "Size of list should be 1";
       assert !found.contains(person2) : "Person 2 should not be found now";
       assert !found.contains(person1) : "Person 1 should not be found because it does not meet the search criteria";
@@ -688,7 +688,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       p.setAge(30);
       p.setBlurb("works best on weekends");
       cache.put(p.getName(), p);
-      
+
       assertIndexingKnows(cache, Person.class);
    }
 
@@ -699,9 +699,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
     */
    private void assertIndexingKnows(Cache<Object, Object> cache, Class... types) {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
-      SearchFactoryImplementor searchFactoryIntegrator = (SearchFactoryImplementor) cr.getComponent(SearchIntegrator.class);
-      assertNotNull(searchFactoryIntegrator);
-      Map<Class<?>, EntityIndexBinding> indexBindingForEntity = searchFactoryIntegrator.getIndexBindings();
+      SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
+      assertNotNull(searchIntegrator);
+      Map<Class<?>, EntityIndexBinding> indexBindingForEntity = searchIntegrator.unwrap(ExtendedSearchIntegrator.class).getIndexBindings();
       assertNotNull(indexBindingForEntity);
       Set<Class<?>> keySet = indexBindingForEntity.keySet();
       assertEquals(types.length, keySet.size());
@@ -765,7 +765,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
       StaticTestingErrorHandler.assertAllGood(cache);
    }
-   
+
    protected void enhanceConfig(ConfigurationBuilder c) {
       // no op, meant to be overridden
    }

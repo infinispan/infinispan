@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import javax.transaction.TransactionManager;
 
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.hibernate.search.engine.spi.SearchFactoryImplementor;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
@@ -85,8 +85,8 @@ public class MultiNodeDistributedTest extends AbstractInfinispanTest {
    private boolean isMasterNode(Cache<?,?> cache) {
       //Implicitly verifies the components are setup as configured by casting:
       SearchManager searchManager = Search.getSearchManager(cache);
-      SearchFactoryImplementor searchFactory = (SearchFactoryImplementor) searchManager.getSearchFactory();
-      InfinispanIndexManager indexManager = (InfinispanIndexManager) searchFactory.getIndexManagerHolder().getIndexManager("person");
+      SearchIntegrator searchFactory = searchManager.getSearchFactory();
+      InfinispanIndexManager indexManager = (InfinispanIndexManager) searchFactory.getIndexManager("person");
       return indexManager.isMasterLocal();
    }
 
