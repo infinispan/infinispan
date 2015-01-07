@@ -10,7 +10,7 @@ import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
  * The main IndexingBackend implementations are the one forwarding to another node, and the one applying to the local node.
  * We when defined a set of additional implementations to handle intermediate transitionaly behaviour, each such implementation
  * respects this contract.
- * 
+ *
  * @see ClusteredSwitchingBackend
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
  * @since 7.0

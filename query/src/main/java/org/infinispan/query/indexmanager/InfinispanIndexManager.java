@@ -12,7 +12,7 @@ import org.infinispan.util.logging.LogFactory;
 
 /**
  * A custom IndexManager to store indexes in the grid itself.
- * 
+ *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2012 Red Hat Inc.
  */
 public class InfinispanIndexManager extends DirectoryBasedIndexManager {

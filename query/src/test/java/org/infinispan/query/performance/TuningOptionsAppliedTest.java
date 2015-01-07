@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 
 /**
  * Verifies the options used for performance tuning are actually being applied to the Search engine
- * 
+ *
  * @author Sanne Grinovero
  * @since 5.3
  */

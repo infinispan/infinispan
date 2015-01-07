@@ -11,7 +11,7 @@ import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
  * incoming indexing operations trigger it, then transfers the incoming
  * operations to the new backend.
  * Which backed is being selected depends on the cluster state.
- * 
+ *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
  * @since 7.0
  */
