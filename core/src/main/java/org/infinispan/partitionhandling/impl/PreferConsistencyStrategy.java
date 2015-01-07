@@ -46,8 +46,8 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       }
 
       if (isDataLost(context.getStableTopology().getCurrentCH(), newMembers)) {
-         log.enteringUnavailableModeGracefulLeaver(context.getCacheName(), leaver);
-         context.updateAvailabilityMode(newMembers, AvailabilityMode.UNAVAILABLE, true);
+         log.enteringDegradedModeGracefulLeaver(context.getCacheName(), leaver);
+         context.updateAvailabilityMode(newMembers, AvailabilityMode.DEGRADED_MODE, true);
          return;
       }
 
@@ -107,7 +107,6 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       int maxTopologyId = 0;
       CacheTopology maxStableTopology = null;
       CacheTopology maxActiveTopology = null;
-      Set<CacheTopology> unavailableTopologies = new HashSet<>();
       Set<CacheTopology> degradedTopologies = new HashSet<>();
       CacheTopology maxDegradedTopology = null;
       for (CacheStatusResponse response : statusResponses) {
@@ -137,8 +136,6 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
             if (maxDegradedTopology == null || maxDegradedTopology.getTopologyId() < partitionTopology.getTopologyId()) {
                maxDegradedTopology = partitionTopology;
             }
-         } else if (response.getAvailabilityMode() == AvailabilityMode.UNAVAILABLE) {
-            unavailableTopologies.add(partitionTopology);
          } else {
             log.unexpectedAvailabilityMode(context.getAvailabilityMode(), context.getCacheName(),
                   response.getCacheTopology());
@@ -154,25 +151,17 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
       if (maxDegradedTopology != null) {
          log.tracef("Max degraded partition topology: %s, all degraded: %s", maxDegradedTopology, degradedTopologies);
       }
-      if (!unavailableTopologies.isEmpty()) {
-         log.tracef("Found unavailable partition topologies: %s", unavailableTopologies);
-      }
 
       List<Address> actualMembers = new ArrayList<>(context.getExpectedMembers());
       CacheTopology mergedTopology;
       AvailabilityMode mergedAvailabilityMode;
-      if (!unavailableTopologies.isEmpty()) {
-         log.debugf("At least one of the partitions is unavailable, staying in unavailable mode");
-         mergedTopology = unavailableTopologies.iterator().next();
-         actualMembers.retainAll(mergedTopology.getMembers());
-         mergedAvailabilityMode = AvailabilityMode.UNAVAILABLE;
-      } else if (maxActiveTopology != null) {
+      if (maxActiveTopology != null) {
          log.debugf("One of the partitions is available, using that partition's topology");
          mergedTopology = maxActiveTopology;
          actualMembers.retainAll(mergedTopology.getMembers());
          mergedAvailabilityMode = AvailabilityMode.AVAILABLE;
       } else if (!degradedTopologies.isEmpty()) {
-         log.debugf("No active or unavailable partitions, so all the partitions must be in degraded mode.");
+         log.debugf("No active partitions, so all the partitions must be in degraded mode.");
          // Once a partition enters degraded mode its CH won't change, but it could be that a partition managed to
          // rebalance before losing another member and entering degraded mode.
          mergedTopology = maxDegradedTopology;
@@ -201,9 +190,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
             mergedAvailabilityMode);
 
       // It shouldn't be possible to recover from unavailable mode without user action
-      if (newAvailabilityMode == AvailabilityMode.UNAVAILABLE) {
-         log.debugf("After merge, cache %s is staying in unavailable mode", context.getCacheName());
-      } else if (newAvailabilityMode == AvailabilityMode.DEGRADED_MODE) {
+      if (newAvailabilityMode == AvailabilityMode.DEGRADED_MODE) {
          log.debugf("After merge, cache %s is staying in degraded mode", context.getCacheName());
          context.updateAvailabilityMode(actualMembers, newAvailabilityMode, true);
       } else { // AVAILABLE
@@ -214,9 +201,6 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
 
    protected AvailabilityMode computeAvailabilityAfterMerge(AvailabilityStrategyContext context,
          CacheTopology maxStableTopology, List<Address> newMembers, AvailabilityMode initialMode) {
-      if (initialMode == AvailabilityMode.UNAVAILABLE)
-         return AvailabilityMode.UNAVAILABLE;
-
       if (maxStableTopology != null) {
          List<Address> stableMembers = maxStableTopology.getMembers();
          List<Address> lostMembers = new ArrayList<>(stableMembers);
@@ -237,8 +221,8 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
    @Override
    public void onRebalanceEnd(AvailabilityStrategyContext context) {
       // We may have a situation where 2 nodes leave in sequence, and the rebalance for the first leave only finishes
-      // after the second node left (and we entered degraded/unavailable mode).
-      // For now, we ignore the rebalance and we keep the cache in degraded/unavailable mode.
+      // after the second node left (and we entered degraded mode).
+      // For now, we ignore the rebalance and we keep the cache in degraded mode.
       // Don't need to queue another rebalance, if we need another rebalance it's already in the queue
    }
 

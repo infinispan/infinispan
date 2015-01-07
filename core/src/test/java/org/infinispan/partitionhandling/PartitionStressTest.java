@@ -112,7 +112,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
          TestingUtil.blockForMemberToFail(30000, partitionOneManagers.toArray(new CacheContainer[0]));
          TestingUtil.blockForMemberToFail(30000, partitionTwoManagers.toArray(new CacheContainer[0]));
 
-         log.infof("Nodes split, waiting for the caches to become unavailable");
+         log.infof("Nodes split, waiting for the caches to become degraded");
          eventually(new Condition() {
             @Override
             public boolean isSatisfied() throws Exception {
@@ -123,7 +123,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
 
          assertFuturesRunning(futures);
 
-         log.infof("Cache is unavailable, merging partitions %s and %s", partitionOne, partitionTwo);
+         log.infof("Cache is degraded, merging partitions %s and %s", partitionOne, partitionTwo);
          for (int i = 0; i < NUM_NODES; i++) {
             discards[i].resetIgnoredMembers();
          }

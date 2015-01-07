@@ -117,16 +117,16 @@ public class NumOwnersNodeCrashInSequenceTest extends MultipleCacheManagersTest 
       for (Object k : allKeys) cache(a0).put(k, k);
 
       StateSequencer ss = new StateSequencer();
-      ss.logicalThread("main", "main:st_in_progress", "main:2nd_node_left", "main:cluster_unavailable", "main:after_cluster_unavailable");
+      ss.logicalThread("main", "main:st_in_progress", "main:2nd_node_left", "main:cluster_degraded", "main:after_cluster_degraded");
 
       advanceOnInboundRpc(ss, advancedCache(a1),
             matchCommand(StateResponseCommand.class).matchCount(0).build())
-            .before("main:st_in_progress", "main:cluster_unavailable");
+            .before("main:st_in_progress", "main:cluster_degraded");
       // When the coordinator node stops gracefully there are two rebalance operations, one with the old coord
       // and one with the new coord. The second
       advanceOnInboundRpc(ss, advancedCache(a1),
             matchCommand(StateResponseCommand.class).matchCount(1).build())
-            .before("main:after_cluster_unavailable");
+            .before("main:after_cluster_degraded");
 
       // Prepare for rebalance. Manager a1 will request state from c0 for segment 2
       cchf.setMembersToUse(advancedCache(a0).getRpcManager().getTransport().getMembers());

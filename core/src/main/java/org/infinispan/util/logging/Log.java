@@ -1122,8 +1122,8 @@ public interface Log extends BasicLogger {
    @Message(value = "More than one configuration file with specified name on classpath. The first one will be used:\n %s", id = 304)
    void ambiguousConfigurationFiles(String files);
 
-   @Message(value = "Cluster is unavailable because of node failures.", id = 305)
-   AvailabilityException partitionUnavailable();
+   @Message(value = "Cluster is operating in degraded mode because of node failures.", id = 305)
+   AvailabilityException partitionDegraded();
 
    @Message(value = "Key '%s' is not available. Not all owners are in this partition", id = 306)
    AvailabilityException degradedModeKeyUnavailable(Object key);
@@ -1164,8 +1164,8 @@ public interface Log extends BasicLogger {
    void unexpectedAvailabilityMode(AvailabilityMode availabilityMode, String cacheName, CacheTopology cacheTopology);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Cache %s lost data because of graceful leaver %s, entering unavailable mode", id = 316)
-   void enteringUnavailableModeGracefulLeaver(String cacheName, Address leaver);
+   @Message(value = "Cache %s lost data because of graceful leaver %s, entering degraded mode", id = 316)
+   void enteringDegradedModeGracefulLeaver(String cacheName, Address leaver);
 
    @LogMessage(level = ERROR)
    @Message(value = "Cache %s lost data because of abrupt leavers %s, assuming a network split and entering degraded mode", id = 317)
