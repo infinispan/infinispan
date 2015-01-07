@@ -66,7 +66,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    protected String key2 = "BigGoat";
    protected String key3 = "MiniGoat";
    protected String anotherGrassEaterKey = "anotherGrassEaterKey";
-   
+
    public LocalCacheTest() {
       cleanup = CleanupPhase.AFTER_METHOD;
    }
@@ -254,7 +254,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       luceneQuery = queryParser.parse("Goat");
       cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
       found = cacheQuery.list();
-      
+
       assert found.size() == 1 : "Size of list should be 1";
       assert !found.contains(person2) : "Person 2 should not be found now";
       assert !found.contains(person1) : "Person 1 should not be found because it does not meet the search criteria";
@@ -688,7 +688,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       p.setAge(30);
       p.setBlurb("works best on weekends");
       cache.put(p.getName(), p);
-      
+
       assertIndexingKnows(cache, Person.class);
    }
 
@@ -765,7 +765,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       anotherGrassEater = new AnotherGrassEater("Another grass-eater", "Eats grass");
       StaticTestingErrorHandler.assertAllGood(cache);
    }
-   
+
    protected void enhanceConfig(ConfigurationBuilder c) {
       // no op, meant to be overridden
    }

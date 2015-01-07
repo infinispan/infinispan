@@ -18,7 +18,7 @@ public class SimpleLocalBackendFactory implements LocalBackendFactory {
    private final DirectoryBasedIndexManager indexManager;
    private Properties cfg;
    private WorkerBuildContext buildContext;
-   
+
 
    SimpleLocalBackendFactory(DirectoryBasedIndexManager indexManager, Properties cfg, WorkerBuildContext buildContext) {
       this.indexManager = indexManager;

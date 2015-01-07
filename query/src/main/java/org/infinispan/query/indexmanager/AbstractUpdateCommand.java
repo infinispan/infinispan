@@ -80,7 +80,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
    public boolean canBlock() {
       return true;
    }
-   
+
    protected List<LuceneWork> transformKeysToStrings(final List<LuceneWork> luceneWorks) {
       ArrayList<LuceneWork> transformedWorks = new ArrayList<>(luceneWorks.size());
       for (LuceneWork lw : luceneWorks) {
