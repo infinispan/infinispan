@@ -26,8 +26,10 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 /**
@@ -57,7 +59,7 @@ import java.util.List;
  */
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
-   protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<EmbeddedCacheManager>();
+   protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<>();
    protected IdentityHashMap<Cache<?, ?>, ReplListener> listeners = new IdentityHashMap<Cache<?, ?>, ReplListener>();
 
    @BeforeClass(alwaysRun = true)

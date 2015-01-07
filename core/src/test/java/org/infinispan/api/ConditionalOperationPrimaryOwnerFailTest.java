@@ -22,6 +22,8 @@ import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.replaceField;
@@ -80,7 +82,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
                                                any(InternalCacheEntry.class), anyBoolean(),
                                                any(FlagAffectedCommand.class), anyBoolean());
 
-      fork(new Runnable() {
+      Future<?> killMemberResult = fork(new Runnable() {
          @Override
          public void run() {
             killMember(1);
@@ -92,6 +94,7 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
       futureBackupOwnerCache.put(key, FINAL_VALUE);
 
       latch1.countDown();
+      killMemberResult.get(30, TimeUnit.SECONDS);
    }
 
    @Override
