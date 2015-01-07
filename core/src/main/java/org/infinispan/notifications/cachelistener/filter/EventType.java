@@ -10,10 +10,6 @@ import org.infinispan.notifications.cachelistener.event.Event;
  * @since 7.0
  */
 public class EventType {
-   public enum Operation {
-      CREATE, REMOVE, MODIFY;
-   }
-
    private final Event.Type type;
    private final boolean retried;
    private final boolean pre;
@@ -25,9 +21,9 @@ public class EventType {
       this.type = type;
    }
 
-   boolean isPreEvent() { return pre; };
+   public boolean isPreEvent() { return pre; };
 
-   boolean isRetry() {
+   public boolean isRetry() {
       return retried;
    };
 
@@ -35,15 +31,15 @@ public class EventType {
       return type;
    }
 
-   boolean isCreate() {
+   public boolean isCreate() {
       return type == Event.Type.CACHE_ENTRY_CREATED;
    }
 
-   boolean isModified() {
+   public boolean isModified() {
       return type == Event.Type.CACHE_ENTRY_MODIFIED;
    }
 
-   boolean isRemove() {
+   public boolean isRemove() {
       return type == Event.Type.CACHE_ENTRY_REMOVED;
    }
 }
