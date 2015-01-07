@@ -794,34 +794,27 @@ assumed to be because of a network problem.
 If the configured number of copies (_numOwners_) is greater than 1, the
 cluster can remain available and will try to make new replicas of the data
 on the crashed node. However, other nodes might crash during the rebalance process.
-If more than _numOwners_ nodes leave in a short interval of time, there is a
+If more than _numOwners_ nodes crash in a short interval of time, there is a
 chance that some cache entries have disappeared from the cluster altogether.
 In this case, with partition handling functionality enabled, Infinispan
 assumes (incorrectly) that there is a split brain and enters degraded mode
 as described in the split-brain section.
 
-At this stage there is no way for the cluster to become available again,
+The administrator can also shut down more than *numOwners* nodes in
+rapid succession, causing the loss of the data stored only on those nodes.
+When the administrator shuts down a node gracefully, Infinispan knows that
+the node can't come back.
+However, the cluster doesn't keep track of how each node left, and the cache
+still enters _degraded_ mode as if those nodes had crashed.
+
+At this stage there is no way for the cluster to recover its state,
 except stopping it and repopulating it on restart with the data from an
 external source.
 Clusters are expected to be configured with an appropriate *numOwners* in
 order to avoid *numOwners* successive node failures, so this situation
 should be pretty rare.
-However, having the partition handling enabled represents a safety net for
-systems that do not.
-
-When the administrator shuts down a node gracefully, Infinispan knows that
-the node can't come back so it never enters degraded mode. However, the
-administrator can shut down more than *numOwners* nodes in rapid succession,
-causing the loss of the data stored only on those nodes. In that case the
-cache enters a different mode called _unavailable_.
-
-Just like degraded mode, unavailable mode only allows access to keys that
-are fully owned by the live members, and requests to access partially-owned
-keys throw `AvailabilityException`.
-The difference between the two modes is that the cluster will never recover
-from unavailable mode by itself.
-There are two ways to exit unavailable mode: restart the entire cluster,
-or by forcing the availability mode back to AVAILABLE
+If the application can handle losing some of the data in the cache, the
+administrator can force the availability mode back to AVAILABLE
 <<partition-handling-monitoring,via JMX>>.
 
 [[partition-handling-configuration]]
@@ -853,7 +846,7 @@ dcc.clustering().partitionHandling().enabled(true);
 The availability mode of a cache is exposed in JMX as an attribute in the
 link:http://docs.jboss.org/infinispan/7.0/apidocs/jmxComponents.html#Cache[Cache MBean].
 The attribute is writable, allowing an administrator to forcefully migrate
-a cache from degraded or unavailable state back to available (at the cost of
+a cache from degraded state back to available (at the cost of
 consistency).
 
 The availability mode is also accessible via the

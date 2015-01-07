@@ -1,6 +1,5 @@
 package org.infinispan.topology;
 
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -108,7 +107,7 @@ public class CacheTopology {
 
    /**
     * @return The nodes that are active members of the cache. It should be equal to {@link #getMembers()} when the
-    *    cache is available, and a strict subset if the cache is in degraded/unavailable mode.
+    *    cache is available, and a strict subset if the cache is in degraded mode.
     * @see org.infinispan.partitionhandling.AvailabilityMode
     */
    public List<Address> getActualMembers() {

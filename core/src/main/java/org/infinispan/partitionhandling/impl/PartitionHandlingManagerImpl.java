@@ -91,7 +91,7 @@ public class PartitionHandlingManagerImpl implements PartitionHandlingManager {
    @Override
    public void checkBulkRead() {
       if (availabilityMode != AvailabilityMode.AVAILABLE) {
-         throw log.partitionUnavailable();
+         throw log.partitionDegraded();
       }
    }
 

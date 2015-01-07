@@ -8,9 +8,9 @@ package org.infinispan.partitionhandling;
 public enum AvailabilityMode {
    /** Regular operation mode */
    AVAILABLE,
-   /** Data can not be safely accessed because of a network split */
+   /** Data can not be safely accessed because of a network split or successive nodes leaving. */
    DEGRADED_MODE,
-   /** Data has been lost permanently because of successive nodes leaving */
+   /** @deprecated Use {@link #DEGRADED_MODE} instead. */
    UNAVAILABLE,
    ;
 
