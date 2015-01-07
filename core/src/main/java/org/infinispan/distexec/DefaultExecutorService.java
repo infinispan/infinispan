@@ -1037,6 +1037,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
                Response value = e.getValue();
                if (value instanceof SuccessfulResponse) {
                   result = (V) ((SuccessfulResponse) value).getResponseValue();
+               } else {
+                  throw new ExecutionException(new Exception(value != null ? value.toString() : "Unknown cause"));
                }
             }
          } else {
