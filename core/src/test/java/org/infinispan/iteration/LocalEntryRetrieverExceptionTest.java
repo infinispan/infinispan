@@ -4,7 +4,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import static org.testng.AssertJUnit.fail;
-import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertSame;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -31,7 +31,7 @@ public class LocalEntryRetrieverExceptionTest extends BaseSetupEntryRetrieverTes
       // Extract real one to replace after
       DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
       try {
-         Throwable t = new AssertionError();
+         Throwable t = new CacheException();
          DataContainer mockContainer = when(mock(DataContainer.class).iterator()).thenThrow(t).getMock();
          TestingUtil.replaceComponent(cache, DataContainer.class, mockContainer, true);
          
@@ -39,13 +39,7 @@ public class LocalEntryRetrieverExceptionTest extends BaseSetupEntryRetrieverTes
             cache.getAdvancedCache().filterEntries(AcceptAllKeyValueFilter.getInstance()).iterator().hasNext();
             fail("We should have gotten a CacheException");
          } catch (CacheException e) {
-            Throwable cause = e;
-            while ((cause = cause.getCause()) != null) {
-               if (cause == t) {
-                  break;
-               }
-            }
-            assertNotNull("We should have found the throwable as a cause", cause);
+            assertSame("We should have found the throwable as a cause", t, e);
          }
       } finally {
          TestingUtil.replaceComponent(cache, DataContainer.class, dataContainer, true);

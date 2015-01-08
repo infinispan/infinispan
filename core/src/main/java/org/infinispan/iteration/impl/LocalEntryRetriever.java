@@ -6,6 +6,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.IteratorAsCloseableIterator;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -246,6 +247,17 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                                                                  final SegmentListener listener) {
       final Converter<? super K, ? super V, ? extends C> usedConverter = checkForKeyValueFilterConverter(filter, converter);
       wireFilterAndConverterDependencies(filter, usedConverter);
+      // If we aren't using a loader just return the iterator which works on the data container directly
+      if (flags != null && flags.contains(Flag.SKIP_CACHE_LOAD) || !cache.getCacheConfiguration().persistence().usingStores()) {
+         // If we aren't in available mode (clustered only) and we aren't forcing the operation to be local only, then this 
+         // operation can't continue since we are in a possible state of inconsistency.
+         if ((flags == null || !flags.contains(Flag.CACHE_MODE_LOCAL)) && partitionListener.currentMode != AvailabilityMode.AVAILABLE) {
+            throw log.partitionDegraded();
+         }
+         final Iterator<InternalCacheEntry<K, V>> iterator = dataContainer.iterator();
+
+         return new DataContainerIterator<>(iterator, filter, usedConverter);
+      }
       final Itr<C> iterator = new Itr<C>(batchSize);
       registerIterator(iterator, flags);
       final ItrQueuerHandler<C> handler = new ItrQueuerHandler<C>(iterator);
@@ -407,6 +419,105 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
 
    protected interface BatchHandler<K, C> {
       public void handleBatch(boolean complete, Collection<CacheEntry<K, C>> entries) throws InterruptedException;
+   }
+
+   protected class DataContainerIterator<C> implements CloseableIterator<CacheEntry<K, C>> {
+      private CacheEntry<K, C> next;
+      private CacheEntry<K, C> prev;
+      
+      private final Iterator<InternalCacheEntry<K, V>> iterator;
+      private final KeyValueFilter<? super K, ? super V> filter;
+      private final Converter<? super K, ? super V, ? extends C> converter;
+
+      public DataContainerIterator(Iterator<InternalCacheEntry<K, V>> iterator, 
+            KeyValueFilter<? super K, ? super V> filter,
+            Converter<? super K, ? super V, ? extends C> converter) {
+         this.iterator = iterator;
+         this.filter = filter;
+         this.converter = converter;
+      }
+
+      @Override
+      public boolean hasNext() {
+         while (next == null) {
+            if (iterator.hasNext()) {
+               InternalCacheEntry<K, V> entry = iterator.next();
+
+               // Skip any expired entries
+               if (entry.isExpired(timeService.wallClockTime())) {
+                  continue;
+               }
+
+               K marshalledKey = unwrapMarshalledvalue(entry.getKey());
+               V marshalledValue = unwrapMarshalledvalue(entry.getValue());
+
+               InternalCacheEntry<K, V> clone;
+               if (marshalledKey != entry.getKey() || marshalledValue != entry.getValue()) {
+                  clone = entryFactory.create(marshalledKey, marshalledValue, entry);
+               } else {
+                  clone = entry;
+               }
+               if (filter != null) {
+                  K key = clone.getKey();
+                  if (converter == null && filter instanceof KeyValueFilterConverter) {
+                     C converted = ((KeyValueFilterConverter<K, V, C>)filter).filterAndConvert(
+                           key, clone.getValue(), clone.getMetadata());
+                     if (converted != null) {
+                        // If entry and clone are the same we didn't have a marshalled value then we need to create a 
+                        // copy with the new value
+                        if (entry == clone) {
+                           clone = (InternalCacheEntry<K, V>) entryFactory.create(clone.getKey(), converted, entry);
+                        } else {
+                           clone.setValue((V) converted);
+                        }
+                     } else {
+                        continue;
+                     }
+                  }
+                  else if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
+                     continue;
+                  }
+               }
+
+               next = (CacheEntry<K, C>) clone;
+               if (converter != null) {
+                  C newValue = converter.convert(clone.getKey(), clone.getValue(), clone.getMetadata());
+                  if (newValue != clone.getValue()) {
+                     // If we didn't have a marshalled value then we need to create a copy with the new value
+                     if (entry == clone) {
+                        next = entryFactory.create(clone.getKey(), newValue, entry);
+                     } else {
+                        next.setValue(newValue);
+                     }
+                  }
+               }
+            } else {
+               break;
+            }
+         }
+         return next != null;
+      }
+
+      @Override
+      public CacheEntry<K, C> next() {
+         if (next == null && !hasNext()) {
+            throw new NoSuchElementException();
+         }
+         CacheEntry<K, C> returnEntry = next;
+         next = null;
+         prev = returnEntry;
+         return returnEntry;
+      }
+
+      @Override
+      public void remove() {
+         cache.remove(prev.getKey());
+      }
+
+      @Override
+      public void close() {
+         // Nothing to do here
+      }
    }
 
    protected class ItrQueuerHandler<C> implements BatchHandler<K, C> {
