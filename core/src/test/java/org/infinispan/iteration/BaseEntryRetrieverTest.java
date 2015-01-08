@@ -1,6 +1,7 @@
 package org.infinispan.iteration;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
@@ -8,15 +9,12 @@ import org.infinispan.container.entries.TransientMortalCacheEntry;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyValueFilterConverter;
-import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.iteration.impl.EntryRetriever;
-import org.infinispan.metadata.Metadata;
 import org.testng.annotations.Test;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -25,8 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * Base class for entry retriever tests
@@ -98,7 +96,7 @@ public abstract class BaseEntryRetrieverTest extends BaseSetupEntryRetrieverTest
                break;
             }
          }
-         assertNotNull(found, "No retrieved Value matching" + inserted);
+         assertNotNull("No retrieved Value matching" + inserted, found);
          assertEquals(found.getValue(), inserted.getValue());
          assertEquals(found.getMaxIdle(), inserted.getMaxIdle());
          assertEquals(found.getLifespan(), inserted.getLifespan());
@@ -174,7 +172,31 @@ public abstract class BaseEntryRetrieverTest extends BaseSetupEntryRetrieverTest
       KeyValueFilterConverter<MagicKey, String, String> filterConverter = new CompositeKeyValueFilterConverter<>(
             new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(excludedEntry.getKey()))),
             new StringTruncator(2, 5));
-      try (EntryIterable<MagicKey, String> iterable = cache.getAdvancedCache().filterEntries(filterConverter)) {
+      try (CloseableIterable<CacheEntry<MagicKey, String>> iterable = cache.getAdvancedCache()
+            .filterEntries(filterConverter).converter(filterConverter)) {
+         Map<MagicKey, String> results = mapFromIterable(iterable);
+
+         assertEquals(values.size(), results.size());
+         for (Map.Entry<Object, String> entry : values.entrySet()) {
+            assertEquals(entry.getValue().substring(2, 7), results.get(entry.getKey()));
+         }
+      }
+   }
+
+   @Test
+   public void testFilterAndConverterCombinedConverterNotPassed() {
+      Map<Object, String> values = putValuesInCache();
+      Iterator<Map.Entry<Object, String>> iter = values.entrySet().iterator();
+      Map.Entry<Object, String> excludedEntry = iter.next();
+      // Remove it so comparison below will be correct
+      iter.remove();
+
+
+      Cache<MagicKey, String> cache = cache(0, CACHE_NAME);
+      KeyValueFilterConverter<MagicKey, String, String> filterConverter = new CompositeKeyValueFilterConverter<>(
+            new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(excludedEntry.getKey()))),
+            new StringTruncator(2, 5));
+      try (CloseableIterable<CacheEntry<MagicKey, String>> iterable = cache.getAdvancedCache().filterEntries(filterConverter)) {
          Map<MagicKey, String> results = mapFromIterable(iterable);
 
          assertEquals(values.size(), results.size());
