@@ -283,7 +283,7 @@
         <suite.manual.include>**/*.java</suite.manual.include>
         <suite.manual.exclude.groups>
             org.infinispan.server.test.category.ClientLocal,org.infinispan.server.test.category.ClientClustered,org.infinispan.server.test.category.RollingUpgrades,org.infinispan.server.test.category.RollingUpgradesDist,org.infinispan.server.test.category.Unstable,org.infinispan.server.test.category.Osgi,
-            org.infinispan.server.test.category.Security, org.infinispan.server.test.category.Queries
+            org.infinispan.server.test.category.Queries
         </suite.manual.exclude.groups>
         <suite.client.local.config>testsuite/standalone-default-local.xml</suite.client.local.config>
         <suite.client.dist.config>testsuite/clustered-default-dist.xml</suite.client.dist.config>
@@ -1055,19 +1055,7 @@
                 <suite.client.dist.phase>none</suite.client.dist.phase>
                 <suite.client.repl.phase>none</suite.client.repl.phase>
                 <suite.security.phase>integration-test</suite.security.phase>
-                <suite.security.arquillian>suite-security</suite.security.arquillian>
-            </properties>
-        </profile>
-        <profile>
-            <id>suite.security.manual</id>
-            <properties>
-                <suite.manual.phase>none</suite.manual.phase>
-                <suite.queries.phase>none</suite.queries.phase>
-                <suite.client.local.phase>none</suite.client.local.phase>
-                <suite.client.dist.phase>none</suite.client.dist.phase>
-                <suite.client.repl.phase>none</suite.client.repl.phase>
-                <suite.security.phase>integration-test</suite.security.phase>
-                <suite.security.arquillian>suite-security-manual</suite.security.arquillian>
+                <suite.security.arquillian>suite-manual</suite.security.arquillian>
             </properties>
         </profile>
         <profile>
