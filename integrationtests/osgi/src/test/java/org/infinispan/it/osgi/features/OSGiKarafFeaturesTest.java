@@ -75,6 +75,8 @@ public class OSGiKarafFeaturesTest {
       checkInstall(service, "infinispan-cachestore-leveldb", "infinispan-cachestore-leveldb-java", version);
       checkInstall(service, "infinispan-cachestore-jpa", "infinispan-cachestore-jpa", version);
       checkInstall(service, "infinispan-osgi", "infinispan-osgi", version);
+      checkInstall(service, "infinispan-embedded", "infinispan-embedded", version);
+      checkInstall(service, "infinispan-remote", "infinispan-remote", version);
    }
 
    private void checkInstall(FeaturesService service, String artifactId, String feature, String version) throws Exception {
