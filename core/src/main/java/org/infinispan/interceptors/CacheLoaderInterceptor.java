@@ -1,12 +1,16 @@
 package org.infinispan.interceptors;
 
+import static org.infinispan.persistence.PersistenceUtil.convert;
+
+import java.util.Collection;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
-import org.infinispan.commands.read.EntrySetCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -43,18 +47,8 @@ import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static org.infinispan.persistence.PersistenceUtil.convert;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
 public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
@@ -93,46 +87,22 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-      if (enabled) {
-         Object key;
-         if ((key = command.getKey()) != null) {
-            loadIfNeeded(ctx, key, command);
-         }
-      }
-      return invokeNextInterceptor(ctx, command);
+      return visitDataCommand(ctx, command);
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (enabled) {
-         Object key;
-         if ((key = command.getKey()) != null) {
-            loadIfNeeded(ctx, key, command);
-         }
-      }
-      return invokeNextInterceptor(ctx, command);
+      return visitDataCommand(ctx, command);
    }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      if (enabled) {
-         Object key;
-         if ((key = command.getKey()) != null) {
-            loadIfNeededAndUpdateStats(ctx, key, command);
-         }
-      }
-      return invokeNextInterceptor(ctx, command);
+      return visitDataCommand(ctx, command);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      if (enabled) {
-         Object key;
-         if ((key = command.getKey()) != null) {
-            loadIfNeededAndUpdateStats(ctx, key, command);
-         }
-      }
-      return invokeNextInterceptor(ctx, command);
+      return visitDataCommand(ctx, command);
    }
 
    @Override
@@ -150,21 +120,19 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      if (enabled) {
-         Object key;
-         if ((key = command.getKey()) != null) {
-            loadIfNeededAndUpdateStats(ctx, key, command);
-         }
-      }
-      return invokeNextInterceptor(ctx, command);
+      return visitDataCommand(ctx, command);
    }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return visitDataCommand(ctx, command);
+   }
+
+   private Object visitDataCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       if (enabled) {
          Object key;
          if ((key = command.getKey()) != null) {
-            loadIfNeededAndUpdateStats(ctx, key, command);
+            loadIfNeeded(ctx, key, command);
          }
       }
       return invokeNextInterceptor(ctx, command);
@@ -235,14 +203,27 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       final AtomicReference<Boolean> isLoaded = new AtomicReference<>();
       InternalCacheEntry entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, persistenceManager, key,
                                                                              ctx, timeService, isLoaded);
+      Boolean isLoadedValue = isLoaded.get();
+      if (trace) {
+         log.tracef("Entry was loaded? %s", isLoadedValue);
+      }
+      if (getStatisticsEnabled()) {
+         if (isLoadedValue == null) {
+            // the entry was in data container, we haven't touched cache store
+         } else if (isLoadedValue) {
+            cacheLoads.incrementAndGet();
+         } else {
+            cacheMisses.incrementAndGet();
+         }
+      }
+
       if (entry != null) {
          CacheEntry wrappedEntry = wrapInternalCacheEntry(ctx, key, cmd, entry, isDelta);
-         if (isLoaded.get() == Boolean.TRUE) {
+         if (isLoadedValue != null && isLoadedValue.booleanValue() && wrappedEntry != null) {
             recordLoadedEntry(ctx, key, wrappedEntry, entry, cmd);
          }
-
       }
-      return isLoaded.get();
+      return isLoadedValue;
    }
 
    private boolean skipLoad(FlagAffectedCommand cmd, Object key, InvocationContext ctx) {
@@ -311,58 +292,36 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    /**
-    * This method records a loaded entry, performing the following steps: <ol> <li>Increments counters for reporting via
-    * JMX</li> <li>updates the 'entry' reference (an entry in the current thread's InvocationContext) with the contents
+    * This method records a loaded entry, performing the following steps: <ol>
+    * <li>updates the 'entry' reference (an entry in the current thread's InvocationContext) with the contents
     * of 'loadedEntry' (freshly loaded from the CacheStore) so that the loaded details will be flushed to the
-    * DataContainer when the call returns (in the LockingInterceptor, when locks are released)</li> <li>Notifies
-    * listeners</li> </ol>
+    * DataContainer when the call returns (in the LockingInterceptor, when locks are released)</li>
+    * <li>notifies listeners</li> </ol>
     */
    private void recordLoadedEntry(InvocationContext ctx, Object key,
                                   CacheEntry entry, InternalCacheEntry loadedEntry, FlagAffectedCommand cmd) {
-      boolean entryExists = loadedEntry != null;
-      if (trace) {
-         log.trace("Entry exists in loader? " + entryExists);
-      }
+      final Object value = loadedEntry.getValue();
+      // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
+      sendNotification(key, value, true, ctx, cmd);
+      entry.setValue(value);
 
-      if (getStatisticsEnabled()) {
-         if (entryExists) {
-            cacheLoads.incrementAndGet();
-         } else {
-            cacheMisses.incrementAndGet();
-         }
-      }
+      Metadata metadata = cmd.getMetadata();
+      Metadata loadedMetadata = loadedEntry.getMetadata();
+      if (metadata != null && loadedMetadata != null)
+         metadata = Metadatas.applyVersion(loadedMetadata, metadata);
+      else if (metadata == null)
+         metadata = loadedMetadata;
 
-      if (entryExists) {
-         final Object value = loadedEntry.getValue();
-         // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
-         sendNotification(key, value, true, ctx, cmd);
-         entry.setValue(value);
+      entry.setMetadata(metadata);
+      // TODO shouldn't we also be setting last used and created timestamps?
+      entry.setValid(true);
 
-         Metadata metadata = cmd.getMetadata();
-         Metadata loadedMetadata = loadedEntry.getMetadata();
-         if (metadata != null && loadedMetadata != null)
-            metadata = Metadatas.applyVersion(loadedMetadata, metadata);
-         else if (metadata == null)
-            metadata = loadedMetadata;
-
-         entry.setMetadata(metadata);
-         // TODO shouldn't we also be setting last used and created timestamps?
-         entry.setValid(true);
-
-         sendNotification(key, value, false, ctx, cmd);
-      }
+      sendNotification(key, value, false, ctx, cmd);
    }
 
    protected void sendNotification(Object key, Object value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand cmd) {
       notifier.notifyCacheEntryLoaded(key, value, pre, ctx, cmd);
-   }
-
-   private void loadIfNeededAndUpdateStats(InvocationContext ctx, Object key, FlagAffectedCommand cmd) throws Throwable {
-      Boolean found = loadIfNeeded(ctx, key, cmd);
-      if (found == Boolean.FALSE && getStatisticsEnabled()) {
-         cacheMisses.incrementAndGet();
-      }
    }
 
    @ManagedAttribute(
