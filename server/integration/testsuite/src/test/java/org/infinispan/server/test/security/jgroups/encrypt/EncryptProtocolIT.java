@@ -10,14 +10,13 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 
-import javax.management.ObjectName;
-
 import org.apache.commons.io.FileUtils;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.server.test.category.Security;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
 import org.jboss.arquillian.container.test.api.ContainerController;
@@ -25,6 +24,7 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
@@ -40,6 +40,7 @@ import org.junit.runner.RunWith;
  * @author Martin Gencur
  */
 @RunWith(Arquillian.class)
+@Category({ Security.class })
 public class EncryptProtocolIT {
 
     @InfinispanResource
