@@ -1,12 +1,17 @@
 package org.infinispan.interceptors.locking;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.atomic.DeltaCompositeKey;
-import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -18,11 +23,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
-
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Base class for transaction based locking interceptors.
@@ -56,25 +56,12 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    }
 
    @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      try {
-         return super.visitGetKeyValueCommand(ctx, command);
-      } finally {
-         //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
-         //locks need to be released in this situation as they might have been acquired from L1.
-         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
+   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
+         // Cache.putForExternalRead() is non-transactional
+         return visitNonTxDataWriteCommand(ctx, command);
       }
-   }
-
-   @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      try {
-         return super.visitGetCacheEntryCommand(ctx, command);
-      } finally {
-         //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
-         //locks need to be released in this situation as they might have been acquired from L1.
-         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
-      }
+      return visitDataWriteCommand(ctx, command);
    }
 
    @Override

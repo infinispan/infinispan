@@ -1,15 +1,17 @@
 package org.infinispan.interceptors.locking;
 
+import java.util.Set;
+
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.AbstractVisitor;
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -25,8 +27,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Set;
 
 /**
  * Locking interceptor to be used by optimistic transactional caches.
@@ -60,7 +60,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       }
    }
 
-   private void markKeyAsRead(InvocationContext ctx, AbstractDataCommand command, boolean forceRead) {
+   private void markKeyAsRead(InvocationContext ctx, DataCommand command, boolean forceRead) {
       if (needToMarkReads && ctx.isInTxScope() &&
             (forceRead || !command.hasFlag(Flag.IGNORE_RETURN_VALUES))) {
          TxInvocationContext tctx = (TxInvocationContext) ctx;
@@ -89,30 +89,15 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
-         // Cache.putForExternalRead() is non-transactional
-         return super.visitPutKeyValueCommand(ctx, command);
-      }
-
+   protected Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable {
+      markKeyAsRead(ctx, command, true);
       try {
-         markKeyAsRead(ctx, command, command.isConditional());
          return invokeNextInterceptor(ctx, command);
-      } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
+      } finally {
+         //when not invoked in an explicit tx's scope the get is non-transactional(mainly for efficiency).
+         //locks need to be released in this situation as they might have been acquired from L1.
+         if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
       }
-   }
-
-   @Override
-   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      markKeyAsRead(ctx, command, true);
-      return super.visitGetKeyValueCommand(ctx, command);
-   }
-
-   @Override
-   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      markKeyAsRead(ctx, command, true);
-      return super.visitGetCacheEntryCommand(ctx, command);
    }
 
    @Override
@@ -134,20 +119,10 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       try {
          // Regardless of whether is conditional so that
          // write skews can be detected in both cases.
-         markKeyAsRead(ctx, command, command.isConditional());
-         return invokeNextInterceptor(ctx, command);
-      } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
-      }
-   }
-
-   @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      try {
          markKeyAsRead(ctx, command, command.isConditional());
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {

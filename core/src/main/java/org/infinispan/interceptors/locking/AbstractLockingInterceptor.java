@@ -1,10 +1,18 @@
 package org.infinispan.interceptors.locking;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -13,9 +21,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Base class for various locking interceptors in this package.
@@ -41,6 +46,35 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+      return visitDataWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return visitDataWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+      return visitDataWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
+      return visitDataReadCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
+      return visitDataReadCommand(ctx, command);
+   }
+
+   protected abstract Object visitDataReadCommand(InvocationContext ctx, DataCommand command) throws Throwable;
+
+   protected abstract Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable;
+
+   // We need this method in here because of putForExternalRead
+   protected Object visitNonTxDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       try {
          if (!shouldLock(command.getKey(), command))
             return invokeNextInterceptor(ctx, command);
@@ -48,8 +82,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
-      }
-      finally {
+      } finally {
          lockManager.unlockAll(ctx);
       }
    }
@@ -126,5 +159,4 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    protected final void lockKey(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking) throws InterruptedException {
       lockManager.acquireLockNoCheck(ctx, key, timeoutMillis, skipLocking);
    }
-
 }
