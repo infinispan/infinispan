@@ -9,9 +9,6 @@
    </feature>
    <feature name="infinispan-client-hotrod-with-query" version="${project.version}">
       <feature version="${project.version}">infinispan-client-hotrod</feature>
-      <bundle>wrap:mvn:com.squareup/protoparser/${version.protoparser}</bundle>
-      <bundle>wrap:mvn:org.javassist/javassist/${version.javassist}</bundle>
-      <bundle>mvn:com.google.protobuf/protobuf-java/${version.protobuf}</bundle>
       <bundle>mvn:org.infinispan/infinispan-remote-query-client/${project.version}</bundle>
       <bundle>mvn:org.infinispan/infinispan-query-dsl/${project.version}</bundle>
       <bundle>mvn:org.infinispan.protostream/protostream/${version.protostream}</bundle>
