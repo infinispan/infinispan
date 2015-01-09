@@ -6,8 +6,5 @@
 
     <dependencies>
         <module name="org.jboss.logging"/>
-        <module name="com.google.protobuf" slot="${slot}"/>
-        <module name="com.squareup.protoparser" slot="${slot}"/>
-        <module name="org.javassist" slot="${slot}"/>
     </dependencies>
 </module>

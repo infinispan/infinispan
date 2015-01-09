@@ -5,9 +5,6 @@
         <!-- Insert resources here -->
     </resources>
     <dependencies>
-        <module name="com.google.protobuf" />
-        <module name="com.squareup.protoparser" />
-        <module name="org.javassist" />
         <module name="javax.api" />
         <module name="javax.transaction.api" />
         <module name="org.hibernate.hql.parser" />

@@ -134,14 +134,6 @@
                            <shadedPattern>infinispan.com.google</shadedPattern>
                         </relocation>
                         <relocation>
-                           <pattern>javassist</pattern>
-                           <shadedPattern>infinispan.javassist</shadedPattern>
-                        </relocation>
-                        <relocation>
-                           <pattern>com.squareup</pattern>
-                           <shadedPattern>infinispan.com.squareup</shadedPattern>
-                        </relocation>
-                        <relocation>
                            <pattern>org.jboss.logging</pattern>
                            <shadedPattern>infinispan.org.jboss.logging</shadedPattern>
                         </relocation>

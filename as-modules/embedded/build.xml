@@ -137,18 +137,6 @@
         <module-def name="org.hibernate.hql.lucene" slot="${infinispan.slot}">
             <maven-resource group="org.hibernate.hql" artifact="hibernate-hql-lucene" />
         </module-def>
-
-        <module-def name="com.google.protobuf" slot="${infinispan.slot}">
-            <maven-resource group="com.google.protobuf" artifact="protobuf-java" />
-        </module-def>
-
-        <module-def name="com.squareup.protoparser" slot="${infinispan.slot}">
-            <maven-resource group="com.squareup" artifact="protoparser" />
-        </module-def>
-
-        <module-def name="org.javassist" slot="${infinispan.slot}">
-            <maven-resource group="org.javassist" artifact="javassist" />
-        </module-def>
     </target>
     
     <!-- Modelus aliases to satisfy dependencies -->
