@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.persistence.jpa.configuration.JpaStoreConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -47,12 +48,15 @@ public class InfinispanStoreJpaIT {
 
    @Test
    public void testCacheManager() {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.globalJmxStatistics().allowDuplicateDomains(true);
+
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(JpaStoreConfigurationBuilder.class)
          .persistenceUnitName("org.infinispan.persistence.jpa")
          .entityClass(KeyValueEntity.class);
 
-      EmbeddedCacheManager cm = new DefaultCacheManager(builder.build());
+      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), builder.build());
       Cache<String, KeyValueEntity> cache = cm.getCache();
       KeyValueEntity entity = new KeyValueEntity("a", "a");
       cache.put(entity.getK(), entity);
