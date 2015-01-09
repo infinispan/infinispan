@@ -3,6 +3,7 @@ package org.infinispan.test.integration.as;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfigurationBuilder;
@@ -51,11 +52,14 @@ public class InfinispanStoreLevelDBIT {
 
    @Test
    public void testCacheManager() {
+      GlobalConfigurationBuilder gcb = new GlobalConfigurationBuilder();
+      gcb.globalJmxStatistics().allowDuplicateDomains(true);
+
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence().addStore(LevelDBStoreConfigurationBuilder.class)
             .location(tmpDirectory(this.getClass()));
 
-      EmbeddedCacheManager cm = new DefaultCacheManager(builder.build());
+      EmbeddedCacheManager cm = new DefaultCacheManager(gcb.build(), builder.build());
       Cache<String, String> cache = cm.getCache();
       cache.put("a", "a");
       assertEquals("a", cache.get("a"));
