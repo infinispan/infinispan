@@ -76,6 +76,11 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    }
 
    @Override
+   public boolean isDeleteByTermEnforced() {
+      return true;
+   }
+
+   @Override
    public Iterator<Class<?>> getClassMappings() {
       return classes.values().iterator();
    }
