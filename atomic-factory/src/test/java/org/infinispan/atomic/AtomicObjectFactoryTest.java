@@ -21,13 +21,12 @@ import java.util.concurrent.Future;
 
 /**
  * @author Pierre Sutra
- * @since 6.0
  */
 @Test(groups = "functional", testName = "AtomicObjectFactoryTest")
 public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
 
     private static int NCALLS= 1000;
-    private static int NCACHES = 3;
+    private static int NCACHES = 2;
     private static List<Cache> caches = new ArrayList<Cache>();
 
     private static Log log = LogFactory.getLog(AtomicObjectFactory.class);
