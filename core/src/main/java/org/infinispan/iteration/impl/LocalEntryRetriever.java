@@ -6,7 +6,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.IteratorAsCloseableIterator;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -442,9 +441,15 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
          while (next == null) {
             if (iterator.hasNext()) {
                InternalCacheEntry<K, V> entry = iterator.next();
+               if (log.isTraceEnabled()) {
+                  log.tracef("Object [%s] returned from iteration - need to check if filtered", entry);
+               }
 
                // Skip any expired entries
                if (entry.isExpired(timeService.wallClockTime())) {
+                  if (log.isTraceEnabled()) {
+                     log.tracef("Object [%s] was expired, not returning", entry);
+                  }
                   continue;
                }
 
@@ -471,10 +476,16 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                            clone.setValue((V) converted);
                         }
                      } else {
+                        if (log.isTraceEnabled()) {
+                           log.tracef("Object [%s] was filtered by KeyValueFilterConverter, not returning", clone);
+                        }
                         continue;
                      }
                   }
                   else if (!filter.accept(key, clone.getValue(), clone.getMetadata())) {
+                     if (log.isTraceEnabled()) {
+                        log.tracef("Object [%s] was filtered, not returning", clone);
+                     }
                      continue;
                   }
                }
