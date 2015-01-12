@@ -35,6 +35,13 @@
             </xs:documentation>
           </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="raw-values">
+          <xs:annotation>
+            <xs:documentation>
+              Whether to disable unmarshalling of values.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
       </xs:extension>
     </xs:complexContent>
   </xs:complexType>

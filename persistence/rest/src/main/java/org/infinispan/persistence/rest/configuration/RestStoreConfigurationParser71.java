@@ -158,6 +158,10 @@ public class RestStoreConfigurationParser71 implements ConfigurationParser {
                builder.key2StringMapper(value);
                break;
             }
+            case RAW_VALUES: {
+               builder.rawValues(Boolean.parseBoolean(value));
+               break;
+            }
             default: {
                Parser71.parseStoreAttribute(reader, i, builder);
                break;
