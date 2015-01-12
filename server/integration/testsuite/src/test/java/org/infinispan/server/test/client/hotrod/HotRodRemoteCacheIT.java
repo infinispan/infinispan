@@ -36,31 +36,49 @@ public class HotRodRemoteCacheIT extends AbstractRemoteCacheIT {
     @InfinispanResource("container2")
     RemoteInfinispanServer server2;   //when run in LOCAL mode - inject here the same container as container1
 
-    @Deployment(testable = false, name = "filter-converter-1")
+    @Deployment(testable = false, name = "filter-1")
     @TargetsContainer("container1")
     @OverProtocol("jmx-as7")
-    public static Archive<?> deploy1() {
-        return createArchive();
+    public static Archive<?> deployFilter1() {
+        return createFilterArchive();
     }
 
-    @Deployment(testable = false, name = "filter-converter-2")
+    @Deployment(testable = false, name = "converter-1")
+    @TargetsContainer("container1")
+    @OverProtocol("jmx-as7")
+    public static Archive<?> deployConverter1() {
+        return createConverterArchive();
+    }
+
+    @Deployment(testable = false, name = "converter-2")
     @TargetsContainer("container2")
     @OverProtocol("jmx-as7")
-    public static Archive<?> deploy2() {
-        return createArchive();
+    public static Archive<?> deployConverter2() {
+        return createConverterArchive();
     }
 
-    private static Archive<?> createArchive() {
-        return ShrinkWrap.create(JavaArchive.class, "filter-converter.jar")
+    @Deployment(testable = false, name = "filter-2")
+    @TargetsContainer("container2")
+    @OverProtocol("jmx-as7")
+    public static Archive<?> deployFilter2() {
+        return createFilterArchive();
+    }
+
+    private static Archive<?> createFilterArchive() {
+        return ShrinkWrap.create(JavaArchive.class, "filter.jar")
                 .addClasses(StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class)
-                .addClasses(StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class, CustomEvent.class)
                 .addAsServiceProvider(CacheEventFilterFactory.class,
-                        StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class)
-                .addAsServiceProvider(CacheEventConverterFactory.class,
-                        StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class);
+                        StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class);
     }
 
-    @Override
+   private static Archive<?> createConverterArchive() {
+      return ShrinkWrap.create(JavaArchive.class, "converter.jar")
+            .addClasses(StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class, CustomEvent.class)
+            .addAsServiceProvider(CacheEventConverterFactory.class,
+                  StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class);
+   }
+
+   @Override
     protected List<RemoteInfinispanServer> getServers() {
         List<RemoteInfinispanServer> servers = new ArrayList<RemoteInfinispanServer>();
         servers.add(server1);
