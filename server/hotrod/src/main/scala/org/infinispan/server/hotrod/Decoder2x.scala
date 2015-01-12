@@ -443,10 +443,14 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    }
 
    override def getOptimizedCache(h: HotRodHeader, c: Cache): Cache = {
+      val cacheCfg = SecurityActions.getCacheConfiguration(c)
+      val isTransactional = cacheCfg.transaction().transactionMode().isTransactional
+      val isClustered = cacheCfg.clustering().cacheMode().isClustered
+
       var optCache = c
       h.op match {
          case PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest
-              | RemoveIfUnmodifiedRequest if !isCacheTransactional(optCache) =>
+              | RemoveIfUnmodifiedRequest if isClustered && !isTransactional =>
             warnConditionalOperationNonTransactional(h.op.toString)
          case _ => // no-op
       }
@@ -485,14 +489,11 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             case _ =>
          }
       } else {
-         if (!isCacheTransactional(optCache))
+         if (!isTransactional)
             warnForceReturnPreviousNonTransactional(h.op.toString)
       }
       optCache
    }
-
-   private def isCacheTransactional(c: Cache): Boolean =
-      SecurityActions.getCacheConfiguration(c).transaction().transactionMode().isTransactional
 
    def normalizeAuthorizationId(id: String): String = {
       val realm = id.indexOf('@')
