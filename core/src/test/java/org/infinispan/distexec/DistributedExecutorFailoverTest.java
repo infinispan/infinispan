@@ -1,14 +1,5 @@
 package org.infinispan.distexec;
 
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.test.MultipleCacheManagersTest;
-import org.testng.AssertJUnit;
-import org.testng.annotations.Test;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Random;
@@ -16,6 +7,16 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.Cache;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
+import org.testng.AssertJUnit;
+import org.testng.annotations.Test;
 
 /**
  * Tests dist.exec failover after node kill.
@@ -65,7 +66,7 @@ public class DistributedExecutorFailoverTest extends MultipleCacheManagersTest {
 
             @Override
             public void run() {
-//               TestingUtil.killCacheManagers(cacheManager2);
+               TestingUtil.killCacheManagers(cacheManager2);
                latch.countDown();
             }
          });
