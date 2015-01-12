@@ -23,8 +23,9 @@ public enum Attribute {
    OUTBOUND_SOCKET_BINDING("outbound-socket-binding"),
    PATH("path"),
    PORT("port"),
+   RAW_VALUES("raw-values"),
    SOCKET_TIMEOUT("socket-timeout"),
-   TCP_NO_DELAY("tcp-no-delay"),
+   TCP_NO_DELAY("tcp-no-delay"), 
    ;
 
    private final String name;

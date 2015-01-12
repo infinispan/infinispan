@@ -10,7 +10,7 @@
       <local-cache name="default">
          <persistence passivation="false">
             <rest-store xmlns="urn:infinispan:config:store:rest:7.1"
-                        fetch-state="false" read-only="false" preload="false" purge="false" shared="true"
+                        fetch-state="false" read-only="false" preload="false" purge="false" shared="true" raw-values="false"
                         path="/rest/___defaultcache" append-cache-name-to-path="false"
                         key-to-string-mapper="org.infinispan.persistence.keymappers.MarshalledValueOrPrimitiveMapper">
                <connection-pool connection-timeout="10000" max-connections-per-host="10" max-total-connections="10" buffer-size="20000" socket-timeout="10000" tcp-no-delay="true" />
