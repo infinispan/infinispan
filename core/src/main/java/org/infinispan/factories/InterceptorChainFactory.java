@@ -146,7 +146,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          } else {
             interceptorChain.appendInterceptor(createInterceptor(new StateTransferInterceptor(), StateTransferInterceptor.class), false);
          }
-         interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(), TransactionSynchronizerInterceptor.class), false);
+         if (configuration.transaction().transactionMode().isTransactional()) {
+            interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(), TransactionSynchronizerInterceptor.class), false);
+         }
       }
 
       // The partition handling must run every time the state transfer interceptor retries a command (in non-transactional caches)

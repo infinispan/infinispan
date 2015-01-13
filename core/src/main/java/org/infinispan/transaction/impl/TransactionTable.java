@@ -24,9 +24,11 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.TopologyChanged;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
+import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
+import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.synchronization.SyncLocalTransaction;
 import org.infinispan.transaction.synchronization.SynchronizationAdapter;
@@ -47,6 +49,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -92,6 +95,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private ScheduledExecutorService executorService;
    private String cacheName;
    private TimeService timeService;
+   private CacheManagerNotifier cacheManagerNotifier;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
@@ -99,7 +103,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
                           TransactionFactory gtf, TransactionCoordinator txCoordinator,
                           TransactionSynchronizationRegistry transactionSynchronizationRegistry,
                           CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache,
-                          TimeService timeService) {
+                          TimeService timeService, CacheManagerNotifier cacheManagerNotifier) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icf = icf;
@@ -110,8 +114,11 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.commandsFactory = commandsFactory;
       this.clusteringLogic = clusteringDependentLogic;
+      this.cacheManagerNotifier = cacheManagerNotifier;
       this.cacheName = cache.getName();
       this.timeService = timeService;
+
+      this.clustered = configuration.clustering().cacheMode().isClustered();
    }
 
    @Start(priority = 9) // Start before cache loader manager
@@ -124,20 +131,12 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
                                                               new IdentityEquivalence<Transaction>(),
                                                               AnyEquivalence.getInstance());
       globalToLocalTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-      if (configuration.clustering().cacheMode().isClustered()) {
-         minTopologyRecalculationLock = new ReentrantLock();
-         // Only initialize this if we are clustered.
-         remoteTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
-         notifier.addListener(this);
-         clustered = true;
-      }
 
       boolean transactional = configuration.transaction().transactionMode().isTransactional();
-      boolean totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
-      if (clustered && transactional && !totalOrder) {
-         completedTransactionsInfo = new CompletedTransactionsInfo();
+      if (clustered && transactional) {
+         minTopologyRecalculationLock = new ReentrantLock();
+         remoteTransactions = CollectionFactory.makeConcurrentMap(concurrencyLevel, 0.75f, concurrencyLevel);
 
-         // Periodically run a task to cleanup the transaction table from completed transactions.
          ThreadFactory tf = new ThreadFactory() {
             @Override
             public Thread newThread(Runnable r) {
@@ -147,23 +146,31 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
                return th;
             }
          };
-
          executorService = Executors.newSingleThreadScheduledExecutor(tf);
 
-         long interval = configuration.transaction().reaperWakeUpInterval();
-         executorService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-               completedTransactionsInfo.cleanupCompletedTransactions();
-            }
-         }, interval, interval, TimeUnit.MILLISECONDS);
+         notifier.addListener(this);
+         cacheManagerNotifier.addListener(this);
 
-         executorService.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-               cleanupTimedOutTransactions();
-            }
-         }, interval, interval, TimeUnit.MILLISECONDS);
+         boolean totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+         if (!totalOrder) {
+            completedTransactionsInfo = new CompletedTransactionsInfo();
+
+            // Periodically run a task to cleanup the transaction table of completed transactions.
+            long interval = configuration.transaction().reaperWakeUpInterval();
+            executorService.scheduleAtFixedRate(new Runnable() {
+               @Override
+               public void run() {
+                  completedTransactionsInfo.cleanupCompletedTransactions();
+               }
+            }, interval, interval, TimeUnit.MILLISECONDS);
+
+            executorService.scheduleAtFixedRate(new Runnable() {
+               @Override
+               public void run() {
+                  cleanupTimedOutTransactions();
+               }
+            }, interval, interval, TimeUnit.MILLISECONDS);
+         }
       }
    }
 
@@ -261,23 +268,20 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       return minTxTopologyId;
    }
 
-   public void cleanupLeaverTransactions(CacheTopology cacheTopology) {
-      int topologyId = cacheTopology.getTopologyId();
-      List<Address> members = cacheTopology.getMembers();
-
-      // We only care about transactions originated before this topology update
-      if (getMinTopologyId() >= topologyId)
+   public void cleanupLeaverTransactions(List<Address> members) {
+      // Can happen if the cache is non-transactional
+      if (remoteTransactions == null)
          return;
 
-      log.tracef("Checking for transactions originated on leavers. Current members are %s, remote transactions: %d",
+      log.tracef("Checking for transactions originated on leavers. Current cache members are %s, remote transactions: %d",
             members, remoteTransactions.size());
+      HashSet<Address> membersSet = new HashSet<>(members);
       List<GlobalTransaction> toKill = new ArrayList<GlobalTransaction>();
       for (Map.Entry<GlobalTransaction, RemoteTransaction> e : remoteTransactions.entrySet()) {
          GlobalTransaction gt = e.getKey();
          RemoteTransaction remoteTx = e.getValue();
          log.tracef("Checking transaction %s", gt);
-         // The topology id check is needed for joiners
-         if (remoteTx.getTopologyId() < topologyId && !members.contains(gt.getAddress())) {
+         if (!membersSet.contains(gt.getAddress())) {
             toKill.add(gt);
          }
       }
@@ -506,6 +510,16 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             calculateMinTopologyId(-1);
          }
       }
+   }
+
+   @ViewChanged
+   public void onViewChange(final ViewChangedEvent e) {
+      executorService.submit(new Callable<Void>() {
+         public Void call() {
+            cleanupLeaverTransactions(e.getNewMembers());
+            return null;
+         }
+      });
    }
 
    /**

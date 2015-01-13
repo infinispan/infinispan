@@ -1,7 +1,5 @@
 package org.infinispan.tx;
 
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -24,6 +22,8 @@ import org.infinispan.transaction.xa.XaTransactionTable;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 import java.util.UUID;
 
 import static org.mockito.Mockito.mock;
@@ -50,7 +50,7 @@ public class TransactionXaAdapterTmIntegrationTest {
       configuration = new ConfigurationBuilder().build();
       txTable = new XaTransactionTable();
       txTable.initialize(null, configuration, null, null, null, null,
-            null, null, null, null, mockCache, null);
+            null, null, null, null, mockCache, null, null);
       txTable.start();
       txTable.startXidMapping();
       TransactionFactory gtf = new TransactionFactory();
