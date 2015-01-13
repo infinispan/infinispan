@@ -257,7 +257,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          if (newCacheTopology.getRebalanceId() != oldCacheTopology.getRebalanceId()) {
             // The currentCH changed, we need to install a "reset" topology with the new currentCH first
             CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1,
-                  newCacheTopology.getRebalanceId() - 1, newCacheTopology.getCurrentCH(), null, null);
+                  newCacheTopology.getRebalanceId() - 1, newCacheTopology.getCurrentCH(), null, newCacheTopology.getActualMembers());
             log.debugf("Installing fake cache topology %s for cache %s", resetTopology, cacheName);
             handler.updateConsistentHash(resetTopology);
          }

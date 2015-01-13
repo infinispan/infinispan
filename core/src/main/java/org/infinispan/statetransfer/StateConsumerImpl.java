@@ -374,7 +374,7 @@ public class StateConsumerImpl implements StateConsumer {
          // Need to do it now, after we have applied any transactions from other nodes,
          // and after notifyTransactionDataReceived - otherwise the RollbackCommands would block.
          if (transactionTable != null) {
-            transactionTable.cleanupLeaverTransactions(cacheTopology);
+            transactionTable.cleanupLeaverTransactions(rpcManager.getTransport().getMembers());
          }
 
          // Any data for segments we do not own should be removed from data container and cache store
