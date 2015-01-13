@@ -61,7 +61,7 @@
       <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
 
       <!-- Versions for dependencies -->
-      <version.protostream>3.0.0.Alpha6</version.protostream>
+      <version.protostream>3.0.0.Alpha7</version.protostream>
       <version.aesh>0.33.7</version.aesh>
       <version.antlr>3.4</version.antlr>
       <version.c3p0>0.9.5-pre8</version.c3p0>

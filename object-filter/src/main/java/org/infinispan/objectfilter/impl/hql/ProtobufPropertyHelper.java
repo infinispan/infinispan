@@ -137,7 +137,7 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
             return super.convertToPropertyType(entityType, propertyPath, value);
          }
       } else if (field.getJavaType() == JavaType.ENUM) {
-         EnumDescriptor enumType = field.getEnumDescriptor();
+         EnumDescriptor enumType = field.getEnumType();
          EnumValueDescriptor enumValue;
          try {
             enumValue = enumType.findValueByNumber(Integer.parseInt(value));
