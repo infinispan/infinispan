@@ -6,5 +6,5 @@ DESCRIPTION
     Shows the available containers or selects a container to be used as default for CLI operations
     
 ARGUMENTS 
-    cachename 
+    containername
         (optional) the name of the container to set as default for the following operations
