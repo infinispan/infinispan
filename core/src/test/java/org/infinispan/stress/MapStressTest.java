@@ -2,11 +2,13 @@ package org.infinispan.stress;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
+import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
@@ -87,8 +89,8 @@ public class MapStressTest extends SingleCacheManagerTest {
    @DataProvider(name = "readWriteRemove")
    public Object[][] independentReadWriteRemoveParams() {
       return new Object[][]{
-            new Object[]{CAPACITY, 3 * CAPACITY, 32, 90, 9, 1},
-            new Object[]{CAPACITY, 3 * CAPACITY, 32, 9, 1, 0},
+            new Object[]{CAPACITY, 3 * CAPACITY, 32, 90, 9, 3},
+            new Object[]{CAPACITY, 3 * CAPACITY, 32, 9, 1, 1},
       };
    }
 
@@ -110,14 +112,25 @@ public class MapStressTest extends SingleCacheManagerTest {
 
    private Map<String, Map<String, Integer>> createMaps(int capacity, int numKeys, int concurrency) {
       Map<String, Map<String, Integer>> maps = new TreeMap<String, Map<String, Integer>>();
+      maps.put("BCHMv8:LRU", new BoundedEquivalentConcurrentHashMapV8(
+            (long) capacity, Eviction.LRU,
+            BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(),
+            AnyEquivalence.STRING, AnyEquivalence.INT));
+      maps.put("BCHMv8:LIRS", new BoundedEquivalentConcurrentHashMapV8(
+            (long) capacity, Eviction.LIRS,
+            BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(),
+            AnyEquivalence.STRING, AnyEquivalence.INT));
       maps.put("BCHM:LRU", new BoundedConcurrentHashMap<String, Integer>(
             capacity, concurrency, BoundedConcurrentHashMap.Eviction.LRU,
             AnyEquivalence.STRING, AnyEquivalence.INT));
       maps.put("BCHM:LIRS", new BoundedConcurrentHashMap<String, Integer>(
             capacity, concurrency, BoundedConcurrentHashMap.Eviction.LIRS,
             AnyEquivalence.STRING, AnyEquivalence.INT));
-      // CHM doesn't have eviction, so we size it to the total number of keys to avoid resizing
-      maps.put("CHM", new ConcurrentHashMap<String, Integer>(numKeys, MAP_LOAD_FACTOR, concurrency));
+      // CHM doesn't have eviction, so we size it to the capacity to allow for dynamic resize
+      maps.put("CHM", new ConcurrentHashMap<String, Integer>(capacity, MAP_LOAD_FACTOR, concurrency));
+      maps.put("CHMv8", new ConcurrentHashMapV8<String, Integer>(capacity, MAP_LOAD_FACTOR, concurrency));
+      maps.put("ECHMv8", new EquivalentConcurrentHashMapV8<String, Integer>(capacity, 
+            MAP_LOAD_FACTOR, concurrency, AnyEquivalence.STRING, AnyEquivalence.INT));
       maps.put("SLHM", synchronizedLinkedHashMap(capacity, MAP_LOAD_FACTOR));
       maps.put("CACHE", configureAndBuildCache(capacity));
       return maps;
@@ -180,8 +193,9 @@ public class MapStressTest extends SingleCacheManagerTest {
          t.start();
       latch.countDown();
 
-      for (Thread t : threads)
+      for (Thread t : threads) {
          t.join();
+      }
 
       return perf;
    }
@@ -381,9 +395,9 @@ public class MapStressTest extends SingleCacheManagerTest {
 
       @Override
       public void run() {
-         waitForStart();
          long startMilis = System.currentTimeMillis();
          long endMillis = startMilis + runningTimeout;
+         waitForStart();
          int keyIndex = RANDOM.nextInt(keys.size());
          long runs = 0;
          long missCount = 0;
