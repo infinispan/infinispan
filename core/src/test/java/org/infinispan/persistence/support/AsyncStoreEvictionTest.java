@@ -12,6 +12,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -24,7 +25,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
 @Test(groups = "unit", testName = "persistence.decorators.AsyncStoreEvictionTest")
-public class AsyncStoreEvictionTest {
+public class AsyncStoreEvictionTest extends AbstractInfinispanTest {
 
    // set to false to fix all the tests
    private static final boolean USE_ASYNC_STORE = true;
@@ -146,9 +147,12 @@ public class AsyncStoreEvictionTest {
             cache.put("k1", "v0");
             cache.put("k2", "v2"); // force eviction of "k1"
 
-            // wait for k1 == v1 to appear in store
-            while (store.load("k1") == null)
-               TestingUtil.sleepThread(10);
+            eventually(new Condition() {
+               @Override
+               public boolean isSatisfied() throws Exception {
+                  return store.load("k1") != null;
+               }
+            });
 
             // simulate slow back end store
             store.lock.lock();
@@ -180,9 +184,12 @@ public class AsyncStoreEvictionTest {
             cache.put("k1", "v1");
             cache.put("k2", "v2"); // force eviction of "k1"
 
-            // wait for "k1" to appear in store
-            while (store.load("k1") == null)
-               TestingUtil.sleepThread(10);
+            eventually(new Condition() {
+               @Override
+               public boolean isSatisfied() throws Exception {
+                  return store.load("k1") != null;
+               }
+            });
 
             // simulate slow back end store
             store.lock.lock();
