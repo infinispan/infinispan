@@ -599,8 +599,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk) {
-      return new XSiteStatePushCommand(cacheName, chunk);
+   public XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk, long timeoutMillis) {
+      return new XSiteStatePushCommand(cacheName, chunk, timeoutMillis);
    }
 
    @Override

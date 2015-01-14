@@ -23,6 +23,7 @@ import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteState;
@@ -44,16 +45,18 @@ import java.util.concurrent.TimeUnit;
 public abstract class BaseBackupReceiver implements BackupReceiver {
 
    protected final Cache<Object, Object> cache;
+   protected final TimeService timeService;
    private final BackupCacheUpdater siteUpdater;
 
    protected BaseBackupReceiver(Cache<Object, Object> cache) {
       this.cache = cache;
+      this.timeService = cache.getAdvancedCache().getComponentRegistry().getTimeService();
       siteUpdater = new BackupCacheUpdater(cache);
    }
 
    protected static XSiteStatePushCommand newStatePushCommand(Cache<?, ?> cache, List<XSiteState> stateList) {
       CommandsFactory commandsFactory = cache.getAdvancedCache().getComponentRegistry().getCommandsFactory();
-      return commandsFactory.buildXSiteStatePushCommand(stateList.toArray(new XSiteState[stateList.size()]));
+      return commandsFactory.buildXSiteStatePushCommand(stateList.toArray(new XSiteState[stateList.size()]), 0);
    }
 
    @Override

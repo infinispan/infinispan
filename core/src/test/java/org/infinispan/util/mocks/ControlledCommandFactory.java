@@ -352,8 +352,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk) {
-      return actual.buildXSiteStatePushCommand(chunk);
+   public XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk, long timeoutMillis) {
+      return actual.buildXSiteStatePushCommand(chunk, timeoutMillis);
    }
 
    @Override

@@ -170,6 +170,14 @@ public abstract class AbstractTopologyChangeTest extends AbstractTwoSitesTest {
       });
    }
 
+   protected void assertXSiteStatus(String localSite, String remoteSite, String status) {
+      assertEquals(status, getXSitePushStatus(localSite, remoteSite));
+   }
+
+   protected String getXSitePushStatus(String localSite, String remoteSite) {
+      return extractComponent(cache(localSite, 0), XSiteAdminOperations.class).getPushStateStatus().get(remoteSite);
+   }
+
    protected <K, V> TestCaches<K, V> createTestCache(TopologyEvent topologyEvent, String siteName) {
       switch (topologyEvent) {
          case JOIN:
