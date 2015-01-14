@@ -188,7 +188,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
          log.debugf("Sending chunk to site '%s'. Chunk has %s keys.", xSiteBackup.getSiteName(), privateBuffer.length);
       }
 
-      XSiteStatePushCommand command = commandsFactory.buildXSiteStatePushCommand(privateBuffer);
+      XSiteStatePushCommand command = commandsFactory.buildXSiteStatePushCommand(privateBuffer, xSiteBackup.getTimeout());
       RetryOnFailureXSiteCommand remoteSite = RetryOnFailureXSiteCommand.newInstance(xSiteBackup, command, task.retryPolicy);
       remoteSite.execute(rpcManager.getTransport(), task.waitTime, TimeUnit.MILLISECONDS);
    }

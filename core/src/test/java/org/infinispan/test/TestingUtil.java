@@ -41,6 +41,7 @@ import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.ReplicationQueue;
+import org.infinispan.remoting.inboundhandler.PerCacheInboundInvocationHandler;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -1518,6 +1519,15 @@ public class TestingUtil {
       T current = extractComponent(cache, tClass);
       W wrap = factory.wrap(cache, current);
       replaceComponent(cache, tClass, wrap, rewire);
+      return wrap;
+   }
+
+   public static <T extends PerCacheInboundInvocationHandler> T wrapPerCacheInboundInvocationHandler(
+         Cache<?, ?> cache, WrapFactory<PerCacheInboundInvocationHandler, T, Cache<?, ?>> factory, boolean rewire) {
+      PerCacheInboundInvocationHandler current = extractComponent(cache, PerCacheInboundInvocationHandler.class);
+      T wrap = factory.wrap(cache, current);
+      replaceComponent(cache, PerCacheInboundInvocationHandler.class, wrap, rewire);
+      replaceField(wrap, "inboundInvocationHandler", cache.getAdvancedCache().getComponentRegistry(), ComponentRegistry.class);
       return wrap;
    }
 

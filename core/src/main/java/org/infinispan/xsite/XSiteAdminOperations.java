@@ -262,7 +262,7 @@ public class XSiteAdminOperations {
          map.putAll(stateTransferManager.getClusterStatus());
          return map;
       } catch (Exception e) {
-         return Collections.singletonMap("ERROR", e.getLocalizedMessage());
+         return Collections.singletonMap(XSiteStateTransferManager.STATUS_ERROR, e.getLocalizedMessage());
       }
    }
 

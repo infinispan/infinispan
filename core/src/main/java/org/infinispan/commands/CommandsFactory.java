@@ -420,10 +420,11 @@ public interface CommandsFactory {
    /**
     * Builds XSiteStatePushCommand used to transfer a single chunk of data between sites.
     *
-    * @param chunk the data chunk
+    * @param chunk         the data chunk
+    * @param timeoutMillis timeout in milliseconds, for the retries in the receiver site.
     * @return the XSiteStatePushCommand created
     */
-   XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk);
+   XSiteStatePushCommand buildXSiteStatePushCommand(XSiteState[] chunk, long timeoutMillis);
 
    /**
     * Builds SingleRpcCommand used to perform {@link org.infinispan.commands.VisitableCommand} on the backup site,

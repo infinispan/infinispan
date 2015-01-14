@@ -41,8 +41,10 @@ public class LocalInvocation implements Callable<Response> {
          commandsFactory.initializeReplicableCommand(command, false);
          command.setOrigin(self);
          return responseGenerator.getResponse(command, command.perform(null));
+      } catch (Exception e) {
+         throw e;
       } catch (Throwable throwable) {
-         return new ExceptionResponse(new CacheException("Problems invoking command.", throwable));
+         throw new CacheException("Problems invoking command.", throwable);
       }
    }
 
