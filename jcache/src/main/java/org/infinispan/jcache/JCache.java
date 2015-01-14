@@ -60,12 +60,12 @@ import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameT
  * @author Galder Zamarreño
  * @since 5.3
  */
-public final class JCache<K, V> implements Cache<K, V> {
+public class JCache<K, V> implements Cache<K, V> {
 
    private static final Log log =
          LogFactory.getLog(JCache.class, Log.class);
 
-   private final JCacheManager cacheManager;
+   private final CacheManager cacheManager;
    private final MutableConfiguration<K, V> configuration;
    private final AdvancedCache<K, V> cache;
    private final AdvancedCache<K, V> ignoreReturnValuesCache;
@@ -82,7 +82,7 @@ public final class JCache<K, V> implements Cache<K, V> {
    private CacheLoader<K, V> jcacheLoader;
    private CacheWriter<? super K, ? super V> jcacheWriter;
 
-   public JCache(AdvancedCache<K, V> cache, JCacheManager cacheManager, ConfigurationAdapter<K, V> c) {
+   public JCache(AdvancedCache<K, V> cache, CacheManager cacheManager, ConfigurationAdapter<K, V> c) {
       this.cache = cache;
       this.processorLocks = new ReentrantPerEntryLockContainer(32, cache.getCacheConfiguration().dataContainer().keyEquivalence());
       this.ignoreReturnValuesCache = cache.withFlags(Flag.IGNORE_RETURN_VALUES);
