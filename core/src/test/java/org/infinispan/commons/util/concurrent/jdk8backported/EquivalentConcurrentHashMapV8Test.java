@@ -3,7 +3,7 @@ package org.infinispan.commons.util.concurrent.jdk8backported;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMapTest;
+import org.infinispan.util.EquivalentHashMapTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -26,7 +26,7 @@ import static org.testng.AssertJUnit.*;
  * @since 5.3
  */
 @Test(groups = "functional", testName = "util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8Test")
-public class EquivalentConcurrentHashMapV8Test extends BoundedConcurrentHashMapTest {
+public class EquivalentConcurrentHashMapV8Test extends EquivalentHashMapTest {
 
    private static final Log log = LogFactory.getLog(EquivalentConcurrentHashMapV8Test.class);
 

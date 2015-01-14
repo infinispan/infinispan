@@ -23,12 +23,14 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
 
 @Test(testName = "container.versioning.AbstractClusteredWriteSkewTest", groups = "functional")
 public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManagersTest {
 
    private static final String PASSIVATION_CACHE = "passivation-cache";
+   private static final int MAX_ENTRIES = 2;
 
    public final void testPutIgnoreReturnValueOnNonExistingKey() throws Exception {
       doIgnoreReturnValueTest(true, Operation.PUT, false);
@@ -232,7 +234,7 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
 
       builder = defaultConfigurationBuilder();
       builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class);
-      builder.eviction().maxEntries(2);
+      builder.eviction().maxEntries(MAX_ENTRIES);
       decorate(builder);
       defineConfigurationOnAllManagers(PASSIVATION_CACHE, builder);
       waitForClusterToForm(PASSIVATION_CACHE);
@@ -298,15 +300,19 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
          primaryOwner.put(key, "v2");
       }
 
+      boolean evicted = false;
       int i = 0;
       DataContainer dataContainer = TestingUtil.extractComponent(primaryOwner, DataContainer.class);
-      while (true) {
+      while (i < MAX_ENTRIES * 2) {
          primaryOwner.put(new MagicKey("other-key-" + i, primaryOwner), "value");
-         if (!dataContainer.containsKey(key)) {
+         if (dataContainer.peek(key) == null) {
             //the key was evicted and it is only in persistence.
+            evicted = true;
             break;
          }
+         ++i;
       }
+      assertTrue("The key was not evicted after " + MAX_ENTRIES + " inserts", evicted);
 
       log.debugf("It is going to try to commit the suspended transaction");
       try {
