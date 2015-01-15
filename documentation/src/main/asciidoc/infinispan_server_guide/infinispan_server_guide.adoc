@@ -425,6 +425,51 @@ By default each protocol stores data in the cache in the most efficient format f
 
 ----
 
+To specify a custom server-side compatibility marshaller use the "marshaller" attribute:
+
+[source,xml]
+----
+
+<compatibility enabled="true" marshaller="com.acme.CustomMarshaller"/>
+
+----
+
+Your custom marshaller needs to be on the classpath of the Infinispan module. You can add it by either:
+
+- copying your jar to
++
+    modules/system/layers/base/org/infinispan/main
++
+and editing the module definition to include the jar as resource-root:
++
+[source,xml]
+.modules/system/layers/base/org/infinispan/main/modules.xml
+----
+
+<resources>
+    ...
+    <resource-root path="acme-custom-marshallers.jar"/>
+    ...
+</resources>
+
+----
+
+- or by creating a custom JBoss Module and adding it as a dependency to the Infinispan module:
++
+[source,xml]
+.modules/system/layers/base/org/infinispan/main/modules.xml
+----
+
+<dependencies>
+    ...
+    <module name="com.acme.custom.marshallers"/>
+    ...
+</dependencies>
+
+----
+
+
+
 == Security
 
 === General concepts
