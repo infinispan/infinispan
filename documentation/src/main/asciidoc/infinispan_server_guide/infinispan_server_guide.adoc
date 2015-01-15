@@ -529,12 +529,12 @@ Infinispan Server comes with an add-user.sh script (add-user.bat for Windows) to
 
 It is also possible to authenticate/authorize against alternative sources, such as LDAP, JAAS, etc. Refer to the https://docs.jboss.org/author/display/WFLY8/Security+Realms[WildFly security realms guide] on how to configure the Security Realms. Bear in mind that the choice of authentication mechanism you select for the protocols limits the type of authentication sources, since the credentials must be in a format supported by the algorithm itself (e.g. pre-digested passwords for the digest algorithm)
 
-== Security Audit
+=== Security Audit
 
 The Infinispan subsystem security audit by default sends audit logs to the audit manager configured at the server level. Refer to the https://docs.jboss.org/author/display/WFLY8/Security+subsystem+configuration[WildFly security subsystem guide] on how to configure the server audit manager. Alternatively you can also set your custom audit logger by using the same configuration as for embedded mode.
 Refer to the The link:../user_guide/user_guide.html#_Security_chapter[Security] chapter in the user guide for details.
 
-== Hot Rod authentication
+=== Hot Rod authentication
 
 The Hot Rod protocol supports authentication since version 2.0 (Infinispan 7.0) by leveraging the SASL mechanisms. The supported SASL mechanisms (usually shortened as mechs) are:
 
@@ -613,7 +613,7 @@ RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 
 The actual type of callbacks that your CallbackHandler will need to be able to handle are mech-specific, so the above is just a simple example.
 
-=== Using GSSAPI/Kerberos
+==== Using GSSAPI/Kerberos
 
 If you want to use GSSAPI/Kerberos, setup and configuration differs. First we need to define a Kerberos login module using the security domain subsystem:
 
@@ -732,7 +732,7 @@ RemoteCache<String, String> cache = remoteCacheManager.getCache("secured");
 
 For brevity we used the same callback handler both for obtaining the client subject and for handling authentication in the SASL GSSAPI mech, however different callbacks will actually be invoked: NameCallback and PasswordCallback are needed to construct the client subject, while the AuthorizeCallback will be called during the SASL authentication.
 
-== Hot Rod encryption (SSL)
+=== Hot Rod encryption (SSL)
 
 The Hot Rod protocol also supports encryption using SSL/TLS. To set this up you need to create a keystore using the +keytool+ application which is part of the JDK to store your server certificate. Then add a +<server-identities>+ element to your security realm:
 
