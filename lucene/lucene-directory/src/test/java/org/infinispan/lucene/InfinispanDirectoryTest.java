@@ -43,7 +43,7 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
    public void testInitWithInvalidChunkSize() {
       Cache cache = cacheManager.getCache();
       DirectoryBuilder.newDirectoryInstance(cache, cache, cache, "index")
-         .overrideSegmentReadLocker(new DistributedSegmentReadLocker(cache, cache, cache, "index"))
+         .overrideSegmentReadLocker(new DistributedSegmentReadLocker(cache, cache, cache, "index", -1))
          .chunkSize(0);
    }
 

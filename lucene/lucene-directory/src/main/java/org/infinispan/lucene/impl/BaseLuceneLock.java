@@ -34,7 +34,7 @@ class BaseLuceneLock extends Lock implements Closeable, ObtainableLock {
       this.noCacheStoreCache = (Cache<Object, Object>) cache.getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
       this.lockName = lockName;
       this.indexName = indexName;
-      this.keyOfLock = new FileCacheKey(indexName, lockName);
+      this.keyOfLock = new FileCacheKey(indexName, lockName, -1);
    }
 
    @Override

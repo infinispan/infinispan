@@ -29,19 +29,19 @@ public class ExternalizersEnabledTest extends SingleCacheManagerTest {
 
    @Test
    public void testChunkCacheKeyExternalizer() throws IOException {
-      ChunkCacheKey key = new ChunkCacheKey("myIndex", "filename", 5, 1000);
+      ChunkCacheKey key = new ChunkCacheKey("myIndex", "filename", 5, 1000, 7);
       verifyExternalizerForType(key, ChunkCacheKey.Externalizer.class);
    }
 
    @Test
    public void testFileCacheKeyExternalizer() throws IOException {
-      FileCacheKey key = new FileCacheKey("myIndex", "fileA.idx");
+      FileCacheKey key = new FileCacheKey("myIndex", "fileA.idx", 7);
       verifyExternalizerForType(key, FileCacheKey.Externalizer.class);
    }
 
    @Test
    public void testFileListCacheKeyExternalizer() throws IOException {
-      FileListCacheKey key = new FileListCacheKey("myIndex");
+      FileListCacheKey key = new FileListCacheKey("myIndex", 7);
       verifyExternalizerForType(key, FileListCacheKey.Externalizer.class);
    }
 
@@ -53,7 +53,7 @@ public class ExternalizersEnabledTest extends SingleCacheManagerTest {
 
    @Test
    public void testFileReadLockKeyExternalizer() throws IOException {
-      FileReadLockKey key = new FileReadLockKey("myIndex", "index.lock");
+      FileReadLockKey key = new FileReadLockKey("myIndex", "index.lock", 7);
       verifyExternalizerForType(key, FileReadLockKey.Externalizer.class);
    }
 

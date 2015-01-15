@@ -103,19 +103,19 @@ public class DistributedSegmentReadLockerTest extends MultipleCacheManagersTest 
    }
 
    void assertFileNotExists(String fileName) throws InterruptedException {
-      DirectoryIntegrityCheck.assertFileNotExists(cache0, INDEX_NAME, fileName, 10000L);
-      DirectoryIntegrityCheck.assertFileNotExists(cache1, INDEX_NAME, fileName, 10000L);
+      DirectoryIntegrityCheck.assertFileNotExists(cache0, INDEX_NAME, fileName, 10000L, -1);
+      DirectoryIntegrityCheck.assertFileNotExists(cache1, INDEX_NAME, fileName, 10000L, -1);
    }
 
    void assertFileExistsHavingRLCount(String fileName, int expectedReadcount, boolean expectRegisteredInFat) {
-      DirectoryIntegrityCheck.assertFileExistsHavingRLCount(cache0, fileName, INDEX_NAME, expectedReadcount, CHUNK_SIZE, expectRegisteredInFat);
-      DirectoryIntegrityCheck.assertFileExistsHavingRLCount(cache1, fileName, INDEX_NAME, expectedReadcount, CHUNK_SIZE, expectRegisteredInFat);
+      DirectoryIntegrityCheck.assertFileExistsHavingRLCount(cache0, fileName, INDEX_NAME, expectedReadcount, CHUNK_SIZE, expectRegisteredInFat, -1);
+      DirectoryIntegrityCheck.assertFileExistsHavingRLCount(cache1, fileName, INDEX_NAME, expectedReadcount, CHUNK_SIZE, expectRegisteredInFat, -1);
    }
 
    Directory createDirectory(Cache cache) {
       return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
              .chunkSize(CHUNK_SIZE)
-             .overrideSegmentReadLocker(new DistributedSegmentReadLocker(cache, cache, cache, INDEX_NAME, true))
+             .overrideSegmentReadLocker(new DistributedSegmentReadLocker(cache, cache, cache, INDEX_NAME, -1, true))
              .create();
    }
 

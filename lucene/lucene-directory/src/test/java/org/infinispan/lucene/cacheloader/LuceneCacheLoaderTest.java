@@ -101,7 +101,7 @@ public class LuceneCacheLoaderTest extends IndexCacheLoaderTest {
 
                LuceneCacheLoader cacheLoader = (LuceneCacheLoader) TestingUtil.getFirstLoader(cacheManager.getCache());
                for(String fileName : fileNamesFromIndexDir) {
-                  FileCacheKey key = new FileCacheKey(indexName, fileName);
+                  FileCacheKey key = new FileCacheKey(indexName, fileName, -1);
                   assert cacheLoader.contains(key);
 
                   //Testing non-existent keys with non-acceptable type

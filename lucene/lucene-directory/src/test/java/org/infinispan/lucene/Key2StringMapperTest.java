@@ -25,23 +25,23 @@ public class Key2StringMapperTest {
 
    @Test
    public void loadChunkCacheKey() {
-      AssertJUnit.assertEquals(new ChunkCacheKey("my addressbook", "sgments0.gen", 34, 16000000), mapper.getKeyMapping("sgments0.gen|34|16000000|my addressbook"));
+      AssertJUnit.assertEquals(new ChunkCacheKey("my addressbook", "sgments0.gen", 34, 16000000, -1), mapper.getKeyMapping("C|sgments0.gen|34|16000000|my addressbook|-1"));
    }
 
    @Test
    public void loadFileCacheKey() {
-      AssertJUnit.assertEquals(new FileCacheKey("poems and songs, 3000AC-2000DC", "filename.extension"), mapper.getKeyMapping("filename.extension|M|poems and songs, 3000AC-2000DC"));
+      AssertJUnit.assertEquals(new FileCacheKey("poems and songs, 3000AC-2000DC", "filename.extension", -1), mapper.getKeyMapping("M|filename.extension|poems and songs, 3000AC-2000DC|-1"));
    }
 
    @Test
    public void loadFileListCacheKey() {
-      AssertJUnit.assertEquals(new FileListCacheKey(""), mapper.getKeyMapping("*|"));
-      AssertJUnit.assertEquals(new FileListCacheKey("the leaves of Amazonia"), mapper.getKeyMapping("*|the leaves of Amazonia"));
+      AssertJUnit.assertEquals(new FileListCacheKey("", -1), mapper.getKeyMapping("*||-1"));
+      AssertJUnit.assertEquals(new FileListCacheKey("the leaves of Amazonia", -1), mapper.getKeyMapping("*|the leaves of Amazonia|-1"));
    }
 
    @Test
    public void loadReadLockKey() {
-      AssertJUnit.assertEquals(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock"), mapper.getKeyMapping("brushed steel lock|RL|poems and songs, 3000AC-2000DC"));
+      AssertJUnit.assertEquals(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock", -1), mapper.getKeyMapping("RL|brushed steel lock|poems and songs, 3000AC-2000DC|-1"));
    }
 
    @Test(expectedExceptions=IllegalArgumentException.class)
@@ -76,16 +76,16 @@ public class Key2StringMapperTest {
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "filename must not be null")
    public void testChunkCacheKeyInitWithNllFileName() {
-      new ChunkCacheKey("index-A", null, 0, 1024);
+      new ChunkCacheKey("index-A", null, 0, 1024, -1);
    }
 
    @Test
    public void testChunkCacheKeyComparison() {
-      AssertJUnit.assertFalse("The object should not be equals to null.", new ChunkCacheKey("index-A", "fileName", 0, 1024).equals(null));
+      AssertJUnit.assertFalse("The object should not be equals to null.", new ChunkCacheKey("index-A", "fileName", 0, 1024, -1).equals(null));
       AssertJUnit.assertFalse("The ChunkCacheKey objects should not be equal due to different file names.",
-                         new ChunkCacheKey("index-A", "fileName", 0, 1024).equals(new ChunkCacheKey("index-A", "fileName1", 0, 1024)));
+                         new ChunkCacheKey("index-A", "fileName", 0, 1024, -1).equals(new ChunkCacheKey("index-A", "fileName1", 0, 1024, -1)));
       AssertJUnit.assertEquals("The ChunkCacheKey objects should be equal.",
-                        new ChunkCacheKey("index-A", "fileName", 0, 1024), new ChunkCacheKey("index-A", "fileName", 0, 1024));
+                        new ChunkCacheKey("index-A", "fileName", 0, 1024, -1), new ChunkCacheKey("index-A", "fileName", 0, 1024, -1));
    }
 
    public void testIsSupportedType() {
@@ -98,34 +98,34 @@ public class Key2StringMapperTest {
 
    @Test(expectedExceptions=IllegalArgumentException.class)
    public void testReadLockKeyIndexNameNull() {
-      FileReadLockKey key = new FileReadLockKey(null, "brushed steel lock");
+      FileReadLockKey key = new FileReadLockKey(null, "brushed steel lock", -1);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testReadLockKeyFileNameNull() {
-      FileReadLockKey key = new FileReadLockKey("poems and songs, 3000AC-2000DC", null);
+      FileReadLockKey key = new FileReadLockKey("poems and songs, 3000AC-2000DC", null, -1);
    }
 
    public void testReadLockEqualsWithNullOrNotEqualObj() {
-      FileReadLockKey key = new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock");
+      FileReadLockKey key = new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed steel lock", -1);
       AssertJUnit.assertNotNull(key);
-      AssertJUnit.assertFalse(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed lock")
-                     .equals(mapper.getKeyMapping("brushed steel lock|RL|poems and songs, 3000AC-2000DC")));
+      AssertJUnit.assertFalse(new FileReadLockKey("poems and songs, 3000AC-2000DC", "brushed lock", -1)
+                     .equals(mapper.getKeyMapping("RL|brushed steel lock|poems and songs, 3000AC-2000DC|-1")));
    }
 
    @Test
    public void testFileListCacheKeyComparison() {
-      AssertJUnit.assertFalse("The instance of FileListCacheKey should not be equal to null.", new FileListCacheKey("index-A").equals(null));
-      AssertJUnit.assertFalse("The instance of FileListCacheKey should not be equal to FileCacheKey instance.", new FileListCacheKey("index-A").equals(new FileCacheKey("index-A", "test.txt")));
+      AssertJUnit.assertFalse("The instance of FileListCacheKey should not be equal to null.", new FileListCacheKey("index-A", -1).equals(null));
+      AssertJUnit.assertFalse("The instance of FileListCacheKey should not be equal to FileCacheKey instance.", new FileListCacheKey("index-A", -1).equals(new FileCacheKey("index-A", "test.txt", -1)));
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "filename must not be null")
    public void testFileCacheKeyInit() {
-      new FileCacheKey("poems and songs, 3000AC-2000DC", null);
+      new FileCacheKey("poems and songs, 3000AC-2000DC", null, -1);
    }
 
    @Test
    public void testFileCacheKeyCompWithNull() {
-      AssertJUnit.assertFalse("The Instance of FileCacheKey should not be equal to null.", new FileCacheKey("poems and songs, 3000AC-2000DC", "fileName.txt").equals(null));
+      AssertJUnit.assertFalse("The Instance of FileCacheKey should not be equal to null.", new FileCacheKey("poems and songs, 3000AC-2000DC", "fileName.txt", -1).equals(null));
    }
 }

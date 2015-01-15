@@ -32,31 +32,31 @@ public class ConfigurationCheckTest extends SingleCacheManagerTest {
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testEvictionIsNotAllowed() {
       Cache<?, ?> c = cacheManager.getCache();
-      new DistributedSegmentReadLocker((Cache<Object, Integer>) c, c, c, "lucene.readlocks.ConfigurationCheckTest");
+      new DistributedSegmentReadLocker((Cache<Object, Integer>) c, c, c, "lucene.readlocks.ConfigurationCheckTest", -1);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testLocksCacheNullIsNotAllowed() {
       Cache<?, ?> c = cacheManager.getCache();
-      new DistributedSegmentReadLocker(null, c, c, "lucene.readlocks.ConfigurationCheckTest");
+      new DistributedSegmentReadLocker(null, c, c, "lucene.readlocks.ConfigurationCheckTest", -1);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testChunkCacheNullIsNotAllowed() {
       Cache<?, ?> c = cacheManager.getCache();
-      new DistributedSegmentReadLocker((Cache<Object, Integer>) c, null, c, "lucene.readlocks.ConfigurationCheckTest");
+      new DistributedSegmentReadLocker((Cache<Object, Integer>) c, null, c, "lucene.readlocks.ConfigurationCheckTest", -1);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testMetaDataNullIsNotAllowed() {
       Cache<?, ?> c = cacheManager.getCache();
-      new DistributedSegmentReadLocker((Cache<Object, Integer>) c, c, null, "lucene.readlocks.ConfigurationCheckTest");
+      new DistributedSegmentReadLocker((Cache<Object, Integer>) c, c, null, "lucene.readlocks.ConfigurationCheckTest", -1);
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class)
    public void testIndexNameNullIsNotAllowed() {
       Cache<?, ?> c = cacheManager.getCache();
-      new DistributedSegmentReadLocker((Cache<Object, Integer>) c, c, c, null);
+      new DistributedSegmentReadLocker((Cache<Object, Integer>) c, c, c, null, -1);
    }
 
 }
