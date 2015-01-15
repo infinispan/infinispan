@@ -62,25 +62,25 @@
 
       <!-- Versions for dependencies -->
       <version.protostream>3.0.0.Alpha6</version.protostream>
-      <version.aesh>0.33.7</version.aesh>
+      <version.aesh>0.33.11</version.aesh>
       <version.antlr>3.4</version.antlr>
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.commons.pool>1.6</version.commons.pool>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
-      <version.hibernate.core>4.3.6.Final</version.hibernate.core>
+      <version.hibernate.core>4.3.7.Final</version.hibernate.core>
       <version.hibernate.search>5.0.1.Final</version.hibernate.search>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.cdi>1.0-SP4</version.cdi>
-      <version.jboss.marshalling>1.4.4.Final</version.jboss.marshalling>
-      <version.jboss.logging>3.1.2.GA</version.jboss.logging>
+      <version.jboss.marshalling>1.4.9.Final</version.jboss.marshalling>
+      <version.jboss.logging>3.1.4.GA</version.jboss.logging>
       <version.jgroups>3.6.1.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
-      <version.netty>4.0.20.Final</version.netty>
+      <version.netty>4.0.24.Final</version.netty>
       <version.osgi>4.3.1</version.osgi>
       <version.rhq>4.4.0</version.rhq>
       <version.scala.major>2.11</version.scala.major>
-      <version.scala>${version.scala.major}.2</version.scala>
+      <version.scala>${version.scala.major}.4</version.scala>
       <version.scala.xml>1.0.2</version.scala.xml>
       <version.xstream>1.4.7</version.xstream>
       <version.c3p0>0.9.5-pre8</version.c3p0>

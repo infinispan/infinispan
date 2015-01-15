@@ -154,9 +154,9 @@
       <version.mockito_dep.objenesis>1.4</version.mockito_dep.objenesis>
       <version.mysql.driver>5.1.19</version.mysql.driver>
       <version.org.jboss.naming>5.0.6.CR1</version.org.jboss.naming>
-      <version.org.picketbox>4.0.20.Final</version.org.picketbox>
+      <version.org.picketbox>4.0.21.Final</version.org.picketbox>
       <version.postgresql.driver>9.3-1101-jdbc41</version.postgresql.driver>
-      <version.resteasy>3.0.7.Final</version.resteasy>
+      <version.resteasy>3.0.10.Final</version.resteasy>
       <version.shrinkwrapResolver>2.0.0-alpha-6</version.shrinkwrapResolver>
       <version.slf4j>1.7.5</version.slf4j>
       <version.snappy>1.0.5</version.snappy>
@@ -168,7 +168,7 @@
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.13.Final</version.weld>
-      <version.wildfly>8.1.0.Final</version.wildfly>
+      <version.wildfly>8.2.0.Final</version.wildfly>
       <version.javassist>3.18.1-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
