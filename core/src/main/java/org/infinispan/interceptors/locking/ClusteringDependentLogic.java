@@ -6,6 +6,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
+import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -101,15 +102,13 @@ public interface ClusteringDependentLogic {
       protected void notifyCommitEntry(boolean created, boolean removed,
                                        boolean evicted, CacheEntry entry, InvocationContext ctx,
                                        FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
-         // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
-         // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
-         // with non-null values, so we should do the same here as an ugly workaround.
-         if (removed && evicted) {
-            notifier.notifyCacheEntryEvicted(
-                  entry.getKey(), entry.getValue(), ctx, command);
-         } else if (removed) {
-            notifier.notifyCacheEntryRemoved(
-                  entry.getKey(), previousValue, previousMetadata, false, ctx, command);
+         if (removed) {
+            if (command instanceof RemoveCommand) {
+               ((RemoveCommand)command).notify(ctx, previousValue, previousMetadata, false);
+            } else {
+               notifier.notifyCacheEntryRemoved(
+                     entry.getKey(), previousValue, previousMetadata, false, ctx, command);
+            }
          } else {
             // Notify entry event after container has been updated
             if (created) {

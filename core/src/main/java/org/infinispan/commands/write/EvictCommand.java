@@ -38,11 +38,17 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
    }
 
    @Override
-   public void notify(InvocationContext ctx, Object value, Metadata previousMetadata) {
-      /**
-       * We don't notify in pre for evictions - the notification is done in
-       * {@link org.infinispan.interceptors.locking.ClusteringDependentLogic.AbstractClusteringDependentLogic#notifyCommitEntry(boolean, boolean, boolean, org.infinispan.container.entries.CacheEntry, org.infinispan.context.InvocationContext, org.infinispan.commands.FlagAffectedCommand, org.infinispan.container.entries.InternalCacheEntry)}
-        */
+   public void notify(InvocationContext ctx, Object value, Metadata previousMetadata, 
+         boolean isPre) {
+      // Eviction has no notion of pre/post event since 4.2.0.ALPHA4.
+      // EvictionManagerImpl.onEntryEviction() triggers both pre and post events
+      // with non-null values, so we should do the same here as an ugly workaround.
+      if (!isPre) {
+         if (log.isTraceEnabled())
+            log.tracef("Notify eviction listeners for key=%", key);
+
+         notifier.notifyCacheEntryEvicted(key, value, ctx, this);
+      }
    }
 
    @Override
