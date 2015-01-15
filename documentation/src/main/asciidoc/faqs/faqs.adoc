@@ -102,10 +102,9 @@ A lot of the code, designs and ideas in Infinispan are from JBoss Cache, and has
 Infinispan should thus be viewed as a mature and stable platform and not a new, experimental one.
 
 === How is this related to JSR 107, the JCACHE specification?
-link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR 107] is not complete, but Infinispan's primary API is as close as possible to JSR 107's `javax.cache.Cache` interface.
-The goal is once JSR 107 is complete, `org.infinispan.Cache` would extend `javax.cache.Cache`.
+Infinispan core engineers are on the link:$$http://jcp.org/en/jsr/detail?id=107$$[JSR 107] expert group and starting with version 7.0.0, Infinispan provides a certified compatible implementation of version 1.0.0 of the specification.
 
-Infinispan core engineers are on the JSR 107 expert group, and have produced link:$$../user_guide/user_guide.html#_using_infinispan_as_a_jsr107_jcache_provider$$[a prototype of Infinispan implementing JSR 107].
+Have a look at link:$$../user_guide/user_guide.html#_using_infinispan_as_a_jsr107_jcache_provider$$[Using Infinispan as a JSR107 (JCache) provider] for details.
 
 === Can I use Infinispan with Hibernate?
 Yes, you can combine one or more of these integrations in the same application:
