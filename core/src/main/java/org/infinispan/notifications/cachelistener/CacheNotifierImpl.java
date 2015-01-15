@@ -402,15 +402,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    @Override
-   public void notifyCacheEntryInvalidated(final K key, V value, final boolean pre,
-         InvocationContext ctx, FlagAffectedCommand command) {
+   public void notifyCacheEntryInvalidated(final K key, V value, 
+         final boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryInvalidatedListeners)) {
-         final boolean originLocal = ctx.isOriginLocal();
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_INVALIDATED);
-         e.setOriginLocal(originLocal);
-         e.setPre(pre);
-         e.setKey(key);
-         e.setValue(value);
+         configureEvent(e, key, value, pre, ctx, command, value, null);
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryInvalidatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);

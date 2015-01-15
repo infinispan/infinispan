@@ -93,8 +93,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       return performRemove(e, ctx);
    }
 
-   protected void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata) {
-      notifier.notifyCacheEntryRemoved(key, removedValue, removedMetadata, true, ctx, this);
+   public void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata, boolean isPre) {
+      notifier.notifyCacheEntryRemoved(key, removedValue, removedMetadata, isPre, ctx, this);
    }
 
    @Override
@@ -205,7 +205,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    private Object performRemove(CacheEntry e, InvocationContext ctx) {
       final Object removedValue = e.getValue();
-      notify(ctx, removedValue, e.getMetadata());
+      notify(ctx, removedValue, e.getMetadata(), true);
 
       e.setRemoved(true);
       e.setValid(false);

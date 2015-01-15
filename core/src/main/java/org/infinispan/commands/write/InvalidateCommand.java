@@ -5,6 +5,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -68,6 +69,12 @@ public class InvalidateCommand extends RemoveCommand {
    protected void invalidate(InvocationContext ctx, Object keyToInvalidate) throws Throwable {
       key = keyToInvalidate; // so that the superclass can see it
       super.perform(ctx);
+   }
+
+   @Override
+   public void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata,
+         boolean isPre) {
+      notifier.notifyCacheEntryInvalidated(key, removedValue, isPre, ctx, this);
    }
 
    @Override
