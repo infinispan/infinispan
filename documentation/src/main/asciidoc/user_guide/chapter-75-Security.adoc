@@ -11,24 +11,24 @@ Also, to avoid pulling in any external dependencies and to increase the ease of 
 standard Java security libraries (JAAS, JSSE, JCA, JCE, SASL, etc).
 For this reason, the Infinispan core library only provides interfaces and a set of basic implementations.
 
-== Embedded Security
+=== Embedded Security
 Applications interact with Infinispan using its API within the same JVM. The two main components which are exposed by the Infinispan API are CacheManagers and Caches. If an application wants to interact with a secured CacheManager and Cache, it should provide an identity which Infinispan’s security layer will validate against a set of required roles and permissions. If the identity provided by the user application has sufficient permissions, then access will be granted, otherwise an exception indicating a security violation will be thrown. The identity is represented by the javax.security.auth.Subject class which is a wrapper around multiple Principals, e.g. a user and all the groups it belongs to. Since the Principal name is dependent on the owning system (e.g. a Distinguished Name in LDAP), Infinispan needs to be able to map Principal names to roles.
 Roles, in turn, represent one or more permissions. The following diagram shows the relationship between the various elements:
 
 .Roles/Permissions mapping 
 image::images/SecurityRolesPermissions.png[Roles/Permissions mapping]
  
-=== Embedded Permissions
+==== Embedded Permissions
 
 Access to a cache manager or a cache is controlled by using a list of required permissions. Permissions are concerned with the type of action that is performed on one of the above entities and not with the type of data being manipulated. Some of these permissions can be narrowed to specifically named entities, where applicable (e.g. a named cache). Depending on the type of entity, there are different types of permission available:
 
-==== Cache Manager permissions
+===== Cache Manager permissions
 * CONFIGURATION (defineConfiguration): whether a new cache configuration can be defined
 * LISTEN (addListener): whether listeners can be registered against a cache manager
 * LIFECYCLE (stop): whether the cache manager can be stopped
 * ALL: a convenience permission which includes all of the above
 
-==== Cache permissions
+===== Cache permissions
 * READ (get, contains): whether entries can be retrieved from the cache
 * WRITE (put, putIfAbsent, replace, remove, evict): whether data can be written/replaced/removed/evicted from the cache
 * EXEC (distexec, mapreduce): whether code execution can be run against the cache
@@ -49,7 +49,7 @@ Some permissions might need to be combined with others in order to be useful. Fo
 <role name="supervisors" permission="READ WRITE EXEC BULK"/>
 ----
 
-=== Embedded API
+==== Embedded API
 When a DefaultCacheManager has been constructed with security enabled using either the programmatic or declarative configuration, it returns a SecureCache which will check the security context before invoking any operations on the underlying caches. A SecureCache also makes sure that applications cannot retrieve lower-level insecure objects (such as DataContainer).
 In Java, executing code with a specific identity usually means wrapping the code to be executed within a PrivilegedAction:
 
@@ -82,7 +82,7 @@ which will automatically retrieve the Subject either from the Infinispan's conte
 
 Infinispan also fully supports running under a full-blown SecurityManager. The Infinispan distribution contains an example security.policy file which you should customize with the appropriate paths before supplying it to your JVM.
 
-=== Embedded Configuration
+==== Embedded Configuration
 There are two levels of configuration: global and per-cache. The global configuration defines the set of roles/permissions mappings while each cache can decide whether to enable authorization checks and the required roles.
 
 .Programmatic
@@ -135,7 +135,7 @@ There are two levels of configuration: global and per-cache. The global configur
 </infinispan>
 ----
 
-==== Role Mappers
+===== Role Mappers
 
 In order to convert the Principals in a Subject into a set of roles to be used when authorizing, a suitable +PrincipalRoleMapper+ must be specified in the global configuration. Infinispan comes with 3 mappers and also allows you to provide a custom one:
 
@@ -145,7 +145,7 @@ the DN +cn=managers,ou=people,dc=example,dc=com+ will be mapped to the role +man
 * ClusterRoleMapper (Java: +org.infinispan.security.impl.ClusterRoleMapper+ XML: +<cluster-role-mapper />+): a mapper which uses the ClusterRegistry to store principal to role mappings. This allows the use of the CLI's GRANT and DENY commands to add/remove roles to a principal.
 * Custom role mappers (XML: +<custom-role-mapper class="a.b.c" />+): just supply the fully-qualified class name of an implementation of +org.infinispan.security.PrincipalRoleMapper+
 
-== Security Audit
+=== Security Audit
 
 Infinispan offers a pluggable audit logger which tracks whether a cache or a cache manager operation was allowed or denied.
 The audit logger is configured at the cache container authorization level:
@@ -183,7 +183,7 @@ In embedded mode the default audit logger is +org.infinispan.security.impl.NullA
 Using an appropriate logging appender it is possible to send the AUDIT category either to a log file, a JMS queue, a database, etc.
 The +user+ which is included in the log above is the name of the first non-+java.security.acl.Group+ principal in the Subject.
 
-== Cluster security
+=== Cluster security
 
 JGroups can be configured so that nodes need to authenticate each other when joining / merging. The authentication uses SASL and is setup by adding the +SASL+ protocol to your JGroups XML configuration above the GMS protocol, as follows:
 
