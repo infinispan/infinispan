@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.protostream.DescriptorParserException;
+import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.logging.Log;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -144,9 +145,9 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertEquals(value, cache0.get("test.proto"));
       assertEquals(value, cache1.get("test.proto"));
       assertEquals("Import 'missing.proto' not found", cache0.get("test.proto.errors"));
-      assertEquals("test.proto", cache0.get(".errors"));
+      assertEquals("test.proto", cache0.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
       assertEquals("Import 'missing.proto' not found", cache1.get("test.proto.errors"));
-      assertEquals("test.proto", cache1.get(".errors"));
+      assertEquals("test.proto", cache1.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       value = "package foobar;";
       cache0.put("test.proto", value);
@@ -154,8 +155,8 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertEquals(value, cache1.get("test.proto"));
       assertFalse(cache0.containsKey("test.proto.errors"));
       assertFalse(cache1.containsKey("test.proto.errors"));
-      assertFalse(cache0.containsKey(".errors"));
-      assertFalse(cache1.containsKey(".errors"));
+      assertFalse(cache0.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertFalse(cache1.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       assertNoTransactionsAndLocks();
    }
@@ -173,17 +174,17 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertEquals(value, cache0.get("test.proto"));
       assertEquals(value, cache1.get("test.proto"));
       assertEquals("Import 'missing.proto' not found", cache0.get("test.proto.errors"));
-      assertEquals("test.proto", cache0.get(".errors"));
+      assertEquals("test.proto", cache0.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
       assertEquals("Import 'missing.proto' not found", cache1.get("test.proto.errors"));
-      assertEquals("test.proto", cache1.get(".errors"));
+      assertEquals("test.proto", cache1.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       cache0.putIfAbsent("test.proto", "package foobar;");
       assertEquals(value, cache0.get("test.proto"));
       assertEquals(value, cache1.get("test.proto"));
       assertEquals("Import 'missing.proto' not found", cache0.get("test.proto.errors"));
-      assertEquals("test.proto", cache0.get(".errors"));
+      assertEquals("test.proto", cache0.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
       assertEquals("Import 'missing.proto' not found", cache1.get("test.proto.errors"));
-      assertEquals("test.proto", cache1.get(".errors"));
+      assertEquals("test.proto", cache1.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       value = "package foobar;";
       cache0.put("test.proto", value);
@@ -191,8 +192,8 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertEquals(value, cache1.get("test.proto"));
       assertFalse(cache0.containsKey("test.proto.errors"));
       assertFalse(cache1.containsKey("test.proto.errors"));
-      assertFalse(cache0.containsKey(".errors"));
-      assertFalse(cache1.containsKey(".errors"));
+      assertFalse(cache0.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertFalse(cache1.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       assertNoTransactionsAndLocks();
    }
@@ -219,10 +220,10 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertEquals("Import 'missing.proto' not found", cache1.get("a.proto.errors"));
       assertFalse(cache0.containsKey("b.proto.errors"));
       assertFalse(cache1.containsKey("b.proto.errors"));
-      assertTrue(cache0.containsKey(".errors"));
-      assertTrue(cache1.containsKey(".errors"));
-      assertEquals("a.proto", cache0.get(".errors"));
-      assertEquals("a.proto", cache1.get(".errors"));
+      assertTrue(cache0.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertTrue(cache1.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertEquals("a.proto", cache0.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertEquals("a.proto", cache1.get(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       file1 = "package a;";
       map.put("a.proto", file1);
@@ -236,8 +237,8 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertFalse(cache1.containsKey("a.proto.errors"));
       assertFalse(cache0.containsKey("b.proto.errors"));
       assertFalse(cache1.containsKey("b.proto.errors"));
-      assertFalse(cache0.containsKey(".errors"));
-      assertFalse(cache1.containsKey(".errors"));
+      assertFalse(cache0.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertFalse(cache1.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       assertNoTransactionsAndLocks();
    }
@@ -262,8 +263,8 @@ public class ProtobufMetadataManagerInterceptorTest extends MultipleCacheManager
       assertFalse(cache1.containsKey("test.proto"));
       assertFalse(cache0.containsKey("test.proto.errors"));
       assertFalse(cache1.containsKey("test.proto.errors"));
-      assertFalse(cache0.containsKey(".errors"));
-      assertFalse(cache1.containsKey(".errors"));
+      assertFalse(cache0.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      assertFalse(cache1.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
 
       assertNoTransactionsAndLocks();
    }
