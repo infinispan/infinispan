@@ -141,15 +141,15 @@ public final class ProtobufMetadataManager implements ProtobufMetadataManagerMBe
 
    @ManagedOperation(description = "Registers a set of Protobuf definition files", displayName = "Register Protofiles")
    @Override
-   public void registerProtofiles(@Parameter(name = "fileNames", description = "names of the protofiles") String[] names,
+   public void registerProtofiles(@Parameter(name = "fileNames", description = "names of the protofiles") String[] fileNames,
                                   @Parameter(name = "fileContents", description = "content of the files") String[] contents)
          throws Exception {
-      if (names.length != contents.length) {
+      if (fileNames.length != contents.length) {
          throw new MBeanException(new IllegalArgumentException("invalid parameter sizes"));
       }
-      Map<String, String> files = new HashMap<String, String>(names.length);
-      for (int i = 0; i < names.length; i++) {
-         files.put(names[i], contents[i]);
+      Map<String, String> files = new HashMap<String, String>(fileNames.length);
+      for (int i = 0; i < fileNames.length; i++) {
+         files.put(fileNames[i], contents[i]);
       }
       getCache().putAll(files);
    }
