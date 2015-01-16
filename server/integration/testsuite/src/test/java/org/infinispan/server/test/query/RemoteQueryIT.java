@@ -123,7 +123,7 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
 
     private User createUser2() {
         User user = new User();
-        user.setId(1);
+        user.setId(2);
         user.setName("Adrian");
         user.setSurname("Nistor");
         user.setGender(User.Gender.MALE);
