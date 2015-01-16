@@ -220,11 +220,6 @@ public class QueryFacadeImpl implements QueryFacade {
             public FieldBridge getFieldBridge(String type, String propertyPath) {
                Descriptor md = serCtx.getMessageDescriptor(type);
                FieldDescriptor fd = getFieldDescriptor(md, propertyPath);
-               IndexingMetadata indexingMetadata = md.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
-               if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getNumber())) {
-                  throw new IllegalArgumentException("Field " + propertyPath + " from type " + md.getFullName() + " is not indexed");
-               }
-
                switch (fd.getType()) {
                   case DOUBLE:
                      return NumericFieldBridge.DOUBLE_FIELD_BRIDGE;
@@ -269,6 +264,10 @@ public class QueryFacadeImpl implements QueryFacade {
          fd = messageDescriptor.findFieldByName(name);
          if (fd == null) {
             throw new IllegalArgumentException("Unknown field " + name + " in type " + messageDescriptor.getFullName());
+         }
+         IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
+         if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getNumber())) {
+            throw new IllegalArgumentException("Field " + name + " from type " + messageDescriptor.getFullName() + " is not indexed");
          }
          if (i < split.length - 1) {
             messageDescriptor = fd.getMessageType();
