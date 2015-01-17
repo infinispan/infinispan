@@ -1,0 +1,363 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+   xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.infinispan</groupId>
+      <artifactId>infinispan-jcache-parent</artifactId>
+      <version>7.2.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
+   </parent>
+
+   <artifactId>infinispan-jcache-tck-runner</artifactId>
+   <packaging>jar</packaging>
+   <name>Infinispan JCACHE (JSR-107) TCK Runner</name>
+   <description>JCACHE (JSR-107) TCK runner for Infinispan implementations</description>
+
+   <properties>
+      <infinispan.server.version>7.2.0.Alpha1</infinispan.server.version>
+
+      <skipJSR107RemoteTests>true</skipJSR107RemoteTests>
+
+      <domain-lib-dir>${project.build.directory}/domainlib</domain-lib-dir>
+      <domain-jar>domain.jar</domain-jar>
+      <tck.mbean.builder>org.infinispan.jcache.tck.TckMbeanServerBuilder</tck.mbean.builder>
+      <tck.mbean.server>TckMbeanServer</tck.mbean.server>
+
+      <!-- TODO: do they need to be different? -->
+      <embedded.CacheManagerImpl>org.infinispan.jcache.embedded.JCacheManager</embedded.CacheManagerImpl>
+      <embedded.CacheImpl>org.infinispan.jcache.embedded.JCache</embedded.CacheImpl>
+      <embedded.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</embedded.CacheEntryImpl>
+      <embedded.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</embedded.CacheInvocationContextImpl>
+
+      <remote.CacheManagerImpl>org.infinispan.jcache.remote.JCacheManager</remote.CacheManagerImpl>
+      <remote.CacheImpl>org.infinispan.jcache.remote.JCache</remote.CacheImpl>
+      <remote.CacheEntryImpl>org.infinispan.jcache.JCacheEntry</remote.CacheEntryImpl>
+      <remote.CacheInvocationContextImpl>org.infinispan.jcache.annotation.CacheKeyInvocationContextImpl</remote.CacheInvocationContextImpl>
+
+      <server.dir.parent>${project.build.directory}</server.dir.parent>
+      <server.dir.name>infinispan-server-${infinispan.server.version}</server.dir.name>
+      <server.dir>${server.dir.parent}/${server.dir.name}</server.dir>
+
+      <failsafe.reportdir.embedded>${project.build.directory}/failsafe-reports-embedded</failsafe.reportdir.embedded>
+      <failsafe.reportdir.remote>${project.build.directory}/failsafe-reports-remote</failsafe.reportdir.remote>
+      <failsafe.summary.embedded>${failsafe.reportdir.embedded}/failsafe-summary.xml</failsafe.summary.embedded>
+      <failsafe.summary.remote>${failsafe.reportdir.remote}/failsafe-summary.xml</failsafe.summary.remote>
+   </properties>
+
+   <dependencies>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-jcache</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-jcache-remote</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.wildfly</groupId>
+         <artifactId>wildfly-controller</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>org.hamcrest</groupId>
+         <artifactId>hamcrest-library</artifactId>
+         <version>1.2</version>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cache-tests</artifactId>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cache-tests</artifactId>
+         <classifier>tests</classifier>
+         <scope>test</scope>
+      </dependency>
+      <dependency>
+         <groupId>javax.cache</groupId>
+         <artifactId>cdi-weld-annotations-test-harness</artifactId>
+         <scope>test</scope>
+      </dependency>
+   </dependencies>
+
+   <build>
+      <testResources>
+         <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+         </testResource>
+      </testResources>
+
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>unpack-server</id>
+                  <goals>
+                     <goal>unpack</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>org.infinispan.server</groupId>
+                           <artifactId>infinispan-server</artifactId>
+                           <version>${infinispan.server.version}</version>
+                           <classifier>bin</classifier>
+                           <type>zip</type>
+                           <outputDirectory>${server.dir.parent}</outputDirectory>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>copy-cache-tests</id>
+                  <goals>
+                     <goal>unpack-dependencies</goal>
+                  </goals>
+                  <configuration>
+                     <outputDirectory>${project.build.testOutputDirectory}</outputDirectory>
+                     <includeArtifactIds>cache-tests</includeArtifactIds>
+                     <includeScope>test</includeScope>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>copy-domain</id>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+                        <artifactItem>
+                           <groupId>javax.cache</groupId>
+                           <artifactId>app-domain</artifactId>
+                           <version>${version.javax.cache.cache-tests}</version>
+                           <outputDirectory>${domain-lib-dir}</outputDirectory>
+                           <destFileName>${domain-jar}</destFileName>
+                        </artifactItem>
+                     </artifactItems>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+         <!-- <plugin> -->
+         <!--    <groupId>org.wildfly.plugins</groupId> -->
+         <!--    <artifactId>wildfly-maven-plugin</artifactId> -->
+         <!--    <executions> -->
+         <!--       <execution> -->
+         <!--          <id>start-server</id> -->
+         <!--          <phase>pre-integration-test</phase> -->
+         <!--          <goals> -->
+         <!--             <goal>start</goal> -->
+         <!--          </goals> -->
+         <!--          <configuration> -->
+         <!--             <skip>${skipTests}</skip> -->
+         <!--             <jbossHome>${server.dir}</jbossHome> -->
+         <!--          </configuration> -->
+         <!--       </execution> -->
+         <!--       <execution> -->
+         <!--          <id>stop-server</id> -->
+         <!--          <phase>post-integration-test</phase> -->
+         <!--          <goals> -->
+         <!--             <goal>shutdown</goal> -->
+         <!--          </goals> -->
+         <!--          <configuration> -->
+         <!--             <skip>${skipTests}</skip> -->
+         <!--             <jbossHome>${server.dir}</jbossHome> -->
+         <!--          </configuration> -->
+         <!--       </execution> -->
+         <!--    </executions> -->
+         <!-- </plugin> -->
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>default-test</id>
+                  <phase>none</phase>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+               <includes>
+                  <include>**/Test*.java</include>
+                  <include>**/*Test.java</include>
+                  <include>**/*TestCase.java</include>
+               </includes>
+               <systemPropertyVariables>
+                  <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
+                  <javax.management.builder.initial>${tck.mbean.builder}</javax.management.builder.initial>
+                  <org.jsr107.tck.management.agentId>${tck.mbean.server}</org.jsr107.tck.management.agentId>
+                  <log4j.configuration>${log4j.configuration}</log4j.configuration>
+                  <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
+               </systemPropertyVariables>
+               <properties>
+                  <property>
+                     <name>listener</name>
+                     <value>org.infinispan.jcache.test.tck.DummyTestListener</value>
+                  </property>
+               </properties>
+            </configuration>
+            <executions>
+               <execution>
+                  <id>tck-embedded</id>
+                  <phase>integration-test</phase>
+                  <goals>
+                     <goal>integration-test</goal>
+                  </goals>
+                  <configuration>
+                     <summaryFile>${failsafe.summary.embedded}</summaryFile>
+                     <reportsDirectory>${failsafe.reportdir.embedded}</reportsDirectory>
+                     <classpathDependencyExcludes>
+                        <classpathDependencyExcludes>${project.groupId}:infinispan-jcache-remote</classpathDependencyExcludes>
+                     </classpathDependencyExcludes>
+                     <systemPropertyVariables>
+                        <ExcludeList>ExcludeList_embedded</ExcludeList>
+                        <javax.cache.Cache>${embedded.CacheImpl}</javax.cache.Cache>
+                        <javax.cache.Cache.Entry>${embedded.CacheEntryImpl}</javax.cache.Cache.Entry>
+                     </systemPropertyVariables>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>verify-tck-embedded</id>
+                  <phase>verify</phase>
+                  <goals>
+                     <goal>verify</goal>
+                  </goals>
+                  <configuration>
+                     <summaryFile>${failsafe.summary.embedded}</summaryFile>
+                     <reportsDirectory>${failsafe.reportdir.embedded}</reportsDirectory>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>tck-remote</id>
+                  <phase>integration-test</phase>
+                  <goals>
+                     <goal>integration-test</goal>
+                  </goals>
+                  <configuration>
+                     <summaryFile>${failsafe.summary.remote}</summaryFile>
+                     <reportsDirectory>${failsafe.reportdir.remote}</reportsDirectory>
+                     <classpathDependencyExcludes>
+                        <classpathDependencyExcludes>${project.groupId}:infinispan-jcache</classpathDependencyExcludes>
+                     </classpathDependencyExcludes>
+                     <systemPropertyVariables>
+                        <ExcludeList>ExcludeList_remote</ExcludeList>
+                        <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
+                        <javax.cache.Cache.Entry>${remote.CacheEntryImpl}</javax.cache.Cache.Entry>
+                     </systemPropertyVariables>
+                     <skipTests>${skipJSR107RemoteTests}</skipTests>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>verify-tck-remote</id>
+                  <phase>verify</phase>
+                  <goals>
+                     <goal>verify</goal>
+                  </goals>
+                  <configuration>
+                     <summaryFile>${failsafe.summary.remote}</summaryFile>
+                     <reportsDirectory>${failsafe.reportdir.remote}</reportsDirectory>
+                     <skipTests>${skipJSR107RemoteTests}</skipTests>
+                  </configuration>
+               </execution>
+            </executions>
+            <dependencies>
+               <dependency>
+                  <groupId>org.apache.maven.surefire</groupId>
+                  <artifactId>surefire-junit4</artifactId>
+                  <version>${version.maven.surefire}</version>
+               </dependency>
+            </dependencies>
+         </plugin>
+
+      </plugins>
+   </build>
+
+   <repositories>
+      <repository>
+         <releases>
+            <enabled>true</enabled>
+         </releases>
+         <snapshots>
+            <enabled>true</enabled>
+         </snapshots>
+         <id>sonatype-snapshot-repository</id>
+         <name>Sonatype snapshot to be removed once everything becomes stable</name>
+         <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      </repository>
+   </repositories>
+
+   <profiles>
+      <profile>
+         <id>test-basic-cache</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <configuration>
+                     <excludes>
+                        <exclude>**/interceptor/*Test.java</exclude>
+                     </excludes>
+                     <systemPropertyVariables>
+                        <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
+                     </systemPropertyVariables>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <profile>
+         <id>test-optional-cache</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-failsafe-plugin</artifactId>
+                  <configuration>
+                     <includes>
+                        <include>**/interceptor/*Test.java</include>
+                     </includes>
+                  </configuration>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+      <profile>
+         <id>smoke</id>
+         <build>
+            <plugins>
+               <plugin>
+                  <groupId>org.apache.maven.plugins</groupId>
+                  <artifactId>maven-surefire-plugin</artifactId>
+                  <executions>
+                     <execution>
+                        <id>default-test</id>
+                        <phase>none</phase>
+                     </execution>
+                  </executions>
+               </plugin>
+            </plugins>
+         </build>
+      </profile>
+
+   </profiles>
+
+</project>

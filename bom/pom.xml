@@ -241,7 +241,18 @@
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
          </dependency>
-         
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-jcache-commons</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-jcache-remote</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <!-- Infinispan aggregate jars -->
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-embedded</artifactId>
@@ -521,6 +532,7 @@
                                        <goal>copy</goal>
                                        <goal>copy-dependencies</goal>
                                        <goal>unpack</goal>
+                                       <goal>unpack-dependencies</goal>
                                     </goals>
                                  </pluginExecutionFilter>
                                  <action>
