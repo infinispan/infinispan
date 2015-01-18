@@ -1232,4 +1232,13 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Remote transaction %s rolled back because originator is no longer in the cluster", id = 332)
    CacheException orphanTransactionRolledBack(GlobalTransaction gtx);
+
+   @Message(value = "The site must be specified.", id = 333)
+   CacheConfigurationException backupSiteNullName();
+
+   @Message(value = "Using a custom failure policy requires a failure policy class to be specified.", id = 334)
+   CacheConfigurationException customBackupFailurePolicyClassNotSpecified();
+
+   @Message(value = "Two-phase commit can only be used with synchronous backup strategy.", id = 335)
+   CacheConfigurationException twoPhaseCommitAsyncBackup();
 }

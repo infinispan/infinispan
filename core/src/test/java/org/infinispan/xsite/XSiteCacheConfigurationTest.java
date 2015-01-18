@@ -3,6 +3,7 @@ package org.infinispan.xsite;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
@@ -65,6 +66,37 @@ public class XSiteCacheConfigurationTest {
                .site("LON")
             .sites().addBackup()
                .site("NYC");
+      cb.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testBackupSiteNotSpecified() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.
+            sites().addBackup()
+               .site();
+      cb.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testCustomBackupFailurePolicyClassNotSpecified() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.
+            sites().addBackup()
+               .site("LON")
+               .backupFailurePolicy(BackupFailurePolicy.CUSTOM)
+               .failurePolicyClass();
+      cb.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testTwoPhaseCommitAsyncBackup() {
+      ConfigurationBuilder cb = new ConfigurationBuilder();
+      cb.
+            sites().addBackup()
+               .site("LON")
+               .strategy(BackupConfiguration.BackupStrategy.ASYNC)
+               .useTwoPhaseCommit(true);
       cb.build();
    }
 
