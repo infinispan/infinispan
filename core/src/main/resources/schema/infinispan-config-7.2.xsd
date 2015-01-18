@@ -1398,8 +1398,8 @@
     <xs:attribute name="two-phase-commit" use="optional" type="xs:boolean" default="false">
       <xs:annotation>
         <xs:documentation>
-          Whether a backup will use a 2PC cycle for SYNC backups.  Defaults to "false".
-          NOTE: Not used for ASYNC backup strategies.
+          Configures whether the replication happens in a 1PC or 2PC when using SYNC backup strategy. Defaults to "false".
+          CacheConfigurationException is thrown when used with ASYNC backup strategy.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

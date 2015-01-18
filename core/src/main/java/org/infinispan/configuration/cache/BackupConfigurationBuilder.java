@@ -1,14 +1,17 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
 public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupConfiguration> {
+
+   private static final Log log = LogFactory.getLog(BackupConfigurationBuilder.class);
 
    private String site;
 
@@ -118,8 +121,9 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    }
 
    /**
-    * Configures whether the replication happens in a 1PC or 2PC for sync backups.
-    * The default value is "false"
+    * Configures whether the replication happens in a 1PC or 2PC when using SYNC backup strategy.
+    * The default value is "false". {@link org.infinispan.commons.CacheConfigurationException} is
+    * thrown when used with ASYNC backup strategy.
     */
    public BackupConfigurationBuilder useTwoPhaseCommit(boolean useTwoPhaseCommit) {
       this.useTwoPhaseCommit = useTwoPhaseCommit;
@@ -143,10 +147,12 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
       takeOfflineBuilder.validate();
       stateTransferBuilder.validate();
       if (site == null)
-         throw new CacheConfigurationException("The 'site' must be specified!");
+         throw log.backupSiteNullName();
       if (backupFailurePolicy == BackupFailurePolicy.CUSTOM && (failurePolicyClass == null)) {
-         throw new CacheConfigurationException("It is required to specify a 'failurePolicyClass' when using a " +
-                                                "custom backup failure policy!");
+         throw log.customBackupFailurePolicyClassNotSpecified();
+      }
+      if (useTwoPhaseCommit && strategy == BackupConfiguration.BackupStrategy.ASYNC) {
+         throw log.twoPhaseCommitAsyncBackup();
       }
    }
 
