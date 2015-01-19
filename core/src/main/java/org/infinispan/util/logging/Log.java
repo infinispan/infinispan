@@ -36,10 +36,10 @@ import javax.management.MBeanRegistrationException;
 import javax.management.ObjectName;
 import javax.naming.NamingException;
 import javax.transaction.Synchronization;
+import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.xml.namespace.QName;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -52,7 +52,12 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
-import static org.jboss.logging.Logger.Level.*;
+import static org.jboss.logging.Logger.Level.DEBUG;
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.FATAL;
+import static org.jboss.logging.Logger.Level.INFO;
+import static org.jboss.logging.Logger.Level.TRACE;
+import static org.jboss.logging.Logger.Level.WARN;
 
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
@@ -1220,9 +1225,11 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Distributed task failed at %s. The task is failing over to be executed at %s", id = 330)
    void distributedTaskFailover(Address failedAtAddress, Address failoverTarget, @Cause Exception e);
-   
+
    @LogMessage(level = WARN)
    @Message(value = "Unable to invoke method %s on Object instance %s ", id = 331)
    void unableToInvokeListenerMethod(Method m, Object target, @Cause Throwable e);
 
+   @Message(value = "Remote transaction %s rolled back because originator is no longer in the cluster", id = 332)
+   CacheException orphanTransactionRolledBack(GlobalTransaction gtx);
 }

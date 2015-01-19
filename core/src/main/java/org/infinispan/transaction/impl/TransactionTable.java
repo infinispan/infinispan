@@ -196,7 +196,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    @Stop
    @SuppressWarnings("unused")
    private void stop() {
-
+      cacheManagerNotifier.removeListener(this);
       if (executorService != null)
          executorService.shutdownNow();
 
