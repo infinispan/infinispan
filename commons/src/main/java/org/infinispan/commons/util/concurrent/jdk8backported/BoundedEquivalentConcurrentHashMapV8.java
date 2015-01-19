@@ -494,6 +494,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                } else {
                   break;
                }
+               // If we had a CAS failure, make sure to double check the size again in
+               // case if it increased or decreased - since evicting may be off
             } while ((overMax = (map.sumCount() - maxSize)) > 0);
          }
          if (toEvict > 0) {
