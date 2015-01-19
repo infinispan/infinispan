@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Galder Zamarreño
@@ -54,10 +55,14 @@ public class ClientListenerNotifier {
    private final Codec codec;
    private final Marshaller marshaller;
 
-   public ClientListenerNotifier(ExecutorService executor, Codec codec, Marshaller marshaller) {
+   protected ClientListenerNotifier(ExecutorService executor, Codec codec, Marshaller marshaller) {
       this.executor = executor;
       this.codec = codec;
       this.marshaller = marshaller;
+   }
+
+   public static ClientListenerNotifier create(Codec codec, Marshaller marshaller) {
+      return new ClientListenerNotifier(Executors.newCachedThreadPool(), codec, marshaller);
    }
 
    public Marshaller getMarshaller() {
@@ -129,12 +134,10 @@ public class ClientListenerNotifier {
       return null;
    }
 
-   public boolean isListenerConnected(Object listener) {
-      for (EventDispatcher dispatcher : clientListeners.values()) {
-         if (dispatcher.op.listener.equals(listener))
-            return !dispatcher.stopped;
-      }
-      return false; // if listener not present, is not active
+   public boolean isListenerConnected(byte[] listenerId) {
+      EventDispatcher dispatcher = clientListeners.get(listenerId);
+      // If listener not present, is not active
+      return dispatcher != null && !dispatcher.stopped;
    }
 
    public Transport findTransport(byte[] listenerId) {
@@ -226,7 +229,8 @@ public class ClientListenerNotifier {
 
       @Override
       public void run() {
-         while (true) {
+         Thread.currentThread().setName("Client-Listener-" + Util.toHexString(op.listenerId, 8));
+         while (!Thread.currentThread().isInterrupted()) {
             ClientEvent clientEvent = null;
             try {
                clientEvent = codec.readEvent(transport, op.listenerId, marshaller);
