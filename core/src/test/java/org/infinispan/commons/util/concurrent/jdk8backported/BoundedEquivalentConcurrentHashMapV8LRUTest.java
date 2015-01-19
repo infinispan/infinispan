@@ -33,7 +33,7 @@ import org.testng.annotations.Test;
  * @since 7.1
  */
 @Test(groups = "functional", testName = "util.concurrent.BoundedConcurrentHashMapTest")
-public class BoundedEquivalentConcurrentHashMapV8Test extends EquivalentHashMapTest {
+public class BoundedEquivalentConcurrentHashMapV8LRUTest extends EquivalentHashMapTest {
 
    public void testJdkMapExpectations() {
       super.testJdkMapExpectations();
@@ -148,6 +148,9 @@ public class BoundedEquivalentConcurrentHashMapV8Test extends EquivalentHashMapT
 
       // adding one more entry must evict COUNT
       bchm.put(COUNT + 1, COUNT + 1);
+
+      // We insert 0 -> COUNT which means COUNT + 1
+      assertEquals(COUNT + 1, bchm.size());
    }
 
    public void testLRUHitWhenHead() {

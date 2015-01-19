@@ -1,56 +1,34 @@
 package org.infinispan.util.concurrent;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8StressTest;
+import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
 import org.testng.annotations.Test;
-
-import java.util.Map;
-
-import static org.testng.AssertJUnit.fail;
 
 /**
 * @author Dan Berindei
 * @since 7.0
 */
 @Test(groups = "stress", testName = "util.concurrent.BoundedConcurrentHashMapStressTest")
-public class BoundedConcurrentHashMapStressTest extends AbstractInfinispanTest {
-   private void testRemovePerformance(BoundedConcurrentHashMap.Eviction eviction) {
-      final int COUNT = 200000;
-      Map<Integer, Integer> bchm = new BoundedConcurrentHashMap<Integer, Integer>(
-            COUNT, 1, eviction, AnyEquivalence.INT, AnyEquivalence.INT);
-
-      long startIncludePut = System.currentTimeMillis();
-      // fill the cache
-      for (int i = 0; i < COUNT; i++)
-         bchm.put(i, i);
-
-      // force a single cache hit (so that accessQueue has a head item)
-      bchm.get(0);
-
-      // remove items
-      long start = System.currentTimeMillis();
-      for (int i = 1; i < COUNT; i++)
-      {
-         bchm.get(i);
-         bchm.remove(i);
-
-         // original version needs ~5 min for 200k entries (2h for 1M)
-         // fixed version needs < 200ms for 200k (500ms for 1M)
-         if (System.currentTimeMillis() - start > 5000)
-            fail(eviction.name() + ": removing " + COUNT + " entries takes more than 5 seconds!");
-      }
-      System.out.println("BCHM Stress Test " + eviction + " took " + 
-            (System.currentTimeMillis() - start) + " milliseconds");
-      System.out.println("BCHM Entire Stress Test " + eviction + " took " + 
-            (System.currentTimeMillis() - startIncludePut) + " milliseconds");
+public class BoundedConcurrentHashMapStressTest extends BoundedEquivalentConcurrentHashMapV8StressTest {
+   public void testNoEvictionRemovePerformance() {
+      Eviction eviction = Eviction.NONE;
+      testRemovePerformance(COUNT, new BoundedConcurrentHashMap<Integer, Integer>(
+            COUNT, 1, eviction, AnyEquivalence.INT, AnyEquivalence.INT), eviction.toString());
    }
-
+   
+   @Test(priority=5)
    public void testLRURemovePerformance() {
-      testRemovePerformance(BoundedConcurrentHashMap.Eviction.LRU);
+      Eviction eviction = Eviction.LRU;
+      testRemovePerformance(COUNT, new BoundedConcurrentHashMap<Integer, Integer>(
+            COUNT, 1, eviction, AnyEquivalence.INT, AnyEquivalence.INT), eviction.toString());
    }
 
+   @Test(priority=10)
    public void testLIRSRemovePerformance() {
-      testRemovePerformance(BoundedConcurrentHashMap.Eviction.LIRS);
+      Eviction eviction = Eviction.LIRS;
+      testRemovePerformance(COUNT, new BoundedConcurrentHashMap<Integer, Integer>(
+            COUNT, 1, eviction, AnyEquivalence.INT, AnyEquivalence.INT), eviction.toString());
    }
 
 

@@ -2,12 +2,15 @@ package org.infinispan.commons.util.concurrent.jdk8backported;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
+import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.fail;
+import static org.testng.AssertJUnit.assertNotNull;
 
 /**
 * @author William Burns
@@ -15,45 +18,80 @@ import static org.testng.AssertJUnit.fail;
 */
 @Test(groups = "stress", testName = "util.concurrent.BoundedEquivalentConcurrentHashMapV8StressTest")
 public class BoundedEquivalentConcurrentHashMapV8StressTest extends AbstractInfinispanTest {
-   private void testRemovePerformance(BoundedEquivalentConcurrentHashMapV8.Eviction eviction) {
-      final int COUNT = 10000000;
-      Map<Integer, Integer> bchm = new BoundedEquivalentConcurrentHashMapV8<Integer, Integer>(
-            COUNT, COUNT >> 1, eviction, BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
-            AnyEquivalence.INT, AnyEquivalence.INT);
+   protected static final int COUNT = 10_000_000;
+   
+   protected void testRemovePerformance(int count, Map<Integer, Integer> bchm,
+         String evictionName) {
       long startIncludePut = System.currentTimeMillis();
-      // fill the cache
-      for (int i = 0; i < COUNT; i++)
-         bchm.put(i, i);
 
+      int j = 0;
+      long firstHalfNano = System.nanoTime();
+      // fill the cache
+      for (; j < count / 2; j++)
+         bchm.put(j, j);
+      firstHalfNano = System.nanoTime() - firstHalfNano;
+
+      long secondHalfNano = System.nanoTime();
+      for (; j < count; j++)
+         bchm.put(j, j);
+      secondHalfNano = System.nanoTime() - secondHalfNano;
+      
       // force a single cache hit (so that accessQueue has a head item)
       bchm.get(0);
 
       // remove items
       long start = System.currentTimeMillis();
-      for (int i = 1; i < COUNT; i++)
+      long getNano = 0;
+      long removeNano = 0;
+      for (int i = 1; i < count; i++)
       {
-         bchm.get(i);
+         long getBegin = System.nanoTime();
+         assertNotNull(bchm.get(i));
+         getNano += System.nanoTime() - getBegin;
+         long removeBegin = System.nanoTime();
          bchm.remove(i);
+         removeNano += System.nanoTime() - removeBegin;
 
          // Only check every 100
          if (i % 100 == 0) {
-            // original version needs ~5 min for 200k entries (2h for 1M)
-            // fixed version needs < 200ms for 200k (500ms for 1M)
-            if (System.currentTimeMillis() - start > 50000)
-               fail(eviction.name() + ": removing " + COUNT + " entries takes more than 50 seconds!");
+            if (System.currentTimeMillis() - start > TimeUnit.SECONDS.toMillis(50))
+               fail(evictionName + ": removing " + count + " entries takes more than 50 seconds!");
          }
       }
-      System.out.println("BCHMV8 Stress Test " + eviction + " took " + 
+      System.out.println("BCHM Stress Test " + evictionName + " took " + 
             (System.currentTimeMillis() - start) + " milliseconds");
-      System.out.println("BCHMV8 Entire Stress Test " + eviction + " took " + 
+      System.out.println("BCHM Entire Stress Test " + evictionName + " took " + 
             (System.currentTimeMillis() - startIncludePut) + " milliseconds");
+      
+      System.out.println("First half of puts took " + firstHalfNano + " nanoseconds");
+      System.out.println("Second half of puts took " + secondHalfNano + " nanoseconds");
+      System.out.println("Gets took: " + getNano + " nanoseconds");
+      System.out.println("Removes took: " + removeNano + " nanoseconds");
    }
 
+   public void testNoEvictionRemovePerformance() {
+      Eviction lru = Eviction.NONE;
+      testRemovePerformance(COUNT, new BoundedEquivalentConcurrentHashMapV8<Integer, Integer>(
+            COUNT, COUNT >> 1, lru, 
+            BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
+            AnyEquivalence.INT, AnyEquivalence.INT), lru.toString());
+   }
+
+   @Test(priority=5)
    public void testLRURemovePerformance() {
-      testRemovePerformance(BoundedEquivalentConcurrentHashMapV8.Eviction.LRU);
+      Eviction lru = Eviction.LRU;
+      testRemovePerformance(COUNT, new BoundedEquivalentConcurrentHashMapV8<Integer, Integer>(
+            COUNT, COUNT >> 1, lru, 
+            BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
+            AnyEquivalence.INT, AnyEquivalence.INT), lru.toString());
    }
 
+   @Test(priority=10)
    public void testLIRSRemovePerformance() {
-      testRemovePerformance(BoundedEquivalentConcurrentHashMapV8.Eviction.LIRS);
+      Eviction lirs = Eviction.LIRS;
+      testRemovePerformance(COUNT, new BoundedEquivalentConcurrentHashMapV8<Integer, Integer>(
+            COUNT, COUNT >> 1, lirs, 
+            BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
+            AnyEquivalence.INT, AnyEquivalence.INT), lirs.toString());
    }
 }

@@ -27,12 +27,10 @@ import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -232,6 +230,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @since 1.5
  * @author Doug Lea
  * @author Galder Zamarreño
+ * @author William Burns
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
@@ -341,7 +340,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       
       /**
        * This should be invoked after an operation that would cause an element to be added
-       * to the map to make sure that no elements need evicting
+       * to the map to make sure that no elements need evicting.
+       * <p>
+       * Note this is also invoked after a read hit.  In the case of a read hit or a 
+       * remove the size is always returned as 0.
        * <p>
        * This method is never invoked while holding a lock on any segment
        * 
@@ -421,12 +423,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                // this doesn't get unlinked if it was a tail of head here - 
                // we are covered for tail but
                deque.unlink(eviction);
-               // TODO: currently only way to be 100% sure that head slack doesn't
-               // contain our node is to create a new one
-               // Once the deque removes slack on unlick of head and tail we don't
-               // need to allocate a new object we can use the next 2 lines instead
-//               eviction.item = e;
-//               deque.linkLast(eviction);
                deque.linkLast(new DequeNode<Node<K,V>>(e));
             }
          }
@@ -434,6 +430,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public void onEntryMiss(Node<K, V> e) {
+         // TODO: we need to check eviction node before and then synchronize in case
+         // if a concurrent hit happens before we finish this
          DequeNode<Node<K, V>> eviction = (DequeNode<Node<K, V>>) e.eviction;
          deque.linkLast(eviction);
       }
@@ -454,9 +452,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             EvictionEntry evictionEntry) {
          Node<K, V> node = new Node<K, V>(hash, map.nodeEq, key, value, next);
          if (evictionEntry == null) {
-            node.eviction = new DequeNode<>(node);
+            node.lazySetEviction(new DequeNode<>(node));
          } else {
-            node.eviction = evictionEntry;
+            node.lazySetEviction(evictionEntry);
          }
          return node;
       }
@@ -467,7 +465,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          TreeNode<K, V> treeNode;
          if (evictionEntry == null) {
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, null);
-            treeNode.eviction = new DequeNode<>(treeNode);
+            treeNode.lazySetEviction(new DequeNode<>(treeNode));
          } else {
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent,
                   evictionEntry);
@@ -494,6 +492,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                } else {
                   break;
                }
+               // If we had a CAS failure, make sure to double check the size again in
+               // case if it increased or decreased - since evicting may be off
             } while ((overMax = (map.sumCount() - maxSize)) > 0);
          }
          if (toEvict > 0) {
@@ -516,632 +516,464 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
    }
 
-   /**
-    * Wraps another EvictionPolicy to reduce lock contention of concurrent
-    * cache hits.
-    * <p/>
-    * See "BP-Wrapper: a system framework making any replacement algorithms
-    * (almost) lock contention free"
-    * <p/>
-    * http://www.cse.ohio-state.edu/hpcs/WWW/HTML/publications/abs09-1.html
-    * <p/>
-    * Note that this class only implements the batching part described in the
-    * paper, not the prefetching.
-    */
-   static final class BatchWrapper<K, V> implements EvictionPolicy<K, V> {
+   enum Recency {
+      HIR_RESIDENT, LIR_RESIDENT, HIR_NONRESIDENT, REMOVED
+   }
 
-      static final int MAX_BATCH_SIZE = 64;
+   static interface EvictionEntry {
+   }
 
-      final ConcurrentLinkedQueue<Node<K, V>> accessQueue =
-         new ConcurrentLinkedQueue<Node<K, V>>();
+   static final class LIRSNode<K, V> implements EvictionEntry {
+      // The next 3 variables are to always be protected by this
+      Recency state;
+      DequeNode<Node<K, V>> stackNode;
+      DequeNode<Node<K, V>> queueNode;
+      private final Node<K, V> attachedNode;
 
-      final AtomicInteger accessQueueSize = new AtomicInteger(0);
+      public LIRSNode(Node<K, V> item) {
+         attachedNode = item;
+      }
 
-      final int maxBatchQueueSize;
+      public void setState(Recency recency) {
+         state = recency;
+      }
 
-      final EvictionPolicy<K, V> eviction;
+      public void setStackNode(DequeNode<Node<K, V>> stackNode) {
+         this.stackNode = stackNode;
+      }
 
-      final Lock hitLock = new ReentrantLock();
+      public void setQueueNode(DequeNode<Node<K, V>> queueNode) {
+         this.queueNode = queueNode; 
+      }
+   }
 
-      BatchWrapper(int maxBatchQueueSize,
-            EvictionPolicy<K, V> wrappedEvictionPolicy)
-      {
-         this.maxBatchQueueSize = Math.min(maxBatchQueueSize, MAX_BATCH_SIZE);
-         this.eviction = wrappedEvictionPolicy;
+   static final class LIRSEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
+      /**
+       * The percentage of the cache which is dedicated to hot blocks. See section 5.1
+       */
+      private static final float L_LIRS = 0.95f;
+
+      final BoundedEquivalentConcurrentHashMapV8<K, V> map;
+      // LIRS stack S
+      /**
+       * The LIRS stack, S, which is maintains recency information. All hot entries are on the
+       * stack. All cold and non-resident entries which are more recent than the least recent hot
+       * entry are also stored in the stack (the stack is always pruned such that the last entry is
+       * hot, and all entries accessed more recently than the last hot entry are present in the
+       * stack). The stack is ordered by recency, with its most recently accessed entry at the top,
+       * and its least recently accessed entry at the bottom.
+       */
+      final StrippedConcurrentLinkedDeque<Node<K, V>> stack = new StrippedConcurrentLinkedDeque<Node<K, V>>();
+      // LIRS queue Q
+      /**
+       * The LIRS queue, Q, which enqueues all cold entries for eviction. Cold entries (by
+       * definition in the queue) may be absent from the stack (due to pruning of the stack). Cold
+       * entries are added to the end of the queue and entries are evicted from the front of the
+       * queue.
+       */
+      final StrippedConcurrentLinkedDeque<Node<K, V>> queue = new StrippedConcurrentLinkedDeque<Node<K, V>>();
+
+      /** The maximum number of hot entries (L_lirs in the paper). */
+      private final long maximumHotSize;
+
+      /** The maximum number of resident entries (L in the paper). */
+      private final long maximumSize;
+
+      /** The actual number of hot entries. */
+      private AtomicLong hotSize = new AtomicLong();
+      
+      /** The number of LIRS entries in total counting all residents */
+      private AtomicLong size = new AtomicLong();
+
+      final AtomicLong evictingCount = new AtomicLong();
+
+      final ThreadLocal<Set<Node<K, V>>> nodesToEvictTL = new ThreadLocal<Set<Node<K,V>>>();
+
+      public LIRSEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize) {
+         this.map = map;
+         this.maximumSize = maxSize;
+         this.maximumHotSize = calculateLIRSize(maxSize);
+      }
+
+      private static long calculateLIRSize(long maximumSize) {
+         long result = (long) (L_LIRS * maximumSize);
+         return (result == maximumSize) ? maximumSize - 1 : result;
       }
 
       @Override
       public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value,
             EvictionEntry evictionEntry) {
-         return eviction.createNewEntry(key, hash, next, value, evictionEntry);
+         Node<K, V> node = new Node<K, V>(hash, map.nodeEq, key, value, next);
+         if (evictionEntry == null) {
+            node.lazySetEviction(new LIRSNode<>(node));
+         } else {
+            node.lazySetEviction(evictionEntry);
+         }
+         return node;
       }
 
       @Override
       public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next, TreeNode<K, V> parent, V value,
             EvictionEntry evictionEntry) {
-         return eviction.createNewEntry(key, hash, next, parent, value, evictionEntry);
-      }
-
-      private void processEnqueuedHits() {
-         Node<K, V> e;
-         int hitCount = 0;
-         while ((e = accessQueue.poll()) != null) {
-            eviction.onEntryHit(e);
-            hitCount++;
+         TreeNode<K, V> treeNode;
+         if (evictionEntry == null) {
+            treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, null);
+            treeNode.lazySetEviction(new LIRSNode<>(treeNode));
+         } else {
+            treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, evictionEntry);
          }
-         accessQueueSize.addAndGet(-hitCount);
+         return treeNode;
       }
 
+      /**
+       * Adds this LIRS node as LIR if there is room.
+       * @param lirsNode The node to try to add
+       * @return if the node was added or not
+       */
+      boolean addToLIRIfNotFullHot(LIRSNode<K, V> lirsNode) {
+         long currentHotSize;
+         // If we haven't hit LIR max then promote it immediately
+         // See section 3.3 second paragraph:
+         while ((currentHotSize = hotSize.get()) < maximumHotSize) {
+            if (hotSize.compareAndSet(currentHotSize, currentHotSize + 1)) {
+               size.incrementAndGet();
+               DequeNode<Node<K, V>> stackNode = new DequeNode<>(lirsNode.attachedNode);
+               lirsNode.setStackNode(stackNode);
+               lirsNode.setState(Recency.LIR_RESIDENT);
+               stack.linkLast(stackNode);
+               return true;
+            }
+         }
+         return false;
+      }
+      @SuppressWarnings("unchecked")
       @Override
       public void onEntryMiss(Node<K, V> e) {
-         hitLock.lock();
-         try {
-            // unconditionally process postponed hits so that the eviction
-            // algorithm's state is up to date when choosing an entry to evict
-            processEnqueuedHits();
-            eviction.onEntryMiss(e);
-         } finally {
-            hitLock.unlock();
+         LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
+         synchronized (lirsNode) {
+            // If the state is not null that means we had a concurrent hot hit, so
+            // we don't need to do anything here
+            // We can also have a miss if the node is a non resident
+            if (lirsNode.state != null && lirsNode.state != Recency.HIR_NONRESIDENT) {
+               return;
+            }
+            // If it was added to LIR due to size don't do anymore
+            if (addToLIRIfNotFullHot(lirsNode)) {
+               return;
+            }
+
+            // See section 3.3 case 3:
+            DequeNode<Node<K, V>> stackNode;
+            // If it isn't in the stack it is a non resident node
+            if ((stackNode = lirsNode.stackNode) != null) {
+               // This is the (a) example
+   
+               promoteHIRToLIRMakingRoom(lirsNode);
+            } else {
+               // This is the (b) example
+   
+               lirsNode.setState(Recency.HIR_RESIDENT);
+               stackNode = new DequeNode<>(e);
+               lirsNode.setStackNode(stackNode);
+               stack.linkLast(stackNode);
+               DequeNode<Node<K, V>> queueNode = new DequeNode<>(e);
+               lirsNode.setQueueNode(queueNode);
+               queue.linkLast(queueNode);
+            }
+         }
+         // After we updated we increment size and check to make sure we didn't
+         // go over the limit and have to remove something from the queue.
+         // NOTE: we have to increase the size after adding ours to the queue in case
+         // of concurrent puts would have increased the max size too high
+         // EXAMPLE: maxHot=3 and max=4.  In this case if all 3 hot are used up and
+         // there is nothing in the queue, if 2 puts tried to increment one of them
+         // would get stuck in a spin lock until something was added to HIR queue.  We don't
+         // want that if all possible
+         boolean evicted = false;
+         Set<Node<K, V>> nodesToEvict = null;
+         // If by adding this element we are over the maximum size, we need to remove
+         // an element from the queue to free up space
+         for (long currentSize = size.incrementAndGet(); 
+               currentSize > maximumSize && !evicted; currentSize = size.get()) {
+            Object[] hirDetails = queue.pollFirstNode();
+            if (hirDetails == null) {
+               // If this was null that means we either had a concurrent removal
+               // or a concurrent promotion to LIR and another node would be 
+               // demoted to HIR - the latter is a race condition we need
+               // to worry about...
+               // We loop back around to get this - this could spin loop if it takes
+               // the other thread long to add the HIR element back
+               continue;
+            }
+            DequeNode<Node<K, V>> removedDequeNode = (DequeNode<Node<K, V>>) hirDetails[0];
+            Node<K, V> removedNode = (Node<K, V>) hirDetails[1];
+            LIRSNode<K, V> removedHIR = (LIRSNode<K, V>) removedNode.eviction;
+            synchronized (removedHIR) {
+               // If the HIR was not updated to have a new queue node, then we
+               // know we didn't have a concurrent hit, so we can proceed
+               if (removedHIR.queueNode == removedDequeNode) {
+                  // If it is in the stack we set it to HIR non resident
+                  if (removedHIR.stackNode != null) {
+                     // Since we removed the queue node we need to null it out
+                     removedHIR.setQueueNode(null);
+                     removedHIR.setState(Recency.HIR_NONRESIDENT);
+                     // NOTE: we are setting the CHMV8 node value to null directly
+                     // We have special handling in the various read and write methods
+                     // to handle this
+                     removedHIR.attachedNode.val = null;
+                     // We also have to decrease the count by 1 (since we essentially
+                     // removed a value) - but the map counts entries
+                     map.addCount(-1, -1);
+                  } else {
+                     // It wasn't part of the stack so we have to remove it completely
+                     // Note we don't null out the queue or stack nodes on the LIRSNode
+                     // since we aren't reusing it
+                     if (nodesToEvict == null) {
+                        nodesToEvict = new HashSet<Node<K,V>>();
+                        nodesToEvict.add(removedHIR.attachedNode);
+                     }
+                  }
+                  evicted = true;
+               }
+            }
+         }
+         if (evicted) {
+            // Lastly we reduce the size since we removed a resident
+            size.decrementAndGet();
+            if (nodesToEvict != null) {
+               nodesToEvictTL.set(nodesToEvict);
+            }
          }
       }
 
+      /**
+       * Prunes blocks in the bottom of the stack until a HOT block is removed.
+       * If pruned blocks were resident, then they remain in the queue; non-resident blocks (if any)
+       * are dropped
+       * @return Returns an array storing the removed LIR details.  The first element is 
+       *         the DequeNode that was removed from the stack deque - this
+       *         is helpful to determine if this entry was update concurrently (because
+       *         it will have a new stack deque pointer if it was).  The second element is
+       *         the actual Node that this is tied to value wise
+       */
+      @SuppressWarnings("unchecked")
+      Object[] pruneIncludingLIR() {
+         // See section 3.3:
+         // "We define an operation called "stack pruning" on the LIRS
+         // stack S, which removes the HIR blocks in the bottom of
+         // the stack until an LIR block sits in the stack bottom. This
+         // operation serves for two purposes: (1) We ensure the block in
+         // the bottom of the stack always belongs to the LIR block set.
+         // (2) After the LIR block in the bottom is removed, those HIR
+         // blocks contiguously located above it will not have chances to
+         // change their status from HIR to LIR, because their recencies
+         // are larger than the new maximum recency of LIR blocks."
+         /**
+          * Note that our implementation is done lazily and we don't prune HIR blocks
+          * until we know we are removing a LIR block.  The reason for this is that
+          * we can't do a head CAS and only can poll from them
+          * WARNING: This could cause a HIR block that should have been pruned to be
+          * promoted to LIR if it is accesssed before another LIR block is promoted.
+          * Unfortunately there is not an easier way to do this without adding additional
+          * contention.  Need to figure out if the contention would be high or not
+          */
+         LIRSNode<K, V> removedLIR = null;
+         Set<Node<K, V>> nodesToEvict = null;
+         Object[] nodeDetails;
+         while (true) {
+            nodeDetails = stack.pollFirstNode();
+            if (nodeDetails == null) {
+               break;
+            }
+            Node<K, V> realNode = (Node<K, V>) nodeDetails[1];
+            removedLIR = (LIRSNode<K, V>) realNode.eviction;
+            synchronized (removedLIR) {
+               if (removedLIR.state != Recency.LIR_RESIDENT) {
+                  // This means it was a non resident, so we can safely evict it
+                  // We don't have to remove it's pointers then as well
+                  if (removedLIR.queueNode == null) {
+                     if (nodesToEvict == null) {
+                        nodesToEvict = new HashSet<>();
+                        nodesToEvictTL.set(nodesToEvict);
+                     }
+                     nodesToEvict.add(removedLIR.attachedNode);
+                  } else {
+                     // Leave it in the queue if it was a resident
+                     removedLIR.stackNode = null;
+                  }
+               } else {
+                  break; 
+               }
+            }
+         }
+         return nodeDetails;
+      }
+
+      @SuppressWarnings("unchecked")
+      void promoteHIRToLIRMakingRoom(LIRSNode<K, V> lirsNode) {
+         // This block first unlinks the node from both the stack and queue before
+         // repositioning it
+         {
+            DequeNode<Node<K, V>> stackNode = lirsNode.stackNode;
+            // First unlink from the stackNode
+            lirsNode.setStackNode(null);
+            // This can't be lazily set since we need to read the item as null
+            stackNode.item = null;
+            stack.unlink(stackNode);
+            
+            // Also unlink from queue node
+            DequeNode<Node<K, V>> queueNode = lirsNode.queueNode;
+            if (queueNode != null) {
+               lirsNode.setQueueNode(null);
+               queueNode.item = null;
+               queue.unlink(queueNode);
+            }
+         }
+
+         boolean pruned = false;
+         while (!pruned) {
+            // Now we prune to make room for our promoted node
+            Object[] LIRDetails = pruneIncludingLIR();
+            if (LIRDetails == null) {
+               // There was nothing to prune!
+               pruned = true;
+            } else {
+               DequeNode<Node<K, V>> removedDequeNode = (DequeNode<Node<K, V>>) LIRDetails[0];
+               Node<K, V> removedNode = (Node<K, V>) LIRDetails[1];
+               LIRSNode<K, V> removedLIR = (LIRSNode<K, V>) removedNode.eviction;
+               synchronized (removedLIR) {
+                  // If the stack node is still the one we removed, then we can continue
+                  // with promotion.  If not then we had a concurrent hit which ressurected
+                  // the LIR so we pick the next one to evict
+                  if (removedLIR.stackNode == removedDequeNode) {
+                     // We demote the LIR_RESIDENT to HIR_RESIDENT in the queue
+                     removedLIR.setState(Recency.HIR_RESIDENT);
+                     removedLIR.setStackNode(null);
+                     DequeNode<Node<K, V>> queueNode = new DequeNode<>(removedLIR.attachedNode);
+                     removedLIR.setQueueNode(queueNode);
+                     queue.linkLast(queueNode);
+                     pruned = true;
+                  }
+               }
+            }
+         }
+         
+         // Promoting the node to LIR and add to the stack
+         lirsNode.setState(Recency.LIR_RESIDENT);
+         DequeNode<Node<K, V>> stackNode = new DequeNode<>(lirsNode.attachedNode);
+         lirsNode.setStackNode(stackNode);
+         stack.linkLast(stackNode);
+         
+         // Note we don't do pruning, this is done lazily on the next LIR removal
+      }
+
+      @SuppressWarnings("unchecked")
       @Override
       public void onEntryHit(Node<K, V> e) {
-         accessQueue.add(e);
-         int sz = accessQueueSize.incrementAndGet();
+         LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
+         synchronized (lirsNode) {
+            // Section 3.3
+            //
+            Recency recency = lirsNode.state;
+            // If the state is still null that means it was added and we got in
+            // before the onEntryMiss was fired, so that means this is automatically
+            // a LIR resident
+            if (recency == null) {
+               // If it was added to LRI don't need anymore work
+               if (addToLIRIfNotFullHot(lirsNode)) {
+                  return;
+               }
+               lirsNode.setState(Recency.LIR_RESIDENT);
+            } else if (recency == Recency.REMOVED) {
+               // If this entry was removed, then we don't care about updating recency
+               return;
+            }
+            
+            if (recency == null || recency == Recency.LIR_RESIDENT) {
+               // case 1
+               //
+               // Note that if we had a concurrent pruning targeting this node, getting
+               // a hit takes precedence
+               DequeNode<Node<K, V>> stackNode = lirsNode.stackNode;
+               // This will be null if we got in before onEntryMiss
+               if (stackNode != null) {
+                  stackNode.item = null;
+                  stack.unlink(stackNode);
+               }
+               // Now that we have it removed promote it to the top
+               DequeNode<Node<K, V>> newStackNode = new DequeNode<>(e);
+               lirsNode.setStackNode(newStackNode);
+               stack.linkLast(newStackNode);
+               // TODO: the spec normally does a stack pruning here if the LIRS entry is
+               // bottom of the stack - can we do this ?
+            } else {
+               // case 2
+               if (lirsNode.stackNode != null) {
+                  // This is the (a) example
+                  //
+                  // In the case it was in the stack that means it was a HIR resident,
+                  // so we promote it
+                  promoteHIRToLIRMakingRoom(lirsNode);
+               } else {
+                  // This is the (b) example
+                  //
+                  // In the case it wasn't in the stack but was in the queue, we
+                  // add it again to the stack and bump it up to the top of the queue
+                  lirsNode.queueNode.item = null;
+                  queue.unlink(lirsNode.queueNode);
 
-         // only process enqueued cache hits if the threshold has been
-         // reached *and* we can opportunistically acquire the lock
-         // This way if subsequent hits are produced they won't have to worry about queue
-         if (sz >= maxBatchQueueSize && hitLock.tryLock()) {
-            try {
-               processEnqueuedHits();
-            } finally {
-               hitLock.unlock();
+                  DequeNode<Node<K, V>> newStackNode = new DequeNode<>(e);
+                  lirsNode.setStackNode(newStackNode);
+                  stack.linkLast(newStackNode);
+                  DequeNode<Node<K, V>> newQueueNode = new DequeNode<>(e);
+                  lirsNode.setQueueNode(newQueueNode);
+                  queue.linkLast(newQueueNode);
+               }
+            }
+         }
+      }
+
+      @SuppressWarnings("unchecked")
+      @Override
+      public void onEntryRemove(Node<K, V> e) {
+         LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
+         synchronized (lirsNode) {
+            if (lirsNode.state == Recency.LIR_RESIDENT) {
+               hotSize.decrementAndGet();
+            }
+            size.decrementAndGet();
+            // We have to set the state to REMOVED to tell a onEntryHit or onEntryMiss
+            // that the entry was removed and to not continue with updates.  The latter
+            // onEntryMiss can only happen if this object was removed while it was
+            // being added
+            lirsNode.setState(Recency.REMOVED);
+            DequeNode<Node<K, V>> queueNode = lirsNode.queueNode;
+            if (queueNode != null) {
+               queueNode.item = null;
+               queue.unlink(queueNode);
+            }
+            DequeNode<Node<K, V>> stackNode = lirsNode.stackNode;
+            if (stackNode != null) {
+               stackNode.item = null;
+               stack.unlink(stackNode);
             }
          }
       }
 
       @Override
-      public void onEntryRemove(Node<K, V> e) {
-         // Key point is that any eviction policy MUST be able to handle hits on entries
-         // that may have been removed since we don't clear them out of the
-         // process queue here
-         eviction.onEntryRemove(e);
-      }
-
-      @Override
       public Set<Node<K, V>> findIfEntriesNeedEvicting(long currentSize) {
-         return eviction.findIfEntriesNeedEvicting(currentSize);
+         Set<Node<K, V>> evicting = nodesToEvictTL.get();
+         if (evicting != null) {
+            nodesToEvictTL.remove();
+            for (Node<K, V> evict : evicting) {
+               map.replaceNode(evict.key, null, null, true);
+            }
+            return evicting;
+         }
+         return InfinispanCollections.emptySet();
       }
-   }
 
-   private enum Recency {
-      HIR_RESIDENT, LIR_RESIDENT, HIR_NONRESIDENT
    }
-
-   static interface EvictionEntry {
-   }
-//
-//   /**
-//    * Adapted to Infinispan BoundedConcurrentHashMap using LIRS implementation ideas from Charles Fry (fry@google.com)   
-//    * See http://code.google.com/p/concurrentlinkedhashmap/source/browse/trunk/src/test/java/com/googlecode/concurrentlinkedhashmap/caches/LirsMap.java
-//    * for original sources
-//    * 
-//    */
-//   private static final class LIRSEvictionEntry<K,V> extends EvictionEntry<K,V> {
-//      
-//      // LIRS stack S
-//      private LIRSEvictionEntry<K, V> previousInStack;
-//      private LIRSEvictionEntry<K, V> nextInStack;
-//
-//      // LIRS queue Q
-//      private LIRSEvictionEntry<K, V> previousInQueue;
-//      private LIRSEvictionEntry<K, V> nextInQueue;
-//      volatile Recency state;
-//      
-//      LIRS<K, V> owner;
-//      private volatile Node<K, V> owningNode;
-//      
-//
-//      LIRSEvictionEntry(LIRS<K, V> owner) {
-//         this.owner = owner;
-//         this.owningNode = owningNode;
-//         this.state = Recency.HIR_RESIDENT;
-//         
-//         // initially point everything back to self
-//         this.previousInStack = this;
-//         this.nextInStack = this;
-//         this.previousInQueue = this;
-//         this.nextInQueue = this;
-//      }
-//
-//      /**
-//       * Returns true if this entry is in the stack, false otherwise.
-//       */
-//      public boolean inStack() {
-//        return (nextInStack != null);
-//      }
-//
-//      /**
-//       * Returns true if this entry is in the queue, false otherwise.
-//       */
-//      public boolean inQueue() {
-//        return (nextInQueue != null);
-//      }
-//
-//      /**
-//       * Records a cache hit.
-//       */
-//      public void hit() {
-//        switch (state) {
-//          case LIR_RESIDENT:
-//            hotHit();
-//            break;
-//          case HIR_RESIDENT:
-//            coldHit();
-//            break;
-//          case HIR_NONRESIDENT:
-//            throw new IllegalStateException("Can't hit a non-resident entry!");
-//          default:
-//            throw new AssertionError("Hit with unknown status: " + state);
-//        }
-//      }
-//
-//      /**
-//       * Records a cache hit on a hot block.
-//       */
-//      private void hotHit() {
-//        // See section 3.3 case 1:
-//        // "Upon accessing an LIR block X:
-//        // This access is guaranteed to be a hit in the cache."
-//
-//        // "We move it to the top of stack S."
-//        boolean onBottom = (owner.stackBottom() == this);
-//        moveToStackTop();
-//
-//        // "If the LIR block is originally located in the bottom of the stack,
-//        // we conduct a stack pruning."
-//        if (onBottom) {
-//           owner.pruneStack();
-//        }
-//      }
-//
-//      /**
-//       * Records a cache hit on a cold block.
-//       */
-//      private void coldHit() {
-//        // See section 3.3 case 2:
-//        // "Upon accessing an HIR resident block X:
-//        // This is a hit in the cache."
-//
-//        // "We move it to the top of stack S."
-//        boolean inStack = inStack();
-//        moveToStackTop();
-//
-//        // "There are two cases for block X:"
-//        if (inStack) {
-//          // "(1) If X is in the stack S, we change its status to LIR."
-//          hot();
-//
-//          // "This block is also removed from list Q."
-//          removeFromQueue();
-//
-//          // "The LIR block in the bottom of S is moved to the end of list Q
-//          // with its status changed to HIR."
-//          owner.stackBottom().migrateToQueue();
-//
-//          // "A stack pruning is then conducted."
-//          owner.pruneStack();
-//        } else {
-//          // "(2) If X is not in stack S, we leave its status in HIR and move
-//          // it to the end of list Q."
-//          moveToQueueEnd();
-//        }
-//      }
-//
-//      /**
-//       * Records a cache miss. This is how new entries join the LIRS stack and
-//       * queue. This is called both when a new entry is first created, and when a
-//       * non-resident entry is re-computed.
-//       */
-//      private Set<Node<K, V>> miss() {
-//         Set<Node<K, V>> evicted;
-//        if (owner.hotSize < owner.maximumHotSize) {
-//          warmupMiss();
-//          evicted = InfinispanCollections.emptySet();
-//        } else {
-//          evicted = new HashSet<>(); 
-//          fullMiss(evicted);
-//        }
-//
-//        // now the missed item is in the cache
-//        owner.size++;
-//        return evicted;
-//      }
-//
-//      /**
-//       * Records a miss when the hot entry set is not full.
-//       */
-//      private void warmupMiss() {
-//        // See section 3.3:
-//        // "When LIR block set is not full, all the referenced blocks are
-//        // given an LIR status until its size reaches L_lirs."
-//        hot();
-//        moveToStackTop();
-//      }
-//
-//      /**
-//       * Records a miss when the hot entry set is full.
-//       */
-//      private void fullMiss(Set<Node<K, V>> evicted) {
-//        // See section 3.3 case 3:
-//        // "Upon accessing an HIR non-resident block X:
-//        // This is a miss."
-//
-//        // This condition is unspecified in the paper, but appears to be
-//        // necessary.
-//        if (owner.size >= owner.maximumSize) {
-//          // "We remove the HIR resident block at the front of list Q (it then
-//          // becomes a non-resident block), and replace it out of the cache."
-//          LIRSEvictionEntry<K, V> evictedNode = owner.queueFront();
-//          evicted.add(evictedNode.owningNode);
-//        }
-//
-//        // "Then we load the requested block X into the freed buffer and place
-//        // it on the top of stack S."
-//        boolean inStack = inStack();
-//        moveToStackTop();
-//
-//        // "There are two cases for block X:"
-//        if (inStack) {
-//          // "(1) If X is in stack S, we change its status to LIR and move the
-//          // LIR block in the bottom of stack S to the end of list Q with its
-//          // status changed to HIR. A stack pruning is then conducted.
-//          hot();
-//          owner.stackBottom().migrateToQueue();
-//          owner.pruneStack();
-//        } else {
-//          // "(2) If X is not in stack S, we leave its status in HIR and place
-//          // it in the end of list Q."
-//          cold();
-//        }   
-//      }
-//
-//      /**
-//       * Marks this entry as hot.
-//       */
-//      private void hot() {
-//        if (state != Recency.LIR_RESIDENT) {
-//          owner.hotSize++;
-//        }
-//        state = Recency.LIR_RESIDENT;
-//      }
-//
-//      /**
-//       * Marks this entry as cold.
-//       */
-//      private void cold() {
-//        if (state == Recency.LIR_RESIDENT) {
-//          owner.hotSize--;
-//        }
-//        state = Recency.HIR_RESIDENT;
-//        moveToQueueEnd();
-//      }
-//
-//      /**
-//       * Marks this entry as non-resident.
-//       */
-//      @SuppressWarnings("fallthrough")
-//      private void nonResident() {
-//        switch (state) {
-//          case LIR_RESIDENT:
-//            owner.hotSize--;
-//            // fallthrough
-//          case HIR_RESIDENT:
-//            owner.size--;
-//            break;
-//        }
-//        state = Recency.HIR_NONRESIDENT;
-//      }
-//      
-//      /**
-//       * Returns true if this entry is resident in the cache, false otherwise.
-//       */
-//      public boolean isResident() {
-//        return (state != Recency.HIR_NONRESIDENT);
-//      }
-//
-//
-//      /**
-//       * Temporarily removes this entry from the stack, fixing up neighbor links.
-//       * This entry's links remain unchanged, meaning that {@link #inStack()} will
-//       * continue to return true. This should only be called if this node's links
-//       * will be subsequently changed.
-//       */
-//      private void tempRemoveFromStack() {
-//        if (inStack()) {
-//          previousInStack.nextInStack = nextInStack;
-//          nextInStack.previousInStack = previousInStack;
-//        }
-//      }
-//
-//      /**
-//       * Removes this entry from the stack.
-//       */
-//      private void removeFromStack() {
-//        tempRemoveFromStack();
-//        previousInStack = null;
-//        nextInStack = null;
-//      }
-//
-//      /**
-//       * Inserts this entry before the specified existing entry in the stack.
-//       */
-//      private void addToStackBefore(LIRSEvictionEntry<K,V> existingEntry) {
-//        previousInStack = existingEntry.previousInStack;
-//        nextInStack = existingEntry;
-//        previousInStack.nextInStack = this;
-//        nextInStack.previousInStack = this;
-//      }
-//
-//      /**
-//       * Moves this entry to the top of the stack.
-//       */
-//      private void moveToStackTop() {
-//        tempRemoveFromStack();
-//        addToStackBefore(owner.header.nextInStack);
-//      }
-//
-//      /**
-//       * Moves this entry to the bottom of the stack.
-//       */
-//      private void moveToStackBottom() {
-//        tempRemoveFromStack();
-//        addToStackBefore(owner.header);
-//      }
-//
-//      /**
-//       * Temporarily removes this entry from the queue, fixing up neighbor links.
-//       * This entry's links remain unchanged. This should only be called if this
-//       * node's links will be subsequently changed.
-//       */
-//      private void tempRemoveFromQueue() {
-//        if (inQueue()) {
-//          previousInQueue.nextInQueue = nextInQueue;
-//          nextInQueue.previousInQueue = previousInQueue;
-//        }
-//      }
-//
-//      /**
-//       * Removes this entry from the queue.
-//       */
-//      private void removeFromQueue() {
-//        tempRemoveFromQueue();
-//        previousInQueue = null;
-//        nextInQueue = null;
-//      }
-//
-//      /**
-//       * Inserts this entry before the specified existing entry in the queue.
-//       */
-//      private void addToQueueBefore(LIRSEvictionEntry<K,V> existingEntry) {
-//        previousInQueue = existingEntry.previousInQueue;
-//        nextInQueue = existingEntry;
-//        previousInQueue.nextInQueue = this;
-//        nextInQueue.previousInQueue = this;
-//      }
-//
-//      /**
-//       * Moves this entry to the end of the queue.
-//       */
-//      private void moveToQueueEnd() {
-//        tempRemoveFromQueue();
-//        addToQueueBefore(owner.header);
-//      }
-//
-//
-//      /**
-//       * Moves this entry from the stack to the queue, marking it cold
-//       * (as hot entries must remain in the stack). This should only be called
-//       * on resident entries, as non-resident entries should not be made resident.
-//       * The bottom entry on the queue is always hot due to stack pruning.
-//       */
-//      private void migrateToQueue() {
-//        removeFromStack();
-//        cold();
-//      }
-//
-//      /**
-//       * Moves this entry from the queue to the stack, marking it hot (as cold
-//       * resident entries must remain in the queue).
-//       */
-//      private void migrateToStack() {
-//        removeFromQueue();
-//        if (!inStack()) {
-//          moveToStackBottom();
-//        }
-//        hot();
-//      }
-//
-//      /**
-//       * Evicts this entry, removing it from the queue and setting its status to
-//       * cold non-resident. If the entry is already absent from the stack, it is
-//       * removed from the backing map; otherwise it remains in order for its
-//       * recency to be maintained.
-//       */
-//      private void evict() {
-//        removeFromQueue();
-//        removeFromStack();
-//        nonResident();    
-//        owner = null;
-//      }
-//
-//      /**
-//       * Removes this entry from the cache. This operation is not specified in
-//       * the paper, which does not account for forced eviction.
-//       */
-//      private void remove() {
-//        boolean wasHot = (state == Recency.LIR_RESIDENT);
-//        LIRSEvictionEntry<K,V> end = owner != null? owner.queueEnd():null;
-//        evict();
-//
-//        // attempt to maintain a constant number of hot entries
-//        if (wasHot) {
-//          if (end != null) {
-//            end.migrateToStack();
-//          }
-//        }
-//      }
-//   }
-//
-//   static final class LIRS<K, V> implements EvictionPolicy<K, V> {
-//      
-//      /**
-//       * The percentage of the cache which is dedicated to hot blocks.
-//       * See section 5.1
-//       */
-//      private static final float L_LIRS = 0.95f;
-//      
-//      /** The owning map */
-//      private final BoundedEquivalentConcurrentHashMapV8<K,V> map;
-//      
-//      /** The number of LIRS entries in a segment */
-//      private long size;
-//      
-//      /**
-//       * This header encompasses two data structures:
-//       *
-//       * <ul>
-//       * <li>The LIRS stack, S, which is maintains recency information. All hot
-//       * entries are on the stack. All cold and non-resident entries which are more
-//       * recent than the least recent hot entry are also stored in the stack (the
-//       * stack is always pruned such that the last entry is hot, and all entries
-//       * accessed more recently than the last hot entry are present in the stack).
-//       * The stack is ordered by recency, with its most recently accessed entry
-//       * at the top, and its least recently accessed entry at the bottom.</li>
-//       *
-//       * <li>The LIRS queue, Q, which enqueues all cold entries for eviction. Cold
-//       * entries (by definition in the queue) may be absent from the stack (due to
-//       * pruning of the stack). Cold entries are added to the end of the queue
-//       * and entries are evicted from the front of the queue.</li>
-//       * </ul>
-//       */
-//      private final LIRSEvictionEntry<K,V> header = new LIRSEvictionEntry<K,V>(null);
-//
-//      /** The maximum number of hot entries (L_lirs in the paper). */
-//      private final long maximumHotSize;
-//
-//      /** The maximum number of resident entries (L in the paper). */
-//      private final long maximumSize ;
-//
-//      /** The actual number of hot entries. */
-//      private long hotSize = 0;
-//
-//            
-//
-//      public LIRS(BoundedEquivalentConcurrentHashMapV8<K, V> map, long capacity) {
-//         this.map = map;
-//         this.maximumSize = capacity;
-//         this.maximumHotSize = calculateLIRSize(capacity);
-//      }
-//      
-//      private static long calculateLIRSize(long maximumSize) {
-//         long result = (long) (L_LIRS * maximumSize);
-//         return (result == maximumSize) ? maximumSize - 1 : result;
-//       }
-//
-//      /**
-//       * Prunes HIR blocks in the bottom of the stack until an HOT block sits in
-//       * the stack bottom. If pruned blocks were resident, then they
-//       * remain in the queue; non-resident blocks (if any) are dropped (the
-//       * current LIRSHashEntry.nonResident() implementation removes non-resident
-//       * blocks from both stack and queue, so this cannot actually happen).
-//       */
-//      private void pruneStack() {
-//        // See section 3.3:
-//        // "We define an operation called "stack pruning" on the LIRS
-//        // stack S, which removes the HIR blocks in the bottom of
-//        // the stack until an LIR block sits in the stack bottom. This
-//        // operation serves for two purposes: (1) We ensure the block in
-//        // the bottom of the stack always belongs to the LIR block set.
-//        // (2) After the LIR block in the bottom is removed, those HIR
-//        // blocks contiguously located above it will not have chances to
-//        // change their status from HIR to LIR, because their recencies
-//        // are larger than the new maximum recency of LIR blocks."
-//        LIRSEvictionEntry<K, V> bottom = stackBottom();
-//        while (bottom != null && bottom.state != Recency.LIR_RESIDENT) {
-//          bottom.removeFromStack();
-//          bottom = stackBottom();
-//        }
-//      }
-//      
-//      @Override
-//      public Set<Node<K, V>> onEntryMiss(Node<K, V> en) {
-//         LIRSEvictionEntry<K, V> e = (LIRSEvictionEntry<K, V>) en.eviction;
-//         Set<Node<K, V>> evicted = e.miss();
-//         removeFromSegment(evicted);
-//         return evicted;
-//      }
-//     
-//      private void removeFromSegment(Set<Node<K, V>> evicted) {
-//         for (Node<K, V> e : evicted) {
-//            ((LIRSEvictionEntry<K, V>)e.eviction).evict();
-//            // TODO: need to do something here
-////            segment.remove(e.key, e.hash, null, true);
-//         }
-//      }
-//
-//      @Override
-//      public void onEntryHit(Node<K, V> en) {
-//         LIRSEvictionEntry<K, V> e = (LIRSEvictionEntry<K, V>) en.eviction;
-//         if (e.isResident()) {
-//            e.hit();
-//         }
-//      }
-//
-//      @Override
-//      public void onEntryRemove(Node<K, V> e) {
-//         // TODO: should we do this ?
-//         ((LIRSEvictionEntry<K,V>)e.eviction).remove();
-//      }
-//
-//      @Override
-//      public void clear() {
-//         // Or should this remove everything as well ?
-//      }
-//
-//      /**
-//       * Returns the entry at the bottom of the stack.
-//       */
-//      private LIRSEvictionEntry<K, V> stackBottom() {
-//         LIRSEvictionEntry<K, V> bottom = header.previousInStack;
-//        return (bottom == header) ? null : bottom;
-//      }
-//
-//      /**
-//       * Returns the entry at the front of the queue.
-//       */
-//      private LIRSEvictionEntry<K, V> queueFront() {
-//         LIRSEvictionEntry<K, V> front = header.nextInQueue;
-//        return (front == header) ? null : front;
-//      }
-//
-//      /**
-//       * Returns the entry at the end of the queue.
-//       */
-//      private LIRSEvictionEntry<K, V> queueEnd() {
-//         LIRSEvictionEntry<K, V> end = header.previousInQueue;
-//        return (end == header) ? null : end;
-//      }
-//
-//      
-//      @Override
-//      public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value) {
-//         return new Node<K, V>(hash, new LIRSEvictionEntry<K, V>(this), map.nodeEq, key, 
-//               value, next);
-//      }
-//   }
 
    public enum Eviction {
       NONE {
@@ -1156,19 +988,13 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          public <K, V> EvictionPolicy<K, V> make(
                BoundedEquivalentConcurrentHashMapV8<K, V> map, long capacity) {
             return new LRUEvictionPolicy<K, V>(map, capacity);
-            // TODO: figure a better queue size
-//            return new BatchWrapper<K, V>((int) capacity & 0x7fffffff,
-//                   new LRUEvictionPolicy<K, V>(map, capacity));
          }
       },
       LIRS {
          @Override
          public <K, V> EvictionPolicy<K, V> make(BoundedEquivalentConcurrentHashMapV8<K, V> map, 
                long capacity) {
-//             TODO: figure a better queue size
-//            return new BatchWrapper<K, V>(null, (int) capacity / 10,
-//                   new LIRS<K, V>(map, capacity));
-            throw new IllegalArgumentException();
+            return new LIRSEvictionPolicy<K, V>(map, capacity);
          }
       };
 
@@ -1639,6 +1465,26 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
          return null;
       }
+
+      void lazySetEviction(EvictionEntry val) {
+         UNSAFE.putOrderedObject(this, evictionOffset, val);
+     }
+
+      // Unsafe mechanics
+
+      private static final sun.misc.Unsafe UNSAFE;
+      private static final long evictionOffset;
+
+      static {
+          try {
+              UNSAFE = BoundedEquivalentConcurrentHashMapV8.getUnsafe();
+              Class<?> k = Node.class;
+              evictionOffset = UNSAFE.objectFieldOffset
+                  (k.getDeclaredField("eviction"));
+          } catch (Exception e) {
+              throw new Error(e);
+          }
+      }
    }
 
     /* ---------------- Static utilities -------------- */
@@ -1992,7 +1838,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             (e = tabAt(tab, (n - 1) & h)) != null) {
          if ((eh = e.hash) == h) {
             if ((ek = e.key) == key || (ek != null && keyEq.equals(ek, key))) {// EQUIVALENCE_MOD
-               evictionPolicy.onEntryHit(e);
+               if (e.val != null) {
+                  evictionPolicy.onEntryHit(e);
+                  notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting(0));
+               }
                return e.val;
             }
          }
@@ -2001,7 +1850,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          while ((e = e.next) != null) {
             if (e.hash == h &&
                   ((ek = e.key) == key || (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
-               evictionPolicy.onEntryHit(e);
+               if (e.val != null) {
+                  evictionPolicy.onEntryHit(e);
+                  notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting(0));
+               }
                return e.val;
             }
          }
@@ -2099,7 +1951,12 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            oldVal = e.val;
                            if (!onlyIfAbsent) {
                               e.val = value;
-                              evictionPolicy.onEntryHit(e);
+                              // We support null evicted values
+                              if (oldVal == null) {
+                                 evictionPolicy.onEntryMiss(e);
+                              } else {
+                                 evictionPolicy.onEntryHit(e);
+                              }
                            }
                            break;
                         }
@@ -2122,7 +1979,12 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         oldVal = p.val;
                         if (!onlyIfAbsent) {
                            p.val = value;
-                           evictionPolicy.onEntryHit(p);
+                           // We support null evicted values
+                           if (oldVal == null) {
+                              evictionPolicy.onEntryMiss(p);
+                           } else {
+                              evictionPolicy.onEntryHit(p);
+                           }
                         }
                      }
                   }
@@ -2131,8 +1993,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             if (binCount != 0) {
                if (binCount >= TREEIFY_THRESHOLD)
                   treeifyBin(tab, i);
-               if (oldVal != null)
+               if (oldVal != null) {
+                  notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting(0));
                   return oldVal;
+               }
                break;
             }
          }
@@ -2175,7 +2039,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    @SuppressWarnings({ "rawtypes", "unchecked" })
    private void notifyListenerOfRemoval(Node removedNode, boolean isEvict) {
       if (isEvict) {
-         // TODO: still need to send eviction event ?
          evictionListener.onEntryChosenForEviction(removedNode);
       } else {
          evictionListener.onEntryRemoved(removedNode);
@@ -2214,13 +2077,23 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                               oldVal = ev;
                               if (value != null) {
                                  e.val = value;
-                                 evictionPolicy.onEntryHit(e);
+                                 if (oldVal == null) {
+                                    evictionPolicy.onEntryMiss(e);
+                                 } else {
+                                    evictionPolicy.onEntryHit(e);
+                                 }
                               }
                               else if (pred != null) {
+                                 if (!isEvict) {
+                                    evictionPolicy.onEntryRemove(e);
+                                 }
                                  notifyListenerOfRemoval(e, isEvict);
                                  pred.next = e.next;
                               }
                               else {
+                                 if (!isEvict) {
+                                    evictionPolicy.onEntryRemove(e);
+                                 }
                                  notifyListenerOfRemoval(e, isEvict);
                                  setTabAt(tab, i, e.next);
                               }
@@ -2244,13 +2117,20 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            oldVal = pv;
                            if (value != null) {
                               p.val = value;
-                              evictionPolicy.onEntryHit(p);
+                              if (oldVal == null) {
+                                 evictionPolicy.onEntryMiss(p);
+                              } else {
+                                 evictionPolicy.onEntryHit(p);
+                              }
                            }
                            else {
                               if (t.removeTreeNode(p)) {
                                  setTabAt(tab, i, untreeify(t.first)); // EQUIVALENCE_MOD
                               }
-                              evictionPolicy.onEntryRemove(p);
+                              if (!isEvict) {
+                                 evictionPolicy.onEntryRemove(p);
+                              }
+                              notifyListenerOfRemoval(p, isEvict);
                            }
                         }
                      }
@@ -2267,11 +2147,12 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
          }
       }
+      notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting(0));
       return null;
    }
 
    /**
-    * Removes all of the mappings from this map.
+    * Removes all of the mappingsonEntryHit(e) from this map.
     */
    public void clear() {
       long delta = 0L; // negative number of deletions
@@ -2552,7 +2433,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if (k != null && v != null) {
             p = evictionPolicy.createNewEntry(k, spread(keyEq.hashCode(k)), p, v, null); // EQUIVALENCE_MOD
             evictionPolicy.onEntryMiss(p);
-            // TODO: this can get in an eviction cycle - however it shouldn't be possible
             size -= evictionPolicy.findIfEntriesNeedEvicting(size).size();
             ++size;
          }
@@ -2998,8 +2878,13 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                                      (ek != null && keyEq.equals(ek, key)))) { // EQUIVALENCE_MOD
                            val = remappingFunction.apply(key, e.val);
                            if (val != null) {
+                              V oldVal = e.val;
                               e.val = val;
-                              evictionPolicy.onEntryHit(e);
+                              if (oldVal == null) {
+                                 evictionPolicy.onEntryMiss(e);
+                              } else {
+                                 evictionPolicy.onEntryHit(e);
+                              }
                            }
                            else {
                               delta = -1;
@@ -3008,7 +2893,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                                  pred.next = en;
                               else
                                  setTabAt(tab, i, en);
-                              evictionPolicy.onEntryRemove(e);
+                              if (e.val != null) {
+                                 evictionPolicy.onEntryRemove(e);
+                              }
                            }
                            break;
                         }
@@ -3040,7 +2927,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      if (val != null) {
                         if (p != null) {
                            p.val = val;
-                           evictionPolicy.onEntryHit(p);
+                           if (pv == null) {
+                              evictionPolicy.onEntryRemove(p);
+                           } else {
+                              evictionPolicy.onEntryHit(p);
+                           }
                         }
                         else {
                            delta = 1;
@@ -3063,10 +2954,13 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
          }
       }
+      long currentSize;
       if (delta != 0) {
-         long currentSize = addCount((long)delta, binCount);
-         notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting(currentSize));
+         currentSize = addCount((long)delta, binCount);
+      } else {
+         currentSize = 0;
       }
+      notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting(currentSize));
       return val;
    }
 
@@ -3709,7 +3603,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             TreeNode<K,V> parent, EvictionEntry evictionEntry) {
          super(hash, nodeEq, key, val, next); // EQUIVALENCE_MOD
          this.parent = parent;
-         this.eviction = evictionEntry;
+         lazySetEviction(evictionEntry);
       }
 
       Node<K,V> find(int h, Object k) {
