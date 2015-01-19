@@ -116,6 +116,8 @@ public class RecoveryAwareTransactionTable extends XaTransactionTable {
 
    @Override
    public void failureCompletingTransaction(Transaction tx) {
+      // TODO Change the Transaction parameter to LocalTransaction to avoid the reverse lookup and the
+      // NullPointerException when called from RecoveryManagerImpl.forceTransactionCompletion
       RecoveryAwareLocalTransaction localTx = (RecoveryAwareLocalTransaction) getLocalTransaction(tx);
       if (localTx == null)
          throw new CacheException(String.format("Local transaction for transaction (%s) not found", tx));

@@ -1,9 +1,5 @@
 package org.infinispan.interceptors;
 
-import javax.transaction.Status;
-import javax.transaction.SystemException;
-import javax.transaction.Transaction;
-
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
@@ -43,6 +39,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -54,6 +51,9 @@ import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Status;
+import javax.transaction.SystemException;
+import javax.transaction.Transaction;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -132,24 +132,34 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
          return invokeNextInterceptor(ctx, command);
       } finally {
          if (!ctx.isOriginLocal()) {
+            // command.getOrigin() and ctx.getOrigin() are not reliable for LockControlCommands started by
+            // ClusteredGetCommands, or for PrepareCommands started by MultipleRpcCommands (when the replication queue
+            // is enabled).
+            Address origin = ctx.getGlobalTransaction().getAddress();
             //It is possible to receive a prepare or lock control command from a node that crashed. If that's the case rollback
             //the transaction forcefully in order to cleanup resources.
-            boolean originatorMissing = !rpcManager.getTransport().getMembers().contains(command.getOrigin());
+            boolean originatorMissing = !rpcManager.getTransport().getMembers().contains(origin);
             // It is also possible that the LCC timed out on the originator's end and this node has processed
             // a TxCompletionNotification.  So we need to check the presence of the remote transaction to
             // see if we need to clean up any acquired locks on our end.
             boolean alreadyCompleted = txTable.isTransactionCompleted(command.getGlobalTransaction()) ||
-                                       !txTable.containRemoteTx(command.getGlobalTransaction());
+                    !txTable.containRemoteTx(command.getGlobalTransaction());
+            // We want to throw an exception if the originator left the cluster and the transaction is not finished
+            // and/or it was rolled back by TransactionTable.cleanupLeaverTransactions().
+            // We don't want to throw an exception if the originator left the cluster but the transaction already
+            // completed successfully. So far, this only seems possible when forcing the commit of an orphaned
+            // transaction (with recovery enabled).
+            boolean completedSuccessfully = alreadyCompleted && !ctx.getCacheTransaction().isMarkedForRollback();
             if (trace) {
                log.tracef("invokeNextInterceptorAndVerifyTransaction :: originatorMissing=%s, alreadyCompleted=%s",
-                          originatorMissing, alreadyCompleted);
+                       originatorMissing, alreadyCompleted);
             }
 
             if (alreadyCompleted || originatorMissing) {
                if (trace) {
-                  log.tracef("Rolling back remote transaction %s because either already completed(%s) or originator no " +
-                                   "longer in the cluster(%s).",
-                             command.getGlobalTransaction(), alreadyCompleted, originatorMissing);
+                  log.tracef("Rolling back remote transaction %s because either already completed (%s) or originator no " +
+                          "longer in the cluster (%s).",
+                          command.getGlobalTransaction(), alreadyCompleted, originatorMissing);
                }
                RollbackCommand rollback = new RollbackCommand(command.getCacheName(), command.getGlobalTransaction());
                try {
@@ -159,6 +169,10 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
                   remoteTx.markForRollback(true);
                   txTable.removeRemoteTransaction(command.getGlobalTransaction());
                }
+            }
+
+            if (originatorMissing && !completedSuccessfully) {
+               throw log.orphanTransactionRolledBack(ctx.getGlobalTransaction());
             }
          }
       }
