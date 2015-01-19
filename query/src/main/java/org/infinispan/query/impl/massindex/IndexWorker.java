@@ -31,16 +31,14 @@ public class IndexWorker implements DistributedCallable<Void, Void, Void> {
 
    protected Cache<?, ?> cache;
    protected final Class<?> entity;
-   protected final String indexName;
    private final boolean flush;
    protected IndexUpdater indexUpdater;
 
    private ClusteringDependentLogic clusteringDependentLogic;
    private EntryRetriever entryRetriever;
 
-   public IndexWorker(Class<?> entity, String indexName, boolean flush) {
+   public IndexWorker(Class<?> entity, boolean flush) {
       this.entity = entity;
-      this.indexName = indexName;
       this.flush = flush;
    }
 
@@ -82,7 +80,7 @@ public class IndexWorker implements DistributedCallable<Void, Void, Void> {
             CacheEntry<Object, String> next = iterator.next();
             Object value = extractValue(next.getValue());
             if (value != null && value.getClass().equals(entity))
-               indexUpdater.updateIndex(next.getKey(), value, indexName);
+               indexUpdater.updateIndex(next.getKey(), value);
          }
       }
       postIndex();
@@ -109,13 +107,12 @@ public class IndexWorker implements DistributedCallable<Void, Void, Void> {
       @Override
       public void writeObject(ObjectOutput output, IndexWorker worker) throws IOException {
          output.writeObject(worker.entity);
-         output.writeUTF(worker.indexName);
          output.writeBoolean(worker.flush);
       }
 
       @Override
       public IndexWorker readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new IndexWorker((Class<?>) input.readObject(), input.readUTF(), input.readBoolean());
+         return new IndexWorker((Class<?>) input.readObject(), input.readBoolean());
       }
 
       @Override

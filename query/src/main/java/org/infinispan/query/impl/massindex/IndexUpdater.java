@@ -7,7 +7,6 @@ import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
 import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.DefaultInstanceInitializer;
-import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
@@ -52,7 +51,7 @@ public class IndexUpdater {
       queryInterceptor.purgeIndex(entityType);
    }
 
-   public void updateIndex(Object key, Object value, String indexName) {
+   public void updateIndex(Object key, Object value) {
       if (value != null) {
          Class clazz = value.getClass();
          EntityIndexBinding entityIndexBinding = searchIntegrator.getIndexBinding(clazz);
@@ -72,11 +71,7 @@ public class IndexUpdater {
                conversionContext
          );
          try {
-            IndexManager indexManagerForAddition = entityIndexBinding
-                  .getSelectionStrategy().getIndexManagerForAddition(clazz, idInString, idInString, updateTask.getDocument());
-            if (indexManagerForAddition.getIndexName().equals(indexName)) {
-               defaultBatchBackend.enqueueAsyncWork(updateTask);
-            }
+            defaultBatchBackend.enqueueAsyncWork(updateTask);
          } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
          }

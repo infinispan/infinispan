@@ -7,7 +7,6 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distexec.DistributedTask;
-import org.infinispan.distexec.DistributedTaskBuilder;
 import org.infinispan.query.MassIndexer;
 import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import org.infinispan.query.logging.Log;
@@ -44,29 +43,30 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
       DistributedExecutorService executor = new DefaultExecutorService(cache);
       ArrayList<Future<Void>> futures = new ArrayList<>();
       Deque<Class<?>> toFlush = new LinkedList<>();
-      boolean replicated = cache.getAdvancedCache().getCacheConfiguration().clustering().cacheMode().isReplicated();
+      boolean replicated = cache.getAdvancedCache().getCacheConfiguration()
+            .clustering().cacheMode().isReplicated();
 
       for (Class<?> indexedType : searchIntegrator.getIndexedTypes()) {
          EntityIndexBinding indexBinding = searchIntegrator.getIndexBinding(indexedType);
          IndexManager[] indexManagers = indexBinding.getIndexManagers();
-         for (IndexManager indexManager : indexManagers) {
-            String indexName = indexManager.getIndexName();
-            IndexWorker indexWork;
-            boolean shared = isShared(indexManager);
-            if (shared) {
-               indexUpdater.purge(indexedType);
-               indexWork = new IndexWorker(indexedType, indexName, false);
-               toFlush.add(indexedType);
-            } else {
-               indexWork = new IndexWorker(indexedType, indexName, true);
-            }
-            DistributedTaskBuilder builder = executor.createDistributedTaskBuilder(indexWork).timeout(0, TimeUnit.NANOSECONDS);
-            DistributedTask task = builder.build();
-            if (replicated && shared) {
-               futures.add(executor.submit(task));
-            } else {
-               futures.addAll(executor.submitEverywhere(task));
-            }
+         boolean shared = isShared(indexManagers[0]);
+         boolean sharded = indexManagers.length > 1;
+         IndexWorker indexWork;
+         if (shared && !sharded) {
+            indexUpdater.purge(indexedType);
+            indexWork = new IndexWorker(indexedType, false);
+            toFlush.add(indexedType);
+         } else {
+            indexWork = new IndexWorker(indexedType, true);
+         }
+         DistributedTask task = executor
+               .createDistributedTaskBuilder(indexWork)
+               .timeout(0, TimeUnit.NANOSECONDS)
+               .build();
+         if (replicated && shared && !sharded) {
+            futures.add(executor.submit(task));
+         } else {
+            futures.addAll(executor.submitEverywhere(task));
          }
       }
       waitForAll(futures);
