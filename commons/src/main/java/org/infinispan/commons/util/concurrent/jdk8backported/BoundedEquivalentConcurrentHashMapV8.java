@@ -454,11 +454,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             EvictionEntry evictionEntry) {
          Node<K, V> node = new Node<K, V>(hash, map.nodeEq, key, value, next);
          if (evictionEntry == null) {
-//            node.eviction = new DequeNode<>(node);
             node.lazySetEviction(new DequeNode<>(node));
          } else {
             node.lazySetEviction(evictionEntry);
-//            node.eviction = evictionEntry;
          }
          return node;
       }
@@ -469,7 +467,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          TreeNode<K, V> treeNode;
          if (evictionEntry == null) {
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, null);
-//            treeNode.eviction = new DequeNode<>(treeNode);
             treeNode.lazySetEviction(new DequeNode<>(treeNode));
          } else {
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent,
