@@ -454,9 +454,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             EvictionEntry evictionEntry) {
          Node<K, V> node = new Node<K, V>(hash, map.nodeEq, key, value, next);
          if (evictionEntry == null) {
-            node.eviction = new DequeNode<>(node);
+//            node.eviction = new DequeNode<>(node);
+            node.lazySetEviction(new DequeNode<>(node));
          } else {
-            node.eviction = evictionEntry;
+            node.lazySetEviction(evictionEntry);
+//            node.eviction = evictionEntry;
          }
          return node;
       }
@@ -467,7 +469,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          TreeNode<K, V> treeNode;
          if (evictionEntry == null) {
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, null);
-            treeNode.eviction = new DequeNode<>(treeNode);
+//            treeNode.eviction = new DequeNode<>(treeNode);
+            treeNode.lazySetEviction(new DequeNode<>(treeNode));
          } else {
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent,
                   evictionEntry);
@@ -518,6 +521,17 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
    }
 
+   static final class WrappedNode<K, V> extends DequeNode<WrappedNode<K, V>> {
+      final boolean isHit;
+      final Node<K, V> node;
+
+      public WrappedNode(boolean isHit, Node<K, V> node) {
+         super.item = this;
+         this.isHit = isHit;
+         this.node = node;
+      }
+   }
+
    /**
     * Wraps another EvictionPolicy to reduce lock contention of concurrent
     * cache hits.
@@ -534,21 +548,24 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       static final int MAX_BATCH_SIZE = 64;
 
-      final ConcurrentLinkedQueue<Node<K, V>> accessQueue =
-         new ConcurrentLinkedQueue<Node<K, V>>();
+      final StrippedConcurrentLinkedDeque<WrappedNode<K, V>> accessQueue =
+         new StrippedConcurrentLinkedDeque<WrappedNode<K, V>>();
 
       final AtomicInteger accessQueueSize = new AtomicInteger(0);
 
       final int maxBatchQueueSize;
 
+      final long mapMaxSize;
+
       final EvictionPolicy<K, V> eviction;
 
-      final Lock hitLock = new ReentrantLock();
+      final Lock queueLock = new ReentrantLock();
 
-      BatchWrapper(int maxBatchQueueSize,
+      BatchWrapper(int maxBatchQueueSize, long mapMaxSize,
             EvictionPolicy<K, V> wrappedEvictionPolicy)
       {
          this.maxBatchQueueSize = Math.min(maxBatchQueueSize, MAX_BATCH_SIZE);
+         this.mapMaxSize = mapMaxSize;
          this.eviction = wrappedEvictionPolicy;
       }
 
@@ -564,11 +581,21 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return eviction.createNewEntry(key, hash, next, parent, value, evictionEntry);
       }
 
-      private void processEnqueuedHits() {
-         Node<K, V> e;
+      /*
+       * This should only ever be invoked while holding the queueLock
+       */
+      private void processEnqueued() {
+         WrappedNode<K, V> e;
          int hitCount = 0;
-         while ((e = accessQueue.poll()) != null) {
-            eviction.onEntryHit(e);
+         // We keep polling until we run out or we hit the max batch size.  The latter
+         // is important so our thread doesn't get live locked by constant concurrent
+         // hits or misses
+         while ((e = accessQueue.pollFirst()) != null && hitCount < maxBatchQueueSize) {
+            if (e.isHit) {
+               eviction.onEntryHit(e.node);
+            } else {
+               eviction.onEntryMiss(e.node);
+            }
             hitCount++;
          }
          accessQueueSize.addAndGet(-hitCount);
@@ -576,30 +603,36 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public void onEntryMiss(Node<K, V> e) {
-         hitLock.lock();
-         try {
-            // unconditionally process postponed hits so that the eviction
-            // algorithm's state is up to date when choosing an entry to evict
-            processEnqueuedHits();
-            eviction.onEntryMiss(e);
-         } finally {
-            hitLock.unlock();
+         accessQueue.linkLast(new WrappedNode<>(false, e));
+         int sz = accessQueueSize.incrementAndGet();
+
+         // only process enqueued if the threshold has been
+         // reached *and* we can opportunistically acquire the lock
+         // This way if subsequent hits are produced they won't have to worry about queue
+         // NOTE: we will process the queue on 1/16 or less entries since we want to
+         // if at all possible keep read hits fast
+         if (sz >= maxBatchQueueSize >> 4 && queueLock.tryLock()) {
+            try {
+               processEnqueued();
+            } finally {
+               queueLock.unlock();
+            }
          }
       }
 
       @Override
       public void onEntryHit(Node<K, V> e) {
-         accessQueue.add(e);
+         accessQueue.linkLast(new WrappedNode<>(true, e));
          int sz = accessQueueSize.incrementAndGet();
 
-         // only process enqueued cache hits if the threshold has been
+         // only process enqueued if the threshold has been
          // reached *and* we can opportunistically acquire the lock
          // This way if subsequent hits are produced they won't have to worry about queue
-         if (sz >= maxBatchQueueSize && hitLock.tryLock()) {
+         if (sz >= maxBatchQueueSize && queueLock.tryLock()) {
             try {
-               processEnqueuedHits();
+               processEnqueued();
             } finally {
-               hitLock.unlock();
+               queueLock.unlock();
             }
          }
       }
@@ -614,7 +647,19 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public Set<Node<K, V>> findIfEntriesNeedEvicting(long currentSize) {
-         return eviction.findIfEntriesNeedEvicting(currentSize);
+         if (currentSize > mapMaxSize) {
+            queueLock.lock();
+            try {
+               // If we think something will be evicted we need to now process all the
+               // queued hits and misses
+               processEnqueued();
+            } finally {
+               queueLock.unlock();
+            }
+            // If an entry is concurrently missed or hit we don't really care
+            return eviction.findIfEntriesNeedEvicting(currentSize);
+         }
+         return InfinispanCollections.emptySet();
       }
    }
 
@@ -624,7 +669,155 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
    static interface EvictionEntry {
    }
-//
+
+   static final class LIRSNode<K, V> extends DequeNode<Node<K, V>> {
+      volatile Recency state = Recency.HIR_NONRESIDENT;
+
+      public LIRSNode() {
+         super();
+      }
+
+      public LIRSNode(Node<K, V> item) {
+         super(item);
+      }
+   }
+
+   static final class LIRSEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
+      /**
+       * The percentage of the cache which is dedicated to hot blocks. See section 5.1
+       */
+      private static final float L_LIRS = 0.95f;
+
+      final BoundedEquivalentConcurrentHashMapV8<K, V> map;
+      // LIRS stack S
+      /**
+       * The LIRS stack, S, which is maintains recency information. All hot entries are on the
+       * stack. All cold and non-resident entries which are more recent than the least recent hot
+       * entry are also stored in the stack (the stack is always pruned such that the last entry is
+       * hot, and all entries accessed more recently than the last hot entry are present in the
+       * stack). The stack is ordered by recency, with its most recently accessed entry at the top,
+       * and its least recently accessed entry at the bottom.
+       */
+      final StrippedConcurrentLinkedDeque<Node<K, V>> stack = new StrippedConcurrentLinkedDeque<Node<K, V>>();
+      // LIRS queue Q
+      /**
+       * The LIRS queue, Q, which enqueues all cold entries for eviction. Cold entries (by
+       * definition in the queue) may be absent from the stack (due to pruning of the stack). Cold
+       * entries are added to the end of the queue and entries are evicted from the front of the
+       * queue.
+       */
+      final StrippedConcurrentLinkedDeque<Node<K, V>> queue = new StrippedConcurrentLinkedDeque<Node<K, V>>();
+
+      /** The maximum number of hot entries (L_lirs in the paper). */
+      private final long maximumHotSize;
+
+      /** The maximum number of resident entries (L in the paper). */
+      private final long maximumSize;
+
+      /** The actual number of hot entries. */
+      private AtomicLong hotSize = new AtomicLong();
+      
+      /** The number of LIRS entries in total counting all residents */
+      private AtomicLong size = new AtomicLong();
+
+      final AtomicLong evictingCount = new AtomicLong();
+
+      public LIRSEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize) {
+         this.map = map;
+         this.maximumSize = maxSize;
+         this.maximumHotSize = calculateLIRSize(maxSize);
+      }
+
+      private static long calculateLIRSize(long maximumSize) {
+         long result = (long) (L_LIRS * maximumSize);
+         return (result == maximumSize) ? maximumSize - 1 : result;
+      }
+
+      /**
+       * Prunes HIR blocks in the bottom of the stack until an HOT block sits in the stack bottom.
+       * If pruned blocks were resident, then they remain in the queue; non-resident blocks (if any)
+       * are dropped (the current LIRSHashEntry.nonResident() implementation removes non-resident
+       * blocks from both stack and queue, so this cannot actually happen).
+       */
+      private void pruneStack() {
+         // See section 3.3:
+         // "We define an operation called "stack pruning" on the LIRS
+         // stack S, which removes the HIR blocks in the bottom of
+         // the stack until an LIR block sits in the stack bottom. This
+         // operation serves for two purposes: (1) We ensure the block in
+         // the bottom of the stack always belongs to the LIR block set.
+         // (2) After the LIR block in the bottom is removed, those HIR
+         // blocks contiguously located above it will not have chances to
+         // change their status from HIR to LIR, because their recencies
+         // are larger than the new maximum recency of LIR blocks."
+         //        LIRSEvictionEntry<K, V> bottom = stackBottom();
+         //        while (bottom != null && bottom.state != Recency.LIR_RESIDENT) {
+         //          bottom.removeFromStack();
+         //          bottom = stackBottom();
+         //        }
+      }
+
+      @Override
+      public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value, EvictionEntry evictionEntry) {
+         Node<K, V> node = new Node<K, V>(hash, map.nodeEq, key, value, next);
+         if (evictionEntry == null) {
+            node.eviction = new LIRSNode<>(node);
+         } else {
+            node.eviction = evictionEntry;
+         }
+         return node;
+      }
+
+      @Override
+      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next, TreeNode<K, V> parent, V value,
+            EvictionEntry evictionEntry) {
+         TreeNode<K, V> treeNode;
+         if (evictionEntry == null) {
+            treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, null);
+            treeNode.eviction = new LIRSNode<>(treeNode);
+         } else {
+            treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, evictionEntry);
+         }
+         return treeNode;
+      }
+
+      @Override
+      public void onEntryMiss(Node<K, V> e) {
+         LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
+         long currentHotSize;
+         // If we haven't hit LIR max then promote it immediately
+         // See section 3.3 second paragraph:
+         while ((currentHotSize = hotSize.get()) < maximumHotSize) {
+            if (hotSize.compareAndSet(currentHotSize, currentHotSize + 1)) {
+               size.incrementAndGet();
+               lirsNode.state = Recency.LIR_RESIDENT;
+               stack.linkLast(lirsNode);
+               return;
+            }
+         }
+         // See section 3.3 case 3:
+         // "Upon accessing an HIR non-resident block X:
+         // This is a miss."
+         // TODO: need to do stuff here
+      }
+
+      @Override
+      public void onEntryHit(Node<K, V> e) {
+         //FIXME implement me
+      }
+
+      @Override
+      public void onEntryRemove(Node<K, V> e) {
+         //FIXME implement me
+      }
+
+      @Override
+      public Set<Node<K, V>> findIfEntriesNeedEvicting(long currentSize) {
+         return InfinispanCollections.emptySet();
+      }
+
+   }
+
 //   /**
 //    * Adapted to Infinispan BoundedConcurrentHashMap using LIRS implementation ideas from Charles Fry (fry@google.com)   
 //    * See http://code.google.com/p/concurrentlinkedhashmap/source/browse/trunk/src/test/java/com/googlecode/concurrentlinkedhashmap/caches/LirsMap.java
@@ -1159,7 +1352,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                BoundedEquivalentConcurrentHashMapV8<K, V> map, long capacity) {
             return new LRUEvictionPolicy<K, V>(map, capacity);
             // TODO: figure a better queue size
-//            return new BatchWrapper<K, V>((int) capacity & 0x7fffffff,
+//            return new BatchWrapper<K, V>((int) capacity & 0x7fffffff, map.maxSize,
 //                   new LRUEvictionPolicy<K, V>(map, capacity));
          }
       },
@@ -1168,7 +1361,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          public <K, V> EvictionPolicy<K, V> make(BoundedEquivalentConcurrentHashMapV8<K, V> map, 
                long capacity) {
 //             TODO: figure a better queue size
-//            return new BatchWrapper<K, V>(null, (int) capacity / 10,
+//            return new BatchWrapper<K, V>(null, (int) capacity / 10, map.maxSize,
 //                   new LIRS<K, V>(map, capacity));
             throw new IllegalArgumentException();
          }
@@ -1640,6 +1833,26 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             } while ((e = e.next) != null);
          }
          return null;
+      }
+
+      void lazySetEviction(EvictionEntry val) {
+         UNSAFE.putOrderedObject(this, evictionOffset, val);
+     }
+
+      // Unsafe mechanics
+
+      private static final sun.misc.Unsafe UNSAFE;
+      private static final long evictionOffset;
+
+      static {
+          try {
+              UNSAFE = BoundedEquivalentConcurrentHashMapV8.getUnsafe();
+              Class<?> k = Node.class;
+              evictionOffset = UNSAFE.objectFieldOffset
+                  (k.getDeclaredField("eviction"));
+          } catch (Exception e) {
+              throw new Error(e);
+          }
       }
    }
 

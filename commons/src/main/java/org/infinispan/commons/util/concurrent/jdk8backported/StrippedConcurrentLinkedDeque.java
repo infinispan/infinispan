@@ -47,6 +47,8 @@ class StrippedConcurrentLinkedDeque<E> {
    
    static final DequeNode<Object> PREV_TERMINATOR, NEXT_TERMINATOR;
 
+   final DequeNode<E> DEFAULT;
+
    @SuppressWarnings("unchecked")
    DequeNode<E> prevTerminator() {
        return (DequeNode<E>) PREV_TERMINATOR;
@@ -57,11 +59,16 @@ class StrippedConcurrentLinkedDeque<E> {
        return (DequeNode<E>) NEXT_TERMINATOR;
    }
 
-   public StrippedConcurrentLinkedDeque() {
-      head = tail = new DequeNode<E>(null);
+   DequeNode<E> defaultNode() {
+       return (DequeNode<E>) DEFAULT;
    }
 
-   static final class DequeNode<E> implements BoundedEquivalentConcurrentHashMapV8.EvictionEntry {
+   public StrippedConcurrentLinkedDeque() {
+      DEFAULT = new DequeNode<>();
+      head = tail = defaultNode();
+   }
+
+   static class DequeNode<E> implements BoundedEquivalentConcurrentHashMapV8.EvictionEntry {
        volatile DequeNode<E> prev;
        volatile E item;
        volatile DequeNode<E> next;
