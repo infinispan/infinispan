@@ -118,7 +118,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(RemoteQueryFactory.class, getQueryFactory().getClass());
    }
 
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalArgumentException: Field notes from type sample_bank_account.User is not indexed")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalArgumentException: ISPN018002: Field notes from type sample_bank_account.User is not indexed")
    @Override
    public void testEqNonIndexed() throws Exception {
       QueryFactory qf = getQueryFactory();
