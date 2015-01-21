@@ -170,7 +170,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
          // coordinator to member
          case CH_UPDATE:
             localTopologyManager.handleTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
-                  pendingCH, actualMembers), availabilityMode, viewId);
+                  pendingCH, actualMembers), availabilityMode, viewId, sender);
             return null;
          case STABLE_TOPOLOGY_UPDATE:
             localTopologyManager.handleStableTopologyUpdate(cacheName, new CacheTopology(topologyId, rebalanceId,
@@ -178,7 +178,7 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             return null;
          case REBALANCE_START:
             localTopologyManager.handleRebalance(cacheName, new CacheTopology(topologyId, rebalanceId, currentCH,
-                  pendingCH, actualMembers), viewId);
+                  pendingCH, actualMembers), viewId, sender);
             return null;
          case GET_STATUS:
             return localTopologyManager.handleStatusRequest(viewId);

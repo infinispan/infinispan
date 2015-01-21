@@ -307,7 +307,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             }
             return invocation.callRealMethod();
          }
-      }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt());
+      }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
+            any(Address.class));
       TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLocalTopologyManager, true);
    }
 
@@ -339,7 +340,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             return invocation.callRealMethod();
          }
       }).when(spyLocalTopologyManager2).handleTopologyUpdate(eq(CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt());
+            any(AvailabilityMode.class), anyInt(), any(Address.class));
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -350,7 +351,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             }
             return invocation.callRealMethod();
          }
-      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt());
+      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
+            any(Address.class));
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 
       // Node 1 (the coordinator) dies. Node 2 becomes coordinator and tries to call GET_STATUS
@@ -410,7 +412,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             return invocation.callRealMethod();
          }
       }).when(spyLocalTopologyManager2).handleTopologyUpdate(eq(CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt());
+            any(AvailabilityMode.class), anyInt(), any(Address.class));
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -421,7 +423,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             }
             return invocation.callRealMethod();
          }
-      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt());
+      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
+            any(Address.class));
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 
       // Node 1 (the coordinator) dies. Node 2 becomes coordinator and tries to call GET_STATUS
