@@ -232,7 +232,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
             return invocation.callRealMethod();
          }
       }).when(spyLtm).handleTopologyUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt());
+            any(AvailabilityMode.class), anyInt(), any(Address.class));
       TestingUtil.extractGlobalComponentRegistry(manager).registerComponent(spyLtm, LocalTopologyManager.class);
    }
 }

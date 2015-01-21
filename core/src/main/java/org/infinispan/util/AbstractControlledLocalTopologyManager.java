@@ -4,6 +4,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
@@ -49,15 +50,17 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
-   public final void handleTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, int viewId) throws InterruptedException {
+   public final void handleTopologyUpdate(String cacheName, CacheTopology cacheTopology,
+         AvailabilityMode availabilityMode, int viewId, Address sender) throws InterruptedException {
       beforeHandleTopologyUpdate(cacheName, cacheTopology, viewId);
-      delegate.handleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId);
+      delegate.handleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender);
    }
 
    @Override
-   public final void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId) throws InterruptedException {
+   public final void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender)
+         throws InterruptedException {
       beforeHandleRebalance(cacheName, cacheTopology, viewId);
-      delegate.handleRebalance(cacheName, cacheTopology, viewId);
+      delegate.handleRebalance(cacheName, cacheTopology, viewId, sender);
    }
 
    @Override
