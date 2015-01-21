@@ -14,7 +14,7 @@ import org.hibernate.search.bridge.builtin.impl.TwoWayString2FieldBridgeAdaptor;
 import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.CacheException;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.MessageMarshaller;
@@ -34,6 +34,7 @@ import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 import org.infinispan.query.remote.indexing.IndexingMetadata;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
+import org.infinispan.query.remote.logging.Log;
 import org.infinispan.server.core.QueryFacade;
 import org.infinispan.util.KeyValuePair;
 import org.kohsuke.MetaInfServices;
@@ -50,6 +51,8 @@ import java.util.List;
  */
 @MetaInfServices
 public class QueryFacadeImpl implements QueryFacade {
+
+   private static final Log log = LogFactory.getLog(QueryFacadeImpl.class, Log.class);
 
    /**
     * A special hidden Lucene document field that holds the actual protobuf type name.
@@ -77,7 +80,7 @@ public class QueryFacadeImpl implements QueryFacade {
 
          return ProtobufUtil.toByteArray(serCtx, response);
       } catch (IOException e) {
-         throw new CacheException("An exception has occurred during query execution", e);
+         throw log.errorExecutingQuery(e);
       }
    }
 
@@ -263,11 +266,11 @@ public class QueryFacadeImpl implements QueryFacade {
          String name = split[i];
          fd = messageDescriptor.findFieldByName(name);
          if (fd == null) {
-            throw new IllegalArgumentException("Unknown field " + name + " in type " + messageDescriptor.getFullName());
+            throw log.unknownField(name, messageDescriptor.getFullName());
          }
          IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
          if (indexingMetadata != null && !indexingMetadata.isFieldIndexed(fd.getNumber())) {
-            throw new IllegalArgumentException("Field " + name + " from type " + messageDescriptor.getFullName() + " is not indexed");
+            throw log.fieldIsNotIndexed(name, messageDescriptor.getFullName());
          }
          if (i < split.length - 1) {
             messageDescriptor = fd.getMessageType();
