@@ -1,6 +1,10 @@
 package org.infinispan.query.distributed;
 
+import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.context.Flag;
+import org.infinispan.query.Search;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.api.NotIndexedType;
 import org.infinispan.query.queries.faceting.Car;
 import org.testng.annotations.Test;
@@ -36,5 +40,13 @@ public class MassIndexingTest extends DistributedMassIndexingTest {
       verifyFindsCar(100, "megane");
       verifyFindsCar(0, "test1");
       verifyFindsCar(0, "test2");
+   }
+
+   @Override
+   protected void rebuildIndexes() throws Exception {
+      Cache cache = caches.get(0);
+      SearchManager searchManager = Search.getSearchManager(cache);
+      NotifyingFuture<Void> future = searchManager.getMassIndexer().startAsync();
+      future.get();
    }
 }

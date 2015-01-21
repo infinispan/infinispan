@@ -1,5 +1,6 @@
 package org.infinispan.query;
 
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.jmx.annotations.MBean;
 import org.infinispan.jmx.annotations.ManagedOperation;
 
@@ -18,9 +19,12 @@ import org.infinispan.jmx.annotations.ManagedOperation;
       description = "Component that rebuilds the index from the cached data")
 public interface MassIndexer {
 
-   //TODO Add more parameters here, like timeout when it will be implemented
-   //(see ISPN-1313, and ISPN-1042 for task cancellation)
    @ManagedOperation(description = "Starts rebuilding the index", displayName = "Rebuild index")
    void start();
+
+   /**
+    * @return {@link org.infinispan.commons.util.concurrent.NotifyingFuture}
+    */
+   NotifyingFuture<Void> startAsync();
 
 }

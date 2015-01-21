@@ -53,29 +53,30 @@ public class IndexUpdater {
 
    public void updateIndex(Object key, Object value) {
       if (value != null) {
-         Class clazz = value.getClass();
-         EntityIndexBinding entityIndexBinding = searchIntegrator.getIndexBinding(clazz);
-         if (entityIndexBinding == null) {
-            // it might be possible to receive not-indexes types
-            return;
-         }
-         ConversionContext conversionContext = new ContextualExceptionBridgeHelper();
-         DocumentBuilderIndexedEntity docBuilder = entityIndexBinding.getDocumentBuilder();
-         final String idInString = keyTransformationHandler.keyToString(key);
-         UpdateLuceneWork updateTask = docBuilder.createUpdateWork(
-               clazz,
-               value,
-               idInString,
-               idInString,
-               DefaultInstanceInitializer.DEFAULT_INITIALIZER,
-               conversionContext
-         );
-         try {
-            defaultBatchBackend.enqueueAsyncWork(updateTask);
-         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
+         if (!Thread.currentThread().isInterrupted()) {
+            Class clazz = value.getClass();
+            EntityIndexBinding entityIndexBinding = searchIntegrator.getIndexBinding(clazz);
+            if (entityIndexBinding == null) {
+               // it might be possible to receive not-indexes types
+               return;
+            }
+            ConversionContext conversionContext = new ContextualExceptionBridgeHelper();
+            DocumentBuilderIndexedEntity docBuilder = entityIndexBinding.getDocumentBuilder();
+            final String idInString = keyTransformationHandler.keyToString(key);
+            UpdateLuceneWork updateTask = docBuilder.createUpdateWork(
+                  clazz,
+                  value,
+                  idInString,
+                  idInString,
+                  DefaultInstanceInitializer.DEFAULT_INITIALIZER,
+                  conversionContext
+            );
+            try {
+               defaultBatchBackend.enqueueAsyncWork(updateTask);
+            } catch (InterruptedException e) {
+               Thread.currentThread().interrupt();
+            }
          }
       }
    }
-
 }
