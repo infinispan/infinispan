@@ -540,7 +540,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to invoke method %s on Object instance %s - " +
          "removing this target object from list of listeners!", id = 134)
-   void unableToInvokeListenerMethod(Method m, Object target, @Cause Throwable e);
+   void unableToInvokeListenerMethodAndRemoveListener(Method m, Object target, @Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Could not lock key %s in order to invalidate from L1 at node %s, skipping....", id = 135)
@@ -1220,4 +1220,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Distributed task failed at %s. The task is failing over to be executed at %s", id = 330)
    void distributedTaskFailover(Address failedAtAddress, Address failoverTarget, @Cause Exception e);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to invoke method %s on Object instance %s ", id = 331)
+   void unableToInvokeListenerMethod(Method m, Object target, @Cause Throwable e);
+
 }
