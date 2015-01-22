@@ -142,12 +142,15 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       Future<Object> put = cache.putAsync(key2, "v2");
       latch.waitToBlock(30, TimeUnit.SECONDS);
 
-      //the eviction was trigger and the key is no longer in the map
-      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
-
       //let the eviction continue and wait for put
       latch.disable();
       put.get();
+
+      //the eviction was trigger and the key is no longer in the map
+      // This should be after the async put is known to finish.  It is undefined which would
+      // win in the case of an entry being activated while it is also being passivated
+      // This way it is clear which should be there
+      assertEquals("Wrong value for key " + key1 + " in get operation.", "v1", cache.get(key1));
 
       assertInMemory(key1, "v1");
       assertNotInMemory(key2, "v2");

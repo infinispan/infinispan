@@ -19,6 +19,7 @@ public class BoundedConcurrentHashMapStressTest extends AbstractInfinispanTest {
       Map<Integer, Integer> bchm = new BoundedConcurrentHashMap<Integer, Integer>(
             COUNT, 1, eviction, AnyEquivalence.INT, AnyEquivalence.INT);
 
+      long startIncludePut = System.currentTimeMillis();
       // fill the cache
       for (int i = 0; i < COUNT; i++)
          bchm.put(i, i);
@@ -38,6 +39,10 @@ public class BoundedConcurrentHashMapStressTest extends AbstractInfinispanTest {
          if (System.currentTimeMillis() - start > 5000)
             fail(eviction.name() + ": removing " + COUNT + " entries takes more than 5 seconds!");
       }
+      System.out.println("BCHM Stress Test " + eviction + " took " + 
+            (System.currentTimeMillis() - start) + " milliseconds");
+      System.out.println("BCHM Entire Stress Test " + eviction + " took " + 
+            (System.currentTimeMillis() - startIncludePut) + " milliseconds");
    }
 
    public void testLRURemovePerformance() {
