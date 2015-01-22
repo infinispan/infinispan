@@ -113,7 +113,7 @@ public class BoundedEquivalentConcurrentHashMapV8Test extends EquivalentHashMapT
    public void testLRUCacheHits() throws InterruptedException
    {
       final int COUNT_PER_THREAD = 100000;
-      final int THREADS = 10;
+      final int THREADS = 1;
       final int COUNT = COUNT_PER_THREAD * THREADS;
 
       final EvictionListener<Integer, Integer> l = new NullEvictionListener<Integer, Integer>() {

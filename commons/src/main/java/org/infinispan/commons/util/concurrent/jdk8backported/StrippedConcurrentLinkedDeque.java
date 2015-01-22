@@ -89,6 +89,12 @@ class StrippedConcurrentLinkedDeque<E> {
            UNSAFE.putObject(this, itemOffset, item);
        }
 
+       void resetLazily(E item) {
+          UNSAFE.putObject(this, itemOffset, item);
+          lazySetNext(null);
+          lazySetPrev(null);
+       }
+
        boolean casItem(E cmp, E val) {
            return UNSAFE.compareAndSwapObject(this, itemOffset, cmp, val);
        }
@@ -138,6 +144,23 @@ class StrippedConcurrentLinkedDeque<E> {
           if (item != null && p.casItem(item, null)) {
               unlink(p);
               return item;
+          }
+      }
+      return null;
+   }
+
+   /**
+    * Returns the first node as well as it's value
+    * @return an array of size 2 (1 = DequeNode<E> that was removed (note item will be 
+    *         null, and 2 = value of the node from 1).  Or this will return null if there
+    *         are no nodes in this deque
+    */
+   public Object[] pollFirstNode() {
+      for (DequeNode<E> p = first(); p != null; p = succ(p)) {
+          E item = p.item;
+          if (item != null && p.casItem(item, null)) {
+              unlink(p);
+              return new Object[]{p, item};
           }
       }
       return null;
@@ -291,11 +314,11 @@ class StrippedConcurrentLinkedDeque<E> {
                    p = q;
            }
 
-           // TODO: better HOP heuristics
-           if (hops < HOPS
-               // always squeeze out interior deleted nodes
-               && (isFirst | isLast))
-               return;
+//           // TODO: better HOP heuristics
+//           if (hops < HOPS
+//               // always squeeze out interior deleted nodes
+//               && (isFirst | isLast))
+//               return;
 
            // Squeeze out deleted nodes between activePred and
            // activeSucc, including x.
@@ -449,7 +472,7 @@ class StrippedConcurrentLinkedDeque<E> {
        }
    }
 
-   private void skipDeletedPredecessors(DequeNode<E> x) {
+   void skipDeletedPredecessors(DequeNode<E> x) {
        whileActive:
        do {
            DequeNode<E> prev = x.prev;
@@ -480,7 +503,7 @@ class StrippedConcurrentLinkedDeque<E> {
        } while (x.item != null || x.next == null);
    }
 
-   private void skipDeletedSuccessors(DequeNode<E> x) {
+   void skipDeletedSuccessors(DequeNode<E> x) {
        whileActive:
        do {
            DequeNode<E> next = x.next;

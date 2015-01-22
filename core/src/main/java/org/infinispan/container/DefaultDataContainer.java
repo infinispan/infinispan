@@ -109,15 +109,9 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
 
-      if (eviction == Eviction.LIRS) {
-         entries = new BoundedConcurrentHashMap<K, InternalCacheEntry<K, V>>(maxEntries, concurrencyLevel, eviction, evictionListener,
-                                                                          keyEquivalence, AnyEquivalence.getInstance());
-         extendedMap = new BoundedConcurrentExtendedMap();
-      } else {
-         entries = new BoundedEquivalentConcurrentHashMapV8<K, InternalCacheEntry<K, V>>(
-               (long) maxEntries, org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction.LRU, evictionListener, keyEquivalence, AnyEquivalence.getInstance());
-         extendedMap = new BoundedEquivalentConcurrentExtendedMap();
-      }
+      entries = new BoundedEquivalentConcurrentHashMapV8<K, InternalCacheEntry<K, V>>(
+            (long) maxEntries, org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction.LRU, evictionListener, keyEquivalence, AnyEquivalence.getInstance());
+      extendedMap = new BoundedEquivalentConcurrentExtendedMap();
    }
 
    @Inject
