@@ -540,8 +540,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to invoke method %s on Object instance %s - " +
          "removing this target object from list of listeners!", id = 134)
-   void unableToInvokeListenerMethod(Method m, Object target, @Cause Throwable e);
-
+   void unableToInvokeListenerMethodAndRemoveListener(Method m, Object target, @Cause Throwable e);
+   
    @LogMessage(level = WARN)
    @Message(value = "Could not lock key %s in order to invalidate from L1 at node %s, skipping....", id = 135)
    void unableToLockToInvalidate(Object key, Address address);
@@ -1216,4 +1216,9 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to read rebalancing status from coordinator %s", id = 329)
    void errorReadingRebalancingStatus(Address coordinator, @Cause Exception e);
+   
+   @LogMessage(level = WARN)
+   @Message(value = "Unable to invoke method %s on Object instance %s ", id = 330)
+   void unableToInvokeListenerMethod(Method m, Object target, @Cause Throwable e);
+
 }
