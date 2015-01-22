@@ -289,7 +289,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                      getLog().unableToInvokeListenerMethod(method, target, cause);
                   }
                } catch (IllegalAccessException exception) {
-                  getLog().unableToInvokeListenerMethod(method, target, exception);
+                  getLog().unableToInvokeListenerMethodAndRemoveListener(method, target, exception);
                   removeListener(target);
                } finally {
                   if (classLoader != null && classLoader.get() != null) {
