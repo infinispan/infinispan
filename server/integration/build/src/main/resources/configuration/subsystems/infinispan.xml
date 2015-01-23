@@ -39,6 +39,10 @@
             </distributed-cache>
 
             <distributed-cache name="namedCache" mode="SYNC" start="EAGER" />
+
+            <distributed-cache name="transactionalCache" mode="SYNC" start="EAGER">
+               <transaction mode="NON_XA" locking="PESSIMISTIC"/>
+            </distributed-cache>
          </cache-container>
          <cache-container name="security">
          </cache-container>
