@@ -646,7 +646,7 @@ public class JCache<K, V> implements Cache<K, V> {
 
    @Override
    public <T> T unwrap(Class<T> clazz) {
-      return ReflectionUtil.unwrap(this, clazz);
+      return ReflectionUtil.unwrapAny(clazz, this, cache);
    }
 
    @Override

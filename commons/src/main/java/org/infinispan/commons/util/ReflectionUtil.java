@@ -353,4 +353,15 @@ public class ReflectionUtil {
       throw log.unableToUnwrap(obj, clazz);
    }
 
+   public static <T> T unwrapAny(Class<T> clazz, Object... objs) {
+      if (clazz != null) {
+         for (Object o : objs) {
+            if (clazz.isAssignableFrom(o.getClass()))
+               return clazz.cast(o);
+         }
+      }
+
+      throw log.unableToUnwrapAny(Arrays.toString(objs), clazz);
+   }
+
 }
