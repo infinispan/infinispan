@@ -14,6 +14,9 @@ trait Log extends org.infinispan.server.core.logging.Log {
 
    private[hotrod] lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
 
+   @volatile private var warnConditionalLogged = false
+   @volatile private var warnForceReturnPreviousLogged = false
+
    def logViewNullWhileDetectingCrashedMember = log.viewNullWhileDetectingCrashedMember
 
    def logUnableToUpdateView = log.unableToUpdateView
@@ -22,9 +25,19 @@ trait Log extends org.infinispan.server.core.logging.Log {
 
    def unexpectedEvent(e: Event[_, _]) = log.unexpectedEvent(e)
 
-   def warnConditionalOperationNonTransactional(op: String) = log.warnConditionalOperationNonTransactional(op)
+   def warnConditionalOperationNonTransactional(op: String) = {
+      if (!warnConditionalLogged) {
+         log.warnConditionalOperationNonTransactional(op)
+         warnConditionalLogged = true
+      }
+   }
 
-   def warnForceReturnPreviousNonTransactional(op: String) = log.warnForceReturnPreviousNonTransactional(op)
+   def warnForceReturnPreviousNonTransactional(op: String) = {
+      if (!warnForceReturnPreviousLogged) {
+         log.warnForceReturnPreviousNonTransactional(op)
+         warnForceReturnPreviousLogged = true
+      }
+   }
 
    def warnMarshallerAlreadySet(existingMarshaller: Marshaller, newMarshaller: Marshaller) =
       log.warnMarshallerAlreadySet(existingMarshaller, newMarshaller)
