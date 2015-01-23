@@ -3,7 +3,6 @@ package org.infinispan.jcache.annotation;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.cache.annotation.CacheResult;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
@@ -30,7 +29,7 @@ import javax.interceptor.InvocationContext;
  * @author Galder Zamarreño
  */
 @Interceptor
-@CacheResult
+@CacheResultInterceptorBinding
 public class CacheResultInterceptor extends AbstractCacheResultInterceptor {
 
    private static final long serialVersionUID = 5275055951121834315L;

@@ -3,7 +3,6 @@ package org.infinispan.jcache.annotation;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.cache.annotation.CachePut;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
@@ -16,7 +15,7 @@ import javax.interceptor.InvocationContext;
  * @author Galder Zamarreño
  */
 @Interceptor
-@CachePut
+@CachePutInterceptorBinding
 public class CachePutInterceptor extends AbstractCachePutInterceptor {
 
    private static final Log log = LogFactory.getLog(CachePutInterceptor.class, Log.class);
