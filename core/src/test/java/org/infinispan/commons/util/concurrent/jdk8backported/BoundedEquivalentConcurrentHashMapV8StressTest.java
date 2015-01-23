@@ -69,22 +69,22 @@ public class BoundedEquivalentConcurrentHashMapV8StressTest extends AbstractInfi
       System.out.println("Removes took: " + removeNano + " nanoseconds");
    }
 
-   public void testNoEvictionRemovePerformance() {
-      Eviction lru = Eviction.NONE;
-      testRemovePerformance(COUNT, new BoundedEquivalentConcurrentHashMapV8<Integer, Integer>(
-            COUNT, COUNT >> 1, lru, 
-            BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
-            AnyEquivalence.INT, AnyEquivalence.INT), lru.toString());
-   }
+public void testNoEvictionRemovePerformance() {
+   Eviction lru = Eviction.NONE;
+   testRemovePerformance(COUNT, new BoundedEquivalentConcurrentHashMapV8<Integer, Integer>(
+         COUNT, COUNT >> 1, lru, 
+         BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
+         AnyEquivalence.INT, AnyEquivalence.INT), lru.toString());
+}
 
-   @Test(priority=5)
-   public void testLRURemovePerformance() {
-      Eviction lru = Eviction.LRU;
-      testRemovePerformance(COUNT, new BoundedEquivalentConcurrentHashMapV8<Integer, Integer>(
-            COUNT, COUNT >> 1, lru, 
-            BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
-            AnyEquivalence.INT, AnyEquivalence.INT), lru.toString());
-   }
+@Test(priority=5)
+public void testLRURemovePerformance() {
+   Eviction lru = Eviction.LRU;
+   testRemovePerformance(COUNT, new BoundedEquivalentConcurrentHashMapV8<Integer, Integer>(
+         COUNT, COUNT >> 1, lru, 
+         BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
+         AnyEquivalence.INT, AnyEquivalence.INT), lru.toString());
+}
 
    @Test(priority=10)
    public void testLIRSRemovePerformance() {

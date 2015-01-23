@@ -15,8 +15,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -161,6 +163,45 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
       assertEquals(COUNT + 1, bchm.size());
    }
 
+   public void testLIRSCacheMisses() throws InterruptedException, ExecutionException, TimeoutException {
+      int count = 5;
+      final Map<String, Integer> bchm = createMap(count, Eviction.LIRS);
+      
+      final AtomicInteger threadOffset = new AtomicInteger();
+      final int COUNT_PER_THREAD = 200;
+      final int THREADS = 2;
+      ExecutorService service = Executors.newFixedThreadPool(THREADS);
+      Future<Void>[] futures = new Future[2];
+      for (int i = 0; i < THREADS; ++i) {
+         futures[i] = service.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+               int offset = threadOffset.getAndIncrement();
+               for (int i = 0; i < COUNT_PER_THREAD; i++ ) {
+                  String keyValue = offset + " " + i;
+                  System.out.println("Calling put for " + offset + " with i: " + i);
+                  bchm.put(keyValue, i);
+               }
+               return null;
+            }
+         });
+      }
+      service.shutdown();
+      service.awaitTermination(1000, TimeUnit.SECONDS);
+      for (int i = 0; i < THREADS; ++i) {
+         futures[i].get(10, TimeUnit.SECONDS);
+      }
+      assertEquals(count, bchm.size());
+      int manualCount = 0;
+      for (Entry<String, Integer> entry : bchm.entrySet()) {
+         if (entry.getValue() != null) {
+            manualCount++;
+         }
+      }
+      assertEquals(count, manualCount);
+      assertTrue(bchm.containsKey(0 + " " + 1));
+   }
+
    public void testLIRSHitWhenHead() {
       final BoundedEquivalentConcurrentHashMapV8<Integer, Integer> bchm = 
             createMap(2, Eviction.LIRS);
@@ -244,28 +285,6 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
       } finally {
          service.shutdownNow();
       }
-   }
-
-   public void testLIRSEvictionOrder() throws InterruptedException
-   {
-      final EvictionListener<Integer, Integer> l = new NullEvictionListener<Integer, Integer>() {
-         private int index = 0;
-         private int entries[] = new int[]{1, 0};
-         @Override
-         public void onEntryChosenForEviction(Entry<Integer, Integer> entry) {
-            assertEquals(entries[index++], entry.getValue().intValue());
-         }
-      };
-
-      BoundedEquivalentConcurrentHashMapV8<Integer, Integer> bchm = createMap(3, Eviction.LIRS, l);
-
-      // TODO: need to implement this!!!
-//      bchm.put(0, 0); // LRU: 0
-//      bchm.put(1, 1); // LRU: 0, 1
-//      bchm.get(0);    // LRU: 1, 0
-//      bchm.put(2, 2); // LRU: 1, 0, 2
-//      bchm.put(3, 3); // evict 1, LRU: 0, 2, 3
-//      bchm.put(4, 4); // evict 0, LRU: 2, 3, 4
    }
 
    private void verifyQueueContents(Iterator<DequeNode<Node<String, String>>> queueItr, 
