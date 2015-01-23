@@ -489,8 +489,12 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             case _ =>
          }
       } else {
-         if (!isTransactional)
-            warnForceReturnPreviousNonTransactional(h.op.toString)
+         h.op match {
+            case PutRequest | RemoveRequest | PutIfAbsentRequest | ReplaceRequest
+                 | ReplaceIfUnmodifiedRequest | RemoveIfUnmodifiedRequest if !isTransactional =>
+               warnForceReturnPreviousNonTransactional(h.op.toString)
+            case _ => // no-op
+         }
       }
       optCache
    }
