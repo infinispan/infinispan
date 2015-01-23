@@ -414,9 +414,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    override def createErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
       t match {
          case _ : SuspectException => createNodeSuspectedErrorResponse(h, t)
-         case e: IllegalLifecycleStateException =>
-            new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-               IllegalLifecycleState, h.topologyId, t.toString)
+         case e: IllegalLifecycleStateException => createIllegalLifecycleStateErrorResponse(h, t)
          case i: IOException =>
             new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                ParseError, h.topologyId, i.toString)
@@ -424,8 +422,9 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                OperationTimedOut, h.topologyId, t.toString)
          case c: CacheException => c.getCause match {
-            // JGroups exceptions come wrapped up
+            // JGroups and remote exceptions (inside RemoteException) can come wrapped up
             case _ : org.jgroups.SuspectedException => createNodeSuspectedErrorResponse(h, t)
+            case _ : IllegalLifecycleStateException => createIllegalLifecycleStateErrorResponse(h, t)
             case _ => createServerErrorResponse(h, t)
          }
          case t: Throwable => createServerErrorResponse(h, t)
@@ -435,6 +434,11 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    private def createNodeSuspectedErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
       new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
          NodeSuspected, h.topologyId, t.toString)
+   }
+
+   private def createIllegalLifecycleStateErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
+      new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+         IllegalLifecycleState, h.topologyId, t.toString)
    }
 
    private def createServerErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
