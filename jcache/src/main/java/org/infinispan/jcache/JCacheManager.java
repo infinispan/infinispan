@@ -315,7 +315,7 @@ public class JCacheManager implements CacheManager {
 
    @Override
    public <T> T unwrap(Class<T> clazz) {
-      return ReflectionUtil.unwrap(this, clazz);
+      return ReflectionUtil.unwrapAny(clazz, this, cm);
    }
 
    @Override
