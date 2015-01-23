@@ -1,5 +1,6 @@
 package org.infinispan.query.remote.logging;
 
+import org.infinispan.commons.CacheException;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -17,4 +18,12 @@ import static org.jboss.logging.Logger.Level.*;
 @MessageLogger(projectCode = "ISPN")
 public interface Log extends org.infinispan.util.logging.Log {
 
+   @Message(value = "Unknown field %s in type %s", id = 18001)
+   IllegalArgumentException unknownField(String fieldName, String fullyQualifiedTypeName);
+
+   @Message(value = "Field %s from type %s is not indexed", id = 18002)
+   IllegalArgumentException fieldIsNotIndexed(String fieldName, String fullyQualifiedTypeName);
+
+   @Message(value = "An exception has occurred during query execution", id = 18003)
+   CacheException errorExecutingQuery(@Cause Throwable cause);
 }
