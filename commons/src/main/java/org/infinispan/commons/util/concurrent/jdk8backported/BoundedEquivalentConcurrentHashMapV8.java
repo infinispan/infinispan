@@ -517,7 +517,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    enum Recency {
-      HIR_RESIDENT, LIR_RESIDENT, HIR_NONRESIDENT, REMOVED
+      HIR_RESIDENT, LIR_RESIDENT, HIR_NONRESIDENT, LIR_REMOVED, HIR_REMOVED
    }
 
    static interface EvictionEntry {
@@ -649,6 +649,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       @SuppressWarnings("unchecked")
       @Override
       public void onEntryMiss(Node<K, V> e) {
+         boolean pruneLIR = false;
          LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
          synchronized (lirsNode) {
             // If the state is not null that means we had a concurrent hot hit, so
@@ -664,14 +665,15 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
             // See section 3.3 case 3:
             DequeNode<Node<K, V>> stackNode;
-            // If it isn't in the stack it is a non resident node
+            // If it is in the stack it is a resident node
             if ((stackNode = lirsNode.stackNode) != null) {
                // This is the (a) example
-   
-               promoteHIRToLIRMakingRoom(lirsNode);
+
+               promoteHIRToLIR(lirsNode);
+               pruneLIR = true;
             } else {
                // This is the (b) example
-   
+
                lirsNode.setState(Recency.HIR_RESIDENT);
                stackNode = new DequeNode<>(e);
                lirsNode.setStackNode(stackNode);
@@ -681,6 +683,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                queue.linkLast(queueNode);
             }
          }
+         if (pruneLIR) {
+            demoteLowestLIR();
+         }
+
          // After we updated we increment size and check to make sure we didn't
          // go over the limit and have to remove something from the queue.
          // NOTE: we have to increase the size after adding ours to the queue in case
@@ -746,6 +752,42 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
 
+      @SuppressWarnings("unchecked")
+      void demoteLowestLIR() {
+         boolean pruned = false;
+         while (!pruned) {
+            // Now we prune to make room for our promoted node
+            Object[] LIRDetails = pruneIncludingLIR();
+            if (LIRDetails == null) {
+               // There was nothing to prune!
+               pruned = true;
+            } else {
+               DequeNode<Node<K, V>> removedDequeNode = (DequeNode<Node<K, V>>) LIRDetails[0];
+               Node<K, V> removedNode = (Node<K, V>) LIRDetails[1];
+               LIRSNode<K, V> removedLIR = (LIRSNode<K, V>) removedNode.eviction;
+               synchronized (removedLIR) {
+                  // If the node was removed concurrently we don't need to prune anything
+                  // because they freed a spot
+                  if (removedLIR.state == Recency.LIR_REMOVED) {
+                     pruned = true;
+                  } else if (removedLIR.stackNode == removedDequeNode) {
+                     // If the stack node is still the one we removed, then we can continue
+                     // with demotion.  If not then we had a concurrent hit which resurrected
+                     // the LIR so we pick the next one to evict
+
+                     // We demote the LIR_RESIDENT to HIR_RESIDENT in the queue
+                     removedLIR.setState(Recency.HIR_RESIDENT);
+                     removedLIR.setStackNode(null);
+                     DequeNode<Node<K, V>> queueNode = new DequeNode<>(removedLIR.attachedNode);
+                     removedLIR.setQueueNode(queueNode);
+                     queue.linkLast(queueNode);
+                     pruned = true;
+                  }
+               }
+            }
+         }
+      }
+
       /**
        * Prunes blocks in the bottom of the stack until a HOT block is removed.
        * If pruned blocks were resident, then they remain in the queue; non-resident blocks (if any)
@@ -778,7 +820,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
           * contention.  Need to figure out if the contention would be high or not
           */
          LIRSNode<K, V> removedLIR = null;
-         Set<Node<K, V>> nodesToEvict = null;
          Object[] nodeDetails;
          while (true) {
             nodeDetails = stack.pollFirstNode();
@@ -788,29 +829,29 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             Node<K, V> realNode = (Node<K, V>) nodeDetails[1];
             removedLIR = (LIRSNode<K, V>) realNode.eviction;
             synchronized (removedLIR) {
-               if (removedLIR.state != Recency.LIR_RESIDENT) {
-                  // This means it was a non resident, so we can safely evict it
-                  // We don't have to remove it's pointers then as well
-                  if (removedLIR.queueNode == null) {
-                     if (nodesToEvict == null) {
-                        nodesToEvict = new HashSet<>();
-                        nodesToEvictTL.set(nodesToEvict);
-                     }
-                     nodesToEvict.add(removedLIR.attachedNode);
-                  } else {
+               switch (removedLIR.state) {
+                  case LIR_REMOVED:
+                     // Our LIR was removed at the same time so we just return nothing
+                     return null;
+                  case LIR_RESIDENT:
+                     return nodeDetails;
+                  case HIR_RESIDENT:
                      // Leave it in the queue if it was a resident
                      removedLIR.stackNode = null;
-                  }
-               } else {
-                  break; 
+                     break;
+                  case HIR_NONRESIDENT:
+                  case HIR_REMOVED:
+                     // Non resident was already evicted and now it is no longer in the
+                     // queue or the stack so it is effectively gone
+                     // Same with a removed HIR - but we keep going until LIR
+                     break;
                }
             }
          }
          return nodeDetails;
       }
 
-      @SuppressWarnings("unchecked")
-      void promoteHIRToLIRMakingRoom(LIRSNode<K, V> lirsNode) {
+      void promoteHIRToLIR(LIRSNode<K, V> lirsNode) {
          // This block first unlinks the node from both the stack and queue before
          // repositioning it
          {
@@ -830,46 +871,17 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
          }
 
-         boolean pruned = false;
-         while (!pruned) {
-            // Now we prune to make room for our promoted node
-            Object[] LIRDetails = pruneIncludingLIR();
-            if (LIRDetails == null) {
-               // There was nothing to prune!
-               pruned = true;
-            } else {
-               DequeNode<Node<K, V>> removedDequeNode = (DequeNode<Node<K, V>>) LIRDetails[0];
-               Node<K, V> removedNode = (Node<K, V>) LIRDetails[1];
-               LIRSNode<K, V> removedLIR = (LIRSNode<K, V>) removedNode.eviction;
-               synchronized (removedLIR) {
-                  // If the stack node is still the one we removed, then we can continue
-                  // with promotion.  If not then we had a concurrent hit which ressurected
-                  // the LIR so we pick the next one to evict
-                  if (removedLIR.stackNode == removedDequeNode) {
-                     // We demote the LIR_RESIDENT to HIR_RESIDENT in the queue
-                     removedLIR.setState(Recency.HIR_RESIDENT);
-                     removedLIR.setStackNode(null);
-                     DequeNode<Node<K, V>> queueNode = new DequeNode<>(removedLIR.attachedNode);
-                     removedLIR.setQueueNode(queueNode);
-                     queue.linkLast(queueNode);
-                     pruned = true;
-                  }
-               }
-            }
-         }
-         
          // Promoting the node to LIR and add to the stack
          lirsNode.setState(Recency.LIR_RESIDENT);
          DequeNode<Node<K, V>> stackNode = new DequeNode<>(lirsNode.attachedNode);
          lirsNode.setStackNode(stackNode);
          stack.linkLast(stackNode);
-         
-         // Note we don't do pruning, this is done lazily on the next LIR removal
       }
 
       @SuppressWarnings("unchecked")
       @Override
       public void onEntryHit(Node<K, V> e) {
+         boolean pruneLIR = false;
          LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
          synchronized (lirsNode) {
             // Section 3.3
@@ -884,7 +896,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   return;
                }
                lirsNode.setState(Recency.LIR_RESIDENT);
-            } else if (recency == Recency.REMOVED) {
+            } else if (recency == Recency.LIR_REMOVED || recency == Recency.HIR_REMOVED) {
                // If this entry was removed, then we don't care about updating recency
                return;
             }
@@ -913,7 +925,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   //
                   // In the case it was in the stack that means it was a HIR resident,
                   // so we promote it
-                  promoteHIRToLIRMakingRoom(lirsNode);
+                  promoteHIRToLIR(lirsNode);
+                  pruneLIR = true;
                } else {
                   // This is the (b) example
                   //
@@ -931,6 +944,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                }
             }
          }
+         if (pruneLIR) {
+            demoteLowestLIR();
+         }
       }
 
       @SuppressWarnings("unchecked")
@@ -938,15 +954,18 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       public void onEntryRemove(Node<K, V> e) {
          LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
          synchronized (lirsNode) {
-            if (lirsNode.state == Recency.LIR_RESIDENT) {
-               hotSize.decrementAndGet();
-            }
-            size.decrementAndGet();
             // We have to set the state to REMOVED to tell a onEntryHit or onEntryMiss
             // that the entry was removed and to not continue with updates.  The latter
             // onEntryMiss can only happen if this object was removed while it was
             // being added
-            lirsNode.setState(Recency.REMOVED);
+            if (lirsNode.state == Recency.LIR_RESIDENT) {
+               hotSize.decrementAndGet();
+               lirsNode.setState(Recency.LIR_REMOVED);
+            } else {
+               lirsNode.setState(Recency.HIR_REMOVED);
+            }
+            size.decrementAndGet();
+
             DequeNode<Node<K, V>> queueNode = lirsNode.queueNode;
             if (queueNode != null) {
                queueNode.item = null;
