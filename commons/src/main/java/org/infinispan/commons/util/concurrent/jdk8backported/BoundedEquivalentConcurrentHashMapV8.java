@@ -258,7 +258,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    // We need the suppress warnings because Java doesn't do wildcard types well in another
    // type so we can't pass our map with types properly
    @SuppressWarnings({ "rawtypes", "unchecked" })
-   private void notifyEvictionListener(Set<Node<K, V>> evicted) {
+   private void notifyEvictionListener(Collection<Node<K, V>> evicted) {
       // piggyback listener invocation on callers thread outside lock
       if (evicted != null && !evicted.isEmpty()) {
          Map evictedCopy;
@@ -298,10 +298,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    public interface EvictionPolicy<K, V> {
 
       Node<K,V> createNewEntry(K key, int hash, Node<K,V> next, V value, 
-            EvictionEntry evictionEntry);
+            EvictionEntry<K, V> evictionEntry);
 
       TreeNode<K,V> createNewEntry(K key, int hash, TreeNode<K,V> next, 
-            TreeNode<K, V> parent, V value, EvictionEntry evictionEntry);
+            TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry);
 
       /**
        * Invoked to notify EvictionPolicy implementation that there has been an attempt to access
@@ -351,7 +351,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        *        to calculate size so we piggyback on that
        * @return the nodes that were evicted
        */
-      Set<Node<K, V>> findIfEntriesNeedEvicting(long currentSize);
+      Collection<Node<K, V>> findIfEntriesNeedEvicting(long currentSize);
    }
 
    static class NullEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
@@ -378,20 +378,32 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value, 
-            EvictionEntry evictionEntry) {
+            EvictionEntry<K, V> evictionEntry) {
          // No eviction passed in
          return new Node<K, V>(hash, nodeEq, key, value, next);
       }
       
       @Override
       public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next, 
-            TreeNode<K, V> parent, V value, EvictionEntry evictionEntry) {
+            TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry) {
          return new TreeNode<>(hash, nodeEq, key, value, next, parent, evictionEntry);
       }
 
       @Override
       public Set<Node<K, V>> findIfEntriesNeedEvicting(long currentSize) {
          return InfinispanCollections.emptySet();
+      }
+   }
+
+   static class LRUNode<K, V> extends DequeNode<Node<K, V>> implements EvictionEntry<K, V> {
+
+      public LRUNode(Node<K, V> item) {
+         super(item);
+      }
+
+      @Override
+      public Node<K, V> getAttachedNode() {
+         return item;
       }
    }
 
@@ -449,10 +461,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value,
-            EvictionEntry evictionEntry) {
+            EvictionEntry<K, V> evictionEntry) {
          Node<K, V> node = new Node<K, V>(hash, map.nodeEq, key, value, next);
          if (evictionEntry == null) {
-            node.lazySetEviction(new DequeNode<>(node));
+            node.lazySetEviction(new LRUNode<>(node));
          } else {
             node.lazySetEviction(evictionEntry);
          }
@@ -461,11 +473,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next, 
-            TreeNode<K, V> parent, V value, EvictionEntry evictionEntry) {
+            TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry) {
          TreeNode<K, V> treeNode;
          if (evictionEntry == null) {
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, null);
-            treeNode.lazySetEviction(new DequeNode<>(treeNode));
+            treeNode.lazySetEviction(new LRUNode<>(treeNode));
          } else {
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent,
                   evictionEntry);
@@ -520,10 +532,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       HIR_RESIDENT, LIR_RESIDENT, HIR_NONRESIDENT, LIR_REMOVED, HIR_REMOVED
    }
 
-   static interface EvictionEntry {
+   static interface EvictionEntry<K, V> {
+      public Node<K, V> getAttachedNode();
    }
 
-   static final class LIRSNode<K, V> implements EvictionEntry {
+   static final class LIRSNode<K, V> implements EvictionEntry<K, V> {
       // The next 3 variables are to always be protected by this
       Recency state;
       DequeNode<Node<K, V>> stackNode;
@@ -544,6 +557,27 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       public void setQueueNode(DequeNode<Node<K, V>> queueNode) {
          this.queueNode = queueNode; 
+      }
+
+      @Override
+      public Node<K, V> getAttachedNode() {
+         return attachedNode;
+      }
+
+      @Override
+      public String toString() {
+         return "LIRSNode [state=" + state + ", stackNode=" + stackNode + ", queueNode=" + queueNode
+               + ", attachedNode=" + attachedNode + "]";
+      }
+   }
+
+   static final class LIRSSize {
+      private final long size;
+      private final long evicting;
+
+      public LIRSSize(long size, long evicting) {
+         this.size = size;
+         this.evicting = evicting;
       }
    }
 
@@ -587,7 +621,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       final AtomicLong evictingCount = new AtomicLong();
 
-      final ThreadLocal<Set<Node<K, V>>> nodesToEvictTL = new ThreadLocal<Set<Node<K,V>>>();
+      private final AtomicReference<LIRSSize> currentSize = new AtomicReference<>(
+            new LIRSSize(0, 0));
+
+      final ThreadLocal<Collection<Node<K, V>>> nodesToEvictTL = new ThreadLocal<>();
 
       public LIRSEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize) {
          this.map = map;
@@ -602,7 +639,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value,
-            EvictionEntry evictionEntry) {
+            EvictionEntry<K, V> evictionEntry) {
          Node<K, V> node = new Node<K, V>(hash, map.nodeEq, key, value, next);
          if (evictionEntry == null) {
             node.lazySetEviction(new LIRSNode<>(node));
@@ -613,16 +650,15 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
 
       @Override
-      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next, TreeNode<K, V> parent, V value,
-            EvictionEntry evictionEntry) {
+      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next,
+            TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry) {
          TreeNode<K, V> treeNode;
          if (evictionEntry == null) {
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, null);
             treeNode.lazySetEviction(new LIRSNode<>(treeNode));
-//            System.out.println("Created TreeNode for Key: " + key + " with no eviction");
          } else {
+            // We need to link the eviction entry with the new node now too
             treeNode = new TreeNode<>(hash, map.nodeEq, key, value, next, parent, evictionEntry);
-//            System.out.println("Created TreeNode for Key: " + key + " with eviction" + evictionEntry);
          }
          return treeNode;
       }
@@ -689,6 +725,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             demoteLowestLIR();
          }
 
+         long seenSize;
          long toEvict = 0;
          long overMax;
          // After we updated we increment size and check to make sure we didn't
@@ -699,8 +736,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          // there is nothing in the queue, if 2 puts tried to increment one of them
          // would get stuck in a spin lock until something was added to HIR queue.  We don't
          // want that if all possible
-         if ((overMax = size.incrementAndGet() - maximumSize) > 0) {
+         if ((overMax = (seenSize = size.incrementAndGet()) - maximumSize) > 0) {
             do {
+               // TODO: if you have a concurrent decrement of evictingCount but seen
+               // the larger size this could evict extra and possibly get stuck ?
                long currentlyEvicting = evictingCount.get();
                long attemptEvict;
                // If we aren't evicting enough
@@ -712,14 +751,27 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                } else {
                   break;
                }
+               System.out.println("CAS failure - tried :" + attemptEvict);
                // If we had a CAS failure, make sure to double check the size again in
                // case if it increased or decreased - since evicting may be off
-            } while ((overMax = (size.get() - maximumSize)) > 0);
+            } while ((overMax = ((seenSize = size.get()) - maximumSize)) > 0);
          }
          if (toEvict > 0) {
+            // Now we have to correct to evict amount if the size changed concurrently.
+            // This is important if there are 2 threads evicting and we saw the size before
+            // they updated but we saw them updating the evictingCount
+            long removed = seenSize - size.get();
+            long evictRemove = toEvict;
+            if (removed > 0) {
+               // TODO: this doesn't work if a concurrent onMiss comes in and increases size
+               // but doesn't evict
+               System.out.println("Corrected eviction as " + removed + " objects were removed");
+               toEvict -= removed;
+            }
+            System.out.println("Evicting :" + toEvict);
             long evictedCount = 0;
             
-            Set<Node<K, V>> nodesToEvict = null;
+            Collection<Node<K, V>> nodesToEvict = null;
             while (evictedCount < toEvict) {
                Object[] hirDetails = queue.pollFirstNode();
                if (hirDetails == null) {
@@ -751,7 +803,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            // NOTE: we are setting the CHMV8 node value to null directly
                            // We have special handling in the various read and write methods
                            // to handle this
-                           removedHIR.attachedNode.val = null;
+                           removedHIR.attachedNode.innerSetValue(null);
                            // We also have to decrease the count by 1 (since we essentially
                            // removed a value) - but the map counts entries
                            map.addCount(-1, -1);
@@ -760,7 +812,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            // Note we don't null out the queue or stack nodes on the LIRSNode
                            // since we aren't reusing it
                            if (nodesToEvict == null) {
-                              nodesToEvict = new HashSet<Node<K,V>>();
+                              nodesToEvict = new ArrayList<Node<K,V>>();
                               nodesToEvict.add(removedHIR.attachedNode);
                            }
                         }
@@ -784,12 +836,15 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   }
                }
             }
+            System.out.println("Reduced by :" + toEvict);
             // Lastly we reduce the size since we removed a resident
             size.addAndGet(-toEvict);
-            evictingCount.addAndGet(-toEvict);
+            evictingCount.addAndGet(-evictRemove);
             if (nodesToEvict != null) {
                nodesToEvictTL.set(nodesToEvict);
             }
+         } else {
+            System.out.println("Not evicting");
          }
       }
 
@@ -919,7 +974,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          stack.linkLast(stackNode);
       }
 
-      @SuppressWarnings("unchecked")
       @Override
       public void onEntryHit(Node<K, V> e) {
          boolean pruneLIR = false;
@@ -990,7 +1044,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
 
-      @SuppressWarnings("unchecked")
       @Override
       public void onEntryRemove(Node<K, V> e) {
          LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
@@ -1021,8 +1074,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
 
       @Override
-      public Set<Node<K, V>> findIfEntriesNeedEvicting(long currentSize) {
-         Set<Node<K, V>> evicting = nodesToEvictTL.get();
+      public Collection<Node<K, V>> findIfEntriesNeedEvicting(long currentSize) {
+         Collection<Node<K, V>> evicting = nodesToEvictTL.get();
          if (evicting != null) {
             nodesToEvictTL.remove();
             for (Node<K, V> evict : evicting) {
@@ -1481,7 +1534,14 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       final NodeEquivalence<K, V> nodeEq; // EQUIVALENCE_MOD
       volatile V val;
       volatile Node<K,V> next;
-      volatile EvictionEntry eviction;
+      volatile EvictionEntry<K, V> eviction;
+
+      /**
+       * This variable is used when a node is transferred into a new one.  Since this
+       * transfer is done asynchronously we just keep a reference to the original one
+       * and do updates as needed.
+       */
+      volatile Node<K, V> wrappingNode;
 
       Node(int hash, NodeEquivalence<K, V> nodeEq, K key, 
             V val, Node<K,V> next) { // EQUIVALENCE_MOD
@@ -1498,6 +1558,16 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       public final String toString(){ return key + "=" + val; }
       public final V setValue(V value) {
          throw new UnsupportedOperationException();
+      }
+
+      /*
+       * This method is only useful for eviction updates
+       */
+      void innerSetValue(V val) {
+         this.val = val;
+         if (wrappingNode != null) {
+            wrappingNode.val = val;
+         }
       }
 
       @SuppressWarnings("unchecked")
@@ -1526,7 +1596,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return null;
       }
 
-      void lazySetEviction(EvictionEntry val) {
+      void lazySetEviction(EvictionEntry<K, V> val) {
          UNSAFE.putOrderedObject(this, evictionOffset, val);
      }
 
@@ -3661,12 +3731,21 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       TreeNode<K,V> right;
       TreeNode<K,V> prev;    // needed to unlink next upon deletion
       boolean red;
-
+      
       TreeNode(int hash, NodeEquivalence<K,V> nodeEq, K key, V val, Node<K,V> next, // EQUIVALENCE_MOD
-            TreeNode<K,V> parent, EvictionEntry evictionEntry) {
+            TreeNode<K,V> parent, EvictionEntry<K, V> evictionEntry) {
          super(hash, nodeEq, key, val, next); // EQUIVALENCE_MOD
          this.parent = parent;
-         lazySetEviction(evictionEntry);
+         if (evictionEntry != null) {
+            lazySetEviction(evictionEntry);
+            wrappingNode = evictionEntry.getAttachedNode();
+            wrappingNode.wrappingNode = this;
+            // we check the value again in case if it was changed between when we set the
+            // the value in the super call above and linking the attached node
+            if (wrappingNode.val == null) {
+               this.val = null;
+            }
+         }
       }
 
       Node<K,V> find(int h, Object k) {
@@ -3882,7 +3961,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          for (TreeNode<K,V> p = root;;) {
             int dir, ph; K pk;
             if (p == null) {
-               first = root = map.evictionPolicy.createNewEntry(k, hash, null, null, v, null);
+               first = root = map.evictionPolicy.createNewEntry(k, h, null, null, v, null);
                map.evictionPolicy.onEntryMiss(first);
                map.evictionListener.onEntryActivated(k);
                break;
@@ -3910,7 +3989,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             TreeNode<K,V> xp = p;
             if ((p = (dir <= 0) ? p.left : p.right) == null) {
                TreeNode<K,V> x, f = first;
-               first = x = map.evictionPolicy.createNewEntry(k, hash, f, xp, v, null);
+               first = x = map.evictionPolicy.createNewEntry(k, h, f, xp, v, null);
                map.evictionPolicy.onEntryMiss(first);
                map.evictionListener.onEntryActivated(k);
                if (f != null)

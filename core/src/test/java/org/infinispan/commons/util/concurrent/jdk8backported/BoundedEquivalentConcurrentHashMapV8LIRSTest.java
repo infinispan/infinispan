@@ -121,7 +121,7 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
             EQUIVALENCE, EQUIVALENCE);
    }
 
-   public void testLIRSCacheHits() throws InterruptedException
+   public void testLIRSCacheGetHits() throws InterruptedException
    {
       final int COUNT_PER_THREAD = 100000;
       final int THREADS = 10;
@@ -163,23 +163,28 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
       assertEquals(COUNT + 1, bchm.size());
    }
 
-   public void testLIRSCacheMisses() throws InterruptedException, ExecutionException, TimeoutException {
-      int count = 5;
+   public void testLIRSCacheWriteMisses() throws InterruptedException, ExecutionException, TimeoutException {
+      int count = 500;
       final Map<String, Integer> bchm = createMap(count, Eviction.LIRS);
       
       final AtomicInteger threadOffset = new AtomicInteger();
-      final int COUNT_PER_THREAD = 200;
-      final int THREADS = 2;
+      final int COUNT_PER_THREAD = 10000;
+      final int THREADS = 10;
+      
+      // We insert a value first, note this will be promoted to LIR
+      // Since we should have all misses this should never leave the cache!
+      String keptKey = 0 + " " + 0;
+      bchm.put(keptKey, 0);
+      
       ExecutorService service = Executors.newFixedThreadPool(THREADS);
-      Future<Void>[] futures = new Future[2];
+      Future<Void>[] futures = new Future[THREADS];
       for (int i = 0; i < THREADS; ++i) {
          futures[i] = service.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
                int offset = threadOffset.getAndIncrement();
-               for (int i = 0; i < COUNT_PER_THREAD; i++ ) {
+               for (int i = 1; i < COUNT_PER_THREAD; i++ ) {
                   String keyValue = offset + " " + i;
-                  System.out.println("Calling put for " + offset + " with i: " + i);
                   bchm.put(keyValue, i);
                }
                return null;
@@ -199,7 +204,112 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
          }
       }
       assertEquals(count, manualCount);
-      assertTrue(bchm.containsKey(0 + " " + 1));
+      assertTrue(bchm.containsKey(keptKey));
+   }
+
+   /*
+    * This test is to verify that LIRS works properly when we have a ton of write hits.
+    * That is we have a value that already exists and it was updated
+    */
+   public void testLIRSCacheWriteHits() throws InterruptedException, ExecutionException, TimeoutException {
+      final int COUNT = 10000;
+      final Map<Integer, Integer> bchm = createMap(COUNT, Eviction.LIRS);
+
+      // fill the cache (note: <=, i.e. including an entry for COUNT)
+      for (int i = 0; i <= COUNT; i++)
+         bchm.put(i, i);
+      
+      final int THREADS = 10;
+      
+      ExecutorService service = Executors.newFixedThreadPool(THREADS);
+      Future<Void>[] futures = new Future[THREADS];
+      for (int i = 0; i < THREADS; ++i) {
+         // We use this so we have some threads going forward with keys on hits and
+         // some going backwards.
+         final int offset = i / 2;
+         futures[i] = service.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+               for (int i = 0; i < COUNT; i++ ) {
+                  // Each thread will be hitting different values
+                  int keyValue = offset * (COUNT / THREADS) + i;
+                  if (keyValue >= COUNT) {
+                     keyValue = keyValue - COUNT;
+                  }
+                  bchm.put(keyValue, keyValue);
+               }
+               return null;
+            }
+         });
+      }
+      service.shutdown();
+      service.awaitTermination(10, TimeUnit.SECONDS);
+      for (int i = 0; i < THREADS; ++i) {
+         futures[i].get(10, TimeUnit.SECONDS);
+      }
+      assertEquals(COUNT, bchm.size());
+      int manualCount = 0;
+      for (Entry<Integer, Integer> entry : bchm.entrySet()) {
+         if (entry.getValue() != null) {
+            manualCount++;
+         }
+      }
+      assertEquals(COUNT, manualCount);
+   }
+   /**
+    * Test to make sure that when multiple writes occur both misses and hits that
+    * we have the correct eviction size later
+    */
+   @Test(invocationCount=10000)
+   public void testLIRSCacheWriteMissAndHit() throws InterruptedException, ExecutionException, TimeoutException {
+      final int COUNT = 10;
+      final Map<String, String> bchm = createMap(COUNT, Eviction.LIRS);
+
+      final int THREADS = 2;
+      // How high the write will go up to
+      final int WRITE_OFFSET = 1;
+      
+      ExecutorService service = Executors.newFixedThreadPool(THREADS);
+      Future<Void>[] futures = new Future[THREADS];
+      for (int i = 0; i < THREADS / 2; ++i) {
+         futures[i * 2] = service.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+               for (int i = 0; i < COUNT * WRITE_OFFSET; i++ ) {
+                  bchm.put("a" + i, "a" + i);
+               }
+               return null;
+            }
+         });
+         futures[i * 2 + 1] = service.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+               for (int i = 0; i < COUNT * WRITE_OFFSET; i++ ) {
+                  bchm.put("b" + i, "b" + i);
+               }
+               return null;
+            }
+         });
+      }
+      service.shutdown();
+      service.awaitTermination(10, TimeUnit.SECONDS);
+      for (int i = 0; i < THREADS; ++i) {
+         futures[i].get(1000, TimeUnit.SECONDS);
+      }
+      if (COUNT != bchm.size()) {
+         System.currentTimeMillis();
+      }
+      assertEquals(COUNT, bchm.size());
+      int manualCount = 0;
+      for (Entry<String, String> entry : bchm.entrySet()) {
+         if (entry.getValue() != null) {
+            manualCount++;
+         }
+      }
+      assertEquals(COUNT, manualCount);
+      if (COUNT != manualCount) {
+         System.currentTimeMillis();
+      }
    }
 
    public void testLIRSHitWhenHead() {
@@ -277,7 +387,7 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
       
       try {
          // Now we do a bunch of puts trying to interleave them
-         for (int i = 0; i < 10000; i++) {
+         for (int i = 0; i < 1000; i++) {
             service.submit(new HashCodeControlledPutCallable(0, bchm, barrier));
             service.submit(new HashCodeControlledPutCallable(1, bchm, barrier));
             barrier.await(10, TimeUnit.SECONDS);
@@ -294,7 +404,7 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
          assertTrue(queueItr.hasNext());
          DequeNode<Node<String, String>> node = queueItr.next();
          // Queue elements should ALWAYS be HIR_RESIDENT
-         assertEquals(Recency.HIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.HIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals(content, node.item.key);
          assertEquals(content, node.item.val);
       }
@@ -329,25 +439,25 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
          Iterator<DequeNode<Node<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<Node<String, String>> node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("D", node.item.key);
          assertNull(node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("A", node.item.key);
          assertEquals("A", node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.HIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("E", node.item.key);
          assertEquals("E", node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("B", node.item.key);
          assertEquals("B", node.item.val);
          
@@ -377,19 +487,19 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
          Iterator<DequeNode<Node<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<Node<String, String>> node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("D", node.item.key);
          assertNull(node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("A", node.item.key);
          assertEquals("A", node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("E", node.item.key);
          assertEquals("E", node.item.val);
          
@@ -427,25 +537,25 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
          Iterator<DequeNode<Node<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<Node<String, String>> node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("D", node.item.key);
          assertNull(node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("A", node.item.key);
          assertEquals("A", node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("E", node.item.key);
          assertEquals("E", node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.HIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("B", node.item.key);
          assertEquals("B", node.item.val);
 
@@ -471,19 +581,19 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
          Iterator<DequeNode<Node<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<Node<String, String>> node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("A", node.item.key);
          assertEquals("A", node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("E", node.item.key);
          assertEquals(null, node.item.val);
 
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("D", node.item.key);
          assertEquals("D", node.item.val);
 
@@ -505,31 +615,31 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
       Iterator<DequeNode<Node<String, String>>> stackItr = policy.stack.new Itr();
       assertTrue(stackItr.hasNext());
       DequeNode<Node<String, String>> node = stackItr.next();
-      assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+      assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
       assertEquals("B", node.item.key);
       assertEquals("B", node.item.val);
       
       assertTrue(stackItr.hasNext());
       node = stackItr.next();
-      assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode)node.item.eviction).state);
+      assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
       assertEquals("D", node.item.key);
       assertNull(node.item.val);
       
       assertTrue(stackItr.hasNext());
       node = stackItr.next();
-      assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+      assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
       assertEquals("A", node.item.key);
       assertEquals("A", node.item.val);
       
       assertTrue(stackItr.hasNext());
       node = stackItr.next();
-      assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode)node.item.eviction).state);
+      assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
       assertEquals("E", node.item.key);
       assertNull(node.item.val);
 
       assertTrue(stackItr.hasNext());
       node = stackItr.next();
-      assertEquals(Recency.HIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+      assertEquals(Recency.HIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
       assertEquals("C", node.item.key);
       assertEquals("C", node.item.val);
 
@@ -577,25 +687,25 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
          Iterator<DequeNode<Node<String, String>>> stackItr = policy.stack.new Itr();
          assertTrue(stackItr.hasNext());
          DequeNode<Node<String, String>> node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("B", node.item.key);
          assertEquals("B", node.item.val);
          
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.HIR_NONRESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("D", node.item.key);
          assertNull(node.item.val);
          
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.LIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("A", node.item.key);
          assertEquals("A", node.item.val);
          
          assertTrue(stackItr.hasNext());
          node = stackItr.next();
-         assertEquals(Recency.HIR_RESIDENT, ((LIRSNode)node.item.eviction).state);
+         assertEquals(Recency.HIR_RESIDENT, ((LIRSNode<String, String>)node.item.eviction).state);
          assertEquals("E", node.item.key);
          assertEquals("E", node.item.val);
          

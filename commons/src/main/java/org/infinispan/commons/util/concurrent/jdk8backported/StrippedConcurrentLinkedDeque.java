@@ -71,7 +71,7 @@ class StrippedConcurrentLinkedDeque<E> {
       head = tail = defaultNode();
    }
 
-   static class DequeNode<E> implements BoundedEquivalentConcurrentHashMapV8.EvictionEntry {
+   static class DequeNode<E> {
        volatile DequeNode<E> prev;
        volatile E item;
        volatile DequeNode<E> next;
