@@ -265,9 +265,9 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
       final int COUNT = 10;
       final Map<String, String> bchm = createMap(COUNT, Eviction.LIRS);
 
-      final int THREADS = 2;
+      final int THREADS = 10;
       // How high the write will go up to
-      final int WRITE_OFFSET = 1;
+      final int WRITE_OFFSET = 5;
       
       ExecutorService service = Executors.newFixedThreadPool(THREADS);
       Future<Void>[] futures = new Future[THREADS];

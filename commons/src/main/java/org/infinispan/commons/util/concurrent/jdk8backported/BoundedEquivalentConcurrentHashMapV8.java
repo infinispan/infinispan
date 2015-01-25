@@ -616,10 +616,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       /** The actual number of hot entries. */
       private AtomicLong hotSize = new AtomicLong();
       
-      /** The number of LIRS entries in total counting all residents */
-      private AtomicLong size = new AtomicLong();
-
-      final AtomicLong evictingCount = new AtomicLong();
+//      /** The number of LIRS entries in total counting all residents */
+//      private AtomicLong size = new AtomicLong();
+//
+//      final AtomicLong evictingCount = new AtomicLong();
 
       private final AtomicReference<LIRSSize> currentSize = new AtomicReference<>(
             new LIRSSize(0, 0));
@@ -635,6 +635,49 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       private static long calculateLIRSize(long maximumSize) {
          long result = (long) (L_LIRS * maximumSize);
          return (result == maximumSize) ? maximumSize - 1 : result;
+      }
+
+      boolean incrementSizeAndEvictingIfNecessary() {
+         boolean replaced = false;
+         boolean evict = false;
+         LIRSSize lirsSize = null;
+         while (!replaced) {
+            LIRSSize existingSize = currentSize.get();
+            long newSize = existingSize.size + 1;
+            long newEvicting;
+            // If the new size is greater than maximum we should increase evicting as well
+            if (newSize > maximumSize) {
+               newEvicting = existingSize.evicting + 1;
+               if (newSize - newEvicting != maximumSize) {
+                  throw new IllegalStateException();
+               }
+               evict = true;
+            } else {
+               newEvicting = existingSize.evicting;
+               evict = false;
+            }
+            lirsSize = new LIRSSize(newSize, newEvicting);
+            replaced = currentSize.compareAndSet(existingSize, lirsSize);
+         }
+         if (evict) {
+            System.out.println("Incremented eviction " + lirsSize.evicting + " size " + lirsSize.size);
+         } else {
+            System.out.println("Didn't increment eviction " + lirsSize.evicting + " size " + lirsSize.size);
+         }
+         return evict;
+      }
+
+      LIRSSize incrementSizeEviction(long size, long eviction) {
+         boolean replaced = false;
+         LIRSSize lirsSize = null;
+         while (!replaced) {
+            LIRSSize existingSize = currentSize.get();
+            long newSize = existingSize.size + size;
+            long newEviction = existingSize.evicting + eviction;
+            lirsSize = new LIRSSize(newSize, newEviction);
+            replaced = currentSize.compareAndSet(existingSize, lirsSize);
+         }
+         return lirsSize;
       }
 
       @Override
@@ -674,7 +717,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          // See section 3.3 second paragraph:
          while ((currentHotSize = hotSize.get()) < maximumHotSize) {
             if (hotSize.compareAndSet(currentHotSize, currentHotSize + 1)) {
-               size.incrementAndGet();
+               incrementSizeEviction(1, 0);
                DequeNode<Node<K, V>> stackNode = new DequeNode<>(lirsNode.attachedNode);
                lirsNode.setStackNode(stackNode);
                lirsNode.setState(Recency.LIR_RESIDENT);
@@ -725,54 +768,13 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             demoteLowestLIR();
          }
 
-         long seenSize;
-         long toEvict = 0;
-         long overMax;
-         // After we updated we increment size and check to make sure we didn't
-         // go over the limit and have to remove something from the queue.
-         // NOTE: we have to increase the size after adding ours to the queue in case
-         // of concurrent puts would have increased the max size too high
-         // EXAMPLE: maxHot=3 and max=4.  In this case if all 3 hot are used up and
-         // there is nothing in the queue, if 2 puts tried to increment one of them
-         // would get stuck in a spin lock until something was added to HIR queue.  We don't
-         // want that if all possible
-         if ((overMax = (seenSize = size.incrementAndGet()) - maximumSize) > 0) {
-            do {
-               // TODO: if you have a concurrent decrement of evictingCount but seen
-               // the larger size this could evict extra and possibly get stuck ?
-               long currentlyEvicting = evictingCount.get();
-               long attemptEvict;
-               // If we aren't evicting enough
-               if ((attemptEvict = overMax - currentlyEvicting) > 0) {
-                  if (evictingCount.compareAndSet(currentlyEvicting, currentlyEvicting + attemptEvict)) {
-                     toEvict = attemptEvict;
-                     break;
-                  }
-               } else {
-                  break;
-               }
-               System.out.println("CAS failure - tried :" + attemptEvict);
-               // If we had a CAS failure, make sure to double check the size again in
-               // case if it increased or decreased - since evicting may be off
-            } while ((overMax = ((seenSize = size.get()) - maximumSize)) > 0);
-         }
-         if (toEvict > 0) {
-            // Now we have to correct to evict amount if the size changed concurrently.
-            // This is important if there are 2 threads evicting and we saw the size before
-            // they updated but we saw them updating the evictingCount
-            long removed = seenSize - size.get();
-            long evictRemove = toEvict;
-            if (removed > 0) {
-               // TODO: this doesn't work if a concurrent onMiss comes in and increases size
-               // but doesn't evict
-               System.out.println("Corrected eviction as " + removed + " objects were removed");
-               toEvict -= removed;
-            }
-            System.out.println("Evicting :" + toEvict);
-            long evictedCount = 0;
-            
+         boolean toEvict = incrementSizeAndEvictingIfNecessary();
+         if (toEvict) {
+            System.out.println("Added key " + e.key + " so have to evict");
             Collection<Node<K, V>> nodesToEvict = null;
-            while (evictedCount < toEvict) {
+            boolean evicted = false;
+            boolean removalEviction = false;
+            while (!evicted) {
                Object[] hirDetails = queue.pollFirstNode();
                if (hirDetails == null) {
                   // If this was null that means we either had a concurrent removal
@@ -789,6 +791,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                DequeNode<Node<K, V>> removedDequeNode = (DequeNode<Node<K, V>>) hirDetails[0];
                Node<K, V> removedNode = (Node<K, V>) hirDetails[1];
                LIRSNode<K, V> removedHIR = (LIRSNode<K, V>) removedNode.eviction;
+               System.out.println("Evicted " + removedNode.key);
                synchronized (removedHIR) {
                   switch (removedHIR.state) {
                   case HIR_RESIDENT:
@@ -807,16 +810,15 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            // We also have to decrease the count by 1 (since we essentially
                            // removed a value) - but the map counts entries
                            map.addCount(-1, -1);
+                           System.out.println("Made a HIR " + removedHIR.attachedNode.key + " a non resident");
                         } else {
                            // It wasn't part of the stack so we have to remove it completely
                            // Note we don't null out the queue or stack nodes on the LIRSNode
                            // since we aren't reusing it
-                           if (nodesToEvict == null) {
-                              nodesToEvict = new ArrayList<Node<K,V>>();
-                              nodesToEvict.add(removedHIR.attachedNode);
-                           }
+                           nodesToEvict = Collections.singleton(removedHIR.attachedNode);
+                           System.out.println("Removing HIR resident " + removedHIR.attachedNode.key);
                         }
-                        evictedCount++;
+                        evicted = true;
                      }
                      break;
                   case LIR_REMOVED:
@@ -831,20 +833,26 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      throw new IllegalStateException("Cannot be a non resident HIR!");
                   case HIR_REMOVED:
                      // We count the concurrent removal as an eviction
-                     evictedCount++;
+                     evicted = true;
+                     removalEviction = true;
+                     System.out.println("Not removing due to concurrently removed HIR");
                      break;
                   }
                }
             }
-            System.out.println("Reduced by :" + toEvict);
-            // Lastly we reduce the size since we removed a resident
-            size.addAndGet(-toEvict);
-            evictingCount.addAndGet(-evictRemove);
+            if (removalEviction) {
+               // If the entry was removed that means we didn't actually evict, so 
+               // we just decrement eviction and not size
+               incrementSizeEviction(0, -1);
+               System.out.println("Reducing eviction");
+            } else {
+               // Lastly we reduce the size since we removed a resident
+               LIRSSize lirsSize = incrementSizeEviction(-1, -1);
+               System.out.println("Reducing eviction " + lirsSize.evicting + " and size " + lirsSize.size);
+            }
             if (nodesToEvict != null) {
                nodesToEvictTL.set(nodesToEvict);
             }
-         } else {
-            System.out.println("Not evicting");
          }
       }
 
@@ -1058,7 +1066,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             } else {
                lirsNode.setState(Recency.HIR_REMOVED);
             }
-            size.decrementAndGet();
+            incrementSizeEviction(-1, 0);
 
             DequeNode<Node<K, V>> queueNode = lirsNode.queueNode;
             if (queueNode != null) {
@@ -1079,6 +1087,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if (evicting != null) {
             nodesToEvictTL.remove();
             for (Node<K, V> evict : evicting) {
+               System.out.println("Removing key: " + evict.key);
                map.replaceNode(evict.key, null, null, true);
             }
             return evicting;
