@@ -1,7 +1,6 @@
 package org.infinispan.commons.util.concurrent.jdk8backported;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;

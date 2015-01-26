@@ -20,7 +20,12 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
+import org.infinispan.commons.util.concurrent.jdk8backported.CountedCompleter;
+import org.infinispan.commons.util.concurrent.jdk8backported.ForkJoinPool;
+import org.infinispan.commons.util.concurrent.jdk8backported.StrippedConcurrentLinkedDeque;
 import org.infinispan.commons.util.concurrent.jdk8backported.StrippedConcurrentLinkedDeque.DequeNode;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.io.ObjectStreamField;
 import java.io.Serializable;
@@ -237,6 +242,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       implements ConcurrentMap<K,V>, Serializable, ParallelIterableMap<K, V> {
    private static final long serialVersionUID = 7249069246763182397L;
+
+   private static Log log = LogFactory.getLog(BoundedEquivalentConcurrentHashMapV8.class);
 
    // EVICTION STUFF
    
@@ -529,7 +536,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    }
 
    enum Recency {
-      HIR_RESIDENT, LIR_RESIDENT, HIR_NONRESIDENT, LIR_REMOVED, HIR_REMOVED
+      HIR_RESIDENT, LIR_RESIDENT, HIR_NONRESIDENT, EVICTING_HIR, REMOVED
    }
 
    static interface EvictionEntry<K, V> {
@@ -624,7 +631,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       private final AtomicReference<LIRSSize> currentSize = new AtomicReference<>(
             new LIRSSize(0, 0));
 
-      final ThreadLocal<Collection<Node<K, V>>> nodesToEvictTL = new ThreadLocal<>();
+      final ThreadLocal<Collection<LIRSNode<K, V>>> nodesToEvictTL = new ThreadLocal<>();
 
       public LIRSEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize) {
          this.map = map;
@@ -660,9 +667,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             replaced = currentSize.compareAndSet(existingSize, lirsSize);
          }
          if (evict) {
-            System.out.println("Incremented eviction " + lirsSize.evicting + " size " + lirsSize.size);
+            log.info("Incremented eviction " + lirsSize.evicting + " size " + lirsSize.size);
          } else {
-            System.out.println("Didn't increment eviction " + lirsSize.evicting + " size " + lirsSize.size);
+            log.info("Didn't increment eviction " + lirsSize.evicting + " size " + lirsSize.size);
          }
          return evict;
       }
@@ -770,8 +777,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
          boolean toEvict = incrementSizeAndEvictingIfNecessary();
          if (toEvict) {
-            System.out.println("Added key " + e.key + " so have to evict");
-            Collection<Node<K, V>> nodesToEvict = null;
+            log.info("Added key " + e.key + " so have to evict");
+            Collection<LIRSNode<K, V>> nodesToEvict = null;
             boolean evicted = false;
             boolean removalEviction = false;
             while (!evicted) {
@@ -791,7 +798,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                DequeNode<Node<K, V>> removedDequeNode = (DequeNode<Node<K, V>>) hirDetails[0];
                Node<K, V> removedNode = (Node<K, V>) hirDetails[1];
                LIRSNode<K, V> removedHIR = (LIRSNode<K, V>) removedNode.eviction;
-               System.out.println("Evicted " + removedNode.key);
                synchronized (removedHIR) {
                   switch (removedHIR.state) {
                   case HIR_RESIDENT:
@@ -810,32 +816,35 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                            // We also have to decrease the count by 1 (since we essentially
                            // removed a value) - but the map counts entries
                            map.addCount(-1, -1);
-                           System.out.println("Made a HIR " + removedHIR.attachedNode.key + " a non resident");
+                           log.info("Made a HIR " + removedHIR.attachedNode.key + " a non resident");
                         } else {
+                           removedHIR.state = Recency.EVICTING_HIR;
                            // It wasn't part of the stack so we have to remove it completely
                            // Note we don't null out the queue or stack nodes on the LIRSNode
                            // since we aren't reusing it
-                           nodesToEvict = Collections.singleton(removedHIR.attachedNode);
-                           System.out.println("Removing HIR resident " + removedHIR.attachedNode.key);
+                           nodesToEvict = Collections.singleton(removedHIR);
+                           log.info("Removing HIR resident " + removedHIR.attachedNode.key);
                         }
                         evicted = true;
                      }
                      break;
-                  case LIR_REMOVED:
+                  case REMOVED:
                      // This one is complex basically it was promoted to LIR and then removed
                      // - all while after we polled it
                      // what a crazy ride, treat it as if it was just LIR and loop back
+                     log.info("Can't evict " + removedHIR.attachedNode.key + "as it was already removed");
                      break;
                   case LIR_RESIDENT:
                      // If this node was promoted to LIR_RESIDENT then forget about it
+                     log.info("Can't evict " + removedHIR.attachedNode.key + "as it is now LIR");
                      break;
                   case HIR_NONRESIDENT:
                      throw new IllegalStateException("Cannot be a non resident HIR!");
-                  case HIR_REMOVED:
+                  case EVICTING_HIR:
                      // We count the concurrent removal as an eviction
                      evicted = true;
                      removalEviction = true;
-                     System.out.println("Not removing due to concurrently removed HIR");
+                     log.info("Not removing " + removedHIR.attachedNode.key + " due to concurrently removed HIR");
                      break;
                   }
                }
@@ -844,11 +853,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                // If the entry was removed that means we didn't actually evict, so 
                // we just decrement eviction and not size
                incrementSizeEviction(0, -1);
-               System.out.println("Reducing eviction");
+               log.info("Reducing eviction");
             } else {
                // Lastly we reduce the size since we removed a resident
                LIRSSize lirsSize = incrementSizeEviction(-1, -1);
-               System.out.println("Reducing eviction " + lirsSize.evicting + " and size " + lirsSize.size);
+               log.info("Reducing eviction " + lirsSize.evicting + " and size " + lirsSize.size);
             }
             if (nodesToEvict != null) {
                nodesToEvictTL.set(nodesToEvict);
@@ -872,13 +881,14 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                synchronized (removedLIR) {
                   // If the node was removed concurrently we don't need to prune anything
                   // because they freed a spot
-                  if (removedLIR.state == Recency.LIR_REMOVED) {
+                  if (removedLIR.state == Recency.REMOVED) {
                      pruned = true;
                   } else if (removedLIR.stackNode == removedDequeNode) {
                      // If the stack node is still the one we removed, then we can continue
                      // with demotion.  If not then we had a concurrent hit which resurrected
                      // the LIR so we pick the next one to evict
 
+                     log.info("Changed " + removedNode.key + " to " + Recency.HIR_RESIDENT + " - was " + removedLIR.state);
                      // We demote the LIR_RESIDENT to HIR_RESIDENT in the queue
                      removedLIR.setState(Recency.HIR_RESIDENT);
                      removedLIR.setStackNode(null);
@@ -934,7 +944,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             removedLIR = (LIRSNode<K, V>) realNode.eviction;
             synchronized (removedLIR) {
                switch (removedLIR.state) {
-               case LIR_REMOVED:
+               case REMOVED:
                   // Our LIR was removed at the same time so we just return nothing
                   return null;
                case LIR_RESIDENT:
@@ -944,7 +954,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   removedLIR.stackNode = null;
                   break;
                case HIR_NONRESIDENT:
-               case HIR_REMOVED:
+               case EVICTING_HIR:
                   // Non resident was already evicted and now it is no longer in the
                   // queue or the stack so it is effectively gone
                   // Same with a removed HIR - but we keep going until LIR
@@ -999,7 +1009,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   return;
                }
                lirsNode.setState(Recency.LIR_RESIDENT);
-            } else if (recency == Recency.LIR_REMOVED || recency == Recency.HIR_REMOVED) {
+            } else if (recency == Recency.REMOVED || recency == Recency.EVICTING_HIR) {
                // If this entry was removed, then we don't care about updating recency
                return;
             }
@@ -1019,8 +1029,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                DequeNode<Node<K, V>> newStackNode = new DequeNode<>(e);
                lirsNode.setStackNode(newStackNode);
                stack.linkLast(newStackNode);
-               // TODO: the spec normally does a stack pruning here if the LIRS entry is
-               // bottom of the stack - can we do this ?
+               // If we are doing a promotion of HIR to LIR we need to do pruning as well
+               // Remember if recency was null that means we just had a concurrent
+               // onEntryMiss but it hasn't been processed yet, which means it would
+               // been a HIR resident
+               pruneLIR = recency == null;
             } else {
                // case 2
                if (lirsNode.stackNode != null) {
@@ -1062,10 +1075,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             // being added
             if (lirsNode.state == Recency.LIR_RESIDENT) {
                hotSize.decrementAndGet();
-               lirsNode.setState(Recency.LIR_REMOVED);
-            } else {
-               lirsNode.setState(Recency.HIR_REMOVED);
+               
             }
+            lirsNode.setState(Recency.REMOVED);
             incrementSizeEviction(-1, 0);
 
             DequeNode<Node<K, V>> queueNode = lirsNode.queueNode;
@@ -1083,14 +1095,24 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public Collection<Node<K, V>> findIfEntriesNeedEvicting(long currentSize) {
-         Collection<Node<K, V>> evicting = nodesToEvictTL.get();
+         Collection<LIRSNode<K, V>> evicting = nodesToEvictTL.get();
          if (evicting != null) {
             nodesToEvictTL.remove();
-            for (Node<K, V> evict : evicting) {
-               System.out.println("Removing key: " + evict.key);
-               map.replaceNode(evict.key, null, null, true);
+            Collection<Node<K, V>> removedNodes = new ArrayList<Node<K,V>>(evicting.size());
+            for (LIRSNode<K, V> evict : evicting) {
+               synchronized (evict) {
+                  log.info("Removing key: " + evict.attachedNode.key);
+                  if (evict.state != Recency.EVICTING_HIR) {
+                     log.info("Eviction of " + evict.attachedNode.key + " was prevented due to being concurrently " + 
+                  (evict.state == Recency.REMOVED ? " removed" : " added back in"));
+                     continue;
+                  }
+                  evict.state = Recency.REMOVED;
+               }
+               map.replaceNode(evict.attachedNode.key, null, null, true);
+               removedNodes.add(evict.attachedNode);
             }
-            return evicting;
+            return removedNodes;
          }
          return InfinispanCollections.emptySet();
       }

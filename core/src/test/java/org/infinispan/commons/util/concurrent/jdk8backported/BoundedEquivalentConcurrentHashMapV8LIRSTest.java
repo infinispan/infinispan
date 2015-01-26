@@ -260,9 +260,9 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
     * Test to make sure that when multiple writes occur both misses and hits that
     * we have the correct eviction size later
     */
-   @Test(invocationCount=10000)
+//   @Test(invocationCount=10000)
    public void testLIRSCacheWriteMissAndHit() throws InterruptedException, ExecutionException, TimeoutException {
-      final int COUNT = 10;
+      final int COUNT = 10000;
       final Map<String, String> bchm = createMap(COUNT, Eviction.LIRS);
 
       final int THREADS = 10;
