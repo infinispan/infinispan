@@ -115,7 +115,7 @@
       </dependency>
       <dependency>
          <groupId>org.jboss.spec</groupId>
-         <artifactId>jboss-javaee-6.0</artifactId>
+         <artifactId>jboss-javaee-7.0</artifactId>
          <type>pom</type>
          <scope>test</scope>
       </dependency>
