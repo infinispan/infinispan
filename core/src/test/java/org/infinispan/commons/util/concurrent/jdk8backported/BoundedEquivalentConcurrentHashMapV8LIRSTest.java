@@ -260,14 +260,14 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
     * Test to make sure that when multiple writes occur both misses and hits that
     * we have the correct eviction size later
     */
-//   @Test(invocationCount=10000)
+   @Test(invocationCount=10000)
    public void testLIRSCacheWriteMissAndHit() throws InterruptedException, ExecutionException, TimeoutException {
-      final int COUNT = 10000;
+      final int COUNT = 5;
       final Map<String, String> bchm = createMap(COUNT, Eviction.LIRS);
 
-      final int THREADS = 10;
+      final int THREADS = 4;
       // How high the write will go up to
-      final int WRITE_OFFSET = 5;
+      final int WRITE_OFFSET = 1;
       
       ExecutorService service = Executors.newFixedThreadPool(THREADS);
       Future<Void>[] futures = new Future[THREADS];
@@ -281,15 +281,17 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
                return null;
             }
          });
-         futures[i * 2 + 1] = service.submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-               for (int i = 0; i < COUNT * WRITE_OFFSET; i++ ) {
-                  bchm.put("b" + i, "b" + i);
+         if (THREADS % 2 == 0) {
+            futures[i * 2 + 1] = service.submit(new Callable<Void>() {
+               @Override
+               public Void call() throws Exception {
+                  for (int i = 0; i < COUNT * WRITE_OFFSET; i++ ) {
+                     bchm.put("b" + i, "b" + i);
+                  }
+                  return null;
                }
-               return null;
-            }
-         });
+            });
+         }
       }
       service.shutdown();
       service.awaitTermination(10, TimeUnit.SECONDS);
@@ -306,10 +308,10 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
             manualCount++;
          }
       }
-      assertEquals(COUNT, manualCount);
       if (COUNT != manualCount) {
          System.currentTimeMillis();
       }
+      assertEquals(COUNT, manualCount);
    }
 
    public void testLIRSHitWhenHead() {

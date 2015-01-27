@@ -655,9 +655,6 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             // If the new size is greater than maximum we should increase evicting as well
             if (newSize > maximumSize) {
                newEvicting = existingSize.evicting + 1;
-               if (newSize - newEvicting != maximumSize) {
-                  throw new IllegalStateException();
-               }
                evict = true;
             } else {
                newEvicting = existingSize.evicting;
@@ -743,7 +740,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             // If the state is not null that means we had a concurrent hot hit, so
             // we don't need to do anything here
             // We can also have a miss if the node is a non resident
-            if (lirsNode.state != null && lirsNode.state != Recency.HIR_NONRESIDENT) {
+            if (lirsNode.state != null && lirsNode.state != Recency.HIR_NONRESIDENT &&
+                  lirsNode.state != Recency.REMOVED) {
                return;
             }
             // If it was added to LIR due to size don't do anymore
