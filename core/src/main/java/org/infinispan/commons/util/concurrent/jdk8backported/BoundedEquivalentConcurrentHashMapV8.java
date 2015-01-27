@@ -990,9 +990,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          stack.linkLast(stackNode);
       }
 
+      @SuppressWarnings("unchecked")
       @Override
       public void onEntryHit(Node<K, V> e) {
          boolean pruneLIR = false;
+         boolean evictHIR = false;
          LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
          synchronized (lirsNode) {
             // Section 3.3
@@ -1002,7 +1004,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             // before the onEntryMiss was fired, so that means this is automatically
             // a LIR resident
             if (recency == null) {
-               // If it was added to LRI don't need anymore work
+               // If it was added to LIR don't need anymore work
                if (addToLIRIfNotFullHot(lirsNode)) {
                   return;
                }
@@ -1037,9 +1039,13 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                if (lirsNode.stackNode != null) {
                   // This is the (a) example
                   //
-                  // In the case it was in the stack that means it was a HIR resident,
-                  // so we promote it
+                  // In the case it was in the stack that means it was a HIR resident 
+                  // (also in queue) or HIR non resident (not in queue) so we promote it
                   promoteHIRToLIR(lirsNode);
+                  // If it was a non resident we also have to evict a HIR entry since
+                  // we will demote a LIR to HIR and we didn't remove a HIR when we
+                  // promoted ourself
+                  evictHIR = recency == Recency.HIR_NONRESIDENT;
                   pruneLIR = true;
                } else {
                   // This is the (b) example
@@ -1058,8 +1064,84 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                }
             }
          }
+         log.info("Hit " + e.key + " - have to prune LIR: " + pruneLIR + 
+               " also evict HIR: " + evictHIR);
          if (pruneLIR) {
             demoteLowestLIR();
+         }
+         if (evictHIR) {
+            Collection<LIRSNode<K, V>> nodesToEvict = null;
+            boolean evicted = false;
+            while (!evicted) {
+               Object[] hirDetails = queue.pollFirstNode();
+               if (hirDetails == null) {
+                  // If this was null that means we either had a concurrent removal
+                  // or a concurrent promotion to LIR and another node would be 
+                  // demoted to HIR - the latter is a race condition we need
+                  // to worry about...
+                  // We loop back around to get this - this could spin loop if it takes
+                  // the other thread long to add the HIR element back
+                  // TODO: could we get stuck in an infinite loop if an entry was removed ?
+                  // I think so, in that case we need to make sure the LIR promotion
+                  // works properly since it can remove from the queue as well
+                  continue;
+               }
+               DequeNode<Node<K, V>> removedDequeNode = (DequeNode<Node<K, V>>) hirDetails[0];
+               Node<K, V> removedNode = (Node<K, V>) hirDetails[1];
+               LIRSNode<K, V> removedHIR = (LIRSNode<K, V>) removedNode.eviction;
+               synchronized (removedHIR) {
+                  switch (removedHIR.state) {
+                  case HIR_RESIDENT:
+                     // If the HIR was not updated to have a new queue node, then we
+                     // know we didn't have a concurrent hit
+                     if (removedHIR.queueNode == removedDequeNode) {
+                        // If it is in the stack we set it to HIR non resident
+                        if (removedHIR.stackNode != null) {
+                           // Since we removed the queue node we need to null it out
+                           removedHIR.setQueueNode(null);
+                           removedHIR.setState(Recency.HIR_NONRESIDENT);
+                           // NOTE: we are setting the CHMV8 node value to null directly
+                           // We have special handling in the various read and write methods
+                           // to handle this
+                           removedHIR.attachedNode.innerSetValue(null);
+                           // We also have to decrease the count by 1 (since we essentially
+                           // removed a value) - but the map counts entries
+                           map.addCount(-1, -1);
+                           log.info("Made a HIR " + removedHIR.attachedNode.key + " a non resident");
+                        } else {
+                           removedHIR.state = Recency.EVICTING_HIR;
+                           // It wasn't part of the stack so we have to remove it completely
+                           // Note we don't null out the queue or stack nodes on the LIRSNode
+                           // since we aren't reusing it
+                           nodesToEvict = Collections.singleton(removedHIR);
+                           log.info("Removing HIR resident " + removedHIR.attachedNode.key);
+                        }
+                        evicted = true;
+                     }
+                     break;
+                  case REMOVED:
+                     // This one is complex basically it was promoted to LIR and then removed
+                     // - all while after we polled it
+                     // what a crazy ride, treat it as if it was just LIR and loop back
+                     log.info("Can't evict " + removedHIR.attachedNode.key + "as it was already removed");
+                     break;
+                  case LIR_RESIDENT:
+                     // If this node was promoted to LIR_RESIDENT then forget about it
+                     log.info("Can't evict " + removedHIR.attachedNode.key + "as it is now LIR");
+                     break;
+                  case HIR_NONRESIDENT:
+                     throw new IllegalStateException("Cannot be a non resident HIR!");
+                  case EVICTING_HIR:
+                     // We count the concurrent removal as an eviction
+                     evicted = true;
+                     log.info("Not removing " + removedHIR.attachedNode.key + " due to concurrently removed HIR");
+                     break;
+                  }
+               }
+            }
+            if (nodesToEvict != null) {
+               nodesToEvictTL.set(nodesToEvict);
+            }
          }
       }
 
