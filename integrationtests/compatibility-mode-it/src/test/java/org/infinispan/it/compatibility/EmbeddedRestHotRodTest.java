@@ -7,6 +7,7 @@ import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
 import org.apache.commons.httpclient.methods.EntityEnclosingMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.HeadMethod;
+import org.apache.commons.httpclient.methods.InputStreamRequestEntity;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -17,7 +18,10 @@ import org.testng.annotations.Test;
 
 import javax.servlet.http.HttpServletResponse;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -192,6 +196,28 @@ public class EmbeddedRestHotRodTest {
       cacheFactory.getRestClient().executeMethod(getXml);
       assertEquals(getXml.getStatusText(), HttpServletResponse.SC_OK, getXml.getStatusCode());
       assertTrue(getXml.getResponseBodyAsString().contains("<name>Jakub</name>"));
+   }
+
+   public void testCustomObjectRestPutHotRodEmbeddedGet() throws Exception{
+      final String key = "77";
+      Person p = new Person("Iker");
+
+      // 1. Put with Rest
+      EntityEnclosingMethod put = new PutMethod(cacheFactory.getRestUrl() + "/" + key);
+      ByteArrayOutputStream bout = new ByteArrayOutputStream();
+      try (ObjectOutputStream oos = new ObjectOutputStream(bout)) {
+         oos.writeObject(p);
+      }
+      put.setRequestHeader("Content-Type", "application/x-java-serialized-object");
+      put.setRequestEntity(new InputStreamRequestEntity(new ByteArrayInputStream(bout.toByteArray())));
+      cacheFactory.getRestClient().executeMethod(put);
+
+      // 2. Get with Hot Rod
+      RemoteCache<String, Object> remote = cacheFactory.getHotRodCache();
+      assertEquals(p, remote.get(key));
+
+      // 3. Get with Embedded
+      assertEquals(p, cacheFactory.getEmbeddedCache().get(key));
    }
 
    public void testHotRodEmbeddedPutRestHeadExpiry() throws Exception {

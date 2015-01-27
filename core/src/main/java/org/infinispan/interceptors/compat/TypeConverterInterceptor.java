@@ -1,13 +1,18 @@
 package org.infinispan.interceptors.compat;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 import java.util.Collection;
 import java.util.Set;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.commons.util.Util;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.context.Flag;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * An interceptor that applies type conversion to the data stored in the cache.
@@ -57,6 +62,7 @@ public class TypeConverterInterceptor extends BaseTypeConverterInterceptor {
 
    private static class EmbeddedTypeConverter
          implements TypeConverter<Object, Object, Object, Object> {
+      private static final Log log = LogFactory.getLog(EmbeddedTypeConverter.class);
 
       private Marshaller marshaller;
 
@@ -82,6 +88,17 @@ public class TypeConverterInterceptor extends BaseTypeConverterInterceptor {
                return marshaller.objectFromByteBuffer((byte[]) target);
             } catch (Exception e) {
                throw new CacheException("Unable to unmarshall return value");
+            }
+         }
+
+         if (target instanceof byte[]) {
+            // Try standard deserialization
+            try {
+               ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream((byte[]) target));
+               return ois.readObject();
+            } catch (Exception ee) {
+               if (log.isDebugEnabled())
+                  log.debugf("Standard deserialization not in use for %s", Util.printArray((byte[]) target));
             }
          }
 
