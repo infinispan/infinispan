@@ -65,7 +65,7 @@ public class LocalModePassivationTest extends SingleCacheManagerTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true, true);
       builder.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC)
             .transactionManagerLookup(new DummyTransactionManagerLookup())
-            .eviction().maxEntries(1000).strategy(EvictionStrategy.LIRS)
+            .eviction().maxEntries(150).strategy(EvictionStrategy.LIRS)
             .locking().lockAcquisitionTimeout(20000)
             .concurrencyLevel(5000)
             .useLockStriping(false).writeSkewCheck(false).isolationLevel(IsolationLevel.READ_COMMITTED)
