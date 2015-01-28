@@ -50,22 +50,34 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
    }
 
    @Test(expectedExceptions = { IllegalArgumentException.class })
-   public void testStoppedLocalExecutorServiceForDistributedExecutor() {
-      EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(false);
-      DistributedExecutorService des = null;
-      try {
-         Cache<Object, Object> cache = cacheManager.getCache();
+   public void testStoppedLocalExecutorServiceForDistributedExecutor() throws ExecutionException, InterruptedException {
+      ExecutorService service = new WithinThreadExecutor();
+      service.shutdown();
+      customExecutorServiceDistributedExecutorTest(service, false);
+   }
 
-         ExecutorService service = new WithinThreadExecutor();
-         service.shutdown();
-
-         des = new DefaultExecutorService(cache, service);
-      } finally {
-         TestingUtil.killCacheManagers(cacheManager);
-      }
+   public void testDistributedExecutorWithPassedThreadExecutorOwnership() throws ExecutionException, InterruptedException {
+      ExecutorService service = new WithinThreadExecutor();
+      customExecutorServiceDistributedExecutorTest(service, true);
    }
 
    public void testDistributedExecutorWithPassedThreadExecutor() throws ExecutionException, InterruptedException {
+      ExecutorService service = new WithinThreadExecutor();
+      customExecutorServiceDistributedExecutorTest(service, false);
+   }
+
+   public void testDistributedExecutorWithManagedExecutorService() throws ExecutionException, InterruptedException {
+      ExecutorService service = new ManagedExecutorServicesEmulator();
+      customExecutorServiceDistributedExecutorTest(service, false);
+   }
+
+   @Test(expectedExceptions = { IllegalArgumentException.class })
+   public void testDistributedExecutorWithManagedExecutorServiceOwnership() throws ExecutionException, InterruptedException {
+      ExecutorService service = new ManagedExecutorServicesEmulator();
+      customExecutorServiceDistributedExecutorTest(service, true);
+   }
+
+   private void customExecutorServiceDistributedExecutorTest(ExecutorService service, boolean overrideOwnership) throws ExecutionException, InterruptedException {
       ConfigurationBuilder config = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       config.clustering().cacheMode(CacheMode.REPL_SYNC);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createClusteredCacheManager(config);
@@ -73,8 +85,10 @@ public class BasicDistributedExecutorTest extends AbstractCacheTest {
       try {
          Cache<Object, Object> cache = cacheManager.getCache();
 
-         ExecutorService service = new WithinThreadExecutor();
-         des = new DefaultExecutorService(cache, service);
+         if (overrideOwnership)
+            des = new DefaultExecutorService(cache, service, true);
+         else
+            des = new DefaultExecutorService(cache, service);
 
          Future<Integer> future = des.submit(new SimpleCallable());
          Integer r = future.get();
