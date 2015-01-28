@@ -161,7 +161,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new IllegalArgumentException("Can not use null cache for DefaultExecutorService");
       else if (localExecutorService == null)
          throw new IllegalArgumentException("Can not use null instance of ExecutorService");
-      else if (localExecutorService.isShutdown())
+      else if (takeExecutorOwnership && localExecutorService.isShutdown())
          throw new IllegalArgumentException("Can not use an instance of ExecutorService which is shutdown");
       ensureAccessPermissions(masterCacheNode.getAdvancedCache());
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
