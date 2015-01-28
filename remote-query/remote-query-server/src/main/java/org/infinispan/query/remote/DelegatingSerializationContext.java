@@ -102,4 +102,14 @@ final class DelegatingSerializationContext implements SerializationContext {
    public <T> BaseMarshaller<T> getMarshaller(Class<T> clazz) {
       return delegate.getMarshaller(clazz);
    }
+
+   @Override
+   public String getTypeNameById(Integer typeId) {
+      return delegate.getTypeNameById(typeId);
+   }
+
+   @Override
+   public Integer getTypeIdByName(String descriptorFullName) {
+      return delegate.getTypeIdByName(descriptorFullName);
+   }
 }

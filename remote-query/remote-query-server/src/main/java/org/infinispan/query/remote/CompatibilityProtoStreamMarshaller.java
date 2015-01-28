@@ -6,8 +6,9 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 
 /**
- * A per EmbeddedCacheManager marshaller that can be used as compatibility mode marshaller. An instance cannot be shared
- * between multiple cache managers.
+ * A per EmbeddedCacheManager marshaller that can be used as compatibility mode marshaller (see {@link
+ * org.infinispan.interceptors.compat.TypeConverterInterceptor}). An instance cannot be shared between multiple cache
+ * managers.
  *
  * @author anistor@redhat.com
  * @since 6.0
