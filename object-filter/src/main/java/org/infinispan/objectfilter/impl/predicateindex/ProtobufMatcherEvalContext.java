@@ -71,6 +71,10 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, F
                entityTypeName = (String) tagValue;
                break;
 
+            case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_ID:
+               entityTypeName = serializationContext.getTypeNameById((Integer) tagValue);
+               break;
+
             case WrappedMessageMarshaller.WRAPPED_MESSAGE_BYTES:
                payload = (byte[]) tagValue;
                break;

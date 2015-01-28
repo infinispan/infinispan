@@ -65,6 +65,10 @@ final class WrappedMessageTagHandler implements TagHandler {
          case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_FULL_NAME:
             messageDescriptor = serCtx.getMessageDescriptor((String) value);
             break;
+         case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_ID:
+            String typeName = serCtx.getTypeNameById((Integer) value);
+            messageDescriptor = serCtx.getMessageDescriptor(typeName);
+            break;
          case WrappedMessageMarshaller.WRAPPED_MESSAGE_BYTES:
             bytes = (byte[]) value;
             break;
@@ -87,7 +91,7 @@ final class WrappedMessageTagHandler implements TagHandler {
    public void onEnd() {
       if (bytes != null) {
          if (messageDescriptor == null) {
-            throw new IllegalStateException("Descriptor name is missing");
+            throw new IllegalStateException("Type name/id is missing");
          }
          IndexingMetadata indexingMetadata = messageDescriptor.getProcessedAnnotation(IndexingMetadata.INDEXED_ANNOTATION);
          // if the message definition is not annotated at all we consider all fields indexed and stored, just to be backwards compatible
