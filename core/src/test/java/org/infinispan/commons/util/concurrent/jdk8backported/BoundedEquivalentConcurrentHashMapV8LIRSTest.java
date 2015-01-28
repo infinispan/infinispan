@@ -164,7 +164,7 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
    }
 
    public void testLIRSCacheWriteMisses() throws InterruptedException, ExecutionException, TimeoutException {
-      int count = 500;
+      int count = 50;
       final Map<String, Integer> bchm = createMap(count, Eviction.LIRS);
       
       final AtomicInteger threadOffset = new AtomicInteger();
@@ -260,14 +260,13 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
     * Test to make sure that when multiple writes occur both misses and hits that
     * we have the correct eviction size later
     */
-   @Test(invocationCount=10000)
    public void testLIRSCacheWriteMissAndHit() throws InterruptedException, ExecutionException, TimeoutException {
-      final int COUNT = 5;
+      final int COUNT = 20;
       final Map<String, String> bchm = createMap(COUNT, Eviction.LIRS);
 
-      final int THREADS = 4;
+      final int THREADS = 10;
       // How high the write will go up to
-      final int WRITE_OFFSET = 1;
+      final int WRITE_OFFSET = 40;
       
       ExecutorService service = Executors.newFixedThreadPool(THREADS);
       Future<Void>[] futures = new Future[THREADS];
@@ -296,7 +295,11 @@ public class BoundedEquivalentConcurrentHashMapV8LIRSTest extends EquivalentHash
       service.shutdown();
       service.awaitTermination(10, TimeUnit.SECONDS);
       for (int i = 0; i < THREADS; ++i) {
-         futures[i].get(1000, TimeUnit.SECONDS);
+         try {
+            futures[i].get(1000, TimeUnit.SECONDS);
+         } catch (Exception e) {
+            throw e;
+         }
       }
       if (COUNT != bchm.size()) {
          System.currentTimeMillis();
