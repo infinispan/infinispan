@@ -8,6 +8,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -181,12 +182,11 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to unregister Cache MBeans with pattern %s", id = 33)
    void unableToUnregisterMBeanWithPattern(String pattern, @Cause MBeanRegistrationException e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "There's already an cache manager instance registered under " +
+   @Message(value = "There's already a JMX MBean instance %s already registered under " +
          "'%s' JMX domain. If you want to allow multiple instances configured " +
          "with same JMX domain enable 'allowDuplicateDomains' attribute in " +
          "'globalJmxStatistics' config element", id = 34)
-   void cacheManagerAlreadyRegistered(String jmxDomain);
+   JmxDomainConflictException jmxMBeanAlreadyRegistered(String mBeanName, String jmxDomain);
 
    @LogMessage(level = WARN)
    @Message(value = "Could not reflect field description of this class. Was it removed?", id = 35)
