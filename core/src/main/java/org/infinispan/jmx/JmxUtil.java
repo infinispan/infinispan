@@ -48,9 +48,7 @@ public class JmxUtil {
       String jmxDomain = findJmxDomain(cfg.globalJmxStatistics().domain(), mBeanServer, groupName);
       String configJmxDomain = cfg.globalJmxStatistics().domain();
       if (!jmxDomain.equals(configJmxDomain) && !cfg.globalJmxStatistics().allowDuplicateDomains()) {
-         log.cacheManagerAlreadyRegistered(configJmxDomain);
-         throw new JmxDomainConflictException(String.format(
-               "Domain already registered %s when trying to register: %s", configJmxDomain, groupName));
+         throw log.jmxMBeanAlreadyRegistered(groupName, configJmxDomain);
       }
       return jmxDomain;
    }

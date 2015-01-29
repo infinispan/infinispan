@@ -2,6 +2,8 @@ package org.infinispan.cdi;
 
 import org.infinispan.cdi.util.defaultbean.DefaultBean;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
@@ -21,6 +23,8 @@ import javax.enterprise.inject.Produces;
  */
 public class DefaultEmbeddedCacheManagerProducer {
 
+   private static final String CACHE_NAME = "CDIExtensionDefaultCacheManager";
+
    /**
     * Produces the default embedded cache manager.
     *
@@ -31,7 +35,12 @@ public class DefaultEmbeddedCacheManagerProducer {
    @ApplicationScoped
    @DefaultBean(EmbeddedCacheManager.class)
    public EmbeddedCacheManager getDefaultEmbeddedCacheManager(Configuration defaultConfiguration) {
-      return new DefaultCacheManager(defaultConfiguration);
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder()
+            .globalJmxStatistics()
+            .cacheManagerName(CACHE_NAME)
+            .build();
+
+      return new DefaultCacheManager(globalConfiguration, defaultConfiguration);
    }
 
    /**
