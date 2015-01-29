@@ -74,7 +74,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    @Override
    public List<Address> getNewMembers() {
       if(newMembers == null){
-         InfinispanCollections.emptyList();
+         return InfinispanCollections.emptyList();
       }
       return newMembers;
    }
@@ -90,7 +90,7 @@ public class EventImpl implements CacheStartedEvent, CacheStoppedEvent, ViewChan
    @Override
    public List<Address> getOldMembers() {
       if(oldMembers == null){
-         InfinispanCollections.emptyList();
+         return InfinispanCollections.emptyList();
       }
       return this.oldMembers;
    }
