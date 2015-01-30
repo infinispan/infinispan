@@ -3,7 +3,7 @@
    <modelVersion>4.0.0</modelVersion>
    <groupId>org.infinispan</groupId>
    <artifactId>infinispan-bom</artifactId>
-   <version>7.1.0-SNAPSHOT</version>
+   <version>7.1.0.Final</version>
    <packaging>pom</packaging>
    <name>Infinispan BOM</name>
    <description>Infinispan BOM module</description>
@@ -57,10 +57,10 @@
 
       <version.java>1.7</version.java>
 
-      <!-- Versions for plugins -->
+      
       <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
 
-      <!-- Versions for dependencies -->
+      
       <version.protostream>3.0.0.Final</version.protostream>
       <version.aesh>0.33.7</version.aesh>
       <version.antlr>3.4</version.antlr>
@@ -113,7 +113,7 @@
 
    <dependencyManagement>
       <dependencies>
-         <!-- Infinispan module versions -->
+         
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-cachestore-jdbc</artifactId>
@@ -245,7 +245,7 @@
             <artifactId>infinispan-jcache</artifactId>
             <version>${project.version}</version>
          </dependency>
-         <!-- Infinispan aggregate jars -->
+         
          <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-embedded</artifactId>
@@ -322,7 +322,7 @@
             <artifactId>hibernate-core</artifactId>
             <version>${version.hibernate.core}</version>
          </dependency>
-         <!-- Infinispan RHQ module dependencies -->
+         
          <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-domain</artifactId>
@@ -354,7 +354,7 @@
             <artifactId>rhq-core-native-system</artifactId>
             <version>${version.rhq}</version>
          </dependency>
-         <!-- Infinispan Query module dependencies -->
+         
          <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-search-engine</artifactId>
@@ -375,7 +375,7 @@
               <artifactId>hibernate-entitymanager</artifactId>
               <version>${version.hibernate.core}</version>
           </dependency>
-         <!-- Infinispan Remote Query module dependencies -->
+         
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
@@ -435,7 +435,7 @@
             <artifactId>commons-pool</artifactId>
             <version>${version.commons.pool}</version>
          </dependency>
-         <!-- Other dependencies -->
+         
          <dependency>
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
@@ -474,15 +474,14 @@
          </activation>
 
          <properties>
-            <!-- Eclipse doesn't handle well the dependency on uberjars for the modules which use them (e.g. demos).
-                 Mark the dependencies of the uberjar modules as not-optional when inside Eclipse. -->
+            
             <uberjar.deps.optional>false</uberjar.deps.optional>
          </properties>
 
          <build>
             <pluginManagement>
                <plugins>
-                  <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+                  
                   <plugin>
                      <groupId>org.eclipse.m2e</groupId>
                      <artifactId>lifecycle-mapping</artifactId>
@@ -514,7 +513,7 @@
                                     </goals>
                                  </pluginExecutionFilter>
                                  <action>
-                                    <ignore/>
+                                    <ignore />
                                  </action>
                               </pluginExecution>
                               <pluginExecution>
@@ -542,7 +541,7 @@
                                     </goals>
                                  </pluginExecutionFilter>
                                  <action>
-                                    <ignore/>
+                                    <ignore />
                                  </action>
                               </pluginExecution>
                               <pluginExecution>
@@ -555,7 +554,7 @@
                                     </goals>
                                  </pluginExecutionFilter>
                                  <action>
-                                    <ignore/>
+                                    <ignore />
                                  </action>
                               </pluginExecution>
                               <pluginExecution>
@@ -581,7 +580,7 @@
                                     </goals>
                                  </pluginExecutionFilter>
                                  <action>
-                                    <ignore/>
+                                    <ignore />
                                  </action>
                               </pluginExecution>
                               <pluginExecution>
@@ -594,7 +593,7 @@
                                     </goals>
                                  </pluginExecutionFilter>
                                  <action>
-                                    <ignore/>
+                                    <ignore />
                                  </action>
                               </pluginExecution>
                               <pluginExecution>
@@ -635,7 +634,7 @@
                                     </goals>
                                  </pluginExecutionFilter>
                                  <action>
-                                    <ignore></ignore>
+                                    <ignore />
                                  </action>
                               </pluginExecution>
                               <pluginExecution>
