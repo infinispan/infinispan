@@ -3,7 +3,6 @@ package org.infinispan.jcache.annotation;
 import org.infinispan.jcache.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import javax.cache.annotation.CacheRemoveAll;
 import javax.inject.Inject;
 import javax.interceptor.AroundInvoke;
 import javax.interceptor.Interceptor;
@@ -21,7 +20,7 @@ import javax.interceptor.InvocationContext;
  * @author Kevin Pollet <kevin.pollet@serli.com> (C) 2011 SERLI
  */
 @Interceptor
-@CacheRemoveAll
+@CacheRemoveAllInterceptorBinding
 public class CacheRemoveAllInterceptor extends AbstractCacheRemoveAllInterceptor {
 
    private static final Log log = LogFactory.getLog(CacheRemoveAllInterceptor.class, Log.class);
