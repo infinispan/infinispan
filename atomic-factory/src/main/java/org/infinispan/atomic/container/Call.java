@@ -2,11 +2,9 @@ package org.infinispan.atomic.container;
 
 import java.io.Serializable;
 
-/**
-*
-*
+/*
 * @author Pierre Sutra
-* @since 6.0
+* @since 7.1
 */
 abstract class Call implements Serializable {
     long callID;

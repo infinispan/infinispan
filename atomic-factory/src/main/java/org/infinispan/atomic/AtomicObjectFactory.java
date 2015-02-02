@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 
 /**
  * @author Pierre Sutra
- * @since 7.0
+ * @since 7.1
  */
 public class AtomicObjectFactory {
 

@@ -5,9 +5,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/**
-* @author Pierre Sutra
-* @since 6.0
+/*
+ * @author Pierre Sutra
+ * @since 7.1
 */
 class CallFuture implements Future<Object> {
     private Object ret;

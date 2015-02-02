@@ -15,9 +15,9 @@ import java.util.*;
 
 
 /**
- *
- * @author otrack
- * @since 7.0
+ * @author Pierre Sutra
+ * @since 7.1
+ * *
  */
 @Test(groups = "functional", testName = "ShardedTreeMapTest")
 public class ShardedTreeMapTest extends MultipleCacheManagersTest {

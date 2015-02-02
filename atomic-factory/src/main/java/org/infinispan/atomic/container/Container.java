@@ -27,8 +27,7 @@ import java.util.concurrent.*;
 
 /**
  * @author Pierre Sutra
- *  @since 6.0
- *
+ * @since 7.1
  */
 @Listener(sync = false, clustered = true, primaryOnly = true)
 public class Container {

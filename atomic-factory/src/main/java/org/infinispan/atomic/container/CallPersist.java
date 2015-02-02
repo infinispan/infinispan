@@ -1,9 +1,8 @@
 package org.infinispan.atomic.container;
 
 /**
-*
 * @author Pierre Sutra
-* @since 6.0
+* @since 7.1
 */
 class CallPersist extends Call {
     Object object;

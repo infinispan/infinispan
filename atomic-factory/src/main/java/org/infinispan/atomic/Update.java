@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * To declare a method as modifying the state of the object.
  *
  * @author Pierre Sutra
- * @since 7.0
+ * @since 7.1
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

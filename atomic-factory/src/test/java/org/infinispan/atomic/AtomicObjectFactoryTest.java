@@ -21,6 +21,8 @@ import java.util.concurrent.Future;
 
 /**
  * @author Pierre Sutra
+ * @since 7.1
+ * *
  */
 @Test(groups = "functional", testName = "AtomicObjectFactoryTest")
 public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {

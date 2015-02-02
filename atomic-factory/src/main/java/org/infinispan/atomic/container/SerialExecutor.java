@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
  * From the Java Executor class documentation.
  *
  * @author Pierre Sutra
- * @since 7.0
+ * @since 7.1
  */
 public class SerialExecutor implements Executor {
     final Queue<Runnable> tasks = new ArrayDeque<Runnable>();

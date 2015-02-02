@@ -12,7 +12,7 @@ import java.io.Externalizable;
  * allowing several performance optimizations.
  *
  * @author Pierre Sutra
- * @since 7.0
+ * @since 7.1
  */
 
 public abstract class Updatable implements Externalizable{
