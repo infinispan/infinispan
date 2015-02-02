@@ -5,7 +5,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.FilterAndConverter;
@@ -14,10 +13,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -29,40 +25,40 @@ import static org.junit.Assert.*;
 @Test(groups = "functional", testName = "query.dsl.embedded.FilterAndConverterDistTest")
 public class FilterAndConverterDistTest extends MultipleCacheManagersTest {
 
-   private final String CACHE_NAME = getClass().getName();
+   protected final int numNodes;
 
-   private final int NUM_NODES = 3;
+   protected FilterAndConverterDistTest(int numNodes) {
+      this.numNodes = numNodes;
+   }
 
    public FilterAndConverterDistTest() {
+      this(3);
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
-      cfgBuilder.clustering().cacheMode(CacheMode.DIST_SYNC)
-            .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
-            .clustering().hash().numOwners(2)
-            .stateTransfer().chunkSize(50);
-      createClusteredCaches(NUM_NODES, CACHE_NAME, cfgBuilder);
+      ConfigurationBuilder cfgBuilder = getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false);
+      cfgBuilder.transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      createClusteredCaches(numNodes, cfgBuilder);
    }
 
    @Test
    public void testFilter() {
+      final boolean isClustered = cache(0).getCacheConfiguration().clustering().cacheMode().isClustered();
       for (int i = 0; i < 10; ++i) {
-         Cache<Object, Person> cache = cache(i % NUM_NODES, CACHE_NAME);
-         Object key = new MagicKey(cache);
          Person value = new Person();
          value.setName("John");
          value.setAge(i + 30);
+
+         Cache<Object, Person> cache = cache(i % numNodes);
+         Object key = isClustered ? new MagicKey(cache) : i;
          cache.put(key, value);
       }
 
-      EntryRetriever<MagicKey, Person> retriever = cache(0, CACHE_NAME).getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
+      FilterAndConverter filterAndConverter = new FilterAndConverter<Object, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", ReflectionMatcher.class);
 
-      FilterAndConverter filterAndConverter = new FilterAndConverter<MagicKey, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", ReflectionMatcher.class);
-
-      CloseableIterator<Map.Entry<MagicKey, ObjectFilter.FilterResult>> iterator = retriever.retrieveEntries(filterAndConverter, filterAndConverter, null, null);
-      Map<MagicKey, ObjectFilter.FilterResult> results = mapFromIterator(iterator);
+      CloseableIterator<Map.Entry<Object, ObjectFilter.FilterResult>> iterator = cache(0).getAdvancedCache().filterEntries(filterAndConverter).converter(filterAndConverter).iterator();
+      Map<Object, ObjectFilter.FilterResult> results = mapFromIterator(iterator);
 
       assertEquals(2, results.size());
       for (ObjectFilter.FilterResult p : results.values()) {
@@ -72,25 +68,18 @@ public class FilterAndConverterDistTest extends MultipleCacheManagersTest {
    }
 
    /**
-    * Iterates over all the entries provided by the iterator and puts them in a Map. If the iterator implements
-    * Closeable it will close it before returning.
+    * Iterates over all the entries provided by the iterator and puts them in a Map.
     */
-   private <K, V> Map<K, ObjectFilter.FilterResult> mapFromIterator(Iterator<Map.Entry<K, ObjectFilter.FilterResult>> iterator) {
+   private Map<Object, ObjectFilter.FilterResult> mapFromIterator(CloseableIterator<Map.Entry<Object, ObjectFilter.FilterResult>> iterator) {
       try {
-         Map<K, ObjectFilter.FilterResult> result = new HashMap<K, ObjectFilter.FilterResult>();
+         Map<Object, ObjectFilter.FilterResult> result = new HashMap<Object, ObjectFilter.FilterResult>();
          while (iterator.hasNext()) {
-            Map.Entry<K, ObjectFilter.FilterResult> entry = iterator.next();
+            Map.Entry<Object, ObjectFilter.FilterResult> entry = iterator.next();
             result.put(entry.getKey(), entry.getValue());
          }
          return result;
       } finally {
-         if (iterator instanceof Closeable) {
-            try {
-               ((Closeable) iterator).close();
-            } catch (IOException e) {
-               throw new RuntimeException(e);
-            }
-         }
+         iterator.close();
       }
    }
 }
