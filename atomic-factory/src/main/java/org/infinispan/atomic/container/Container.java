@@ -46,8 +46,8 @@ public class Container {
       }
    };
    private static Log log = LogFactory.getLog(Container.class);
-   private static final int CALL_TTIMEOUT_TIME = 100000;
-   private static final int RETRIEVE_TTIMEOUT_TIME = 100000;
+   private static final int CALL_TTIMEOUT_TIME = 3000;
+   private static final int RETRIEVE_TTIMEOUT_TIME = 3000;
    private static Executor globalExecutors = Executors.newCachedThreadPool();
 
    //
@@ -99,7 +99,7 @@ public class Container {
             // 1 - local operation
             if ( withReadOptimization
                   && ! updateMethods.contains(m.getName()) ) {
-               log.debug(this+"executing "+m.getName()+" locally");
+               if (log.isDebugEnabled()) log.debugf("Executing %s locally", m.getName());
                return callObject(object, m.getName(), args);
             }
 
@@ -117,13 +117,13 @@ public class Container {
 
             // 2.3 - call execution
             cache.put(Container.this.key, bb);
-            log.debug(this+"Waiting on "+future);
+            if (log.isDebugEnabled()) log.debugf("Waiting on %s", future.toString());
             Object ret = future.get(CALL_TTIMEOUT_TIME,TimeUnit.MILLISECONDS);
             registeredCalls.remove(callID);
             if(!future.isDone()){
                throw new TimeoutException("Unable to execute "+invoke+" on "+clazz+ " @ "+ Container.this.key);
             }
-            log.debug(this+"Return " + invoke+ " "+(ret==null ? "null" : ret.toString()));
+            if (log.isDebugEnabled()) log.debugf("Return %s %s ", invoke.toString(), (ret==null ? "null" : ret.toString()));
             return ret;
          }
       };
@@ -159,7 +159,7 @@ public class Container {
          GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
          byte[] bb = (byte[]) event.getValue();
          Call call = (Call) marshaller.objectFromByteBuffer(bb);
-         log.debug(this+"Receive " + call+" (isOriginLocal="+event.isOriginLocal()+")");
+         if (log.isDebugEnabled()) log.debugf("Receive %s (isOriginLocal=%s) ", call, event.isOriginLocal());
          callExecutor.execute(new AtomicObjectContainerTask(call));
 
       } catch (Exception e) {
@@ -170,17 +170,17 @@ public class Container {
 
    public synchronized void dispose(boolean keepPersistent) throws IOException, InterruptedException{
 
-      log.debug(this+"Disposing "+this);
+      if (log.isDebugEnabled()) log.debugf("Disposing ");
 
       if (!registeredCalls.isEmpty()){
-         log.warn("Cannot dispose "+this+" registeredCalls non-empty");
+         log.warnf("Cannot dispose - registeredCalls non-empty");
          return;
       }
 
       if (listenerState==1){
          cache.removeListener(listener);
          if ( keepPersistent ) {
-            log.debug(this+" persisted");
+            if (log.isDebugEnabled()) log.debugf("Persisted");
             GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
             CallPersist persist = new CallPersist(0,object);
             byte[] bb = marshaller.objectToByteBuffer(persist);
@@ -221,11 +221,11 @@ public class Container {
       Object ret = callObject(object, invocation.method, invocation.arguments);
       CallFuture future = registeredCalls.get(invocation.callID);
       if(future!=null){
-         log.debug(this+"Updating "+future);
+         if (log.isDebugEnabled()) log.debugf("Updating %s",future.toString());
          future.setReturnValue(ret);
          return true;
       }else{
-         log.debug(this+"No future for "+invocation.callID);
+         log.debugf("No future for %s", invocation.callID);
       }
       return false;
    }
@@ -243,11 +243,11 @@ public class Container {
          try {
             Call persist = (Call) marshaller.objectFromByteBuffer((byte[]) cache.get(key));
             if(persist instanceof CallPersist){
-               log.debug(this+"Persisted object "+key);
+               if (log.isDebugEnabled()) log.debugf("Persisted %s",key.toString());
                object = ((CallPersist)persist).object;
             }else{
                installListener();
-               log.debug(this+"Retrieving object "+key);
+               if (log.isDebugEnabled()) log.debugf("Retrieving object %s",key.toString());
                if (installListener==false)
                   throw new IllegalAccessException();
                retrieve_future = new CallFuture();
@@ -256,7 +256,7 @@ public class Container {
                cache.put(key,marshaller.objectToByteBuffer(retrieve_call));
                retrieve_future.get(RETRIEVE_TTIMEOUT_TIME,TimeUnit.MILLISECONDS);
                if(!retrieve_future.isDone()) throw new TimeoutException();
-               log.debug(this+"Object "+key+" retrieved");
+               if (log.isDebugEnabled()) log.debugf("Object %s retrieved", key.toString());
                assert object!=null;
             }
             if (object instanceof Updatable){
@@ -265,7 +265,7 @@ public class Container {
             }
             return;
          } catch (Exception e) {
-            log.debug(this+"Unable to retrieve object " + key + " from the cache.");
+            if (log.isDebugEnabled()) log.debugf("Unable to retrieve object %s from the cache.", key.toString());
          }
       }
 
@@ -293,11 +293,17 @@ public class Container {
          ((Updatable)object).setKey(this.key);
       }
 
-      if(found)
-         log.debug(this+"Object " + key + "[" + clazz.getSimpleName() + "] is created (AtomicObject="+(object instanceof Updatable)+")");
-      else
-         throw new IllegalArgumentException("Unable to find constructor for "+clazz.toString()+" with "+initArgs);
-
+      if(found) {
+         if (log.isDebugEnabled()) {
+            log.debugf("Object %s[%s] is created (AtomicObject=%s)",
+                  key.toString(),
+                  clazz.getSimpleName(),
+                  Boolean.toString(object instanceof Updatable));
+         }
+      } else {
+         throw new IllegalArgumentException("Unable to find constructor for " + clazz.toString() + " with " + initArgs);
+      }
+      
    }
 
    //
@@ -307,7 +313,7 @@ public class Container {
    private void installListener(){
       if (listenerState==1)
          return;
-      log.debug(this+"Installing listener "+key);
+      if (log.isDebugEnabled()) log.debugf("Installing listener %s",key);
       cache.addListener(listener);
       listenerState = 1;
    }
@@ -318,7 +324,7 @@ public class Container {
    }
 
    private synchronized Object callObject(Object obj, String method, Object[] args) throws InvocationTargetException, IllegalAccessException {
-      log.debug(this+"Calling "+method.toString()+"()");
+      if (log.isDebugEnabled()) log.debugf("Calling %s()", method.toString());
       boolean isFound = false;
       Object ret = null;
       for (Method m : obj .getClass().getMethods()) { // only public methods (inherited and not)
@@ -384,7 +390,7 @@ public class Container {
 
                if (object != null ) {
 
-                  log.debug("sending persistent state");
+                  if (log.isDebugEnabled()) log.debugf("Sending persistent state");
 
                   CallPersist persist = new CallPersist(0,object);
                   GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
@@ -399,7 +405,7 @@ public class Container {
 
             } else { // AtomicObjectCallPersist
 
-               log.debug("persistent state received");
+               if (log.isDebugEnabled()) log.debugf("Persistent state received");
 
                if (object == null && pending_calls != null)  {
                   object = ((CallPersist)call).object;

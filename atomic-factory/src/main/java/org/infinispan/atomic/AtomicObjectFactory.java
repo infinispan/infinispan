@@ -81,7 +81,7 @@ public class AtomicObjectFactory {
                   @Override
                   public Void call() throws IOException {
                      try {
-                        log.debug("Disposing " + eldest.getValue().toString());
+                        if (log.isDebugEnabled()) log.debugf("Disposing %s", eldest.getValue().toString());
                         eldest.getValue().dispose(false);
                      } catch (Exception e) {
                         e.printStackTrace();
@@ -241,7 +241,7 @@ public class AtomicObjectFactory {
          throws InvalidCacheUsageException {
 
       ContainerSignature signature = new ContainerSignature(clazz,key);
-      log.debug("Disposing "+signature);
+      if (log.isDebugEnabled()) log.debugf("Disposing %s",signature.toString());
       Container container;
       synchronized (registeredContainers){
          container = registeredContainers.get(signature);
