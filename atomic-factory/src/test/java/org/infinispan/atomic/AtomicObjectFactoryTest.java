@@ -6,7 +6,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractCacheTest;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -18,6 +17,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import static org.infinispan.atomic.Utils.assertOnAllCaches;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * @author Pierre Sutra
@@ -44,18 +46,18 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
         // 1 - Basic Usage
         Set<String> set = factory.getInstanceOf(HashSet.class, "set");
         set.add("smthing");
-        assert set.contains("smthing");
+        assertTrue(set.contains("smthing"));
         assert set.size()==1;
 
         // 2 - Persistence
         factory.disposeInstanceOf(HashSet.class, "set", true);
         set = factory.getInstanceOf(HashSet.class, "set", false, null, false);
-        assert set.contains("smthing");
+        assertTrue(set.contains("smthing"));
 
         // 3 - Optimistic execution
         ArrayList list = factory.getInstanceOf(ArrayList.class, "list", true);
-        assert !list.contains("foo");
-        assert !cache.containsKey("list");
+        assertTrue(!list.contains("foo"));
+        assertTrue(!cache.containsKey("list"));
 
     }
 
@@ -109,7 +111,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
             total += future.get();
         }
 
-        assert total == (NCALLS) : "obtained = "+total+"; espected = "+ (NCALLS);
+        assertEquals("obtained = " + total + "; espected = " + (NCALLS), Integer.valueOf(NCALLS), total);
 
     }
 
@@ -132,7 +134,7 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
         cache2 = manager2.getCache();
         factory2 = new AtomicObjectFactory(cache2);
         set2 = factory2.getInstanceOf(HashSet.class, "persist", true, null, false);
-        assert set2.contains("smthing");
+        assertTrue(set2.contains("smthing"));
 
     }
 
@@ -151,21 +153,9 @@ public class AtomicObjectFactoryTest extends MultipleCacheManagersTest {
     protected void initAndTest() {
         for (Cache<Object, String> c : caches) assert c.isEmpty();
         caches.iterator().next().put("k1", "value");
-        assertOnAllCaches("k1", "value");
+        assertOnAllCaches(caches,"k1", "value");
     }
 
-    protected void assertOnAllCaches(Object key, String value) {
-        for (Cache<Object, String> c : caches) {
-            Object realVal = c.get(key);
-            if (value == null) {
-                assert realVal == null : "Expecting [" + key + "] to equal [" + value + "] on cache "+ c.toString();
-            } else {
-                assert value.equals(realVal) : "Expecting [" + key + "] to equal [" + value + "] on cache "+c.toString();
-            }
-        }
-        // Allow some time for all ClusteredGetCommands to finish executing
-        TestingUtil.sleepThread(1000);
-    }
 
     //
     // INNER CLASSES
