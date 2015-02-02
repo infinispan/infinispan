@@ -120,6 +120,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    // these members are not valid until we have received the first view on a second thread
    // and channelConnectedLatch is signaled
+   protected volatile int viewId;
    protected volatile List<Address> members = null;
    protected volatile Address coordinator = null;
    protected volatile boolean isCoordinator = false;
@@ -224,10 +225,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    public int getViewId() {
       if (channel == null)
          throw new CacheException("The cache has been stopped and invocations are not allowed!");
-      View view = channel.getView();
-      if (view == null)
-         return -1;
-      return (int) view.getViewId().getId();
+      return viewId;
    }
 
    @Override
@@ -237,7 +235,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       log.tracef("Waiting on view %d being accepted", viewId);
       viewUpdateLock.lock();
       try {
-         while (channel != null && this.getViewId() < viewId) {
+         while (channel != null && getViewId() < viewId) {
                viewUpdateCondition.await();
          }
       } finally {
@@ -284,6 +282,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
 
       channel = null;
+      viewId = -1;
       members = InfinispanCollections.emptyList();
       coordinator = null;
       isCoordinator = false;
@@ -679,26 +678,31 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       }
 
       List<Address> oldMembers = members;
-      // we need a defensive copy anyway
-      members = fromJGroupsAddressList(newMembers);
 
-      // Delta view debug log for large cluster
-      if (log.isDebugEnabled() && oldMembers != null) {
-         List<Address> joined = new ArrayList<Address>(members);
-         joined.removeAll(oldMembers);
-         List<Address> left = new ArrayList<Address>(oldMembers);
-         left.removeAll(members);
-         log.debugf("Joined: %s, Left: %s", joined, left);
-      }
-
-      // Now that we have a view, figure out if we are the isCoordinator
-      coordinator = fromJGroupsAddress(newView.getCreator());
-      isCoordinator = coordinator != null && coordinator.equals(getAddress());
-
-      // Wake up any threads that are waiting to know about who the isCoordinator is
-      // do it before the notifications, so if a listener throws an exception we can still start
+      // Update every view-related field while holding the lock so that waitForView only returns
+      // after everything was updated.
       viewUpdateLock.lock();
       try {
+         viewId = (int) newView.getViewId().getId();
+
+         // we need a defensive copy anyway
+         members = fromJGroupsAddressList(newMembers);
+
+         // Delta view debug log for large cluster
+         if (log.isDebugEnabled() && oldMembers != null) {
+            List<Address> joined = new ArrayList<Address>(members);
+            joined.removeAll(oldMembers);
+            List<Address> left = new ArrayList<Address>(oldMembers);
+            left.removeAll(members);
+            log.debugf("Joined: %s, Left: %s", joined, left);
+         }
+
+         // Now that we have a view, figure out if we are the isCoordinator
+         coordinator = fromJGroupsAddress(newView.getCreator());
+         isCoordinator = coordinator != null && coordinator.equals(getAddress());
+
+         // Wake up any threads that are waiting to know about who the isCoordinator is
+         // do it before the notifications, so if a listener throws an exception we can still start
          viewUpdateCondition.signalAll();
       } finally {
          viewUpdateLock.unlock();
