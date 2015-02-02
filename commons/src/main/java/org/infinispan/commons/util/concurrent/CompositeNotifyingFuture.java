@@ -76,13 +76,13 @@ public final class CompositeNotifyingFuture<T> extends NotifyingFutureImpl<Void>
             }
             remaining.countDown();
             if (remaining.getCount() == 0) {
-               setFuture(new NoOpFuture<Void>(null));
                if (error != null) {
                   notifyException(error);
                } else {
                   notifyDone(null);
 
                }
+               setFuture(new NoOpFuture<Void>(null));
             }
          }
 
