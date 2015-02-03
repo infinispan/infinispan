@@ -73,7 +73,7 @@ public class TransportStackConfigurationIT {
 
         assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "thread_pool.enabled")));
         assertEquals(false, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "thread_pool.queue_enabled")));
-        assertEquals("discard", getAttribute(provider, protocolMBean, "thread_pool.rejection_policy"));
+        assertEquals("Discard", getAttribute(provider, protocolMBean, "thread_pool.rejection_policy"));
 
         assertEquals(true, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "oob_thread_pool.enabled")));
         assertEquals(false, Boolean.parseBoolean(getAttribute(provider, protocolMBean, "oob_thread_pool.queue_enabled")));
