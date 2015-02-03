@@ -993,7 +993,7 @@ Response format:
 |==============================================================================
 
 As of Infinispan 6.0, the query and response objects are specified by the protobuf message types 'org.infinispan.client.hotrod.impl.query.QueryRequest' and 'org.infinispan.client.hotrod.impl.query.QueryResponse'
-respectively defined in link:$$https://github.com/infinispan/infinispan/blob/master/remote-query/remote-query-client/src/main/resources/query.proto$$[remote-query/remote-query-client/src/main/resources/query.proto].
+defined in link:$$https://github.com/infinispan/infinispan/blob/master/remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto$$[remote-query/remote-query-client/src/main/resources/org/infinispan/query/remote/client/query.proto].
 These definitions could change in future Infinispan versions, but as long as these evolutions will be kept backward
 compatible (according to the rules defined link:$$https://developers.google.com/protocol-buffers/docs/proto#updating$$[here]) no new Hot Rod
 protocol version will be introduced to accommodate this.
