@@ -1,35 +1,37 @@
 package org.infinispan.server.memcached
 
-import io.netty.buffer.ByteBuf
-import io.netty.channel.{ChannelHandlerContext, Channel}
-import logging.Log
-import org.infinispan.server.core.Operation._
-import org.infinispan.server.memcached.MemcachedOperation._
-import org.infinispan.context.Flag
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit.{MILLISECONDS => MILLIS}
+import java.io.{ByteArrayOutputStream, EOFException, IOException, StreamCorruptedException}
+import java.lang.StringBuilder
 import java.nio.channels.ClosedChannelException
+import java.util
+import java.util.concurrent.TimeUnit.{MILLISECONDS => MILLIS}
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.{ScheduledExecutorService, TimeUnit}
+
+import io.netty.handler.codec.ReplayingDecoder
+import io.netty.buffer._
+import io.netty.channel._
+import io.netty.util.CharsetUtil
+import org.infinispan._
+import org.infinispan.commons.CacheException
+import org.infinispan.configuration.cache.Configuration
+import org.infinispan.container.entries.CacheEntry
+import org.infinispan.container.versioning.{EntryVersion, NumericVersion, NumericVersionGenerator, VersionGenerator}
+import org.infinispan.context.Flag
+import org.infinispan.factories.ComponentRegistry
+import org.infinispan.metadata.Metadata
+import org.infinispan.remoting.rpc.RpcManager
+import org.infinispan.server.core.Operation._
 import org.infinispan.server.core._
 import org.infinispan.server.core.transport.ExtendedByteBuf._
-import org.infinispan._
-import collection.mutable.ListBuffer
-import collection.{mutable, immutable}
-import transport.NettyTransport
-import DecoderState._
-import java.lang.StringBuilder
-import java.io.{ByteArrayOutputStream, IOException, EOFException, StreamCorruptedException}
+import org.infinispan.server.core.transport.{NettyTransport, StatsChannelHandler}
+import org.infinispan.server.memcached.MemcachedDecoderState._
+import org.infinispan.server.memcached.MemcachedOperation._
 import org.infinispan.server.memcached.TextProtocolUtil._
-import scala.Predef._
-import org.infinispan.container.entries.CacheEntry
-import scala.Some
-import org.infinispan.metadata.Metadata
-import org.infinispan.container.versioning.NumericVersion
-import org.infinispan.commons.CacheException
-import scala.Some
-import java.util
-import org.infinispan.factories.ComponentRegistry
-import org.infinispan.configuration.cache.Configuration
+import org.infinispan.server.memcached.logging.Log
+
+import scala.collection.mutable.ListBuffer
+import scala.collection.{immutable, mutable}
 
 /**
  * A Memcached protocol specific decoder
@@ -37,21 +39,27 @@ import org.infinispan.configuration.cache.Configuration
  * @author Galder Zamarreño
  * @since 4.1
  */
-class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], scheduler: ScheduledExecutorService, transport: NettyTransport)
-      extends AbstractProtocolDecoder[String, Array[Byte]](false, transport) {
+class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], scheduler: ScheduledExecutorService, val transport: NettyTransport)
+extends ReplayingDecoder[MemcachedDecoderState](DECODE_HEADER) with StatsChannelHandler with ServerConstants {
 
-   cache =
+   val SecondsInAMonth = 60 * 60 * 24 * 30
+   val DefaultTimeUnit = TimeUnit.MILLISECONDS
+   var defaultLifespanTime: Long = _
+   var defaultMaxIdleTime: Long = _
+
+   protected var key: String = null
+   protected var rawValue: Array[Byte] = null
+   protected var cacheConfiguration: Configuration = null
+
+   var cache =
       if (memcachedCache.getCacheConfiguration.compatibility().enabled())
          memcachedCache.getAdvancedCache.withFlags(Flag.OPERATION_MEMCACHED)
       else memcachedCache
 
-   import RequestResolver._
+   import org.infinispan.server.memcached.RequestResolver._
 
-   type SuitableParameters = MemcachedParameters
-   type SuitableHeader = RequestHeader
-
-   private lazy val isStatsEnabled =
-      cache.getCacheConfiguration.jmxStatistics().enabled()
+   protected var params: MemcachedParameters = null
+   private lazy val isStatsEnabled = cache.getCacheConfiguration.jmxStatistics().enabled()
    private final val incrMisses = new AtomicLong(0)
    private final val incrHits = new AtomicLong(0)
    private final val decrMisses = new AtomicLong(0)
@@ -61,19 +69,172 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    private final val replaceIfUnmodifiedBadval = new AtomicLong(0)
    private val isTrace = isTraceEnabled
    private val byteBuffer = new ByteArrayOutputStream()
+   protected var header: RequestHeader = _
 
-  override def decode(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
-    try {
-      super.decode(ctx, in, out)
-    } finally {
-      // reset in all cases
-      byteBuffer.reset()
-    }
-  }
+   override def decode(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
+      try {
+         decodeDispatch(ctx, in, out)
+      } finally {
+         // reset in all cases
+         byteBuffer.reset()
+      }
+   }
 
-  override def createHeader: RequestHeader = new RequestHeader
+   protected def replace: AnyRef = {
+      // Avoid listener notification for a simple optimization
+      // on whether a new version should be calculated or not.
+      var prev = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).get(key)
+      if (prev != null) {
+         // Generate new version only if key present
+         prev = cache.replace(key, createValue(), buildMetadata())
+      }
+      if (prev != null)
+         createSuccessResponse(prev)
+      else
+         createNotExecutedResponse(prev)
+   }
 
-   override def readHeader(buffer: ByteBuf, header: RequestHeader): Option[Boolean] = {
+   protected def replaceIfUnmodified: AnyRef = {
+      val entry = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION).getCacheEntry(key)
+      if (entry != null) {
+         val prev = entry.getValue
+         val streamVersion = new NumericVersion(params.streamVersion)
+         if (entry.getMetadata.version() == streamVersion) {
+            val v = createValue()
+            // Generate new version only if key present and version has not changed, otherwise it's wasteful
+            val replaced = cache.replace(key, prev, v, buildMetadata())
+            if (replaced)
+               createSuccessResponse(prev)
+            else
+               createNotExecutedResponse(prev)
+         } else {
+            createNotExecutedResponse(prev)
+         }
+      } else createNotExistResponse
+   }
+
+   private def decodeDispatch(ctx: ChannelHandlerContext, in: ByteBuf, out: util.List[AnyRef]): Unit = {
+      try {
+         if (isTrace) // To aid debugging
+            trace("Decode using instance @%x", System.identityHashCode(this))
+         state match {
+            case DECODE_HEADER => decodeHeader(ctx, in, state, out)
+            case DECODE_KEY => decodeKey(ctx, in, state)
+            case DECODE_PARAMETERS => decodeParameters(ctx, in, state)
+            case DECODE_VALUE => decodeValue(ctx, in, state)
+         }
+      } catch {
+         case e: Exception =>
+            val (serverException, isClientError) = createServerException(e, in)
+            // If decode returns an exception, decode won't be called again so,
+            // we need to fire the exception explicitly so that requests can
+            // carry on being processed on same connection after a client error
+            if (isClientError) {
+               ctx.pipeline.fireExceptionCaught(serverException)
+            } else {
+               throw serverException
+            }
+         case t: Throwable => throw t
+      }
+   }
+
+   def decodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf, state: MemcachedDecoderState, out: util.List[AnyRef]): AnyRef = {
+      header = createHeader
+      val endOfOp = readHeader(buffer, header)
+      if (endOfOp == None) {
+         // Something went wrong reading the header, so get more bytes.
+         // It can happen with Hot Rod if the header is completely corrupted
+         return null
+      }
+      val ch = ctx.channel
+      cache = getCache.getAdvancedCache
+      cacheConfiguration = getCacheConfiguration
+      defaultLifespanTime = cacheConfiguration.expiration().lifespan()
+      defaultMaxIdleTime = cacheConfiguration.expiration().maxIdle()
+      if (endOfOp.get) {
+         val message = header.op match {
+            case StatsRequest => writeResponse(ch, createStatsResponse)
+            case _ => customDecodeHeader(ctx, buffer)
+         }
+         message match {
+            case pr: PartialResponse => pr.buffer.map(out.add(_))
+            case _ => null
+         }
+         null
+      } else {
+         checkpointTo(DECODE_KEY)
+      }
+   }
+
+   def decodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf, state: MemcachedDecoderState): AnyRef = {
+      val ch = ctx.channel
+      header.op match {
+         // Get, put and remove are the most typical operations, so they're first
+         case GetRequest => writeResponse(ch, get(buffer))
+         case PutRequest => handleModification(ch, buffer)
+         case RemoveRequest => handleModification(ch, buffer)
+         case GetWithVersionRequest => writeResponse(ch, get(buffer))
+         case PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest =>
+            handleModification(ch, buffer)
+         case _ => customDecodeKey(ctx, buffer)
+      }
+   }
+
+   def decodeParameters(ctx: ChannelHandlerContext, buffer: ByteBuf, state: MemcachedDecoderState): AnyRef = {
+      val ch = ctx.channel
+      val endOfOp = readParameters(ch, buffer)
+      if (!endOfOp && params.valueLength > 0) {
+         // Create value holder and checkpoint only if there's more to read
+         rawValue = new Array[Byte](params.valueLength)
+         checkpointTo(DECODE_VALUE)
+      } else if (params.valueLength == 0) {
+         rawValue = Array.empty
+         decodeValue(ctx, buffer, state)
+      } else {
+         decodeValue(ctx, buffer, state)
+      }
+   }
+
+   def decodeValue(ctx: ChannelHandlerContext, buffer: ByteBuf, state: MemcachedDecoderState): AnyRef = {
+      val ch = ctx.channel
+      val ret = header.op match {
+         case PutRequest | PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest =>
+            readValue(buffer)
+            header.op match {
+               case PutRequest => put
+               case PutIfAbsentRequest => putIfAbsent
+               case ReplaceRequest => replace
+               case ReplaceIfUnmodifiedRequest => replaceIfUnmodified
+            }
+         case RemoveRequest => remove
+         case _ => customDecodeValue(ctx, buffer)
+      }
+      writeResponse(ch, ret)
+   }
+
+
+   private def putIfAbsent: AnyRef = {
+      var prev = cache.get(key)
+      if (prev == null) {
+         // Generate new version only if key not present
+         prev = cache.putIfAbsent(key, createValue(), buildMetadata())
+      }
+      if (prev == null)
+         createSuccessResponse(prev)
+      else
+         createNotExecutedResponse(prev)
+   }
+
+   private def put: AnyRef = {
+      // Get an optimised cache in case we can make the operation more efficient
+      val prev = cache.put(key, createValue(), buildMetadata())
+      createSuccessResponse(prev)
+   }
+
+
+   def createHeader: RequestHeader = new RequestHeader
+
+   def readHeader(buffer: ByteBuf, header: RequestHeader): Option[Boolean] = {
       var endOfOp = readElement(buffer, byteBuffer)
       val streamOp = extractString(byteBuffer)
       val op = toRequest(streamOp, endOfOp, buffer)
@@ -94,7 +255,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       Some(endOfOp)
    }
 
-   override def readKey(b: ByteBuf): (String, Boolean) = {
+   def readKey(b: ByteBuf): (String, Boolean) = {
       val endOfOp = readElement(b, byteBuffer)
       val k = extractString(byteBuffer)
       checkKeyLength(k, endOfOp, b)
@@ -102,7 +263,27 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    }
 
    private def readKeys(b: ByteBuf): Seq[String] = readSplitLine(b)
-   override protected def get(buffer: ByteBuf): AnyRef = {
+
+   override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
+      val ch = ctx.channel
+      // Log it just in case the channel is closed or similar
+      debug(cause, "Exception caught")
+      if (!cause.isInstanceOf[IOException]) {
+         val errorResponse = createErrorResponse(cause)
+         if (errorResponse != null) {
+            errorResponse match {
+               case a: Array[Byte] => ch.writeAndFlush(wrappedBuffer(a))
+               case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8))
+               case null => // ignore
+               case _ => ch.writeAndFlush(errorResponse)
+            }
+         }
+      }
+      // After writing back an error, reset params and revert to initial state
+      resetParams
+   }
+
+   protected def get(buffer: ByteBuf): AnyRef = {
       val keys = readKeys(buffer)
       if (keys.length > 1) {
          val map = new mutable.HashMap[String, CacheEntry[String, Array[Byte]]]()
@@ -126,29 +307,28 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       } else k
    }
 
-   override def readParameters(ch: Channel, b: ByteBuf): Boolean = {
+   def readParameters(ch: Channel, b: ByteBuf): Boolean = {
       val args = readSplitLine(b)
       var endOfOp = false
       params =
-         if (!args.isEmpty) {
-            if (isTrace) trace("Operation parameters: %s", args)
-            try {
-               header.op match {
-                  case PutRequest => readStorageParameters(args, b)
-                  case RemoveRequest => readRemoveParameters(args)
-                  case IncrementRequest | DecrementRequest => {
-                     endOfOp = true
-                     readIncrDecrParameters(args)
-                  }
-                  case FlushAllRequest => readFlushAllParameters(args)
-                  case _ => readStorageParameters(args, b)
-               }
-            } catch {
-               case _: ArrayIndexOutOfBoundsException => throw new IOException("Missing content in command line " + args)
+      if (args.nonEmpty) {
+         if (isTrace) trace("Operation parameters: %s", args)
+         try {
+            header.op match {
+               case PutRequest => readStorageParameters(args, b)
+               case RemoveRequest => readRemoveParameters(args)
+               case IncrementRequest | DecrementRequest =>
+                  endOfOp = true
+                  readIncrDecrParameters(args)
+               case FlushAllRequest => readFlushAllParameters(args)
+               case _ => readStorageParameters(args, b)
             }
-         } else {
-            null // For example when delete <key> is sent without any further parameters, or flush_all without delay
+         } catch {
+            case _: ArrayIndexOutOfBoundsException => throw new IOException("Missing content in command line " + args)
          }
+      } else {
+         null // For example when delete <key> is sent without any further parameters, or flush_all without delay
+      }
       endOfOp
    }
 
@@ -169,12 +349,11 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
          try {
             friendlyMaxIntCheck(args(0), "Flush delay")
          } catch {
-            case n: NumberFormatException => {
+            case n: NumberFormatException =>
                if (n.getMessage.contains("noreply")) {
                   noReplyFound = true
                   0
                } else throw n
-            }
          }
       val noReply = if (!noReplyFound) parseNoReply(1, args) else true
       new MemcachedParameters(-1, -1, -1, -1, noReply, 0, "", flushDelay)
@@ -193,10 +372,9 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       val length = getLength(args(index))
       if (length < 0) throw new StreamCorruptedException("Negative bytes length provided: " + length)
       val streamVersion = header.op match {
-         case ReplaceIfUnmodifiedRequest => {
+         case ReplaceIfUnmodifiedRequest =>
             index += 1
             getVersion(args(index))
-         }
          case _ => -1
       }
       index += 1
@@ -204,12 +382,40 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       new MemcachedParameters(length, lifespan, -1, streamVersion, noReply, flags, "", 0)
    }
 
-   override protected def readValue(b: ByteBuf) {
+   protected def generateVersion(cache: Cache[String, Array[Byte]]): EntryVersion = {
+      val registry = getCacheRegistry
+      val cacheVersionGenerator = registry.getComponent(classOf[VersionGenerator])
+      if (cacheVersionGenerator == null) {
+         // It could be null, for example when not running in compatibility mode.
+         // The reason for that is that if no other component depends on the
+         // version generator, the factory does not get invoked.
+         val newVersionGenerator = new NumericVersionGenerator()
+         .clustered(registry.getComponent(classOf[RpcManager]) != null)
+         registry.registerComponent(newVersionGenerator, classOf[VersionGenerator])
+         newVersionGenerator.generateNew()
+      } else {
+         cacheVersionGenerator.generateNew()
+      }
+   }
+
+
+   protected def readValue(b: ByteBuf) {
       b.readBytes(rawValue)
       skipLine(b) // read the rest of line to clear CRLF after value Byte[]
    }
 
-   override def createValue(): Array[Byte] = rawValue
+   override def write(ctx: ChannelHandlerContext, msg: scala.Any, promise: ChannelPromise): Unit = {
+      val readable = msg.asInstanceOf[ByteBuf].readableBytes()
+      ctx.write(msg, promise.addListener(new ChannelFutureListener {
+         def operationComplete(future: ChannelFuture): Unit = {
+            if (future.isSuccess) {
+               transport.updateTotalBytesWritten(readable)
+            }
+         }
+      }))
+   }
+
+   def createValue(): Array[Byte] = rawValue
 
    private def getFlags(flags: String): Long = {
       if (flags == null) throw new EOFException("No flags passed")
@@ -251,46 +457,44 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
             args(0).toInt
          }
          catch {
-            case e: NumberFormatException => return -1 // Either unformatted number, or noreply found
+            case e: NumberFormatException => -1 // Either unformatted number, or noreply found
          }
       }
       else 0
    }
 
-   override def getCache: Cache[String, Array[Byte]] = cache
+   def getCache: Cache[String, Array[Byte]] = cache
 
-   override def getCacheConfiguration: Configuration = cache.getCacheConfiguration
+   def getCacheConfiguration: Configuration = cache.getCacheConfiguration
 
-   override def getCacheRegistry: ComponentRegistry = cache.getComponentRegistry
+   def getCacheRegistry: ComponentRegistry = cache.getComponentRegistry
 
-   override protected def customDecodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
+   protected def customDecodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
       val ch = ctx.channel
       header.op match {
          case FlushAllRequest => flushAll(buffer, ch, isReadParams = false) // Without params
-         case VersionRequest => {
+         case VersionRequest =>
             val ret = new StringBuilder().append("VERSION ").append(Version.getVersion).append(CRLF)
             writeResponse(ch, ret)
-         }
          case QuitRequest => closeChannel(ch)
       }
    }
 
-   override protected def customDecodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
+   protected def customDecodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
       val ch = ctx.channel
       header.op match {
-         case AppendRequest | PrependRequest | IncrementRequest | DecrementRequest => {
+         case AppendRequest | PrependRequest | IncrementRequest | DecrementRequest =>
             key = readKey(buffer)._1
             checkpointTo(DECODE_PARAMETERS)
-         }
          case FlushAllRequest => flushAll(buffer, ch, isReadParams = true) // With params
       }
    }
 
-   override protected def customDecodeValue(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
+   protected def customDecodeValue(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef = {
       val ch = ctx.channel
       val op = header.op
       op match {
-         case AppendRequest | PrependRequest => {
+         case AppendRequest | PrependRequest =>
             readValue(buffer)
             val prev = cache.get(key)
             val ret =
@@ -303,12 +507,11 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
                   if (replaced)
                      if (!params.noReply) STORED else null
                   else // If there's a concurrent modification on this key, treat it as we couldn't replace it
-                     if (!params.noReply) NOT_STORED else null
+                  if (!params.noReply) NOT_STORED else null
                } else {
                   if (!params.noReply) NOT_STORED else null
                }
             writeResponse(ch, ret)
-         }
          case IncrementRequest | DecrementRequest => incrDecr(ch)
       }
    }
@@ -322,14 +525,12 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
             val delta = validateDelta(params.delta)
             val newCounter =
                op match {
-                  case IncrementRequest => {
+                  case IncrementRequest =>
                      val candidateCounter = prevCounter + delta
                      if (candidateCounter > MAX_UNSIGNED_LONG) 0 else candidateCounter
-                  }
-                  case DecrementRequest => {
+                  case DecrementRequest =>
                      val candidateCounter = prevCounter - delta
                      if (candidateCounter < 0) 0 else candidateCounter
-                  }
                }
 
             val next = newCounter.toString.getBytes
@@ -370,7 +571,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       bigIntDelta
    }
 
-   override def createSuccessResponse(prev: Array[Byte]): AnyRef = {
+   def createSuccessResponse(prev: Array[Byte]): AnyRef = {
       if (isStatsEnabled) {
          header.op match {
             case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedHits.incrementAndGet
@@ -385,7 +586,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       } else null
    }
 
-   override def createNotExecutedResponse(prev: Array[Byte]): AnyRef = {
+   def createNotExecutedResponse(prev: Array[Byte]): AnyRef = {
       if (isStatsEnabled) {
          header.op match {
             case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedBadval.incrementAndGet
@@ -400,7 +601,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       } else null
    }
 
-   override def createNotExistResponse: AnyRef = {
+   def createNotExistResponse: AnyRef = {
       if (isStatsEnabled) {
          header.op match {
             case ReplaceIfUnmodifiedRequest => replaceIfUnmodifiedMisses.incrementAndGet
@@ -413,7 +614,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
          null
    }
 
-   override def createGetResponse(k: String, entry: CacheEntry[String, Array[Byte]]): AnyRef = {
+   def createGetResponse(k: String, entry: CacheEntry[String, Array[Byte]]): AnyRef = {
       if (entry != null) {
          header.op match {
             case GetRequest =>
@@ -426,53 +627,85 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
          END
    }
 
-   override def createMultiGetResponse(pairs: Map[String, CacheEntry[String, Array[Byte]]]): AnyRef = {
+   private def buildSingleGetResponse(k: String, entry: CacheEntry[String, Array[Byte]]): ByteBuf = {
+      val buf = buildGetHeaderBegin(k, entry, END_SIZE)
+      writeGetHeaderData(entry.getValue, buf)
+      writeGetHeaderEnd(buf)
+   }
+
+   def createMultiGetResponse(pairs: Map[String, CacheEntry[String, Array[Byte]]]): AnyRef = {
       val elements = new ListBuffer[ByteBuf]
       val op = header.op
       op match {
-         case GetRequest | GetWithVersionRequest => {
+         case GetRequest | GetWithVersionRequest =>
             for ((k, entry) <- pairs)
                elements += buildGetResponse(op, k, entry)
             elements += wrappedBuffer(END)
-         }
       }
       elements.toArray
    }
 
-   override def createErrorResponse(t: Throwable): AnyRef = {
+   def handleModification(ch: Channel, buf: ByteBuf): AnyRef = {
+      val (k, endOfOp) = readKey(buf)
+      key = k
+      if (endOfOp) {
+         // If it's the end of the operation, it can only be a remove
+         writeResponse(ch, remove)
+      } else {
+         checkpointTo(DECODE_PARAMETERS)
+      }
+   }
+
+   def checkpointTo(state: MemcachedDecoderState): AnyRef = {
+      checkpoint(state)
+      null // For netty's decoder that mandates a return
+   }
+
+   private def resetParams: AnyRef = {
+      checkpointTo(DECODE_HEADER)
+      // Reset parameters to avoid leaking previous params
+      // into a request that has no params
+      params = null
+      rawValue = null // Clear reference to value
+      null
+   }
+
+
+   protected def remove: AnyRef = {
+      val prev = cache.remove(key)
+      if (prev != null)
+         createSuccessResponse(prev)
+      else
+         createNotExistResponse
+   }
+
+   def createErrorResponse(t: Throwable): AnyRef = {
       val sb = new StringBuilder
       t match {
-         case m: MemcachedException => {
+         case m: MemcachedException =>
             m.getCause match {
-               case u: UnknownOperationException => {
+               case u: UnknownOperationException =>
                   logExceptionReported(u)
                   ERROR
-               }
-               case c: ClosedChannelException => {
+               case c: ClosedChannelException =>
                   logExceptionReported(c)
                   null // no-op, only log
-               }
-               case i: IOException => {
+               case i: IOException =>
                   logAndCreateErrorMessage(sb, m)
-               }
-               case n: NumberFormatException => {
+               case n: NumberFormatException =>
                   logAndCreateErrorMessage(sb, m)
-               }
-               case i: IllegalStateException => {
+               case i: IllegalStateException =>
                   logAndCreateErrorMessage(sb, m)
-               }
                case _ => sb.append(m.getMessage).append(CRLF)
             }
-         }
-         case c: ClosedChannelException => {
+         case c: ClosedChannelException =>
             logExceptionReported(c)
             null // no-op, only log
-         }
          case _ => sb.append(SERVER_ERROR).append(t.getMessage).append(CRLF)
       }
    }
 
-   override protected def buildMetadata(): Metadata = {
+   protected def buildMetadata(): Metadata = {
       val metadata = new MemcachedMetadataBuilder
       metadata.version(generateVersion(cache))
       metadata.flags(params.flags)
@@ -487,7 +720,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       sb.append(m.getMessage).append(CRLF)
    }
 
-   override protected def createServerException(e: Exception, b: ByteBuf): (MemcachedException, Boolean) = {
+   protected def createServerException(e: Exception, b: ByteBuf): (MemcachedException, Boolean) = {
       e match {
          case i: IOException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT + i.getMessage, i), true)
          case n: NumberFormatException => (new MemcachedException(CLIENT_ERROR_BAD_FORMAT + n.getMessage, n), true)
@@ -500,10 +733,52 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       null
    }
 
-   override def createStatsResponse: AnyRef = {
+   /**
+    * Transforms lifespan pass as seconds into milliseconds
+    * following this rule:
+    *
+    * If lifespan is bigger than number of seconds in 30 days,
+    * then it is considered unix time. After converting it to
+    * milliseconds, we substract the current time in and the
+    * result is returned.
+    *
+    * Otherwise it's just considered number of seconds from
+    * now and it's returned in milliseconds unit.
+    */
+   protected def toMillis(lifespan: Int): Long = {
+      if (lifespan > SecondsInAMonth) {
+         val unixTimeExpiry = TimeUnit.SECONDS.toMillis(lifespan) - System.currentTimeMillis
+         if (unixTimeExpiry < 0) 0 else unixTimeExpiry
+      } else {
+         TimeUnit.SECONDS.toMillis(lifespan)
+      }
+   }
+
+   protected def writeResponse(ch: Channel, response: AnyRef): AnyRef = {
+      try {
+         if (response != null) {
+            if (isTrace) trace("Write response %s", response)
+            response match {
+               // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure
+               case l: Array[ByteBuf] =>
+                  l.foreach(ch.write(_))
+                  ch.flush
+               case a: Array[Byte] => ch.writeAndFlush(wrappedBuffer(a))
+               case cs: CharSequence => ch.writeAndFlush(Unpooled.copiedBuffer(cs, CharsetUtil.UTF_8))
+               case pr: PartialResponse => return pr
+               case _ => ch.writeAndFlush(response)
+            }
+         }
+         null
+      } finally {
+         resetParams
+      }
+   }
+
+   def createStatsResponse: AnyRef = {
       val stats = cache.getAdvancedCache.getStats
       val sb = new StringBuilder
-      Array[ByteBuf] (
+      Array[ByteBuf](
          buildStat("pid", 0, sb),
          buildStat("uptime", stats.getTimeSinceStart, sb),
          buildStat("uptime", stats.getTimeSinceStart, sb),
@@ -557,14 +832,8 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
       writeGetHeaderData(entry.getValue, buf)
    }
 
-   private def buildSingleGetResponse(k: String, entry: CacheEntry[String, Array[Byte]]): ByteBuf = {
-      val buf = buildGetHeaderBegin(k, entry, END_SIZE)
-      writeGetHeaderData(entry.getValue, buf)
-      writeGetHeaderEnd(buf)
-   }
-
    private def buildGetHeaderBegin(k: String, entry: CacheEntry[String, Array[Byte]],
-           extraSpace: Int): ByteBuf = {
+                                   extraSpace: Int): ByteBuf = {
       val data = entry.getValue
       val dataSize = Integer.valueOf(data.length).toString.getBytes
       val key = k.getBytes
@@ -577,7 +846,7 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
 
       val flagsSize = flags.length
       val buf = buffer(VALUE_SIZE + key.length + data.length + flagsSize
-              + dataSize.length + 6 + extraSpace)
+      + dataSize.length + 6 + extraSpace)
       buf.writeBytes(VALUE)
       buf.writeBytes(key)
       buf.writeByte(SP)
@@ -621,35 +890,34 @@ class MemcachedDecoder(memcachedCache: AdvancedCache[String, Array[Byte]], sched
    private def numericLimitCheck(number: String, maxValue: Long, message: String, n: NumberFormatException): Int = {
       if (java.lang.Long.parseLong(number) > maxValue)
          throw new NumberFormatException(message + " sent (" + number
-            + ") exceeds the limit (" + maxValue + ")")
+         + ") exceeds the limit (" + maxValue + ")")
       else throw n
    }
 
-   private def numericLimitCheck(number: String, maxValue: Long, message: String): Long =  {
+   private def numericLimitCheck(number: String, maxValue: Long, message: String): Long = {
       val numeric = java.lang.Long.parseLong(number)
       if (java.lang.Long.parseLong(number) > maxValue)
          throw new NumberFormatException(message + " sent (" + number
-            + ") exceeds the limit (" + maxValue + ")")
+         + ") exceeds the limit (" + maxValue + ")")
       numeric
    }
 }
 
-class MemcachedParameters(override val valueLength: Int, override val lifespan: Int,
-                          override val maxIdle: Int, override val streamVersion: Long,
+class MemcachedParameters(val valueLength: Int, val lifespan: Int,
+                          val maxIdle: Int, val streamVersion: Long,
                           val noReply: Boolean, val flags: Long, val delta: String,
-                          val flushDelay: Int)
-        extends RequestParameters(valueLength, lifespan, maxIdle, streamVersion) {
+                          val flushDelay: Int) {
    override def toString = {
       new StringBuilder().append("MemcachedParameters").append("{")
-         .append("valueLength=").append(valueLength)
-         .append(", lifespan=").append(lifespan)
-         .append(", maxIdle=").append(maxIdle)
-         .append(", streamVersion=").append(streamVersion)
-         .append(", noReply=").append(noReply)
-         .append(", flags=").append(flags)
-         .append(", delta=").append(delta)
-         .append(", flushDelay=").append(flushDelay)
-         .append("}").toString
+      .append("valueLength=").append(valueLength)
+      .append(", lifespan=").append(lifespan)
+      .append(", maxIdle=").append(maxIdle)
+      .append(", streamVersion=").append(streamVersion)
+      .append(", noReply=").append(noReply)
+      .append(", flags=").append(flags)
+      .append(", delta=").append(delta)
+      .append(", flushDelay=").append(flushDelay)
+      .append("}").toString
    }
 }
 
@@ -662,6 +930,7 @@ private class DelayedFlushAll(cache: AdvancedCache[String, Array[Byte]],
 
 private object RequestResolver extends Log {
    private val isTrace = isTraceEnabled
+
    def toRequest(commandName: String, endOfOp: Boolean, buffer: ByteBuf): Enumeration#Value = {
       if (isTrace) trace("Operation: '%s'", commandName)
       val op = commandName match {
@@ -681,7 +950,7 @@ private object RequestResolver extends Log {
          case "stats" => StatsRequest
          case "verbosity" => VerbosityRequest
          case "quit" => QuitRequest
-         case _ => {
+         case _ =>
             if (!endOfOp) {
                val line = readDiscardedLine(buffer) // Read rest of line to clear the operation
                debug("Unexpected operation '%s', rest of line contains: %s",
@@ -689,10 +958,24 @@ private object RequestResolver extends Log {
             }
 
             throw new UnknownOperationException("Unknown operation: " + commandName)
-         }
       }
       op
    }
 }
 
 class MemcachedException(message: String, cause: Throwable) extends Exception(message, cause)
+
+class RequestHeader {
+   var op: Enumeration#Value = _
+
+   override def toString = {
+      new StringBuilder().append("RequestHeader").append("{")
+      .append("op=").append(op)
+      .append("}").toString
+   }
+}
+
+
+class UnknownOperationException(reason: String) extends StreamCorruptedException(reason)
+
+class PartialResponse(val buffer: Option[ByteBuf])

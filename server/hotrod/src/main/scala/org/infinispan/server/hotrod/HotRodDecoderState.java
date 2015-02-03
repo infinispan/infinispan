@@ -1,4 +1,4 @@
-package org.infinispan.server.core;
+package org.infinispan.server.hotrod;
 
 /**
  * Protocol decoding state
@@ -6,7 +6,7 @@ package org.infinispan.server.core;
  * @author Galder Zamarreño
  * @since 4.2
  */
-public enum DecoderState {
+public enum HotRodDecoderState {
    DECODE_HEADER,
    DECODE_KEY,
    DECODE_PARAMETERS,

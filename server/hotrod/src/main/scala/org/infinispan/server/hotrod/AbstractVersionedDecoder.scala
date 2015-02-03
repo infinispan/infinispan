@@ -1,7 +1,7 @@
 package org.infinispan.server.hotrod
 
 import org.infinispan.stats.Stats
-import org.infinispan.server.core.{QueryFacade, RequestParameters}
+import org.infinispan.server.core.QueryFacade
 import org.infinispan.server.core.transport.NettyTransport
 import org.infinispan.container.entries.CacheEntry
 import io.netty.buffer.ByteBuf
@@ -35,22 +35,22 @@ abstract class AbstractVersionedDecoder {
    /**
     * Create a successful response.
     */
-   def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): AnyRef
+   def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): Response
 
    /**
     * Create a response indicating the the operation could not be executed.
     */
-   def createNotExecutedResponse(header: HotRodHeader, prev: Array[Byte]): AnyRef
+   def createNotExecutedResponse(header: HotRodHeader, prev: Array[Byte]): Response
 
    /**
     * Create a response indicating that the key, which the message tried to operate on, did not exist.
     */
-   def createNotExistResponse(header: HotRodHeader): AnyRef
+   def createNotExistResponse(header: HotRodHeader): Response
 
    /**
     * Create a response for get a request.
     */
-   def createGetResponse(header: HotRodHeader, entry: CacheEntry[Array[Byte], Array[Byte]]): AnyRef
+   def createGetResponse(header: HotRodHeader, entry: CacheEntry[Array[Byte], Array[Byte]]): Response
 
    /**
     * Handle a protocol specific header reading.
@@ -70,7 +70,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Create a response for the stats command.
     */
-   def createStatsResponse(header: HotRodHeader, stats: Stats, t: NettyTransport): AnyRef
+   def createStatsResponse(header: HotRodHeader, stats: Stats, t: NettyTransport): StatsResponse
 
    /**
     * Create an error response based on the Throwable instance received.

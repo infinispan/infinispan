@@ -129,7 +129,7 @@ class NettyTransport(server: ProtocolServer, handler: ChannelInitializer[Channel
          getNumberOfLocalConnections
    }
 
-   private[core] def updateTotalBytesWritten(bytes: Int) {
+   private[server] def updateTotalBytesWritten(bytes: Int) {
       if (isGlobalStatsEnabled)
          incrementTotalBytesWritten(totalBytesWritten, bytes)
    }
@@ -139,7 +139,7 @@ class NettyTransport(server: ProtocolServer, handler: ChannelInitializer[Channel
          base.addAndGet(bytes)
    }
 
-   private[core] def updateTotalBytesRead(bytes: Int) {
+   private[server] def updateTotalBytesRead(bytes: Int) {
       if (isGlobalStatsEnabled)
          incrementTotalBytesRead(totalBytesRead, bytes)
    }
