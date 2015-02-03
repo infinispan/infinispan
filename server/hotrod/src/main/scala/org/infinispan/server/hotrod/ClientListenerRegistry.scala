@@ -366,3 +366,5 @@ object ClientListenerRegistry extends Constants {
    }
 
 }
+
+class MissingFactoryException(reason: String) extends IllegalArgumentException(reason)

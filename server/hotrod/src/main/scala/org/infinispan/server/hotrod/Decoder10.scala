@@ -16,8 +16,6 @@ import transport.NettyTransport
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
-import scala.Some
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.Channel
 
@@ -72,7 +70,6 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       header.flag = flag
       header.clientIntel = clientIntelligence
       header.topologyId = topologyId
-      header.decoder = this
       endOfOp
    }
 
@@ -90,19 +87,17 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       header.op match {
          case RemoveRequest => (null, true)
          case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, -1, -1, buffer.readLong), true)
-         case ReplaceIfUnmodifiedRequest => {
+         case ReplaceIfUnmodifiedRequest =>
             val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
             val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
             val version = buffer.readLong
             val valueLength = readUnsignedInt(buffer)
             (new RequestParameters(valueLength, lifespan, maxIdle, version), false)
-         }
-         case _ => {
+         case _ =>
             val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
             val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
             val valueLength = readUnsignedInt(buffer)
             (new RequestParameters(valueLength, lifespan, maxIdle, -1), false)
-         }
       }
    }
 
@@ -120,16 +115,16 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       } else stream
    }
 
-   override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): AnyRef =
+   override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): Response =
       createResponse(header, toResponse(header.op), Success, prev)
 
-   override def createNotExecutedResponse(header: HotRodHeader, prev: Array[Byte]): AnyRef =
+   override def createNotExecutedResponse(header: HotRodHeader, prev: Array[Byte]): Response =
       createResponse(header, toResponse(header.op), OperationNotExecuted, prev)
 
-   override def createNotExistResponse(header: HotRodHeader): AnyRef =
+   override def createNotExistResponse(header: HotRodHeader): Response =
       createResponse(header, toResponse(header.op), KeyDoesNotExist, null)
 
-   private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: Array[Byte]): AnyRef = {
+   private def createResponse(h: HotRodHeader, op: OperationResponse, st: OperationStatus, prev: Array[Byte]): Response = {
       if (hasFlag(h, ForceReturnPreviousValue))
          new ResponseWithPrevious(h.version, h.messageId, h.cacheName,
                h.clientIntel, op, st, h.topologyId, if (prev == null) None else Some(prev))
@@ -137,17 +132,17 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
          new Response(h.version, h.messageId, h.cacheName, h.clientIntel, op, st, h.topologyId)
    }
 
-   override def createGetResponse(h: HotRodHeader, entry: CacheEntry[Array[Byte], Array[Byte]]): AnyRef = {
+   override def createGetResponse(h: HotRodHeader, entry: CacheEntry[Array[Byte], Array[Byte]]): Response = {
       val op = h.op
       if (entry != null && op == GetRequest)
          new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                GetResponse, Success, h.topologyId,
-               Some(entry.getValue.asInstanceOf[Array[Byte]]))
+               Some(entry.getValue))
       else if (entry != null && op == GetWithVersionRequest) {
          val version = entry.getMetadata.version().asInstanceOf[NumericVersion].getVersion
          new GetWithVersionResponse(h.version, h.messageId, h.cacheName,
             h.clientIntel, GetWithVersionResponse, Success, h.topologyId,
-            Some(entry.getValue.asInstanceOf[Array[Byte]]), version)
+            Some(entry.getValue), version)
       } else if (op == GetRequest)
          new GetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                          GetResponse, KeyDoesNotExist, h.topologyId, None)
@@ -159,12 +154,11 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
 
    override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef = {
       h.op match {
-         case ClearRequest => {
+         case ClearRequest =>
             // Get an optimised cache in case we can make the operation more efficient
             cache.clear()
             new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
                          ClearResponse, Success, h.topologyId)
-         }
          case PingRequest => new Response(h.version, h.messageId, h.cacheName,
                   h.clientIntel, PingResponse, Success, h.topologyId)
       }
@@ -172,13 +166,12 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
 
    override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ch: Channel): AnyRef = {
       h.op match {
-         case RemoveIfUnmodifiedRequest => {
+         case RemoveIfUnmodifiedRequest =>
             val k = readKey(buffer)
             val params = readParameters(h, buffer)._1
             val entry = cache.getCacheEntry(k)
             if (entry != null) {
-               // Hacky, but CacheEntry has not been generified
-               val prev = entry.getValue.asInstanceOf[Array[Byte]]
+               val prev = entry.getValue
                val streamVersion = new NumericVersion(params.streamVersion)
                if (entry.getMetadata.version() == streamVersion) {
                   val removed = cache.remove(k, prev)
@@ -192,8 +185,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
             } else {
                createResponse(h, RemoveIfUnmodifiedResponse, KeyDoesNotExist, null)
             }
-         }
-         case ContainsKeyRequest => {
+         case ContainsKeyRequest =>
             val k = readKey(buffer)
             if (cache.containsKey(k))
                new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
@@ -201,29 +193,24 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
             else
                new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
                             ContainsKeyResponse, KeyDoesNotExist, h.topologyId)
-         }
-         case BulkGetRequest => {
+         case BulkGetRequest =>
             val count = readUnsignedInt(buffer)
             if (isTrace) trace("About to create bulk response, count = %d", count)
             new BulkGetResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                                 BulkGetResponse, Success, h.topologyId, count)
-         }
-         case BulkGetKeysRequest => {
+         case BulkGetKeysRequest =>
             val scope = readUnsignedInt(buffer)
             if (isTrace) trace("About to create bulk get keys response, scope = %d", scope)
             new BulkGetKeysResponse(h.version, h.messageId, h.cacheName,
                   h.clientIntel, BulkGetKeysResponse, Success, h.topologyId, scope)
-         }
-         case GetWithMetadataRequest => {
+         case GetWithMetadataRequest =>
             val k = readKey(buffer)
             getKeyMetadata(h, k, cache)
-         }
-         case QueryRequest => {
+         case QueryRequest =>
             val query = readRangedBytes(buffer)
             val result = server.getQueryFacades.head.query(cache, query)
             new QueryResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                h.topologyId, result)
-         }
       }
    }
 
@@ -247,7 +234,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
 
    override def customReadValue(header: HotRodHeader, buffer: ByteBuf, cache: Cache): AnyRef = null
 
-   override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): AnyRef = {
+   override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): StatsResponse = {
       val stats = mutable.Map.empty[String, String]
       stats += ("timeSinceStart" -> cacheStats.getTimeSinceStart.toString)
       stats += ("currentNumberOfEntries" -> cacheStats.getCurrentNumberOfEntries.toString)
