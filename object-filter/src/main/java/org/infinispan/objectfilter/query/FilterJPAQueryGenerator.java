@@ -6,7 +6,7 @@ import org.infinispan.query.dsl.impl.JPAQueryGenerator;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterJPAQueryGenerator extends JPAQueryGenerator {
+final class FilterJPAQueryGenerator extends JPAQueryGenerator {
 
    public FilterJPAQueryGenerator() {
    }
