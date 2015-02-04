@@ -26,11 +26,8 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
 @MetaInfServices
 @Namespaces({
     @Namespace(uri = "urn:infinispan:config:store:jdbc:7.1", root = "string-keyed-jdbc-store"),
-    @Namespace(root = "string-keyed-jdbc-store"),
     @Namespace(uri = "urn:infinispan:config:store:jdbc:7.1", root = "binary-keyed-jdbc-store"),
-    @Namespace(root = "binary-keyed-jdbc-store"),
     @Namespace(uri = "urn:infinispan:config:store:jdbc:7.1", root = "mixed-keyed-jdbc-store"),
-    @Namespace(root = "mixed-keyed-jdbc-store")
 })
 public class JdbcStoreConfigurationParser71 implements ConfigurationParser {
 

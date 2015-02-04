@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified"
-           version="1.0" targetNamespace="urn:infinispan:config:7.1"
-           xmlns:tns="urn:infinispan:config:7.1" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+           version="1.0" targetNamespace="urn:infinispan:config:7.2"
+           xmlns:tns="urn:infinispan:config:7.2" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
   <xs:element name="infinispan" type="tns:infinispan">
     <xs:annotation>
@@ -491,6 +491,34 @@
 
   <xs:complexType name="cache" abstract="true">
     <xs:sequence>
+      <xs:element name="backups" type="tns:backups" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>The state transfer configuration for distribution and replicated caches.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="backup-for" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>
+            Configures this cache as a backup for a remote cache.
+          </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+          <xs:attribute name="remote-cache" type="xs:string" use="optional">
+            <xs:annotation>
+              <xs:documentation>
+                The name of the remote cache that backups data here.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+          <xs:attribute name="remote-site" type="xs:string" use="optional">
+            <xs:annotation>
+              <xs:documentation>
+                The name of the remote site containing the cache that backups data here.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:complexType>
+      </xs:element>
       <xs:element name="locking" type="tns:locking" minOccurs="0">
         <xs:annotation>
           <xs:documentation>The locking configuration of the cache.</xs:documentation>
@@ -920,34 +948,6 @@
     <xs:complexContent>
       <xs:extension base="tns:cache">
         <xs:sequence>
-          <xs:element name="backups" type="tns:backups" minOccurs="0">
-            <xs:annotation>
-              <xs:documentation>The state transfer configuration for distribution and replicated caches.</xs:documentation>
-            </xs:annotation>
-          </xs:element>
-          <xs:element name="backup-for" minOccurs="0" maxOccurs="1">
-            <xs:annotation>
-              <xs:documentation>
-                Configures this cache as a backup for a remote cache.
-              </xs:documentation>
-            </xs:annotation>
-            <xs:complexType>
-              <xs:attribute name="remote-cache" type="xs:string" use="optional">
-                <xs:annotation>
-                  <xs:documentation>
-                    The name of the remote cache that backups data here.
-                  </xs:documentation>
-                </xs:annotation>
-              </xs:attribute>
-              <xs:attribute name="remote-site" type="xs:string" use="optional">
-                <xs:annotation>
-                  <xs:documentation>
-                    The name of the remote site containing the cache that backups data here.
-                  </xs:documentation>
-                </xs:annotation>
-              </xs:attribute>
-            </xs:complexType>
-          </xs:element>
           <xs:element name="partition-handling" minOccurs="0" maxOccurs="1">
              <xs:annotation>
                 <xs:documentation>
