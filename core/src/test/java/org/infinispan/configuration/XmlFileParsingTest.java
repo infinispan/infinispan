@@ -1,7 +1,6 @@
 package org.infinispan.configuration;
 
 import org.infinispan.Version;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;

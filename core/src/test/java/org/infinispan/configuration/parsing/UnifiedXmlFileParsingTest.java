@@ -1,5 +1,15 @@
 package org.infinispan.configuration.parsing;
 
+import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
@@ -37,31 +47,21 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-
-import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.*;
 
 @Test(groups = "unit", testName = "configuration.parsing.UnifiedXmlFileParsingTest")
 public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
-   public void testParseAndConstructUnifiedXmlFile71() throws IOException {
-      withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.fromXml("configs/unified/7.1.xml", true, false)) {
-         @Override
-         public void call() {
-            configurationCheck70(cm);
-         }
-      });
+   @DataProvider(name = "configurationFiles")
+   public Object[][] configurationFiles() {
+      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"} };
    }
 
-   public void testParseAndConstructUnifiedXmlFile70() throws IOException {
+   @Test(dataProvider="configurationFiles")
+   public void testParseAndConstructUnifiedXmlFile(String config) throws IOException {
       withCacheManager(new CacheManagerCallable(
-            TestCacheManagerFactory.fromXml("configs/unified/7.0.xml", true, false)) {
+            TestCacheManagerFactory.fromXml("configs/unified/" + config, true, false)) {
          @Override
          public void call() {
             configurationCheck70(cm);

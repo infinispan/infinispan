@@ -24,7 +24,6 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
 @MetaInfServices
 @Namespaces({
       @Namespace(uri = "urn:infinispan:config:store:cli:7.1", root = "cli-loader"),
-      @Namespace(root = "cli-loader")
 })
 public class CLInterfaceLoaderConfigurationParser71 implements ConfigurationParser {
 

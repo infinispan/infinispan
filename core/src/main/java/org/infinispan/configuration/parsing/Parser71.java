@@ -64,7 +64,6 @@ import static org.infinispan.factories.KnownComponentNames.*;
 @MetaInfServices
 @Namespaces({
       @Namespace(uri = "urn:infinispan:config:7.1", root = "infinispan"),
-      @Namespace(root = "infinispan")
 })
 public class Parser71 implements ConfigurationParser {
 
