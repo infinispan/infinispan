@@ -41,10 +41,18 @@
             <directory>${project.basedir}/src/main/resources</directory>
             <filtering>false</filtering>
             <includes>
+               <include>schema/*-${infinispan.core.schema.version}.xsd</include>
+            </includes>
+         </resource>
+         <resource>
+            <directory>${project.basedir}/src/main/resources</directory>
+            <filtering>false</filtering>
+            <includes>
                <include>**/*</include>
             </includes>
             <excludes>
                <exclude>features.xml</exclude>
+               <exclude>schema/**</exclude>
            </excludes>
          </resource>
       </resources>
