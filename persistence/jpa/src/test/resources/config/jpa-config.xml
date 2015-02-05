@@ -2,9 +2,9 @@
 <infinispan
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="urn:infinispan:config:7.1 http://www.infinispan.org/schemas/infinispan-config-7.1.xsd
-   urn:infinispan:config:store:jpa:7.0 http://www.infinispan.org/schemas/infinispan-cachestore-jpa-config-7.0.xsd"
+   urn:infinispan:config:store:jpa:7.1 http://www.infinispan.org/schemas/infinispan-cachestore-jpa-config-7.1.xsd"
    xmlns="urn:infinispan:config:7.1"
-   xmlns:jpa="urn:infinispan:config:store:jpa:7.0"
+   xmlns:jpa="urn:infinispan:config:store:jpa:7.1"
    >
 
   <cache-container default-cache="default">
@@ -15,7 +15,7 @@
     </local-cache>
     <local-cache name="vehicleCache">
       <persistence passivation="false">
-        <jpa-store xmlns="urn:infinispan:config:store:jpa:7.0"
+        <jpa-store xmlns="urn:infinispan:config:store:jpa:7.1"
                   shared="false" preload="true"
                   persistence-unit="org.infinispan.persistence.jpa.configurationTest"
                   entity-class="org.infinispan.persistence.jpa.entity.Vehicle"

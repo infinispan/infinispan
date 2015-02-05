@@ -83,16 +83,17 @@
          <mkdir dir="@{dir}/schema" />
          <copy todir="@{dir}/schema">
             <fileset dir="${basedir}/..">
-               <include name="**/src/main/resources/schema/*.xsd" />
+               <include name="**/src/main/resources/schema/*-${infinispan.core.schema.version}.xsd" />
+               <include name="**/src/main/resources/org/infinispan/spring/config/*${infinispan.core.schema.version}.xsd" />
             </fileset>
             <mapper type="flatten" />
          </copy>
          <!-- JavaDocs -->
-         <mkdir dir="@{dir}/doc" />
-         <copy todir="@{dir}/doc/apidocs">
+         <mkdir dir="@{dir}/docs" />
+         <copy todir="@{dir}/docs/api">
             <fileset dir="${project.build.directory}/site/apidocs" />
          </copy>
-         <copy todir="@{dir}/doc/configdocs">
+         <copy todir="@{dir}/docs/config">
             <fileset dir="${project.build.directory}/site/configdocs" />
          </copy>
       </sequential>
