@@ -2,6 +2,8 @@ package org.infinispan.notifications.cachelistener.filter;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.marshall.core.Ids;
@@ -35,6 +37,11 @@ public class CacheEventConverterAsConverter<K, V, C> implements Converter<K, V, 
    @Override
    public C convert(K key, V value, Metadata metadata) {
       return converter.convert(key, null, null, value, metadata, CREATE_EVENT);
+   }
+
+   @Inject
+   protected void injectDependencies(ComponentRegistry cr) {
+      cr.wireDependencies(converter);
    }
 
    public static class Externalizer extends AbstractExternalizer<CacheEventConverterAsConverter> {

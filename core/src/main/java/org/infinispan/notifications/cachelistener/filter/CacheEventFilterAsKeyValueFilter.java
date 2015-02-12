@@ -2,6 +2,8 @@ package org.infinispan.notifications.cachelistener.filter;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
@@ -34,6 +36,11 @@ public class CacheEventFilterAsKeyValueFilter<K, V> implements KeyValueFilter<K,
    @Override
    public boolean accept(K key, V value, Metadata metadata) {
       return filter.accept(key, null, null, value, metadata, CREATE_EVENT);
+   }
+
+   @Inject
+   protected void injectDependencies(ComponentRegistry cr) {
+      cr.wireDependencies(filter);
    }
 
    public static class Externalizer extends AbstractExternalizer<CacheEventFilterAsKeyValueFilter> {
