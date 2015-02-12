@@ -2,8 +2,14 @@ package org.infinispan.query;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
+import org.infinispan.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
+import org.infinispan.query.dsl.embedded.impl.JPACacheEventFilterConverter;
+import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.impl.SearchManagerImpl;
 import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.security.AuthorizationManager;
@@ -15,6 +21,11 @@ import org.infinispan.security.AuthorizationPermission;
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2011 Red Hat Inc.
  */
 public final class Search {
+
+   public static <K, V, C> CacheEventFilterConverter<K, V, C> makeFilter(Query query) {
+      JPAFilterAndConverter<K, V> filterAndConverter = new JPAFilterAndConverter<K, V>(((BaseQuery) query).getJPAQuery(), ReflectionMatcher.class);
+      return new JPACacheEventFilterConverter<K, V, C>(filterAndConverter);
+   }
 
    public static QueryFactory getQueryFactory(Cache<?, ?> cache) {
       if (cache == null || cache.getAdvancedCache() == null) {
