@@ -2,6 +2,8 @@ package org.infinispan.filter;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
@@ -25,9 +27,15 @@ public class KeyFilterAsKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
       }
       this.filter = filter;
    }
+
    @Override
    public boolean accept(K key, V value, Metadata metadata) {
       return filter.accept(key);
+   }
+
+   @Inject
+   protected void injectDependencies(ComponentRegistry cr) {
+      cr.wireDependencies(filter);
    }
 
    public static class Externalizer extends AbstractExternalizer<KeyFilterAsKeyValueFilter> {

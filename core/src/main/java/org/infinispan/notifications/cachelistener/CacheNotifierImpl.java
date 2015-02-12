@@ -18,8 +18,11 @@ import org.infinispan.distexec.DistributedExecutionCompletionService;
 import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -38,6 +41,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverterAsCo
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterAsKeyValueFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterAsKeyValueFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachelistener.filter.KeyFilterAsCacheEventFilter;
 import org.infinispan.notifications.impl.AbstractListenerImpl;
@@ -303,9 +307,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
    private void configureEvent(EventImpl<K, V> e, K key, V value, boolean pre, InvocationContext ctx,
                                FlagAffectedCommand command, V previousValue, Metadata previousMetadata) {
-      boolean originLocal = ctx.isOriginLocal();
-
-      e.setOriginLocal(originLocal);
+      e.setOriginLocal(ctx.isOriginLocal());
       e.setValue(pre ? previousValue : value);
       e.setPre(pre);
       e.setOldValue(previousValue);
@@ -652,7 +654,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       builder
             .setIncludeCurrentState(l.includeCurrentState())
             .setClustered(l.clustered())
-            .setOnlyPrimary(l.clustered() ? (cacheMode.isDistributed() ? true : false) : l.primaryOnly())
+            .setOnlyPrimary(l.clustered() ? cacheMode.isDistributed() : l.primaryOnly())
             .setFilter(filter)
             .setConverter(converter)
             .setIdentifier(generatedId)
@@ -727,8 +729,16 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          if (log.isTraceEnabled()) {
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
-         try (CloseableIterator<CacheEntry<K, C>> iterator = entryRetriever.retrieveEntries(filter == null ? null :
-               new CacheEventFilterAsKeyValueFilter(filter), converter == null ? null : new CacheEventConverterAsConverter(converter), null, handler)) {
+         final KeyValueFilter usedFilter;
+         final Converter usedConverter;
+         if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
+            usedFilter = new CacheEventFilterConverterAsKeyValueFilterConverter((CacheEventFilterConverter) filter);
+            usedConverter = null;
+         } else {
+            usedFilter = filter == null ? null : new CacheEventFilterAsKeyValueFilter(filter);
+            usedConverter = converter == null ? null : new CacheEventConverterAsConverter(converter);
+         }
+         try (CloseableIterator<CacheEntry<K, C>> iterator = entryRetriever.retrieveEntries(usedFilter, usedConverter, null, handler)) {
             while (iterator.hasNext()) {
                CacheEntry<K, C> entry = iterator.next();
                // Mark the key as processed and see if we had a concurrent update
@@ -862,6 +872,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       public CacheEntryListenerInvocation<K, V> build() {
          ListenerInvocation<Event<K, V>> invocation = new ListenerInvocationImpl(target, method, sync, classLoader,
                                                                                  subject);
+
+         wireFilterAndConverterDependencies(filter, converter);
+
          // If we are dealing with clustered events that forces the cluster listener to only use primary only else we would
          // have duplicate events
          CacheEntryListenerInvocation<K, V> returnValue;
@@ -905,6 +918,16 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                                                identifier, sync);
          }
          return returnValue;
+      }
+
+      private <C> void wireFilterAndConverterDependencies(CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
+         ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+         if (filter != null) {
+            componentRegistry.wireDependencies(filter);
+         }
+         if (converter != null && converter != filter) {
+            componentRegistry.wireDependencies(converter);
+         }
       }
    }
 
@@ -968,6 +991,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       protected final boolean clustered;
       protected final UUID identifier;
       protected final boolean sync;
+      protected final boolean filterAndConvert;
 
 
       protected BaseCacheEntryListenerInvocation(ListenerInvocation<Event<K, V>> invocation,
@@ -977,6 +1001,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          this.invocation = invocation;
          this.filter = filter;
          this.converter = converter;
+         this.filterAndConvert = filter instanceof CacheEventFilterConverter && (filter == converter || converter == null);
          this.onlyPrimary = onlyPrimary;
          this.clustered = clustered;
          this.identifier = identifier;
@@ -998,7 +1023,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          CacheEntryEvent<K, V> resultingEvent;
          // See if this should be filtered first before evaluating
          if ((resultingEvent = shouldInvoke(event, isLocalNodePrimaryOwner)) != null) {
-            invokeNoChecks(resultingEvent, false, filter == converter && filter instanceof CacheEventFilterConverter);
+            invokeNoChecks(resultingEvent, false, filterAndConvert);
          }
       }
 
@@ -1038,7 +1063,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             EventType eventType;
             // Only use the filter if it was provided and we have an event that we can filter properly
             if (filter != null && (eventType = getEvent(eventImpl)) != null) {
-               if (filter == converter && filter instanceof CacheEventFilterConverter) {
+               if (filterAndConvert) {
                   Object newValue = ((CacheEventFilterConverter)filter).filterAndConvert(eventImpl.getKey(),
                         eventImpl.getOldValue(), eventImpl.getOldMetadata(), eventImpl.getValue(),
                         eventImpl.getMetadata(), eventType);
@@ -1118,7 +1143,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                   returnedEvent = eventImpl;
                }
             } else {
-               throw new IllegalArgumentException("Provided event should be org.infinispan.notifications.cachelistener.eventEventImpl " +
+               throw new IllegalArgumentException("Provided event should be org.infinispan.notifications.cachelistener.event.impl.EventImpl " +
                                                         "when a converter is being used!");
             }
          } else {
