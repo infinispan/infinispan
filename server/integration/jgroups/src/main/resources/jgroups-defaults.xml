@@ -26,6 +26,8 @@
    <UDP 
       ucast_send_buf_size="1m"
       mcast_send_buf_size="1m"
+      ucast_recv_buf_size="20m"
+      mcast_recv_buf_size="25m"
       ip_ttl="${jgroups.ip_ttl:2}"
       thread_naming_pattern="pl"
       enable_diagnostics="false"
