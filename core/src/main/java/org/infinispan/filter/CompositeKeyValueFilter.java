@@ -1,7 +1,10 @@
 package org.infinispan.filter;
 
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
@@ -23,7 +26,6 @@ public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
       this.filters = filters;
    }
 
-
    @Override
    public boolean accept(K key, V value, Metadata metadata) {
       for (KeyValueFilter<? super K, ? super V> filter : filters) {
@@ -34,6 +36,13 @@ public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
       return true;
    }
 
+   @Inject
+   protected void injectDependencies(ComponentRegistry cr) {
+      for (KeyValueFilter<? super K, ? super V> f : filters) {
+         cr.wireDependencies(f);
+      }
+   }
+
    public static class Externalizer extends AbstractExternalizer<CompositeKeyValueFilter> {
       @Override
       public Set<Class<? extends CompositeKeyValueFilter>> getTypeClasses() {
@@ -42,7 +51,7 @@ public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
 
       @Override
       public void writeObject(ObjectOutput output, CompositeKeyValueFilter object) throws IOException {
-         output.writeInt(object.filters.length);
+         UnsignedNumeric.writeUnsignedInt(output, object.filters.length);
          for (KeyValueFilter filter : object.filters) {
             output.writeObject(filter);
          }
@@ -50,7 +59,7 @@ public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
 
       @Override
       public CompositeKeyValueFilter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         int filtersSize = input.readInt();
+         int filtersSize = UnsignedNumeric.readUnsignedInt(input);
          KeyValueFilter[] filters = new KeyValueFilter[filtersSize];
          for (int i = 0; i < filtersSize; ++i) {
             filters[i] = (KeyValueFilter)input.readObject();
