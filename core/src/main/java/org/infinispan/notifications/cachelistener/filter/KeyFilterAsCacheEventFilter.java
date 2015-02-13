@@ -9,7 +9,6 @@ import org.infinispan.metadata.Metadata;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.Set;
 
 /**
@@ -18,7 +17,7 @@ import java.util.Set;
  * @author wburns
  * @since 7.0
  */
-public class KeyFilterAsCacheEventFilter<K> implements CacheEventFilter<K, Object>, Serializable {
+public class KeyFilterAsCacheEventFilter<K> implements CacheEventFilter<K, Object> {
    private final KeyFilter<? super K> filter;
 
    public KeyFilterAsCacheEventFilter(KeyFilter<? super K> filter) {
