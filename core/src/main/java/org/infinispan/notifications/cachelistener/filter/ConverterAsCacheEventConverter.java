@@ -11,7 +11,6 @@ import org.infinispan.metadata.Metadata;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.Set;
 
 /**
@@ -20,7 +19,7 @@ import java.util.Set;
  * @author wburns
  * @since 7.0
  */
-public class ConverterAsCacheEventConverter<K, V, C> implements CacheEventConverter<K, V, C>, Serializable {
+public class ConverterAsCacheEventConverter<K, V, C> implements CacheEventConverter<K, V, C> {
    private final Converter<K, V, C> converter;
 
    public ConverterAsCacheEventConverter(Converter<K, V, C> converter) {

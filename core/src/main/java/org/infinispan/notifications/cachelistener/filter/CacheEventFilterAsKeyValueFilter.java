@@ -12,7 +12,6 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.Set;
 
 /**
@@ -24,7 +23,7 @@ import java.util.Set;
  * @author wburns
  * @since 7.0
  */
-public class CacheEventFilterAsKeyValueFilter<K, V> implements KeyValueFilter<K, V>, Serializable {
+public class CacheEventFilterAsKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
    private static final EventType CREATE_EVENT = new EventType(false, false, Event.Type.CACHE_ENTRY_CREATED);
 
    private final CacheEventFilter<K, V> filter;
