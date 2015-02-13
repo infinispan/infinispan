@@ -101,14 +101,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    static final boolean trace = log.isTraceEnabled();
 
    protected boolean connectChannel = true, disconnectChannel = true, closeChannel = true;
-   private CommandAwareRpcDispatcher dispatcher;
+   protected CommandAwareRpcDispatcher dispatcher;
    protected TypedProperties props;
    protected StreamingMarshaller marshaller;
    protected ExecutorService asyncExecutor;
    protected CacheManagerNotifier notifier;
-   private GlobalComponentRegistry gcr;
+   protected GlobalComponentRegistry gcr;
    private TimeService timeService;
-   private InboundInvocationHandler globalHandler;
+   protected InboundInvocationHandler globalHandler;
 
    private boolean globalStatsEnabled;
    private MBeanServer mbeanServer;
@@ -347,6 +347,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    private void initChannelAndRPCDispatcher() throws CacheException {
       initChannel();
+      initRPCDispatcher();
+   }
+
+   protected void initRPCDispatcher() {
       dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, gcr, globalHandler);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
