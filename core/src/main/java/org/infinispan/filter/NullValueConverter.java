@@ -5,10 +5,8 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 
-import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.Set;
 
 /**
@@ -18,7 +16,7 @@ import java.util.Set;
  * @author wburns
  * @since 7.0
  */
-public class NullValueConverter implements Converter<Object, Object, Void>, Serializable {
+public class NullValueConverter implements Converter<Object, Object, Void> {
 
    private NullValueConverter() { }
 
@@ -42,11 +40,11 @@ public class NullValueConverter implements Converter<Object, Object, Void>, Seri
       }
 
       @Override
-      public void writeObject(ObjectOutput output, NullValueConverter object) throws IOException {
+      public void writeObject(ObjectOutput output, NullValueConverter object) {
       }
 
       @Override
-      public NullValueConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public NullValueConverter readObject(ObjectInput input) {
          return NullValueConverter.getInstance();
       }
 
