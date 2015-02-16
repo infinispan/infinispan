@@ -3,10 +3,12 @@ package org.infinispan.persistence.file;
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.filter.KeyFilter;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -23,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -265,7 +268,44 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       assertTrue(length2 <= length1);
       assertTrue(length3 < length2);
    }
-   
+
+   public void testProcess() throws ExecutionException, InterruptedException {
+      final int NUM_WRITER_THREADS = 2;
+      final int NUM_KEYS = 2000;
+      final int MAX_VALUE_SIZE = 100;
+
+      Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
+      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
+      final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
+      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      assertEquals(0, store.size());
+
+      final List<String> keys = new ArrayList<String>(NUM_KEYS);
+      for (int j = 0; j < NUM_KEYS; j++) {
+         String key = "key" + j;
+         String value = key + "_value_" + j + times("123456789_", new Random().nextInt(MAX_VALUE_SIZE/10));
+         keys.add(key);
+         MarshalledEntryImpl entry = new MarshalledEntryImpl<String, String>(key, value, null, marshaller);
+         store.write(entry);
+      }
+
+      final CountDownLatch stopLatch = new CountDownLatch(1);
+      Future[] writeFutures = new Future[NUM_WRITER_THREADS];
+      for (int i = 0; i < NUM_WRITER_THREADS; i++) {
+         writeFutures[i] = fork(stopOnException(new WriteTask(store, marshaller, keys, stopLatch), stopLatch));
+      }
+
+      Future processFuture = fork(stopOnException(new ProcessTask(store), stopLatch));
+
+      // Stop the writers only after we finish processing
+      processFuture.get();
+      stopLatch.countDown();
+
+      for (int i = 0; i < NUM_WRITER_THREADS; i++) {
+         writeFutures[i].get();
+      }
+   }
+
    private Callable<Object> stopOnException(Callable<Object> task, CountDownLatch stopLatch) {
       return new StopOnExceptionTask(task, stopLatch);
    }
@@ -279,7 +319,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
    }
 
    private class WriteTask implements Callable<Object> {
-      public static final int MAX_VALUE_SIZE = 10000;
+      public static final int MAX_VALUE_SIZE = 1000;
       private final SingleFileStore store;
       private final StreamingMarshaller marshaller;
       private final List<String> keys;
@@ -369,6 +409,42 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
                   fileSizeAfterClear <= storeSizeAfterClear);
             MILLISECONDS.sleep(100);
          }
+         return null;
+      }
+   }
+
+   private class ProcessTask implements Callable<Object> {
+      private final SingleFileStore store;
+
+      public ProcessTask(SingleFileStore store) {
+         this.store = store;
+      }
+
+      @Override
+      public Object call() throws Exception {
+         final int NUM_PROCESS_THREADS = Runtime.getRuntime().availableProcessors();
+
+         File file = new File(location, CACHE_NAME + ".dat");
+         assertTrue(file.exists());
+
+         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS);
+         final AtomicInteger count = new AtomicInteger(0);
+         store.process(new KeyFilter() {
+            @Override
+            public boolean accept(Object key) {
+               return true;
+            }
+         }, new AdvancedCacheLoader.CacheLoaderTask() {
+            @Override
+            public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext)
+                  throws InterruptedException {
+               count.incrementAndGet();
+               Object key = marshalledEntry.getKey();
+               Object value = marshalledEntry.getValue();
+               assertEquals(key, ((String) value).substring(0, ((String) key).length()));
+            }
+         }, executor, true, true);
+         log.tracef("Processed %d entries from the store", count.get());
          return null;
       }
    }
