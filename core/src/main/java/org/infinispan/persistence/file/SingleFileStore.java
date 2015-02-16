@@ -25,7 +25,15 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -496,21 +504,31 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
    @Override
    public void process(KeyFilter<? super K> filter, final CacheLoaderTask<K, V> task, Executor executor, final boolean fetchValue, final boolean fetchMetadata) {
       filter = PersistenceUtil.notNull(filter);
-      Set<Object> keysToLoad = new HashSet<Object>(entries.size());
+      ArrayList<KeyValuePair<K, FileEntry>> keysToLoad = new ArrayList<>(entries.size());
       synchronized (entries) {
-         for (K k : entries.keySet()) {
-            if (filter.accept(k))
-               keysToLoad.add(k);
+         for (Map.Entry<K, FileEntry> e : entries.entrySet()) {
+            if (filter.accept(e.getKey()))
+               keysToLoad.add(new KeyValuePair<>(e.getKey(), e.getValue()));
          }
+         Collections.sort(keysToLoad, new Comparator<KeyValuePair<K, FileEntry>>() {
+            @Override
+            public int compare(KeyValuePair<K, FileEntry> o1, KeyValuePair<K, FileEntry> o2) {
+               long offset1 = o1.getValue().offset;
+               long offset2 = o2.getValue().offset;
+               return offset1 < offset2 ? -1 : offset1 == offset2 ? 0 : 1;
+            }
+         });
+         // keysToLoad values (i.e. FileEntries) must not be used past this point
       }
 
       ExecutorAllCompletionService eacs = new ExecutorAllCompletionService(executor);
 
       final TaskContextImpl taskContext = new TaskContextImpl();
-      for (final Object key : keysToLoad) {
+      for (KeyValuePair<K, FileEntry> e : keysToLoad) {
          if (taskContext.isStopped())
             break;
 
+         final K key = e.getKey();
          eacs.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
