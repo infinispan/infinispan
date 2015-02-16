@@ -1,0 +1,15 @@
+import "org/infinispan/protostream/message-wrapping.proto";
+
+package org.infinispan.query.remote.client;
+
+/**
+ * @TypeId(1000103)
+ */
+message FilterResult {
+
+   optional bytes instance = 1;
+
+   repeated org.infinispan.protostream.WrappedMessage projection = 2;
+
+   repeated org.infinispan.protostream.WrappedMessage sortProjection = 3;
+}
