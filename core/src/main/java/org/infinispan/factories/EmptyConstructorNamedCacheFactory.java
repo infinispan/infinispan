@@ -26,11 +26,12 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
-import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
+import org.infinispan.notifications.cachelistener.cluster.ClusterCacheNotifier;
+import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.manager.PersistenceManagerImpl;
 import org.infinispan.statetransfer.CommitManager;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferLockImpl;
@@ -64,7 +65,8 @@ import static org.infinispan.commons.util.Util.getInstance;
                               ClusteringDependentLogic.class, L1Manager.class, TransactionFactory.class, BackupSender.class,
                               TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
-                              XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class})
+                              XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
+                              CacheStoreFactoryRegistry.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -136,6 +138,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new XSiteStateConsumerImpl();
          } else if (componentType.equals(XSiteStateProvider.class)) {
             return (T) new XSiteStateProviderImpl();
+         } else if (componentType.equals(CacheStoreFactoryRegistry.class)) {
+            return (T) new CacheStoreFactoryRegistry();
          }
       }
 
