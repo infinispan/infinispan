@@ -312,6 +312,29 @@ While it is possible to configure server caches to be transactional, none of the
 
 TODO
 
+==== State Transfer
+To define the state transfer configuration for a distributed or replicated cache, add the `<state-transfer/>` element as follows:
+
+[source,xml]
+----
+
+<state-transfer enabled="true" timeout="240000" chunk-size="512" await-initial-transfer="true" />
+
+----
+
+The possible attributes for the state-transfer element are:
+
+*  _enabled_ if true, this will cause the cache to ask neighboring caches for state when it starts up, so the cache starts 'warm', although it will impact startup time. Defaults to true.
+
+
+*  _timeout_ the maximum amount of time (ms) to wait for state from neighboring caches, before throwing an exception and aborting startup. Defaults to 240000 (4 minutes).
+
+
+*  _chunk-size_ the number of cache entries to batch in each transfer. Defaults to 512.
+
+
+*  _await-initial-transfer_ if true, this will cause the cache to wait for initial state transfer to complete before responding to requests. Defaults to true.
+
 === Endpoint subsystem configuration
 
 The endpoint subsystem exposes a whole container (or in the case of Memcached, a single cache) over a specific connector protocol. You can define as many connector as you need, provided they bind on different interfaces/ports.
