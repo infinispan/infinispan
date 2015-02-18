@@ -1,13 +1,13 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.configuration.global.GlobalConfiguration;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * @author Mircea.Markus@jboss.com

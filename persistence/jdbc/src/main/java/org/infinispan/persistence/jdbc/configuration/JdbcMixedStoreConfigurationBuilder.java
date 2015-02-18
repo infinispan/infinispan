@@ -1,15 +1,20 @@
 package org.infinispan.persistence.jdbc.configuration;
 
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
+import static org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration.BATCH_SIZE;
+import static org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration.CONCURRENCY_LEVEL;
+import static org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration.FETCH_SIZE;
+import static org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration.KEY2STRING_MAPPER;
+import static org.infinispan.persistence.jdbc.configuration.JdbcMixedStoreConfiguration.LOCK_ACQUISITION_TIMEOUT;
+
 import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
-import org.infinispan.persistence.jdbc.TableManipulation;
-import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
-
 /**
  *
  * JdbcMixedCacheStoreConfigurationBuilder.
@@ -21,16 +26,9 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
       implements JdbcMixedStoreConfigurationChildBuilder<JdbcMixedStoreConfigurationBuilder> {
    private final MixedTableManipulationConfigurationBuilder binaryTable;
    private final MixedTableManipulationConfigurationBuilder stringTable;
-   private String key2StringMapper = DefaultTwoWayKey2StringMapper.class.getName();
-   private int batchSize = TableManipulation.DEFAULT_BATCH_SIZE;
-   private int fetchSize = TableManipulation.DEFAULT_FETCH_SIZE;
-
-   private int lockConcurrencyLevel = JdbcBinaryStoreConfigurationBuilder.DEFAULT_CONCURRENCY_LEVEL;
-   private long lockAcquisitionTimeout = JdbcBinaryStoreConfigurationBuilder.DEFAULT_LOCK_ACQUISITION_TIMEOUT;
-
 
    public JdbcMixedStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, JdbcMixedStoreConfiguration.attributeDefinitionSet());
       this.binaryTable = new MixedTableManipulationConfigurationBuilder(this);
       this.stringTable = new MixedTableManipulationConfigurationBuilder(this);
    }
@@ -46,7 +44,7 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
     * be defaulted to {@link org.infinispan.persistence.jdbc.TableManipulation#DEFAULT_BATCH_SIZE}.
     */
    public JdbcMixedStoreConfigurationBuilder batchSize(int batchSize) {
-      this.batchSize = batchSize;
+      attributes.attribute(BATCH_SIZE).set(batchSize);
       return this;
    }
 
@@ -55,7 +53,7 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
     * parameter, if not specified will be defaulted to {@link org.infinispan.persistence.jdbc.TableManipulation#DEFAULT_FETCH_SIZE}.
     */
    public JdbcMixedStoreConfigurationBuilder fetchSize(int fetchSize) {
-      this.fetchSize = fetchSize;
+      attributes.attribute(FETCH_SIZE).set(fetchSize);
       return this;
    }
 
@@ -79,11 +77,11 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
 
    @Override
    public JdbcMixedStoreConfigurationBuilder withProperties(Properties props) {
-      Map<Object, Object> unrecognized = XmlConfigHelper.setValues(this, props, false, false);
-      XmlConfigHelper.setValues(binaryTable, unrecognized, false, false);
-      unrecognized = XmlConfigHelper.setValues(stringTable, unrecognized, false, false);
+      Map<Object, Object> unrecognized = XmlConfigHelper.setAttributes(attributes, props, false, false);
+      XmlConfigHelper.setAttributes(binaryTable.attributes(), unrecognized, false, false);
+      unrecognized = XmlConfigHelper.setAttributes(stringTable.attributes(), unrecognized, false, false);
       XmlConfigHelper.showUnrecognizedAttributes(unrecognized);
-      this.properties = props;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
    }
 
@@ -93,7 +91,7 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
     */
    @Override
    public JdbcMixedStoreConfigurationChildBuilder<JdbcMixedStoreConfigurationBuilder> key2StringMapper(String key2StringMapper) {
-      this.key2StringMapper = key2StringMapper;
+      attributes.attribute(KEY2STRING_MAPPER).set(key2StringMapper);
       return this;
    }
 
@@ -103,47 +101,39 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
     */
    @Override
    public JdbcMixedStoreConfigurationChildBuilder<JdbcMixedStoreConfigurationBuilder> key2StringMapper(Class<? extends Key2StringMapper> klass) {
-      this.key2StringMapper = klass.getName();
+      key2StringMapper(klass.getName());
       return this;
    }
 
    @Override
    public void validate() {
       super.validate();
-      if (binaryTable.tableNamePrefix.equals(stringTable.tableNamePrefix))
+      if (binaryTable.tableNamePrefix().equals(stringTable.tableNamePrefix()))
          throw new CacheConfigurationException("There cannot be the same tableNamePrefix on both the binary and " +
                "String tables.");
 
    }
 
    public JdbcMixedStoreConfigurationBuilder lockConcurrencyLevel(int l) {
-      this.lockConcurrencyLevel = l;
+      attributes.attribute(CONCURRENCY_LEVEL).set(l);
       return this;
    }
 
    public JdbcMixedStoreConfigurationBuilder lockAcquisitionTimeout(long timeout) {
-      this.lockAcquisitionTimeout = timeout;
+      attributes.attribute(LOCK_ACQUISITION_TIMEOUT).set(timeout);
       return this;
    }
 
    @Override
    public JdbcMixedStoreConfiguration create() {
-      return new JdbcMixedStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                             singletonStore.create(), preload, shared, properties, connectionFactory.create(), manageConnectionFactory,
-                                             batchSize, fetchSize, databaseType, binaryTable.create(), stringTable.create(), key2StringMapper, lockConcurrencyLevel, lockAcquisitionTimeout);
+      return new JdbcMixedStoreConfiguration(attributes.protect(), async.create(), singletonStore.create(), connectionFactory.create(), binaryTable.create(), stringTable.create());
    }
 
    @Override
    public JdbcMixedStoreConfigurationBuilder read(JdbcMixedStoreConfiguration template) {
       super.read(template);
-
       this.binaryTable.read(template.binaryTable());
       this.stringTable.read(template.stringTable());
-      this.key2StringMapper = template.key2StringMapper();
-      this.batchSize = template.batchSize();
-      this.fetchSize = template.fetchSize();
-      this.lockAcquisitionTimeout = template.lockAcquisitionTimeout();
-      this.lockConcurrencyLevel = template.lockConcurrencyLevel();
       return this;
    }
 
@@ -189,5 +179,11 @@ public class JdbcMixedStoreConfigurationBuilder extends AbstractJdbcStoreConfigu
       public JdbcMixedStoreConfigurationChildBuilder<JdbcMixedStoreConfigurationBuilder> key2StringMapper(Class<? extends Key2StringMapper> klass) {
          return JdbcMixedStoreConfigurationBuilder.this.key2StringMapper(klass);
       }
+   }
+
+   @Override
+   public String toString() {
+      return "JdbcMixedStoreConfigurationBuilder [binaryTable=" + binaryTable + ", stringTable=" + stringTable + ", connectionFactory=" + connectionFactory + ", attributes="
+            + attributes + ", async=" + async + ", singletonStore=" + singletonStore + "]";
    }
 }

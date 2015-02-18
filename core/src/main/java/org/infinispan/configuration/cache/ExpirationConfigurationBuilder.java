@@ -1,8 +1,11 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.ExpirationConfiguration.*;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -10,13 +13,12 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ExpirationConfiguration> {
 
-   private long lifespan = -1L;
-   private long maxIdle = -1L;
-   private boolean reaperEnabled = true;
-   private long wakeUpInterval = TimeUnit.MINUTES.toMillis(1);
+
+   private final AttributeSet attributes;
 
    ExpirationConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = ExpirationConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -26,7 +28,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public ExpirationConfigurationBuilder lifespan(long l) {
-      this.lifespan = l;
+      attributes.attribute(LIFESPAN).set(l);
       return this;
    }
 
@@ -47,7 +49,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public ExpirationConfigurationBuilder maxIdle(long l) {
-      this.maxIdle = l;
+      attributes.attribute(MAX_IDLE).set(l);
       return this;
    }
 
@@ -67,7 +69,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * touched.
     */
    public ExpirationConfigurationBuilder enableReaper() {
-      this.reaperEnabled = true;
+      attributes.attribute(REAPER_ENABLED).set(true);
       return this;
    }
 
@@ -77,7 +79,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * touched.
     */
    public ExpirationConfigurationBuilder reaperEnabled(boolean enabled) {
-      this.reaperEnabled = enabled;
+      attributes.attribute(REAPER_ENABLED).set(enabled);
       return this;
    }
 
@@ -87,7 +89,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * touched.
     */
    public ExpirationConfigurationBuilder disableReaper() {
-      this.reaperEnabled = false;
+      attributes.attribute(REAPER_ENABLED).set(false);
       return this;
    }
 
@@ -97,7 +99,7 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
     * wakeupInterval to -1.
     */
    public ExpirationConfigurationBuilder wakeUpInterval(long l) {
-      this.wakeUpInterval = l;
+      attributes.attribute(WAKEUP_INTERVAL).set(l);
       return this;
    }
 
@@ -120,26 +122,17 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    public ExpirationConfiguration create() {
-      return new ExpirationConfiguration(lifespan, maxIdle, reaperEnabled, wakeUpInterval);
+      return new ExpirationConfiguration(attributes.protect());
    }
 
    @Override
    public ExpirationConfigurationBuilder read(ExpirationConfiguration template) {
-      this.lifespan = template.lifespan();
-      this.maxIdle = template.maxIdle();
-      this.reaperEnabled = template.reaperEnabled();
-      this.wakeUpInterval = template.wakeUpInterval();
-
+      this.attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "ExpirationConfigurationBuilder{" +
-            "lifespan=" + lifespan +
-            ", maxIdle=" + maxIdle +
-            ", reaperEnabled=" + reaperEnabled +
-            ", wakeUpInterval=" + wakeUpInterval +
-            '}';
+      return this.getClass().getSimpleName() + attributes;
    }
 }

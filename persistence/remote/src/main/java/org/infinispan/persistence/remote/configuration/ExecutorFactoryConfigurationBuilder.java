@@ -1,24 +1,24 @@
 package org.infinispan.persistence.remote.configuration;
 
+import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
+import static org.infinispan.persistence.remote.configuration.ExecutorFactoryConfiguration.EXECUTOR_FACTORY;
+
 import java.util.Properties;
 
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.executors.DefaultExecutorFactory;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Configures executor factory.
  */
 public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConfigurationChildBuilder<RemoteStoreConfigurationBuilder> implements Builder<ExecutorFactoryConfiguration> {
-
-   private ExecutorFactory factory = new DefaultExecutorFactory();
-   private Properties properties;
-
+   private final AttributeSet attributes;
    ExecutorFactoryConfigurationBuilder(RemoteStoreConfigurationBuilder builder) {
       super(builder);
-      this.properties = new Properties();
+      attributes = ExecutorFactoryConfiguration.attributeSet();
    }
 
    /**
@@ -33,7 +33,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConf
     * @return this ExecutorFactoryConfig
     */
    public ExecutorFactoryConfigurationBuilder factory(ExecutorFactory factory) {
-      this.factory = factory;
+      attributes.attribute(EXECUTOR_FACTORY).set(factory);
       return this;
    }
 
@@ -47,7 +47,9 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConf
     * @return previous value if exists, null otherwise
     */
    public ExecutorFactoryConfigurationBuilder addExecutorProperty(String key, String value) {
-      this.properties.put(key, value);
+      TypedProperties properties = attributes.attribute(PROPERTIES).get();
+      properties.put(key, value);
+      attributes.attribute(PROPERTIES).set(properties);
       return this;
    }
 
@@ -59,7 +61,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConf
     * @return this ExecutorFactoryConfig
     */
    public ExecutorFactoryConfigurationBuilder withExecutorProperties(Properties props) {
-      this.properties = props;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
    }
 
@@ -74,19 +76,17 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractRemoteStoreConf
 
    @Override
    public ExecutorFactoryConfiguration create() {
-      return new ExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));
+      return new ExecutorFactoryConfiguration(attributes.protect());
    }
 
    @Override
    public ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template) {
-      this.factory = template.factory();
-      this.properties = template.properties();
-
+      attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "ExecutorFactoryConfigurationBuilder{" + "factory=" + factory + ", properties=" + properties + '}';
+      return "ExecutorFactoryConfigurationBuilder [attributes=" + attributes + "]";
    }
 }

@@ -1,83 +1,69 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
-import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.container.DataContainer;
 
 /**
  * Controls the data container for the cache.
- * 
+ *
  * @author pmuir
  *
  */
 public class DataContainerConfiguration extends AbstractTypedPropertiesConfiguration {
+   public static final AttributeDefinition<DataContainer> DATA_CONTAINER = AttributeDefinition
+         .builder("dataContainer", null, DataContainer.class).immutable().build();
+   public static final AttributeDefinition<Equivalence> KEY_EQUIVALENCE = AttributeDefinition
+         .<Equivalence> builder("keyEquivalence", AnyEquivalence.getInstance()).immutable().build();
+   public static final AttributeDefinition<Equivalence> VALUE_EQUIVALENCE = AttributeDefinition
+         .<Equivalence> builder("valueEquivalence", AnyEquivalence.getInstance()).immutable().build();
 
-   private final DataContainer dataContainer;
-   private final Equivalence keyEquivalence;
-   private final Equivalence valueEquivalence;
-
-   DataContainerConfiguration(DataContainer dataContainer,
-         TypedProperties properties, Equivalence keyEquivalence,
-         Equivalence valueEquivalence) {
-      super(properties);
-      this.dataContainer = dataContainer;
-      this.keyEquivalence = keyEquivalence;
-      this.valueEquivalence = valueEquivalence;
+   static public AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(DataContainerConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(),
+            DATA_CONTAINER, KEY_EQUIVALENCE, VALUE_EQUIVALENCE);
    }
-   
+
+   private final Attribute<DataContainer> dataContainer;
+   private final Attribute<Equivalence> keyEquivalence;
+   private final Attribute<Equivalence> valueEquivalence;
+
+   DataContainerConfiguration(AttributeSet attributes) {
+      super(attributes);
+      dataContainer = attributes.attribute(DATA_CONTAINER);
+      keyEquivalence = attributes.attribute(KEY_EQUIVALENCE);
+      valueEquivalence = attributes.attribute(VALUE_EQUIVALENCE);
+   }
+
    /**
     * Data container implementation in use
+    *
     * @return
     */
    public DataContainer dataContainer() {
-      return dataContainer;
+      return dataContainer.get();
    }
 
    @SuppressWarnings("unchecked")
    public <K> Equivalence<K> keyEquivalence() {
-      return keyEquivalence;
+      return (Equivalence<K>) keyEquivalence.get();
    }
 
    @SuppressWarnings("unchecked")
    public <V> Equivalence<V> valueEquivalence() {
-      return valueEquivalence;
+      return (Equivalence<V>) valueEquivalence.get();
+   }
+
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public String toString() {
-      return "DataContainerConfiguration{" +
-            "dataContainer=" + dataContainer +
-            ", keyEquivalence=" + keyEquivalence +
-            ", valueEquivalence=" + valueEquivalence +
-            '}';
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      if (!super.equals(o)) return false;
-
-      DataContainerConfiguration that = (DataContainerConfiguration) o;
-
-      if (dataContainer != null ? !dataContainer.equals(that.dataContainer) : that.dataContainer != null)
-         return false;
-      if (keyEquivalence != null ? !keyEquivalence.equals(that.keyEquivalence) : that.keyEquivalence != null)
-         return false;
-      if (valueEquivalence != null ? !valueEquivalence.equals(that.valueEquivalence) : that.valueEquivalence != null)
-         return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (dataContainer != null ? dataContainer.hashCode() : 0);
-      result = 31 * result + (keyEquivalence != null ? keyEquivalence.hashCode() : 0);
-      result = 31 * result + (valueEquivalence != null ? valueEquivalence.hashCode() : 0);
-      return result;
+      return "DataContainerConfiguration [attributes=" + attributes + "]";
    }
 
 }

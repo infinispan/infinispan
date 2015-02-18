@@ -2,31 +2,75 @@ package org.infinispan.configuration.cache;
 
 import java.util.Properties;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeInitializer;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TypedProperties;
+
 public class AbstractStoreConfiguration implements StoreConfiguration {
+   public static final AttributeDefinition<Boolean> FETCH_PERSISTENT_STATE = AttributeDefinition.builder("fetchPersistentState", false).immutable().build();
+   public static final AttributeDefinition<Boolean> PURGE_ON_STARTUP = AttributeDefinition.builder("purgeOnStartup", false).immutable().build();
+   public static final AttributeDefinition<Boolean> IGNORE_MODIFICATIONS = AttributeDefinition.builder("ignoreModifications", false).immutable().build();
+   public static final AttributeDefinition<Boolean> PRELOAD = AttributeDefinition.builder("preload", false).immutable().build();
+   public static final AttributeDefinition<Boolean> SHARED = AttributeDefinition.builder("shared", false).immutable().build();
+   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).initializer(new AttributeInitializer<TypedProperties>() {
+      @Override
+      public TypedProperties initialize() {
+         return new TypedProperties();
+      }
+   }).immutable().build();
 
-   private final boolean purgeOnStartup;
+   public static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(AbstractStoreConfiguration.class, FETCH_PERSISTENT_STATE, PURGE_ON_STARTUP, IGNORE_MODIFICATIONS, PRELOAD, SHARED, PROPERTIES);
+   }
 
-   private final boolean fetchPersistentState;
-   private final boolean ignoreModifications;
-   private final boolean preload;
-   private final boolean shared;
+   private final Attribute<Boolean> fetchPersistentState;
+   private final Attribute<Boolean> purgeOnStartup;
+   private final Attribute<Boolean> ignoreModifications;
+   private final Attribute<Boolean> preload;
+   private final Attribute<Boolean> shared;
+   private final Attribute<TypedProperties> properties;
 
-   private final Properties properties;
+   protected final AttributeSet attributes;
    private final AsyncStoreConfiguration async;
-
    private final SingletonStoreConfiguration singletonStore;
 
+   /**
+    * @deprecated Use {@link AbstractStoreConfiguration#AbstractStoreConfiguration(AttributeSet, AsyncStoreConfiguration, SingletonStoreConfiguration) instead
+    */
+   @Deprecated
    public AbstractStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
-                                     AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload,
-                                     boolean shared, Properties properties) {
-      this.purgeOnStartup = purgeOnStartup;
-      this.fetchPersistentState = fetchPersistentState;
-      this.ignoreModifications = ignoreModifications;
+         AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties) {
+      attributes = attributeDefinitionSet();
+      attributes.attribute(PURGE_ON_STARTUP).set(purgeOnStartup);
+      attributes.attribute(FETCH_PERSISTENT_STATE).set(fetchPersistentState);
+      attributes.attribute(IGNORE_MODIFICATIONS).set(ignoreModifications);
+      attributes.attribute(PRELOAD).set(preload);
+      attributes.attribute(SHARED).set(shared);
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(properties));
+
       this.async = async;
       this.singletonStore = singletonStore;
-      this.preload = preload;
-      this.shared = shared;
-      this.properties = properties;
+      this.fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE);
+      this.purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP);
+      this.ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS);
+      this.preload = attributes.attribute(PRELOAD);
+      this.shared = attributes.attribute(SHARED);
+      this.properties = attributes.attribute(PROPERTIES);
+   }
+
+   public AbstractStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async,
+         SingletonStoreConfiguration singletonStore) {
+      this.attributes = attributes.checkProtection();
+      this.async = async;
+      this.singletonStore = singletonStore;
+      this.fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE);
+      this.purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP);
+      this.ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS);
+      this.preload = attributes.attribute(PRELOAD);
+      this.shared = attributes.attribute(SHARED);
+      this.properties = attributes.attribute(PROPERTIES);
    }
 
    /**
@@ -39,10 +83,10 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
    }
 
    /**
-    * SingletonStore is a delegating store used for situations when only one instance in a
-    * cluster should interact with the underlying store. The coordinator of the cluster will be
-    * responsible for the underlying CacheStore. SingletonStore is a simply facade to a real
-    * CacheStore implementation. It always delegates reads to the real CacheStore.
+    * SingletonStore is a delegating store used for situations when only one instance in a cluster
+    * should interact with the underlying store. The coordinator of the cluster will be responsible
+    * for the underlying CacheStore. SingletonStore is a simply facade to a real CacheStore
+    * implementation. It always delegates reads to the real CacheStore.
     */
    @Override
    public SingletonStoreConfiguration singletonStore() {
@@ -54,13 +98,12 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
     */
    @Override
    public boolean purgeOnStartup() {
-      return purgeOnStartup;
+      return purgeOnStartup.get();
    }
-
 
    @Override
    public boolean shared() {
-      return shared;
+      return shared.get();
    }
 
    /**
@@ -72,7 +115,7 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
     */
    @Override
    public boolean fetchPersistentState() {
-      return fetchPersistentState;
+      return fetchPersistentState.get();
    }
 
    /**
@@ -82,58 +125,63 @@ public class AbstractStoreConfiguration implements StoreConfiguration {
     */
    @Override
    public boolean ignoreModifications() {
-      return ignoreModifications;
+      return ignoreModifications.get();
    }
-
 
    @Override
    public boolean preload() {
-      return preload;
+      return preload.get();
    }
 
    @Override
    public Properties properties() {
-      return properties;
+      return properties.get();
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof AbstractStoreConfiguration)) return false;
-
-      AbstractStoreConfiguration that = (AbstractStoreConfiguration) o;
-
-      if (fetchPersistentState != that.fetchPersistentState) return false;
-      if (ignoreModifications != that.ignoreModifications) return false;
-      if (purgeOnStartup != that.purgeOnStartup) return false;
-      if (async != null ? !async.equals(that.async) : that.async != null) return false;
-      if (properties != null ? !properties.equals(that.properties) : that.properties != null) return false;
-      if (singletonStore != null ? !singletonStore.equals(that.singletonStore) : that.singletonStore != null)
-         return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = (purgeOnStartup ? 1 : 0);
-      result = 31 * result + (fetchPersistentState ? 1 : 0);
-      result = 31 * result + (ignoreModifications ? 1 : 0);
-      result = 31 * result + (async != null ? async.hashCode() : 0);
-      result = 31 * result + (singletonStore != null ? singletonStore.hashCode() : 0);
-      result = 31 * result + (properties != null ? properties.hashCode() : 0);
-      return result;
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public String toString() {
-      return "AbstractStoreConfiguration{" +
-            "purgeOnStartup=" + purgeOnStartup +
-            ", fetchPersistentState=" + fetchPersistentState +
-            ", ignoreModifications=" + ignoreModifications +
-            ", async=" + async +
-            ", singletonStore=" + singletonStore +
-            ", properties=" + properties +
-            '}';
+      return "AbstractStoreConfiguration [attributes=" + attributes + ", async=" + async + ", singletonStore="
+            + singletonStore + "]";
+   }
+
+   @Override
+   public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((async == null) ? 0 : async.hashCode());
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      result = prime * result + ((singletonStore == null) ? 0 : singletonStore.hashCode());
+      return result;
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      AbstractStoreConfiguration other = (AbstractStoreConfiguration) obj;
+      if (async == null) {
+         if (other.async != null)
+            return false;
+      } else if (!async.equals(other.async))
+         return false;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
+      if (singletonStore == null) {
+         if (other.singletonStore != null)
+            return false;
+      } else if (!singletonStore.equals(other.singletonStore))
+         return false;
+      return true;
    }
 }

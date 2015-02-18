@@ -1,12 +1,17 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.AsyncConfiguration.*;
+
+import java.lang.invoke.MethodHandles;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * If configured all communications are asynchronous, in that whenever a thread sends a message sent
@@ -15,15 +20,12 @@ import org.infinispan.remoting.ReplicationQueueImpl;
  *
  */
 public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<AsyncConfiguration> {
-
-   private boolean asyncMarshalling = false;
-   private ReplicationQueue replicationQueue;
-   private long replicationQueueInterval = 10;
-   private int replicationQueueMaxElements = 1000;
-   private boolean useReplicationQueue = false;
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private final AttributeSet attributes;
 
    protected AsyncConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
+      attributes = AsyncConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -33,12 +35,12 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
     * >https://docs.jboss.org/author/display/ISPN/Asynchronous+Options</a>.
     */
    public AsyncConfigurationBuilder asyncMarshalling() {
-      this.asyncMarshalling = true;
+      attributes.attribute(MARSHALLING).set(true);
       return this;
    }
 
    public AsyncConfigurationBuilder asyncMarshalling(boolean async) {
-      this.asyncMarshalling = async;
+      attributes.attribute(MARSHALLING).set(async);
       return this;
    }
 
@@ -48,7 +50,7 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
     * >https://docs.jboss.org/author/display/ISPN/Asynchronous+Options</a>.
     */
    public AsyncConfigurationBuilder syncMarshalling() {
-      this.asyncMarshalling = false;
+      attributes.attribute(MARSHALLING).set(false);
       return this;
    }
 
@@ -60,7 +62,7 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
     * constructor to any instance. This will be resolved in Infinispan 5.2.0
     */
    public AsyncConfigurationBuilder replQueue(ReplicationQueue replicationQueue) {
-      this.replicationQueue = replicationQueue;
+      attributes.attribute(REPLICATION_QUEUE).set(replicationQueue);
       return this;
    }
 
@@ -69,7 +71,7 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
     * to flush the replication queue runs.
     */
    public AsyncConfigurationBuilder replQueueInterval(long interval) {
-      this.replicationQueueInterval = interval;
+      attributes.attribute(REPLICATION_QUEUE_INTERVAL).set(interval);
       return this;
    }
 
@@ -86,7 +88,7 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
     * when it reaches a specific threshold.
     */
    public AsyncConfigurationBuilder replQueueMaxElements(int elements) {
-      this.replicationQueueMaxElements = elements;
+      attributes.attribute(REPLICATION_QUEUE_MAX_ELEMENTS).set(elements);
       return this;
    }
 
@@ -95,18 +97,18 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
     * batch.
     */
    public AsyncConfigurationBuilder useReplQueue(boolean use) {
-      this.useReplicationQueue = use;
+      attributes.attribute(USE_REPLICATION_QUEUE).set(use);
       return this;
    }
 
    @Override
    public
    void validate() {
-      if (useReplicationQueue && getClusteringBuilder().cacheMode().isDistributed())
-         throw new CacheConfigurationException("Use of the replication queue is invalid when using DISTRIBUTED mode.");
+      if (attributes.attribute(USE_REPLICATION_QUEUE).get() && getClusteringBuilder().cacheMode().isDistributed())
+         throw log.noReplicationQueueDistributedCache();
 
-      if (useReplicationQueue && getClusteringBuilder().cacheMode().isSynchronous())
-         throw new CacheConfigurationException("Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.");
+      if (attributes.attribute(USE_REPLICATION_QUEUE).get() && getClusteringBuilder().cacheMode().isSynchronous())
+         throw log.replicationQueueOnlyForAsyncCaches();
    }
 
    @Override
@@ -116,28 +118,17 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
    @Override
    public
    AsyncConfiguration create() {
-      return new AsyncConfiguration(asyncMarshalling, replicationQueue, replicationQueueInterval, replicationQueueMaxElements, useReplicationQueue);
+      return new AsyncConfiguration(attributes.protect());
    }
 
    @Override
    public AsyncConfigurationBuilder read(AsyncConfiguration template) {
-      this.asyncMarshalling = template.asyncMarshalling();
-      this.replicationQueue = template.replQueue();
-      this.replicationQueueInterval = template.replQueueInterval();
-      this.replicationQueueMaxElements = template.replQueueMaxElements();
-      this.useReplicationQueue = template.useReplQueue();
-
+      this.attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "AsyncConfigurationBuilder{" +
-            "asyncMarshalling=" + asyncMarshalling +
-            ", replicationQueue=" + replicationQueue +
-            ", replicationQueueInterval=" + replicationQueueInterval +
-            ", replicationQueueMaxElements=" + replicationQueueMaxElements +
-            ", useReplicationQueue=" + useReplicationQueue +
-            '}';
+      return AsyncConfigurationBuilder.class.getSimpleName() + attributes;
    }
 }

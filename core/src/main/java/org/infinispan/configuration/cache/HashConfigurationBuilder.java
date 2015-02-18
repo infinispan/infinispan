@@ -1,14 +1,15 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.HashConfiguration.*;
+
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
  *
@@ -18,18 +19,12 @@ import org.infinispan.util.logging.LogFactory;
 public class HashConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<HashConfiguration> {
    private static final Log log = LogFactory.getLog(HashConfigurationBuilder.class);
 
-   private ConsistentHashFactory consistentHashFactory;
-   private Hash hash = MurmurHash3.getInstance();
-   private int numOwners = 2;
-   // With the default consistent hash factory, this default gives us an even spread for clusters
-   // up to 6 members and the difference between nodes stays under 20% up to 12 members.
-   private int numSegments = 60;
-   private float capacityFactor = 1;
-
+   private final AttributeSet attributes;
    private final GroupsConfigurationBuilder groupsConfigurationBuilder;
 
    HashConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
+      this.attributes = HashConfiguration.attributeDefinitionSet();
       this.groupsConfigurationBuilder = new GroupsConfigurationBuilder(builder);
    }
 
@@ -45,8 +40,8 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    /**
     * The consistent hash factory in use.
     */
-   public HashConfigurationBuilder consistentHashFactory(ConsistentHashFactory consistentHashFactory) {
-      this.consistentHashFactory = consistentHashFactory;
+   public HashConfigurationBuilder consistentHashFactory(ConsistentHashFactory<? extends ConsistentHash> consistentHashFactory) {
+      attributes.attribute(CONSISTENT_HASH_FACTORY).set(consistentHashFactory);;
       return this;
    }
 
@@ -55,7 +50,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder numOwners(int numOwners) {
       if (numOwners < 1) throw new IllegalArgumentException("numOwners cannot be less than 1");
-      this.numOwners = numOwners;
+      attributes.attribute(NUM_OWNERS).set(numOwners);
       return this;
    }
 
@@ -82,7 +77,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder numSegments(int numSegments) {
       if (numSegments < 1) throw new IllegalArgumentException("numSegments cannot be less than 1");
-      this.numSegments = numSegments;
+      attributes.attribute(NUM_SEGMENTS).set(numSegments);
       return this;
    }
 
@@ -147,7 +142,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     * constructor to any instance. This will be resolved in Infinispan 5.2.0
     */
    public HashConfigurationBuilder hash(Hash hash) {
-      this.hash = hash;
+      attributes.attribute(HASH).set(hash);
       return this;
    }
 
@@ -159,7 +154,7 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
     */
    public HashConfigurationBuilder capacityFactor(float capacityFactor) {
       if (capacityFactor < 0) throw new IllegalArgumentException("capacityFactor must be positive");
-      this.capacityFactor = capacityFactor;
+      attributes.attribute(CAPACITY_FACTOR).set(capacityFactor);
       return this;
    }
 
@@ -180,29 +175,20 @@ public class HashConfigurationBuilder extends AbstractClusteringConfigurationChi
    @Override
    public HashConfiguration create() {
       // TODO stateTransfer().create() will create a duplicate StateTransferConfiguration instance. That's ok as long as none of the stateTransfer settings are modifiable at runtime.
-      return new HashConfiguration(consistentHashFactory, hash, numOwners, numSegments, capacityFactor,
+      return new HashConfiguration(attributes.protect(),
             groupsConfigurationBuilder.create(), stateTransfer().create());
    }
 
    @Override
    public HashConfigurationBuilder read(HashConfiguration template) {
-      this.consistentHashFactory = template.consistentHashFactory();
-      this.hash = template.hash();
-      this.numOwners = template.numOwners();
-      this.numSegments = template.numSegments();
+      this.attributes.read(template.attributes());
       this.groupsConfigurationBuilder.read(template.groups());
-      this.capacityFactor = template.capacityFactor();
       return this;
    }
 
    @Override
    public String toString() {
-      return "HashConfigurationBuilder{" +
-            "consistentHashFactory=" + consistentHashFactory +
-            ", hash=" + hash +
-            ", numOwners=" + numOwners +
-            ", numSegments=" + numSegments +
-            ", groups=" + groupsConfigurationBuilder +
-            '}';
+      return "HashConfigurationBuilder [attributes=" + attributes + ", groupsConfigurationBuilder="
+            + groupsConfigurationBuilder + "]";
    }
 }

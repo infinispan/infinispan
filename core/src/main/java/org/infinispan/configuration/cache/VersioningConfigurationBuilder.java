@@ -1,35 +1,47 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.VersioningConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.VersioningConfiguration.SCHEME;
+
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class VersioningConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<VersioningConfiguration> {
 
-   boolean enabled = false;
-   VersioningScheme scheme = VersioningScheme.NONE;
+   private final AttributeSet attributes;
 
    protected VersioningConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = VersioningConfiguration.attributeDefinitionSet();
    }
 
    public VersioningConfigurationBuilder enable() {
-      this.enabled = true;
+      attributes.attribute(ENABLED).set(true);
       return this;
    }
 
    public VersioningConfigurationBuilder disable() {
-      this.enabled = false;
+      attributes.attribute(ENABLED).set(false);
       return this;
    }
 
    public VersioningConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
    public VersioningConfigurationBuilder scheme(VersioningScheme scheme) {
-      this.scheme = scheme;
+      attributes.attribute(SCHEME).set(scheme);
       return this;
+   }
+
+   boolean enabled() {
+      return attributes.attribute(ENABLED).get();
+   }
+
+   VersioningScheme scheme() {
+      return attributes.attribute(SCHEME).get();
    }
 
    @Override
@@ -42,22 +54,18 @@ public class VersioningConfigurationBuilder extends AbstractConfigurationChildBu
 
    @Override
    public VersioningConfiguration create() {
-      return new VersioningConfiguration(enabled, scheme);
+      return new VersioningConfiguration(attributes.protect());
    }
 
    @Override
    public VersioningConfigurationBuilder read(VersioningConfiguration template) {
-      this.enabled = template.enabled();
-      this.scheme = template.scheme();
+      this.attributes.read(template.attributes());
 
       return this;
    }
 
    @Override
    public String toString() {
-      return "VersioningConfigurationBuilder{" +
-            "enabled=" + enabled +
-            ", scheme=" + scheme +
-            '}';
+      return this.getClass().getSimpleName() + attributes;
    }
 }

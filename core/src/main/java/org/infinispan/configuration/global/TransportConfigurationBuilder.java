@@ -1,6 +1,7 @@
 package org.infinispan.configuration.global;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.CacheConfigurationException;
@@ -13,6 +14,8 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 
+import static org.infinispan.configuration.global.TransportConfiguration.*;
+
 /**
  * Configures the transport used for network communications across the cluster.
  */
@@ -22,22 +25,15 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    // Lazily instantiate this if the user doesn't request an alternate to avoid a hard dep on jgroups library
    public static final String DEFAULT_TRANSPORT = "org.infinispan.remoting.transport.jgroups.JGroupsTransport";
 
-   private String clusterName = "ISPN";
-   private String machineId;
-   private String rackId;
-   private String siteId;
-   private long distributedSyncTimeout = TimeUnit.MINUTES.toMillis(4);
-   private Transport transport;
-
-   private String nodeName;
-   private Properties properties = new Properties();
    private final ThreadPoolConfigurationBuilder transportThreadPool;
    private final ThreadPoolConfigurationBuilder remoteCommandThreadPool;
    @Deprecated
    private final ThreadPoolConfigurationBuilder totalOrderThreadPool;
+   private final AttributeSet attributes;
 
    TransportConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
+      attributes = TransportConfiguration.attributeSet();
       transportThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       remoteCommandThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
       totalOrderThreadPool = new ThreadPoolConfigurationBuilder(globalConfig);
@@ -49,7 +45,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * @param clusterName
     */
    public TransportConfigurationBuilder clusterName(String clusterName) {
-      this.clusterName = clusterName;
+      attributes.attribute(CLUSTER_NAME).set(clusterName);
       return this;
    }
 
@@ -58,7 +54,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * href="http://community.jboss.org/wiki/DesigningServerHinting">server hinting</a> .
     */
    public TransportConfigurationBuilder machineId(String machineId) {
-      this.machineId = machineId;
+      attributes.attribute(MACHINE_ID).set(machineId);
       return this;
    }
 
@@ -67,7 +63,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * href="http://community.jboss.org/wiki/DesigningServerHinting">server hinting</a> .
     */
    public TransportConfigurationBuilder rackId(String rackId) {
-      this.rackId = rackId;
+      attributes.attribute(RACK_ID).set(rackId);
       return this;
    }
 
@@ -76,7 +72,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * href="http://community.jboss.org/wiki/DesigningServerHinting">server hinting</a> .
     */
    public TransportConfigurationBuilder siteId(String siteId) {
-      this.siteId = siteId;
+      attributes.attribute(SITE_ID).set(siteId);
       return this;
    }
 
@@ -87,7 +83,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * @return
     */
    public TransportConfigurationBuilder distributedSyncTimeout(long distributedSyncTimeout) {
-      this.distributedSyncTimeout = distributedSyncTimeout;
+      attributes.attribute(DISTRIBUTED_SYNC_TIMEOUT).set(distributedSyncTimeout);
       return this;
    }
 
@@ -112,7 +108,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * @param transport transport instance
     */
    public TransportConfigurationBuilder transport(Transport transport) {
-      this.transport = transport;
+      attributes.attribute(TRANSPORT).set(transport);
       return this;
    }
 
@@ -124,7 +120,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * @param nodeName
     */
    public TransportConfigurationBuilder nodeName(String nodeName) {
-      this.nodeName = nodeName;
+      attributes.attribute(NODE_NAME).set(nodeName);
       return this;
    }
 
@@ -135,7 +131,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * @return this TransportConfig
     */
    public TransportConfigurationBuilder withProperties(Properties properties) {
-      this.properties = properties;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(properties));
       return this;
    }
 
@@ -145,22 +141,26 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
     * @return this TransportConfig
     */
    public TransportConfigurationBuilder clearProperties() {
-      this.properties = new Properties();
+      attributes.attribute(PROPERTIES).set(new TypedProperties());
       return this;
    }
 
    public TransportConfigurationBuilder addProperty(String key, String value) {
-      this.properties.put(key, value);
+      TypedProperties properties = attributes.attribute(PROPERTIES).get();
+      properties.put(key, value);
+      attributes.attribute(PROPERTIES).set(properties);
       return this;
    }
 
    public TransportConfigurationBuilder removeProperty(String key) {
-      this.properties.remove(key);
+      TypedProperties properties = attributes.attribute(PROPERTIES).get();
+      properties.remove(key);
+      attributes.attribute(PROPERTIES).set(properties);
       return this;
    }
 
    public String getProperty(String key) {
-      return String.valueOf(this.properties.get(key));
+      return String.valueOf(attributes.attribute(PROPERTIES).get());
    }
 
    /**
@@ -192,7 +192,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
             remoteCommandThreadPool, totalOrderThreadPool)) {
          validatable.validate();
       }
-      if(clusterName == null){
+      if(attributes.attribute(CLUSTER_NAME).get() == null){
           throw new CacheConfigurationException("Transport clusterName cannot be null");
       }
    }
@@ -200,9 +200,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    @Override
    public
    TransportConfiguration create() {
-      return new TransportConfiguration(clusterName, machineId, rackId, siteId,
-            distributedSyncTimeout, transport, nodeName, TypedProperties.toTypedProperties(properties),
-            transportThreadPool.create(), remoteCommandThreadPool.create(), totalOrderThreadPool.create());
+      return new TransportConfiguration(attributes.protect(), transportThreadPool.create(), remoteCommandThreadPool.create(), totalOrderThreadPool.create());
    }
 
    public TransportConfigurationBuilder defaultTransport() {
@@ -214,90 +212,27 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    @Override
    public
    TransportConfigurationBuilder read(TransportConfiguration template) {
-      this.clusterName = template.clusterName();
-      this.distributedSyncTimeout = template.distributedSyncTimeout();
-      this.machineId = template.machineId();
-      this.nodeName = template.nodeName();
-      this.properties = template.properties();
-      this.rackId = template.rackId();
-      this.siteId = template.siteId();
+      attributes.read(template.attributes());
       this.remoteCommandThreadPool.read(template.remoteCommandThreadPool());
       this.totalOrderThreadPool.read(template.totalOrderThreadPool());
       this.transportThreadPool.read(template.transportThreadPool());
       if (template.transport() != null) {
-         this.transport = Util.getInstance(template.transport().getClass().getName(), template.transport().getClass().getClassLoader());
+         Transport transport = Util.getInstance(template.transport().getClass().getName(), template.transport().getClass().getClassLoader());
+         transport(transport);
       }
 
       return this;
    }
 
    public Transport getTransport() {
-      return transport;
+      return attributes.attribute(TRANSPORT).get();
    }
 
    @Override
    public String toString() {
-      return "TransportConfigurationBuilder{" +
-            "clusterName='" + clusterName + '\'' +
-            ", machineId='" + machineId + '\'' +
-            ", rackId='" + rackId + '\'' +
-            ", siteId='" + siteId + '\'' +
-            ", distributedSyncTimeout=" + distributedSyncTimeout +
-            ", transport=" + transport +
-            ", nodeName='" + nodeName + '\'' +
-            ", properties=" + properties +
-            ", threadPool=" + transportThreadPool +
-            ", remoteCommandThreadPool=" + remoteCommandThreadPool +
-            ", totalOrderThreadPool=" + totalOrderThreadPool +
-            '}';
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TransportConfigurationBuilder that = (TransportConfigurationBuilder) o;
-
-      if (distributedSyncTimeout != that.distributedSyncTimeout) return false;
-      if (clusterName != null ? !clusterName.equals(that.clusterName) : that.clusterName != null)
-         return false;
-      if (machineId != null ? !machineId.equals(that.machineId) : that.machineId != null)
-         return false;
-      if (nodeName != null ? !nodeName.equals(that.nodeName) : that.nodeName != null)
-         return false;
-      if (properties != null ? !properties.equals(that.properties) : that.properties != null)
-         return false;
-      if (rackId != null ? !rackId.equals(that.rackId) : that.rackId != null)
-         return false;
-      if (siteId != null ? !siteId.equals(that.siteId) : that.siteId != null)
-         return false;
-      if (transport != null ? !transport.equals(that.transport) : that.transport != null)
-         return false;
-      if (!transportThreadPool.equals(that.transportThreadPool))
-         return false;
-      if (!remoteCommandThreadPool.equals(that.remoteCommandThreadPool))
-         return false;
-      if (!totalOrderThreadPool.equals(that.totalOrderThreadPool))
-         return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = clusterName != null ? clusterName.hashCode() : 0;
-      result = 31 * result + (machineId != null ? machineId.hashCode() : 0);
-      result = 31 * result + (rackId != null ? rackId.hashCode() : 0);
-      result = 31 * result + (siteId != null ? siteId.hashCode() : 0);
-      result = 31 * result + (int) (distributedSyncTimeout ^ (distributedSyncTimeout >>> 32));
-      result = 31 * result + (transport != null ? transport.hashCode() : 0);
-      result = 31 * result + (nodeName != null ? nodeName.hashCode() : 0);
-      result = 31 * result + (properties != null ? properties.hashCode() : 0);
-      result = 31 * result + (transportThreadPool.hashCode());
-      result = 31 * result + (remoteCommandThreadPool.hashCode());
-      result = 31 * result + (totalOrderThreadPool.hashCode());
-      return result;
+      return "TransportConfigurationBuilder [transportThreadPool=" + transportThreadPool + ", remoteCommandThreadPool="
+            + remoteCommandThreadPool + ", totalOrderThreadPool=" + totalOrderThreadPool + ", attributes=" + attributes
+            + "]";
    }
 
 }

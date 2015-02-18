@@ -1,15 +1,19 @@
 package org.infinispan.configuration.cache;
 
-import java.util.Map;
+import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
+import static org.infinispan.configuration.cache.IndexingConfiguration.AUTO_CONFIG;
+import static org.infinispan.configuration.cache.IndexingConfiguration.INDEX;
+
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
 /**
  * Configures indexing of entries in the cache for searching.
  */
@@ -17,12 +21,11 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    private static final Log log = LogFactory.getLog(IndexingConfigurationBuilder.class);
 
-   private Properties properties = new Properties();
-   private Index index = Index.NONE;
-   private boolean autoConfig;
+   private final AttributeSet attributes;
 
    IndexingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = IndexingConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -31,8 +34,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     */
    @Deprecated
    public IndexingConfigurationBuilder enable() {
-      if (this.index == Index.NONE)
-         this.index = Index.ALL;
+      Attribute<Index> index = attributes.attribute(INDEX);
+      if (index.get() == Index.NONE)
+         index.set(Index.ALL);
       return this;
    }
 
@@ -42,7 +46,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     */
    @Deprecated
    public IndexingConfigurationBuilder disable() {
-      this.index = Index.NONE;
+      attributes.attribute(INDEX).set(Index.NONE);
       return this;
    }
 
@@ -52,15 +56,16 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     */
    @Deprecated
    public IndexingConfigurationBuilder enabled(boolean enabled) {
-      if (this.index == Index.NONE & enabled)
-         this.index = Index.ALL;
+      Attribute<Index> index = attributes.attribute(INDEX);
+      if (index.get() == Index.NONE & enabled)
+         index.set(Index.ALL);
       else if (!enabled)
-         this.index = Index.NONE;
+         index.set(Index.NONE);
       return this;
    }
 
    boolean enabled() {
-      return index.isEnabled();
+      return attributes.attribute(INDEX).get().isEnabled();
    }
 
    /**
@@ -71,13 +76,13 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
    @Deprecated
    public IndexingConfigurationBuilder indexLocalOnly(boolean b) {
       if (b)
-         this.index = Index.LOCAL;
+         attributes.attribute(INDEX).set(Index.LOCAL);
 
       return this;
    }
 
    boolean indexLocalOnly() {
-      return this.index.isLocalOnly();
+      return attributes.attribute(INDEX).get().isLocalOnly();
    }
 
    /**
@@ -99,8 +104,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder addProperty(String key, String value) {
-      this.properties.put(key, value);
-      return this;
+      return setProperty(key, value);
    }
 
    /**
@@ -122,7 +126,9 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder setProperty(String key, Object value) {
-      this.properties.put(key, value);
+      TypedProperties properties = attributes.attribute(PROPERTIES).get();
+      properties.put(key, value);
+      attributes.attribute(PROPERTIES).set(properties);
       return this;
    }
 
@@ -143,7 +149,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder withProperties(Properties props) {
-      this.properties = props;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
    }
 
@@ -151,7 +157,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * Indicates indexing mode
     */
    public IndexingConfigurationBuilder index(Index index) {
-      this.index = index;
+      attributes.attribute(INDEX).set(index);
       return this;
    }
 
@@ -163,17 +169,17 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
     * @return <code>this</code>, for method chaining
     */
    public IndexingConfigurationBuilder autoConfig(boolean autoConfig) {
-      this.autoConfig = autoConfig;
+      attributes.attribute(AUTO_CONFIG).set(autoConfig);
       return this;
    }
 
    public boolean autoConfig() {
-      return autoConfig;
+      return attributes.attribute(AUTO_CONFIG).get();
    }
 
    @Override
    public void validate() {
-      if (index.isEnabled()) {
+      if (enabled()) {
          //Indexing is not conceptually compatible with Invalidation mode
          if (clustering().cacheMode().isInvalidation()) {
             throw log.invalidConfigurationIndexingWithInvalidation();
@@ -183,7 +189,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
-      if (index.isEnabled()) {
+      if (enabled()) {
          // Check that the query module is on the classpath.
          try {
             String clazz = "org.infinispan.query.Search";
@@ -196,39 +202,26 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
 
    @Override
    public IndexingConfiguration create() {
-      TypedProperties typedProperties = TypedProperties.toTypedProperties(properties);
+      TypedProperties typedProperties = attributes.attribute(PROPERTIES).get();
       if (autoConfig()) {
          if (clustering().cacheMode().isDistributed()) {
-            IndexOverlay.DISTRIBUTED_INFINISPAN.apply(typedProperties);
+            IndexOverlay.DISTRIBUTED_INFINISPAN.apply(typedProperties );
          } else {
             IndexOverlay.NON_DISTRIBUTED_FS.apply(typedProperties);
          }
       }
-      return new IndexingConfiguration(typedProperties, index, autoConfig);
+      return new IndexingConfiguration(attributes.protect());
    }
 
    @Override
    public IndexingConfigurationBuilder read(IndexingConfiguration template) {
-      this.index = template.index();
-      this.properties = new Properties();
-
-      TypedProperties templateProperties = template.properties();
-      if (templateProperties != null) {
-         for (Map.Entry entry : templateProperties.entrySet()) {
-            properties.put(entry.getKey(), entry.getValue());
-         }
-      }
-
+      attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "IndexingConfigurationBuilder{" +
-            "index=" + index +
-            ", autoConfig=" + autoConfig +
-            ", properties=" + properties +
-            '}';
+      return "IndexingConfigurationBuilder [attributes=" + attributes + "]";
    }
 
 }

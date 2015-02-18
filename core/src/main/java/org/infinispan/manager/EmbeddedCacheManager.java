@@ -229,7 +229,7 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    /**
     * Add a dependency between two caches. The cache manager will make sure that
     * a cache is stopped before any of its dependencies
-    * 
+    *
     * @param from cache name
     * @param to cache name
     * @since 7.0

@@ -21,7 +21,6 @@ import org.infinispan.commands.RemoveCacheCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -339,10 +338,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          start();
    }
 
-
    @Override
    public Configuration defineConfiguration(String cacheName, Configuration configuration) {
-      return defineConfiguration(cacheName, configuration, defaultConfiguration, true);
+      return defineConfiguration(cacheName, configuration, null, true);
    }
 
    @Override
@@ -376,7 +374,9 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          }
       }
       ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.read(defaultConfigIfNotPresent);
+      if (defaultConfigIfNotPresent != null) {
+         builder.read(defaultConfigIfNotPresent);
+      }
       builder.read(configOverride);
       Configuration configuration = builder.build(globalConfiguration);
       configurationOverrides.put(cacheName, configuration);

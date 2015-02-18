@@ -1,9 +1,11 @@
 package org.infinispan.lucene.cacheloader.configuration;
 
+import static org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration.AUTO_CHUNK_SIZE;
+import static org.infinispan.lucene.cacheloader.configuration.LuceneLoaderConfiguration.LOCATION;
+
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
-
 /**
  * {@link org.infinispan.configuration.cache.ConfigurationBuilder} bean for the {@link LuceneLoaderConfiguration}
  *
@@ -13,15 +15,8 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 public class LuceneLoaderConfigurationBuilder extends
                                              AbstractStoreConfigurationBuilder<LuceneLoaderConfiguration, LuceneLoaderConfigurationBuilder> {
 
-
-   /** Auto-split huge files in blocks, with a base value of 32MB **/
-   private int autoChunkSize = Integer.MAX_VALUE / 64;
-
-   /** Path of the root directory containing all indexes **/
-   private String location = "Infinispan-IndexStore";
-
    public LuceneLoaderConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, LuceneLoaderConfiguration.attributeDefinitionSet());
    }
 
 
@@ -33,7 +28,7 @@ public class LuceneLoaderConfigurationBuilder extends
     * @return this for method chaining
     */
    public LuceneLoaderConfigurationBuilder autoChunkSize(int autoChunkSize) {
-      this.autoChunkSize = autoChunkSize;
+      attributes.attribute(AUTO_CHUNK_SIZE).set(autoChunkSize);
       return this;
    }
 
@@ -46,7 +41,7 @@ public class LuceneLoaderConfigurationBuilder extends
     * @return this for method chaining
     */
    public LuceneLoaderConfigurationBuilder location(String location) {
-      this.location = location;
+      attributes.attribute(LOCATION).set(location);
       return this;
    }
 
@@ -57,17 +52,12 @@ public class LuceneLoaderConfigurationBuilder extends
 
    @Override
    public LuceneLoaderConfiguration create() {
-      return new LuceneLoaderConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                          singleton().create(), preload, shared, properties, this.autoChunkSize, this.location);
+      return new LuceneLoaderConfiguration(attributes.protect(), async.create(), singletonStore.create());
    }
 
    @Override
    public Builder<?> read(LuceneLoaderConfiguration template) {
       super.read(template);
-
-      this.autoChunkSize = template.autoChunkSize();
-      this.location = template.location();
-
       return this;
    }
 
@@ -78,7 +68,6 @@ public class LuceneLoaderConfigurationBuilder extends
 
    @Override
    public String toString() {
-      return "LuceneLoaderConfigurationBuilder{" + "autoChunkSize=" + autoChunkSize + ", " +
-            "location=" + location + "}";
+      return "LuceneLoaderConfigurationBuilder [attributes=" + attributes + ", async=" + async + ", singletonStore=" + singletonStore + "]";
    }
 }

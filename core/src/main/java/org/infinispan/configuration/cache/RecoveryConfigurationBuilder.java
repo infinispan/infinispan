@@ -1,10 +1,12 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.configuration.global.GlobalConfiguration;
+import static org.infinispan.configuration.cache.RecoveryConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.RecoveryConfiguration.RECOVERY_INFO_CACHE_NAME;
 
-import static org.infinispan.configuration.cache.RecoveryConfiguration.DEFAULT_RECOVERY_INFO_CACHE;
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Defines recovery configuration for the cache.
@@ -14,18 +16,18 @@ import static org.infinispan.configuration.cache.RecoveryConfiguration.DEFAULT_R
  */
 public class RecoveryConfigurationBuilder extends AbstractTransportConfigurationChildBuilder implements Builder<RecoveryConfiguration> {
 
-   boolean enabled = false;
-   private String recoveryInfoCacheName = DEFAULT_RECOVERY_INFO_CACHE;
+   private final AttributeSet attributes;
 
    RecoveryConfigurationBuilder(TransactionConfigurationBuilder builder) {
       super(builder);
+      attributes = RecoveryConfiguration.attributeDefinitionSet();
    }
 
    /**
     * Enable recovery for this cache
     */
    public RecoveryConfigurationBuilder enable() {
-      this.enabled = true;
+      attributes.attribute(ENABLED).set(true);
       return this;
    }
 
@@ -33,7 +35,7 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
     * Disable recovery for this cache
     */
    public RecoveryConfigurationBuilder disable() {
-      this.enabled = false;
+      attributes.attribute(ENABLED).set(false);
       return this;
    }
 
@@ -41,8 +43,12 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
     * Enable recovery for this cache
     */
    public RecoveryConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(ENABLED).set(enabled);
       return this;
+   }
+
+   boolean isEnabled() {
+      return attributes.attribute(ENABLED).get();
    }
 
    /**
@@ -50,13 +56,13 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
     * defaults to a cache named {@link RecoveryConfiguration#DEFAULT_RECOVERY_INFO_CACHE}
     */
    public RecoveryConfigurationBuilder recoveryInfoCacheName(String recoveryInfoName) {
-      this.recoveryInfoCacheName = recoveryInfoName;
+      attributes.attribute(RECOVERY_INFO_CACHE_NAME).set(recoveryInfoName);
       return this;
    }
 
    @Override
    public void validate() {
-      if (!enabled || transaction().useSynchronization()) {
+      if (!attributes.attribute(ENABLED).get() || transaction().useSynchronization()) {
          return;
       }
       if (!clustering().cacheMode().isSynchronous()) {
@@ -77,22 +83,20 @@ public class RecoveryConfigurationBuilder extends AbstractTransportConfiguration
 
    @Override
    public RecoveryConfiguration create() {
-      return new RecoveryConfiguration(enabled, recoveryInfoCacheName);
+      return new RecoveryConfiguration(attributes.protect());
    }
 
    @Override
    public RecoveryConfigurationBuilder read(RecoveryConfiguration template) {
-      this.enabled = template.enabled();
-      this.recoveryInfoCacheName = template.recoveryInfoCacheName();
+      this.attributes.read(template.attributes());
 
       return this;
    }
 
    @Override
    public String toString() {
-      return "RecoveryConfigurationBuilder{" +
-            "enabled=" + enabled +
-            ", recoveryInfoCacheName='" + recoveryInfoCacheName + '\'' +
-            '}';
+      return "RecoveryConfigurationBuilder [attributes=" + attributes + "]";
    }
+
+
 }

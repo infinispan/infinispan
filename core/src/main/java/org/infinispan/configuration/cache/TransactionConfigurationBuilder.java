@@ -1,20 +1,25 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
-import org.infinispan.transaction.TransactionProtocol;
-import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
-import org.infinispan.transaction.lookup.TransactionManagerLookup;
-import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+import static org.infinispan.configuration.cache.TransactionConfiguration.*;
+
+import java.lang.invoke.MethodHandles;
+import java.util.concurrent.TimeUnit;
 
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
-import java.util.concurrent.TimeUnit;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
+import org.infinispan.transaction.TransactionProtocol;
+import org.infinispan.transaction.lookup.TransactionManagerLookup;
+import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
@@ -23,27 +28,13 @@ import java.util.concurrent.TimeUnit;
  * @author Pedro Ruivo
  */
 public class TransactionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TransactionConfiguration> {
-
-   private boolean autoCommit = true;
-   private long cacheStopTimeout = TimeUnit.SECONDS.toMillis(30);
-   private boolean eagerLockingSingleNode = false;
-   LockingMode lockingMode = LockingMode.OPTIMISTIC;
-   private boolean syncCommitPhase = true;
-   private boolean syncRollbackPhase = true;
-   private TransactionManagerLookup transactionManagerLookup = new GenericTransactionManagerLookup();
-   private TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
-   TransactionMode transactionMode = null;
-   private boolean useEagerLocking = false;
-   private boolean useSynchronization = false;
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass());
+   private final AttributeSet attributes;
    private final RecoveryConfigurationBuilder recovery;
-   private boolean use1PcForAutoCommitTransactions = false;
-   private long reaperWakeUpInterval = 30000;
-   private long completedTxTimeout = 60000;
-   private TransactionProtocol transactionProtocol = TransactionProtocol.DEFAULT;
-
 
    TransactionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = TransactionConfiguration.attributeDefinitionSet();
       this.recovery = new RecoveryConfigurationBuilder(this);
    }
 
@@ -54,7 +45,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * is injected by the system. Defaults to true.
     */
    public TransactionConfigurationBuilder autoCommit(boolean b) {
-      this.autoCommit = b;
+      attributes.attribute(AUTO_COMMIT).set(b);
       return this;
    }
 
@@ -68,7 +59,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * This configuration property may be adjusted at runtime
     */
    public TransactionConfigurationBuilder cacheStopTimeout(long l) {
-      this.cacheStopTimeout = l;
+      attributes.attribute(CACHE_STOP_TIMEOUT).set(l);
       return this;
    }
 
@@ -97,7 +88,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     */
    @Deprecated
    public TransactionConfigurationBuilder eagerLockingSingleNode(boolean b) {
-      this.eagerLockingSingleNode = b;
+      attributes.attribute(EAGER_LOCKING_SINGLE_NODE).set(b);
       return this;
    }
 
@@ -108,8 +99,12 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * @see org.infinispan.configuration.cache.TransactionConfiguration#transactionMode()
     */
    public TransactionConfigurationBuilder lockingMode(LockingMode lockingMode) {
-      this.lockingMode = lockingMode;
+      attributes.attribute(LOCKING_MODE).set(lockingMode);
       return this;
+   }
+
+   LockingMode lockingMode() {
+      return attributes.attribute(LOCKING_MODE).get();
    }
 
    /**
@@ -120,7 +115,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * only commits the transaction after the primary owner released the lock.
     */
    public TransactionConfigurationBuilder syncCommitPhase(boolean b) {
-      this.syncCommitPhase = b;
+      attributes.attribute(SYNC_COMMIT_PHASE).set(b);
       return this;
    }
 
@@ -129,8 +124,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     *
     * @return {@code true} if sync commit phase is enabled
     */
-   public boolean syncCommitPhase() {
-      return syncCommitPhase;
+   boolean syncCommitPhase() {
+      return attributes.attribute(SYNC_COMMIT_PHASE).get();
    }
 
    /**
@@ -142,7 +137,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * a commit timeout, as a backup owner could commit the transaction after the primary released the lock.
     */
    public TransactionConfigurationBuilder syncRollbackPhase(boolean b) {
-      this.syncRollbackPhase = b;
+      attributes.attribute(SYNC_ROLLBACK_PHASE).set(b);
       return this;
    }
 
@@ -151,7 +146,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * Calling this method marks the cache as transactional.
     */
    public TransactionConfigurationBuilder transactionManagerLookup(TransactionManagerLookup tml) {
-      this.transactionManagerLookup = tml;
+      attributes.attribute(TRANSACTION_MANAGER_LOOKUP).set(tml);
       if (tml != null) {
          this.transactionMode(TransactionMode.TRANSACTIONAL);
       }
@@ -162,15 +157,22 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * Configure Transaction Synchronization Registry lookup directly using an instance of
     * TransactionManagerLookup. Calling this method marks the cache as transactional.
     */
-   public TransactionConfigurationBuilder transactionSynchronizationRegistryLookup(
-         TransactionSynchronizationRegistryLookup lookup) {
-      this.transactionSynchronizationRegistryLookup = lookup;
+   public TransactionConfigurationBuilder transactionSynchronizationRegistryLookup(TransactionSynchronizationRegistryLookup lookup) {
+      attributes.attribute(TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP).set(lookup);
       return this;
    }
 
    public TransactionConfigurationBuilder transactionMode(TransactionMode transactionMode) {
-      this.transactionMode = transactionMode;
+      attributes.attribute(TRANSACTION_MODE).set(transactionMode);
       return this;
+   }
+
+   TransactionMode transactionMode() {
+      if (attributes.attribute(TRANSACTION_MODE).isModified()) {
+         return attributes.attribute(TRANSACTION_MODE).get();
+      } else {
+         return null;
+      }
    }
 
    /**
@@ -185,7 +187,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     */
    @Deprecated
    public TransactionConfigurationBuilder useEagerLocking(boolean b) {
-      this.useEagerLocking = b;
+      this.attributes.attribute(USE_EAGER_LOCKING).set(b);
       return this;
    }
 
@@ -196,7 +198,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * @param b if true, {@link Synchronization}s are used rather than {@link XAResource}s when communicating with a {@link TransactionManager}.
     */
    public TransactionConfigurationBuilder useSynchronization(boolean b) {
-      this.useSynchronization = b;
+      attributes.attribute(USE_SYNCHRONIZATION).set(b);
       return this;
    }
 
@@ -205,8 +207,8 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     *
     * @return {@code true} if synchronization enlistment is enabled
     */
-   public boolean useSynchronization() {
-      return useSynchronization;
+   boolean useSynchronization() {
+      return attributes.attribute(USE_SYNCHRONIZATION).get();
    }
 
    /**
@@ -232,7 +234,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * case of a full 2 Phase Commit (2PC).
     */
    public TransactionConfigurationBuilder use1PcForAutoCommitTransactions(boolean b) {
-      this.use1PcForAutoCommitTransactions = b;
+      attributes.attribute(USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS).set(b);
       return this;
    }
 
@@ -240,7 +242,7 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     *The time interval (millis) at which the thread that cleans up transaction completion information kicks in. Defaults to 30000.
     */
    public TransactionConfigurationBuilder reaperWakeUpInterval(long interval) {
-      this.reaperWakeUpInterval = interval;
+      attributes.attribute(REAPER_WAKE_UP_INTERVAL).set(interval);
       return this;
    }
 
@@ -248,33 +250,40 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
     * The duration (millis) in which to keep information about the completion of a transaction. Defaults to 60000.
     */
    public TransactionConfigurationBuilder completedTxTimeout(long timeout) {
-      this.completedTxTimeout = timeout;
+      attributes.attribute(COMPLETED_TX_TIMEOUT).set(timeout);
+      return this;
+   }
+
+   public TransactionConfigurationBuilder transactionProtocol(TransactionProtocol transactionProtocol) {
+      attributes.attribute(TRANSACTION_PROTOCOL).set(transactionProtocol);
       return this;
    }
 
    @Override
    public void validate() {
-      if (reaperWakeUpInterval < 0)
-         throw new CacheConfigurationException("reaperWakeUpInterval must be > 0, we got " + reaperWakeUpInterval);
-      if (completedTxTimeout < 0)
-         throw new CacheConfigurationException("completedTxTimeout must be > 0, we got " + reaperWakeUpInterval);
-      if(transactionProtocol == TransactionProtocol.TOTAL_ORDER) {
+      Attribute<Long> reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
+      Attribute<Long> completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
+      if (reaperWakeUpInterval.get()< 0)
+         throw log.invalidReaperWakeUpInterval(reaperWakeUpInterval.get());
+      if (completedTxTimeout.get() < 0)
+         throw log.invalidCompletedTxTimeout(completedTxTimeout.get());
+      if(attributes.attribute(TRANSACTION_PROTOCOL).get() == TransactionProtocol.TOTAL_ORDER) {
          //total order only supports transactional caches
-         if(transactionMode != TransactionMode.TRANSACTIONAL) {
-            throw new CacheConfigurationException("Total Order based protocol not available in " + transactionMode +" cache");
+         if(transactionMode() != TransactionMode.TRANSACTIONAL) {
+            throw log.invalidTxModeForTotalOrder(transactionMode());
          }
 
          //total order only supports replicated and distributed mode
          if(!clustering().cacheMode().isReplicated() && !clustering().cacheMode().isDistributed()) {
-            throw new CacheConfigurationException(clustering().cacheMode().friendlyCacheModeString() + " is not supported by Total Order based protocol");
+            throw log.invalidCacheModeForTotalOrder(clustering().cacheMode().friendlyCacheModeString());
          }
 
          if (recovery.create().enabled()) {
-            throw new CacheConfigurationException("Total Order based protocol not available with recovery");
+            throw log.unavailableTotalOrderWithTxRecovery();
          }
 
-         if (lockingMode != LockingMode.OPTIMISTIC) {
-            throw new CacheConfigurationException("Total Order based protocol not available with " + lockingMode);
+         if (lockingMode() != LockingMode.OPTIMISTIC) {
+            throw log.invalidLockingModeForTotalOrder(lockingMode());
          }
       }
       recovery.validate();
@@ -287,63 +296,27 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public TransactionConfiguration create() {
-      if (useEagerLocking) {
-         lockingMode = LockingMode.PESSIMISTIC;
+      if (attributes.attribute(USE_EAGER_LOCKING).get()) {
+         lockingMode(LockingMode.PESSIMISTIC);
       }
-      if (transactionMode == null && getBuilder().invocationBatching().enabled)
-         transactionMode = TransactionMode.TRANSACTIONAL;
-      else if (transactionMode == null)
-         transactionMode = TransactionMode.NON_TRANSACTIONAL;
-      return new TransactionConfiguration(autoCommit, cacheStopTimeout, eagerLockingSingleNode, lockingMode, syncCommitPhase,
-            syncRollbackPhase, transactionManagerLookup, transactionSynchronizationRegistryLookup, transactionMode,
-            useEagerLocking, useSynchronization, use1PcForAutoCommitTransactions, reaperWakeUpInterval, completedTxTimeout, recovery.create(), transactionProtocol);
+      if (transactionMode() == null && getBuilder().invocationBatching().isEnabled())
+         transactionMode(TransactionMode.TRANSACTIONAL);
+      else if (transactionMode() == null)
+         transactionMode(TransactionMode.NON_TRANSACTIONAL);
+      return new TransactionConfiguration(attributes.protect(), recovery.create());
    }
 
    @Override
    public TransactionConfigurationBuilder read(TransactionConfiguration template) {
-      this.autoCommit = template.autoCommit();
-      this.cacheStopTimeout = template.cacheStopTimeout();
-      this.eagerLockingSingleNode = template.eagerLockingSingleNode();
-      this.lockingMode = template.lockingMode();
-      this.syncCommitPhase = template.syncCommitPhase();
-      this.syncRollbackPhase = template.syncRollbackPhase();
-      this.transactionManagerLookup = template.transactionManagerLookup();
-      this.transactionMode = template.transactionMode();
-      this.transactionSynchronizationRegistryLookup = template.transactionSynchronizationRegistryLookup();
-      this.useEagerLocking = template.useEagerLocking();
-      this.useSynchronization = template.useSynchronization();
-      this.use1PcForAutoCommitTransactions = template.use1PcForAutoCommitTransactions();
+      this.attributes.read(template.attributes());
       this.recovery.read(template.recovery());
-      this.reaperWakeUpInterval = template.reaperWakeUpInterval();
-      this.completedTxTimeout = template.completedTxTimeout();
-      this.transactionProtocol = template.transactionProtocol();
 
       return this;
    }
 
    @Override
    public String toString() {
-      return "TransactionConfigurationBuilder{" +
-            "autoCommit=" + autoCommit +
-            ", cacheStopTimeout=" + cacheStopTimeout +
-            ", eagerLockingSingleNode=" + eagerLockingSingleNode +
-            ", lockingMode=" + lockingMode +
-            ", syncCommitPhase=" + syncCommitPhase +
-            ", syncRollbackPhase=" + syncRollbackPhase +
-            ", transactionManagerLookup=" + transactionManagerLookup +
-            ", transactionSynchronizationRegistryLookup=" + transactionSynchronizationRegistryLookup +
-            ", transactionMode=" + transactionMode +
-            ", useEagerLocking=" + useEagerLocking +
-            ", useSynchronization=" + useSynchronization +
-            ", recovery=" + recovery +
-            ", use1PcForAutoCommitTransactions=" + use1PcForAutoCommitTransactions +
-            ", completedTxTimeout=" + completedTxTimeout +
-            ", reaperWakeUpInterval=" + reaperWakeUpInterval +
-            '}';
+      return "TransactionConfigurationBuilder [attributes=" + attributes + ", recovery=" + recovery + "]";
    }
 
-   public TransactionConfigurationBuilder transactionProtocol(TransactionProtocol transactionProtocol) {
-      this.transactionProtocol = transactionProtocol;
-      return this;
-   }
 }

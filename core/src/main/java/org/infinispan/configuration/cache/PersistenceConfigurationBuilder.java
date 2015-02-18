@@ -1,30 +1,31 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIVATION;
+
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationUtils;
-import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
-
 /**
  * Configuration for cache stores.
  *
  */
 public class PersistenceConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<PersistenceConfiguration> {
-
-   private boolean passivation = false;
    private List<StoreConfigurationBuilder<?,?>> stores = new ArrayList<StoreConfigurationBuilder<?,?>>(2);
+   private final AttributeSet attributes;
 
    protected PersistenceConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = PersistenceConfiguration.attributeDefinitionSet();
    }
 
    public PersistenceConfigurationBuilder passivation(boolean b) {
-      this.passivation = b;
+      attributes.attribute(PASSIVATION).set(b);
       return this;
    }
 
@@ -38,7 +39,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
     * in cache store writes. This essentially gives you a 'write-through' configuration.
     */
    boolean passivation() {
-      return passivation;
+      return attributes.attribute(PASSIVATION).get();
    }
 
    /**
@@ -121,12 +122,13 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
       List<StoreConfiguration> stores = new ArrayList<StoreConfiguration>(this.stores.size());
       for (StoreConfigurationBuilder<?, ?> loader : this.stores)
          stores.add(loader.create());
-      return new PersistenceConfiguration(passivation, stores);
+      return new PersistenceConfiguration(attributes.protect(), stores);
    }
 
    @SuppressWarnings("unchecked")
    @Override
    public PersistenceConfigurationBuilder read(PersistenceConfiguration template) {
+      this.attributes.read(template.attributes());
       clearStores();
       for (StoreConfiguration c : template.stores()) {
          Class<? extends StoreConfigurationBuilder<?, ?>> builderClass = (Class<? extends StoreConfigurationBuilder<?, ?>>) ConfigurationUtils.builderForNonStrict(c);
@@ -136,7 +138,7 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
          StoreConfigurationBuilder builder =  this.addStore(builderClass);
          builder.read(c);
       }
-      this.passivation = template.passivation();
+
       return this;
    }
 
@@ -146,9 +148,6 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public String toString() {
-      return "PersistenceConfigurationBuilder{" +
-            "stores=" + stores +
-            ", passivation=" + passivation +
-            '}';
+      return "PersistenceConfigurationBuilder [stores=" + stores + ", attributes=" + attributes + "]";
    }
 }

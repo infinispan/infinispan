@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
@@ -39,7 +40,6 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -333,8 +333,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
    @ConfigurationFor(LockableStore.class)
    public static class LockableStoreConfiguration extends DummyInMemoryStoreConfiguration {
 
-      public LockableStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties, boolean debug, boolean slow, String storeName, Object failKey) {
-         super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties, debug, slow, storeName, failKey);
+      public LockableStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+         super(attributes, async, singletonStore);
       }
    }
 
@@ -346,8 +346,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
       @Override
       public LockableStoreConfiguration create() {
-         return new LockableStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                               singletonStore.create(), preload, shared, properties, debug, slow, storeName, failKey);
+         return new LockableStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
       }
    }
 

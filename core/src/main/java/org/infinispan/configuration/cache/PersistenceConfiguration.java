@@ -2,17 +2,27 @@ package org.infinispan.configuration.cache;
 
 import java.util.List;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * Configuration for stores.
  *
  */
 public class PersistenceConfiguration {
+   public static final AttributeDefinition<Boolean> PASSIVATION = AttributeDefinition.builder("passivation", false).immutable().build();
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(PersistenceConfiguration.class, PASSIVATION);
+   }
 
-   private final boolean passivation;
+   private final Attribute<Boolean> passivation;
+   private final AttributeSet attributes;
    private final List<StoreConfiguration> stores;
 
-   PersistenceConfiguration(boolean passivation, List<StoreConfiguration> stores) {
-      this.passivation = passivation;
+   PersistenceConfiguration(AttributeSet attributes, List<StoreConfiguration> stores) {
+      this.attributes = attributes.checkProtection();
+      passivation = attributes.attribute(PASSIVATION);
       this.stores = stores;
    }
 
@@ -26,7 +36,7 @@ public class PersistenceConfiguration {
     * in cache store writes. This essentially gives you a 'write-through' configuration.
     */
    public boolean passivation() {
-      return passivation;
+      return passivation.get();
    }
 
    public List<StoreConfiguration> stores() {
@@ -69,32 +79,43 @@ public class PersistenceConfiguration {
       return false;
    }
 
-   @Override
-   public String toString() {
-      return "PersistenceConfiguration{" +
-            "persistence=" + stores +
-            ", passivation=" + passivation +
-            '}';
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+   public String toString() {
+      return "PersistenceConfiguration [attributes=" + attributes + ", stores=" + stores + "]";
+   }
 
-      PersistenceConfiguration that = (PersistenceConfiguration) o;
-
-      if (passivation != that.passivation) return false;
-      if (stores != null ? !stores.equals(that.stores) : that.stores != null)
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
          return false;
-
+      if (getClass() != obj.getClass())
+         return false;
+      PersistenceConfiguration other = (PersistenceConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
+      if (stores == null) {
+         if (other.stores != null)
+            return false;
+      } else if (!stores.equals(other.stores))
+         return false;
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = (passivation ? 1 : 0);
-      result = 31 * result + (stores != null ? stores.hashCode() : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      result = prime * result + ((stores == null) ? 0 : stores.hashCode());
       return result;
    }
 

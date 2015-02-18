@@ -1,15 +1,18 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.configuration.parsing.XmlConfigHelper;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
+import static org.infinispan.configuration.cache.ClusterLoaderConfiguration.REMOTE_CALL_TIMEOUT;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.parsing.XmlConfigHelper;
+
 public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfigurationBuilder<ClusterLoaderConfiguration, ClusterLoaderConfigurationBuilder> {
-   private long remoteCallTimeout = TimeUnit.SECONDS.toMillis(15);
 
    public ClusterLoaderConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, ClusterLoaderConfiguration.attributeDefinitionSet());
    }
 
    @Override
@@ -18,19 +21,19 @@ public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfiguratio
    }
 
    public ClusterLoaderConfigurationBuilder remoteCallTimeout(long remoteCallTimeout) {
-      this.remoteCallTimeout = remoteCallTimeout;
+      attributes.attribute(REMOTE_CALL_TIMEOUT).set(remoteCallTimeout);
       return this;
    }
 
    public ClusterLoaderConfigurationBuilder remoteCallTimeout(long remoteCallTimeout, TimeUnit unit) {
-      this.remoteCallTimeout = unit.toMillis(remoteCallTimeout);
+      remoteCallTimeout(unit.toMillis(remoteCallTimeout));
       return this;
    }
 
    @Override
    public ClusterLoaderConfigurationBuilder withProperties(Properties p) {
-      this.properties = p;
-      XmlConfigHelper.setValues(this, properties, false, true);
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(p));
+      XmlConfigHelper.setAttributes(attributes, p, false, true);
       return this;
    }
 
@@ -40,15 +43,12 @@ public class ClusterLoaderConfigurationBuilder extends AbstractStoreConfiguratio
 
    @Override
    public ClusterLoaderConfiguration create() {
-      return new ClusterLoaderConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                                 singletonStore.create(), preload, shared, properties, remoteCallTimeout);
+      return new ClusterLoaderConfiguration(attributes.protect(), async.create(), singletonStore.create());
    }
 
    @Override
    public ClusterLoaderConfigurationBuilder read(ClusterLoaderConfiguration template) {
       super.read(template);
-      this.remoteCallTimeout = template.remoteCallTimeout();
-      this.properties = template.properties();
       return this;
    }
 }

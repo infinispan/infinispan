@@ -1,59 +1,82 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
+import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
- * 
+ *
  * @author pmuir
  * @author Pedro Ruivo
- * 
+ *
  */
 public class TransactionConfiguration {
+   public static final AttributeDefinition<Boolean> AUTO_COMMIT = AttributeDefinition.builder("autoCommit", true).immutable().build();
+   public static final AttributeDefinition<Long> CACHE_STOP_TIMEOUT = AttributeDefinition.builder("cacheStopTimeout", TimeUnit.SECONDS.toMillis(30)).build();
+   public static final AttributeDefinition<Boolean> EAGER_LOCKING_SINGLE_NODE = AttributeDefinition.builder("eagerLockingSingleNode", false).immutable().build();
+   public static final AttributeDefinition<LockingMode> LOCKING_MODE = AttributeDefinition.builder("lockingMode", LockingMode.OPTIMISTIC).build();
+   public static final AttributeDefinition<Boolean> SYNC_COMMIT_PHASE = AttributeDefinition.builder("syncCommitPhase", true).immutable().build();
+   public static final AttributeDefinition<Boolean> SYNC_ROLLBACK_PHASE = AttributeDefinition.builder("syncRollbackPhase", true).immutable().build();
+   public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder("transactionManagerLookup", GenericTransactionManagerLookup.INSTANCE).build();
+   public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transactionSynchronizationRegistryLookup", null, TransactionSynchronizationRegistryLookup.class).build();
+   public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("transactionMode", TransactionMode.NON_TRANSACTIONAL).immutable().build();
+   public static final AttributeDefinition<Boolean> USE_EAGER_LOCKING = AttributeDefinition.builder("useEagerLocking", false).build();
+   public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("useSynchronization", false).immutable().build();
+   public static final AttributeDefinition<Boolean> USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS = AttributeDefinition.builder("use1PcForAutoCommitTransactions", false).build();
+   public static final AttributeDefinition<Long> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder("reaperWakeUpInterval", 30000l).immutable().build();
+   public static final AttributeDefinition<Long> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder("completedTxTimeout", 60000l).immutable().build();
+   public static final AttributeDefinition<TransactionProtocol> TRANSACTION_PROTOCOL = AttributeDefinition.builder("transactionProtocol", TransactionProtocol.DEFAULT).immutable().build();
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(TransactionConfiguration.class, AUTO_COMMIT, CACHE_STOP_TIMEOUT, EAGER_LOCKING_SINGLE_NODE, LOCKING_MODE, SYNC_COMMIT_PHASE, SYNC_ROLLBACK_PHASE,
+            TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, TRANSACTION_MODE, USE_EAGER_LOCKING, USE_SYNCHRONIZATION, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
+            REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, TRANSACTION_PROTOCOL);
+   }
 
-   private final boolean autoCommit;
-   private long cacheStopTimeout;
-   private final boolean eagerLockingSingleNode;
-   private LockingMode lockingMode;
-   private final boolean syncCommitPhase;
-   private final boolean syncRollbackPhase;
-   private TransactionManagerLookup transactionManagerLookup;
-   private final TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup;
-   private final TransactionMode transactionMode;
-   private boolean useEagerLocking;
-   private final boolean useSynchronization;
+   private final Attribute<Boolean> autoCommit;
+   private final Attribute<Long> cacheStopTimeout;
+   private final Attribute<Boolean> eagerLockingSingleNode;
+   private final Attribute<LockingMode> lockingMode;
+   private final Attribute<Boolean> syncCommitPhase;
+   private final Attribute<Boolean> syncRollbackPhase;
+   private final Attribute<TransactionManagerLookup> transactionManagerLookup;
+   private final Attribute<TransactionSynchronizationRegistryLookup> transactionSynchronizationRegistryLookup;
+   private final Attribute<TransactionMode> transactionMode;
+   private final Attribute<Boolean> useEagerLocking;
+   private final Attribute<Boolean> useSynchronization;
+   private final Attribute<Boolean> use1PcForAutoCommitTransactions;
+   private final Attribute<Long> reaperWakeUpInterval;
+   private final Attribute<Long> completedTxTimeout;
+   private final Attribute<TransactionProtocol> transactionProtocol;
+   private final AttributeSet attributes;
    private final RecoveryConfiguration recovery;
-   private final boolean use1PcForAutoCommitTransactions;
-   private final long reaperWakeUpInterval;
-   private final long completedTxTimeout;
-   private final TransactionProtocol transactionProtocol; //2PC or Total order protocol
 
-
-   TransactionConfiguration(boolean autoCommit, long cacheStopTimeout, boolean eagerLockingSingleNode, LockingMode lockingMode,
-                            boolean syncCommitPhase, boolean syncRollbackPhase, TransactionManagerLookup transactionManagerLookup,
-                            TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup, TransactionMode transactionMode,
-                            boolean useEagerLocking, boolean useSynchronization, boolean use1PcForAutoCommitTransactions,
-                            long reaperWakeUpInterval, long completedTxTimeout, RecoveryConfiguration recovery, TransactionProtocol transactionProtocol) {
-      this.autoCommit = autoCommit;
-      this.cacheStopTimeout = cacheStopTimeout;
-      this.eagerLockingSingleNode = eagerLockingSingleNode;
-      this.lockingMode = lockingMode;
-      this.syncCommitPhase = syncCommitPhase;
-      this.syncRollbackPhase = syncRollbackPhase;
-      this.transactionManagerLookup = transactionManagerLookup;
-      this.transactionSynchronizationRegistryLookup = transactionSynchronizationRegistryLookup;
-      this.transactionMode = transactionMode;
-      this.useEagerLocking = useEagerLocking;
-      this.useSynchronization = useSynchronization;
+   TransactionConfiguration(AttributeSet attributes, RecoveryConfiguration recovery) {
+      this.attributes = attributes.checkProtection();
+      autoCommit = attributes.attribute(AUTO_COMMIT);
+      cacheStopTimeout = attributes.attribute(CACHE_STOP_TIMEOUT);
+      eagerLockingSingleNode = attributes.attribute(EAGER_LOCKING_SINGLE_NODE);
+      lockingMode = attributes.attribute(LOCKING_MODE);
+      syncCommitPhase = attributes.attribute(SYNC_COMMIT_PHASE);
+      syncRollbackPhase = attributes.attribute(SYNC_ROLLBACK_PHASE);
+      transactionManagerLookup = attributes.attribute(TRANSACTION_MANAGER_LOOKUP);
+      transactionSynchronizationRegistryLookup = attributes.attribute(TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP);
+      transactionMode = attributes.attribute(TRANSACTION_MODE);
+      useEagerLocking = attributes.attribute(USE_EAGER_LOCKING);
+      useSynchronization = attributes.attribute(USE_SYNCHRONIZATION);
+      use1PcForAutoCommitTransactions = attributes.attribute(USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS);
+      reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
+      completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
+      transactionProtocol = attributes.attribute(TRANSACTION_PROTOCOL);
       this.recovery = recovery;
-      this.use1PcForAutoCommitTransactions = use1PcForAutoCommitTransactions;
-      this.reaperWakeUpInterval = reaperWakeUpInterval;
-      this.completedTxTimeout = completedTxTimeout;
-      this.transactionProtocol = transactionProtocol;
    }
 
    /**
@@ -63,7 +86,7 @@ public class TransactionConfiguration {
     * is injected by the system. Defaults to true.
     */
    public boolean autoCommit() {
-      return autoCommit;
+      return autoCommit.get();
    }
 
    /**
@@ -74,7 +97,7 @@ public class TransactionConfiguration {
     * only last as long as the transaction timeout allows it.
     */
    public TransactionConfiguration cacheStopTimeout(long l) {
-      this.cacheStopTimeout = l;
+      cacheStopTimeout.set(l);
       return this;
    }
 
@@ -86,7 +109,7 @@ public class TransactionConfiguration {
     * only last as long as the transaction timeout allows it.
     */
    public long cacheStopTimeout() {
-      return cacheStopTimeout;
+      return cacheStopTimeout.get();
    }
 
    /**
@@ -101,17 +124,17 @@ public class TransactionConfiguration {
     */
    @Deprecated
    public boolean eagerLockingSingleNode() {
-      return eagerLockingSingleNode;
+      return eagerLockingSingleNode.get();
    }
 
    /**
     * Configures whether the cache uses optimistic or pessimistic locking.
     * If the cache is not transactional then the locking mode is ignored.
-    * 
+    *
     * @see TransactionConfiguration#transactionMode()
     */
    public LockingMode lockingMode() {
-      return lockingMode;
+      return lockingMode.get();
    }
 
    /**
@@ -121,7 +144,7 @@ public class TransactionConfiguration {
     * @see TransactionConfiguration#transactionMode()
     */
     public TransactionConfiguration lockingMode(LockingMode lockingMode) {
-      this.lockingMode = lockingMode;
+      this.lockingMode.set(lockingMode);
       return this;
    }
 
@@ -133,7 +156,7 @@ public class TransactionConfiguration {
     * the lock before the backup commits the change.
     */
    public boolean syncCommitPhase() {
-      return syncCommitPhase;
+      return syncCommitPhase.get();
    }
 
    /**
@@ -155,11 +178,11 @@ public class TransactionConfiguration {
     * synchronous, so Infinispan will wait for responses from all nodes to which the rollback was
     * sent. Otherwise, the rollback phase will be asynchronous. Keeping it as false improves
     * performance of 2PC transactions.
-    * 
+    *
     * @return
     */
    public boolean syncRollbackPhase() {
-      return syncRollbackPhase;
+      return syncRollbackPhase.get();
    }
 
    /**
@@ -179,11 +202,11 @@ public class TransactionConfiguration {
     * Calling this method marks the cache as transactional.
     */
    public TransactionManagerLookup transactionManagerLookup() {
-      return transactionManagerLookup;
+      return transactionManagerLookup.get();
    }
 
    public TransactionConfiguration transactionManagerLookup(TransactionManagerLookup transactionManagerLookup) {
-      this.transactionManagerLookup = transactionManagerLookup;
+      this.transactionManagerLookup.set(transactionManagerLookup);
       return this;
    }
 
@@ -192,11 +215,11 @@ public class TransactionConfiguration {
     * TransactionManagerLookup. Calling this method marks the cache as transactional.
     */
    public TransactionSynchronizationRegistryLookup transactionSynchronizationRegistryLookup() {
-      return transactionSynchronizationRegistryLookup;
+      return transactionSynchronizationRegistryLookup.get();
    }
 
    public TransactionMode transactionMode() {
-      return transactionMode;
+      return transactionMode.get();
    }
 
    /**
@@ -212,17 +235,17 @@ public class TransactionConfiguration {
     */
    @Deprecated
    public boolean useEagerLocking() {
-      return useEagerLocking;
+      return useEagerLocking.get();
    }
 
    @Deprecated
    public TransactionConfiguration useEagerLocking(boolean b) {
-      this.useEagerLocking = b;
+      useEagerLocking.set(b);
       return this;
    }
 
    public boolean useSynchronization() {
-      return useSynchronization;
+      return useSynchronization.get();
    }
 
    /**
@@ -238,14 +261,14 @@ public class TransactionConfiguration {
     * @see TransactionConfigurationBuilder#reaperWakeUpInterval(long)
     */
    public long reaperWakeUpInterval() {
-      return reaperWakeUpInterval;
+      return reaperWakeUpInterval.get();
    }
 
    /**
     * @see TransactionConfigurationBuilder#completedTxTimeout(long)
     */
    public long completedTxTimeout()  {
-      return completedTxTimeout;
+      return completedTxTimeout.get();
    }
 
    /**
@@ -266,84 +289,54 @@ public class TransactionConfiguration {
     * guarantees under concurrent access.
     */
    public boolean use1PcForAutoCommitTransactions() {
-      return use1PcForAutoCommitTransactions;
-   }
-
-   @Override
-   public String toString() {
-      return "TransactionConfiguration{" +
-            "autoCommit=" + autoCommit +
-            ", cacheStopTimeout=" + cacheStopTimeout +
-            ", eagerLockingSingleNode=" + eagerLockingSingleNode +
-            ", lockingMode=" + lockingMode +
-            ", syncCommitPhase=" + syncCommitPhase +
-            ", syncRollbackPhase=" + syncRollbackPhase +
-            ", transactionManagerLookup=" + transactionManagerLookup +
-            ", transactionSynchronizationRegistryLookup=" + transactionSynchronizationRegistryLookup +
-            ", transactionMode=" + transactionMode +
-            ", useEagerLocking=" + useEagerLocking +
-            ", useSynchronization=" + useSynchronization +
-            ", recovery=" + recovery +
-            ", reaperWakeUpInterval=" + reaperWakeUpInterval +
-            ", completedTxTimeout=" + completedTxTimeout +
-            ", use1PcForAutoCommitTransactions=" + use1PcForAutoCommitTransactions +
-            '}';
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      TransactionConfiguration that = (TransactionConfiguration) o;
-
-      if (autoCommit != that.autoCommit) return false;
-      if (cacheStopTimeout != that.cacheStopTimeout) return false;
-      if (eagerLockingSingleNode != that.eagerLockingSingleNode) return false;
-      if (syncCommitPhase != that.syncCommitPhase) return false;
-      if (syncRollbackPhase != that.syncRollbackPhase) return false;
-      if (use1PcForAutoCommitTransactions != that.use1PcForAutoCommitTransactions)
-         return false;
-      if (useEagerLocking != that.useEagerLocking) return false;
-      if (useSynchronization != that.useSynchronization) return false;
-      if (lockingMode != that.lockingMode) return false;
-      if (recovery != null ? !recovery.equals(that.recovery) : that.recovery != null)
-         return false;
-      if (transactionManagerLookup != null ? !transactionManagerLookup.equals(that.transactionManagerLookup) : that.transactionManagerLookup != null)
-         return false;
-      if (transactionMode != that.transactionMode) return false;
-      if (transactionSynchronizationRegistryLookup != null ? !transactionSynchronizationRegistryLookup.equals(that.transactionSynchronizationRegistryLookup) : that.transactionSynchronizationRegistryLookup != null)
-         return false;
-      if (transactionProtocol != that.transactionProtocol) {
-         return false;
-      }
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = (autoCommit ? 1 : 0);
-      result = 31 * result + (int) (cacheStopTimeout ^ (cacheStopTimeout >>> 32));
-      result = 31 * result + (eagerLockingSingleNode ? 1 : 0);
-      result = 31 * result + (lockingMode != null ? lockingMode.hashCode() : 0);
-      result = 31 * result + (syncCommitPhase ? 1 : 0);
-      result = 31 * result + (syncRollbackPhase ? 1 : 0);
-      result = 31 * result + (transactionManagerLookup != null ? transactionManagerLookup.hashCode() : 0);
-      result = 31 * result + (transactionSynchronizationRegistryLookup != null ? transactionSynchronizationRegistryLookup.hashCode() : 0);
-      result = 31 * result + (transactionMode != null ? transactionMode.hashCode() : 0);
-      result = 31 * result + (useEagerLocking ? 1 : 0);
-      result = 31 * result + (useSynchronization ? 1 : 0);
-      result = 31 * result + (recovery != null ? recovery.hashCode() : 0);
-      result = 31 * result + (use1PcForAutoCommitTransactions ? 1 : 0);
-      result = 31 * result + (transactionProtocol != null ? transactionProtocol.hashCode() : 0);
-      return result;
+      return use1PcForAutoCommitTransactions.get();
    }
 
    /**
     * @return the transaction protocol in use (2PC or Total Order)
     */
    public TransactionProtocol transactionProtocol() {
-      return transactionProtocol;
+      return transactionProtocol.get();
    }
+
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   @Override
+   public String toString() {
+      return "TransactionConfiguration [attributes=" + attributes + ", recovery=" + recovery + "]";
+   }
+
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      TransactionConfiguration other = (TransactionConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
+      if (recovery == null) {
+         if (other.recovery != null)
+            return false;
+      } else if (!recovery.equals(other.recovery))
+         return false;
+      return true;
+   }
+
+   @Override
+   public int hashCode() {
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      result = prime * result + ((recovery == null) ? 0 : recovery.hashCode());
+      return result;
+   }
+
 }

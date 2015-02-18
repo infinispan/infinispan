@@ -6,20 +6,14 @@ import java.util.Properties;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.commons.util.TypedProperties;
+import static org.infinispan.persistence.jdbc.configuration.JdbcBinaryStoreConfiguration.*;
 
 public class JdbcBinaryStoreConfigurationBuilder extends
                                                       AbstractJdbcStoreConfigurationBuilder<JdbcBinaryStoreConfiguration, JdbcBinaryStoreConfigurationBuilder> {
-   public static final int DEFAULT_CONCURRENCY_LEVEL = 2048;
-   public static final int DEFAULT_LOCK_ACQUISITION_TIMEOUT = 60000;
-
    protected final BinaryTableManipulationConfigurationBuilder table;
 
-   private int concurrencyLevel = DEFAULT_CONCURRENCY_LEVEL;
-
-   private long lockAcquisitionTimeout = DEFAULT_LOCK_ACQUISITION_TIMEOUT;
-
    public JdbcBinaryStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, JdbcBinaryStoreConfiguration.attributeDefinitionSet());
       this.table = new BinaryTableManipulationConfigurationBuilder(this);
    }
 
@@ -37,42 +31,43 @@ public class JdbcBinaryStoreConfigurationBuilder extends
 
    @Override
    public JdbcBinaryStoreConfigurationBuilder withProperties(Properties props) {
-      Map<Object, Object> unrecognized = XmlConfigHelper.setValues(this, props, false, false);
-      unrecognized = XmlConfigHelper.setValues(table, unrecognized, false, false);
+      Map<Object, Object> unrecognized = XmlConfigHelper.setAttributes(attributes, props, false, false);
+      unrecognized = XmlConfigHelper.setAttributes(table.attributes(), unrecognized, false, false);
       XmlConfigHelper.showUnrecognizedAttributes(unrecognized);
-      this.properties = props;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
    }
 
    public JdbcBinaryStoreConfigurationBuilder lockAcquisitionTimeout(long lockAcquisitionTimeout) {
-      this.lockAcquisitionTimeout = lockAcquisitionTimeout;
+      attributes.attribute(LOCK_ACQUISITION_TIMEOUT).set(lockAcquisitionTimeout);
       return self();
    }
 
 
    public JdbcBinaryStoreConfigurationBuilder concurrencyLevel(int concurrencyLevel) {
-      this.concurrencyLevel = concurrencyLevel;
+      attributes.attribute(CONCURRENCY_LEVEL).set(concurrencyLevel);
       return self();
    }
 
    @Override
    public JdbcBinaryStoreConfiguration create() {
-      ConnectionFactoryConfiguration cf = connectionFactory != null ? connectionFactory.create() : null;
-      return new JdbcBinaryStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                              singletonStore.create(), preload, shared, TypedProperties.toTypedProperties(properties), cf,
-                                              manageConnectionFactory, table.create(), concurrencyLevel, lockAcquisitionTimeout, databaseType);
+      return new JdbcBinaryStoreConfiguration(attributes.protect(), async.create(), singletonStore.create(), connectionFactory != null ? connectionFactory.create() : null, table.create());
    }
 
    @Override
    public JdbcBinaryStoreConfigurationBuilder read(JdbcBinaryStoreConfiguration template) {
       super.read(template);
-
-      this.table.read(template.table());
-      this.lockAcquisitionTimeout = template.lockAcquisitionTimeout();
-      this.concurrencyLevel = template.lockConcurrencyLevel();
-
+      table.read(template.table());
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "JdbcBinaryStoreConfigurationBuilder [table=" + table + ", connectionFactory=" + connectionFactory + ", attributes=" + attributes + ", async=" + async
+            + ", singletonStore=" + singletonStore + "]";
+   }
+
+
 
    public class BinaryTableManipulationConfigurationBuilder extends
          TableManipulationConfigurationBuilder<JdbcBinaryStoreConfigurationBuilder, BinaryTableManipulationConfigurationBuilder> {

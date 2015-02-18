@@ -3,21 +3,20 @@ package org.infinispan.configuration.global;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.executors.DefaultScheduledExecutorFactory;
 import org.infinispan.executors.ScheduledExecutorFactory;
 
+import static org.infinispan.configuration.global.ScheduledExecutorFactoryConfiguration.*;
 /**
  * Configures executor factory.
  */
 public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<ScheduledExecutorFactoryConfiguration> {
-
-   private ScheduledExecutorFactory factory = new DefaultScheduledExecutorFactory();
-   private Properties properties;
+   private final AttributeSet attributes;
 
    ScheduledExecutorFactoryConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
-      this.properties = new Properties();
+      attributes = ScheduledExecutorFactoryConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -31,7 +30,7 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
     * @return this ScheduledExecutorFactoryConfig
     */
    public ScheduledExecutorFactoryConfigurationBuilder factory(ScheduledExecutorFactory factory) {
-      this.factory = factory;
+      attributes.attribute(FACTORY).set(factory);
       return this;
    }
 
@@ -43,7 +42,7 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
     * @return previous value if exists, null otherwise
     */
    public ScheduledExecutorFactoryConfigurationBuilder addProperty(String key, String value) {
-      this.properties.put(key, value);
+      attributes.attribute(PROPERTIES).get().put(key, value);
       return this;
    }
 
@@ -54,7 +53,7 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
     * @return this ScheduledExecutorFactoryConfig
     */
    public ScheduledExecutorFactoryConfigurationBuilder withProperties(Properties props) {
-      this.properties = props;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
    }
 
@@ -67,45 +66,17 @@ public class ScheduledExecutorFactoryConfigurationBuilder extends AbstractGlobal
    @Override
    public
    ScheduledExecutorFactoryConfiguration create() {
-      return new ScheduledExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));
+      return new ScheduledExecutorFactoryConfiguration(attributes);
    }
 
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder read(ScheduledExecutorFactoryConfiguration template) {
-      this.factory = template.factory();
-      this.properties = template.properties();
-
+      attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "ScheduledExecutorFactoryConfigurationBuilder{" +
-            "factory=" + factory +
-            ", properties=" + properties +
-            '}';
+      return "ScheduledExecutorFactoryConfigurationBuilder [attributes=" + attributes + "]";
    }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ScheduledExecutorFactoryConfigurationBuilder that = (ScheduledExecutorFactoryConfigurationBuilder) o;
-
-      if (factory != null ? !factory.equals(that.factory) : that.factory != null)
-         return false;
-      if (properties != null ? !properties.equals(that.properties) : that.properties != null)
-         return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = factory != null ? factory.hashCode() : 0;
-      result = 31 * result + (properties != null ? properties.hashCode() : 0);
-      return result;
-   }
-
 }

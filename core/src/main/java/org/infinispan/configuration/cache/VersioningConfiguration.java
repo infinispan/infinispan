@@ -1,52 +1,57 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
- * This configuration element controls whether entries are versioned.  Versioning is necessary, for example, when
+ * This configuration element controls whether entries are versioned. Versioning is necessary, for example, when
  * using optimistic transactions in a clustered environment, to be able to perform write-skew checks.
  */
 public class VersioningConfiguration {
-   private final boolean enabled;
-   private final VersioningScheme scheme;
+   public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   public static final AttributeDefinition<VersioningScheme> SCHEME = AttributeDefinition.builder("scheme", VersioningScheme.NONE).immutable().build();
 
-   VersioningConfiguration(boolean enabled, VersioningScheme scheme) {
-      this.enabled = enabled;
-      this.scheme = scheme;
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(VersioningConfiguration.class, ENABLED, SCHEME);
+   }
+
+   private final Attribute<Boolean> enabled;
+   private final Attribute<VersioningScheme> scheme;
+   private AttributeSet attributes;
+
+   VersioningConfiguration(AttributeSet attributes) {
+      this.attributes = attributes.checkProtection();
+      enabled = attributes.attribute(ENABLED);
+      scheme = attributes.attribute(SCHEME);
    }
 
    public boolean enabled() {
-      return enabled;
+      return enabled.get();
    }
 
    public VersioningScheme scheme() {
-      return scheme;
-   }
-
-   @Override
-   public String toString() {
-      return "VersioningConfiguration{" +
-            "enabled=" + enabled +
-            ", scheme=" + scheme +
-            '}';
+      return scheme.get();
    }
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      VersioningConfiguration that = (VersioningConfiguration) o;
-
-      if (enabled != that.enabled) return false;
-      if (scheme != that.scheme) return false;
-
-      return true;
+      VersioningConfiguration other = (VersioningConfiguration) o;
+      return attributes.equals(other.attributes);
    }
 
    @Override
    public int hashCode() {
-      int result = (enabled ? 1 : 0);
-      result = 31 * result + (scheme != null ? scheme.hashCode() : 0);
-      return result;
+      return attributes.hashCode();
+   }
+
+   @Override
+   public String toString() {
+      return attributes.toString();
+   }
+
+   public AttributeSet attributes() {
+      return attributes;
    }
 
 }
