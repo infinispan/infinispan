@@ -2,6 +2,9 @@ import "org/infinispan/protostream/message-wrapping.proto";
 
 package org.infinispan.query.remote.client;
 
+/**
+ * @TypeId(1000101)
+ */
 message QueryRequest {
 
    /**
@@ -23,6 +26,9 @@ message QueryRequest {
    required int32 maxResults = 4;
 }
 
+/**
+ * @TypeId(1000102)
+ */
 message QueryResponse {
 
    /**
