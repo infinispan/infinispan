@@ -1,14 +1,18 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.Builder;
+import static org.infinispan.configuration.cache.LockingConfiguration.*;
+
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * Defines the local, in-VM locking and concurrency characteristics of the cache.
@@ -20,14 +24,11 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
    private static final Log log = LogFactory.getLog(LockingConfigurationBuilder.class);
 
-   private int concurrencyLevel = 32;
-   private IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
-   private long lockAcquisitionTimeout = TimeUnit.SECONDS.toMillis(10);
-   private boolean useLockStriping = false;
-   private boolean writeSkewCheck = false;
+   private final AttributeSet attributes;
 
    protected LockingConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = LockingConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -36,7 +37,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     * the JDK's ConcurrentHashMap.
     */
    public LockingConfigurationBuilder concurrencyLevel(int i) {
-      this.concurrencyLevel = i;
+      attributes.attribute(CONCURRENCY_LEVEL).set(i);
       return this;
    }
 
@@ -47,7 +48,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     * > for a discussion on isolation levels.
     */
    public LockingConfigurationBuilder isolationLevel(IsolationLevel isolationLevel) {
-      this.isolationLevel = isolationLevel;
+      attributes.attribute(ISOLATION_LEVEL).set(isolationLevel);
       return this;
    }
 
@@ -55,6 +56,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     * @see org.infinispan.configuration.cache.LockingConfiguration#supportsConcurrentUpdates()
     * @deprecated
     */
+   @Deprecated
    public LockingConfigurationBuilder supportsConcurrentUpdates(boolean itDoes) {
       if (!itDoes) {
          log.warnConcurrentUpdateSupportCannotBeConfigured();
@@ -66,7 +68,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     * Maximum time to attempt a particular lock acquisition
     */
    public LockingConfigurationBuilder lockAcquisitionTimeout(long l) {
-      this.lockAcquisitionTimeout = l;
+      attributes.attribute(LOCK_ACQUISITION_TIMEOUT).set(l);
       return this;
    }
 
@@ -83,7 +85,7 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     * footprint but may reduce concurrency in the system.
     */
    public LockingConfigurationBuilder useLockStriping(boolean b) {
-      this.useLockStriping = b;
+      attributes.attribute(USE_LOCK_STRIPING).set(b);
       return this;
    }
 
@@ -94,18 +96,18 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
     * such version conflict - known as a write-skew - will throw an Exception.
     */
    public LockingConfigurationBuilder writeSkewCheck(boolean b) {
-      this.writeSkewCheck = b;
+      attributes.attribute(WRITE_SKEW_CHECK).set(b);
       return this;
    }
 
    @Override
    public void validate() {
-      if (writeSkewCheck) {
-         if (isolationLevel != IsolationLevel.REPEATABLE_READ)
+      if (attributes.attribute(WRITE_SKEW_CHECK).get()) {
+         if (attributes.attribute(ISOLATION_LEVEL).get() != IsolationLevel.REPEATABLE_READ)
             throw new CacheConfigurationException("Write-skew checking only allowed with REPEATABLE_READ isolation level for cache");
-         if (transaction().lockingMode != LockingMode.OPTIMISTIC)
+         if (transaction().lockingMode() != LockingMode.OPTIMISTIC)
             throw new CacheConfigurationException("Write-skew checking only allowed with OPTIMISTIC transactions");
-         if (!versioning().enabled || versioning().scheme != VersioningScheme.SIMPLE)
+         if (!versioning().enabled() || versioning().scheme()!= VersioningScheme.SIMPLE)
             throw new CacheConfigurationException(
                   "Write-skew checking requires versioning to be enabled and versioning scheme 'SIMPLE' to be configured");
          if (clustering().cacheMode() != CacheMode.DIST_SYNC && clustering().cacheMode() != CacheMode.REPL_SYNC
@@ -114,14 +116,15 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
                   + clustering().cacheMode() + " cannot be used with write-skew checking");
       }
 
-      if (getBuilder().clustering().cacheMode().isClustered() && isolationLevel == IsolationLevel.NONE)
-         isolationLevel = IsolationLevel.READ_COMMITTED;
+      Attribute<IsolationLevel> isolationLevel = attributes.attribute(ISOLATION_LEVEL);
+      if (getBuilder().clustering().cacheMode().isClustered() && isolationLevel.get() == IsolationLevel.NONE)
+         isolationLevel.set(IsolationLevel.READ_COMMITTED);
 
-      if (isolationLevel == IsolationLevel.READ_UNCOMMITTED)
-         isolationLevel = IsolationLevel.READ_COMMITTED;
+      if (isolationLevel.get() == IsolationLevel.READ_UNCOMMITTED)
+         isolationLevel.set(IsolationLevel.READ_COMMITTED);
 
-      if (isolationLevel == IsolationLevel.SERIALIZABLE)
-         isolationLevel = IsolationLevel.REPEATABLE_READ;
+      if (isolationLevel.get() == IsolationLevel.SERIALIZABLE)
+         isolationLevel.set(IsolationLevel.REPEATABLE_READ);
    }
 
    @Override
@@ -130,28 +133,17 @@ public class LockingConfigurationBuilder extends AbstractConfigurationChildBuild
 
    @Override
    public LockingConfiguration create() {
-      return new LockingConfiguration(concurrencyLevel, isolationLevel, lockAcquisitionTimeout, useLockStriping, writeSkewCheck);
+      return new LockingConfiguration(attributes.protect());
    }
 
    @Override
    public LockingConfigurationBuilder read(LockingConfiguration template) {
-      concurrencyLevel = template.concurrencyLevel();
-      isolationLevel = template.isolationLevel();
-      lockAcquisitionTimeout = template.lockAcquisitionTimeout();
-      useLockStriping = template.useLockStriping();
-      writeSkewCheck = template.writeSkewCheck();
-
+      this.attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "LockingConfigurationBuilder{" +
-            "concurrencyLevel=" + concurrencyLevel +
-            ", isolationLevel=" + isolationLevel +
-            ", lockAcquisitionTimeout=" + lockAcquisitionTimeout +
-            ", useLockStriping=" + useLockStriping +
-            ", writeSkewCheck=" + writeSkewCheck +
-            '}';
+      return this.getClass().getSimpleName() + "[" + attributes + "]";
    }
 }

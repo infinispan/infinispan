@@ -1,25 +1,36 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * Defines clustered characteristics of the cache.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class ClusteringConfiguration {
+   public static final AttributeDefinition<CacheMode> CACHE_MODE = AttributeDefinition.builder("cacheMode",  CacheMode.LOCAL).immutable().build();
 
-   private final CacheMode cacheMode;
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(ClusteringConfiguration.class, CACHE_MODE);
+   }
+
+   private final Attribute<CacheMode> cacheMode;
    private final AsyncConfiguration asyncConfiguration;
    private final HashConfiguration hashConfiguration;
    private final L1Configuration l1Configuration;
    private final StateTransferConfiguration stateTransferConfiguration;
    private final SyncConfiguration syncConfiguration;
    private final PartitionHandlingConfiguration partitionHandlingConfiguration;
+   private final AttributeSet attributes;
 
-   ClusteringConfiguration(CacheMode cacheMode, AsyncConfiguration asyncConfiguration, HashConfiguration hashConfiguration,
+   ClusteringConfiguration(AttributeSet attributes, AsyncConfiguration asyncConfiguration, HashConfiguration hashConfiguration,
          L1Configuration l1Configuration, StateTransferConfiguration stateTransferConfiguration, SyncConfiguration syncConfiguration,
          PartitionHandlingConfiguration partitionHandlingStrategy) {
-      this.cacheMode = cacheMode;
+      this.attributes = attributes.checkProtection();
+      this.cacheMode = attributes.attribute(CACHE_MODE);
       this.asyncConfiguration = asyncConfiguration;
       this.hashConfiguration = hashConfiguration;
       this.l1Configuration = l1Configuration;
@@ -32,7 +43,7 @@ public class ClusteringConfiguration {
     * Cache mode. See {@link CacheMode} for information on the various cache modes available.
     */
    public CacheMode cacheMode() {
-      return cacheMode;
+      return cacheMode.get();
    }
 
    /**
@@ -43,7 +54,8 @@ public class ClusteringConfiguration {
    }
 
    public String cacheModeString() {
-      return cacheMode == null ? "none" : cacheMode.toString();
+
+      return cacheMode() == null ? "none" : cacheMode().toString();
    }
 
    /**
@@ -82,48 +94,77 @@ public class ClusteringConfiguration {
       return stateTransferConfiguration;
    }
 
-   @Override
-   public String toString() {
-      return "ClusteringConfiguration{" +
-            "async=" + asyncConfiguration +
-            ", cacheMode=" + cacheMode +
-            ", hash=" + hashConfiguration +
-            ", l1=" + l1Configuration +
-            ", stateTransfer=" + stateTransferConfiguration +
-            ", sync=" + syncConfiguration +
-            '}';
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+   public String toString() {
+      return "ClusteringConfiguration [asyncConfiguration=" + asyncConfiguration + ", hashConfiguration="
+            + hashConfiguration + ", l1Configuration=" + l1Configuration + ", stateTransferConfiguration="
+            + stateTransferConfiguration + ", syncConfiguration=" + syncConfiguration
+            + ", partitionHandlingConfiguration=" + partitionHandlingConfiguration + ", attributes=" + attributes + "]";
+   }
 
-      ClusteringConfiguration that = (ClusteringConfiguration) o;
-
-      if (asyncConfiguration != null ? !asyncConfiguration.equals(that.asyncConfiguration) : that.asyncConfiguration != null)
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
          return false;
-      if (cacheMode != that.cacheMode) return false;
-      if (hashConfiguration != null ? !hashConfiguration.equals(that.hashConfiguration) : that.hashConfiguration != null)
+      if (getClass() != obj.getClass())
          return false;
-      if (l1Configuration != null ? !l1Configuration.equals(that.l1Configuration) : that.l1Configuration != null)
+      ClusteringConfiguration other = (ClusteringConfiguration) obj;
+      if (asyncConfiguration == null) {
+         if (other.asyncConfiguration != null)
+            return false;
+      } else if (!asyncConfiguration.equals(other.asyncConfiguration))
          return false;
-      if (stateTransferConfiguration != null ? !stateTransferConfiguration.equals(that.stateTransferConfiguration) : that.stateTransferConfiguration != null)
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
          return false;
-      if (syncConfiguration != null ? !syncConfiguration.equals(that.syncConfiguration) : that.syncConfiguration != null)
+      if (hashConfiguration == null) {
+         if (other.hashConfiguration != null)
+            return false;
+      } else if (!hashConfiguration.equals(other.hashConfiguration))
          return false;
-
+      if (l1Configuration == null) {
+         if (other.l1Configuration != null)
+            return false;
+      } else if (!l1Configuration.equals(other.l1Configuration))
+         return false;
+      if (partitionHandlingConfiguration == null) {
+         if (other.partitionHandlingConfiguration != null)
+            return false;
+      } else if (!partitionHandlingConfiguration.equals(other.partitionHandlingConfiguration))
+         return false;
+      if (stateTransferConfiguration == null) {
+         if (other.stateTransferConfiguration != null)
+            return false;
+      } else if (!stateTransferConfiguration.equals(other.stateTransferConfiguration))
+         return false;
+      if (syncConfiguration == null) {
+         if (other.syncConfiguration != null)
+            return false;
+      } else if (!syncConfiguration.equals(other.syncConfiguration))
+         return false;
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = cacheMode != null ? cacheMode.hashCode() : 0;
-      result = 31 * result + (asyncConfiguration != null ? asyncConfiguration.hashCode() : 0);
-      result = 31 * result + (hashConfiguration != null ? hashConfiguration.hashCode() : 0);
-      result = 31 * result + (l1Configuration != null ? l1Configuration.hashCode() : 0);
-      result = 31 * result + (stateTransferConfiguration != null ? stateTransferConfiguration.hashCode() : 0);
-      result = 31 * result + (syncConfiguration != null ? syncConfiguration.hashCode() : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((asyncConfiguration == null) ? 0 : asyncConfiguration.hashCode());
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      result = prime * result + ((hashConfiguration == null) ? 0 : hashConfiguration.hashCode());
+      result = prime * result + ((l1Configuration == null) ? 0 : l1Configuration.hashCode());
+      result = prime * result
+            + ((partitionHandlingConfiguration == null) ? 0 : partitionHandlingConfiguration.hashCode());
+      result = prime * result + ((stateTransferConfiguration == null) ? 0 : stateTransferConfiguration.hashCode());
+      result = prime * result + ((syncConfiguration == null) ? 0 : syncConfiguration.hashCode());
       return result;
    }
 

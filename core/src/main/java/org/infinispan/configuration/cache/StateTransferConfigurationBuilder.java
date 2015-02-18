@@ -1,12 +1,14 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.configuration.cache.StateTransferConfiguration.*;
 
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
  * Configures how state is transferred when a cache joins or leaves the cluster. Used in distributed and
@@ -16,16 +18,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class StateTransferConfigurationBuilder extends
       AbstractClusteringConfigurationChildBuilder implements Builder<StateTransferConfiguration> {
-
-   private static final Log log = LogFactory.getLog(StateTransferConfigurationBuilder.class);
-
-   private Boolean fetchInMemoryState = null;
-   private Boolean awaitInitialTransfer = null;
-   private int chunkSize = 512;
-   private long timeout = TimeUnit.MINUTES.toMillis(4);
+   private final AttributeSet attributes;
 
    StateTransferConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
+      attributes = StateTransferConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -37,7 +34,7 @@ public class StateTransferConfigurationBuilder extends
     * sometimes have less than {@code numOwner} owners.
     */
    public StateTransferConfigurationBuilder fetchInMemoryState(boolean b) {
-      this.fetchInMemoryState = b;
+      attributes.attribute(FETCH_IN_MEMORY_STATE).set(b);
       return this;
    }
 
@@ -50,7 +47,7 @@ public class StateTransferConfigurationBuilder extends
     * remote access. While this will not have any impact on the logic of your application it might impact performance.
     */
    public StateTransferConfigurationBuilder awaitInitialTransfer(boolean b) {
-      this.awaitInitialTransfer = b;
+      attributes.attribute(AWAIT_INITIAL_TRANSFER).set(b);
       return this;
    }
 
@@ -59,7 +56,7 @@ public class StateTransferConfigurationBuilder extends
     * If chunkSize is equal to Integer.MAX_VALUE, the state will be transferred in all at once. Not recommended.
     */
    public StateTransferConfigurationBuilder chunkSize(int i) {
-      this.chunkSize = i;
+      attributes.attribute(CHUNK_SIZE).set(i);
       return this;
    }
 
@@ -68,7 +65,7 @@ public class StateTransferConfigurationBuilder extends
     * caches, before throwing an exception and aborting startup.
     */
    public StateTransferConfigurationBuilder timeout(long l) {
-      this.timeout = l;
+      attributes.attribute(TIMEOUT).set(l);
       return this;
    }
 
@@ -82,12 +79,13 @@ public class StateTransferConfigurationBuilder extends
 
    @Override
    public void validate() {
-      if (chunkSize <= 0) {
+      if (attributes.attribute(CHUNK_SIZE).get() <= 0) {
          throw new CacheConfigurationException("chunkSize can not be <= 0");
       }
 
-      if (awaitInitialTransfer != null && awaitInitialTransfer
-            && !getClusteringBuilder().cacheMode().isReplicated() && !getClusteringBuilder().cacheMode().isDistributed())
+      Attribute<Boolean> awaitInitialTransfer = attributes.attribute(AWAIT_INITIAL_TRANSFER);
+      if (awaitInitialTransfer.isModified() && awaitInitialTransfer.get()
+            && !getClusteringBuilder().cacheMode().needsStateTransfer())
          throw new CacheConfigurationException(
                "awaitInitialTransfer can be enabled only if cache mode is distributed or replicated.");
    }
@@ -98,50 +96,17 @@ public class StateTransferConfigurationBuilder extends
 
    @Override
    public  StateTransferConfiguration create() {
-      // If replicated or distributed and fetch state transfer was not explicitly
-      // disabled, then force enabling of state transfer
-      CacheMode cacheMode = getClusteringBuilder().cacheMode();
-      boolean _fetchInMemoryState;
-      if (fetchInMemoryState != null) {
-         _fetchInMemoryState = fetchInMemoryState;
-      } else if (cacheMode.isReplicated() || cacheMode.isDistributed()) {
-         log.trace("Cache is distributed or replicated but state transfer was not defined, enabling it by default");
-         _fetchInMemoryState = true;
-      } else {
-         _fetchInMemoryState = false;
-      }
-
-      // If replicated or distributed and awaitInitialTransfer was not explicitly disabled,
-      // then enable it by default
-      boolean _awaitInitialTransfer;
-      if (awaitInitialTransfer != null) {
-         _awaitInitialTransfer = awaitInitialTransfer;
-      } else if (cacheMode.isClustered()) {
-         log.trace("Cache is distributed or replicated but awaitInitialTransfer was not defined, enabling it by default");
-         _awaitInitialTransfer = true;
-      } else {
-         _awaitInitialTransfer = false;
-      }
-      return new StateTransferConfiguration(_fetchInMemoryState, fetchInMemoryState,
-            timeout, chunkSize, _awaitInitialTransfer, awaitInitialTransfer);
+      return new StateTransferConfiguration(attributes.protect());
    }
 
    @Override
    public StateTransferConfigurationBuilder read(StateTransferConfiguration template) {
-      this.fetchInMemoryState = template.originalFetchInMemoryState();
-      this.awaitInitialTransfer = template.originalAwaitInitialTransfer();
-      this.timeout = template.timeout();
-      this.chunkSize = template.chunkSize();
+      this.attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "StateTransferConfigurationBuilder{" +
-            "chunkSize=" + chunkSize +
-            ", fetchInMemoryState=" + fetchInMemoryState +
-            ", awaitInitialTransfer=" + awaitInitialTransfer +
-            ", timeout=" + timeout +
-            '}';
+      return "StateTransferConfigurationBuilder [attributes=" + attributes + "]";
    }
 }

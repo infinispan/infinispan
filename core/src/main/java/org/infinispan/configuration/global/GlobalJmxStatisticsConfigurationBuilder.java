@@ -1,27 +1,28 @@
 package org.infinispan.configuration.global;
 
+import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.ALLOW_DUPLICATE_DOMAINS;
+import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.CACHE_MANAGER_NAME;
+import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.ENABLED;
+import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.JMX_DOMAIN;
+import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.MBEAN_SERVER_LOOKUP;
+import static org.infinispan.configuration.global.GlobalJmxStatisticsConfiguration.PROPERTIES;
+
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.commons.util.Util;
 import org.infinispan.jmx.MBeanServerLookup;
-import org.infinispan.jmx.PlatformMBeanServerLookup;
 
 /**
  * Configures whether global statistics are gathered and reported via JMX for all caches under this cache manager.
  */
 public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalJmxStatisticsConfiguration> {
-
-   private Properties properties = new Properties();
-   private String jmxDomain = "org.infinispan";
-   private Boolean allowDuplicateDomains= false;
-   private String cacheManagerName = "DefaultCacheManager";
-   private MBeanServerLookup mBeanServerLookupInstance = Util.getInstance(PlatformMBeanServerLookup.class);
-   private boolean enabled = false;
+   private final AttributeSet attributes;
 
    GlobalJmxStatisticsConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
+      attributes = GlobalJmxStatisticsConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -30,12 +31,14 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
     * @param properties properties to pass to the MBean Server Lookup
     */
    public GlobalJmxStatisticsConfigurationBuilder withProperties(Properties properties) {
-      this.properties = properties;
+      attributes.attribute(PROPERTIES).set(new TypedProperties(properties));
       return this;
    }
 
    public GlobalJmxStatisticsConfigurationBuilder addProperty(String key, String value) {
+      TypedProperties properties = attributes.attribute(PROPERTIES).get();
       properties.put(key, value);
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(properties));
       return this;
    }
 
@@ -46,7 +49,7 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
     * @param jmxDomain
     */
    public GlobalJmxStatisticsConfigurationBuilder jmxDomain(String jmxDomain) {
-      this.jmxDomain = jmxDomain;
+      attributes.attribute(JMX_DOMAIN).set(jmxDomain);
       return this;
    }
 
@@ -58,7 +61,7 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
     * @param allowDuplicateDomains
     */
    public GlobalJmxStatisticsConfigurationBuilder allowDuplicateDomains(Boolean allowDuplicateDomains) {
-      this.allowDuplicateDomains = allowDuplicateDomains;
+      attributes.attribute(ALLOW_DUPLICATE_DOMAINS).set(allowDuplicateDomains);
       return this;
    }
 
@@ -71,7 +74,7 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
     * @param cacheManagerName
     */
    public GlobalJmxStatisticsConfigurationBuilder cacheManagerName(String cacheManagerName) {
-      this.cacheManagerName = cacheManagerName;
+      attributes.attribute(CACHE_MANAGER_NAME).set(cacheManagerName);
       return this;
    }
 
@@ -81,22 +84,22 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
     * @param mBeanServerLookupInstance An instance of {@link org.infinispan.jmx.MBeanServerLookup}
     */
    public GlobalJmxStatisticsConfigurationBuilder mBeanServerLookup(MBeanServerLookup mBeanServerLookupInstance) {
-      this.mBeanServerLookupInstance = mBeanServerLookupInstance;
+      attributes.attribute(MBEAN_SERVER_LOOKUP).set(mBeanServerLookupInstance);
       return this;
    }
 
    public GlobalJmxStatisticsConfigurationBuilder disable() {
-      this.enabled = false;
+      enabled(false);
       return this;
    }
 
    public GlobalJmxStatisticsConfigurationBuilder enable() {
-      this.enabled = true;
+      enabled(true);
       return this;
    }
 
    public GlobalJmxStatisticsConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
@@ -109,65 +112,20 @@ public class GlobalJmxStatisticsConfigurationBuilder extends AbstractGlobalConfi
    @Override
    public
    GlobalJmxStatisticsConfiguration create() {
-      return new GlobalJmxStatisticsConfiguration(enabled, jmxDomain, mBeanServerLookupInstance, allowDuplicateDomains,  cacheManagerName, TypedProperties.toTypedProperties(properties));
+      return new GlobalJmxStatisticsConfiguration(attributes.protect());
    }
 
    @Override
    public
    GlobalJmxStatisticsConfigurationBuilder read(GlobalJmxStatisticsConfiguration template) {
-      this.allowDuplicateDomains = template.allowDuplicateDomains();
-      this.cacheManagerName = template.cacheManagerName();
-      this.enabled = template.enabled();
-      this.jmxDomain = template.domain();
-      this.mBeanServerLookupInstance = template.mbeanServerLookup();
-      this.properties = template.properties();
+      attributes.read(template.attributes());
 
       return this;
    }
 
    @Override
    public String toString() {
-      return "GlobalJmxStatisticsConfigurationBuilder{" +
-            "allowDuplicateDomains=" + allowDuplicateDomains +
-            ", properties=" + properties +
-            ", jmxDomain='" + jmxDomain + '\'' +
-            ", cacheManagerName='" + cacheManagerName + '\'' +
-            ", mBeanServerLookupInstance=" + mBeanServerLookupInstance +
-            ", enabled=" + enabled +
-            '}';
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      GlobalJmxStatisticsConfigurationBuilder that = (GlobalJmxStatisticsConfigurationBuilder) o;
-
-      if (enabled != that.enabled) return false;
-      if (allowDuplicateDomains != null ? !allowDuplicateDomains.equals(that.allowDuplicateDomains) : that.allowDuplicateDomains != null)
-         return false;
-      if (cacheManagerName != null ? !cacheManagerName.equals(that.cacheManagerName) : that.cacheManagerName != null)
-         return false;
-      if (jmxDomain != null ? !jmxDomain.equals(that.jmxDomain) : that.jmxDomain != null)
-         return false;
-      if (mBeanServerLookupInstance != null ? !mBeanServerLookupInstance.equals(that.mBeanServerLookupInstance) : that.mBeanServerLookupInstance != null)
-         return false;
-      if (properties != null ? !properties.equals(that.properties) : that.properties != null)
-         return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = properties != null ? properties.hashCode() : 0;
-      result = 31 * result + (jmxDomain != null ? jmxDomain.hashCode() : 0);
-      result = 31 * result + (allowDuplicateDomains != null ? allowDuplicateDomains.hashCode() : 0);
-      result = 31 * result + (cacheManagerName != null ? cacheManagerName.hashCode() : 0);
-      result = 31 * result + (mBeanServerLookupInstance != null ? mBeanServerLookupInstance.hashCode() : 0);
-      result = 31 * result + (enabled ? 1 : 0);
-      return result;
+      return "GlobalJmxStatisticsConfigurationBuilder [attributes=" + attributes + "]";
    }
 
 }

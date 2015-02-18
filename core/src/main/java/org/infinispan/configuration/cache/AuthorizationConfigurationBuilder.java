@@ -1,9 +1,12 @@
 package org.infinispan.configuration.cache;
 
-import java.util.HashSet;
+import static org.infinispan.configuration.cache.AuthorizationConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.AuthorizationConfiguration.ROLES;
+
 import java.util.Set;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -13,31 +16,33 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * @since 7.0
  */
 public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigurationChildBuilder implements Builder<AuthorizationConfiguration> {
-   private final Set<String> roles = new HashSet<String>();
-   private boolean enabled = false;
+   private final AttributeSet attributes;
 
    public AuthorizationConfigurationBuilder(SecurityConfigurationBuilder securityBuilder) {
       super(securityBuilder);
+      attributes = AuthorizationConfiguration.attributeDefinitionSet();
    }
 
    public AuthorizationConfigurationBuilder disable() {
-      enabled = false;
+      attributes.attribute(ENABLED).set(false);
       return this;
    }
 
    public AuthorizationConfigurationBuilder enable() {
-      enabled = true;
+      attributes.attribute(ENABLED).set(true);
       return this;
    }
 
    public AuthorizationConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      this.attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
 
    public AuthorizationConfigurationBuilder role(String name) {
+      Set<String> roles = attributes.attribute(ROLES).get();
       roles.add(name);
+      attributes.attribute(ROLES).set(roles);
       return this;
    }
 
@@ -51,15 +56,17 @@ public class AuthorizationConfigurationBuilder extends AbstractSecurityConfigura
 
    @Override
    public AuthorizationConfiguration create() {
-      return new AuthorizationConfiguration(enabled, roles);
+      return new AuthorizationConfiguration(attributes.protect());
    }
 
    @Override
    public Builder<?> read(AuthorizationConfiguration template) {
-      this.enabled = template.enabled();
-      this.roles.clear();
-      this.roles.addAll(template.roles());
-
+      this.attributes.read(template.attributes());
       return this;
+   }
+
+   @Override
+   public String toString() {
+      return "AuthorizationConfigurationBuilder [attributes=" + attributes + "]";
    }
 }

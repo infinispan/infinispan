@@ -1,13 +1,12 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.util.InfinispanCollections;
-
-import java.util.Collections;
 import java.util.List;
+
+import org.infinispan.commons.util.InfinispanCollections;
 
 /**
  * Configures custom interceptors to be added to the cache.
- * 
+ *
  * @author pmuir
  */
 public class CustomInterceptorsConfiguration {
@@ -38,9 +37,7 @@ public class CustomInterceptorsConfiguration {
 
    @Override
    public String toString() {
-      return "CustomInterceptorsConfiguration{" +
-            "interceptors=" + interceptors +
-            '}';
+      return "CustomInterceptorsConfiguration [interceptors=" + interceptors + "]";
    }
 
    @Override

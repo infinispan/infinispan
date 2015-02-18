@@ -2,10 +2,14 @@ package org.infinispan.persistence.jdbc.configuration;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.Self;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.persistence.jdbc.TableManipulation;
 import org.infinispan.persistence.jdbc.logging.Log;
+
+import static org.infinispan.persistence.jdbc.configuration.TableManipulationConfiguration.*;
 
 /**
  * TableManipulationConfigurationBuilder.
@@ -16,23 +20,11 @@ import org.infinispan.persistence.jdbc.logging.Log;
 public abstract class TableManipulationConfigurationBuilder<B extends AbstractJdbcStoreConfigurationBuilder<?, B>, S extends TableManipulationConfigurationBuilder<B, S>> extends
                                                                                                                                                                           AbstractJdbcStoreConfigurationChildBuilder<B> implements Builder<TableManipulationConfiguration>, Self<S> {
    private static final Log log = LogFactory.getLog(TableManipulationConfigurationBuilder.class, Log.class);
-   private int batchSize = TableManipulation.DEFAULT_BATCH_SIZE;
-   private int fetchSize = TableManipulation.DEFAULT_FETCH_SIZE;
-   private boolean createOnStart = true;
-   private boolean dropOnExit = false;
-   private String cacheName;
-   private String idColumnName;
-   private String idColumnType;
-   private String dataColumnName;
-   private String dataColumnType;
-   private String timestampColumnName;
-   private String timestampColumnType;
-
-   // Needs package access for validate() in JdbcMixedCacheStoreConfigurationBuilder
-   String tableNamePrefix;
+   private final AttributeSet attributes;
 
    TableManipulationConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, B> builder) {
       super(builder);
+      attributes = TableManipulationConfiguration.attributeSet();
    }
 
    /**
@@ -40,7 +32,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * is not specified it will be defaulted to {@link TableManipulation#DEFAULT_BATCH_SIZE}.
     */
    public S batchSize(int batchSize) {
-      this.batchSize = batchSize;
+      attributes.attribute(BATCH_SIZE).set(batchSize);
       return self();
    }
 
@@ -49,7 +41,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * parameter, if not specified will be defaulted to {@link TableManipulation#DEFAULT_FETCH_SIZE}.
     */
    public S fetchSize(int fetchSize) {
-      this.fetchSize = fetchSize;
+      attributes.attribute(FETCH_SIZE).set(fetchSize);
       return self();
    }
 
@@ -58,15 +50,19 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * be appended to this prefix in order to enforce unique table names for each cache.
     */
    public S tableNamePrefix(String tableNamePrefix) {
-      this.tableNamePrefix = tableNamePrefix;
+      attributes.attribute(TABLE_NAME_PREFIX).set(tableNamePrefix);
       return self();
+   }
+
+   String tableNamePrefix() {
+      return attributes.attribute(TABLE_NAME_PREFIX).get();
    }
 
    /**
     * Determines whether database tables should be created by the store on startup
     */
    public S createOnStart(boolean createOnStart) {
-      this.createOnStart = createOnStart;
+      attributes.attribute(CREATE_ON_START).set(createOnStart);
       return self();
    }
 
@@ -74,7 +70,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * Determines whether database tables should be dropped by the store on shutdown
     */
    public S dropOnExit(boolean dropOnExit) {
-      this.dropOnExit = dropOnExit;
+      attributes.attribute(DROP_ON_EXIT).set(dropOnExit);
       return self();
    }
 
@@ -82,7 +78,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * The name of the database column used to store the keys
     */
    public S idColumnName(String idColumnName) {
-      this.idColumnName = idColumnName;
+      attributes.attribute(ID_COLUMN_NAME).set(idColumnName);
       return self();
    }
 
@@ -90,7 +86,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * The type of the database column used to store the keys
     */
    public S idColumnType(String idColumnType) {
-      this.idColumnType = idColumnType;
+      attributes.attribute(ID_COLUMN_TYPE).set(idColumnType);
       return self();
    }
 
@@ -98,7 +94,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * The name of the database column used to store the entries
     */
    public S dataColumnName(String dataColumnName) {
-      this.dataColumnName = dataColumnName;
+      attributes.attribute(DATA_COLUMN_NAME).set(dataColumnName);
       return self();
    }
 
@@ -106,7 +102,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * The type of the database column used to store the entries
     */
    public S dataColumnType(String dataColumnType) {
-      this.dataColumnType = dataColumnType;
+      attributes.attribute(DATA_COLUMN_TYPE).set(dataColumnType);
       return self();
    }
 
@@ -114,7 +110,7 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * The name of the database column used to store the timestamps
     */
    public S timestampColumnName(String timestampColumnName) {
-      this.timestampColumnName = timestampColumnName;
+      attributes.attribute(TIMESTAMP_COLUMN_NAME).set(timestampColumnName);
       return self();
    }
 
@@ -122,52 +118,47 @@ public abstract class TableManipulationConfigurationBuilder<B extends AbstractJd
     * The type of the database column used to store the timestamps
     */
    public S timestampColumnType(String timestampColumnType) {
-      this.timestampColumnType = timestampColumnType;
+      attributes.attribute(TIMESTAMP_COLUMN_TYPE).set(timestampColumnType);
       return self();
    }
 
    @Override
    public void validate() {
-      validateIfSet("idColumnName", idColumnName);
-      validateIfSet("idColumnType", idColumnType);
-      validateIfSet("dataColumnName", dataColumnName);
-      validateIfSet("dataColumnType", dataColumnType);
-      validateIfSet("timestampColumnName", timestampColumnName);
-      validateIfSet("timestampColumnType", timestampColumnType);
-      validateIfSet("tableNamePrefix", tableNamePrefix);
+      validateIfSet(ID_COLUMN_NAME, ID_COLUMN_TYPE, DATA_COLUMN_NAME, DATA_COLUMN_TYPE, TIMESTAMP_COLUMN_NAME, TIMESTAMP_COLUMN_TYPE, TABLE_NAME_PREFIX);
+   }
+
+   private void validateIfSet(AttributeDefinition<?>... definitions) {
+      for(AttributeDefinition<?> definition : definitions) {
+         String value = attributes.attribute(definition).asObject();
+         if(value == null || value.isEmpty()) {
+            throw log.tableManipulationAttributeNotSet(definition.name());
+         }
+      }
    }
 
    @Override
    public void validate(GlobalConfiguration globalConfig) {
    }
 
-   private void validateIfSet(String name, String value) {
-      if(value == null || value.isEmpty()) {
-         throw log.tableManipulationAttributeNotSet(name);
-      }
+   AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public TableManipulationConfiguration create() {
-      return new TableManipulationConfiguration(idColumnName, idColumnType, tableNamePrefix, cacheName, dataColumnName, dataColumnType, timestampColumnName, timestampColumnType,
-               fetchSize, batchSize, createOnStart, dropOnExit);
+      return new TableManipulationConfiguration(attributes.protect());
    }
 
    @Override
    public Builder<?> read(TableManipulationConfiguration template) {
-      this.batchSize = template.batchSize();
-      this.fetchSize = template.fetchSize();
-      this.createOnStart = template.createOnStart();
-      this.dropOnExit = template.dropOnExit();
-      this.idColumnName = template.idColumnName();
-      this.idColumnType = template.idColumnType();
-      this.dataColumnName = template.dataColumnName();
-      this.dataColumnType = template.dataColumnType();
-      this.timestampColumnName = template.timestampColumnName();
-      this.timestampColumnType = template.timestampColumnType();
-      this.cacheName = template.cacheName();
-      this.tableNamePrefix = template.tableNamePrefix();
-
+      attributes.read(template.attributes());
       return this;
    }
+
+   @Override
+   public String toString() {
+      return "TableManipulationConfigurationBuilder [attributes=" + attributes + "]";
+   }
+
+
 }

@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
@@ -187,33 +188,33 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
 
       @Override
       public int size() {
-         return 0;  
+         return 0;
       }
 
 
       @Override
       public void clear() {
-         
+
       }
 
       @Override
       public void purge(Executor threadPool, PurgeListener task) {
-         
+
       }
 
       @Override
       public void init(InitializationContext ctx) {
-         
+
       }
 
       @Override
       public void write(MarshalledEntry entry) {
-         
+
       }
 
       @Override
       public boolean delete(Object key) {
-         return false;  
+         return false;
       }
 
 
@@ -246,20 +247,20 @@ public class UnnecessaryLoadingTest extends SingleCacheManagerTest {
    @ConfigurationFor(CountingStore.class)
    public static class CountingStoreConfiguration extends AbstractStoreConfiguration {
 
-      public CountingStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties) {
-         super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
+      public CountingStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+         super(attributes, async, singletonStore);
       }
    }
 
    public static class CountingStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<CountingStoreConfiguration, CountingStoreConfigurationBuilder> {
 
       public CountingStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-         super(builder);
+         super(builder, CountingStoreConfiguration.attributeDefinitionSet());
       }
 
       @Override
       public CountingStoreConfiguration create() {
-         return new CountingStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(), singletonStore.create(), preload, shared, properties);
+         return new CountingStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
       }
 
       @Override

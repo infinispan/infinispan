@@ -403,14 +403,12 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
       c = cm.getCacheConfiguration("syncInval");
 
       assertEquals(CacheMode.INVALIDATION_SYNC, c.clustering().cacheMode());
-      assertTrue(!c.clustering().stateTransfer().fetchInMemoryState());
       assertTrue(c.clustering().stateTransfer().awaitInitialTransfer());
       assertEquals(15000, c.clustering().sync().replTimeout());
 
       c = cm.getCacheConfiguration("asyncInval");
 
       assertEquals(CacheMode.INVALIDATION_ASYNC, c.clustering().cacheMode());
-      assertTrue(!c.clustering().stateTransfer().fetchInMemoryState());
       assertEquals(15000, c.clustering().sync().replTimeout());
 
       c = cm.getCacheConfiguration("syncRepl");

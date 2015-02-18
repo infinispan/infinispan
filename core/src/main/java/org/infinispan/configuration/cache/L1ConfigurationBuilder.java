@@ -1,29 +1,26 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import static org.infinispan.configuration.cache.L1Configuration.*;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 /**
  * Configures the L1 cache behavior in 'distributed' caches instances. In any other cache modes,
  * this element is ignored.
  */
 
 public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<L1Configuration> {
-
-   private static final Log log = LogFactory.getLog(L1ConfigurationBuilder.class);
-
-   private boolean enabled = false;
-   private int invalidationThreshold = 0;
-   private long lifespan = TimeUnit.MINUTES.toMillis(10);
-   private long cleanupTaskFrequency = TimeUnit.MINUTES.toMillis(1);
+   private final static Log log = LogFactory.getLog(L1ConfigurationBuilder.class, Log.class);
+   private final AttributeSet attributes;
 
    L1ConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
+      attributes = L1Configuration.attributeDefinitionSet();
    }
 
    /**
@@ -44,7 +41,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     *
     */
    public L1ConfigurationBuilder invalidationThreshold(int invalidationThreshold) {
-      this.invalidationThreshold = invalidationThreshold;
+      attributes.attribute(INVALIDATION_THRESHOLD).set(invalidationThreshold);
       return this;
    }
 
@@ -52,7 +49,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     * Maximum lifespan of an entry placed in the L1 cache.
     */
    public L1ConfigurationBuilder lifespan(long lifespan) {
-      this.lifespan = lifespan;
+      attributes.attribute(LIFESPAN).set(lifespan);
       return this;
    }
 
@@ -67,7 +64,7 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
     * How often the L1 requestors map is cleaned up of stale items
     */
    public L1ConfigurationBuilder cleanupTaskFrequency(long frequencyMillis) {
-      this.cleanupTaskFrequency = frequencyMillis;
+      attributes.attribute(CLEANUP_TASK_FREQUENCY).set(frequencyMillis);
       return this;
    }
 
@@ -79,28 +76,28 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
    }
 
    public L1ConfigurationBuilder enable() {
-      this.enabled = true;
+      attributes.attribute(ENABLED).set(true);
       return this;
    }
 
    public L1ConfigurationBuilder disable() {
-      this.enabled = false;
+      attributes.attribute(ENABLED).set(false);
       return this;
    }
 
    public L1ConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
    @Override
    public void validate() {
-      if (enabled) {
+      if (attributes.attribute(ENABLED).get()) {
          if (!clustering().cacheMode().isDistributed())
-            throw new CacheConfigurationException("Enabling the L1 cache is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to " + clustering().cacheMode().friendlyCacheModeString());
+            throw log.l1OnlyForDistributedCache(clustering().cacheMode().friendlyCacheModeString());
 
-         if (lifespan < 1)
-            throw new CacheConfigurationException("Using a L1 lifespan of 0 or a negative value is meaningless");
+         if (attributes.attribute(LIFESPAN).get() < 1)
+            throw log.l1InvalidLifespan();
 
       }
    }
@@ -111,25 +108,17 @@ public class L1ConfigurationBuilder extends AbstractClusteringConfigurationChild
 
    @Override
    public L1Configuration create() {
-      return new L1Configuration(enabled, invalidationThreshold, lifespan, cleanupTaskFrequency);
+      return new L1Configuration(attributes.protect());
    }
 
    @Override
    public L1ConfigurationBuilder read(L1Configuration template) {
-      enabled = template.enabled();
-      invalidationThreshold = template.invalidationThreshold();
-      lifespan = template.lifespan();
-      cleanupTaskFrequency = template.cleanupTaskFrequency();
+      attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "L1ConfigurationBuilder{" +
-            "enabled=" + enabled +
-            ", invalidationThreshold=" + invalidationThreshold +
-            ", lifespan=" + lifespan +
-            ", cleanupTaskFrequency=" + cleanupTaskFrequency +
-            '}';
+      return "L1ConfigurationBuilder [attributes=" + attributes + "]";
    }
 }

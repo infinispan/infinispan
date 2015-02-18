@@ -1,9 +1,14 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
+import static org.infinispan.configuration.cache.DataContainerConfiguration.DATA_CONTAINER;
+import static org.infinispan.configuration.cache.DataContainerConfiguration.KEY_EQUIVALENCE;
+import static org.infinispan.configuration.cache.DataContainerConfiguration.VALUE_EQUIVALENCE;
+
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
-import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -17,15 +22,11 @@ import org.infinispan.container.DataContainer;
  */
 public class DataContainerConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<DataContainerConfiguration> {
 
-   // No default here. DataContainerFactory figures out default.
-   private DataContainer dataContainer;
-   private Equivalence keyEquivalence = AnyEquivalence.getInstance();
-   private Equivalence valueEquivalence = AnyEquivalence.getInstance();
-   // TODO: What are properties used for? Is it just legacy?
-   private Properties properties = new Properties();
+   private AttributeSet attributes;
 
    DataContainerConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = DataContainerConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -34,7 +35,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @return
     */
    public DataContainerConfigurationBuilder dataContainer(DataContainer dataContainer) {
-      this.dataContainer = dataContainer;
+      attributes.attribute(DATA_CONTAINER).set(dataContainer);
       return this;
    }
 
@@ -46,7 +47,9 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @return previous value if exists, null otherwise
     */
    public DataContainerConfigurationBuilder addProperty(String key, String value) {
-      this.properties.put(key, value);
+      TypedProperties properties = attributes.attribute(PROPERTIES).get();
+      properties.put(key, value);
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(properties));
       return this;
    }
 
@@ -57,7 +60,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @return this ExecutorFactoryConfig
     */
    public DataContainerConfigurationBuilder withProperties(Properties props) {
-      this.properties = props;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
    }
 
@@ -72,7 +75,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @return this configuration builder
     */
    public <K> DataContainerConfigurationBuilder keyEquivalence(Equivalence<K> keyEquivalence) {
-      this.keyEquivalence = keyEquivalence;
+      attributes.attribute(KEY_EQUIVALENCE).set(keyEquivalence);
       return this;
    }
 
@@ -87,7 +90,7 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
     * @return this configuration builder
     */
    public <V> DataContainerConfigurationBuilder valueEquivalence(Equivalence<V> valueEquivalence) {
-      this.valueEquivalence = valueEquivalence;
+      attributes.attribute(VALUE_EQUIVALENCE).set(valueEquivalence);
       return this;
    }
 
@@ -101,28 +104,18 @@ public class DataContainerConfigurationBuilder extends AbstractConfigurationChil
 
    @Override
    public DataContainerConfiguration create() {
-      return new DataContainerConfiguration(dataContainer,
-            TypedProperties.toTypedProperties(properties), keyEquivalence,
-            valueEquivalence);
+      return new DataContainerConfiguration(attributes.protect());
    }
 
    @Override
    public DataContainerConfigurationBuilder read(DataContainerConfiguration template) {
-      this.dataContainer = template.dataContainer();
-      this.properties = template.properties();
-      this.keyEquivalence = template.keyEquivalence();
-      this.valueEquivalence = template.valueEquivalence();
+      attributes.read(template.attributes());
 
       return this;
    }
 
    @Override
    public String toString() {
-      return "DataContainerConfigurationBuilder{" +
-            "dataContainer=" + dataContainer +
-            ", properties=" + properties +
-            ", keyEquivalence=" + keyEquivalence +
-            ", valueEquivalence=" + valueEquivalence +
-            '}';
+      return "DataContainerConfigurationBuilder [attributes=" + attributes + "]";
    }
 }

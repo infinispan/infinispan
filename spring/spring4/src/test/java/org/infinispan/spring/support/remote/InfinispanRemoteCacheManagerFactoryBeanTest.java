@@ -166,7 +166,7 @@ public class InfinispanRemoteCacheManagerFactoryBeanTest {
 
       final RemoteCacheManager remoteCacheManager = objectUnderTest.getObject();
       assertPropertiesSubset(
-            "The configuration properties used by the RemoteCacheManager returned von getObject() should be equal "
+            "The configuration properties used by the RemoteCacheManager returned by getObject() should be equal "
                   + "to those passed into InfinispanRemoteCacheMangerFactoryBean via setConfigurationProperties(props). "
                   + "However, those two are not equal.", configurationProperties,
             remoteCacheManager.getProperties());

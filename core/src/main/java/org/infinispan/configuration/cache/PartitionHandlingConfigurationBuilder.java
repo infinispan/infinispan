@@ -1,10 +1,12 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.PartitionHandlingConfiguration.ENABLED;
+
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
 /**
  * Controls how the cache handles partitioning and/or multiple node failures.
  *
@@ -15,23 +17,24 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
 
    private static Log log = LogFactory.getLog(PartitionHandlingConfigurationBuilder.class);
 
-   private boolean enabled;
+   private final AttributeSet attributes;
 
    public PartitionHandlingConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
+      attributes = PartitionHandlingConfiguration.attributeDefinitionSet();
    }
 
    /**
     * @param enabled If {@code true}, partitions will enter degraded mode. If {@code false}, they will keep working independently.
     */
    public PartitionHandlingConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
    @Override
    public void validate() {
-      if (enabled && clustering().cacheMode().isReplicated()) {
+      if (attributes.attribute(ENABLED).get() && clustering().cacheMode().isReplicated()) {
          log.warnPartitionHandlingForReplicatedCaches();
       }
    }
@@ -42,12 +45,12 @@ public class PartitionHandlingConfigurationBuilder extends AbstractClusteringCon
 
    @Override
    public PartitionHandlingConfiguration create() {
-      return new PartitionHandlingConfiguration(enabled);
+      return new PartitionHandlingConfiguration(attributes.protect());
    }
 
    @Override
    public Builder<?> read(PartitionHandlingConfiguration template) {
-      this.enabled = template.enabled();
+      attributes.read(template.attributes());
       return this;
    }
 }

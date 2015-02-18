@@ -3,21 +3,20 @@ package org.infinispan.configuration.global;
 import java.util.Properties;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.executors.DefaultExecutorFactory;
 
+import static org.infinispan.configuration.global.ExecutorFactoryConfiguration.*;
 /**
  * Configures executor factory.
  */
 public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<ExecutorFactoryConfiguration> {
-
-   private ExecutorFactory factory = new DefaultExecutorFactory();
-   private Properties properties;
+   private final AttributeSet attributes;
 
    ExecutorFactoryConfigurationBuilder(GlobalConfigurationBuilder globalConfig) {
       super(globalConfig);
-      this.properties = new Properties();
+      this.attributes = ExecutorFactoryConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -31,7 +30,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
     * @return this ExecutorFactoryConfig
     */
    public ExecutorFactoryConfigurationBuilder factory(ExecutorFactory factory) {
-      this.factory = factory;
+      attributes.attribute(FACTORY).set(factory);
       return this;
    }
 
@@ -43,7 +42,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
     * @return this ExecutorFactoryConfig
     */
    public ExecutorFactoryConfigurationBuilder addProperty(String key, String value) {
-      this.properties.put(key, value);
+      attributes.attribute(PROPERTIES).get().put(key, value);
       return this;
    }
 
@@ -54,7 +53,7 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
     * @return this ExecutorFactoryConfig
     */
    public ExecutorFactoryConfigurationBuilder withProperties(Properties props) {
-      this.properties = props;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
    }
 
@@ -66,46 +65,19 @@ public class ExecutorFactoryConfigurationBuilder extends AbstractGlobalConfigura
    @Override
    public
    ExecutorFactoryConfiguration create() {
-      return new ExecutorFactoryConfiguration(factory, TypedProperties.toTypedProperties(properties));
+      return new ExecutorFactoryConfiguration(attributes);
    }
 
    @Override
    public
    ExecutorFactoryConfigurationBuilder read(ExecutorFactoryConfiguration template) {
-      this.factory = template.factory();
-      this.properties = new Properties();
-      this.properties.putAll(template.properties());
+      attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "ExecutorFactoryConfigurationBuilder{" +
-            "factory=" + factory +
-            ", properties=" + properties +
-            '}';
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ExecutorFactoryConfigurationBuilder that = (ExecutorFactoryConfigurationBuilder) o;
-
-      if (factory != null ? !factory.equals(that.factory) : that.factory != null)
-         return false;
-      if (properties != null ? !properties.equals(that.properties) : that.properties != null)
-         return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = factory != null ? factory.hashCode() : 0;
-      result = 31 * result + (properties != null ? properties.hashCode() : 0);
-      return result;
+      return "ExecutorFactoryConfigurationBuilder [attributes=" + attributes + "]";
    }
 
 }

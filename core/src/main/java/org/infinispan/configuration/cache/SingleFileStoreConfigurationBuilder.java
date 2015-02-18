@@ -1,7 +1,10 @@
 package org.infinispan.configuration.cache;
 
-import org.infinispan.commons.configuration.Builder;
+import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.FRAGMENTATION_FACTOR;
+import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.LOCATION;
+import static org.infinispan.configuration.cache.SingleFileStoreConfiguration.MAX_ENTRIES;
 
+import org.infinispan.commons.configuration.Builder;
 /**
  * Single file cache store configuration builder.
  *
@@ -11,14 +14,9 @@ import org.infinispan.commons.configuration.Builder;
 public class SingleFileStoreConfigurationBuilder
       extends AbstractStoreConfigurationBuilder<SingleFileStoreConfiguration, SingleFileStoreConfigurationBuilder> {
 
-   private String location = "Infinispan-SingleFileStore";
-
-   private int maxEntries = -1;
-
-   private float fragmentationFactor  = 0.75f;
 
    public SingleFileStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, SingleFileStoreConfiguration.attributeDefinitionSet());
    }
 
    @Override
@@ -30,7 +28,7 @@ public class SingleFileStoreConfigurationBuilder
     * Sets a location on disk where the store can write.
     */
    public SingleFileStoreConfigurationBuilder location(String location) {
-      this.location = location;
+      attributes.attribute(LOCATION).set(location);
       return this;
    }
 
@@ -51,7 +49,7 @@ public class SingleFileStoreConfigurationBuilder
     * not recommended for this use case.
     */
    public SingleFileStoreConfigurationBuilder maxEntries(int maxEntries) {
-      this.maxEntries = maxEntries;
+      attributes.attribute(MAX_ENTRIES).set(maxEntries);
       return this;
    }
 
@@ -65,26 +63,18 @@ public class SingleFileStoreConfigurationBuilder
     * So, if this value is set as 0.75, then the free entry will be split if the new entry is equal to or less than 0.75 times the size of free entry
     */
    public SingleFileStoreConfigurationBuilder fragmentationFactor(float fragmentationFactor) {
-      this.fragmentationFactor  = fragmentationFactor;
+      attributes.attribute(FRAGMENTATION_FACTOR).set(fragmentationFactor);
       return this;
    }
 
    @Override
    public SingleFileStoreConfiguration create() {
-      return new SingleFileStoreConfiguration(purgeOnStartup, fetchPersistentState,ignoreModifications,
-                                                    async.create(), singletonStore.create(), preload,
-                                                    shared, properties, location, maxEntries, fragmentationFactor);
+      return new SingleFileStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
    }
 
    @Override
    public Builder<?> read(SingleFileStoreConfiguration template) {
       super.read(template);
-
-      // SingleFileStore-specific configuration
-      location = template.location();
-      maxEntries = template.maxEntries();
-      fragmentationFactor  = template.fragmentationFactor();
-
       return this;
    }
 

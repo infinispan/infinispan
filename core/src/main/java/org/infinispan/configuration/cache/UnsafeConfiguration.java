@@ -1,52 +1,62 @@
 package org.infinispan.configuration.cache;
 
-/**
+import java.util.Map;
 
- * Controls certain tuning parameters that may break some of Infinispan's public API contracts in exchange for better
- * performance in some cases.
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
+/**
+ *
+ * Controls certain tuning parameters that may break some of Infinispan's public API contracts in
+ * exchange for better performance in some cases.
  * <p />
- * Use with care, only after thoroughly reading and understanding the documentation about a specific feature.
+ * Use with care, only after thoroughly reading and understanding the documentation about a specific
+ * feature.
  * <p />
+ *
  * @see UnsafeConfigurationBuilder
  */
 public class UnsafeConfiguration {
+   public static final AttributeDefinition<Boolean> UNRELIABLE_RETURN_VALUES = AttributeDefinition.builder("unrealiableReturnValues", false).immutable().build();
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(UnsafeConfiguration.class, UNRELIABLE_RETURN_VALUES);
+   }
+   private final Attribute<Boolean> unreliableReturnValues;
+   private final AttributeSet attributes;
 
-   private final boolean unreliableReturnValues;
-
-   UnsafeConfiguration(boolean unreliableReturnValues) {
-      this.unreliableReturnValues = unreliableReturnValues;
+   UnsafeConfiguration(AttributeSet attributes) {
+      this.attributes = attributes.checkProtection();
+      unreliableReturnValues = attributes.attribute(UNRELIABLE_RETURN_VALUES);
    }
 
    /**
-    * Specifies whether Infinispan is allowed to disregard the {@link Map} contract when providing return values for
-    * {@link org.infinispan.Cache#put(Object, Object)} and {@link org.infinispan.Cache#remove(Object)} methods.
+    * Specifies whether Infinispan is allowed to disregard the {@link Map} contract when providing
+    * return values for {@link org.infinispan.Cache#put(Object, Object)} and
+    * {@link org.infinispan.Cache#remove(Object)} methods.
     */
    public boolean unreliableReturnValues() {
-      return unreliableReturnValues;
+      return unreliableReturnValues.get();
+   }
+
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public String toString() {
-      return "UnsafeConfiguration{" +
-            "unreliableReturnValues=" + unreliableReturnValues +
-            '}';
+      return attributes.toString();
    }
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      UnsafeConfiguration that = (UnsafeConfiguration) o;
-
-      if (unreliableReturnValues != that.unreliableReturnValues) return false;
-
-      return true;
+      UnsafeConfiguration other = (UnsafeConfiguration) o;
+      return attributes.equals(other.attributes);
    }
 
    @Override
    public int hashCode() {
-      return (unreliableReturnValues ? 1 : 0);
+      return attributes.hashCode();
    }
 
 }

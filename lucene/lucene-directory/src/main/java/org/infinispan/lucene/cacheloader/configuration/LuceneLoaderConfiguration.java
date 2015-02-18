@@ -2,12 +2,12 @@ package org.infinispan.lucene.cacheloader.configuration;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.lucene.cacheloader.LuceneCacheLoader;
-
-import java.util.Properties;
 
 /**
  * Configuration bean for the {@link org.infinispan.lucene.cacheloader.LuceneCacheLoader}.
@@ -18,28 +18,25 @@ import java.util.Properties;
 @BuiltBy(LuceneLoaderConfigurationBuilder.class)
 @ConfigurationFor(LuceneCacheLoader.class)
 public class LuceneLoaderConfiguration extends AbstractStoreConfiguration {
+   static final AttributeDefinition<Integer> AUTO_CHUNK_SIZE = AttributeDefinition.builder("autoChunkSize", Integer.MAX_VALUE / 64).immutable().build();
+   static final AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-IndexStore").immutable().build();
 
-   private final int autoChunkSize;
+   public LuceneLoaderConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+      super(attributes, async, singletonStore);
+   }
 
-   private final String location;
-
-
-   public LuceneLoaderConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
-                                    AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload,
-                                    boolean shared, Properties properties, int autoChunkSize, String location) {
-      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
-      this.autoChunkSize = autoChunkSize;
-      this.location = location;
+   public static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(LuceneLoaderConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), AUTO_CHUNK_SIZE, LOCATION);
    }
 
    /**
-    * When the segment size is larger than this number of bytes, separate segments will be created of this particular
-    * size.
+    * When the segment size is larger than this number of bytes, separate segments will be created
+    * of this particular size.
     *
     * @return the segmentation size.
     */
    public int autoChunkSize() {
-      return this.autoChunkSize;
+      return attributes.attribute(AUTO_CHUNK_SIZE).get();
    }
 
    /**
@@ -48,6 +45,12 @@ public class LuceneLoaderConfiguration extends AbstractStoreConfiguration {
     * @return the index location root directory.
     */
    public String location() {
-      return this.location;
+      return attributes.attribute(LOCATION).get();
    }
+
+   @Override
+   public String toString() {
+      return "LuceneLoaderConfiguration [attributes=" + attributes + ", async=" + async() + ", singletonStore=" + singletonStore() + "]";
+   }
+
 }

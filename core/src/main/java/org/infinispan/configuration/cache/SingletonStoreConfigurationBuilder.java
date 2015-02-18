@@ -1,26 +1,29 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.SingletonStoreConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.SingletonStoreConfiguration.PUSH_STATE_TIMEOUT;
+import static org.infinispan.configuration.cache.SingletonStoreConfiguration.PUSH_STATE_WHEN_COORDINATOR;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigurationChildBuilder<S> implements Builder<SingletonStoreConfiguration> {
-
-   private boolean enabled = false;
-   private long pushStateTimeout = TimeUnit.SECONDS.toMillis(10);
-   private boolean pushStateWhenCoordinator = true;
+   private final AttributeSet attributes;
 
    SingletonStoreConfigurationBuilder(AbstractStoreConfigurationBuilder<? extends AbstractStoreConfiguration, ?> builder) {
       super(builder);
+      attributes = SingletonStoreConfiguration.attributeDefinitionSet();
    }
 
    /**
     * Enable the singleton store cache store
     */
    public SingletonStoreConfigurationBuilder<S> enable() {
-      this.enabled = true;
+      attributes.attribute(ENABLED).set(true);
       return this;
    }
 
@@ -28,7 +31,7 @@ public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigur
     * If true, the singleton store cache store is enabled.
     */
    public SingletonStoreConfigurationBuilder<S> enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
@@ -36,7 +39,7 @@ public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigur
     * Enable the singleton store cache store
     */
    public SingletonStoreConfigurationBuilder<S> disable() {
-      this.enabled = false;
+      attributes.attribute(ENABLED).set(false);
       return this;
    }
 
@@ -45,7 +48,7 @@ public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigur
     * that the process of pushing the in-memory state to the underlying cache loader should take.
     */
    public SingletonStoreConfigurationBuilder<S> pushStateTimeout(long l) {
-      this.pushStateTimeout = l;
+      attributes.attribute(PUSH_STATE_TIMEOUT).set(l);
       return this;
    }
 
@@ -63,7 +66,7 @@ public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigur
     * and there's a gap in time until the new coordinator is elected.
     */
    public SingletonStoreConfigurationBuilder<S> pushStateWhenCoordinator(boolean b) {
-      this.pushStateWhenCoordinator = b;
+      attributes.attribute(PUSH_STATE_WHEN_COORDINATOR).set(b);
       return this;
    }
 
@@ -81,25 +84,18 @@ public class SingletonStoreConfigurationBuilder<S> extends AbstractStoreConfigur
 
    @Override
    public SingletonStoreConfiguration create() {
-      return new SingletonStoreConfiguration(enabled, pushStateTimeout, pushStateWhenCoordinator);
+      return new SingletonStoreConfiguration(attributes.protect());
    }
 
    @Override
    public SingletonStoreConfigurationBuilder<S> read(SingletonStoreConfiguration template) {
-      this.enabled = template.enabled();
-      this.pushStateTimeout = template.pushStateTimeout();
-      this.pushStateWhenCoordinator = template.pushStateWhenCoordinator();
-
+      attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "SingletonStoreConfigurationBuilder{" +
-            "enabled=" + enabled +
-            ", pushStateTimeout=" + pushStateTimeout +
-            ", pushStateWhenCoordinator=" + pushStateWhenCoordinator +
-            '}';
+      return "SingletonStoreConfigurationBuilder [attributes=" + attributes + "]";
    }
 
 }

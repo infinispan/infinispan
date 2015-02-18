@@ -1,8 +1,11 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.SyncConfiguration.REPL_TIMEOUT;
+
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -11,11 +14,11 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  * mutually exclusive with the AsyncConfig.
  */
 public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChildBuilder implements Builder<SyncConfiguration> {
-
-   private long replTimeout = TimeUnit.SECONDS.toMillis(15);
+   private final AttributeSet attributes;
 
    protected SyncConfigurationBuilder(ClusteringConfigurationBuilder builder) {
       super(builder);
+      this.attributes = SyncConfiguration.attributeDefinitionSet();
    }
 
    /**
@@ -23,7 +26,7 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
     * the call is aborted and an exception is thrown.
     */
    public SyncConfigurationBuilder replTimeout(long l) {
-      this.replTimeout = l;
+      attributes.attribute(REPL_TIMEOUT).set(l);
       return this;
    }
 
@@ -45,19 +48,17 @@ public class SyncConfigurationBuilder extends AbstractClusteringConfigurationChi
 
    @Override
    public SyncConfiguration create() {
-      return new SyncConfiguration(replTimeout);
+      return new SyncConfiguration(attributes.protect());
    }
 
    @Override
    public SyncConfigurationBuilder read(SyncConfiguration template) {
-      this.replTimeout = template.replTimeout();
+      this.attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "SyncConfigurationBuilder{" +
-            "replTimeout=" + replTimeout +
-            '}';
+      return "SyncConfigurationBuilder [attributes=" + attributes + "]";
    }
 }

@@ -1,8 +1,8 @@
 package org.infinispan.persistence.jdbc.configuration;
 
-import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 import java.util.Properties;
 
 import org.h2.Driver;

@@ -4,6 +4,7 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 
+import static org.infinispan.persistence.leveldb.configuration.LevelDBStoreConfiguration.*;
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
@@ -11,57 +12,47 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
  */
 public class LevelDBStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<LevelDBStoreConfiguration, LevelDBStoreConfigurationBuilder> {
 
-   protected String location = "Infinispan-LevelDBStore/data";
-   protected String expiredLocation = "Infinispan-LevelDBStore/expired";
-   protected CompressionType compressionType = CompressionType.NONE;
-   protected LevelDBStoreConfiguration.ImplementationType implementationType = LevelDBStoreConfiguration.ImplementationType.AUTO;
-   protected Integer blockSize;
-   protected Long cacheSize;
-
-   protected int expiryQueueSize = 10000;
-   protected int clearThreshold = 10000;
-
    public LevelDBStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, LevelDBStoreConfiguration.attributeDefinitionSet());
    }
 
    public LevelDBStoreConfigurationBuilder location(String location) {
-      this.location = location;
+      attributes.attribute(LOCATION).set(location);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder expiredLocation(String expiredLocation) {
-      this.expiredLocation = expiredLocation;
+      attributes.attribute(EXPIRED_LOCATION).set(expiredLocation);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder implementationType(LevelDBStoreConfiguration.ImplementationType implementationType) {
-      this.implementationType = implementationType;
+      attributes.attribute(IMPLEMENTATION_TYPE).set(implementationType);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder blockSize(int blockSize) {
-      this.blockSize = blockSize;
+      attributes.attribute(BLOCK_SIZE).set(blockSize);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder cacheSize(long cacheSize) {
-      this.cacheSize = cacheSize;
+      attributes.attribute(CACHE_SIZE).set(cacheSize);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder expiryQueueSize(int expiryQueueSize) {
-      this.expiryQueueSize = expiryQueueSize;
+      attributes.attribute(EXPIRY_QUEUE_SIZE).set(expiryQueueSize);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder clearThreshold(int clearThreshold) {
-      this.clearThreshold = clearThreshold;
+      attributes.attribute(CLEAR_THRESHOLD).set(clearThreshold);
       return self();
    }
 
    public LevelDBStoreConfigurationBuilder compressionType(CompressionType compressionType) {
-      this.compressionType = compressionType;
+      attributes.attribute(COMPRESSION_TYPE).set(compressionType);
       return self();
    }
 
@@ -73,29 +64,12 @@ public class LevelDBStoreConfigurationBuilder extends AbstractStoreConfiguration
 
    @Override
    public LevelDBStoreConfiguration create() {
-      return new LevelDBStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                                singletonStore.create(), preload, shared, properties,location,
-                                                expiredLocation, implementationType, compressionType,  blockSize,
-                                                cacheSize, expiryQueueSize, clearThreshold);
+      return new LevelDBStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
    }
 
    @Override
    public Builder<?> read(LevelDBStoreConfiguration template) {
       super.read(template);
-
-      location = template.location();
-      expiredLocation = template.expiredLocation();
-      implementationType = template.implementationType();
-      preload = template.preload();
-      shared = template.shared();
-
-      compressionType = template.compressionType();
-      blockSize = template.blockSize();
-      cacheSize = template.cacheSize();
-
-      expiryQueueSize = template.expiryQueueSize();
-      clearThreshold = template.clearThreshold();
-
       return self();
    }
 

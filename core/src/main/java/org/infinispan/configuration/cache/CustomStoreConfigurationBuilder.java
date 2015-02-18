@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.CustomStoreConfiguration.CUSTOM_STORE_CLASS;
+
 import org.infinispan.commons.configuration.Builder;
 
 /**
@@ -8,23 +10,26 @@ import org.infinispan.commons.configuration.Builder;
  * @author wburns
  * @since 7.0
  */
-public class CustomStoreConfigurationBuilder extends AbstractStoreConfigurationBuilder<CustomStoreConfiguration, CustomStoreConfigurationBuilder> {
-   private Class<?> customStoreClass;
+public class CustomStoreConfigurationBuilder extends
+      AbstractStoreConfigurationBuilder<CustomStoreConfiguration, CustomStoreConfigurationBuilder> {
 
    public CustomStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, CustomStoreConfiguration.attributeDefinitionSet());
    }
 
    @Override
    public CustomStoreConfiguration create() {
-      return new CustomStoreConfiguration(customStoreClass, purgeOnStartup, fetchPersistentState, ignoreModifications,
-                                          async.create(), singletonStore.create(), preload, shared, properties);
+      return new CustomStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
+   }
+
+   public CustomStoreConfigurationBuilder customStoreClass(Class<?> customStoreClass) {
+      attributes.attribute(CUSTOM_STORE_CLASS).set(customStoreClass);
+      return this;
    }
 
    @Override
    public Builder<?> read(CustomStoreConfiguration template) {
       super.read(template);
-      customStoreClass = template.customStoreClass();
       return this;
    }
 
@@ -33,8 +38,4 @@ public class CustomStoreConfigurationBuilder extends AbstractStoreConfigurationB
       return this;
    }
 
-   public CustomStoreConfigurationBuilder customStoreClass(Class<?> customStoreClass) {
-      this.customStoreClass = customStoreClass;
-      return this;
-   }
 }

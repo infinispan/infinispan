@@ -1,28 +1,45 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 /**
  * Defines the local, in-VM locking and concurrency characteristics of the cache.
- * 
+ *
  * @author pmuir
- * 
+ *
  */
 public class LockingConfiguration {
+   public static final AttributeDefinition<Integer> CONCURRENCY_LEVEL = AttributeDefinition.builder("concurrencyLevel", 32).immutable().build();
+   public static final AttributeDefinition<IsolationLevel> ISOLATION_LEVEL  = AttributeDefinition.builder("isolationLevel", IsolationLevel.READ_COMMITTED).immutable().build();
+   public static final AttributeDefinition<Long> LOCK_ACQUISITION_TIMEOUT  = AttributeDefinition.builder("lockAcquisitionTimeout", TimeUnit.SECONDS.toMillis(10)).build();
+   public static final AttributeDefinition<Boolean> USE_LOCK_STRIPING = AttributeDefinition.builder("useLockStriping", false).immutable().build();
+   public static final AttributeDefinition<Boolean> WRITE_SKEW_CHECK = AttributeDefinition.builder("writeSkewCheck", false).immutable().build();
 
-   private final int concurrencyLevel;
-   private final IsolationLevel isolationLevel;
-   private long lockAcquisitionTimeout;
-   private final boolean useLockStriping;
-   private final boolean writeSkewCheck;
+   static final AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(LockingConfiguration.class, CONCURRENCY_LEVEL, ISOLATION_LEVEL, LOCK_ACQUISITION_TIMEOUT, USE_LOCK_STRIPING, WRITE_SKEW_CHECK);
+   }
 
-   LockingConfiguration(int concurrencyLevel, IsolationLevel isolationLevel, long lockAcquisitionTimeout,
-         boolean useLockStriping, boolean writeSkewCheck) {
-      this.concurrencyLevel = concurrencyLevel;
-      this.isolationLevel = isolationLevel;
-      this.lockAcquisitionTimeout = lockAcquisitionTimeout;
-      this.useLockStriping = useLockStriping;
-      this.writeSkewCheck = writeSkewCheck;
+   private final Attribute<Integer> concurrencyLevel;
+   private final Attribute<IsolationLevel> isolationLevel;
+   private final Attribute<Long> lockAcquisitionTimeout;
+   private final Attribute<Boolean> useLockStriping;
+   private final Attribute<Boolean> writeSkewCheck;
+
+   private final AttributeSet attributes;
+
+   LockingConfiguration(AttributeSet attributes) {
+      attributes.checkProtection();
+      this.attributes = attributes;
+      concurrencyLevel = attributes.attribute(CONCURRENCY_LEVEL);
+      isolationLevel = attributes.attribute(ISOLATION_LEVEL);
+      lockAcquisitionTimeout = attributes.attribute(LOCK_ACQUISITION_TIMEOUT);
+      useLockStriping = attributes.attribute(USE_LOCK_STRIPING);
+      writeSkewCheck = attributes.attribute(WRITE_SKEW_CHECK);
    }
 
    /**
@@ -31,7 +48,7 @@ public class LockingConfiguration {
     * the JDK's ConcurrentHashMap.
     */
    public int concurrencyLevel() {
-      return concurrencyLevel;
+      return concurrencyLevel.get();
    }
 
    /**
@@ -41,6 +58,7 @@ public class LockingConfiguration {
     *
     * @deprecated this option is always <code>true</code> and cannot be modified since version 5.3
     */
+   @Deprecated
    public boolean supportsConcurrentUpdates() {
       return true;
    }
@@ -52,18 +70,18 @@ public class LockingConfiguration {
     * > for a discussion on isolation levels.
     */
    public IsolationLevel isolationLevel() {
-      return isolationLevel;
+      return isolationLevel.get();
    }
 
    /**
     * Maximum time to attempt a particular lock acquisition
     */
    public long lockAcquisitionTimeout() {
-      return lockAcquisitionTimeout;
+      return lockAcquisitionTimeout.get();
    }
 
-   public LockingConfiguration lockAcquisitionTimeout(long lockAcquisitionTimeout) {
-      this.lockAcquisitionTimeout = lockAcquisitionTimeout;
+   public LockingConfiguration lockAcquisitionTimeout(long timeout) {
+      lockAcquisitionTimeout.set(timeout);
       return this;
    }
 
@@ -73,7 +91,7 @@ public class LockingConfiguration {
     * footprint but may reduce concurrency in the system.
     */
    public boolean useLockStriping() {
-      return useLockStriping;
+      return useLockStriping.get();
    }
 
    /**
@@ -83,43 +101,40 @@ public class LockingConfiguration {
     * such version conflict - known as a write-skew - will throw an Exception.
     */
    public boolean writeSkewCheck() {
-      return writeSkewCheck;
+      return writeSkewCheck.get();
+   }
+
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public String toString() {
-      return "LockingConfiguration{" +
-            "concurrencyLevel=" + concurrencyLevel +
-            ", isolationLevel=" + isolationLevel +
-            ", lockAcquisitionTimeout=" + lockAcquisitionTimeout +
-            ", useLockStriping=" + useLockStriping +
-            ", writeSkewCheck=" + writeSkewCheck +
-            '}';
+      return "LockingConfiguration [attributes=" + attributes + "]";
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      LockingConfiguration that = (LockingConfiguration) o;
-
-      if (concurrencyLevel != that.concurrencyLevel) return false;
-      if (lockAcquisitionTimeout != that.lockAcquisitionTimeout) return false;
-      if (useLockStriping != that.useLockStriping) return false;
-      if (writeSkewCheck != that.writeSkewCheck) return false;
-      if (isolationLevel != that.isolationLevel) return false;
-
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      LockingConfiguration other = (LockingConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = concurrencyLevel;
-      result = 31 * result + (isolationLevel != null ? isolationLevel.hashCode() : 0);
-      result = 31 * result + (int) (lockAcquisitionTimeout ^ (lockAcquisitionTimeout >>> 32));
-      result = 31 * result + (useLockStriping ? 1 : 0);
-      result = 31 * result + (writeSkewCheck ? 1 : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
       return result;
    }
 

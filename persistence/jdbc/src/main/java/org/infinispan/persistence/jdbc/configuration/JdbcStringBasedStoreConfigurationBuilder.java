@@ -8,6 +8,10 @@ import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.persistence.keymappers.DefaultTwoWayKey2StringMapper;
 import org.infinispan.persistence.keymappers.Key2StringMapper;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.TypedProperties;
+
+import static org.infinispan.persistence.jdbc.configuration.JdbcStringBasedStoreConfiguration.*;
 
 /**
  *
@@ -17,11 +21,10 @@ import org.infinispan.commons.configuration.Builder;
  * @since 5.2
  */
 public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreConfigurationBuilder<JdbcStringBasedStoreConfiguration, JdbcStringBasedStoreConfigurationBuilder> {
-   private String key2StringMapper = DefaultTwoWayKey2StringMapper.class.getName();
    private StringTableManipulationConfigurationBuilder table;
 
    public JdbcStringBasedStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, JdbcStringBasedStoreConfiguration.attributeDefinitionSet());
       table = new StringTableManipulationConfigurationBuilder(this);
    }
 
@@ -35,7 +38,7 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
     * storage in a database table. Defaults to {@link DefaultTwoWayKey2StringMapper}
     */
    public JdbcStringBasedStoreConfigurationBuilder key2StringMapper(String key2StringMapper) {
-      this.key2StringMapper = key2StringMapper;
+      attributes.attribute(KEY2STRING_MAPPER).set(key2StringMapper);
       return this;
    }
 
@@ -44,7 +47,7 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
     * storage in a database table. Defaults to {@link DefaultTwoWayKey2StringMapper}
     */
    public JdbcStringBasedStoreConfigurationBuilder key2StringMapper(Class<? extends Key2StringMapper> klass) {
-      this.key2StringMapper = klass.getName();
+      key2StringMapper(klass.getName());
       return this;
    }
 
@@ -57,30 +60,28 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
 
    @Override
    public JdbcStringBasedStoreConfigurationBuilder withProperties(Properties props) {
-      Map<Object, Object> unrecognized = XmlConfigHelper.setValues(this, props, false, false);
-      unrecognized = XmlConfigHelper.setValues(table, unrecognized, false, false);
+      Map<Object, Object> unrecognized = XmlConfigHelper.setAttributes(attributes, props, false, false);
+      unrecognized = XmlConfigHelper.setAttributes(table.attributes(), unrecognized, false, false);
       XmlConfigHelper.showUnrecognizedAttributes(unrecognized);
-      this.properties = props;
+      attributes.attribute(PROPERTIES).set(TypedProperties.toTypedProperties(props));
       return this;
    }
 
    @Override
    public JdbcStringBasedStoreConfiguration create() {
-      ConnectionFactoryConfiguration cf = connectionFactory != null ? connectionFactory.create() : null;
-      return new JdbcStringBasedStoreConfiguration(purgeOnStartup, fetchPersistentState, ignoreModifications, async.create(),
-                                                   singletonStore.create(), preload, shared, properties, cf, manageConnectionFactory, key2StringMapper, table.create(), databaseType);
+      return new JdbcStringBasedStoreConfiguration(attributes.protect(), async.create(), singletonStore.create(), connectionFactory != null ? connectionFactory.create() : null,
+            table.create());
    }
 
    @Override
    public Builder<?> read(JdbcStringBasedStoreConfiguration template) {
       super.read(template);
-      this.key2StringMapper = template.key2StringMapper();
       this.table.read(template.table());
-
       return this;
    }
 
-   public class StringTableManipulationConfigurationBuilder extends TableManipulationConfigurationBuilder<JdbcStringBasedStoreConfigurationBuilder, StringTableManipulationConfigurationBuilder> {
+   public class StringTableManipulationConfigurationBuilder extends
+         TableManipulationConfigurationBuilder<JdbcStringBasedStoreConfigurationBuilder, StringTableManipulationConfigurationBuilder> {
 
       StringTableManipulationConfigurationBuilder(AbstractJdbcStoreConfigurationBuilder<?, JdbcStringBasedStoreConfigurationBuilder> builder) {
          super(builder);
@@ -100,6 +101,12 @@ public class JdbcStringBasedStoreConfigurationBuilder extends AbstractJdbcStoreC
       public ManagedConnectionFactoryConfigurationBuilder<JdbcStringBasedStoreConfigurationBuilder> dataSource() {
          return JdbcStringBasedStoreConfigurationBuilder.this.dataSource();
       }
+   }
+
+   @Override
+   public String toString() {
+      return "JdbcStringBasedStoreConfigurationBuilder [table=" + table + ", connectionFactory=" + connectionFactory + ", attributes=" + attributes + ", async=" + async
+            + ", singletonStore=" + singletonStore + "]";
    }
 
 }

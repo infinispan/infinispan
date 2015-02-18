@@ -1,40 +1,56 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * Controls the default expiration settings for entries in the cache.
  */
 public class ExpirationConfiguration {
+   public static final AttributeDefinition<Long> LIFESPAN = AttributeDefinition.builder("lifespan", -1l).build();
+   public static final AttributeDefinition<Long> MAX_IDLE = AttributeDefinition.builder("maxIdle", -1l).build();
+   public static final AttributeDefinition<Boolean> REAPER_ENABLED = AttributeDefinition.builder("reaperEnabled", true).immutable().build();
+   public static final AttributeDefinition<Long> WAKEUP_INTERVAL = AttributeDefinition.builder("wakeUpInterval", TimeUnit.MINUTES.toMillis(1)).build();
 
-   private final long lifespan;
-   private final long maxIdle;
-   private final boolean reaperEnabled;
-   private final long wakeUpInterval;
+   static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(ExpirationConfiguration.class, LIFESPAN, MAX_IDLE, REAPER_ENABLED, WAKEUP_INTERVAL);
+   }
 
-   ExpirationConfiguration(long lifespan, long maxIdle, boolean reaperEnabled, long wakeUpInterval) {
-      this.lifespan = lifespan;
-      this.maxIdle = maxIdle;
-      this.reaperEnabled = reaperEnabled;
-      this.wakeUpInterval = wakeUpInterval;
+   private final Attribute<Long> lifespan;
+   private final Attribute<Long> maxIdle;
+   private final Attribute<Boolean> reaperEnabled;
+   private final Attribute<Long> wakeUpInterval;
+   private final AttributeSet attributes;
+
+   ExpirationConfiguration(AttributeSet attributes) {
+      this.attributes = attributes.checkProtection();
+      lifespan = attributes.attribute(LIFESPAN);
+      maxIdle = attributes.attribute(MAX_IDLE);
+      reaperEnabled = attributes.attribute(REAPER_ENABLED);
+      wakeUpInterval = attributes.attribute(WAKEUP_INTERVAL);
    }
 
    /**
     * Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in
     * milliseconds. -1 means the entries never expire.
-    * 
+    *
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public long lifespan() {
-      return lifespan;
+      return lifespan.get();
    }
 
    /**
     * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle
     * time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
-    * 
+    *
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public long maxIdle() {
-      return maxIdle;
+      return maxIdle.get();
    }
 
    /**
@@ -43,7 +59,7 @@ public class ExpirationConfiguration {
     * touched.
     */
    public boolean reaperEnabled() {
-      return reaperEnabled;
+      return reaperEnabled.get();
    }
 
    /**
@@ -52,41 +68,41 @@ public class ExpirationConfiguration {
     * wakeupInterval to -1.
     */
    public long wakeUpInterval() {
-      return wakeUpInterval;
+      return wakeUpInterval.get();
    }
 
    @Override
    public String toString() {
-      return "ExpirationConfiguration{" +
-            "lifespan=" + lifespan +
-            ", maxIdle=" + maxIdle +
-            ", reaperEnabled=" + reaperEnabled +
-            ", wakeUpInterval=" + wakeUpInterval +
-            '}';
+      return "ExpirationConfiguration [attributes=" + attributes + "]";
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ExpirationConfiguration that = (ExpirationConfiguration) o;
-
-      if (lifespan != that.lifespan) return false;
-      if (maxIdle != that.maxIdle) return false;
-      if (reaperEnabled != that.reaperEnabled) return false;
-      if (wakeUpInterval != that.wakeUpInterval) return false;
-
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      ExpirationConfiguration other = (ExpirationConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = (int) (lifespan ^ (lifespan >>> 32));
-      result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
-      result = 31 * result + (reaperEnabled ? 1 : 0);
-      result = 31 * result + (int) (wakeUpInterval ^ (wakeUpInterval >>> 32));
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
       return result;
+   }
+
+   public AttributeSet attributes() {
+      return attributes;
    }
 
 }

@@ -4,6 +4,7 @@ import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 
+import static org.infinispan.persistence.jpa.configuration.JpaStoreConfiguration.*;
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
@@ -12,32 +13,27 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 public class JpaStoreConfigurationBuilder
       extends AbstractStoreConfigurationBuilder<JpaStoreConfiguration, JpaStoreConfigurationBuilder> {
 
-   private String persistenceUnitName;
-   private Class<?> entityClass;
-   private long batchSize = 100L;
-   private boolean storeMetadata = true;
-
    public JpaStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
-      super(builder);
+      super(builder, JpaStoreConfiguration.attributeDefinitionSet());
    }
 
    public JpaStoreConfigurationBuilder persistenceUnitName(String persistenceUnitName) {
-      this.persistenceUnitName = persistenceUnitName;
+      attributes.attribute(PERSISTENCE_UNIT_NAME).set(persistenceUnitName);
       return self();
    }
 
    public JpaStoreConfigurationBuilder entityClass(Class<?> entityClass) {
-      this.entityClass = entityClass;
+      attributes.attribute(ENTITY_CLASS).set(entityClass);
       return self();
    }
 
    public JpaStoreConfigurationBuilder batchSize(long batchSize) {
-      this.batchSize = batchSize;
+      attributes.attribute(BATCH_SIZE).set(batchSize);
       return self();
    }
 
    public JpaStoreConfigurationBuilder storeMetadata(boolean storeMetadata) {
-      this.storeMetadata = storeMetadata;
+      attributes.attribute(STORE_METADATA).set(storeMetadata);
       return self();
    }
 
@@ -49,28 +45,12 @@ public class JpaStoreConfigurationBuilder
 
    @Override
    public JpaStoreConfiguration create() {
-      return new JpaStoreConfiguration(
-            purgeOnStartup, fetchPersistentState, ignoreModifications,
-            async.create(), singletonStore.create(), preload, shared,
-            TypedProperties.toTypedProperties(properties),
-            persistenceUnitName, entityClass, batchSize, storeMetadata);
+      return new JpaStoreConfiguration(attributes.protect(), async.create(), singletonStore.create());
    }
 
    @Override
    public JpaStoreConfigurationBuilder read(JpaStoreConfiguration template) {
-      persistenceUnitName = template.persistenceUnitName();
-      entityClass = template.entityClass();
-      batchSize = template.batchSize();
-      storeMetadata = template.storeMetadata();
-
-      fetchPersistentState = template.fetchPersistentState();
-      ignoreModifications = template.ignoreModifications();
-      properties = template.properties();
-      purgeOnStartup = template.purgeOnStartup();
-      async.read(template.async());
-      singletonStore.read(template.singletonStore());
-      preload = template.preload();
-      shared = template.shared();
+      super.read(template);
       return this;
    }
 

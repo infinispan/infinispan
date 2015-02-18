@@ -1,9 +1,9 @@
 package org.infinispan.persistence.sifs.configuration;
 
-import java.util.Properties;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
@@ -15,78 +15,64 @@ import org.infinispan.persistence.sifs.SoftIndexFileStore;
 @BuiltBy(SoftIndexFileStoreConfigurationBuilder.class)
 @ConfigurationFor(SoftIndexFileStore.class)
 public class SoftIndexFileStoreConfiguration extends AbstractStoreConfiguration {
-   private final String dataLocation;
-   private final String indexLocation;
-   private final int indexSegments;
-   private final int maxFileSize;
-   private final int minNodeSize;
-   private final int maxNodeSize;
-   private final int indexQueueLength;
-   private final boolean syncWrites;
-   private final int openFilesLimit;
-   private final double compactionThreshold;
+   static final AttributeDefinition<String> DATA_LOCATION = AttributeDefinition.builder("dataLocation", "Infinispan-SoftIndexFileStore-Data").immutable().build();
+   static final AttributeDefinition<String> INDEX_LOCATION = AttributeDefinition.builder("indexLocation", "Infinispan-SoftIndexFileStore-Index").immutable().build();
+   static final AttributeDefinition<Integer> INDEX_SEGMENTS = AttributeDefinition.builder("indexSegments", 3).immutable().build();
+   static final AttributeDefinition<Integer> MAX_FILE_SIZE = AttributeDefinition.builder("maxFileSize", 16 * 1024 * 1024).immutable().build();
+   static final AttributeDefinition<Integer> MIN_NODE_SIZE = AttributeDefinition.builder("minNodeSize", -1).immutable().build();
+   static final AttributeDefinition<Integer> MAX_NODE_SIZE = AttributeDefinition.builder("maxNodeSize", 4096).immutable().build();
+   static final AttributeDefinition<Integer> INDEX_QUEUE_LENGTH = AttributeDefinition.builder("indexQueueLength", 1000).immutable().build();
+   static final AttributeDefinition<Boolean> SYNC_WRITES = AttributeDefinition.builder("syncWrites", false).immutable().build();
+   static final AttributeDefinition<Integer> OPEN_FILES_LIMIT = AttributeDefinition.builder("openFilesLimit", 1000).immutable().build();
+   static final AttributeDefinition<Double> COMPACTION_THRESHOLD = AttributeDefinition.builder("compactionThreshold", 0.5d).immutable().build();
 
+   public static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(SoftIndexFileStoreConfiguration.class, AbstractStoreConfiguration.attributeDefinitionSet(), DATA_LOCATION, INDEX_LOCATION, INDEX_SEGMENTS, MAX_FILE_SIZE,
+            MIN_NODE_SIZE, MAX_NODE_SIZE, INDEX_QUEUE_LENGTH, SYNC_WRITES, OPEN_FILES_LIMIT, COMPACTION_THRESHOLD);
+   }
 
-   public SoftIndexFileStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState,
-                                          boolean ignoreModifications, AsyncStoreConfiguration async,
-                                          SingletonStoreConfiguration singletonStore, boolean preload, boolean shared,
-                                          Properties properties,
-                                          String dataLocation, String indexLocation, int indexSegments,
-                                          int maxFileSize, int minNodeSize, int maxNodeSize, int indexQueueLength,
-                                          boolean syncWrites, int openFilesLimit, double compactionThreshold) {
-      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
-      this.dataLocation = dataLocation;
-      this.indexLocation = indexLocation;
-      this.indexSegments = indexSegments;
-      this.minNodeSize = minNodeSize;
-      this.maxFileSize = maxFileSize;
-      this.maxNodeSize = maxNodeSize;
-      this.indexQueueLength = indexQueueLength;
-      this.syncWrites = syncWrites;
-      this.openFilesLimit = openFilesLimit;
-      this.compactionThreshold = compactionThreshold;
+   public SoftIndexFileStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+      super(attributes, async, singletonStore);
    }
 
    public String dataLocation() {
-      return dataLocation;
+      return attributes.attribute(DATA_LOCATION).get();
    }
 
    public String indexLocation() {
-      return indexLocation;
+      return attributes.attribute(INDEX_LOCATION).get();
    }
 
    public int indexSegments() {
-      return indexSegments;
+      return attributes.attribute(INDEX_SEGMENTS).get();
    }
 
    public int maxFileSize() {
-      return maxFileSize;
+      return attributes.attribute(MAX_FILE_SIZE).get();
    }
 
    public int minNodeSize() {
-      return minNodeSize;
+      return attributes.attribute(MIN_NODE_SIZE).get();
    }
 
    public int maxNodeSize() {
-      return maxNodeSize;
+      return attributes.attribute(MAX_NODE_SIZE).get();
    }
 
    public int indexQueueLength() {
-      return indexQueueLength;
+      return attributes.attribute(INDEX_QUEUE_LENGTH).get();
    }
 
    public boolean syncWrites() {
-      return syncWrites;
+      return attributes.attribute(SYNC_WRITES).get();
    }
 
    public int openFilesLimit() {
-      return openFilesLimit;
+      return attributes.attribute(OPEN_FILES_LIMIT).get();
    }
 
    public double compactionThreshold() {
-      return compactionThreshold;
+      return attributes.attribute(COMPACTION_THRESHOLD).get();
    }
-
-
 
 }

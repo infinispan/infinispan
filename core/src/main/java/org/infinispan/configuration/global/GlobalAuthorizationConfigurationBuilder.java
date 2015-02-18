@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.security.auth.Subject;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
@@ -14,6 +15,8 @@ import org.infinispan.security.impl.LoggingAuditLogger;
 import org.infinispan.security.impl.NullAuditLogger;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import static org.infinispan.configuration.global.GlobalAuthorizationConfiguration.*;
 
 /**
  * GlobalAuthorizationConfigurationBuilder.
@@ -23,27 +26,26 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfigurationBuilder implements Builder<GlobalAuthorizationConfiguration> {
    public static final Log log = LogFactory.getLog(GlobalAuthorizationConfigurationBuilder.class);
-   private boolean enabled = false;
-   private AuditLogger auditLogger;
-   private PrincipalRoleMapper principalRoleMapper;
+   private final AttributeSet attributes;
    private final Map<String, GlobalRoleConfigurationBuilder> roles = new HashMap<String, GlobalRoleConfigurationBuilder>();
 
    public GlobalAuthorizationConfigurationBuilder(GlobalSecurityConfigurationBuilder builder) {
       super(builder.getGlobalConfig());
+      attributes = GlobalAuthorizationConfiguration.attributeDefinitionSet();
    }
 
    public GlobalAuthorizationConfigurationBuilder enable() {
-      this.enabled = true;
+      attributes.attribute(ENABLED).set(true);
       return this;
    }
 
    public GlobalAuthorizationConfigurationBuilder disable() {
-      this.enabled = false;
+      attributes.attribute(ENABLED).set(false);
       return this;
    }
 
    public GlobalAuthorizationConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
@@ -53,7 +55,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
     * @param auditLogger
     */
    public GlobalAuthorizationConfigurationBuilder auditLogger(AuditLogger auditLogger) {
-      this.auditLogger = auditLogger;
+      attributes.attribute(AUDIT_LOGGER).set(auditLogger);
       return this;
    }
 
@@ -63,7 +65,7 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
     * @param principalRoleMapper
     */
    public GlobalAuthorizationConfigurationBuilder principalRoleMapper(PrincipalRoleMapper principalRoleMapper) {
-      this.principalRoleMapper = principalRoleMapper;
+      attributes.attribute(PRINCIPAL_ROLE_MAPPER).set(principalRoleMapper);
       return this;
    }
 
@@ -75,11 +77,8 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
 
    @Override
    public void validate() {
-      if (enabled && principalRoleMapper == null) {
+      if (attributes.attribute(ENABLED).get() && attributes.attribute(PRINCIPAL_ROLE_MAPPER).get() == null) {
          throw log.invalidPrincipalRoleMapper();
-      }
-      if (auditLogger == null) {
-         auditLogger = new NullAuditLogger();
       }
    }
 
@@ -90,14 +89,13 @@ public class GlobalAuthorizationConfigurationBuilder extends AbstractGlobalConfi
          Role roleCfg = role.create();
          rolesCfg.put(roleCfg.getName(), roleCfg);
       }
-      return new GlobalAuthorizationConfiguration(enabled, auditLogger, principalRoleMapper, rolesCfg);
+      attributes.attribute(ROLES).set(rolesCfg);
+      return new GlobalAuthorizationConfiguration(attributes.protect());
    }
 
    @Override
    public Builder<?> read(GlobalAuthorizationConfiguration template) {
-      this.enabled = template.enabled();
-      this.auditLogger = template.auditLogger();
-      this.principalRoleMapper = template.principalRoleMapper();
+      attributes.read(template.attributes());
       this.roles.clear();
       for(Role role : template.roles().values()) {
          this.role(role.getName()).read(role);
