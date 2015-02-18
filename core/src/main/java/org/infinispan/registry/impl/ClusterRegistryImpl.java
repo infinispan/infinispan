@@ -269,8 +269,9 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
             .transactionManagerLookup(null).invocationBatching().enable();
 
       //fetch the state (redundant as state transfer this is enabled by default, keep it here to document the intention)
-      configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
+      configurationBuilder.clustering().stateTransfer().fetchInMemoryState(cacheMode.needsStateTransfer());
 
+      configurationBuilder.security().authorization().disable();
       return configurationBuilder.build();
    }
 

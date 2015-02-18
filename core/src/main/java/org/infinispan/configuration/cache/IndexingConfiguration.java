@@ -1,22 +1,25 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 
 /**
  * Configures indexing of entries in the cache for searching.
  */
 public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration {
+   static final AttributeDefinition<Index> INDEX = AttributeDefinition.builder("index", Index.NONE).immutable().build();
+   static final AttributeDefinition<Boolean> AUTO_CONFIG = AttributeDefinition.builder("autoConfig", false).immutable().build();
+   public static AttributeSet attributeSet() {
+      return new AttributeSet(IndexingConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(), INDEX, AUTO_CONFIG);
+   }
 
-   private final Index index;
-   private final boolean autoConfig;
    private static final String DIRECTORY_PROVIDER_KEY = "directory_provider";
    private static final String RAM_DIRECTORY_PROVIDER = "ram";
 
-   IndexingConfiguration(TypedProperties properties, Index index, boolean autoConfig) {
-      super(properties);
-      this.index = index;
-      this.autoConfig = autoConfig;
+   public IndexingConfiguration(AttributeSet attributes) {
+      super(attributes);
    }
 
    /**
@@ -26,7 +29,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     */
    @Deprecated
    public boolean enabled() {
-      return index.isEnabled();
+      return index().isEnabled();
    }
 
    /**
@@ -37,7 +40,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     */
    @Deprecated
    public boolean indexLocalOnly() {
-      return index.isLocalOnly();
+      return index().isLocalOnly();
    }
 
    /**
@@ -46,7 +49,7 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     * complete and up to date documentation about available properties refer to the Hibernate Search
     * reference of the version you're using with Infinispan Query.
     * </p>
-    * 
+    *
     * @see <a
     *      href="http://docs.jboss.org/hibernate/stable/search/reference/en-US/html_single/">Hibernate
     *      Search</a>
@@ -61,20 +64,20 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
     * Returns the indexing mode of this cache.
     */
    public Index index() {
-      return index;
+      return attributes.attribute(INDEX).asObject(Index.class);
    }
 
    /**
     * Determines if autoconfig is enabled for this IndexingConfiguration
     */
    public boolean autoConfig() {
-      return autoConfig;
+      return attributes.attribute(AUTO_CONFIG).asBoolean();
    }
 
    /**
     * Check if the indexes can be shared. Currently only "ram"
     * based indexes don't allow any sort of sharing
-    * 
+    *
     * @return false if the index is ram only and thus not shared
     */
    public boolean indexShareable() {
@@ -92,34 +95,13 @@ public class IndexingConfiguration extends AbstractTypedPropertiesConfiguration 
       }
       return !hasRamDirectoryProvider;
    }
-   
+
    @Override
    public String toString() {
-      return "IndexingConfiguration{" +
-            "index=" + index +
-            ", properties=" + properties() +
-            '}';
+      return "IndexingConfiguration [attributes=" + attributes + "]";
    }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      IndexingConfiguration that = (IndexingConfiguration) o;
-
-      if (index != that.index) return false;
-      if (autoConfig != that.autoConfig) return false;
-
-      return true;
+   AttributeSet attributes() {
+      return attributes;
    }
-
-   @Override
-   public int hashCode() {
-      int result = super.hashCode();
-      result = 31 * result + (index != null ? index.hashCode() : 0);
-      result = 31 * result + (autoConfig ? 1 : 0);
-      return result;
-   }
-
 }

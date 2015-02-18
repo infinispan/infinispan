@@ -3,6 +3,7 @@ package org.infinispan.xsite;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
 import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -44,16 +45,16 @@ public class XSiteAdminOperationsTest extends AbstractTwoSitesTest {
 
       BackupSenderImpl bs = backupSender("LON", 0);
       OfflineStatus offlineStatus = bs.getOfflineStatus("NYC");
-      assertEquals(offlineStatus.getTakeOffline(), new TakeOfflineConfiguration(0, 0));
+      assertEquals(offlineStatus.getTakeOffline(), new TakeOfflineConfigurationBuilder(null, null).afterFailures(0).minTimeToWait(0).create());
 
       assertEquals(XSiteAdminOperations.SUCCESS, admin("LON", 1).amendTakeOffline("NYC", 7, 12));
-      assertEquals(offlineStatus.getTakeOffline(), new TakeOfflineConfiguration(7, 12));
+      assertEquals(offlineStatus.getTakeOffline(), new TakeOfflineConfigurationBuilder(null, null).afterFailures(7).minTimeToWait(12).create());
 
       assertEquals(XSiteAdminOperations.SUCCESS, admin("LON", 1).setTakeOfflineAfterFailures("NYC", 8));
-      assertEquals(offlineStatus.getTakeOffline(), new TakeOfflineConfiguration(8, 12));
+      assertEquals(offlineStatus.getTakeOffline(), new TakeOfflineConfigurationBuilder(null, null).afterFailures(8).minTimeToWait(12).create());
 
       assertEquals(XSiteAdminOperations.SUCCESS, admin("LON", 1).setTakeOfflineMinTimeToWait("NYC", 13));
-      assertEquals(offlineStatus.getTakeOffline(), new TakeOfflineConfiguration(8, 13));
+      assertEquals(offlineStatus.getTakeOffline(), new TakeOfflineConfigurationBuilder(null, null).afterFailures(8).minTimeToWait(13).create());
 
       assertEquals(admin("LON", 0).getTakeOfflineAfterFailures("NYC"), "8");
       assertEquals(admin("LON", 0).getTakeOfflineMinTimeToWait("NYC"), "13");

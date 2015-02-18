@@ -2,11 +2,12 @@ package org.infinispan.persistence.leveldb.configuration;
 
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.persistence.leveldb.LevelDBStore;
-import java.util.Properties;
 
 /**
  *
@@ -17,62 +18,56 @@ import java.util.Properties;
 @BuiltBy(LevelDBStoreConfigurationBuilder.class)
 public class LevelDBStoreConfiguration extends AbstractStoreConfiguration {
    public enum ImplementationType {
-      AUTO,
-      JAVA,
-      JNI
+      AUTO, JAVA, JNI
    }
 
-   final private String location;
-   final private String expiredLocation;
-   final private ImplementationType implementationType;
-   final private CompressionType compressionType;
-   final private Integer blockSize;
-   final private Long cacheSize;
-   final private int expiryQueueSize;
-   final private int clearThreshold;
+   final static AttributeDefinition<String> LOCATION = AttributeDefinition.builder("location", "Infinispan-LevelDBStore/data").immutable().build();
+   final static AttributeDefinition<String> EXPIRED_LOCATION = AttributeDefinition.builder("expiredLocation", "Infinispan-LevelDBStore/expired").immutable().build();
+   final static AttributeDefinition<ImplementationType> IMPLEMENTATION_TYPE = AttributeDefinition.builder("implementationType", ImplementationType.AUTO).immutable().build();
+   final static AttributeDefinition<CompressionType> COMPRESSION_TYPE = AttributeDefinition.builder("compressionType", CompressionType.NONE).immutable().build();
+   final static AttributeDefinition<Integer> BLOCK_SIZE = AttributeDefinition.builder("blockSize", 0).immutable().build();
+   final static AttributeDefinition<Long> CACHE_SIZE = AttributeDefinition.builder("cacheSize", 0l).immutable().build();
+   final static AttributeDefinition<Integer> EXPIRY_QUEUE_SIZE = AttributeDefinition.builder("expiryQueueSize", 10000).immutable().build();
+   final static AttributeDefinition<Integer> CLEAR_THRESHOLD = AttributeDefinition.builder("clearThreshold", 10000).immutable().build();
 
+   public static AttributeSet attributeSet() {
+      return new AttributeSet(LevelDBStoreConfiguration.class, AbstractStoreConfiguration.attributeSet(), LOCATION, EXPIRED_LOCATION, IMPLEMENTATION_TYPE, COMPRESSION_TYPE,
+            BLOCK_SIZE, CACHE_SIZE, EXPIRY_QUEUE_SIZE, CLEAR_THRESHOLD);
+   }
 
-   public LevelDBStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload, boolean shared, Properties properties, String location, String expiredLocation, ImplementationType implementationType, CompressionType compressionType, Integer blockSize, Long cacheSize, int expiryQueueSize, int clearThreshold) {
-      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
-      this.location = location;
-      this.expiredLocation = expiredLocation;
-      this.implementationType = implementationType;
-      this.compressionType = compressionType;
-      this.blockSize = blockSize;
-      this.cacheSize = cacheSize;
-      this.expiryQueueSize = expiryQueueSize;
-      this.clearThreshold = clearThreshold;
+   public LevelDBStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+      super(attributes, async, singletonStore);
    }
 
    public String location() {
-      return location;
+      return attributes.attribute(LOCATION).asString();
    }
 
    public String expiredLocation() {
-      return expiredLocation;
+      return attributes.attribute(EXPIRED_LOCATION).asString();
    }
 
    public ImplementationType implementationType() {
-      return implementationType;
+      return attributes.attribute(IMPLEMENTATION_TYPE).asObject(ImplementationType.class);
    }
 
    public CompressionType compressionType() {
-      return compressionType;
+      return attributes.attribute(COMPRESSION_TYPE).asObject(CompressionType.class);
    }
 
    public Integer blockSize() {
-      return blockSize;
+      return attributes.attribute(BLOCK_SIZE).asInteger();
    }
 
    public Long cacheSize() {
-      return cacheSize;
+      return attributes.attribute(CACHE_SIZE).asLong();
    }
 
    public int expiryQueueSize() {
-      return expiryQueueSize;
+      return attributes.attribute(EXPIRY_QUEUE_SIZE).asInteger();
    }
 
    public int clearThreshold() {
-      return clearThreshold;
+      return attributes.attribute(CLEAR_THRESHOLD).asInteger();
    }
 }

@@ -1,5 +1,33 @@
 package org.infinispan.util.logging;
 
+import static org.jboss.logging.Logger.Level.DEBUG;
+import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.FATAL;
+import static org.jboss.logging.Logger.Level.INFO;
+import static org.jboss.logging.Logger.Level.TRACE;
+import static org.jboss.logging.Logger.Level.WARN;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.nio.channels.FileChannel;
+import java.security.Permission;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.ObjectName;
+import javax.naming.NamingException;
+import javax.transaction.Synchronization;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAException;
+import javax.xml.namespace.QName;
+
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -19,6 +47,8 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
@@ -30,33 +60,6 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jgroups.View;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.ObjectName;
-import javax.naming.NamingException;
-import javax.transaction.Synchronization;
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAException;
-import javax.xml.namespace.QName;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.nio.channels.FileChannel;
-import java.security.Permission;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-
-import static org.jboss.logging.Logger.Level.DEBUG;
-import static org.jboss.logging.Logger.Level.ERROR;
-import static org.jboss.logging.Logger.Level.FATAL;
-import static org.jboss.logging.Logger.Level.INFO;
-import static org.jboss.logging.Logger.Level.TRACE;
-import static org.jboss.logging.Logger.Level.WARN;
 
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
@@ -1244,4 +1247,56 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Finished cluster-wide rebalance for cache %s, topology id = %d", id = 336)
    void clusterWideRebalanceCompleted(String cacheName, int topologyId);
+
+   @Message(value = "The 'site' must be specified!", id = 337)
+   CacheConfigurationException backupMissingSite();
+
+   @Message(value = "It is required to specify a 'failurePolicyClass' when using a custom backup failure policy!", id = 338)
+   CacheConfigurationException missingBackupFailurePolicyClass();
+
+   @Message(value = "Null name not allowed (use 'defaultRemoteCache()' in case you want to specify the default cache name).", id = 339)
+   CacheConfigurationException backupForNullCache();
+
+   @Message(value = "Both 'remoteCache' and 'remoteSite' must be specified for a backup'!", id = 340)
+   CacheConfigurationException backupForMissingParameters();
+
+   @Message(value = "Cannot configure async properties for an sync cache. Set the cache mode to async first.", id = 341)
+   IllegalStateException asyncPropertiesConfigOnSyncCache();
+
+   @Message(value = "Cannot configure sync properties for an async cache. Set the cache mode to sync first.", id = 342)
+   IllegalStateException syncPropertiesConfigOnAsyncCache();
+
+   @Message(value = "Must have a transport set in the global configuration in " +
+               "order to define a clustered cache", id = 343)
+   CacheConfigurationException missingTransportConfiguration();
+
+   @Message(value = "reaperWakeUpInterval must be >= 0, we got %d", id = 344)
+   CacheConfigurationException invalidReaperWakeUpInterval(long timeout);
+
+   @Message(value = "completedTxTimeout must be >= 0, we got %d", id = 345)
+   CacheConfigurationException invalidCompletedTxTimeout(long timeout);
+
+   @Message(value = "Total Order based protocol not available for transaction mode %s", id = 346)
+   CacheConfigurationException invalidTxModeForTotalOrder(TransactionMode transactionMode);
+
+   @Message(value = "Cache mode %s is not supported by Total Order based protocol", id = 347)
+   CacheConfigurationException invalidCacheModeForTotalOrder(String friendlyCacheModeString);
+
+   @Message(value = "Total Order based protocol not available with recovery", id = 348)
+   CacheConfigurationException unavailableTotalOrderWithTxRecovery();
+
+   @Message(value = "Total Order based protocol not available with %s", id = 349)
+   CacheConfigurationException invalidLockingModeForTotalOrder(LockingMode lockingMode);
+
+   @Message(value = "Enabling the L1 cache is only supported when using DISTRIBUTED as a cache mode.  Your cache mode is set to %s", id = 350)
+   CacheConfigurationException l1OnlyForDistributedCache(String cacheMode);
+
+   @Message(value = "Using a L1 lifespan of 0 or a negative value is meaningless", id = 351)
+   CacheConfigurationException l1InvalidLifespan();
+
+   @Message(value = "Use of the replication queue is invalid when using DISTRIBUTED mode.", id = 352)
+   CacheConfigurationException noReplicationQueueDistributedCache();
+
+   @Message(value = "Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.", id = 353)
+   CacheConfigurationException replicationQueueOnlyForAsyncCaches();
 }

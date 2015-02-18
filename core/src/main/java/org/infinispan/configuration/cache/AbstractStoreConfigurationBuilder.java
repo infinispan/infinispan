@@ -1,31 +1,75 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.FETCH_PERSISTENT_STATE;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.IGNORE_MODIFICATIONS;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PRELOAD;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PROPERTIES;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.PURGE_ON_STARTUP;
+import static org.infinispan.configuration.cache.AbstractStoreConfiguration.SHARED;
+
+import java.lang.reflect.Method;
+import java.util.Properties;
+
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.parsing.XmlConfigHelper;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Properties;
 
 public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfiguration, S extends AbstractStoreConfigurationBuilder<T, S>>
       extends AbstractPersistenceConfigurationChildBuilder implements StoreConfigurationBuilder<T, S> {
 
    private static final Log log = LogFactory.getLog(AbstractStoreConfigurationBuilder.class);
 
+   protected final AttributeSet attributes;
    protected final AsyncStoreConfigurationBuilder<S> async;
    protected final SingletonStoreConfigurationBuilder<S> singletonStore;
-   protected boolean fetchPersistentState = false;
-   protected boolean ignoreModifications = false;
-   protected boolean purgeOnStartup = false;
-   protected boolean shared = false;
-   protected boolean preload = false;
-   protected Properties properties = new Properties();
 
+   @Deprecated
+   protected boolean preload;
+   @Deprecated
+   protected boolean shared;
+   @Deprecated
+   protected boolean ignoreModifications;
+   @Deprecated
+   protected Properties properties;
+   @Deprecated
+   protected boolean purgeOnStartup;
+   @Deprecated
+   protected boolean fetchPersistentState;
+
+   /**
+    * @deprecated Use {@link AbstractStoreConfigurationBuilder#AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder, AttributeSet)} instead
+    */
+   @Deprecated
    public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder) {
       super(builder);
+      this.attributes = AbstractStoreConfiguration.attributeSet();
       this.async = new AsyncStoreConfigurationBuilder(this);
       this.singletonStore = new SingletonStoreConfigurationBuilder(this);
+      initCompatibilitySettings();
+   }
+
+   public AbstractStoreConfigurationBuilder(PersistenceConfigurationBuilder builder, AttributeSet attributes) {
+      super(builder);
+      this.attributes = attributes;
+      this.async = new AsyncStoreConfigurationBuilder(this);
+      this.singletonStore = new SingletonStoreConfigurationBuilder(this);
+      initCompatibilitySettings();
+   }
+
+   @Deprecated
+   private void initCompatibilitySettings() {
+      fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE).asBoolean();
+      preload = attributes.attribute(PRELOAD).asBoolean();
+      purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).asBoolean();
+      shared = attributes.attribute(SHARED).asBoolean();
+      ignoreModifications = attributes.attribute(IGNORE_MODIFICATIONS).asBoolean();
+      properties = attributes.attribute(PROPERTIES).asObject(Properties.class);
    }
 
    /**
@@ -49,7 +93,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S fetchPersistentState(boolean b) {
-      this.fetchPersistentState = b;
+      attributes.attribute(FETCH_PERSISTENT_STATE).set(b);
+      fetchPersistentState = b;
       return self();
    }
 
@@ -58,7 +103,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S ignoreModifications(boolean b) {
-      this.ignoreModifications = b;
+      attributes.attribute(IGNORE_MODIFICATIONS).set(b);
+      ignoreModifications = b;
       return self();
    }
 
@@ -67,11 +113,13 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S purgeOnStartup(boolean b) {
-      this.purgeOnStartup = b;
+      attributes.attribute(PURGE_ON_STARTUP).set(b);
+      purgeOnStartup = b;
       return self();
    }
 
    public S properties(Properties properties) {
+      attributes.attribute(PROPERTIES).set(new TypedProperties(properties));
       this.properties = properties;
       return self();
    }
@@ -81,8 +129,11 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S addProperty(String key, String value) {
-      this.properties.put(key, value);
-      XmlConfigHelper.setValues(this, properties, false, false);
+      TypedProperties properties = attributes.attribute(PROPERTIES).asObject(TypedProperties.class);
+      properties.put(key, value);
+      attributes.attribute(PROPERTIES).set(properties);
+      XmlConfigHelper.setAttributes(attributes, properties, false, false);
+      this.properties = properties;
       return self();
    }
 
@@ -91,7 +142,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S withProperties(Properties props) {
-      XmlConfigHelper.showUnrecognizedAttributes(XmlConfigHelper.setValues(this, props, false, false));
+      XmlConfigHelper.showUnrecognizedAttributes(XmlConfigHelper.setAttributes(attributes, props, false, false));
+      attributes.attribute(PROPERTIES).set(new TypedProperties(props));
       this.properties = props;
       return self();
    }
@@ -101,7 +153,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S preload(boolean b) {
-      this.preload = b;
+      attributes.attribute(PRELOAD).set(b);
+      preload = b;
       return self();
    }
 
@@ -110,7 +163,8 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
     */
    @Override
    public S shared(boolean b) {
-      this.shared = b;
+      attributes.attribute(SHARED).set(b);
+      shared = b;
       return self();
    }
 
@@ -118,6 +172,10 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
    public void validate() {
       async.validate();
       singletonStore.validate();
+      boolean shared = attributes.attribute(SHARED).asBoolean();
+      boolean fetchPersistentState = attributes.attribute(FETCH_PERSISTENT_STATE).asBoolean();
+      boolean purgeOnStartup = attributes.attribute(PURGE_ON_STARTUP).asBoolean();
+      boolean preload = attributes.attribute(PRELOAD).asBoolean();
       ConfigurationBuilder builder = getBuilder();
       if (!shared && !fetchPersistentState && !purgeOnStartup
             && builder.clustering().cacheMode().isClustered())
@@ -134,15 +192,23 @@ public abstract class AbstractStoreConfigurationBuilder<T extends StoreConfigura
 
    @Override
    public Builder<?> read(T template) {
+
+      Method attributesMethod = ReflectionUtil.findMethod(template.getClass(), "attributes");
+      try {
+         attributes.read((AttributeSet) attributesMethod.invoke(template, null));
+      } catch (Exception e) {
+         throw new CacheConfigurationException(e);
+      }
+      initCompatibilitySettings();
       async.read(template.async());
       singletonStore.read(template.singletonStore());
-      fetchPersistentState = template.fetchPersistentState();
-      ignoreModifications = template.ignoreModifications();
-      purgeOnStartup = template.purgeOnStartup();
-      shared = template.shared();
-      preload = template.preload();
-      properties = template.properties();
 
       return this;
+   }
+
+   @Override
+   public String toString() {
+      return "AbstractStoreConfigurationBuilder [attributes=" + attributes + ", async=" + async + ", singletonStore="
+            + singletonStore + "]";
    }
 }

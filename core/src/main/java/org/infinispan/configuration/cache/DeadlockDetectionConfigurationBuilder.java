@@ -3,18 +3,20 @@ package org.infinispan.configuration.cache;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
+import static org.infinispan.configuration.cache.DeadlockDetectionConfiguration.*;
 /**
  * Configures deadlock detection.
  */
 public class DeadlockDetectionConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<DeadlockDetectionConfiguration> {
 
-   private boolean enabled = false;
-   private long spinDuration = TimeUnit.MILLISECONDS.toMillis(100);
+   private final AttributeSet attributes;
 
    DeadlockDetectionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = DeadlockDetectionConfiguration.attributeSet();
    }
 
    /**
@@ -22,7 +24,7 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
     * allowed to acquire a particular lock
     */
    public DeadlockDetectionConfigurationBuilder spinDuration(long l) {
-      this.spinDuration = l;
+      attributes.attribute(SPIN_DURATION).set(l);
       return this;
    }
 
@@ -38,7 +40,7 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
     * Enable deadlock detection
     */
    public DeadlockDetectionConfigurationBuilder enable() {
-      this.enabled = true;
+      attributes.attribute(ENABLED).set(true);
       return this;
    }
 
@@ -46,7 +48,7 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
     * Disable deadlock detection
     */
    public DeadlockDetectionConfigurationBuilder disable() {
-      this.enabled = false;
+      attributes.attribute(ENABLED).set(false);
       return this;
    }
 
@@ -54,7 +56,7 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
     * Enable or disable deadlock detection
     */
    public DeadlockDetectionConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
@@ -70,22 +72,17 @@ public class DeadlockDetectionConfigurationBuilder extends AbstractConfiguration
    @Override
    public
    DeadlockDetectionConfiguration create() {
-      return new DeadlockDetectionConfiguration(enabled, spinDuration);
+      return new DeadlockDetectionConfiguration(attributes.protect());
    }
 
    @Override
    public DeadlockDetectionConfigurationBuilder read(DeadlockDetectionConfiguration template) {
-      this.enabled = template.enabled();
-      this.spinDuration = template.spinDuration();
-
+      attributes.read(template.attributes());
       return this;
    }
 
    @Override
    public String toString() {
-      return "DeadlockDetectionConfigurationBuilder{" +
-            "enabled=" + enabled +
-            ", spinDuration=" + spinDuration +
-            '}';
+      return "DeadlockDetectionConfigurationBuilder [attributes=" + attributes + "]";
    }
 }

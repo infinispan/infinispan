@@ -62,6 +62,10 @@ public enum CacheMode {
       return this == REPL_SYNC || this == REPL_ASYNC;
    }
 
+   public boolean needsStateTransfer() {
+      return this == REPL_ASYNC || this == REPL_SYNC || this == DIST_ASYNC || this == DIST_SYNC;
+   }
+
    public CacheMode toSync() {
       switch (this) {
          case REPL_ASYNC:
@@ -87,7 +91,7 @@ public enum CacheMode {
             return this;
       }
    }
-   
+
    public String friendlyCacheModeString() {
       switch (this) {
          case REPL_SYNC:

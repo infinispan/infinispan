@@ -85,4 +85,19 @@ public class ConfigurationOverrideTest extends AbstractInfinispanTest {
       assertEquals(1, configuration.persistence().stores().size());
    }
 
+   public void testPartialOverride() {
+      ConfigurationBuilder baseBuilder = new ConfigurationBuilder();
+      baseBuilder.eviction().maxEntries(200).strategy(LIRS);
+      Configuration base = baseBuilder.build();
+      ConfigurationBuilder overrideBuilder = new ConfigurationBuilder();
+      overrideBuilder.read(base).locking().concurrencyLevel(31);
+      Configuration override = overrideBuilder.build();
+      assertEquals(200, base.eviction().maxEntries());
+      assertEquals(200, override.eviction().maxEntries());
+      assertEquals(LIRS, base.eviction().strategy());
+      assertEquals(LIRS, override.eviction().strategy());
+      assertEquals(32, base.locking().concurrencyLevel());
+      assertEquals(31, override.locking().concurrencyLevel());
+   }
+
 }

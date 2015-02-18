@@ -1,28 +1,31 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * Configures how state is retrieved when a new cache joins the cluster.
  * Used with invalidation and replication clustered modes.
- * 
+ *
  * @since 5.1
  */
 public class StateTransferConfiguration {
+   static final AttributeDefinition<Boolean> AWAIT_INITIAL_TRANSFER = AttributeDefinition.builder("awaitInitialTransfer", true).immutable().build();
+   static final AttributeDefinition<Boolean> FETCH_IN_MEMORY_STATE = AttributeDefinition.builder("fetchInMemoryState", true).immutable().build();
+   static final AttributeDefinition<Long> TIMEOUT = AttributeDefinition.builder("timeout", TimeUnit.MINUTES.toMillis(4)).immutable().build();
+   static final AttributeDefinition<Integer> CHUNK_SIZE = AttributeDefinition.builder("chunkSize", 512).immutable().build();
 
-   private boolean fetchInMemoryState;
-   private Boolean originalFetchInMemoryState;
-   private long timeout;
-   private int chunkSize;
-   private boolean awaitInitialTransfer;
-   private Boolean originalAwaitInitialTransfer;
+   static final AttributeSet attributeSet() {
+      return new AttributeSet(StoreAsBinaryConfiguration.class, FETCH_IN_MEMORY_STATE, TIMEOUT, CHUNK_SIZE, AWAIT_INITIAL_TRANSFER);
+   }
 
-   StateTransferConfiguration(boolean fetchInMemoryState, Boolean originalFetchInMemoryState, long timeout, int chunkSize,
-                              boolean awaitInitialTransfer, Boolean originalAwaitInitialTransfer) {
-      this.fetchInMemoryState = fetchInMemoryState;
-      this.originalFetchInMemoryState = originalFetchInMemoryState;
-      this.timeout = timeout;
-      this.chunkSize = chunkSize;
-      this.awaitInitialTransfer = awaitInitialTransfer;
-      this.originalAwaitInitialTransfer = originalAwaitInitialTransfer;
+   private final AttributeSet attributes;
+
+   StateTransferConfiguration(AttributeSet attributes) {
+      attributes.checkProtection();
+      this.attributes = attributes;
    }
 
    /**
@@ -34,14 +37,7 @@ public class StateTransferConfiguration {
     * sometimes have less than {@code numOwner} owners.
     */
    public boolean fetchInMemoryState() {
-      return fetchInMemoryState;
-   }
-
-   /**
-    * We want to remember if the user didn't configure fetchInMemoryState for the default cache.
-    */
-   protected Boolean originalFetchInMemoryState() {
-      return originalFetchInMemoryState;
+      return attributes.attribute(FETCH_IN_MEMORY_STATE).asBoolean();
    }
 
    /**
@@ -49,7 +45,7 @@ public class StateTransferConfiguration {
     * caches, before throwing an exception and aborting startup.
     */
    public long timeout() {
-      return timeout;
+      return attributes.attribute(TIMEOUT).asLong();
    }
 
    /**
@@ -57,7 +53,7 @@ public class StateTransferConfiguration {
     * caches, before throwing an exception and aborting startup.
     */
    public StateTransferConfiguration timeout(long l) {
-      timeout = l;
+      attributes.attribute(TIMEOUT).set(l);
       return this;
    }
 
@@ -66,7 +62,7 @@ public class StateTransferConfiguration {
     * If chunkSize is equal to Integer.MAX_VALUE, the state will be transferred in all at once. Not recommended.
     */
    public int chunkSize() {
-      return chunkSize;
+      return attributes.attribute(CHUNK_SIZE).asInteger();
    }
 
    /**
@@ -78,55 +74,47 @@ public class StateTransferConfiguration {
     * remote access. While this will not have any impact on the logic of your application it might impact performance.
     */
    public boolean awaitInitialTransfer() {
-      return awaitInitialTransfer;
+      return attributes.attribute(AWAIT_INITIAL_TRANSFER).asBoolean();
    }
 
    /**
     * We want to remember if the user didn't configure awaitInitialTransfer for the default cache.
     */
-   protected Boolean originalAwaitInitialTransfer() {
-      return originalAwaitInitialTransfer;
+   private boolean originalAwaitInitialTransfer() {
+      return !attributes.attribute(AWAIT_INITIAL_TRANSFER).isModified();
+   }
+
+   AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public String toString() {
-      return "StateTransferConfiguration{" +
-            "chunkSize=" + chunkSize +
-            ", fetchInMemoryState=" + fetchInMemoryState +
-            ", originalFetchInMemoryState=" + originalFetchInMemoryState +
-            ", timeout=" + timeout +
-            ", awaitInitialTransfer=" + awaitInitialTransfer +
-            ", originalAwaitInitialTransfer=" + originalAwaitInitialTransfer +
-            '}';
+      return this.getClass().getSimpleName() + attributes;
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      StateTransferConfiguration that = (StateTransferConfiguration) o;
-
-      if (chunkSize != that.chunkSize) return false;
-      if (fetchInMemoryState != that.fetchInMemoryState) return false;
-      if (timeout != that.timeout) return false;
-      if (originalFetchInMemoryState != null ? !originalFetchInMemoryState.equals(that.originalFetchInMemoryState) : that.originalFetchInMemoryState != null)
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
          return false;
-      if (awaitInitialTransfer != that.awaitInitialTransfer) return false;
-      if (originalAwaitInitialTransfer != null ? !originalAwaitInitialTransfer.equals(that.originalAwaitInitialTransfer) : that.originalAwaitInitialTransfer != null)
+      if (getClass() != obj.getClass())
          return false;
-
+      StateTransferConfiguration other = (StateTransferConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = (fetchInMemoryState ? 1 : 0);
-      result = 31 * result + (originalFetchInMemoryState != null ? originalFetchInMemoryState.hashCode() : 0);
-      result = 31 * result + (int) (timeout ^ (timeout >>> 32));
-      result = 31 * result + chunkSize;
-      result = 31 * result + (awaitInitialTransfer ? 1 : 0);
-      result = 31 * result + (originalAwaitInitialTransfer != null ? originalAwaitInitialTransfer.hashCode() : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
       return result;
    }
 

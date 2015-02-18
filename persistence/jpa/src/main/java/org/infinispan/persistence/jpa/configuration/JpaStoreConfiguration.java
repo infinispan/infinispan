@@ -1,9 +1,9 @@
 package org.infinispan.persistence.jpa.configuration;
 
-import java.util.Properties;
-
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AbstractStoreConfiguration;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
@@ -17,38 +17,32 @@ import org.infinispan.persistence.jpa.JpaStore;
 @BuiltBy(JpaStoreConfigurationBuilder.class)
 @ConfigurationFor(JpaStore.class)
 public class JpaStoreConfiguration extends AbstractStoreConfiguration {
-   final private String persistenceUnitName;
-   final private Class<?> entityClass;
-   final private long batchSize;
-   final private boolean storeMetadata;
+   static final AttributeDefinition<String> PERSISTENCE_UNIT_NAME = AttributeDefinition.builder("persistenceUnitName", null, String.class).immutable().build();
+   static final AttributeDefinition<Class> ENTITY_CLASS = AttributeDefinition.builder("entityClass", null, Class.class).immutable().build();
+   static final AttributeDefinition<Long> BATCH_SIZE = AttributeDefinition.builder("batchSize", 100l).immutable().build();
+   static final AttributeDefinition<Boolean> STORE_METADATA = AttributeDefinition.builder("storeMetadata", true).immutable().build();
 
-   protected JpaStoreConfiguration(boolean purgeOnStartup, boolean fetchPersistentState,
-                                   boolean ignoreModifications, AsyncStoreConfiguration async,
-                                   SingletonStoreConfiguration singletonStore, boolean preload, boolean shared,
-                                   Properties properties,
-                                   String persistenceUnitName, Class<?> entityClass,
-                                   long batchSize, boolean storeMetadata
-   ) {
-      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
-      this.persistenceUnitName = persistenceUnitName;
-      this.entityClass = entityClass;
-      this.batchSize = batchSize;
-      this.storeMetadata = storeMetadata;
+   public static AttributeSet attributeSet() {
+      return new AttributeSet(JpaStoreConfiguration.class, AbstractStoreConfiguration.attributeSet(), PERSISTENCE_UNIT_NAME, ENTITY_CLASS, BATCH_SIZE, STORE_METADATA);
+   }
+
+   protected JpaStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+      super(attributes, async, singletonStore);
    }
 
    public String persistenceUnitName() {
-      return persistenceUnitName;
+      return attributes.attribute(PERSISTENCE_UNIT_NAME).asString();
    }
 
    public Class<?> entityClass() {
-      return entityClass;
+      return attributes.attribute(ENTITY_CLASS).asObject(Class.class);
    }
 
    public long batchSize() {
-      return batchSize;
+      return attributes.attribute(BATCH_SIZE).asLong();
    }
 
    public boolean storeMetadata() {
-      return storeMetadata;
+      return attributes.attribute(STORE_METADATA).asBoolean();
    }
 }

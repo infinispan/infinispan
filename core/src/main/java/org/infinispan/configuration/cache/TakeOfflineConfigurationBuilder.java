@@ -1,6 +1,10 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.TakeOfflineConfiguration.AFTER_FAILURES;
+import static org.infinispan.configuration.cache.TakeOfflineConfiguration.MIN_TIME_TO_WAIT;
+
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
 /**
@@ -9,13 +13,36 @@ import org.infinispan.configuration.global.GlobalConfiguration;
  */
 public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<TakeOfflineConfiguration>{
 
-   private int afterFailures = 0;
-   private long minTimeToWait = 0;
+
+   private final AttributeSet attributes;
    private BackupConfigurationBuilder backupConfigurationBuilder;
 
    public TakeOfflineConfigurationBuilder(ConfigurationBuilder builder, BackupConfigurationBuilder backupConfigurationBuilder) {
       super(builder);
+      this.attributes = TakeOfflineConfiguration.attributeSet();
       this.backupConfigurationBuilder = backupConfigurationBuilder;
+   }
+
+   /**
+    * The minimal number of millis to wait before taking this site offline, even in the case 'afterFailures' is reached.
+    * If smaller or equal to 0, then only 'afterFailures' is considered.
+    */
+   public TakeOfflineConfigurationBuilder minTimeToWait(long minTimeToWait) {
+      attributes.attribute(MIN_TIME_TO_WAIT).set(minTimeToWait);
+      return this;
+   }
+
+   /**
+    * The number of failed request operations after which this site should be taken offline. Defaults to 0 (never). A
+    * negative value would mean that the site will be taken offline after 'minTimeToWait'.
+    */
+   public TakeOfflineConfigurationBuilder afterFailures(int afterFailures) {
+      attributes.attribute(AFTER_FAILURES).set(afterFailures);
+      return this;
+   }
+
+   public BackupConfigurationBuilder backup() {
+      return backupConfigurationBuilder;
    }
 
    @Override
@@ -28,63 +55,17 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
 
    @Override
    public TakeOfflineConfiguration create() {
-      return new TakeOfflineConfiguration(afterFailures, minTimeToWait);
+      return new TakeOfflineConfiguration(attributes.protect());
    }
 
    @Override
    public Builder<?> read(TakeOfflineConfiguration template) {
-      this.afterFailures = template.afterFailures();
-      this.minTimeToWait = template.minTimeToWait();
+      this.attributes.read(template.attributes());
       return this;
-   }
-
-   /**
-    * The minimal number of millis to wait before taking this site offline, even in the case 'afterFailures' is reached.
-    * If smaller or equal to 0, then only 'afterFailures' is considered.
-    */
-   public TakeOfflineConfigurationBuilder minTimeToWait(long minTimeToWait) {
-      this.minTimeToWait = minTimeToWait;
-      return this;
-   }
-
-   /**
-    * The number of failed request operations after which this site should be taken offline. Defaults to 0 (never). A
-    * negative value would mean that the site will be taken offline after 'minTimeToWait'.
-    */
-   public TakeOfflineConfigurationBuilder afterFailures(int afterFailures) {
-      this.afterFailures = afterFailures;
-      return this;
-   }
-
-   public BackupConfigurationBuilder backup() {
-      return backupConfigurationBuilder;
-   }
-
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof TakeOfflineConfigurationBuilder)) return false;
-
-      TakeOfflineConfigurationBuilder that = (TakeOfflineConfigurationBuilder) o;
-
-      if (afterFailures != that.afterFailures) return false;
-      if (minTimeToWait != that.minTimeToWait) return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = afterFailures;
-      result = 31 * result + (int) (minTimeToWait ^ (minTimeToWait >>> 32));
-      return result;
    }
 
    @Override
    public String toString() {
-      return "TakeOfflineConfigurationBuilder{" +
-            "afterFailures=" + afterFailures +
-            ", minTimeToWait=" + minTimeToWait +
-            '}';
+      return this.getClass().getSimpleName() + attributes;
    }
 }

@@ -1,19 +1,20 @@
 package org.infinispan.configuration.cache;
 
-import java.util.Properties;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 
 public class CustomStoreConfiguration extends AbstractStoreConfiguration {
-   private final Class<?> customStoreClass;
+   static final AttributeDefinition<Class> CUSTOM_STORE_CLASS = AttributeDefinition.builder("customStoreClass", null, Class.class).immutable().build();
+   public static AttributeSet attributeSet() {
+      return new AttributeSet(CustomStoreConfiguration.class, AbstractStoreConfiguration.attributeSet(), CUSTOM_STORE_CLASS);
+   }
 
-   public CustomStoreConfiguration(Class<?> customStoreClass, boolean purgeOnStartup, boolean fetchPersistentState, boolean ignoreModifications,
-                                   AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore, boolean preload,
-                                   boolean shared, Properties properties) {
-      super(purgeOnStartup, fetchPersistentState, ignoreModifications, async, singletonStore, preload, shared, properties);
-      this.customStoreClass = customStoreClass;
+   public CustomStoreConfiguration(AttributeSet attributes, AsyncStoreConfiguration async, SingletonStoreConfiguration singletonStore) {
+      super(attributes, async, singletonStore);
    }
 
    public Class<?> customStoreClass() {
-      return customStoreClass;
+      return attributes.attribute(CUSTOM_STORE_CLASS).asObject(Class.class);
    }
 
 }

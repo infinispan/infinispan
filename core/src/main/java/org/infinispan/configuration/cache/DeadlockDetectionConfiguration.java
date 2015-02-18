@@ -1,39 +1,49 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * Configures deadlock detection.
  */
 public class DeadlockDetectionConfiguration {
+   static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   static final AttributeDefinition<Long> SPIN_DURATION = AttributeDefinition.builder("spinDuration", TimeUnit.MILLISECONDS.toMillis(100)).immutable().build();
 
-   private final boolean enabled;
-   private final long spinDuration;
-   
-   DeadlockDetectionConfiguration(boolean enabled, long spinDuration) {
-      this.enabled = enabled;
-      this.spinDuration = spinDuration;
+   static AttributeSet attributeSet() {
+      return new AttributeSet(DeadlockDetectionConfiguration.class, ENABLED, SPIN_DURATION);
    }
-   
+   private final AttributeSet attributes;
+
+   DeadlockDetectionConfiguration(AttributeSet attributes) {
+      attributes.checkProtection();
+      this.attributes = attributes;
+   }
+
    /**
     * Time period that determines how often is lock acquisition attempted within maximum time
     * allowed to acquire a particular lock
     */
    public long spinDuration() {
-      return spinDuration;
+      return attributes.attribute(SPIN_DURATION).asLong();
    }
-   
+
    /**
     * Whether deadlock detection is enabled or disabled
     */
    public boolean enabled() {
-      return enabled;
+      return attributes.attribute(ENABLED).asBoolean();
+   }
+
+   AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public String toString() {
-      return "DeadlockDetectionConfiguration{" +
-            "enabled=" + enabled +
-            ", spinDuration=" + spinDuration +
-            '}';
+      return attributes.toString();
    }
 
    @Override
@@ -43,17 +53,12 @@ public class DeadlockDetectionConfiguration {
 
       DeadlockDetectionConfiguration that = (DeadlockDetectionConfiguration) o;
 
-      if (enabled != that.enabled) return false;
-      if (spinDuration != that.spinDuration) return false;
-
-      return true;
+      return attributes.equals(that.attributes);
    }
 
    @Override
    public int hashCode() {
-      int result = (enabled ? 1 : 0);
-      result = 31 * result + (int) (spinDuration ^ (spinDuration >>> 32));
-      return result;
+      return attributes.hashCode();
    }
 
 }

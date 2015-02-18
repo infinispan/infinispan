@@ -1,7 +1,9 @@
 package org.infinispan.xsite;
 
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.configuration.cache.TakeOfflineConfiguration;
+import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -135,10 +137,14 @@ public class OfflineStatus {
    }
 
    public void amend(Integer afterFailures, Long minTimeToWait) {
-      TakeOfflineConfiguration existing = getTakeOffline();
-      int newAfterFailures = afterFailures == null ? existing.afterFailures() : afterFailures;
-      long newMinTieToWait = minTimeToWait == null ? existing.minTimeToWait() : minTimeToWait;
-      TakeOfflineConfiguration newConfig = new TakeOfflineConfiguration(newAfterFailures, newMinTieToWait);
-      amend(newConfig);
+      TakeOfflineConfigurationBuilder builder = new TakeOfflineConfigurationBuilder(null, null);
+      builder.read(getTakeOffline());
+      if (afterFailures != null) {
+         builder.afterFailures(afterFailures);
+      }
+      if (minTimeToWait != null) {
+         builder.minTimeToWait(minTimeToWait);
+      }
+      amend(builder.create());
    }
 }

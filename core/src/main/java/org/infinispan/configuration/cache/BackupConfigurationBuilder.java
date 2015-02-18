@@ -1,6 +1,18 @@
 package org.infinispan.configuration.cache;
 
+import static org.infinispan.configuration.cache.BackupConfiguration.ENABLED;
+import static org.infinispan.configuration.cache.BackupConfiguration.FAILURE_POLICY;
+import static org.infinispan.configuration.cache.BackupConfiguration.FAILURE_POLICY_CLASS;
+import static org.infinispan.configuration.cache.BackupConfiguration.REPLICATION_TIMEOUT;
+import static org.infinispan.configuration.cache.BackupConfiguration.SITE;
+import static org.infinispan.configuration.cache.BackupConfiguration.STRATEGY;
+import static org.infinispan.configuration.cache.BackupConfiguration.USE_TWO_PHASE_COMMIT;
+
+import java.lang.invoke.MethodHandles;
+
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -11,30 +23,16 @@ import org.infinispan.util.logging.LogFactory;
  */
 public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<BackupConfiguration> {
 
-   private static final Log log = LogFactory.getLog(BackupConfigurationBuilder.class);
-
-   private String site;
-
-   private BackupConfiguration.BackupStrategy strategy = BackupConfiguration.BackupStrategy.ASYNC;
-
-   private long replicationTimeout = 10000;
-
-   private BackupFailurePolicy backupFailurePolicy = BackupFailurePolicy.WARN;
-
-   private String failurePolicyClass;
-
-   private boolean useTwoPhaseCommit = false;
-   
-   private TakeOfflineConfigurationBuilder takeOfflineBuilder;
-
-   private boolean enabled = true;
-
+   private static final Log log = LogFactory.getLog(MethodHandles.lookup().lookupClass(), Log.class);
+   private final AttributeSet attributes;
    private XSiteStateTransferConfigurationBuilder stateTransferBuilder;
+   private TakeOfflineConfigurationBuilder takeOfflineBuilder;
 
    public BackupConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = BackupConfiguration.attributeSet();
       takeOfflineBuilder = new TakeOfflineConfigurationBuilder(builder, this);
-      this.stateTransferBuilder = new XSiteStateTransferConfigurationBuilder(builder, this);
+      stateTransferBuilder = new XSiteStateTransferConfigurationBuilder(builder, this);
    }
 
    /**
@@ -42,7 +40,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     *             global config.
     */
    public BackupConfigurationBuilder site(String site) {
-      this.site = site;
+      attributes.attribute(SITE).set(site);
       return this;
    }
 
@@ -50,7 +48,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @see #site(String)
     */
    public String site() {
-      return this.site;
+      return attributes.attribute(SITE).asString();
    }
 
    /**
@@ -58,14 +56,14 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     * should return the fully qualified name of a class implementing {@link org.infinispan.xsite.CustomFailurePolicy}
     */
    public String failurePolicyClass() {
-      return failurePolicyClass;
+      return attributes.attribute(FAILURE_POLICY_CLASS).asString();
    }
 
    /**
     * @see #failurePolicyClass()
     */
    public BackupConfigurationBuilder failurePolicyClass(String failurePolicy) {
-      this.failurePolicyClass = failurePolicy;
+      attributes.attribute(FAILURE_POLICY_CLASS).set(failurePolicy);
       return this;
    }
 
@@ -73,15 +71,8 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     * Timeout(millis) used for replicating calls to other sites.
     */
    public BackupConfigurationBuilder replicationTimeout(long replicationTimeout) {
-      this.replicationTimeout = replicationTimeout;
+      attributes.attribute(REPLICATION_TIMEOUT).set(replicationTimeout);
       return this;
-   }
-
-   /**
-    * @see {@link #replicationTimeout(long)}
-    */
-   public long replicationTimeout() {
-      return replicationTimeout;
    }
 
    /**
@@ -89,7 +80,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     * to {@link org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy#ASYNC}.
     */
    public BackupConfigurationBuilder strategy(BackupConfiguration.BackupStrategy strategy) {
-      this.strategy = strategy;
+      attributes.attribute(STRATEGY).set(strategy);
       return this;
    }
 
@@ -97,7 +88,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     * @see #strategy()
     */
    public BackupConfiguration.BackupStrategy strategy() {
-      return strategy;
+      return attributes.attribute(STRATEGY).asObject(BackupConfiguration.BackupStrategy.class);
    }
 
    public TakeOfflineConfigurationBuilder takeOffline() {
@@ -109,24 +100,16 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     * The default values is  {@link org.infinispan.configuration.cache.BackupFailurePolicy#WARN}
     */
    public BackupConfigurationBuilder backupFailurePolicy(BackupFailurePolicy backupFailurePolicy) {
-      this.backupFailurePolicy = backupFailurePolicy;
+      attributes.attribute(FAILURE_POLICY).set(backupFailurePolicy);
       return this;
    }
 
    /**
-    * @see {@link #backupFailurePolicy(BackupFailurePolicy backupFailurePolicy)}
-    */
-   public BackupFailurePolicy backupFailurePolicy() {
-      return this.backupFailurePolicy;
-   }
-
-   /**
-    * Configures whether the replication happens in a 1PC or 2PC when using SYNC backup strategy.
-    * The default value is "false". {@link org.infinispan.commons.CacheConfigurationException} is
-    * thrown when used with ASYNC backup strategy.
+    * Configures whether the replication happens in a 1PC or 2PC for sync backups.
+    * The default value is "false"
     */
    public BackupConfigurationBuilder useTwoPhaseCommit(boolean useTwoPhaseCommit) {
-      this.useTwoPhaseCommit = useTwoPhaseCommit;
+      attributes.attribute(USE_TWO_PHASE_COMMIT).set(useTwoPhaseCommit);
       return this;
    }
 
@@ -134,7 +117,7 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
     * Configures whether this site is used for backing up data or not (defaults to true).
     */
    public BackupConfigurationBuilder enabled(boolean isEnabled) {
-      this.enabled = isEnabled;
+      attributes.attribute(ENABLED).set(isEnabled);
       return this;
    }
 
@@ -146,12 +129,12 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
    public void validate() {
       takeOfflineBuilder.validate();
       stateTransferBuilder.validate();
-      if (site == null)
-         throw log.backupSiteNullName();
-      if (backupFailurePolicy == BackupFailurePolicy.CUSTOM && (failurePolicyClass == null)) {
-         throw log.customBackupFailurePolicyClassNotSpecified();
+      if (attributes.attribute(SITE).get() == null)
+         throw log.backupMissingSite();
+      if (attributes.attribute(FAILURE_POLICY).asObject(BackupFailurePolicy.class) == BackupFailurePolicy.CUSTOM && (attributes.attribute(FAILURE_POLICY_CLASS).asString() == null)) {
+         throw log.missingBackupFailurePolicyClass();
       }
-      if (useTwoPhaseCommit && strategy == BackupConfiguration.BackupStrategy.ASYNC) {
+      if (attributes.attribute(USE_TWO_PHASE_COMMIT).asBoolean() && attributes.attribute(STRATEGY).asObject(BackupStrategy.class) == BackupConfiguration.BackupStrategy.ASYNC) {
          throw log.twoPhaseCommitAsyncBackup();
       }
    }
@@ -164,74 +147,19 @@ public class BackupConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public BackupConfiguration create() {
-      return new BackupConfiguration(site, strategy, replicationTimeout, backupFailurePolicy, failurePolicyClass,
-                                     useTwoPhaseCommit, takeOfflineBuilder.create(), stateTransferBuilder.create(), enabled);
+      return new BackupConfiguration(attributes.protect(), takeOfflineBuilder.create(), stateTransferBuilder.create());
    }
 
    @Override
-   public Builder read(BackupConfiguration template) {
-      this.takeOfflineBuilder.read(template.takeOffline());
-      this.stateTransferBuilder.read(template.stateTransfer());
-      this.site = template.site();
-      this.strategy = template.strategy();
-      this.backupFailurePolicy = template.backupFailurePolicy();
-      this.replicationTimeout = template.replicationTimeout();
-      this.failurePolicyClass = template.failurePolicyClass();
-      this.useTwoPhaseCommit = template.isTwoPhaseCommit();
-      this.enabled = template.enabled();
+   public BackupConfigurationBuilder read(BackupConfiguration template) {
+      attributes.read(template.attributes());
+      takeOfflineBuilder.read(template.takeOffline());
+      stateTransferBuilder.read(template.stateTransfer());
       return this;
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof BackupConfigurationBuilder)) return false;
-
-      BackupConfigurationBuilder that = (BackupConfigurationBuilder) o;
-
-      if (replicationTimeout != that.replicationTimeout) return false;
-      if (backupFailurePolicy != that.backupFailurePolicy) return false;
-      if (failurePolicyClass != null ? !failurePolicyClass.equals(that.failurePolicyClass) : that.failurePolicyClass != null)
-         return false;
-      if (site != null ? !site.equals(that.site) : that.site != null) return false;
-      if (strategy != that.strategy) return false;
-      if (takeOfflineBuilder != null ? !takeOfflineBuilder.equals(that.takeOfflineBuilder) : that.takeOfflineBuilder != null)
-         return false;
-      if (useTwoPhaseCommit != that.useTwoPhaseCommit) return false;
-      if (enabled != that.enabled) return false;
-      if (stateTransferBuilder != null ?
-            !stateTransferBuilder.equals(that.stateTransferBuilder) :
-            that.stateTransferBuilder != null)
-         return false;
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int result = site != null ? site.hashCode() : 0;
-      result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
-      result = 31 * result + (int) (replicationTimeout ^ (replicationTimeout >>> 32));
-      result = 31 * result + (backupFailurePolicy != null ? backupFailurePolicy.hashCode() : 0);
-      result = 31 * result + (failurePolicyClass != null ? failurePolicyClass.hashCode() : 0);
-      result = 31 * result + (takeOfflineBuilder != null ? takeOfflineBuilder.hashCode() : 0);
-      result = 31 * result + (stateTransferBuilder != null ? stateTransferBuilder.hashCode() : 0);
-      result = 31 * result + (useTwoPhaseCommit ? 1 : 0);
-      return result;
-   }
-
-   @Override
    public String toString() {
-      return "BackupConfigurationBuilder{" +
-            "site='" + site + '\'' +
-            ", strategy=" + strategy +
-            ", replicationTimeout=" + replicationTimeout +
-            ", useTwoPhaseCommit=" + useTwoPhaseCommit +
-            ", backupFailurePolicy=" + backupFailurePolicy +
-            ", failurePolicyClass='" + failurePolicyClass + '\'' +
-            ", takeOfflineBuilder=" + takeOfflineBuilder +
-            ", stateTransferBuilder=" + stateTransferBuilder +
-            ", enabled=" + enabled +
-            '}';
+      return this.getClass().getSimpleName() + attributes;
    }
 }

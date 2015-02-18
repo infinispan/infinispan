@@ -188,7 +188,7 @@ public class XMLConfigurationOverridingTest extends AbstractInfinispanTest imple
 
             cm.defineConfiguration(replSync, conf);
 
-            Assert.assertEquals(CacheMode.LOCAL, cm.getCacheConfiguration(replSync).clustering().cacheMode());
+            Assert.assertEquals(CacheMode.REPL_SYNC, cm.getCacheConfiguration(replSync).clustering().cacheMode());
             Assert.assertTrue(cm.getCacheConfiguration(replSync).jmxStatistics().enabled());
          }
       });
