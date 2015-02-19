@@ -4,11 +4,11 @@ import org.infinispan.protostream.MessageContext;
 import org.infinispan.protostream.ProtobufParser;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.TagHandler;
+import org.infinispan.protostream.WrappedMessage;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
 import org.infinispan.protostream.descriptors.Type;
-import org.infinispan.protostream.impl.WrappedMessageMarshaller;
 
 import java.io.IOException;
 
@@ -67,15 +67,15 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, F
          }
       } else {
          switch (fieldNumber) {
-            case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_FULL_NAME:
+            case WrappedMessage.WRAPPED_DESCRIPTOR_FULL_NAME:
                entityTypeName = (String) tagValue;
                break;
 
-            case WrappedMessageMarshaller.WRAPPED_DESCRIPTOR_ID:
+            case WrappedMessage.WRAPPED_DESCRIPTOR_ID:
                entityTypeName = serializationContext.getTypeNameById((Integer) tagValue);
                break;
 
-            case WrappedMessageMarshaller.WRAPPED_MESSAGE_BYTES:
+            case WrappedMessage.WRAPPED_MESSAGE_BYTES:
                payload = (byte[]) tagValue;
                break;
 
