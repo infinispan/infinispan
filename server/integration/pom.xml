@@ -75,7 +75,7 @@
                      <finalName>${product.name}-${product.version}</finalName>
                      <outputDirectory>${project.build.directory}/distribution</outputDirectory>
                      <workDirectory>${project.build.directory}/assembly/work</workDirectory>
-                     <attach>false</attach>
+                     <attach>true</attach>
                   </configuration>
                </plugin>
             </plugins>
