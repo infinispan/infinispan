@@ -19,10 +19,7 @@
 package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.server.endpoint.Constants;
-import org.infinispan.server.endpoint.deployments.ConverterFactoryExtensionProcessor;
-import org.infinispan.server.endpoint.deployments.FilterFactoryExtensionProcessor;
-import org.infinispan.server.endpoint.deployments.MarshallerExtensionProcessor;
-import org.infinispan.server.endpoint.deployments.ServerExtensionDependenciesProcessor;
+import org.infinispan.server.endpoint.deployments.*;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
@@ -80,15 +77,47 @@ class EndpointSubsystemAdd extends AbstractAddStepHandler {
 
         ctx.addStep(new AbstractDeploymentChainStep() {
             protected void execute(DeploymentProcessorTarget processorTarget) {
-            processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
-                Phase.INSTALL, Constants.INSTALL_FILTER_FACTORY, new FilterFactoryExtensionProcessor(serviceName));
-            processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
-                Phase.INSTALL, Constants.INSTALL_CONVERTER_FACTORY, new ConverterFactoryExtensionProcessor(serviceName));
-            processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
-                Phase.INSTALL, Constants.INSTALL_MARSHALLER, new MarshallerExtensionProcessor(serviceName));
-            processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
-                Phase.DEPENDENCIES, Constants.DEPENDENCIES, new ServerExtensionDependenciesProcessor());
+               addFilterFactory(processorTarget);
+               addConverterFactory(processorTarget);
+               addMarshaller(processorTarget);
+               addCacheStore(processorTarget);
+               addDependencies(processorTarget);
             }
+
+           private void addDependencies(DeploymentProcessorTarget processorTarget) {
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                  Phase.DEPENDENCIES, Constants.DEPENDENCIES, new ServerExtensionDependenciesProcessor());
+           }
+
+           private void addCacheStore(DeploymentProcessorTarget processorTarget) {
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+               Phase.INSTALL, Constants.INSTALL_CACHE_LOADER, new CacheLoaderExtensionProcessor(serviceName));
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                  Phase.INSTALL, Constants.INSTALL_CACHE_WRITER, new CacheWriterExtensionProcessor(serviceName));
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                  Phase.INSTALL, Constants.INSTALL_ADVANCED_CACHE_LOADER, new AdvancedCacheLoaderExtensionProcessor(serviceName));
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                  Phase.INSTALL, Constants.INSTALL_ADVANCED_CACHE_WRITER, new AdvancedCacheWriterExtensionProcessor(serviceName));
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                  Phase.INSTALL, Constants.INSTALL_EXTERNAL_STORE, new ExternalStoreExtensionProcessor(serviceName));
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                  Phase.INSTALL, Constants.INSTALL_ADVANCED_LOAD_WRITE_STORE, new AdvancedLoadWriteStoreExtensionProcessor(serviceName));
+           }
+
+           private void addMarshaller(DeploymentProcessorTarget processorTarget) {
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+               Phase.INSTALL, Constants.INSTALL_MARSHALLER, new MarshallerExtensionProcessor(serviceName));
+           }
+
+           private void addConverterFactory(DeploymentProcessorTarget processorTarget) {
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+               Phase.INSTALL, Constants.INSTALL_CONVERTER_FACTORY, new ConverterFactoryExtensionProcessor(serviceName));
+           }
+
+           private void addFilterFactory(DeploymentProcessorTarget processorTarget) {
+              processorTarget.addDeploymentProcessor(Constants.SUBSYSTEM_NAME,
+                  Phase.INSTALL, Constants.INSTALL_FILTER_FACTORY, new FilterFactoryExtensionProcessor(serviceName));
+           }
         }, OperationContext.Stage.RUNTIME);
 
         builder.install();

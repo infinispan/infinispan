@@ -42,6 +42,12 @@ public class Constants {
    public static final int INSTALL_FILTER_FACTORY = 0x1801;
    public static final int INSTALL_CONVERTER_FACTORY = 0x1802;
    public static final int INSTALL_MARSHALLER = 0x1803;
+   public static final int INSTALL_CACHE_LOADER = 0x1804;
+   public static final int INSTALL_CACHE_WRITER = 0x1805;
+   public static final int INSTALL_ADVANCED_CACHE_LOADER = 0x1806;
+   public static final int INSTALL_ADVANCED_CACHE_WRITER = 0x1807;
+   public static final int INSTALL_EXTERNAL_STORE = 0x1808;
+   public static final int INSTALL_ADVANCED_LOAD_WRITE_STORE = 0x1809;
    public static final int DEPENDENCIES = 0x1C01;
 
    public static String VERSION = Constants.class.getPackage().getImplementationVersion();

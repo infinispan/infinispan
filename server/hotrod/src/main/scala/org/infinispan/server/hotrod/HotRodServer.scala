@@ -3,6 +3,7 @@ package org.infinispan.server.hotrod
 import logging.Log
 import org.infinispan.commons.marshall.Marshaller
 import org.infinispan.notifications.cachelistener.filter.{CacheEventConverterFactory, CacheEventFilterFactory}
+import org.infinispan.persistence.factory.DeployedCacheStoreFactory
 import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.{QueryFacade, AbstractProtocolServer}
@@ -247,7 +248,19 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       clientListenerRegistry.setEventMarshaller(Option(marshaller))
    }
 
-   override def stop: Unit = {
+   def addCacheStore(name: String, instance: Object): Unit = {
+      knownCacheRegistries
+         .mapValues(registry => registry.getComponent(classOf[DeployedCacheStoreFactory]))
+         .foreach(value => value._2.addInstance(name, instance))
+   }
+
+   def removeCacheStore(name: String): Unit = {
+      knownCacheRegistries
+         .mapValues(registry => registry.getComponent(classOf[DeployedCacheStoreFactory]))
+         .foreach(value => value._2.removeInstance(name))
+   }
+
+  override def stop: Unit = {
       if (clientListenerRegistry != null) clientListenerRegistry.stop()
       super.stop
    }

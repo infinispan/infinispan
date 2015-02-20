@@ -34,7 +34,7 @@ public abstract class AbstractNamedFactoryExtensionProcessor<T> extends Abstract
         CompositeIndex index = ctx.getDeploymentUnit().getAttachment(Attachments.COMPOSITE_ANNOTATION_INDEX);
         List<AnnotationInstance> annotations = index.getAnnotations(NAMED_FACTORY);
         if (annotations.isEmpty())
-            ROOT_LOGGER.noFactoryName(getServiceClass().getName());
+            ROOT_LOGGER.noFactoryName(NAMED_FACTORY.local(), getServiceClass().getName());
         else {
             for (AnnotationInstance annotation : annotations) {
                 AnnotationTarget annotationTarget = annotation.target();
