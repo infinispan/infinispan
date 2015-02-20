@@ -2,12 +2,10 @@ package org.infinispan.persistence.manager;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.CustomStoreConfiguration;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -34,6 +32,7 @@ import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.async.AsyncCacheLoader;
 import org.infinispan.persistence.async.AsyncCacheWriter;
 import org.infinispan.persistence.async.State;
+import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -51,7 +50,6 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -83,6 +81,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private final ReadWriteLock storesMutex = new ReentrantReadWriteLock();
    private final Map<Object, StoreConfiguration> configMap = new HashMap<>();
 
+   private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
 
    /**
     * making it volatile as it might change after @Start, so it needs the visibility.
@@ -97,7 +96,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void inject(AdvancedCache<Object, Object> cache, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                       Configuration configuration, TransactionManager transactionManager,
                       TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
-                      ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory) {
+                      ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory,
+                      CacheStoreFactoryRegistry cacheStoreFactoryRegistry) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
@@ -106,6 +106,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       this.persistenceExecutor = persistenceExecutor;
       this.byteBufferFactory = byteBufferFactory;
       this.marshalledEntryFactory = marshalledEntryFactory;
+      this.cacheStoreFactoryRegistry = cacheStoreFactoryRegistry;
    }
 
    @Override
@@ -509,66 +510,90 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private void createLoadersAndWriters() {
       for (StoreConfiguration cfg : configuration.persistence().stores()) {
-         ConfigurationFor annotation = cfg.getClass().getAnnotation(ConfigurationFor.class);
-         Class classAnnotation = null;
-         if (annotation == null) {
-            if (cfg instanceof CustomStoreConfiguration) {
-               classAnnotation = ((CustomStoreConfiguration)cfg).customStoreClass();
-            }
-         } else {
-            classAnnotation = annotation.value();
-         }
-         if (classAnnotation == null) {
-            throw log.loaderConfigurationDoesNotSpecifyLoaderClass(cfg.getClass().getName());
-         }
-         Object instance = Util.getInstance(classAnnotation);
-         CacheWriter writer = instance instanceof CacheWriter ? (CacheWriter) instance : null;
-         CacheLoader loader = instance instanceof CacheLoader ? (CacheLoader) instance : null;
 
+         Object bareInstance = cacheStoreFactoryRegistry.createInstance(cfg);
+         CacheWriter writer = createCacheWriter(bareInstance);
+         CacheLoader loader = createCacheLoader(bareInstance);
 
-         if (cfg.ignoreModifications())
-            writer = null;
-
-         if (cfg.singletonStore().enabled() && writer != null) {
-            writer = (writer instanceof AdvancedCacheWriter) ?
-                  new AdvancedSingletonCacheWriter(writer, cfg.singletonStore()) :
-                  new SingletonCacheWriter(writer, cfg.singletonStore());
-         }
-
-         if (cfg.async().enabled() && writer != null) {
-            writer = createAsyncWriter(writer);
-            if (loader != null) {
-               AtomicReference<State> state = ((AsyncCacheWriter) writer).getState();
-               loader = (loader instanceof AdvancedCacheLoader) ?
-                     new AdvancedAsyncCacheLoader(loader, state) : new AsyncCacheLoader(loader, state);
-            }
-         }
+         writer = postProcessWriter(cfg, writer);
+         loader = postProcessReader(cfg, writer, loader);
 
          InitializationContextImpl ctx = new InitializationContextImpl(cfg, cache, m, timeService, byteBufferFactory,
                                                                        marshalledEntryFactory);
-         if (loader != null) {
-            if (loader instanceof DelegatingCacheLoader)
-               loader.init(ctx);
-            loaders.add(loader);
-            configMap.put(loader, cfg);
-         }
-         if (writer != null) {
-            if (writer instanceof DelegatingCacheWriter)
-               writer.init(ctx);
-            writers.add(writer);
-            configMap.put(writer, cfg);
-         }
-
-         //the delegates only propagate init if the underlaying object is a delegate as well.
-         // we do this in order to assure the init is only invoked once
-         if (instance instanceof CacheWriter) {
-            ((CacheWriter) instance).init(ctx);
-         } else {
-            ((CacheLoader)instance).init(ctx);
-         }
+         initializeLoader(cfg, loader, ctx);
+         initializeWriter(cfg, writer, ctx);
+         initializeBareInstance(bareInstance, ctx);
       }
    }
 
+   private CacheLoader postProcessReader(StoreConfiguration cfg, CacheWriter writer, CacheLoader loader) {
+      if(cfg.async().enabled() && loader != null && writer != null) {
+         loader = createAsyncLoader(loader, (AsyncCacheWriter) writer);
+      }
+      return loader;
+   }
+
+   private CacheWriter postProcessWriter(StoreConfiguration cfg, CacheWriter writer) {
+      if (writer != null) {
+         if(cfg.ignoreModifications()) {
+            writer = null;
+         } else if (cfg.singletonStore().enabled()) {
+            writer = createSingletonWriter(cfg, writer);
+         } else if (cfg.async().enabled()) {
+            writer = createAsyncWriter(writer);
+         }
+      }
+      return writer;
+   }
+
+   private CacheLoader createAsyncLoader(CacheLoader loader, AsyncCacheWriter asyncWriter) {
+      AtomicReference<State> state = asyncWriter.getState();
+      loader = (loader instanceof AdvancedCacheLoader) ?
+            new AdvancedAsyncCacheLoader(loader, state) : new AsyncCacheLoader(loader, state);
+      return loader;
+   }
+
+   private SingletonCacheWriter createSingletonWriter(StoreConfiguration cfg, CacheWriter writer) {
+      return (writer instanceof AdvancedCacheWriter) ?
+            new AdvancedSingletonCacheWriter(writer, cfg.singletonStore()) :
+            new SingletonCacheWriter(writer, cfg.singletonStore());
+   }
+
+   private void initializeWriter(StoreConfiguration cfg, CacheWriter writer, InitializationContextImpl ctx) {
+      if (writer != null) {
+         if (writer instanceof DelegatingCacheWriter)
+            writer.init(ctx);
+         writers.add(writer);
+         configMap.put(writer, cfg);
+      }
+   }
+
+   private void initializeLoader(StoreConfiguration cfg, CacheLoader loader, InitializationContextImpl ctx) {
+      if (loader != null) {
+         if (loader instanceof DelegatingCacheLoader)
+            loader.init(ctx);
+         loaders.add(loader);
+         configMap.put(loader, cfg);
+      }
+   }
+
+   private void initializeBareInstance(Object instance, InitializationContextImpl ctx) {
+      // the delegates only propagate init if the underlaying object is a delegate as well.
+      // we do this in order to assure the init is only invoked once
+      if (instance instanceof CacheWriter) {
+         ((CacheWriter) instance).init(ctx);
+      } else {
+         ((CacheLoader) instance).init(ctx);
+      }
+   }
+
+   private CacheLoader createCacheLoader(Object instance) {
+      return instance instanceof CacheLoader ? (CacheLoader) instance : null;
+   }
+
+   private CacheWriter createCacheWriter(Object instance) {
+      return instance instanceof CacheWriter ? (CacheWriter) instance : null;
+   }
 
    protected AsyncCacheWriter createAsyncWriter(CacheWriter writer) {
       return (writer instanceof AdvancedCacheWriter) ?
