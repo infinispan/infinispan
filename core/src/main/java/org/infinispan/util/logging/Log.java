@@ -8,6 +8,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.util.TypedProperties;
+import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.jmx.JmxDomainConflictException;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.partitionhandling.AvailabilityException;
@@ -1225,4 +1226,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Unable to invoke method %s on Object instance %s ", id = 331)
    void unableToInvokeListenerMethod(Method m, Object target, @Cause Throwable e);
 
+   @Message(value = "Unable to instantiate class for StoreConfiguration %s", id = 332)
+   CacheConfigurationException unableToInstantiateClass(StoreConfiguration storeConfiguration);
 }

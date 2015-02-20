@@ -21,6 +21,7 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
     private final List<HotRodServer> servers = new ArrayList<>();
     private final Map<String, CacheEventFilterFactory> filterFactories = new HashMap<>();
     private final Map<String, CacheEventConverterFactory> converterFactories = new HashMap<>();
+    private final Map<String, Object> cacheStores = new HashMap<>();
 
     @Override
     public void start(StartContext context) throws StartException {
@@ -120,4 +121,27 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
         return this;
     }
 
+    public void removeCacheStore(String className) {
+        synchronized (cacheStores) {
+            cacheStores.remove(className);
+        }
+
+        synchronized (servers) {
+            for (HotRodServer server : servers) {
+                server.removeCacheStore(className);
+            }
+        }
+    }
+
+    public void addCacheStore(String className, Object extension) {
+        synchronized (cacheStores) {
+            cacheStores.put(className, extension);
+        }
+
+        synchronized (servers) {
+            for (HotRodServer server : servers) {
+                server.addCacheStore(className, extension);
+            }
+        }
+    }
 }

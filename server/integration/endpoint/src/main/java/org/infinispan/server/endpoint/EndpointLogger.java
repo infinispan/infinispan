@@ -160,8 +160,8 @@ public interface EndpointLogger extends BasicLogger {
    void cannotInstantiateClass(String clazz, Throwable reason);
 
    @LogMessage(level = WARN)
-   @Message(id = 10026, value = "No @NamedFactory annotation found in class: %s")
-   void noFactoryName(String clazz);
+   @Message(id = 10026, value = "Could not find annotation %s in class: %s")
+   void noFactoryName(String annotation, String clazz);
 
    @Message(id = 10027, value = "Service not started")
    IllegalStateException serviceNotStarted();
