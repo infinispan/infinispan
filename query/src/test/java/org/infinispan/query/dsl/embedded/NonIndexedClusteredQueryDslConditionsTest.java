@@ -13,7 +13,7 @@ public class NonIndexedClusteredQueryDslConditionsTest extends NonIndexedQueryDs
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      ConfigurationBuilder defaultConfiguration = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       defaultConfiguration.clustering()
             .stateTransfer().fetchInMemoryState(true);
       createClusteredCaches(2, defaultConfiguration);
