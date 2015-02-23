@@ -12,7 +12,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
+import static org.infinispan.test.TestingUtil.withTx;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -29,6 +31,33 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       createClusteredCaches(1, cfg);
+   }
+
+   public void testInsertAndIterateInTx() throws Exception {
+      final User newUser = getModelFactory().makeUser();
+      newUser.setId(15);
+      newUser.setName("Test");
+      newUser.setSurname("User");
+      newUser.setGender(User.Gender.MALE);
+      newUser.setAge(20);
+
+      List results = withTx(tm(0), new Callable<List>() {
+         @Override
+         public List call() throws Exception {
+            Query q = getQueryFactory().from(getModelFactory().getUserImplClass())
+                  .not().having("age").eq(20)
+                  .toBuilder()
+                  .build();
+
+            cache(0).put("new_user_" + newUser.getId(), newUser);
+
+            return q.list();
+         }
+      });
+
+      cache(0).remove("new_user_" + newUser.getId());
+
+      assertEquals(3, results.size());
    }
 
    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Indexing was not enabled on this cache.*")
