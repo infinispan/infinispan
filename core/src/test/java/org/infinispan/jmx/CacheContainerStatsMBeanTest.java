@@ -4,6 +4,7 @@ import static org.infinispan.test.TestingUtil.getCacheManagerObjectName;
 
 import java.io.Serializable;
 
+import javax.management.Attribute;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -59,6 +60,7 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       ObjectName nodeStats = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager",
             CacheContainerStats.OBJECT_NAME);
+      mBeanServer.setAttribute(nodeStats, new Attribute("StatisticsEnabled", Boolean.TRUE));
 
       cache1.put("a1", "b1");
       cache1.put("a2", "b2");
@@ -84,6 +86,24 @@ public class CacheContainerStatsMBeanTest extends MultipleCacheManagersTest {
       assertAttributeValue(mBeanServer, nodeStats, "Stores", 8);
       assertAttributeValue(mBeanServer, nodeStats, "Evictions", 0);
       assertAttributeValueGreaterThanOrEqual(mBeanServer, nodeStats, "AverageWriteTime", 0);
+   }
+
+
+   public void testClusterStatsDisabled() throws Exception {
+      MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
+      ObjectName nodeStats = getCacheManagerObjectName(JMX_DOMAIN, "DefaultCacheManager",
+            CacheContainerStats.OBJECT_NAME);
+      mBeanServer.setAttribute(nodeStats, new Attribute("StatisticsEnabled", Boolean.FALSE));
+
+      assertAttributeValue(mBeanServer, nodeStats, "NumberOfEntries", -1);
+      assertAttributeValue(mBeanServer, nodeStats, "AverageReadTime", -1);
+      assertAttributeValue(mBeanServer, nodeStats, "AverageRemoveTime", -1);
+      assertAttributeValue(mBeanServer, nodeStats, "AverageWriteTime", -1);
+      assertAttributeValue(mBeanServer, nodeStats, "Stores", -1);
+      assertAttributeValue(mBeanServer, nodeStats, "Evictions", -1);
+      assertAttributeValue(mBeanServer, nodeStats, "Hits", -1);
+      assertAttributeValue(mBeanServer, nodeStats, "Misses", -1);
+      assertAttributeValue(mBeanServer, nodeStats, "RemoveHits", -1);
    }
 
    private void assertAttributeValue(MBeanServer mBeanServer, ObjectName oName, String attrName, long expectedValue)

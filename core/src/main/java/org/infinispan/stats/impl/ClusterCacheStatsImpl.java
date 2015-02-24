@@ -581,30 +581,38 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    }
 
    private double updateReadWriteRatio(List<Future<Map<String, Number>>> responseList) throws Exception {
-      long ratio = 0;
+      long sumOfAllReads = 0;
+      long sumOfAllWrites = 0;
+      double rwRatio = 0;
       for (Future<Map<String, Number>> f : responseList) {
          Map<String, Number> m = f.get();
          Number hits = m.get(HITS);
          Number misses = m.get(MISSES);
          Number stores = m.get(STORES);
-         if (stores.longValue() > 0) {
-            ratio += ((hits.longValue() + misses.longValue()) / stores.longValue());
-         }
+         sumOfAllReads += (hits.longValue() + misses.longValue());
+         sumOfAllWrites += stores.longValue();
       }
-      return ratio / responseList.size();
+      if (sumOfAllWrites > 0) {
+         rwRatio = (double) sumOfAllReads / sumOfAllWrites;
+      }
+      return rwRatio;
    }
 
    private double updateHitRatio(List<Future<Map<String, Number>>> responseList) throws Exception {
-      double ratio = 0;
+      long totalHits = 0;
+      long totalRetrievals = 0;
+      double hitRatio = 0;
       for (Future<Map<String, Number>> f : responseList) {
          Map<String, Number> m = f.get();
          Number hits = m.get(HITS);
          Number misses = m.get(MISSES);
-         if (misses.longValue() > 0) {
-            ratio += (hits.longValue() / misses.longValue());
-         }
+         totalHits += hits.longValue();
+         totalRetrievals += (hits.longValue() + misses.longValue());
       }
-      return ratio / responseList.size();
+      if (totalRetrievals > 0) {
+         hitRatio = (double) totalHits / totalRetrievals;
+      }
+      return hitRatio;
    }
 
    public static <T extends CommandInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?,?> cache, Class<T> interceptorClass) {
