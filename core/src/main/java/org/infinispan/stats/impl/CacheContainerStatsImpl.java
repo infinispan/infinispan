@@ -82,20 +82,29 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
          displayType = DisplayType.SUMMARY)
    @Override
    public long getAverageReadTime() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateAverageReadTime();
+      }
+      return result;
+   }
+
+   protected long calculateAverageReadTime() {
       long totalAverageReadTime = 0;
-      int existingCacheCounter = 0;
+      int includedCacheCounter = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            existingCacheCounter++;
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            totalAverageReadTime += stats.getAverageReadTime();
+            long averageReadTime = cm.getCache(cn).getAdvancedCache().getStats().getAverageReadTime();
+            if (averageReadTime > 0) {
+               includedCacheCounter++;
+               totalAverageReadTime += averageReadTime;
+            }
          }
       }
-      if (existingCacheCounter > 0) {
-         return totalAverageReadTime / existingCacheCounter;
-      } else {
-         return -1;
+      if (includedCacheCounter > 0) {
+         totalAverageReadTime = totalAverageReadTime / includedCacheCounter;
       }
+      return totalAverageReadTime;
    }
 
    @ManagedAttribute(description = "Cache container total average number of milliseconds for all remove operation in this cache container",
@@ -104,20 +113,29 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
          displayType = DisplayType.SUMMARY)
    @Override
    public long getAverageRemoveTime() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateAverageRemoveTime();
+      }
+      return result;
+   }
+
+   protected long calculateAverageRemoveTime() {
       long totalAverageRemoveTime = 0;
-      int existingCacheCounter = 0;
+      int includedCacheCounter = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            existingCacheCounter++;
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            totalAverageRemoveTime += stats.getAverageRemoveTime();
+            long averageRemoveTime = cm.getCache(cn).getAdvancedCache().getStats().getAverageRemoveTime();
+            if (averageRemoveTime > 0) {
+               includedCacheCounter++;
+               totalAverageRemoveTime += averageRemoveTime;
+            }
          }
       }
-      if (existingCacheCounter > 0) {
-         return totalAverageRemoveTime / existingCacheCounter;
-      } else {
-         return -1;
+      if (includedCacheCounter > 0) {
+         totalAverageRemoveTime = totalAverageRemoveTime / includedCacheCounter;
       }
+      return totalAverageRemoveTime;
    }
 
    @ManagedAttribute(description = "Cache container average number of milliseconds for all write operation in this cache container",
@@ -126,20 +144,29 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
          displayType = DisplayType.SUMMARY)
    @Override
    public long getAverageWriteTime() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateAverageWriteTime();
+      }
+      return result;
+   }
+
+   protected long calculateAverageWriteTime() {
       long totalAverageWriteTime = 0;
-      int existingCacheCounter = 0;
+      int includedCacheCounter = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            existingCacheCounter++;
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            totalAverageWriteTime += stats.getAverageWriteTime();
+            long averageWriteTime = cm.getCache(cn).getAdvancedCache().getStats().getAverageWriteTime();
+            if (averageWriteTime > 0) {
+               includedCacheCounter++;
+               totalAverageWriteTime += averageWriteTime;
+            }
          }
       }
-      if (existingCacheCounter > 0) {
-         return totalAverageWriteTime / existingCacheCounter;
-      } else {
-         return -1;
+      if (includedCacheCounter > 0) {
+         totalAverageWriteTime = totalAverageWriteTime / includedCacheCounter;
       }
+      return totalAverageWriteTime;
    }
 
    @ManagedAttribute(
@@ -150,11 +177,21 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    )
    @Override
    public long getEvictions() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateEvictions();
+      }
+      return result;
+   }
+
+   protected long calculateEvictions() {
       long totalEvictions = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            totalEvictions += stats.getEvictions();
+            long evictions = cm.getCache(cn).getAdvancedCache().getStats().getEvictions();
+            if (evictions > 0) {
+               totalEvictions += evictions;
+            }
          }
       }
       return totalEvictions;
@@ -167,11 +204,21 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
          displayType = DisplayType.SUMMARY)
    @Override
    public long getHits() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateHits();
+      }
+      return result;
+   }
+
+   protected long calculateHits() {
       long totalHits = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            totalHits += stats.getHits();
+            long hits = cm.getCache(cn).getAdvancedCache().getStats().getHits();
+            if (hits > 0) {
+               totalHits += hits;
+            }
          }
       }
       return totalHits;
@@ -185,23 +232,31 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    )
    @Override
    public double getHitRatio() {
-      double totalHitsOverMisses = 0;
-      int existingCacheCounter = 0;
+      double result = -1d;
+      if (getStatisticsEnabled()) {
+         result = calculateHitRatio();
+      }
+      return result;
+   }
+
+   protected double calculateHitRatio() {
+      long totalHits = 0;
+      double totalRequests = 0;
+      double rwRatio = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            existingCacheCounter++;
             Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            long misses = stats.getMisses();
-            if (misses > 0) {
-               totalHitsOverMisses += stats.getHits() / misses;
+            long requests = stats.getRetrievals();
+            if (requests > 0) {
+               totalHits += stats.getHits();
+               totalRequests += requests;
             }
          }
       }
-      if (existingCacheCounter > 0) {
-         return totalHitsOverMisses / existingCacheCounter;
-      } else {
-         return -1;
+      if (totalRequests > 0) {
+         rwRatio = (double) totalHits / totalRequests;
       }
+      return rwRatio;
    }
 
    @ManagedAttribute(
@@ -212,14 +267,24 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    )
    @Override
    public long getMisses() {
-      long totalMisses = 0;
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateMisses();
+      }
+      return result;
+   }
+
+   protected long calculateMisses() {
+      long totalMisess = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            totalMisses += stats.getMisses();
+            long misses = cm.getCache(cn).getAdvancedCache().getStats().getMisses();
+            if (misses > 0) {
+               totalMisess += misses;
+            }
          }
       }
-      return totalMisses;
+      return totalMisess;
    }
 
    @ManagedAttribute(
@@ -228,14 +293,24 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
          displayType = DisplayType.SUMMARY
    )
    public int getNumberOfEntries() {
-      int totalEntries = 0;
+      int result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateNumberOfEntries();
+      }
+      return result;
+   }
+
+   protected int calculateNumberOfEntries() {
+      int totalNumberOfEntries = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            totalEntries += stats.getCurrentNumberOfEntries();
+            int numOfEntries = cm.getCache(cn).getAdvancedCache().getStats().getCurrentNumberOfEntries();
+            if (numOfEntries > 0) {
+               totalNumberOfEntries += numOfEntries;
+            }
          }
       }
-      return totalEntries;
+      return totalNumberOfEntries;
    }
 
    @ManagedAttribute(
@@ -246,23 +321,31 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    )
    @Override
    public double getReadWriteRatio() {
-      double totalRWRatio = 0;
-      int existingCacheCounter = 0;
+      double result = -1d;
+      if (getStatisticsEnabled()) {
+         result = calculateReadWriteRatio();
+      }
+      return result;
+   }
+
+   protected double calculateReadWriteRatio() {
+      long sumOfAllReads = 0;
+      long sumOfAllWrites = 0;
+      double rwRatio = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            existingCacheCounter++;
             Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
             long stores = stats.getStores();
             if (stores > 0) {
-               totalRWRatio += (double) ((stats.getHits() + stats.getMisses()) / stores);
+               sumOfAllReads += stats.getRetrievals();
+               sumOfAllWrites += stores;
             }
          }
       }
-      if (existingCacheCounter > 0) {
-         return totalRWRatio / existingCacheCounter;
-      } else {
-         return -1;
+      if (sumOfAllWrites > 0) {
+         rwRatio = (double) sumOfAllReads / sumOfAllWrites;
       }
+      return rwRatio;
    }
 
    @ManagedAttribute(
@@ -273,14 +356,24 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    )
    @Override
    public long getRemoveHits() {
-      long removeHits = 0;
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateRemoveHits();
+      }
+      return result;
+   }
+
+   protected long calculateRemoveHits() {
+      long totalRemoveHits = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            removeHits += stats.getRemoveHits();
+            long removeHits = cm.getCache(cn).getAdvancedCache().getStats().getRemoveHits();
+            if (removeHits > 0) {
+               totalRemoveHits += removeHits;
+            }
          }
       }
-      return removeHits;
+      return totalRemoveHits;
    }
 
    @ManagedAttribute(
@@ -291,14 +384,24 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    )
    @Override
    public long getRemoveMisses() {
-      long removeMisses = 0;
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateRemoveMisses();
+      }
+      return result;
+   }
+
+   protected long calculateRemoveMisses() {
+      long totalRemoveMisses = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            removeMisses += stats.getRemoveMisses();
+            long removeMisses = cm.getCache(cn).getAdvancedCache().getStats().getRemoveMisses();
+            if (removeMisses > 0) {
+               totalRemoveMisses += removeMisses;
+            }
          }
       }
-      return removeMisses;
+      return totalRemoveMisses;
    }
 
    @ManagedAttribute(
@@ -309,11 +412,18 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    )
    @Override
    public long getStores() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateStores();
+      }
+      return result;
+   }
+
+   protected long calculateStores() {
       long totalStores = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            totalStores += stats.getStores();
+            totalStores+= cm.getCache(cn).getAdvancedCache().getStats().getStores();
          }
       }
       return totalStores;
@@ -321,11 +431,18 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
 
    @Override
    public long getTimeSinceStart() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = calculateTimeSinceStart();
+      }
+      return result;
+   }
+
+   protected long calculateTimeSinceStart() {
       long longestRunning = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            Stats stats = cm.getCache(cn).getAdvancedCache().getStats();
-            long runningTime = stats.getTimeSinceStart();
+            long runningTime = cm.getCache(cn).getAdvancedCache().getStats().getTimeSinceStart();
             if (runningTime > longestRunning) {
                longestRunning = runningTime;
             }
