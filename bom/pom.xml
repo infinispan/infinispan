@@ -57,7 +57,7 @@
 
       <version.java>1.7</version.java>
       
-      <version.maven-compiler-plugin>3.2</version.maven-compiler-plugin>
+      <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
       
       <version.protostream>3.0.1.Alpha1</version.protostream>
       <version.aesh>0.33.14</version.aesh>
