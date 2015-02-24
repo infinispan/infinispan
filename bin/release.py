@@ -188,7 +188,7 @@ def unzip_archive(version):
     subprocess.check_call(["unzip", "-q", "infinispan-%s-all.zip" % version])
 
 def update_javadoc_tracker(base_dir, version):
-  os.chdir("%s/distribution/target/distribution/infinispan-%s-all/doc" % (base_dir, version))
+  os.chdir("%s/distribution/target/distribution/infinispan-%s-all/docs" % (base_dir, version))
   ## "Fix" the docs to use the appropriate analytics tracker ID
   subprocess.check_call(["%s/bin/updateTracker.sh" % base_dir])
 
