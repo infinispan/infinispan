@@ -163,7 +163,7 @@ public class InterceptorChain {
    public List<CommandInterceptor> asList() {
       if (firstInChain == null) return InfinispanCollections.emptyList();
 
-      List<CommandInterceptor> retval = new LinkedList<CommandInterceptor>();
+      List<CommandInterceptor> retval = new LinkedList<>();
       CommandInterceptor tmp = firstInChain;
       do {
          retval.add(tmp);
@@ -229,17 +229,20 @@ public class InterceptorChain {
       }
    }
 
+   /**
+    * @deprecated Use {@link #addInterceptorBefore(org.infinispan.interceptors.base.CommandInterceptor, Class)} instead.
+    */
+   @Deprecated
    public boolean addInterceptorBefore(CommandInterceptor toAdd, Class<? extends CommandInterceptor> beforeInterceptor, boolean isCustom) {
       if (isCustom) validateCustomInterceptor(toAdd.getClass());
       return addInterceptorBefore(toAdd, beforeInterceptor);
    }
 
-
-      /**
-       * Adds a new interceptor in list after an interceptor of a given type.
-       *
-       * @return true if the interceptor was added; i.e. the afterInterceptor exists
-       */
+   /**
+    * Adds a new interceptor in list after an interceptor of a given type.
+    *
+    * @return true if the interceptor was added; i.e. the afterInterceptor exists
+    */
    public boolean addInterceptorBefore(CommandInterceptor toAdd, Class<? extends CommandInterceptor> beforeInterceptor) {
       final ReentrantLock lock = this.lock;
       lock.lock();
@@ -363,7 +366,7 @@ public class InterceptorChain {
     * Returns all interceptors which extend the given command interceptor.
     */
    public List<CommandInterceptor> getInterceptorsWhichExtend(Class<? extends CommandInterceptor> interceptorClass) {
-      List<CommandInterceptor> result = new LinkedList<CommandInterceptor>();
+      List<CommandInterceptor> result = new LinkedList<>();
       for (CommandInterceptor interceptor : asList()) {
          boolean isSubclass = interceptorClass.isAssignableFrom(interceptor.getClass());
          if (isSubclass) {
@@ -380,7 +383,7 @@ public class InterceptorChain {
    public List<CommandInterceptor> getInterceptorsWithClass(Class clazz) {
       // Called when building interceptor chain and so concurrent start calls are protected already
       CommandInterceptor iterator = firstInChain;
-      List<CommandInterceptor> result = new ArrayList<CommandInterceptor>(2);
+      List<CommandInterceptor> result = new ArrayList<>(2);
       while (iterator != null) {
          if (iterator.getClass() == clazz) result.add(iterator);
          iterator = iterator.getNext();

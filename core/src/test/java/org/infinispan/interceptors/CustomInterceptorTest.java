@@ -55,6 +55,20 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
       });
    }
 
+   public void testOtherThanFirstOrLastInterceptor() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.customInterceptors().addInterceptor().position(Position.OTHER_THAN_FIRST_OR_LAST).interceptor(new FooInterceptor());
+      final EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager();
+      cacheManager.defineConfiguration("interceptors", builder.build());
+      withCacheManager(new CacheManagerCallable(cacheManager) {
+         @Override
+         public void call() {
+            List<CommandInterceptor> interceptorChain = cacheManager.getCache("interceptors").getAdvancedCache().getInterceptorChain();
+            assertEquals(interceptorChain.get(1).getClass(), FooInterceptor.class);
+         }
+      });
+   }
+
    public void testLastInterceptorDefaultCache() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       final FooInterceptor interceptor = new FooInterceptor();

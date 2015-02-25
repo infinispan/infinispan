@@ -22,7 +22,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    private Class<? extends CommandInterceptor> before;
    private CommandInterceptor interceptor;
    private int index = -1;
-   private Position position = Position.OTHER_THAN_FIRST_OR_LAST;
+   private Position position = null;
    private Properties properties = new Properties();
 
    InterceptorConfigurationBuilder(CustomInterceptorsConfigurationBuilder builder) {
@@ -123,7 +123,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       if (before != null) positions++;
       if (after != null) positions++;
       if (index > -1) positions++;
-      if (!position.equals(Position.OTHER_THAN_FIRST_OR_LAST)) positions++;
+      if (position != null) positions++;
 
       switch (positions) {
          case 0:
@@ -133,6 +133,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
          default:
             throw log.multipleCustomInterceptorPositions(interceptor.getClass().getName());
       }
+
       if (interceptor == null) {
          throw log.customInterceptorMissingClass();
       }

@@ -23,8 +23,7 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
        */
       LAST,
       /**
-       * Specifies that the new interceptor can be placed anywhere, except first or last.  This is the default, if not
-       * explicitly specified.
+       * Specifies that the new interceptor can be placed anywhere, except first or last.
        */
       OTHER_THAN_FIRST_OR_LAST
    }
