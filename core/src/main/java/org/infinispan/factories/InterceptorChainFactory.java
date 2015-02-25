@@ -314,7 +314,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          if (config.first())
             interceptorChain.addInterceptor(customInterceptor, 0);
          else if (config.last())
-            interceptorChain.addInterceptorBefore(customInterceptor, CallInterceptor.class, true);
+            interceptorChain.addInterceptorBefore(customInterceptor, CallInterceptor.class);
          else if (config.index() >= 0)
             interceptorChain.addInterceptor(customInterceptor, config.index());
          else if (config.after() != null) {
@@ -331,6 +331,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
                                                       + " as no such interceptor exists in the default chain");
             }
             interceptorChain.addInterceptorBefore(customInterceptor, withClassName.get(0).getClass());
+         } else if (config.position() == InterceptorConfiguration.Position.OTHER_THAN_FIRST_OR_LAST) {
+            interceptorChain.addInterceptor(customInterceptor, 1);
          }
       }
 
