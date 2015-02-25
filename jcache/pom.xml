@@ -136,7 +136,6 @@
                   <goal>package</goal>
                </goals>
                <properties>
-                  <maven.test.skip.exec>${maven.test.skip.exec}</maven.test.skip.exec>
                   <skipTests>${skipTests}</skipTests>
                   <log4j.configuration>${log4j.configuration}</log4j.configuration>
                </properties>
