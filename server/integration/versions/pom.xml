@@ -547,7 +547,7 @@
             <activeByDefault>false</activeByDefault>
          </activation>
          <properties>
-            <maven.test.skip.exec>true</maven.test.skip.exec>
+            <skipTests>true</skipTests>
          </properties>
       </profile>
    </profiles>
