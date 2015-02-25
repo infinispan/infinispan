@@ -19,8 +19,8 @@
         internal_thread_pool.min_threads="${jgroups.internal_thread_pool.min_threads:5}"
         internal_thread_pool.max_threads="${jgroups.internal_thread_pool.max_threads:20}"
         internal_thread_pool.keep_alive_time="60000"
-        internal_thread_pool.queue_enabled="false"
-        internal_thread_pool.rejection_policy="Abort"
+        internal_thread_pool.queue_enabled="true"
+        internal_thread_pool.queue_max_size="500"
 
         oob_thread_pool.min_threads="${jgroups.oob_thread_pool.min_threads:20}"
         oob_thread_pool.max_threads="${jgroups.oob_thread_pool.max_threads:200}"
