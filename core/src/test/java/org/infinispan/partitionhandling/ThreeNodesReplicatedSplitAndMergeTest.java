@@ -11,6 +11,7 @@ import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.AssertJUnit.assertNull;
 
 @Test(groups = "functional", testName = "partitionhandling.ThreeNodesReplicatedSplitAndMergeTest")
 public class ThreeNodesReplicatedSplitAndMergeTest extends BasePartitionHandlingTest {
@@ -131,5 +132,7 @@ public class ThreeNodesReplicatedSplitAndMergeTest extends BasePartitionHandling
       assertExpectedValue("v000", k0);
       assertExpectedValue("v111", k1);
       assertExpectedValue("v222", k2);
+
+      assertNull(cache(0).get("nonExistentKey"));
    }
 }

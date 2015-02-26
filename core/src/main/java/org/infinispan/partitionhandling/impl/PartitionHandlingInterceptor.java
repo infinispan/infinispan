@@ -15,9 +15,9 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Transport;
 
@@ -26,13 +26,13 @@ import java.util.Set;
 public class PartitionHandlingInterceptor extends CommandInterceptor {
    PartitionHandlingManager partitionHandlingManager;
    private Transport transport;
-   private ClusteringDependentLogic cdl;
+   private DistributionManager distributionManager;
 
    @Inject
-   void init(PartitionHandlingManager partitionHandlingManager, Transport transport, ClusteringDependentLogic cdl) {
+   void init(PartitionHandlingManager partitionHandlingManager, Transport transport, DistributionManager distributionManager) {
       this.partitionHandlingManager = partitionHandlingManager;
       this.transport = transport;
-      this.cdl = cdl;
+      this.distributionManager = distributionManager;
    }
 
    private boolean performPartitionCheck(InvocationContext ctx, LocalFlagAffectedCommand command) {
@@ -146,7 +146,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
             // Unlike in PartitionHandlingManager.checkRead(), here we ignore the availability status
             // and we only fail the operation if _all_ owners have left the cluster.
             // TODO Move this to the availability strategy when implementing ISPN-4624
-            if (!InfinispanCollections.containsAny(transport.getMembers(), cdl.getOwners(key))) {
+            if (!InfinispanCollections.containsAny(transport.getMembers(), distributionManager.locate(key))) {
                throw getLog().degradedModeKeyUnavailable(key);
             }
          }
