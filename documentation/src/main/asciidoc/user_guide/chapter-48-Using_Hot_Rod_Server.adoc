@@ -250,7 +250,7 @@ plugged with the name and the cache event filter factory instance. Plugging the
 Infinispan Server with a custom filter involves the following steps:
 
 1. Create a JAR file with the filter implementation within it.
-2. Create a `META-INF/services/org.infinispan.notifications.filter.CacheEventFilterFactory` file
+2. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 filter class implementation.
 3. Deploy the JAR file in the Infinispan Server.
@@ -338,7 +338,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.NamedFactory;
 
 @NamedFactory(name = "static-converter")
-class StaticConverterFactory implements ConverterFactory {
+class StaticConverterFactory implements CacheEventConverterFactory {
    final CacheEventConverter<Integer, String, CustomEvent> staticConverter = new StaticCacheEventConverter();
    public CacheEventConverter<Integer, String, CustomEvent> getConverter(final Object[] params) {
       return staticConverter;
