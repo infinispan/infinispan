@@ -45,4 +45,8 @@ public class EntryRetrievalCommand<K, V> extends AbstractLocalCommand implements
       return new EntryIterableImpl<>(retriever, filter, flags != null ? EnumSet.copyOf(flags) :
             EnumSet.noneOf(Flag.class), cache);
    }
+
+   public KeyValueFilter<K, V> getFilter() {
+      return filter;
+   }
 }

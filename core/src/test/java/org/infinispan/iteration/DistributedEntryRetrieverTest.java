@@ -56,7 +56,11 @@ import static org.testng.AssertJUnit.*;
 @Test(groups = {"functional", "smoke"}, testName = "iteration.DistributedEntryRetrieverTest")
 public class DistributedEntryRetrieverTest extends BaseClusteredEntryRetrieverTest {
    public DistributedEntryRetrieverTest() {
-      super(false, CacheMode.DIST_SYNC);
+      this(false);
+   }
+
+   public DistributedEntryRetrieverTest(boolean tx) {
+      super(tx, CacheMode.DIST_SYNC);
       // This is needed since we kill nodes
       cleanup = CleanupPhase.AFTER_METHOD;
    }
