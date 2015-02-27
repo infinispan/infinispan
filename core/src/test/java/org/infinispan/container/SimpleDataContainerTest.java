@@ -27,6 +27,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.eviction.ActivationManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.Immutables;
 import org.testng.annotations.AfterMethod;
@@ -37,6 +38,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static org.mockito.Mockito.mock;
 import static org.testng.AssertJUnit.assertEquals;
 
 @Test(groups = "unit", testName = "container.SimpleDataContainerTest")
@@ -55,7 +57,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
    protected DataContainer createContainer() {
       DefaultDataContainer dc = new DefaultDataContainer(16);
-      dc.initialize(null, null, new InternalEntryFactoryImpl(), null, null);
+      dc.initialize(null, null, new InternalEntryFactoryImpl(), mock(ActivationManager.class), null);
       return dc;
    }
 

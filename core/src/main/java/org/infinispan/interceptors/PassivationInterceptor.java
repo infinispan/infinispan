@@ -22,9 +22,7 @@
  */
 package org.infinispan.interceptors;
 
-import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.container.DataContainer;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.JmxStatsCommandInterceptor;
@@ -57,13 +55,6 @@ public class PassivationInterceptor extends JmxStatsCommandInterceptor {
    public void setDependencies(PassivationManager passivator, DataContainer dataContainer) {
       this.passivator = passivator;
       this.dataContainer = dataContainer;
-   }
-
-   @Override
-   public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      Object key = command.getKey();
-      passivator.passivate(dataContainer.get(key));
-      return invokeNextInterceptor(ctx, command);
    }
 
    @Override

@@ -29,6 +29,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
+import org.infinispan.util.concurrent.jdk8backported.BoundedConcurrentHashMapV8;
 import org.testng.annotations.*;
 
 import java.util.*;
@@ -104,8 +105,8 @@ public class MapStressTest {
    @DataProvider(name = "readWriteRemove")
    public Object[][] independentReadWriteRemoveParams() {
       return new Object[][]{
-            new Object[]{CAPACITY, 3 * CAPACITY, 32, 90, 9, 1},
-            new Object[]{CAPACITY, 3 * CAPACITY, 32, 9, 1, 0},
+            new Object[]{CAPACITY, 3 * CAPACITY, 32, 90, 9, 3},
+            new Object[]{CAPACITY, 3 * CAPACITY, 32, 9, 1, 1},
       };
    }
 
@@ -127,6 +128,8 @@ public class MapStressTest {
 
    private Map<String, Map<String, Integer>> createMaps(int capacity, int numKeys, int concurrency) {
       Map<String, Map<String, Integer>> maps = new TreeMap<String, Map<String, Integer>>();
+      maps.put("BCHMv8:LRU", new BoundedConcurrentHashMapV8<String, Integer>(capacity, BoundedConcurrentHashMapV8.Eviction.LRU, BoundedConcurrentHashMapV8.getNullEvictionListener()));
+      maps.put("BCHMv8:LIRS", new BoundedConcurrentHashMapV8<String, Integer>(capacity, BoundedConcurrentHashMapV8.Eviction.LIRS, BoundedConcurrentHashMapV8.getNullEvictionListener()));
       maps.put("BCHM:LRU", new BoundedConcurrentHashMap<String, Integer>(capacity, concurrency, BoundedConcurrentHashMap.Eviction.LRU));
       maps.put("BCHM:LIRS", new BoundedConcurrentHashMap<String, Integer>(capacity, concurrency, BoundedConcurrentHashMap.Eviction.LIRS));
       // CHM doesn't have eviction, so we size it to the total number of keys to avoid resizing

@@ -21,11 +21,9 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
@@ -57,7 +55,6 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Tests data loss during state transfer when the originator of a put operation becomes the primary owner of the
@@ -182,12 +179,6 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
                   cache2.getRpcManager().getMembers().size() == 3;
          }
       });
-
-      // Every ClusteredGetKeyValueCommand will be blocked before returning on cache0
-      CyclicBarrier beforeCache0Barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(beforeCache0Barrier,
-            GetKeyValueCommand.class, false);
-      cache0.addInterceptorBefore(blockingInterceptor0, StateTransferInterceptor.class);
 
       // Every PutKeyValueCommand will be blocked before returning on cache1
       CyclicBarrier afterCache1Barrier = new CyclicBarrier(2);
