@@ -360,10 +360,10 @@ The key affinity (for keys generated with the link:$$../user_guide/user_guide.ht
 === Listener questions
 
 ==== In a cache entry modified listener, can the modified value be retrieved via Cache.get() when isPre=false?
-No, it cannot. Use CacheEntryModifiedEvent.getValue() to retrieve the value of the entry that was modified. 
+No, it cannot. Use `CacheEntryModifiedEvent.getValue()` to retrieve the value of the entry that was modified.
 
 ==== When annotating a method with CacheEntryCreated, how do I retrieve the value of the cache entry added?
-Cache listeners can be defined to listen for cache entry created events by annotation methods with link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/notifications/cachelistener/annotation/CacheEntryCreated.html$$[@CacheEntryCreated] and having link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/notifications/cachelistener/event/CacheEntryCreatedEvent.html$$[CacheEntryCreatedEvent] as method parameter. link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/notifications/cachelistener/event/CacheEntryCreatedEvent.html$$[CacheEntryCreatedEvent] does not provide a method to retrieve the value that was created in the cache though. To retrieve this value, a method annotated with link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/notifications/cachelistener/annotation/CacheEntryModified.html$$[@CacheEntryModified] needs to be added because every time a cache entry is created, cache entry modified event is also fired.
+Use `CacheEntryCreatedEvent.getValue()` to retrieve the value of the entry.
 
 === IaaS/Cloud Infrastructure questions
 ==== How do you make Infinispan send replication traffic over a specific network when you don't know the IP address?
