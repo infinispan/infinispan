@@ -26,6 +26,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.container.InternalEntryFactoryImpl;
+import org.infinispan.eviction.ActivationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -36,6 +37,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+
+import static org.mockito.Mockito.mock;
 
 @Test(testName = "config.DataContainerTest", groups = "functional")
 public class DataContainerTest {
@@ -78,7 +81,7 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), null, null);
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), mock(ActivationManager.class), null);
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the default is correctly established
@@ -111,7 +114,7 @@ public class DataContainerTest {
          AdvancedCache<Object, Object> cache = cm.getCache().getAdvancedCache();
 
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getConfiguration().getConcurrencyLevel());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), null, null);
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), mock(ActivationManager.class), null);
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the config is correct

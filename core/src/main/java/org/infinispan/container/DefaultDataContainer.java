@@ -23,6 +23,7 @@
 package org.infinispan.container;
 
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.CacheException;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
@@ -36,10 +37,11 @@ import org.infinispan.loaders.CacheLoaderException;
 import org.infinispan.loaders.CacheLoaderManager;
 import org.infinispan.loaders.CacheStore;
 import org.infinispan.util.Immutables;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMap;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMap.Eviction;
-import org.infinispan.util.concurrent.BoundedConcurrentHashMap.EvictionListener;
-import org.infinispan.util.concurrent.ConcurrentMapFactory;
+import org.infinispan.util.PeekableMap;
+import org.infinispan.util.concurrent.jdk8backported.BoundedConcurrentHashMapV8;
+import org.infinispan.util.concurrent.jdk8backported.BoundedConcurrentHashMapV8.Eviction;
+import org.infinispan.util.concurrent.jdk8backported.BoundedConcurrentHashMapV8.EvictionListener;
+import org.infinispan.util.concurrent.jdk8backported.ConcurrentHashMapV8;
 
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
@@ -48,7 +50,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * DefaultDataContainer is both eviction and non-eviction based data container.
@@ -65,8 +69,8 @@ import java.util.concurrent.ConcurrentMap;
 public class DefaultDataContainer implements DataContainer {
 
    final protected ConcurrentMap<Object, InternalCacheEntry> entries;
+   private final ExtendedMap extendedMap;
    protected InternalEntryFactory entryFactory;
-   final protected DefaultEvictionListener evictionListener;
    private EvictionManager evictionManager;
    private PassivationManager passivator;
    private ActivationManager activator;
@@ -74,11 +78,12 @@ public class DefaultDataContainer implements DataContainer {
 
 
    public DefaultDataContainer(int concurrencyLevel) {
-      entries = ConcurrentMapFactory.makeConcurrentMap(128, concurrencyLevel);
-      evictionListener = null;
+      entries = new ConcurrentHashMapV8<Object, InternalCacheEntry>(128, 0.75f, concurrencyLevel);
+      extendedMap = new ConcurrentExtendedMap();
    }
 
    protected DefaultDataContainer(int concurrencyLevel, int maxEntries, EvictionStrategy strategy, EvictionThreadPolicy policy) {
+      DefaultEvictionListener evictionListener;
       // translate eviction policy and strategy
       switch (policy) {
          case PIGGYBACK:
@@ -102,7 +107,10 @@ public class DefaultDataContainer implements DataContainer {
          default:
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
-      entries = new BoundedConcurrentHashMap<Object, InternalCacheEntry>(maxEntries, concurrencyLevel, eviction, evictionListener);
+
+      entries = new BoundedConcurrentHashMapV8<Object, InternalCacheEntry>(
+            maxEntries, eviction, evictionListener);
+      extendedMap = new BoundedConcurrentExtendedMap();
    }
 
    @Inject
@@ -126,6 +134,9 @@ public class DefaultDataContainer implements DataContainer {
 
    @Override
    public InternalCacheEntry peek(Object key) {
+      if (entries instanceof PeekableMap) {
+         return ((PeekableMap<Object, InternalCacheEntry>) entries).peek(key);
+      }
       return entries.get(key);
    }
 
@@ -160,7 +171,7 @@ public class DefaultDataContainer implements DataContainer {
          // this is a brand-new entry
          e = entryFactory.create(k, v, version, lifespan, maxIdle);
       }
-      entries.put(k, e);
+      extendedMap.putAndActivate(e);
    }
 
    @Override
@@ -175,8 +186,12 @@ public class DefaultDataContainer implements DataContainer {
 
    @Override
    public InternalCacheEntry remove(Object k) {
-      InternalCacheEntry e = entries.remove(k);
+      InternalCacheEntry e = extendedMap.removeAndActivate(k);
       return e == null || (e.canExpire() && e.isExpired(System.currentTimeMillis())) ? null : e;
+   }
+
+   public void evict(Object k) {
+      extendedMap.evict(k);
    }
 
    @Override
@@ -228,8 +243,8 @@ public class DefaultDataContainer implements DataContainer {
       }
 
       @Override
-      public void onEntryChosenForEviction(InternalCacheEntry entry) {
-         passivator.passivate(entry);
+      public void onEntryChosenForEviction(Entry<Object, InternalCacheEntry> entry) {
+         passivator.passivate(entry.getValue());
       }
 
       @Override
@@ -238,11 +253,11 @@ public class DefaultDataContainer implements DataContainer {
       }
 
       @Override
-      public void onEntryRemoved(Object key) {
+      public void onEntryRemoved(Entry<Object, InternalCacheEntry> entry) {
          try {
             CacheStore cacheStore = clm.getCacheStore();
             if (cacheStore != null)
-               cacheStore.remove(key);
+               cacheStore.remove(entry.getKey());
          } catch (CacheLoaderException e) {
             throw new CacheException(e);
          }
@@ -353,4 +368,103 @@ public class DefaultDataContainer implements DataContainer {
       }
    }
 
+   /**
+    * Atomic logic to activate/passivate entries. This is dependent of the {@code ConcurrentMap} implementation.
+    */
+   private static interface ExtendedMap {
+      void evict(Object key);
+
+      void putAndActivate(InternalCacheEntry newEntry);
+
+      InternalCacheEntry removeAndActivate(Object key);
+   }
+
+   private class ConcurrentExtendedMap implements ExtendedMap {
+      @Override
+      public void evict(Object key) {
+         ((ConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+               .computeIfPresent(key, new ConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                  @Override
+                  public InternalCacheEntry apply(Object o, InternalCacheEntry entry) {
+                     passivator.passivate(entry);
+                     return null;
+                  }
+               });
+      }
+
+      @Override
+      public void putAndActivate(final InternalCacheEntry newEntry) {
+         ((ConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+               .compute(newEntry.getKey(), new ConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                  @Override
+                  public InternalCacheEntry apply(Object key, InternalCacheEntry entry) {
+                     if (entry == null) {
+                        //entry does not exists before. we need to activate it.
+                        activator.activate(key);
+                     }
+
+                     return newEntry;
+                  }
+               });
+      }
+
+      @Override
+      public InternalCacheEntry removeAndActivate(Object key) {
+         final AtomicReference<InternalCacheEntry> reference = new AtomicReference<InternalCacheEntry>(null);
+         ((ConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+               .compute(key, new ConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                  @Override
+                  public InternalCacheEntry apply(Object key, InternalCacheEntry entry) {
+                     //always try to activate
+                     activator.activate(key);
+                     reference.set(entry);
+                     return null;
+                  }
+               });
+         return reference.get();
+      }
+   }
+
+   private class BoundedConcurrentExtendedMap  implements ExtendedMap {
+      @Override
+      public void evict(Object key) {
+         ((BoundedConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+               .computeIfPresent(key, new BoundedConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                  @Override
+                  public InternalCacheEntry apply(Object o, InternalCacheEntry entry) {
+                     passivator.passivate(entry);
+                     return null;
+                  }
+               });
+      }
+
+      @Override
+      public void putAndActivate(final InternalCacheEntry newEntry) {
+         ((BoundedConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+               .compute(newEntry.getKey(), new BoundedConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                  @Override
+                  public InternalCacheEntry apply(Object key, InternalCacheEntry entry) {
+                     if (entry == null) {
+                        activator.activate(key);
+                     }
+                     return newEntry;
+                  }
+               });
+      }
+
+      @Override
+      public InternalCacheEntry removeAndActivate(Object key) {
+         final AtomicReference<InternalCacheEntry> reference = new AtomicReference<InternalCacheEntry>(null);
+         ((BoundedConcurrentHashMapV8<Object, InternalCacheEntry>) entries)
+               .compute(key, new BoundedConcurrentHashMapV8.BiFun<Object, InternalCacheEntry, InternalCacheEntry>() {
+                  @Override
+                  public InternalCacheEntry apply(Object key, InternalCacheEntry entry) {
+                     activator.activate(key);
+                     reference.set(entry);
+                     return null;
+                  }
+               });
+         return reference.get();
+      }
+   }
 }
