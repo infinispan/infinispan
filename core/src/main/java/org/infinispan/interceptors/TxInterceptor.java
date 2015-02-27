@@ -325,7 +325,8 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
       // command and the iterator itself does not place read values into the context.
       EntryIterable iterable = (EntryIterable) super.visitEntryRetrievalCommand(ctx, command);
       if (ctx.isInTxScope()) {
-         return new TransactionAwareEntryIterable(iterable, (TxInvocationContext<LocalTransaction>) ctx, cache);
+         return new TransactionAwareEntryIterable(iterable, command.getFilter(), 
+               (TxInvocationContext<LocalTransaction>) ctx, cache);
       } else {
          return iterable;
       }

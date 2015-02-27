@@ -13,15 +13,15 @@ import java.util.NoSuchElementException;
  * @author wburns
  * @since 7.0
  */
-public class RemovableEntryIterator<K, C> implements CloseableIterator<CacheEntry<K, C>> {
-   protected final CloseableIterator<CacheEntry<K, C>> realIterator;
-   protected final Cache<K, ?> cache;
+public class RemovableEntryIterator<K, V, C> implements CloseableIterator<CacheEntry<K, C>> {
+   protected final CloseableIterator<CacheEntry<K, V>> realIterator;
+   protected final Cache<K, V> cache;
 
    protected CacheEntry<K, C> previousValue;
    protected CacheEntry<K, C> currentValue;
 
-   public RemovableEntryIterator(CloseableIterator<CacheEntry<K, C>> realIterator,
-                                            Cache<K, ?> cache, boolean initIterator) {
+   public RemovableEntryIterator(CloseableIterator<CacheEntry<K, V>> realIterator,
+                                            Cache<K, V> cache, boolean initIterator) {
       this.realIterator = realIterator;
       this.cache = cache;
       if (initIterator) {
@@ -31,7 +31,7 @@ public class RemovableEntryIterator<K, C> implements CloseableIterator<CacheEntr
 
    protected CacheEntry<K, C> getNextFromIterator() {
       if (realIterator.hasNext()) {
-         return realIterator.next();
+         return (CacheEntry<K, C>) realIterator.next();
       } else {
          return null;
       }
