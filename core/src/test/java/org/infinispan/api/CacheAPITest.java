@@ -183,7 +183,40 @@ public abstract class CacheAPITest extends APINonTxTest {
       }
    }
 
-   public void testEntrySetIterationInTx(Method m) throws Exception {
+   public void testEntrySetIterationBeforeInTx(Method m) throws Exception {
+      Map<Integer, String> dataIn = new HashMap<Integer, String>();
+      dataIn.put(1, v(m, 1));
+      dataIn.put(2, v(m, 2));
+
+      cache.putAll(dataIn);
+
+      Map<Object, Object> foundValues = new HashMap<>();
+      TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
+      tm.begin();
+      try {
+         Set<Entry<Object, Object>> entries = cache.entrySet();
+
+         // Add an entry within tx
+         cache.put(3, v(m, 3));
+         cache.put(4, v(m, 4));
+
+         Iterator<Entry<Object, Object>> itr = entries.iterator();
+
+         while (itr.hasNext()) {
+            Entry<Object, Object> entry = itr.next();
+            foundValues.put(entry.getKey(), entry.getValue());
+         }
+      } finally {
+         tm.rollback();
+      }
+      assertEquals(4, foundValues.size());
+      assertEquals(v(m, 1), foundValues.get(1));
+      assertEquals(v(m, 2), foundValues.get(2));
+      assertEquals(v(m, 3), foundValues.get(3));
+      assertEquals(v(m, 4), foundValues.get(4));
+   }
+
+   public void testEntrySetIterationAfterInTx(Method m) throws Exception {
       Map<Integer, String> dataIn = new HashMap<Integer, String>();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
@@ -200,6 +233,7 @@ public abstract class CacheAPITest extends APINonTxTest {
 
          // Add an entry within tx
          cache.put(3, v(m, 3));
+         cache.put(4, v(m, 4));
 
          while (itr.hasNext()) {
             Entry<Object, Object> entry = itr.next();
@@ -208,10 +242,11 @@ public abstract class CacheAPITest extends APINonTxTest {
       } finally {
          tm.rollback();
       }
-      assertEquals(3, foundValues.size());
+      assertEquals(4, foundValues.size());
       assertEquals(v(m, 1), foundValues.get(1));
       assertEquals(v(m, 2), foundValues.get(2));
       assertEquals(v(m, 3), foundValues.get(3));
+      assertEquals(v(m, 4), foundValues.get(4));
    }
 
    public void testRollbackAfterPut() throws Exception {
