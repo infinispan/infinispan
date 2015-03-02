@@ -50,7 +50,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
    }
 
    private void testLockMigration(int nodeThatPuts) throws Exception {
-      Map<Object, DummyTransaction> key2Tx = new HashMap<Object, DummyTransaction>();
+      Map<Object, DummyTransaction> key2Tx = new HashMap<>();
       for (int i = 0; i < NUM_KEYS; i++) {
          Object key = getKeyForCache(0);
          if (key2Tx.containsKey(key)) continue;
@@ -71,7 +71,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
 
       Object migratedKey = null;
-      ConsistentHash ch = advancedCache(2).getDistributionManager().getConsistentHash();
+      ConsistentHash ch = advancedCache(2).getDistributionManager().getWriteConsistentHash();
       for (Object key : key2Tx.keySet()) {
          if (ch.locatePrimaryOwner(key).equals(address(2))) {
             migratedKey = key;

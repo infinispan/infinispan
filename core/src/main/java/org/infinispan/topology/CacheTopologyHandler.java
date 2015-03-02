@@ -1,5 +1,6 @@
 package org.infinispan.topology;
 
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.statetransfer.StateTransferManager;
 
 /**
@@ -10,11 +11,19 @@ import org.infinispan.statetransfer.StateTransferManager;
  */
 public interface CacheTopologyHandler {
 
+   void updateConsistentHash(CacheTopology cacheTopology, ConsistentHash newCH, TopologyState state);
+
    /**
     * Invoked when the CH has to be immediately updated because of a leave or when the state transfer has completed
     * and we have to install a permanent CH (pendingCH == null). A state transfer is not always required.
     */
-   void updateConsistentHash(CacheTopology cacheTopology);
+   void updateReadConsistentHash(CacheTopology cacheTopology);
+
+   /**
+    * Invoked when the CH has to be immediately updated because of a leave or when the state transfer has completed
+    * and we have to install a permanent CH (pendingCH == null). A state transfer is not always required.
+    */
+   void updateWriteConsistentHash(CacheTopology cacheTopology);
 
    /**
     * Invoked when state transfer has to be started.
@@ -22,5 +31,5 @@ public interface CacheTopologyHandler {
     * The caller will not consider the local rebalance done when this method returns. Instead, the handler
     * will have to call {@link LocalTopologyManager#confirmRebalance(String, int, int, Throwable)}
     */
-   void rebalance(CacheTopology cacheTopology);
+   void rebalance(CacheTopology cacheTopology, ConsistentHash newCH);
 }

@@ -101,12 +101,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
             try {
                ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
                        CacheTopologyControlCommand.Type.JOIN, transport.getAddress(), joinInfo, viewId);
-               CacheStatusResponse initialStatus = (CacheStatusResponse) executeOnCoordinator(command, timeout);
+               CacheStatusResponse initialStatus = executeOnCoordinator(command, timeout);
                // Ignore null responses, that's what the current coordinator returns if is shutting down
                if (initialStatus != null) {
-                  handleTopologyUpdate(cacheName, initialStatus.getCacheTopology(), initialStatus.getAvailabilityMode(),
-                        viewId, transport.getCoordinator());
+                  handleConsistentHashUpdate(cacheName, initialStatus.getCacheTopology(),
+                                             null, initialStatus.getAvailabilityMode(), viewId, TopologyUpdate.CH_UPDATE, TopologyState.NONE, transport.getCoordinator());
                   handleStableTopologyUpdate(cacheName, initialStatus.getStableTopology(), viewId);
+                  cacheStatus.markJoined();
                   return initialStatus.getCacheTopology();
                }
             } catch (Exception e) {
@@ -115,7 +116,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
                   throw e;
                }
                // TODO Add some configuration for this, or use a fraction of state transfer timeout
-               Thread.sleep(1000);
+               cacheStatus.wait(1000);
             }
          }
       }
@@ -152,8 +153,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    // called by the coordinator
    @Override
-   public ManagerStatusResponse handleStatusRequest(int viewId) {
-      Map<String, CacheStatusResponse> caches = new HashMap<String, CacheStatusResponse>();
+   public Map<String, CacheStatusResponse> handleStatusRequest(int viewId) {
+      Map<String, CacheStatusResponse> caches = new HashMap<>();
       synchronized (runningCaches) {
          for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
             String cacheName = e.getKey();
@@ -165,81 +166,107 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
                     availabilityMode));
          }
       }
-
-      boolean rebalancingEnabled = true;
-      // Avoid adding a direct dependency to the ClusterTopologyManager
-      ReplicableCommand command = new CacheTopologyControlCommand(null,
-            CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(),
-            transport.getViewId());
-      try {
-         gcr.wireDependencies(command);
-         rebalancingEnabled = (Boolean) ((SuccessfulResponse) command.perform(null)).getResponseValue();
-      } catch (Throwable t) {
-         log.warn("Failed to obtain the rebalancing status", t);
-      }
-      return new ManagerStatusResponse(caches, rebalancingEnabled);
+      return caches;
    }
 
    @Override
-   public void handleTopologyUpdate(String cacheName, final CacheTopology cacheTopology, AvailabilityMode availabilityMode,
-         int viewId, final Address sender) throws InterruptedException {
+   public void handleTopologyUpdate(String cacheName, CacheTopology cacheTopology, ConsistentHash newCH, AvailabilityMode availabilityMode,
+                                    TopologyState state, int viewId, Address sender) throws InterruptedException {
+      handleConsistentHashUpdate(cacheName, cacheTopology, newCH, availabilityMode, viewId, TopologyUpdate.CH_UPDATE, state, sender);
+   }
+
+   @Override
+   public void handleReadCHUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode,
+                                  int viewId, Address sender) throws InterruptedException {
+      Throwable throwable = null;
+      try {
+         handleConsistentHashUpdate(cacheName, cacheTopology, null, availabilityMode, viewId, TopologyUpdate.READ_CH_UPDATE, null, sender);
+      } catch (Throwable t) {
+         throwable = t;
+      } finally {
+         ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+                                                                     CacheTopologyControlCommand.Type.READ_CH_CONFIRM,
+                                                                     transport.getAddress(),
+                                                                     cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
+                                                                     throwable, transport.getViewId());
+         try {
+            executeOnCoordinatorAsync(command);
+         } catch (Exception e) {
+            log.debugf(e, "Error sending the rebalance completed notification for cache %s to the coordinator",
+                       cacheName);
+         }
+      }
+   }
+
+   @Override
+   public void handleWriteCHUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode,
+                                   int viewId, Address sender) throws InterruptedException {
+      handleConsistentHashUpdate(cacheName, cacheTopology, null, availabilityMode, viewId, TopologyUpdate.WRITE_CH_UPDATE, null, sender);
+   }
+
+   private void handleConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, ConsistentHash newCH, AvailabilityMode availabilityMode,
+                                           int viewId, TopologyUpdate topologyUpdate, TopologyState state, final Address sender) throws InterruptedException {
       if (!running) {
-         log.tracef("Ignoring consistent hash update %s for cache %s, the local cache manager is not running",
-               cacheTopology.getTopologyId(), cacheName);
+         log.tracef("Ignoring %s consistent hash update %s for cache %s, the local cache manager is not running",
+                    topologyUpdate.print(), cacheTopology.getTopologyId(), cacheName);
          return;
       }
       waitForView(viewId);
 
-      LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
+      final LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
       if (cacheStatus == null) {
-         log.tracef("Ignoring consistent hash update %s for cache %s that doesn't exist locally",
-               cacheTopology.getTopologyId(), cacheName);
+         log.tracef("Ignoring %s consistent hash update %s for cache %s that doesn't exist locally",
+                    topologyUpdate.print(), cacheTopology.getTopologyId(), cacheName);
+         return;
+      }
+
+      if (!cacheStatus.isJoined() && topologyUpdate != TopologyUpdate.CH_UPDATE &&
+            !containsLocalMember(cacheTopology.getReadConsistentHash()) &&
+            !containsLocalMember(cacheTopology.getWriteConsistentHash())) {
+         log.tracef("Ignoring %s consistent hash update %s for cache %s. Member hasn't joined yet",
+                   topologyUpdate.print(), cacheTopology.getTopologyId(), cacheName);
          return;
       }
 
       synchronized (cacheStatus) {
          CacheTopology existingTopology = cacheStatus.getCurrentTopology();
          if (existingTopology != null && cacheTopology.getTopologyId() <= existingTopology.getTopologyId()) {
-            log.debugf("Ignoring late consistent hash update for cache %s, current topology is %s: %s",
-                  cacheName, existingTopology.getTopologyId(), cacheTopology);
+            log.debugf("Ignoring late %s Consistent Hash update for cache %s, current topology is %s: %s",
+                       topologyUpdate.print(), cacheName, existingTopology.getTopologyId(), cacheTopology);
             return;
          }
 
-         CacheTopologyHandler handler = cacheStatus.getHandler();
-         resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
+         log.debugf("Updating local %s consistent hash for cache %s: new topology = %s", topologyUpdate.print(),
+                    cacheName, cacheTopology);
 
          if (!updateCacheTopology(cacheName, cacheTopology, sender, cacheStatus))
             return;
 
-         ConsistentHash unionCH = null;
-         if (cacheTopology.getPendingCH() != null) {
-            unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(cacheTopology.getCurrentCH(),
-                  cacheTopology.getPendingCH());
+         cacheStatus.setCurrentTopology(cacheTopology);
+         cacheTopology.logRoutingTableInformation();
+
+         final boolean updateAvailabilityModeFirst = availabilityMode != AvailabilityMode.AVAILABLE;
+         final PartitionHandlingManager partitionHandlingManager = cacheStatus.getPartitionHandlingManager();
+         final boolean canUpdateAvailability = availabilityMode != null && partitionHandlingManager != null;
+
+         if (canUpdateAvailability && updateAvailabilityModeFirst) {
+            partitionHandlingManager.setAvailabilityMode(availabilityMode);
          }
 
-         CacheTopology unionTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers());
-         unionTopology.logRoutingTableInformation();
-
-         boolean updateAvailabilityModeFirst = availabilityMode != AvailabilityMode.AVAILABLE;
-         if (updateAvailabilityModeFirst) {
-            if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
-               cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
-            }
-         }
-         if ((existingTopology == null || existingTopology.getRebalanceId() != cacheTopology.getRebalanceId()) && unionCH != null) {
-            // This CH_UPDATE command was sent after a REBALANCE_START command, but arrived first.
-            // We will start the rebalance now and ignore the REBALANCE_START command when it arrives.
-            log.tracef("This topology update has a pending CH, starting the rebalance now");
-            handler.rebalance(unionTopology);
-         } else {
-            handler.updateConsistentHash(unionTopology);
+         switch (topologyUpdate) {
+            case READ_CH_UPDATE:
+               cacheStatus.getHandler().updateReadConsistentHash(cacheTopology);
+               break;
+            case WRITE_CH_UPDATE:
+               cacheStatus.getHandler().updateWriteConsistentHash(cacheTopology);
+               break;
+            case CH_UPDATE:
+               cacheStatus.getHandler().updateConsistentHash(cacheTopology, newCH, state);
+               break;
          }
 
-         if (!updateAvailabilityModeFirst) {
-            if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
-               cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
-            }
+         if (canUpdateAvailability && !updateAvailabilityModeFirst) {
+            partitionHandlingManager.setAvailabilityMode(availabilityMode);
          }
       }
    }
@@ -260,32 +287,6 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       }
    }
 
-   private void resetLocalTopologyBeforeRebalance(String cacheName, CacheTopology newCacheTopology,
-         CacheTopology oldCacheTopology, CacheTopologyHandler handler) throws InterruptedException {
-      boolean newRebalance = newCacheTopology.getPendingCH() != null;
-      if (newRebalance) {
-         // The initial topology doesn't need a reset because we are guaranteed not to be a member
-         if (oldCacheTopology == null)
-            return;
-
-         // We only need a reset if we missed a topology update
-         if (newCacheTopology.getTopologyId() == oldCacheTopology.getTopologyId() + 1)
-            return;
-
-         // We have missed a topology update, and that topology might have removed some of our segments.
-         // If this rebalance adds those same segments, we need to remove the old data/inbound transfers first.
-         // This can happen when the coordinator changes, either because the old one left or because there was a merge,
-         // and the rebalance after merge arrives before the merged topology update.
-         if (newCacheTopology.getRebalanceId() != oldCacheTopology.getRebalanceId()) {
-            // The currentCH changed, we need to install a "reset" topology with the new currentCH first
-            CacheTopology resetTopology = new CacheTopology(newCacheTopology.getTopologyId() - 1,
-                  newCacheTopology.getRebalanceId() - 1, newCacheTopology.getCurrentCH(), null, newCacheTopology.getActualMembers());
-            log.debugf("Installing fake cache topology %s for cache %s", resetTopology, cacheName);
-            handler.updateConsistentHash(resetTopology);
-         }
-      }
-   }
-
    @Override
    public void handleStableTopologyUpdate(String cacheName, CacheTopology newStableTopology, int viewId) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
@@ -301,10 +302,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    @Override
-   public void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender) throws InterruptedException {
+   public void handleRebalance(String cacheName, CacheTopology cacheTopology, ConsistentHash newCH, int viewId, Address sender) throws InterruptedException {
       if (!running) {
          log.debugf("Ignoring rebalance request %s for cache %s, the local cache manager is not running",
-               cacheTopology.getTopologyId(), cacheName);
+                    cacheTopology.getTopologyId(), cacheName);
          return;
       }
       waitForView(viewId);
@@ -328,19 +329,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
          if (!updateCacheTopology(cacheName, cacheTopology, sender, cacheStatus))
             return;
+         CacheTopologyHandler handler = cacheStatus.getHandler();
 
          log.debugf("Starting local rebalance for cache %s, topology = %s", cacheName, cacheTopology);
          cacheTopology.logRoutingTableInformation();
          cacheStatus.setCurrentTopology(cacheTopology);
 
-         CacheTopologyHandler handler = cacheStatus.getHandler();
-         resetLocalTopologyBeforeRebalance(cacheName, cacheTopology, existingTopology, handler);
-
-         ConsistentHash unionCH = cacheStatus.getJoinInfo().getConsistentHashFactory().union(
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH());
-         CacheTopology newTopology = new CacheTopology(cacheTopology.getTopologyId(), cacheTopology.getRebalanceId(),
-               cacheTopology.getCurrentCH(), cacheTopology.getPendingCH(), unionCH, cacheTopology.getActualMembers());
-         handler.rebalance(newTopology);
+         handler.rebalance(cacheTopology, newCH);
       }
    }
 
@@ -382,7 +377,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    public boolean isRebalancingEnabled() throws Exception {
       ReplicableCommand command = new CacheTopologyControlCommand(null,
             CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), transport.getViewId());
-      return (Boolean) executeOnCoordinator(command, getGlobalTimeout());
+      return executeOnCoordinator(command, getGlobalTimeout());
    }
 
    @Override
@@ -412,9 +407,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Override
    public AvailabilityMode getCacheAvailability(String cacheName) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-      AvailabilityMode availabilityMode = cacheStatus.getPartitionHandlingManager() != null ?
-            cacheStatus.getPartitionHandlingManager().getAvailabilityMode() : AvailabilityMode.AVAILABLE;
-      return availabilityMode;
+      return cacheStatus.getPartitionHandlingManager() != null ?
+            cacheStatus.getPartitionHandlingManager().getAvailabilityMode() :
+            AvailabilityMode.AVAILABLE;
    }
 
    @Override
@@ -425,7 +420,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       executeOnCoordinator(command, getGlobalTimeout());
    }
 
-   private Object executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {
+   private <T> T executeOnCoordinator(ReplicableCommand command, long timeout) throws Exception {
       Response response;
       if (transport.isCoordinator()) {
          try {
@@ -447,22 +442,22 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
                ? ((ExceptionResponse)response).getException() : null;
          throw new CacheException("Bad response received from coordinator: " + response, exception);
       }
-      return ((SuccessfulResponse) response).getResponseValue();
+      //noinspection unchecked
+      return (T) ((SuccessfulResponse) response).getResponseValue();
    }
 
    private void executeOnCoordinatorAsync(final ReplicableCommand command) throws Exception {
       // if we are the coordinator, the execution is actually synchronous
       if (transport.isCoordinator()) {
-         asyncTransportExecutor.submit(new Callable<Object>() {
+         asyncTransportExecutor.execute(new Runnable() {
             @Override
-            public Object call() throws Exception {
+            public void run() {
                if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
                gcr.wireDependencies(command);
                try {
-                  return command.perform(null);
+                  command.perform(null);
                } catch (Throwable t) {
                   log.errorf(t, "Failed to execute ReplicableCommand %s on coordinator async: %s", command, t.getMessage());
-                  throw new Exception(t);
                }
             }
          });
@@ -483,7 +478,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          Map<Address, Response> responseMap = transport.invokeRemotely(null, command,
                ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS,
                timeout, null, DeliverOrder.TOTAL, distributed);
-         Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
+         Map<Address, Object> responseValues = new HashMap<>(transport.getMembers().size());
          for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
             Address address = entry.getKey();
             Response response = entry.getValue();
@@ -521,7 +516,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       Map<Address, Response> responseMap = remoteFuture.get(timeout, TimeUnit.MILLISECONDS);
 
       // parse the responses
-      Map<Address, Object> responseValues = new HashMap<Address, Object>(transport.getMembers().size());
+      Map<Address, Object> responseValues = new HashMap<>(transport.getMembers().size());
       for (Map.Entry<Address, Response> entry : responseMap.entrySet()) {
          Address address = entry.getKey();
          Response response = entry.getValue();
@@ -541,6 +536,35 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       // TODO Rename setting to something like globalRpcTimeout
       return (int) gcr.getGlobalConfiguration().transport().distributedSyncTimeout();
    }
+
+   private boolean containsLocalMember(ConsistentHash consistentHash) {
+      return consistentHash.getMembers().contains(transport.getAddress());
+   }
+
+   private static enum TopologyUpdate {
+      READ_CH_UPDATE {
+         @Override
+         String print() {
+            return "read";
+         }
+      },
+      WRITE_CH_UPDATE {
+         @Override
+         String print() {
+            return "write";
+         }
+      },
+      CH_UPDATE {
+         @Override
+         String print() {
+            return "";
+         }
+      };
+
+      abstract String print();
+
+
+   }
 }
 
 class LocalCacheStatus {
@@ -549,6 +573,7 @@ class LocalCacheStatus {
    private final PartitionHandlingManager partitionHandlingManager;
    private volatile CacheTopology currentTopology;
    private volatile CacheTopology stableTopology;
+   private volatile boolean joined;
 
    public LocalCacheStatus(CacheJoinInfo joinInfo, CacheTopologyHandler handler, PartitionHandlingManager phm) {
       this.joinInfo = joinInfo;
@@ -582,5 +607,13 @@ class LocalCacheStatus {
 
    public void setStableTopology(CacheTopology stableTopology) {
       this.stableTopology = stableTopology;
+   }
+
+   public void markJoined() {
+      this.joined = true;
+   }
+
+   public boolean isJoined() {
+      return joined;
    }
 }

@@ -114,14 +114,14 @@ public class ThreeWaySplitAndMergeTest extends BasePartitionHandlingTest {
       partition(0).assertKeyAvailableForWrite(k3, 13);
 
       Set<Address> members = new HashSet<>(Arrays.asList(new Address[]{address(p0.node(0)), address(p0.node(1)), address(p1.node(0))}));
-      assertEquals(new HashSet<>(advancedCache(p0.node(0)).getDistributionManager().getConsistentHash().getMembers()), members);
-      assertEquals(new HashSet<>(advancedCache(p0.node(1)).getDistributionManager().getConsistentHash().getMembers()), members);
-      assertEquals(new HashSet<>(advancedCache(p1.node(0)).getDistributionManager().getConsistentHash().getMembers()), members);
+      assertEquals(new HashSet<>(advancedCache(p0.node(0)).getDistributionManager().getWriteConsistentHash().getMembers()), members);
+      assertEquals(new HashSet<>(advancedCache(p0.node(1)).getDistributionManager().getWriteConsistentHash().getMembers()), members);
+      assertEquals(new HashSet<>(advancedCache(p1.node(0)).getDistributionManager().getWriteConsistentHash().getMembers()), members);
 
       partition(1).assertKeysNotAvailableForRead(k0, k1, k2, k3);
 
       members = new HashSet<>(Arrays.asList(new Address[]{address(0), address(1), address(2), address(3)}));
-      assertEquals(new HashSet<>(advancedCache(p2.node(0)).getDistributionManager().getConsistentHash().getMembers()), members);
+      assertEquals(new HashSet<>(advancedCache(p2.node(0)).getDistributionManager().getWriteConsistentHash().getMembers()), members);
 
       for (int i = 0; i < 100; i++) {
          dataContainer(p2.node(0)).put(i, i, null);

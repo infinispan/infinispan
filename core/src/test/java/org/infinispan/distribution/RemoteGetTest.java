@@ -40,7 +40,7 @@ public class RemoteGetTest extends MultipleCacheManagersTest {
       Cache<MagicKey, String> c3 = cache(2);
       MagicKey k = new MagicKey(c1, c2);
 
-      List<Address> owners = c1.getAdvancedCache().getDistributionManager().locate(k);
+      List<Address> owners = c1.getAdvancedCache().getDistributionManager().locate(k, LookupMode.READ);
 
       assert owners.size() == 2: "Key should have 2 owners";
 

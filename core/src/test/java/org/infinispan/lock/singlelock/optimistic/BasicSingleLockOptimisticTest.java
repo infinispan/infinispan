@@ -1,6 +1,7 @@
 package org.infinispan.lock.singlelock.optimistic;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.lock.singlelock.AbstractNoCrashTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
@@ -50,7 +51,7 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
       final Object k1 = getKeyForCache(1);
       final Object k2 = getKeyForCache(2);
 
-      assertEquals(advancedCache(0).getDistributionManager().locate(k1).get(0), address(1));
+      assertEquals(advancedCache(0).getDistributionManager().locate(k1, LookupMode.WRITE).get(0), address(1));
       log.tracef("k1=%s, k2=%s", k1, k2);
 
       tm(0).begin();

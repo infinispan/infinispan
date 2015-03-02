@@ -27,10 +27,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.*;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Test that ensure when L1 cache is enabled that if writes occurs during a state transfer and vice versa that the
@@ -51,8 +55,8 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    }
 
    private final String key = this.getClass() + "-key";
-   private final String startValue = "starting-value";
-   private final String newValue = "new-value";
+   private final static String START_VALUE = "starting-value";
+   private final static String NEW_VALUE = "new-value";
 
    protected final ControlledConsistentHashFactory factory = new ControlledConsistentHashFactory(0, 1);
 
@@ -104,7 +108,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       checkPoint.awaitStrict("pre_topology_installed_invoked_" + c1, 10, TimeUnit.SECONDS);
       checkPoint.awaitStrict("pre_topology_installed_invoked_" + c2, 10, TimeUnit.SECONDS);
 
-      assertNull(c1.put(key, newValue));
+      assertNull(c1.put(key, NEW_VALUE));
 
       checkPoint.triggerForever("post_topology_installed_released_" + c3);
       checkPoint.triggerForever("pre_topology_installed_released_" + c1);
@@ -127,9 +131,9 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
    @Test(groups = "unstable")
    public void testStateTransferWithL1InvalidationAboutToBeCommitted() throws Exception {
       // First 2 caches are primary and backup respectively at the beginning
-      c1.put(key, startValue);
+      c1.put(key, START_VALUE);
 
-      assertEquals(startValue, c3.get(key));
+      assertEquals(START_VALUE, c3.get(key));
 
       assertIsInL1(c3, key);
 
@@ -137,7 +141,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       c3.getAdvancedCache().addInterceptorAfter(new BlockingInterceptor(barrier, InvalidateL1Command.class, true, false),
                                                 EntryWrappingInterceptor.class);
 
-      Future<String> future = c1.putAsync(key, newValue);
+      Future<String> future = c1.putAsync(key, NEW_VALUE);
 
       barrier.await(10, TimeUnit.SECONDS);
 
@@ -168,7 +172,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       checkPoint.awaitStrict("pre_topology_installed_invoked_" + c2, 10, TimeUnit.SECONDS);
 
       barrier.await(10, TimeUnit.SECONDS);
-      assertEquals(startValue, future.get(10, TimeUnit.SECONDS));
+      assertEquals(START_VALUE, future.get(10, TimeUnit.SECONDS));
 
       checkPoint.triggerForever("post_topology_installed_released_" + c3);
       checkPoint.triggerForever("pre_topology_installed_released_" + c1);
@@ -192,7 +196,7 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
       StateConsumer sc = TestingUtil.extractComponent(cache, StateConsumer.class);
       final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(sc);
       StateConsumer mockConsumer = mock(StateConsumer.class, withSettings().defaultAnswer(forwardedAnswer));
-      doAnswer(new Answer() {
+      Answer<Object> answer = new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
             // Wait for main thread to sync up
@@ -202,7 +206,11 @@ public class L1StateTransferRemovesValueTest extends BaseDistFunctionalTest<Stri
 
             return forwardedAnswer.answer(invocation);
          }
-      }).when(mockConsumer).onTopologyUpdate(any(CacheTopology.class), anyBoolean());
+      };
+      doAnswer(answer).when(mockConsumer).onRebalanceStart(any(CacheTopology.class));
+      doAnswer(answer).when(mockConsumer).onReadConsistentHashUpdate(any(CacheTopology.class));
+      doAnswer(answer).when(mockConsumer).onWriteConsistentHashUpdate(any(CacheTopology.class));
+      doAnswer(answer).when(mockConsumer).onConsistentHashUpdate(any(CacheTopology.class));
       TestingUtil.replaceComponent(cache, StateConsumer.class, mockConsumer, true);
    }
 

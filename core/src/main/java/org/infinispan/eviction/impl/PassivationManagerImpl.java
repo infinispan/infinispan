@@ -6,16 +6,17 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.impl.ImmutableContext;
-import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
-import org.infinispan.persistence.spi.PersistenceException;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -29,7 +30,7 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.B
 public class PassivationManagerImpl implements PassivationManager {
 
    PersistenceManager persistenceManager;
-   CacheNotifier notifier;
+   CacheNotifier<Object, Object> notifier;
    Configuration cfg;
 
    boolean statsEnabled = false;
@@ -40,19 +41,19 @@ public class PassivationManagerImpl implements PassivationManager {
    private TimeService timeService;
    private static final boolean trace = log.isTraceEnabled();
    private MarshalledEntryFactory marshalledEntryFactory;
-   private DistributionManager distributionManager;
+   private ClusteringDependentLogic clusteringDependentLogic;
 
    @Inject
-   public void inject(PersistenceManager persistenceManager, CacheNotifier notifier, Configuration cfg, DataContainer container,
-                      TimeService timeService, MarshalledEntryFactory marshalledEntryFactory,
-                      DistributionManager distributionManager) {
+   public void inject(PersistenceManager persistenceManager, CacheNotifier<Object, Object> notifier, Configuration cfg,
+                      DataContainer<Object, Object> container, TimeService timeService, MarshalledEntryFactory marshalledEntryFactory,
+                      ClusteringDependentLogic clusteringDependentLogic) {
       this.persistenceManager = persistenceManager;
       this.notifier = notifier;
       this.cfg = cfg;
       this.container = container;
       this.timeService = timeService;
       this.marshalledEntryFactory = marshalledEntryFactory;
-      this.distributionManager = distributionManager;
+      this.clusteringDependentLogic = clusteringDependentLogic;
    }
 
    @Start(priority = 12)
@@ -69,7 +70,7 @@ public class PassivationManagerImpl implements PassivationManager {
    }
 
    private boolean isL1Key(Object key) {
-      return distributionManager != null && !distributionManager.getLocality(key).isLocal();
+      return !clusteringDependentLogic.localNodeIsOwner(key, LookupMode.READ);
    }
 
    @Override

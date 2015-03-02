@@ -7,12 +7,10 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -38,9 +36,6 @@ import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.P
  * @since 4.0
  */
 public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
-   private DistributionManager dm;
-   private Transport transport;
-   private Address address;
 
    private static final Log log = LogFactory.getLog(DistCacheWriterInterceptor.class);
    private boolean isUsingLockDelegation;
@@ -52,16 +47,13 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
    }
 
    @Inject
-   public void inject(DistributionManager dm, Transport transport, ClusteringDependentLogic cdl) {
-      this.dm = dm;
-      this.transport = transport;
+   public void inject(ClusteringDependentLogic cdl) {
       this.cdl = cdl;
    }
 
    @Start(priority = 25) // after the distribution manager!
    @SuppressWarnings("unused")
    private void setAddress() {
-      this.address = transport.getAddress();
       this.isUsingLockDelegation = !cacheConfiguration.transaction().transactionMode().isTransactional();
    }
 
@@ -89,7 +81,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
       for (Object key : map.keySet()) {
          // In non-tx mode, a node may receive the same forwarded PutMapCommand many times - but each time
          // it must write only the keys locked on the primary owner that forwarded the command
-         if (isUsingLockDelegation && command.isForwarded() && !dm.getPrimaryLocation(key).equals(ctx.getOrigin()))
+         if (isUsingLockDelegation && command.isForwarded() && !cdl.getPrimaryOwner(key, LookupMode.WRITE).equals(ctx.getOrigin()))
             continue;
 
          if (isProperWriter(ctx, command, key)) {
@@ -129,7 +121,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
 
    @Override
    protected boolean skipSharedStores(InvocationContext ctx, Object key, FlagAffectedCommand command) {
-      return !cdl.localNodeIsPrimaryOwner(key) || command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE);
+      return !cdl.localNodeIsPrimaryOwner(key, LookupMode.WRITE) || command.hasFlag(Flag.SKIP_SHARED_CACHE_STORE);
    }
 
    @Override
@@ -138,7 +130,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
          return true;
 
       if (isUsingLockDelegation && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (ctx.isOriginLocal() && !dm.getPrimaryLocation(key).equals(address)) {
+         if (ctx.isOriginLocal() && !cdl.localNodeIsPrimaryOwner(key, LookupMode.WRITE)) {
             // The command will be forwarded back to the originator, and the value will be stored then
             // (while holding the lock on the primary owner).
             log.tracef("Skipping cache store on the originator because it is not the primary owner " +
@@ -146,7 +138,7 @@ public class DistCacheWriterInterceptor extends CacheWriterInterceptor {
             return false;
          }
       }
-      if (!dm.getWriteConsistentHash().isKeyLocalToNode(address, key)) {
+      if (!cdl.localNodeIsOwner(key, LookupMode.WRITE)) {
          log.tracef("Skipping cache store since the key is not local: %s", key);
          return false;
       }

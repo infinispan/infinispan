@@ -5,6 +5,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -79,11 +80,11 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
       CacheHelper<K, V> cacheHelper = new CacheHelper<>();
       for (Cache<K, V> cache : cacheList) {
          ClusteringDependentLogic clusteringDependentLogic = extractComponent(cache, ClusteringDependentLogic.class);
-         log.debugf("owners for key %s are %s", key, clusteringDependentLogic.getOwners(key));
-         if (clusteringDependentLogic.localNodeIsPrimaryOwner(key)) {
+         log.debugf("owners for key %s are %s", key, clusteringDependentLogic.getOwners(key, LookupMode.WRITE));
+         if (clusteringDependentLogic.localNodeIsPrimaryOwner(key, LookupMode.WRITE)) {
             log.debug("Cache " + address(cache) + " is the primary owner");
             assertTrue(cacheHelper.addCache(Ownership.PRIMARY_OWNER, cache));
-         } else if (clusteringDependentLogic.localNodeIsOwner(key)) {
+         } else if (clusteringDependentLogic.localNodeIsOwner(key, LookupMode.WRITE)) {
             log.debug("Cache " + address(cache) + " is the backup owner");
             assertTrue(cacheHelper.addCache(Ownership.BACKUP_OWNER, cache));
          } else {

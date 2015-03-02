@@ -76,7 +76,7 @@ class HotRod10ReplicationTest extends HotRodMultiNodeTest {
       assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
-      resp = clients.tail.head.ping(2, 2)
+      resp = clients.tail.head.ping(2, 3)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
    }
@@ -95,7 +95,7 @@ class HotRod10ReplicationTest extends HotRodMultiNodeTest {
       assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
-      resp = clients.head.put(k(m) , 0, 0, v(m, "v3-"), 2, 2)
+      resp = clients.head.put(k(m) , 0, 0, v(m, "v3-"), 2, 3)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(clients.tail.head.get(k(m), 0), v(m, "v3-"))

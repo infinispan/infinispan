@@ -24,11 +24,10 @@ public interface StateProvider {
    /**
     * Receive notification of topology changes. Cancels all outbound transfers to destinations that are no longer members.
     * The other outbound transfers remain unaffected.
+    *  @param cacheTopology
     *
-    * @param cacheTopology
-    * @param isRebalance
     */
-   void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance);
+   void onTopologyUpdate(CacheTopology cacheTopology);
 
    /**
     * Gets the list of transactions that affect keys from the given segments. This is invoked in response to a

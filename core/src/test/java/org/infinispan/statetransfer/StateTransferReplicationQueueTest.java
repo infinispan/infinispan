@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.ReplicationQueue;
@@ -15,6 +16,7 @@ import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManager;
+import org.infinispan.topology.TopologyState;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -223,7 +225,6 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
 
       @Override
       public void writeExternal(ObjectOutput out) throws IOException {
-         String threadName = Thread.currentThread().getName();
          if (!holdUp.get()) {
             log.debug("In streaming...");
             holdUp.compareAndSet(false, true);
@@ -257,11 +258,9 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
 
 
    private class DelayingClusterTopologyManager implements ClusterTopologyManager {
-      private final EmbeddedCacheManager manager1;
       private ClusterTopologyManager instance;
 
       public DelayingClusterTopologyManager(EmbeddedCacheManager manager1) {
-         this.manager1 = manager1;
          instance = TestingUtil.extractGlobalComponent(manager1, ClusterTopologyManager.class);
       }
 
@@ -281,8 +280,13 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       }
 
       @Override
-      public void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception {
+      public void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) {
          instance.handleRebalanceCompleted(cacheName, node, topologyId, throwable, viewId);
+      }
+
+      @Override
+      public void handleReadCHCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) {
+         instance.handleReadCHCompleted(cacheName, node, topologyId, throwable, viewId);
       }
 
       @Override
@@ -291,7 +295,7 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       }
 
       @Override
-      public void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed) {
+      public void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, ConsistentHash newConsistentHash, boolean totalOrder, boolean distributed) {
          // Allow the joiner to receive some commands between the initial cache topology and the rebalance start
          log.tracef("Delaying rebalance");
          try {
@@ -300,12 +304,22 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
             Thread.currentThread().interrupt();
          }
 
-         instance.broadcastRebalanceStart(cacheName, cacheTopology, totalOrder, distributed);
+         instance.broadcastRebalanceStart(cacheName, cacheTopology, newConsistentHash, totalOrder, distributed);
       }
 
       @Override
-      public void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, boolean totalOrder, boolean distributed) {
-         instance.broadcastTopologyUpdate(cacheName, cacheTopology, availabilityMode, totalOrder, distributed);
+      public void broadcastReadConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, boolean totalOrder, boolean distributed) {
+         instance.broadcastReadConsistentHashUpdate(cacheName, cacheTopology, availabilityMode, totalOrder, distributed);
+      }
+
+      @Override
+      public void broadcastWriteConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, boolean totalOrder, boolean distributed) {
+         instance.broadcastWriteConsistentHashUpdate(cacheName, cacheTopology, availabilityMode, totalOrder, distributed);
+      }
+
+      @Override
+      public void broadcastConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, ConsistentHash newConsistentHash, AvailabilityMode availabilityMode, TopologyState state, boolean totalOrder, boolean distributed) {
+         instance.broadcastConsistentHashUpdate(cacheName, cacheTopology, newConsistentHash, availabilityMode, state, totalOrder, distributed);
       }
 
       @Override

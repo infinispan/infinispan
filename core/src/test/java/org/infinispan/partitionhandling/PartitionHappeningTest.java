@@ -18,7 +18,7 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
    public void testPartitionHappening() throws Throwable {
 
-      final List<ViewChangedHandler> listeners = new ArrayList<ViewChangedHandler>();
+      final List<ViewChangedHandler> listeners = new ArrayList<>();
       for (int i = 0; i < caches().size(); i++) {
          ViewChangedHandler listener = new ViewChangedHandler();
          cache(i).getCacheManager().addListener(listener);
@@ -111,7 +111,7 @@ public class PartitionHappeningTest extends BasePartitionHandlingTest {
 
    public boolean clusterAndChFormed(int cacheIndex, int memberCount) {
       return advancedCache(cacheIndex).getRpcManager().getTransport().getMembers().size() == memberCount &&
-            advancedCache(cacheIndex).getDistributionManager().getConsistentHash().getMembers().size() == memberCount;
+            advancedCache(cacheIndex).getDistributionManager().getWriteConsistentHash().getMembers().size() == memberCount;
    }
 
 }

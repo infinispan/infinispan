@@ -153,7 +153,7 @@ public class TxCleanupServiceTest extends MultipleCacheManagersTest {
    }
 
    private Address owner(Object key) {
-      return advancedCache(0).getDistributionManager().getConsistentHash().locatePrimaryOwner(key);
+      return advancedCache(0).getDistributionManager().getWriteConsistentHash().locatePrimaryOwner(key);
    }
 
 }

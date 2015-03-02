@@ -22,14 +22,13 @@ public interface StateConsumer {
 
    boolean isStateTransferInProgressForKey(Object key);
 
-   /**
-    * Receive notification of topology changes. StateRequestCommands are issued for segments that are new to this member
-    * and the segments that are no longer owned are discarded.
-    *
-    * @param cacheTopology
-    * @param isRebalance
-    */
-   void onTopologyUpdate(CacheTopology cacheTopology, boolean isRebalance);
+   void onRebalanceStart(CacheTopology cacheTopology);
+
+   void onReadConsistentHashUpdate(CacheTopology cacheTopology);
+
+   void onWriteConsistentHashUpdate(CacheTopology cacheTopology);
+
+   void onConsistentHashUpdate(CacheTopology cacheTopology);
 
    void applyState(Address sender, int topologyId, Collection<StateChunk> stateChunks);
 

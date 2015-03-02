@@ -224,7 +224,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
          String value;
          String keyToChange = findKeyBasedOnOwnership(expectedValues.keySet(),
-               cache.getAdvancedCache().getDistributionManager().getConsistentHash(),
+               cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash(),
                shouldBePrimaryOwner, cache.getCacheManager().getAddress());
 
          switch (operation) {
@@ -294,7 +294,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
          String value;
          String keyToChange = findKeyBasedOnOwnership(expectedValues.keySet(),
-                                                      cache.getAdvancedCache().getDistributionManager().getConsistentHash(),
+                                                      cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash(),
                                                       shouldBePrimaryOwner, cache.getCacheManager().getAddress());
 
          switch (operation) {
@@ -466,7 +466,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       String value;
       String keyToChange = findKeyBasedOnOwnership(expectedValues.keySet(),
-                                                   cache.getAdvancedCache().getDistributionManager().getConsistentHash(),
+                                                   cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash(),
                                                    shouldBePrimaryOwner, cache.getCacheManager().getAddress());
 
       switch (operation) {
@@ -485,7 +485,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       }
 
       CheckPoint checkPoint = new CheckPoint();
-      int segmentToUse = cache.getAdvancedCache().getDistributionManager().getConsistentHash().getSegment(keyToChange);
+      int segmentToUse = cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash().getSegment(keyToChange);
 
       // do the operation, which should put it in the queue.
       ClusterCacheNotifier notifier = waitUntilClosingSegment(cache, segmentToUse, checkPoint);

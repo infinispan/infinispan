@@ -292,7 +292,7 @@ public class OngoingTransactionsAndJoinTest extends MultipleCacheManagersTest {
                   }
                   notifyRehashStarted = true;
                   break;
-               case CH_UPDATE:
+               case READ_CH_UPDATE:
                   // TODO Use another type instead, e.g. REBASE_END
                   joinEnded.countDown();
                   break;

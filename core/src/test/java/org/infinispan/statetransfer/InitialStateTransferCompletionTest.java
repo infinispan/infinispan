@@ -92,7 +92,7 @@ public class InitialStateTransferCompletionTest extends MultipleCacheManagersTes
 
       // check the current topology
       CacheTopology cacheTopology = cache2.getAdvancedCache().getComponentRegistry().getStateTransferManager().getCacheTopology();
-      assertNull(cacheTopology.getPendingCH());
+      assertEquals(cacheTopology.getWriteConsistentHash(), cacheTopology.getReadConsistentHash());
       ConsistentHash readCh = cacheTopology.getReadConsistentHash();
       assertTrue(readCh.getMembers().contains(address(2)));
 

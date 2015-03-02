@@ -33,7 +33,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
       for (int i = 0; i < 100; i++) keys[i] = Integer.toHexString(r.nextInt());
 
       for (String key : keys) {
-         List<Address> owners = new ArrayList<Address>();
+         List<Address> owners = new ArrayList<>();
          for (Cache<Object, String> c : caches) {
             boolean isOwner = isOwner(c, key);
             if (isOwner) owners.add(addressOf(c));
@@ -185,7 +185,7 @@ public class DistSyncFuncTest extends BaseDistFunctionalTest<Object, String> {
 
       assertOnAllCachesAndOwnership("k1", "value");
 
-      assert !nonOwner.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class).getLocality("k1").isLocal();
+      assert !nonOwner.getAdvancedCache().getDistributionManager().getLocality("k1", LookupMode.WRITE).isLocal();
       retval = nonOwner.replace("k1", "value", "value2");
       asyncWait("k1", ReplaceCommand.class, getSecondNonOwner("k1"));
       if (testRetVals) assert retval : "Should have replaced";

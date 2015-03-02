@@ -5,6 +5,7 @@ import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -133,9 +134,10 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
 
       CacheTopology duringJoinTopology = ltm0.getCacheTopology(CACHE_NAME);
       assertEquals(duringJoinTopologyId, duringJoinTopology.getTopologyId());
-      assertNotNull(duringJoinTopology.getPendingCH());
-      log.tracef("Rebalance started. Found key %s with current owners %s and pending owners %s", key,
-            duringJoinTopology.getCurrentCH().locateOwners(key), duringJoinTopology.getPendingCH().locateOwners(key));
+      assertFalse(duringJoinTopology.getReadConsistentHash().equals(duringJoinTopology.getWriteConsistentHash()));
+
+      log.tracef("Rebalance started. Found key %s with read CH owners %s and write CH owners %s", key,
+                 duringJoinTopology.getReadConsistentHash().locateOwners(key), duringJoinTopology.getWriteConsistentHash().locateOwners(key));
 
       // Every operation command will be blocked before reaching the distribution interceptor on cache0 (the originator)
       CyclicBarrier beforeCache0Barrier = new CyclicBarrier(2);
@@ -219,7 +221,7 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
          throws InterruptedException {
       LocalTopologyManager component = TestingUtil.extractGlobalComponent(manager, LocalTopologyManager.class);
       LocalTopologyManager spyLtm = Mockito.spy(component);
-      doAnswer(new Answer() {
+      Answer<Object> answer = new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
             CacheTopology topology = (CacheTopology) invocation.getArguments()[1];
@@ -227,12 +229,17 @@ public class NonTxPrimaryOwnerBecomingNonOwnerTest extends MultipleCacheManagers
             if (topology.getTopologyId() != currentTopologyId) {
                checkPoint.trigger("pre_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress());
                checkPoint.await("allow_topology_" + topology.getTopologyId() + "_on_" + manager.getAddress(),
-                     10, TimeUnit.SECONDS);
+                                10, TimeUnit.SECONDS);
             }
             return invocation.callRealMethod();
          }
-      }).when(spyLtm).handleTopologyUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt(), any(Address.class));
+      };
+      doAnswer(answer).when(spyLtm).handleRebalance(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
+                                                    any(ConsistentHash.class), anyInt(), any(Address.class));
+      doAnswer(answer).when(spyLtm).handleReadCHUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
+                                                       any(AvailabilityMode.class), anyInt(), any(Address.class));
+      doAnswer(answer).when(spyLtm).handleWriteCHUpdate(eq(CacheContainer.DEFAULT_CACHE_NAME), any(CacheTopology.class),
+                                                        any(AvailabilityMode.class), anyInt(), any(Address.class));
       TestingUtil.extractGlobalComponentRegistry(manager).registerComponent(spyLtm, LocalTopologyManager.class);
    }
 }

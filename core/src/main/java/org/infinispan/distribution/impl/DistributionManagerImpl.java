@@ -2,6 +2,7 @@ package org.infinispan.distribution.impl;
 
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -30,6 +31,7 @@ import java.util.*;
  */
 @MBean(objectName = "DistributionManager", description = "Component that handles distribution of content across a cluster")
 public class DistributionManagerImpl implements DistributionManager {
+
    private static final Log log = LogFactory.getLog(DistributionManagerImpl.class);
    private static final boolean trace = log.isTraceEnabled();
 
@@ -61,14 +63,16 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Override
-   public DataLocality getLocality(Object key) {
-      boolean transferInProgress = stateTransferManager.isStateTransferInProgressForKey(key);
-      CacheTopology topology = stateTransferManager.getCacheTopology();
+   public DataLocality getLocality(Object key, LookupMode lookupMode) {
+      assertNonNull(lookupMode);
+
+      final boolean transferInProgress = isAffectedByRehash(key);
+      final CacheTopology topology = stateTransferManager.getCacheTopology();
 
       // Null topology means state transfer has not occurred,
       // hence data should be stored locally.
-      boolean local = topology == null
-            || topology.getWriteConsistentHash().isKeyLocalToNode(getAddress(), key);
+      final boolean local = topology == null
+            || lookupMode.getConsistentHash(topology).isKeyLocalToNode(getAddress(), key);
 
       if (transferInProgress) {
          if (local) {
@@ -86,23 +90,18 @@ public class DistributionManagerImpl implements DistributionManager {
    }
 
    @Override
-   public List<Address> locate(Object key) {
-      return getConsistentHash().locateOwners(key);
+   public List<Address> locate(Object key, LookupMode lookupMode) {
+      return getConsistentHashFor(lookupMode).locateOwners(key);
    }
 
    @Override
-   public Address getPrimaryLocation(Object key) {
-      return getConsistentHash().locatePrimaryOwner(key);
+   public Address getPrimaryLocation(Object key, LookupMode lookupMode) {
+      return getConsistentHashFor(lookupMode).locatePrimaryOwner(key);
    }
 
    @Override
-   public Set<Address> locateAll(Collection<Object> keys) {
-      return getConsistentHash().locateAllOwners(keys);
-   }
-
-   @Override
-   public ConsistentHash getConsistentHash() {
-      return getWriteConsistentHash();
+   public Set<Address> locateAll(Collection<Object> keys, LookupMode lookupMode) {
+      return getConsistentHashFor(lookupMode).locateAllOwners(keys);
    }
 
    @Override
@@ -146,7 +145,7 @@ public class DistributionManagerImpl implements DistributionManager {
          displayName = "Is key local?"
    )
    public boolean isLocatedLocally(@Parameter(name = "key", description = "Key to query") String key) {
-      return getLocality(key).isLocal();
+      return getLocality(key, LookupMode.READ).isLocal() || getLocality(key, LookupMode.WRITE).isLocal();
    }
 
    @ManagedOperation(
@@ -155,8 +154,21 @@ public class DistributionManagerImpl implements DistributionManager {
          displayName = "Locate key"
    )
    public List<String> locateKey(@Parameter(name = "key", description = "Key to locate") String key) {
-      List<String> l = new LinkedList<String>();
-      for (Address a : locate(key)) l.add(a.toString());
-      return l;
+      List<String> ownerList = new LinkedList<>();
+      for (Address owner : locate(key, LookupMode.WRITE)) {
+         ownerList.add(String.valueOf(owner));
+      }
+      return ownerList;
+   }
+
+   private ConsistentHash getConsistentHashFor(LookupMode lookupMode) {
+      assertNonNull(lookupMode);
+      return lookupMode.getConsistentHash(stateTransferManager.getCacheTopology());
+   }
+
+   private static void assertNonNull(LookupMode lookupMode) {
+      if (lookupMode == null) {
+         throw new NullPointerException("LookupMode can't be null.");
+      }
    }
 }

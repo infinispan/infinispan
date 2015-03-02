@@ -16,6 +16,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CollectionKeyFilter;
@@ -360,7 +361,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             Collection<T> keysToMap) {
       Map<Address, List<T>> addressToKey = new HashMap<Address, List<T>>();
       for (T key : keysToMap) {
-         Address ownerOfKey = dm.getPrimaryLocation(new IntermediateKey<T>(taskId, key));
+         Address ownerOfKey = dm.getPrimaryLocation(new IntermediateKey<T>(taskId, key), LookupMode.READ);
          List<T> keysAtNode = addressToKey.get(ownerOfKey);
          if (keysAtNode == null) {
             keysAtNode = new ArrayList<T>();
@@ -371,11 +372,10 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return addressToKey;
    }
 
-   protected <KIn> Set<KIn> filterLocalPrimaryOwner(Set<KIn> nodeLocalKeys, DistributionManager dm) {
+   protected <KIn> Set<KIn> filterLocalPrimaryOwner(Set<KIn> nodeLocalKeys) {
       Set<KIn> selectedKeys = new HashSet<KIn>();
       for (KIn key : nodeLocalKeys) {
-         Address primaryLocation = dm != null ? dm.getPrimaryLocation(key) : cdl.getAddress();
-         if (primaryLocation != null && primaryLocation.equals(cdl.getAddress())) {
+         if (cdl.localNodeIsPrimaryOwner(key, LookupMode.READ)) {
             selectedKeys.add(key);
          }
       }
@@ -617,7 +617,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       void emitReduced(K key, V value);
    }
 
-   private final class SynchronizedCollector<KOut, VOut> implements CollectableCollector<KOut, VOut> {
+   private static class SynchronizedCollector<KOut, VOut> implements CollectableCollector<KOut, VOut> {
 
       private CollectableCollector<KOut, VOut> delegate;
 

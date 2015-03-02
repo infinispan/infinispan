@@ -232,7 +232,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    public void waitForView(int viewId) throws InterruptedException {
       if (channel == null)
          return;
-      log.tracef("Waiting on view %d being accepted", viewId);
+      log.tracef("Waiting on view %d being accepted. current view is %d", viewId, getViewId());
       viewUpdateLock.lock();
       try {
          while (channel != null && getViewId() < viewId) {
@@ -392,7 +392,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             } catch (IOException io) {
                //ignore, we check confs later for various states
             }
-            if (confs.isEmpty()) {
+            if (confs == null || confs.isEmpty()) {
                throw new CacheConfigurationException(CONFIGURATION_FILE
                         + " property specifies value " + cfg + " that could not be read!",
                         new FileNotFoundException(cfg));
@@ -656,7 +656,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          MergeView mv = (MergeView) newView;
 
          final Address address = getAddress();
-         final int viewId = (int) newView.getVid().getId();
+         final int viewId = (int) newView.getViewId().getId();
          notifier.notifyMerge(members, oldMembers, address, viewId, getSubgroups(mv.getSubgroups()));
       }
 

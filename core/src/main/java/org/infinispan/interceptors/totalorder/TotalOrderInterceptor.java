@@ -8,6 +8,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderPrepareCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -198,7 +199,7 @@ public class TotalOrderInterceptor extends CommandInterceptor {
       //prepare can be send more than once if we have a state transfer
       context.clearLockedKeys();
       for (Object k : affectedKeys) {
-         if (clusteringDependentLogic.localNodeIsPrimaryOwner(k)) {
+         if (clusteringDependentLogic.localNodeIsPrimaryOwner(k, LookupMode.WRITE)) {
             context.addLockedKey(k);
          }
       }

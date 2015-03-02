@@ -22,6 +22,9 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -54,6 +57,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private boolean isPessimisticCache;
    private boolean useClusteredWriteSkewCheck;
+   private DistributionManager distributionManager;
+
+   @Inject
+   public void inject(DistributionManager distributionManager) {
+      this.distributionManager = distributionManager;
+   }
 
    private static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
       @Override
@@ -181,8 +190,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
          //In Pessimistic mode, the delta composite keys were sent to the wrong owner and never locked.
-         final Collection<Address> affectedNodes = cdl.getOwners(filterDeltaCompositeKeys(command.getKeys()));
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes == null ? dm.getConsistentHash().getMembers() : affectedNodes);
+         final Collection<Address> affectedNodes = cdl.getOwners(filterDeltaCompositeKeys(command.getKeys()), LookupMode.WRITE);
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes == null ? rpcManager.getMembers() : affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
          rpcManager.invokeRemotely(affectedNodes, command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
       }
@@ -205,11 +214,11 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
          boolean affectsAllNodes = ctx.getCacheTransaction().hasModification(ClearCommand.class);
-         Collection<Address> recipients = affectsAllNodes ? dm.getWriteConsistentHash().getMembers() :
-               cdl.getOwners(getAffectedKeysFromContext(ctx));
+         Collection<Address> recipients = affectsAllNodes ? rpcManager.getMembers() :
+               cdl.getOwners(getAffectedKeysFromContext(ctx), LookupMode.WRITE);
          prepareOnAffectedNodes(ctx, command, recipients, defaultSynchronous);
 
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients == null ? rpcManager.getMembers() : recipients);
       }
       return retVal;
    }
@@ -242,9 +251,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private Collection<Address> getCommitNodes(TxInvocationContext ctx) {
       LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
-      Collection<Address> affectedNodes = cdl.getOwners(getAffectedKeysFromContext(ctx));
-      List<Address> members = dm.getConsistentHash().getMembers();
-      return localTx.getCommitNodes(affectedNodes, rpcManager.getTopologyId(), members);
+      Collection<Address> affectedNodes = cdl.getOwners(getAffectedKeysFromContext(ctx), LookupMode.WRITE);
+      return localTx.getCommitNodes(affectedNodes, rpcManager.getTopologyId(), rpcManager.getMembers());
    }
 
    private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command) throws TimeoutException, InterruptedException {
@@ -261,12 +269,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {
       // Note: the primary owner always already has the data, so this method is always going to return false
-      if (useClusteredWriteSkewCheck && ctx.isInTxScope() && dm.isRehashInProgress()) {
+      if (useClusteredWriteSkewCheck && ctx.isInTxScope() && distributionManager.isRehashInProgress()) {
          for (Object key : cmd.getAffectedKeys()) {
             // TODO Dan: Do we need a special check for total order?
-            boolean shouldPerformWriteSkewCheck = cdl.localNodeIsPrimaryOwner(key);
+            boolean shouldPerformWriteSkewCheck = cdl.localNodeIsPrimaryOwner(key, LookupMode.WRITE);
             // TODO Dan: remoteGet() already checks if the key is available locally or not
-            if (shouldPerformWriteSkewCheck && dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) return true;
+            if (shouldPerformWriteSkewCheck && distributionManager.isAffectedByRehash(key) && !dataContainer.containsKey(key)) return true;
          }
       }
       return false;
@@ -298,7 +306,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private Object localGet(InvocationContext ctx, Object key, boolean isWrite,
          FlagAffectedCommand command, boolean isGetCacheEntry) throws Throwable {
-      InternalCacheEntry ice = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
+      InternalCacheEntry ice = fetchValueLocallyIfAvailable(distributionManager.getReadConsistentHash(), key);
       if (ice != null) {
          if (isWrite && isPessimisticCache && ctx.isInTxScope()) {
             ((TxInvocationContext) ctx).addAffectedKey(key);
@@ -329,7 +337,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private InternalCacheEntry remoteGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
-      if (ctx.isOriginLocal() && !isValueAvailableLocally(dm.getReadConsistentHash(), key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
+      if (ctx.isOriginLocal() && !isValueAvailableLocally(distributionManager.getReadConsistentHash(), key) ||
+            distributionManager.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
          if (trace) log.tracef("Doing a remote get for key %s", key);
 
          boolean acquireRemoteLock = false;
@@ -362,7 +371,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             return ice;
          }
       } else {
-         if (trace) log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
+         if (trace) log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1. Owners are %s",
+                               key, rpcManager.getAddress(), cdl.getOwners(key, LookupMode.READ));
       }
       return null;
    }

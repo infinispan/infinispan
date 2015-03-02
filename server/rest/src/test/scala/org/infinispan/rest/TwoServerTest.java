@@ -11,6 +11,7 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
@@ -101,7 +102,7 @@ public class TwoServerTest extends RestServerTestBase {
       assertEquals(get.getStatusCode(), HttpServletResponse.SC_OK);
       Header po = get.getResponseHeader("Cluster-Primary-Owner");
       assertNotNull(po);
-      Address primaryLocation = getCacheManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).getAdvancedCache().getDistributionManager().getPrimaryLocation("testExtendedHeaders");
+      Address primaryLocation = getCacheManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME).getAdvancedCache().getDistributionManager().getPrimaryLocation("testExtendedHeaders", LookupMode.WRITE);
       assertEquals(primaryLocation.toString(), po.getValue());
       Header sa = get.getResponseHeader("Cluster-Server-Address");
       assertNotNull(sa);

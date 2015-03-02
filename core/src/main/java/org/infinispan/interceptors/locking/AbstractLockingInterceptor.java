@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.concurrent.TimeoutException;
@@ -31,7 +32,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    protected ClusteringDependentLogic cdl;
 
    @Inject
-   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory,
+   public void setDependencies(LockManager lockManager, DataContainer<Object, Object> dataContainer, EntryFactory entryFactory,
                                ClusteringDependentLogic cdl) {
       this.lockManager = lockManager;
       this.dataContainer = dataContainer;
@@ -78,7 +79,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
       Object[] keys = command.getKeys();
       try {
          if (keys != null && keys.length >= 1) {
-            ArrayList<Object> keysCopy = new ArrayList<Object>(Arrays.asList(keys));
+            ArrayList<Object> keysCopy = new ArrayList<>(Arrays.asList(keys));
             boolean skipLocking = hasSkipLocking(command);
             for (Object key : command.getKeys()) {
                try {
@@ -112,7 +113,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
          return false;
       if (cacheConfiguration.clustering().cacheMode() == CacheMode.LOCAL)
          return true;
-      boolean shouldLock = cdl.localNodeIsPrimaryOwner(key);
+      boolean shouldLock = cdl.localNodeIsPrimaryOwner(key, LookupMode.WRITE);
       getLog().tracef("Are (%s) we the lock owners for key '%s'? %s", cdl.getAddress(), key, shouldLock);
       return shouldLock;
    }

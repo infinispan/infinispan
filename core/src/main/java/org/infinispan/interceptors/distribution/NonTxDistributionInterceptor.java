@@ -14,6 +14,9 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
@@ -40,6 +43,13 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private static Log log = LogFactory.getLog(NonTxDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+
+   private DistributionManager distributionManager;
+
+   @Inject
+   public void inject(DistributionManager distributionManager) {
+      this.distributionManager = distributionManager;
+   }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
@@ -69,20 +79,20 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          Object key = command.getKey();
          if (needsRemoteGet(ctx, command)) {
             InternalCacheEntry remoteEntry = remoteGetCacheEntry(ctx, key, command);
-            returnValue = computeGetReturn(remoteEntry, command, returnEntry);
+            returnValue = computeGetReturn(remoteEntry, returnEntry);
          }
          if (returnValue == null) {
-            InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
+            InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(distributionManager.getReadConsistentHash(), key);
             if (localEntry != null) {
                wrapInternalCacheEntry(localEntry, ctx, key, false, command);
             }
-            returnValue = computeGetReturn(localEntry, command, returnEntry);
+            returnValue = computeGetReturn(localEntry, returnEntry);
          }
       }
       return returnValue;
    }
 
-   private Object computeGetReturn(InternalCacheEntry entry, AbstractDataCommand command, boolean returnEntry) {
+   private Object computeGetReturn(InternalCacheEntry entry, boolean returnEntry) {
       if (!returnEntry && entry != null)
          return entry.getValue();
       return entry;
@@ -96,9 +106,9 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
-         Set<Address> primaryOwners = new HashSet<Address>(command.getAffectedKeys().size());
+         Set<Address> primaryOwners = new HashSet<>(command.getAffectedKeys().size());
          for (Object k : command.getAffectedKeys()) {
-            primaryOwners.add(cdl.getPrimaryOwner(k));
+            primaryOwners.add(cdl.getPrimaryOwner(k, LookupMode.WRITE));
          }
          primaryOwners.remove(rpcManager.getAddress());
          if (!primaryOwners.isEmpty()) {
@@ -108,13 +118,13 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
       if (!command.isForwarded()) {
          //I need to forward this to all the nodes that are secondary owners
-         Set<Object> keysIOwn = new HashSet<Object>(command.getAffectedKeys().size());
+         Set<Object> keysIOwn = new HashSet<>(command.getAffectedKeys().size());
          for (Object k : command.getAffectedKeys()) {
-            if (cdl.localNodeIsPrimaryOwner(k)) {
+            if (cdl.localNodeIsPrimaryOwner(k, LookupMode.WRITE)) {
                keysIOwn.add(k);
             }
          }
-         Collection<Address> backupOwners = cdl.getOwners(keysIOwn);
+         Collection<Address> backupOwners = cdl.getOwners(keysIOwn, LookupMode.WRITE);
          if (backupOwners == null || !backupOwners.isEmpty()) {
             command.setFlags(Flag.SKIP_LOCKING);
             command.setForwarded(true);
@@ -149,7 +159,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {
       for (Object k : keygen.getKeys()) {
-         if (cdl.localNodeIsPrimaryOwner(k)) {
+         if (cdl.localNodeIsPrimaryOwner(k, LookupMode.READ)) {
             // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
             // earlier when the EntryWrappingInterceptor executed during current invocation context but it should be now.
             localGetCacheEntry(ctx, k, true, command);
@@ -192,7 +202,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       // Note: This should not be necessary, as the primary owner always has the previous value
       if (isNeedReliableReturnValues(command) || command.isConditional()) {
          for (Object key : command.getAffectedKeys()) {
-            if (cdl.localNodeIsPrimaryOwner(key)) return true;
+            if (cdl.localNodeIsPrimaryOwner(key, LookupMode.WRITE)) return true;
          }
       }
       return false;

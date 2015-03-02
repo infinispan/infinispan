@@ -25,7 +25,7 @@ import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.entries.InternalCacheEntry
 import org.infinispan.rest.configuration.ExtendedHeaders
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport
-import org.infinispan.distribution.DistributionManager
+import org.infinispan.distribution.{LookupMode, DistributionManager}
 import org.infinispan.remoting.transport.Address
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.metadata.Metadata
@@ -585,7 +585,7 @@ class ManagerInstance(instance: EmbeddedCacheManager) {
 
    def getPrimaryOwner(cacheName: String, key: String): String =
       getCache(cacheName).getDistributionManager match {
-         case dm: DistributionManager => dm.getPrimaryLocation(key).toString
+         case dm: DistributionManager => dm.getPrimaryLocation(key, LookupMode.WRITE).toString
          case null => null
       }
 

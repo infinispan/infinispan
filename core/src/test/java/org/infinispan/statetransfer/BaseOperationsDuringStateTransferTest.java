@@ -113,10 +113,10 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
 
       // node B is not a member yet and rebalance has not started yet
       CacheTopology cacheTopology = advancedCache(1).getComponentRegistry().getStateTransferManager().getCacheTopology();
-      assertNull(cacheTopology.getPendingCH());
       assertTrue(cacheTopology.getMembers().contains(address(0)));
       assertFalse(cacheTopology.getMembers().contains(address(1)));
-      assertFalse(cacheTopology.getCurrentCH().getMembers().contains(address(1)));
+      assertFalse(cacheTopology.getReadConsistentHash().getMembers().contains(address(1)));
+      assertFalse(cacheTopology.getWriteConsistentHash().getMembers().contains(address(1)));
 
       // no keys should be present on node B yet because state transfer is blocked
       assertTrue(cache(1).keySet().isEmpty());
@@ -195,10 +195,10 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
 
       // node B is not a member yet and rebalance has not started yet
       CacheTopology cacheTopology = advancedCache(1).getComponentRegistry().getStateTransferManager().getCacheTopology();
-      assertNull(cacheTopology.getPendingCH());
       assertTrue(cacheTopology.getMembers().contains(address(0)));
       assertFalse(cacheTopology.getMembers().contains(address(1)));
-      assertFalse(cacheTopology.getCurrentCH().getMembers().contains(address(1)));
+      assertFalse(cacheTopology.getReadConsistentHash().getMembers().contains(address(1)));
+      assertFalse(cacheTopology.getWriteConsistentHash().getMembers().contains(address(1)));
 
       // no keys should be present on node B yet because state transfer is blocked
       assertTrue(cache(1).keySet().isEmpty());
@@ -277,10 +277,10 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
 
       // node B is not a member yet and rebalance has not started yet
       CacheTopology cacheTopology = advancedCache(1).getComponentRegistry().getStateTransferManager().getCacheTopology();
-      assertNull(cacheTopology.getPendingCH());
       assertTrue(cacheTopology.getMembers().contains(address(0)));
       assertFalse(cacheTopology.getMembers().contains(address(1)));
-      assertFalse(cacheTopology.getCurrentCH().getMembers().contains(address(1)));
+      assertFalse(cacheTopology.getReadConsistentHash().getMembers().contains(address(1)));
+      assertFalse(cacheTopology.getWriteConsistentHash().getMembers().contains(address(1)));
 
       // no keys should be present on node B yet because state transfer is blocked
       assertTrue(cache(1).keySet().isEmpty());

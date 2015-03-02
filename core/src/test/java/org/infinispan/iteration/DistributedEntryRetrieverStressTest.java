@@ -117,8 +117,8 @@ public class DistributedEntryRetrieverStressTest extends MultipleCacheManagersTe
                            seenValues.put(entry.getKey(), entry.getValue());
                         }
                         if (seenValues.size() != masterValues.size()) {
-                           Map<Integer, Set<Map.Entry<Integer, Integer>>> target = generateEntriesPerSegment(cache.getAdvancedCache().getDistributionManager().getConsistentHash(), masterValues.entrySet());
-                           Map<Integer, Set<Map.Entry<Integer, Integer>>> actual = generateEntriesPerSegment(cache.getAdvancedCache().getDistributionManager().getConsistentHash(), seenValues.entrySet());
+                           Map<Integer, Set<Map.Entry<Integer, Integer>>> target = generateEntriesPerSegment(cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash(), masterValues.entrySet());
+                           Map<Integer, Set<Map.Entry<Integer, Integer>>> actual = generateEntriesPerSegment(cache.getAdvancedCache().getDistributionManager().getWriteConsistentHash(), seenValues.entrySet());
                            for (Map.Entry<Integer, Set<Map.Entry<Integer, Integer>>> entry : target.entrySet()) {
                               Set<Map.Entry<Integer, Integer>> entrySet = entry.getValue();
                               Set<Map.Entry<Integer, Integer>> actualEntries = actual.get(entry.getKey());

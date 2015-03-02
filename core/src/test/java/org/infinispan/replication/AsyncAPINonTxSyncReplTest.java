@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.data.Key;
@@ -215,7 +216,7 @@ public class AsyncAPINonTxSyncReplTest extends MultipleCacheManagersTest {
 
    private boolean isLockOwner(Cache cache, Object key) {
       AdvancedCache advancedCache = cache.getAdvancedCache();
-      Address primaryLocation = advancedCache.getDistributionManager().getPrimaryLocation(key);
+      Address primaryLocation = advancedCache.getDistributionManager().getPrimaryLocation(key, LookupMode.WRITE);
       Address localAddress = advancedCache.getRpcManager().getAddress();
       boolean isOwner = primaryLocation.equals(localAddress);
       log.tracef("Is %s lock owner? %s", localAddress, isOwner);

@@ -51,7 +51,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
 
       int indexToKill = -1;
       //this tx spreads over 3 out of 4 nodes, let's find one that has the tx and kill it
-      final List<Address> locate = advancedCache(0).getDistributionManager().getConsistentHash().locateOwners(key);
+      final List<Address> locate = advancedCache(0).getDistributionManager().getWriteConsistentHash().locateOwners(key);
       for (int i = 3; i > 0; i--) {
          if (locate.contains(address(i))) {
             indexToKill = i;
@@ -95,7 +95,7 @@ public class ParticipantFailsAfterPrepareTest extends MultipleCacheManagersTest 
    }
 
    private List<Cache> getAliveParticipants(int indexToKill) {
-      List<Cache> participants = new ArrayList<Cache>();
+      List<Cache> participants = new ArrayList<>();
       for (int i = 0; i < 4; i++) {
          if (i == indexToKill) continue;
          participants.add(cache(i));

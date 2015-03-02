@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.container.DataContainer;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.metadata.impl.L1Metadata;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -177,7 +178,7 @@ public class L1WriteSynchronizer {
                try {
                   // Now we can update the L1 if there isn't a value already there and we haven't now become a write
                   // owner
-                  if (!dc.containsKey(key) && !cdl.localNodeIsOwner(key)) {
+                  if (!dc.containsKey(key) && !cdl.localNodeIsOwner(key, LookupMode.WRITE)) {
                      log.tracef("Caching remotely retrieved entry for key %s in L1", key);
                      long lifespan = ice.getLifespan() < 0 ? l1Lifespan : Math.min(ice.getLifespan(), l1Lifespan);
                      // Make a copy of the metadata stored internally, adjust

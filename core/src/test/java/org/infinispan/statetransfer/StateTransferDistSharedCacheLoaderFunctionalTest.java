@@ -68,14 +68,12 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       // Want to enable eviction, but don't actually evict anything
       configurationBuilder.eviction().strategy(EvictionStrategy.LIRS).maxEntries(INSERTION_COUNT * 10);
 
-      EmbeddedCacheManager cm = addClusterEnabledCacheManager(configurationBuilder, new TransportFlags().withMerge(true));
-      return cm;
+      return addClusterEnabledCacheManager(configurationBuilder, new TransportFlags().withMerge(true));
    }
 
    public void testSharedFetchedStoreEntriesUnaffected() throws Exception {
-      Cache<Object, Object> cache1, cache2, cache3;
       EmbeddedCacheManager cm1 = createCacheManager();
-      cache1 = cm1.getCache(cacheName);
+      final Cache<Object, Object> cache1 = cm1.getCache(cacheName);
       writeLargeInitialData(cache1);
 
       assertEquals(INSERTION_COUNT, getDataContainerSize(cache1));
@@ -83,7 +81,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       verifyInitialDataOnLoader(cache1);
 
       JoiningNode node = new JoiningNode(createCacheManager());
-      cache2 = node.getCache(cacheName);
+      final Cache<Object, Object> cache2 = node.getCache(cacheName);
       node.waitForJoin(60000, cache1, cache2);
 
       assertEquals(INSERTION_COUNT, getDataContainerSize(cache1));
@@ -92,12 +90,17 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       node.verifyStateTransfer(new CacheLoaderVerifier(cache2));
 
       JoiningNode node2 = new JoiningNode(createCacheManager());
-      cache3 = node2.getCache(cacheName);
+      final Cache<Object, Object> cache3 = node2.getCache(cacheName);
       node2.waitForJoin(60000, cache1, cache2, cache3);
       // Shared cache loader should have all the contents still
       node2.verifyStateTransfer(new CacheLoaderVerifier(cache3));
 
-      assertEquals(INSERTION_COUNT * 2, getDataContainerSize(cache1, cache2, cache3));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return INSERTION_COUNT * 2 == getDataContainerSize(cache1, cache2, cache3);
+         }
+      });
    }
 
    public void testUnsharedNotFetchedStoreEntriesRemovedProperly() throws Exception {
@@ -162,9 +165,8 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
    public void testSharedNotFetchedStoreEntriesRemovedProperly() throws Exception {
       fetchPersistentState.set(false);
 
-      Cache<Object, Object> cache1, cache2, cache3;
       EmbeddedCacheManager cm1 = createCacheManager();
-      cache1 = cm1.getCache(cacheName);
+      final Cache<Object, Object> cache1 = cm1.getCache(cacheName);
       writeLargeInitialData(cache1);
 
       assertEquals(INSERTION_COUNT, cache1.getAdvancedCache().getDataContainer().size());
@@ -172,7 +174,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       verifyInitialDataOnLoader(cache1);
 
       JoiningNode node = new JoiningNode(createCacheManager());
-      cache2 = node.getCache(cacheName);
+      final Cache<Object, Object> cache2 = node.getCache(cacheName);
       node.waitForJoin(60000, cache1, cache2);
 
       assertEquals(INSERTION_COUNT, cache1.getAdvancedCache().getDataContainer().size());
@@ -181,12 +183,17 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       node.verifyStateTransfer(new CacheLoaderCounter(INSERTION_COUNT, cache2));
 
       JoiningNode node2 = new JoiningNode(createCacheManager());
-      cache3 = node2.getCache(cacheName);
+      final Cache<Object, Object> cache3 = node2.getCache(cacheName);
       node2.waitForJoin(60000, cache1, cache2, cache3);
       // Shared cache loader should have all the contents still
       node2.verifyStateTransfer(new CacheLoaderVerifier(cache3));
 
-      assertEquals(INSERTION_COUNT * 2, getDataContainerSize(cache1, cache2, cache3));
+      eventually(new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return INSERTION_COUNT * 2 == getDataContainerSize(cache1, cache2, cache3);
+         }
+      });
    }
 
    protected int getDataContainerSize(Cache<?, ?>... caches) {
@@ -220,10 +227,10 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
 
    public class CacheLoaderCounter implements Callable<Void> {
 
-      private final Cache<Object, Object>[] caches;
+      private final Cache<?, ?>[] caches;
       private final int expectedCount;
 
-      public CacheLoaderCounter(int expectedCount, Cache<Object, Object>... caches) {
+      public CacheLoaderCounter(int expectedCount, Cache<?, ?>... caches) {
          this.caches = caches;
          this.expectedCount = expectedCount;
       }
@@ -231,7 +238,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       @Override
       public Void call() {
          int count = 0;
-         for (Cache<Object, Object> cache : caches) {
+         for (Cache<?, ?> cache : caches) {
             count += ((AdvancedCacheLoader)TestingUtil.getFirstLoader(cache)).size();
          }
          assertEquals(expectedCount, count);
@@ -239,7 +246,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
       }
    }
 
-   protected void verifyInitialDataOnLoader(Cache<Object, Object> c) {
+   protected void verifyInitialDataOnLoader(Cache<?, ?> c) {
       CacheLoader l = TestingUtil.getFirstLoader(c);
       for (int i = 0; i < INSERTION_COUNT; ++i) {
          assertTrue("Didn't contain key " + i, l.contains("key " + i));

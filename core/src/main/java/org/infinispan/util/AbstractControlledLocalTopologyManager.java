@@ -1,16 +1,20 @@
 package org.infinispan.util;
 
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheJoinInfo;
+import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
-import org.infinispan.topology.ManagerStatusResponse;
+import org.infinispan.topology.TopologyState;
+
+import java.util.Map;
 
 /**
  * Class to be extended to allow some control over the local topology manager when testing Infinispan.
@@ -45,22 +49,33 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
-   public final ManagerStatusResponse handleStatusRequest(int viewId) {
+   public final Map<String, CacheStatusResponse> handleStatusRequest(int viewId) {
       return delegate.handleStatusRequest(viewId);
    }
 
    @Override
-   public final void handleTopologyUpdate(String cacheName, CacheTopology cacheTopology,
-         AvailabilityMode availabilityMode, int viewId, Address sender) throws InterruptedException {
+   public final void handleTopologyUpdate(String cacheName, CacheTopology cacheTopology, ConsistentHash newCH, AvailabilityMode availabilityMode, TopologyState state, int viewId, Address sender) throws InterruptedException {
       beforeHandleTopologyUpdate(cacheName, cacheTopology, viewId);
-      delegate.handleTopologyUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender);
+      delegate.handleTopologyUpdate(cacheName, cacheTopology, newCH, availabilityMode, state, viewId, sender);
    }
 
    @Override
-   public final void handleRebalance(String cacheName, CacheTopology cacheTopology, int viewId, Address sender)
+   public final void handleRebalance(String cacheName, CacheTopology cacheTopology, ConsistentHash newCH, int viewId, Address sender)
          throws InterruptedException {
       beforeHandleRebalance(cacheName, cacheTopology, viewId);
-      delegate.handleRebalance(cacheName, cacheTopology, viewId, sender);
+      delegate.handleRebalance(cacheName, cacheTopology, newCH, viewId, sender);
+   }
+
+   @Override
+   public void handleReadCHUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, int viewId, Address sender) throws InterruptedException {
+      beforeHandleReadCHUpdate(cacheName, cacheTopology, viewId);
+      delegate.handleReadCHUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender);
+   }
+
+   @Override
+   public void handleWriteCHUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, int viewId, Address sender) throws InterruptedException {
+      beforeHandleWriteCHUpdate(cacheName, cacheTopology, viewId);
+      delegate.handleWriteCHUpdate(cacheName, cacheTopology, availabilityMode, viewId, sender);
    }
 
    @Override
@@ -120,6 +135,14 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    protected void beforeHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
+      //no-op by default
+   }
+
+   protected void beforeHandleReadCHUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
+      //no-op by default
+   }
+
+   protected void beforeHandleWriteCHUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
       //no-op by default
    }
 

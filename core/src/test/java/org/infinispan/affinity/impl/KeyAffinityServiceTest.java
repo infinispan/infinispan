@@ -44,7 +44,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
    @Test (dependsOnMethods = "testKeysAreCorrectlyCreated")
    public void testConcurrentConsumptionOfKeys() throws InterruptedException {
-      List<KeyConsumer> consumers = new ArrayList<KeyConsumer>();
+      List<KeyConsumer> consumers = new ArrayList<>();
       int keysToConsume = 1000;
       CountDownLatch consumersStart = new CountDownLatch(1);
       for (int i = 0; i < 10; i++) {
@@ -99,7 +99,7 @@ public class KeyAffinityServiceTest extends BaseKeyAffinityServiceTest {
 
    @Test (dependsOnMethods = "testServersDropped")
    public void testCollocatedKey() {
-      ConsistentHash hash = manager(0).getCache(cacheName).getAdvancedCache().getDistributionManager().getConsistentHash();
+      ConsistentHash hash = manager(0).getCache(cacheName).getAdvancedCache().getDistributionManager().getWriteConsistentHash();
       for (int i = 0; i < 1000; i++) {
          List<Address> addresses = hash.locateOwners(i);
          Object collocatedKey = keyAffinityService.getCollocatedKey(i);

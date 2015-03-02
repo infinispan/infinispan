@@ -12,6 +12,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
@@ -90,7 +91,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
          retVal = invokeNextInterceptor(ctx, command);
          long end = timeService.time();
          initStatsIfNecessary(ctx);
-         if (isRemote(command.getKey())) {
+         if (isRemote(command.getKey(), LookupMode.READ)) {
             cacheStatisticManager.increment(NUM_REMOTE_GET, getGlobalTransaction(ctx), ctx.isOriginLocal());
             cacheStatisticManager.add(REMOTE_GET_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                                       getGlobalTransaction(ctx), ctx.isOriginLocal());
@@ -577,7 +578,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
    public double getReplicationDegree() {
       if (distributionManager != null) {
          //distributed mode
-         return distributionManager.getConsistentHash().getNumOwners();
+         return distributionManager.getReadConsistentHash().getNumOwners();
       } else if (rpcManager != null) {
          //replicated or other clustered mode
          return this.rpcManager.getTransport().getMembers().size();
@@ -638,7 +639,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
    public final void dumpStatisticToFile(@Parameter(description = "The file path") String filePath) throws IOException {
       PrintStream stream = null;
       try {
-         stream = new PrintStream(new File(filePath));
+         stream = new PrintStream(new File(filePath), "UTF-8");
          cacheStatisticManager.dumpCacheStatisticsTo(stream);
       } finally {
          if (stream != null) {
@@ -747,7 +748,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
             cacheStatisticManager.increment(NUM_PUT, getGlobalTransaction(ctx), ctx.isOriginLocal());
             cacheStatisticManager.markAsWriteTransaction(getGlobalTransaction(ctx), ctx.isOriginLocal());
          }
-         if (isRemote(key)) {
+         if (isRemote(key, LookupMode.WRITE)) {
             cacheStatisticManager.add(REMOTE_PUT_EXECUTION, timeService.timeDuration(start, end, NANOSECONDS),
                                       getGlobalTransaction(ctx), ctx.isOriginLocal());
             cacheStatisticManager.increment(NUM_REMOTE_PUT, getGlobalTransaction(ctx), ctx.isOriginLocal());
@@ -764,8 +765,8 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
       return null;
    }
 
-   private boolean isRemote(Object key) {
-      return distributionManager != null && !distributionManager.getLocality(key).isLocal();
+   private boolean isRemote(Object key, LookupMode lookupMode) {
+      return distributionManager != null && !distributionManager.getLocality(key, lookupMode).isLocal();
    }
 
    private void replace() {

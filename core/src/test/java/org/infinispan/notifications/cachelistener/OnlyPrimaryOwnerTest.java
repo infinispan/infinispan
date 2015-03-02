@@ -14,6 +14,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -70,17 +71,17 @@ public class OnlyPrimaryOwnerTest {
    private static class MockCDL implements ClusteringDependentLogic {
       boolean isOwner, isPrimaryOwner;
       @Override
-      public boolean localNodeIsOwner(Object key) {
+      public boolean localNodeIsOwner(Object key, LookupMode lookupMode) {
          return isOwner;
       }
 
       @Override
-      public boolean localNodeIsPrimaryOwner(Object key) {
+      public boolean localNodeIsPrimaryOwner(Object key, LookupMode lookupMode) {
          return isPrimaryOwner;
       }
 
       @Override
-      public Address getPrimaryOwner(Object key) {
+      public Address getPrimaryOwner(Object key, LookupMode lookupMode) {
          throw new UnsupportedOperationException();
       }
 
@@ -91,12 +92,12 @@ public class OnlyPrimaryOwnerTest {
       }
 
       @Override
-      public List<Address> getOwners(Collection<Object> keys) {
+      public List<Address> getOwners(Collection<Object> keys, LookupMode lookupMode) {
          throw new UnsupportedOperationException();
       }
 
       @Override
-      public List<Address> getOwners(Object key) {
+      public List<Address> getOwners(Object key, LookupMode lookupMode) {
          throw new UnsupportedOperationException();
       }
 

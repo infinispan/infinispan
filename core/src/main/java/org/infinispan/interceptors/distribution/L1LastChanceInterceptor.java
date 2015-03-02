@@ -13,6 +13,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.L1Manager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
@@ -79,7 +80,7 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
       Object key;
       if (shouldUpdateOnWriteCommand(command) && command.isSuccessful() &&
-            cdl.localNodeIsOwner((key = command.getKey()))) {
+            cdl.localNodeIsOwner(key = command.getKey(), LookupMode.WRITE)) {
          if (trace) {
             log.trace("Sending additional invalidation for requestors if necessary.");
          }
@@ -96,9 +97,9 @@ public class L1LastChanceInterceptor extends BaseRpcInterceptor {
       Object returnValue = invokeNextInterceptor(ctx, command);
       if (shouldUpdateOnWriteCommand(command)) {
          Set<Object> keys = command.getMap().keySet();
-         Set<Object> toInvalidate = new HashSet<Object>(keys.size());
+         Set<Object> toInvalidate = new HashSet<>(keys.size());
          for (Object k : keys) {
-            if (cdl.localNodeIsOwner(k)) {
+            if (cdl.localNodeIsOwner(k, LookupMode.WRITE)) {
                toInvalidate.add(k);
             }
          }

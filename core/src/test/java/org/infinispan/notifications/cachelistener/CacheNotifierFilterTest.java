@@ -4,8 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.filter.CollectionKeyFilter;
-import org.infinispan.filter.KeyFilter;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
@@ -22,13 +20,7 @@ import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.TestingUtil;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -134,8 +126,8 @@ public class CacheNotifierFilterTest extends MultipleCacheManagersTest {
 
       waitForClusterToForm(CACHE_NAME);
 
-      // Adding a node requires 2 topologies x2 for pre/post = 4
-      assertEquals(4, listener.topologyEvents.size());
+      // Adding a node requires 3 topologies x2 for pre/post = 6
+      assertEquals(6, listener.topologyEvents.size());
    }
 
    @Test

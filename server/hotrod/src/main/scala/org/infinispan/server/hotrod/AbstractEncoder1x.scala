@@ -198,7 +198,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       trace("Write hash distribution change response header %s", h)
       val cache = server.getCacheInstance(r.cacheName, server.getCacheManager, false)
       val distManager = cache.getDistributionManager
-      val ch = distManager.getConsistentHash
+      val ch = distManager.getWriteConsistentHash
 
       // This is not quite correct, as the ownership of segments on the 1.0/1.1/1.2 clients is not exactly
       // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)

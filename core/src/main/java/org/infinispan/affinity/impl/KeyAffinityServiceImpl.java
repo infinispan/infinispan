@@ -78,7 +78,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       this.keyGenerator = keyGenerator;
       this.bufferSize = bufferSize;
       if (filter != null) {
-         this.filter = new ConcurrentHashSet<Address>();
+         this.filter = new ConcurrentHashSet<>();
          for (Address address : filter) {
             this.filter.add(address);
          }
@@ -218,9 +218,9 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
       @Override
       public void run() {
          try {
-            while (isStopped == false) {
+            while (!isStopped) {
                keyProducerStartLatch.await();
-               if (isStopped == false) {
+               if (!isStopped) {
                   isActive = true;
                   log.trace("KeyGeneratorWorker marked as ACTIVE");
                   generateKeys();
@@ -327,13 +327,13 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
 
    private Address getAddressForKey(Object key) {
       DistributionManager distributionManager = getDistributionManager();
-      ConsistentHash hash = distributionManager.getConsistentHash();
+      ConsistentHash hash = distributionManager.getReadConsistentHash();
       return hash.locatePrimaryOwner(key);
    }
 
    private boolean isNodeInConsistentHash(Address address) {
       DistributionManager distributionManager = getDistributionManager();
-      ConsistentHash hash = distributionManager.getConsistentHash();
+      ConsistentHash hash = distributionManager.getReadConsistentHash();
       return hash.getMembers().contains(address);
    }
    private DistributionManager getDistributionManager() {
