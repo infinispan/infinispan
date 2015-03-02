@@ -87,8 +87,9 @@ public class TransactionAwareCloseableIterator<K, V, C> extends RemovableEntryIt
                   break;
                }
                
-            } else if ((returnedEntry = filterEntry(iteratedEntry)) != null) {
-               break;
+            } else {
+               // Filter and conversion were already done by the iterator
+               return (CacheEntry<K, C>) iteratedEntry;
             }
          }
       }
