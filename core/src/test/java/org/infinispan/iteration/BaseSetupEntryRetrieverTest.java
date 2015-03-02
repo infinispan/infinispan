@@ -88,7 +88,7 @@ public abstract class BaseSetupEntryRetrieverTest extends MultipleCacheManagersT
          if (value != null && value.length() > beginning + length) {
             return value.substring(beginning, beginning + length);
          } else {
-            return value;
+            throw new IllegalStateException("String should be longer than truncation size!  Possible double conversion performed!");
          }
       }
    }
