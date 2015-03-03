@@ -4,7 +4,6 @@ import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.Converter;
 
-import java.util.Map;
 
 /**
  * A {@link java.lang.Iterable} instance that allows the user to iterate over the entries in the cache.  This

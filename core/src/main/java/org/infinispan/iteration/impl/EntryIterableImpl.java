@@ -9,7 +9,6 @@ import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.iteration.EntryIterable;
 
 import java.util.EnumSet;
-import java.util.Map;
 
 /**
  * This is an implementation that allows for creating new EntryIterable instances by supplying a new converter.
