@@ -1024,11 +1024,6 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.jboss.narayana.jta</groupId>
-         <artifactId>narayana-jta</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging-processor</artifactId>
          <version>${version.jboss.logging.processor}</version>
