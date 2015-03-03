@@ -31,6 +31,7 @@ public class TransactionAwareCloseableIterator<K, V, C> extends RemovableEntryIt
    private final Set<Object> seenContextKeys = new HashSet<>();
    private final KeyValueFilter<? super K, ? super V> filter;
    private final Converter<? super K, ? super V, ? extends C> converter;
+   private final boolean filterAndConvert;
    private final InternalEntryFactory entryFactory;
 
    public TransactionAwareCloseableIterator(CloseableIterator<CacheEntry<K, V>> realIterator,
@@ -40,15 +41,21 @@ public class TransactionAwareCloseableIterator<K, V, C> extends RemovableEntryIt
       super(realIterator, cache, false);
       this.ctx = ctx;
       this.filter = filter;
-      this.converter = checkForKeyValueFilterConverter(filter, converter);
-      this.entryFactory = cache.getAdvancedCache().getComponentRegistry().getComponent(
-            InternalEntryFactory.class);
+      if (filter instanceof KeyValueFilterConverter && (filter == converter || converter == null)) {
+         // perform filtering and conversion in a single step
+         filterAndConvert = true;
+         this.converter = null;
+      } else {
+         filterAndConvert = false;
+         this.converter = converter;
+      }
+      this.entryFactory = cache.getAdvancedCache().getComponentRegistry().getComponent(InternalEntryFactory.class);
       contextEntries = new ArrayList<>(ctx.getLookedUpEntries().values());
       currentValue = getNextFromIterator();
    }
 
    protected CacheEntry<K, V> filterEntry(CacheEntry<K, V> entry) {
-      if (converter == null && filter instanceof KeyValueFilterConverter) {
+      if (filterAndConvert) {
          K key = entry.getKey();
          C converted = ((KeyValueFilterConverter<K, V, C>)filter).filterAndConvert(
                key, entry.getValue(), entry.getMetadata());
@@ -113,17 +120,5 @@ public class TransactionAwareCloseableIterator<K, V, C> extends RemovableEntryIt
          returnedEntry.setValue((V) newValue);
       }
       return (CacheEntry<K, C>) returnedEntry;
-   }
-
-   protected <C> Converter<? super K, ? super V, ? extends C> checkForKeyValueFilterConverter(
-         KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, ? extends C> converter) {
-      Converter<? super K, ? super V, ? extends C> usedConverter;
-      if (filter == converter && filter instanceof KeyValueFilterConverter) {
-         // If we were supplied an efficient KeyValueFilterConverter don't use a converter!
-         usedConverter = null;
-      } else {
-         usedConverter = converter;
-      }
-      return usedConverter;
    }
 }
