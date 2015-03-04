@@ -7,7 +7,7 @@ package org.infinispan.filter;
  * @since 6.0
  */
 public class CompositeKeyFilter<K> implements KeyFilter<K> {
-   private KeyFilter<? super K>[] filters;
+   private final KeyFilter<? super K>[] filters;
 
    public CompositeKeyFilter(KeyFilter<? super K>... filters) {
       this.filters = filters;

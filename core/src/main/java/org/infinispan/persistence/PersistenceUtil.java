@@ -32,7 +32,7 @@ public class PersistenceUtil {
    private static Log log = LogFactory.getLog(PersistenceUtil.class);
 
    public static KeyFilter notNull(KeyFilter filter) {
-      return filter == null ? KeyFilter.LOAD_ALL_FILTER : filter;
+      return filter == null ? KeyFilter.ACCEPT_ALL_FILTER : filter;
    }
 
    public static <K, V> int count(AdvancedCacheLoader<K, V> acl, KeyFilter<? super K> filter) {

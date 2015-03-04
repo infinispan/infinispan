@@ -13,12 +13,20 @@ import net.jcip.annotations.ThreadSafe;
  */
 @ThreadSafe
 public interface KeyFilter<K> {
-   public static final KeyFilter LOAD_ALL_FILTER = new KeyFilter() {
+
+   KeyFilter ACCEPT_ALL_FILTER = new KeyFilter() {
       @Override
       public boolean accept(Object key) {
          return true;
       }
    };
+
+   //TODO remove this in 8.0
+   /**
+    * @deprecated Use {@code ACCEPT_ALL_FILTER} instead
+    */
+   KeyFilter LOAD_ALL_FILTER = ACCEPT_ALL_FILTER;
+
    /**
     * @param key key to test
     * @return true if the given key is accepted by this filter.
