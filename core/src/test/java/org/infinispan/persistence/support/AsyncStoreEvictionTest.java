@@ -8,10 +8,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -273,21 +273,6 @@ public class AsyncStoreEvictionTest {
             cache.remove("k1");
 
             assertEquals("cache size must be 0", 0, cache.getAdvancedCache().getDataContainer().size());
-         }
-      });
-   }
-
-   @Test(groups = "unstable", description = "See ISPN-3631")
-   public void testSizeAfterRemoveAndExpiration() throws Exception {
-      TestingUtil.withCacheManager(new CacheCallable(config(false, 1)) {
-         @Override
-         public void call() {
-            cache.put("k1", "v1");
-            cache.remove("k1");
-            int size = cache.size();
-            TestingUtil.sleepThread(200);
-
-            assertFalse("remove only works after expiration", size == 1 && cache.size() == 0);
          }
       });
    }
