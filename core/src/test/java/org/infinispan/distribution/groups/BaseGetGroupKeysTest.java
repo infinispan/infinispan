@@ -109,7 +109,7 @@ public abstract class BaseGetGroupKeysTest extends BaseUtilGroupTest {
 
       final AtomicReference<GroupKey> keyToActivate = new AtomicReference<>(null);
       PersistenceManager persistenceManager = TestingUtil.extractComponent(extractTargetCache(testCache), PersistenceManager.class);
-      persistenceManager.processOnAllStores(KeyFilter.LOAD_ALL_FILTER, new AdvancedCacheLoader.CacheLoaderTask() {
+      persistenceManager.processOnAllStores(KeyFilter.ACCEPT_ALL_FILTER, new AdvancedCacheLoader.CacheLoaderTask() {
          @Override
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
             keyToActivate.compareAndSet(null, (GroupKey) marshalledEntry.getKey());

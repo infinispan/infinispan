@@ -20,7 +20,7 @@ import java.util.Set;
  * @since 7.0
  */
 public class CompositeKeyValueFilter<K, V> implements KeyValueFilter<K, V> {
-   KeyValueFilter<? super K, ? super V> filters[];
+   private final KeyValueFilter<? super K, ? super V> filters[];
 
    public CompositeKeyValueFilter(KeyValueFilter<? super K, ? super V>... filters) {
       this.filters = filters;

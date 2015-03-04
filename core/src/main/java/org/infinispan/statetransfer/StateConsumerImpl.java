@@ -893,7 +893,7 @@ public class StateConsumerImpl implements StateConsumer {
       // Keys that we used to own, and need to be removed from the data container AND the cache stores
       final ConcurrentHashSet<Object> keysToRemove = new ConcurrentHashSet<Object>();
 
-      dataContainer.executeTask(KeyFilter.LOAD_ALL_FILTER, new ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry<Object, Object>>() {
+      dataContainer.executeTask(KeyFilter.ACCEPT_ALL_FILTER, new ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry<Object, Object>>() {
          @Override
          public void apply(Object o, InternalCacheEntry<Object, Object> ice) {
             Object key = ice.getKey();
