@@ -1025,6 +1025,16 @@
                 <xs:documentation>The statement batch size used when modifying this table.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="create-on-start" type="xs:boolean" default="false">
+            <xs:annotation>
+                <xs:documentation>Determines whether database tables should be created by the store on startup.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="drop-on-exit" type="xs:boolean" default="false">
+            <xs:annotation>
+                <xs:documentation>Determines whether database tables should be dropped by the store on shutdown.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="id-column">

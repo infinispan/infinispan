@@ -108,12 +108,12 @@
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" max-entries="1000" />
                <mixed-keyed-jdbc-store datasource="java:jboss/datasources/JdbcDS" dialect="H2" passivation="true" preload="true" purge="false">
-                  <binary-keyed-table prefix="ISPN_MIX_BKT">
+                  <binary-keyed-table prefix="ISPN_MIX_BKT" create-on-start="true" drop-on-exit="false">
                      <id-column name="id" type="VARCHAR" />
                      <data-column name="datum" type="BINARY" />
                      <timestamp-column name="version" type="BIGINT" />
                   </binary-keyed-table>
-                  <string-keyed-table prefix="ISPN_MIX_STR">
+                  <string-keyed-table prefix="ISPN_MIX_STR" create-on-start="true" drop-on-exit="false">
                      <id-column name="id" type="VARCHAR" />
                      <data-column name="datum" type="BINARY" />
                      <timestamp-column name="version" type="BIGINT" />

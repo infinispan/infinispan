@@ -1,4 +1,4 @@
-<subsystem xmlns="urn:infinispan:server:core:7.1">
+<subsystem xmlns="urn:infinispan:server:core:7.2">
     <cache-container name="minimal" default-cache="local">
         <local-cache name="local"/>
     </cache-container>
@@ -83,7 +83,7 @@
             <!-- note all jdbc stores have the same name -->
             <string-keyed-jdbc-store name="jdbc-store" fetch-state="false" datasource="java:jboss/datasources/JdbcDS" dialect="MYSQL" passivation="true" preload="false" purge="false" shared="false">
                 <write-behind flush-lock-timeout="1" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
-                <string-keyed-table prefix="ISPN_MC_SK">
+                <string-keyed-table prefix="ISPN_MC_SK" create-on-start="true" drop-on-exit="true">
                     <id-column name="id" type="VARCHAR"/>
                     <data-column name="datum" type="BINARY"/>
                     <timestamp-column name="version" type="BIGINT"/>

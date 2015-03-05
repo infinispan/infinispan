@@ -335,7 +335,7 @@ public final class InfinispanSubsystemXMLReader_7_2 implements XMLElementReader<
                 CacheResource.START.parseAndSetParameter(value, cache, reader);
                 if (!value.equalsIgnoreCase("EAGER")) {
                    Location location = reader.getLocation();
-                   log.warnf("Ignoring start mode [%s] at [row,col] [%s, %s], as EAGER is the only supported mode", value, 
+                   log.warnf("Ignoring start mode [%s] at [row,col] [%s, %s], as EAGER is the only supported mode", value,
                          location.getLineNumber(), location.getColumnNumber());
                    cache.get(CacheResource.START.getName()).set("EAGER");
                 }
@@ -1451,6 +1451,14 @@ public final class InfinispanSubsystemXMLReader_7_2 implements XMLElementReader<
                     BaseJDBCStoreResource.BATCH_SIZE.parseAndSetParameter(value, table, reader);
                     break;
                 }
+                case CREATE_ON_START: {
+                    BaseJDBCStoreResource.CREATE_ON_START.parseAndSetParameter(value, table, reader);
+                    break;
+                }
+                case DROP_ON_EXIT: {
+                    BaseJDBCStoreResource.DROP_ON_EXIT.parseAndSetParameter(value, table, reader);
+                    break;
+                }
                 default: {
                     throw ParseUtils.unexpectedAttribute(reader, i);
                 }
@@ -1665,13 +1673,13 @@ public final class InfinispanSubsystemXMLReader_7_2 implements XMLElementReader<
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
-                case INDEX: 
+                case INDEX:
                     CacheResource.INDEXING.parseAndSetParameter(value, node, reader);
                     break;
                 case AUTO_CONFIG:
                     CacheResource.INDEXING_AUTO_CONFIG.parseAndSetParameter(value, node, reader);
                     break;
-                default: 
+                default:
                     throw ParseUtils.unexpectedAttribute(reader, i);
             }
         }

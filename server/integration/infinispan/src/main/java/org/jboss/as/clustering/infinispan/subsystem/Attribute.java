@@ -58,10 +58,12 @@ public enum Attribute {
     CLUSTER(ModelKeys.CLUSTER),
     CONCURRENCY_LEVEL(ModelKeys.CONCURRENCY_LEVEL),
     CONNECTION_TIMEOUT(ModelKeys.CONNECTION_TIMEOUT),
+    CREATE_ON_START(ModelKeys.CREATE_ON_START),
     DATASOURCE(ModelKeys.DATASOURCE),
     DEFAULT_CACHE(ModelKeys.DEFAULT_CACHE),
     @Deprecated DEFAULT_CACHE_CONTAINER("default-cache-container"),
     DIALECT(ModelKeys.DIALECT),
+    DROP_ON_EXIT(ModelKeys.DROP_ON_EXIT),
     @Deprecated EAGER_LOCKING("eager-locking"),
     ENABLED(ModelKeys.ENABLED),
     EVICTION_EXECUTOR(ModelKeys.EVICTION_EXECUTOR),
@@ -135,7 +137,7 @@ public enum Attribute {
     TOTAL_ORDER_EXECUTOR(ModelKeys.TOTAL_ORDER_EXECUTOR),
     TYPE(ModelKeys.TYPE),
     @Deprecated VIRTUAL_NODES("virtual-nodes"),
-    WAIT_TIME(ModelKeys.WAIT_TIME)
+    WAIT_TIME(ModelKeys.WAIT_TIME),
     ;
 
     private final String name;
