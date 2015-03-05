@@ -17,4 +17,10 @@ public final class GenericJBossMarshaller extends AbstractJBossMarshaller {
             new DefaultContextClassResolver(this.getClass().getClassLoader()));
    }
 
+   public GenericJBossMarshaller(ClassLoader classLoader) {
+      super();
+      baseCfg.setClassResolver(
+            new DefaultContextClassResolver(classLoader != null ? classLoader : this.getClass().getClassLoader()));
+   }
+
 }
