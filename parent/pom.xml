@@ -91,6 +91,7 @@
       <jboss.snapshots.repo.url>https://repository.jboss.org/nexus/content/repositories/snapshots/</jboss.snapshots.repo.url>
       <packaging>jar</packaging>
       <module.skipComponentMetaDataProcessing>true</module.skipComponentMetaDataProcessing>
+      <module.skipTestComponentMetaDataProcessing>true</module.skipTestComponentMetaDataProcessing>
       <module.metadata.isCoreModule>false</module.metadata.isCoreModule>
       
       <version.ant>1.9.4</version.ant>
@@ -1404,34 +1405,7 @@
                </instructions>
             </configuration>
          </plugin>
-         
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.ant</groupId>
-                    <artifactId>ant</artifactId>
-                    <version>${version.ant}</version>
-                </dependency>
-            </dependencies>
-            <executions>
-               <execution>
-                  <id>copy_serialized_metadata</id>
-                  <phase>process-test-resources</phase>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <configuration>
-                     <skip>${module.skipComponentMetaDataProcessing}</skip>
-                     <target>
-                        <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}" />
-                     </target>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         
+
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-eclipse-plugin</artifactId>
@@ -1563,6 +1537,62 @@
                            <value>${module.metadata.isCoreModule}</value>
                         </systemProperty>
                      </systemProperties>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>serialize_test_component_metadata</id>
+                  <phase>process-test-classes</phase>
+                  <goals>
+                     <goal>java</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${module.skipTestComponentMetaDataProcessing}</skip>
+                     <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
+                     <classpathScope>test</classpathScope>
+                     <arguments>
+                        <argument>${project.build.testOutputDirectory}</argument>
+                        <argument>${basedir}/src/test/resources/${project.artifactId}-tests-component-metadata.dat</argument>
+                     </arguments>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <dependencies>
+               <dependency>
+                  <groupId>org.apache.ant</groupId>
+                  <artifactId>ant</artifactId>
+                  <version>${version.ant}</version>
+               </dependency>
+            </dependencies>
+            <executions>
+               <execution>
+                  <id>copy_serialized_metadata</id>
+                  <phase>process-test-resources</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${module.skipComponentMetaDataProcessing}</skip>
+                     <target>
+                        <copy file="${basedir}/src/main/resources/${project.artifactId}-component-metadata.dat" todir="${project.build.outputDirectory}" />
+                     </target>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>copy_serialized_test_metadata</id>
+                  <phase>process-test-classes</phase>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${module.skipTestComponentMetaDataProcessing}</skip>
+                     <target>
+                        <copy file="${basedir}/src/test/resources/${project.artifactId}-tests-component-metadata.dat" todir="${project.build.testOutputDirectory}" />
+                     </target>
                   </configuration>
                </execution>
             </executions>
