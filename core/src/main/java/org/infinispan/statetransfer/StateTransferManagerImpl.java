@@ -211,8 +211,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
    @Start(priority = 1000)
    @SuppressWarnings("unused")
-   public void waitForInitialStateTransferToComplete() throws InterruptedException {
+   public void waitForInitialStateTransferToComplete() throws Exception {
       if (configuration.clustering().stateTransfer().awaitInitialTransfer()) {
+         if (!localTopologyManager.isRebalancingEnabled()) {
+            initialStateTransferComplete.countDown();
+         }
          if (trace) log.tracef("Waiting for initial state transfer to finish for cache %s on %s", cacheName, rpcManager.getAddress());
          boolean success = initialStateTransferComplete.await(configuration.clustering().stateTransfer().timeout(), TimeUnit.MILLISECONDS);
          if (!success) {

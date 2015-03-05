@@ -378,6 +378,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
 
    @ManagedAttribute(description = "Rebalancing enabled", displayName = "Rebalancing enabled",
          dataType = DataType.TRAIT, writable = true)
+   @Override
    public boolean isRebalancingEnabled() throws Exception {
       ReplicableCommand command = new CacheTopologyControlCommand(null,
             CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), transport.getViewId());

@@ -79,6 +79,11 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
+   public boolean isRebalancingEnabled() throws Exception {
+      return delegate.isRebalancingEnabled();
+   }
+
+   @Override
    public void setRebalancingEnabled(boolean enabled) throws Exception {
       delegate.setRebalancingEnabled(enabled);
    }
