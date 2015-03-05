@@ -140,7 +140,7 @@ public class DistributedEntryRetrieverTest extends BaseClusteredEntryRetrieverTe
       Future<Void> future = fork(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            Iterator<CacheEntry<Object, String>> iter = retriever.retrieveEntries(null, null, null, null);
+            Iterator<CacheEntry<Object, String>> iter = retriever.retrieveEntries(new NoOpFilterConverterWithDependencies<Object, String>(), null, null, null);
             while (iter.hasNext()) {
                Map.Entry<Object, String> entry = iter.next();
                returnQueue.add(entry);
