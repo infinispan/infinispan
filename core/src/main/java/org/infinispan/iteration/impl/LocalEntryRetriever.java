@@ -151,7 +151,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    }
 
    @Override
-   public <C> void startRetrievingValues(UUID identifier, Address origin, Set<Integer> segments,
+   public <C> void startRetrievingValues(UUID identifier, Address origin, Set<Integer> segments, Set<K> keysToFilter,
                                             KeyValueFilter<? super K, ? super V> filter,
                                             Converter<? super K, ? super V, C> converter, Set<Flag> flags) {
       throw new UnsupportedOperationException();
