@@ -1,12 +1,10 @@
 package org.infinispan.commands;
 
-import org.infinispan.Cache;
 import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
@@ -446,7 +444,7 @@ public interface CommandsFactory {
     * @param <C> The converted type after the value is applied from the converter
     * @return the EntryRequestCommand created
     */
-   <K, V, C> EntryRequestCommand<K, V, C> buildEntryRequestCommand(UUID identifier, Set<Integer> segments,
+   <K, V, C> EntryRequestCommand<K, V, C> buildEntryRequestCommand(UUID identifier, Set<Integer> segments, Set<K> keysToFilter,
                                                 KeyValueFilter<? super K, ? super V> filter,
                                                 Converter<? super K, ? super V, C> converter, Set<Flag> flags);
 
