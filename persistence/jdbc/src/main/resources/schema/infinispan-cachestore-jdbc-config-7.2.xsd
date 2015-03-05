@@ -131,7 +131,7 @@
         <xs:documentation>The statement batch size used when modifying this table.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-     <xs:attribute name="create-on-start" type="xs:boolean" default="false">
+    <xs:attribute name="create-on-start" type="xs:boolean" default="true">
         <xs:annotation>
            <xs:documentation>Determines whether database tables should be created by the store on startup.</xs:documentation>
         </xs:annotation>

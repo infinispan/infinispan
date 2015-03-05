@@ -69,12 +69,14 @@ public class ModelKeys {
     static final String CONCURRENCY_LEVEL = "concurrency-level";
     static final String CONNECTION_POOL = "connection-pool";
     static final String CONNECTION_TIMEOUT = "connection-timeout";
+    static final String CREATE_ON_START = "create-on-start";
     static final String CUSTOM_ROLE_MAPPER = "custom-role-mapper";
     static final String DATA_COLUMN = "data-column";
     static final String DATASOURCE = "datasource";
     static final String DEFAULT_CACHE = "default-cache";
     static final String DIALECT = "dialect";
     static final String DISTRIBUTED_CACHE = "distributed-cache";
+    static final String DROP_ON_EXIT = "drop-on-exit";
     static final String ENABLED = "enabled";
     static final String ENTRY_TABLE = "entry-table";
     static final String EVICTION = "eviction";

@@ -563,6 +563,8 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             this.writeOptional(writer, Attribute.PREFIX, table, ModelKeys.PREFIX);
             this.writeOptional(writer, Attribute.BATCH_SIZE, table, ModelKeys.BATCH_SIZE);
             this.writeOptional(writer, Attribute.FETCH_SIZE, table, ModelKeys.FETCH_SIZE);
+            this.writeOptional(writer, Attribute.CREATE_ON_START, table, ModelKeys.CREATE_ON_START);
+            this.writeOptional(writer, Attribute.DROP_ON_EXIT, table, ModelKeys.DROP_ON_EXIT);
             this.writeJDBCStoreColumn(writer, Element.ID_COLUMN, table, ModelKeys.ID_COLUMN);
             this.writeJDBCStoreColumn(writer, Element.DATA_COLUMN, table, ModelKeys.DATA_COLUMN);
             this.writeJDBCStoreColumn(writer, Element.TIMESTAMP_COLUMN, table, ModelKeys.TIMESTAMP_COLUMN);
