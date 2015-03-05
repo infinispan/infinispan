@@ -86,6 +86,7 @@ public abstract class MetricsRemappingComponent<T extends MetricsRemappingCompon
       server2plugin.put("activations", "activations");
       server2plugin.put("cache-loader-loads", "cacheLoaderLoads");
       server2plugin.put("cache-loader-misses", "cacheLoaderMisses");
+      server2plugin.put("cache-loader-stores", "cacheLoaderStores");
 
       // we will put these 2 here as well, just to be aware of them
       server2plugin.put("bytesRead", "bytesRead");
