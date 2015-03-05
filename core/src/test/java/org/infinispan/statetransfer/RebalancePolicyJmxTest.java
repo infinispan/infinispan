@@ -7,6 +7,7 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.jmx.PerThreadMBeanServerLookup;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.testng.annotations.Test;
 
@@ -24,20 +25,27 @@ import static org.testng.AssertJUnit.assertTrue;
 /**
  * @author Dan Berindei
  */
-@Test(groups = "functional", testName = "jmx.RebalancePolicyJmxTest")
+@Test(groups = "functional", testName = "statetransfer.RebalancePolicyJmxTest")
+@CleanupAfterMethod
 public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
+
+   public void testJoinAndLeaveWithRebalanceSuspended() throws Exception {
+      doTest(false);
+   }
+
+   public void testJoinAndLeaveWithRebalanceSuspendedAwaitingInitialTransfer() throws Exception {
+      doTest(true);
+   }
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r1"), getConfigurationBuilder());
-      addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r1"), getConfigurationBuilder());
-      waitForClusterToForm();
+      //no-op
    }
 
-   private ConfigurationBuilder getConfigurationBuilder() {
+   private ConfigurationBuilder getConfigurationBuilder(boolean awaitInitialTransfer) {
       ConfigurationBuilder cb = new ConfigurationBuilder();
       cb.clustering().cacheMode(CacheMode.DIST_SYNC)
-         .stateTransfer().awaitInitialTransfer(false);
+            .stateTransfer().awaitInitialTransfer(awaitInitialTransfer);
       return cb;
    }
 
@@ -45,14 +53,16 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
       gcb.globalJmxStatistics()
             .enable()
-            //.allowDuplicateDomains(true)
-            //.jmxDomain(JMX_DOMAIN)
             .mBeanServerLookup(new PerThreadMBeanServerLookup())
-         .transport().rackId(rackId);
+            .transport().rackId(rackId);
       return gcb;
    }
 
-   public void testJoinAndLeaveWithRebalanceSuspended() throws Exception {
+   private void doTest(boolean awaitInitialTransfer) throws Exception {
+      addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r1"), getConfigurationBuilder(awaitInitialTransfer));
+      addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r1"), getConfigurationBuilder(awaitInitialTransfer));
+      waitForClusterToForm();
+
       MBeanServer mBeanServer = PerThreadMBeanServerLookup.getThreadMBeanServer();
       String domain0 = manager(1).getCacheManagerConfiguration().globalJmxStatistics().domain();
       ObjectName ltmName0 = TestingUtil.getCacheManagerObjectName(domain0, "DefaultCacheManager", "LocalTopologyManager");
@@ -73,8 +83,8 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
       // Add 2 nodes
       log.debugf("Starting 2 new nodes");
-      addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r2"), getConfigurationBuilder());
-      addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r2"), getConfigurationBuilder());
+      addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r2"), getConfigurationBuilder(awaitInitialTransfer));
+      addClusterEnabledCacheManager(getGlobalConfigurationBuilder("r2"), getConfigurationBuilder(awaitInitialTransfer));
       cache(2);
       cache(3);
 

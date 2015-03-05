@@ -83,6 +83,8 @@ public interface LocalTopologyManager {
     */
    boolean isTotalOrderCache(String cacheName);
 
+   boolean isRebalancingEnabled() throws Exception;
+
    /**
     * Enable or disable rebalancing in the entire cluster.
     */
