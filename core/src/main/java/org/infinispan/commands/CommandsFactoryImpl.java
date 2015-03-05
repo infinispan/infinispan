@@ -610,11 +610,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V, C> EntryRequestCommand<K, V, C> buildEntryRequestCommand(UUID identifier, Set<Integer> segments,
+                                                                    Set<K> keysToFilter,
                                                                     KeyValueFilter<? super K, ? super V> filter,
                                                                     Converter<? super K, ? super V, C> converter,
                                                                     Set<Flag> flags) {
       return new EntryRequestCommand<K, V, C>(cacheName, identifier, cache.getCacheManager().getAddress(), segments,
-                                              filter, converter, flags);
+                                              keysToFilter, filter, converter, flags);
    }
 
    @Override
