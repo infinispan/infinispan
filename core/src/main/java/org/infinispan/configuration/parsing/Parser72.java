@@ -491,6 +491,11 @@ public class Parser72 implements ConfigurationParser {
                      createThreadPoolConfiguration(value, PERSISTENCE_EXECUTOR));
                break;
             }
+            case STATE_TRANSFER_EXECUTOR: {
+               builder.stateTransferThreadPool().read(
+                     createThreadPoolConfiguration(value, STATE_TRANSFER_EXECUTOR));
+               break;
+            }
             case MODULE: {
                log.ignoreXmlAttribute(attribute);
                break;

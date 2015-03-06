@@ -104,6 +104,11 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    }
 
    @Override
+   public ThreadPoolConfigurationBuilder stateTransferThreadPool() {
+      return globalConfig.stateTransferThreadPool();
+   }
+
+   @Override
    public GlobalSecurityConfigurationBuilder security() {
       return globalConfig.security();
    }

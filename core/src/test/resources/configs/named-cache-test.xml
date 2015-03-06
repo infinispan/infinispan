@@ -18,6 +18,7 @@
       <thread-factory name="total-order-factory" group-name="infinispan" thread-name-pattern="TotalOrderValidatorThread"/>
       <blocking-bounded-queue-thread-pool name="listener" thread-factory="listener-factory" max-threads="5" queue-length="10000"/>
       <blocking-bounded-queue-thread-pool name="persistence" thread-factory="persistence-factory" max-threads="6" queue-length="10001"/>
+      <blocking-bounded-queue-thread-pool name="state-transfer" thread-factory="persistence-factory" max-threads="20" queue-length="5" keepalive-time="60000"/>
       <blocking-bounded-queue-thread-pool name="transport" thread-factory="transport-factory" max-threads="25" queue-length="10000"/>
       <blocking-bounded-queue-thread-pool name="remote" thread-factory="transport-factory" max-threads="30" core-threads="2" queue-length="10000" keepalive-time="10000"/>
       <blocking-bounded-queue-thread-pool name="total" thread-factory="total-order-factory" max-threads="16" core-threads="1" queue-length="0" keepalive-time="1000"/>
@@ -26,7 +27,7 @@
    </threads>
 
    <cache-container default-cache="default" statistics="true" shutdown-hook="REGISTER"
-                    listener-executor="listener" replication-queue-executor="replication-queue" persistence-executor="persistence" eviction-executor="eviction">
+                    listener-executor="listener" replication-queue-executor="replication-queue" persistence-executor="persistence" state-transfer-executor="state-transfer" eviction-executor="eviction">
       <transport stack="udp" cluster="infinispan-cluster" lock-timeout="50000" node-name="Jalapeno" machine="m1" rack="r1" site="s1"
                  executor="transport" total-order-executor="total" remote-command-executor="remote" />
       <serialization marshaller="org.infinispan.marshall.core.VersionAwareMarshaller" version="1.0">

@@ -41,6 +41,7 @@
    - The asynchronous listener executor is only useful if you have asynchronous listeners attached. See:
          - http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_listeners_and_notifications for more details
    - The persistence executor is passed down to cache loader/writer implementations to be able to execute tasks in parallel
+   - The state transfer executor is used during state transfer, to apply state in parallel
    - The asynchronous transport executor is only useful if you intend to use the async cache API or have configured your cluster to use asynchronous communications.  See:
          - http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_asynchronous_api
          - http://infinispan.org/docs/7.0.x/user_guide/user_guide.html#_asynchronous_options
@@ -57,6 +58,7 @@
          <thread-factory name="infinispan-factory" group-name="infinispan" thread-name-pattern="%G %i" priority="5"/>
          <cached-thread-pool name="infinispan-cached" thread-factory="infinispan-factory" />
          <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="infinispan-factory" core-threads="1" max-threads="1" queue-length="0" keepalive-time="0" />
+         <blocking-bounded-queue-thread-pool name="state-transfer" thread-factory="infinispan-factory" core-threads="1" max-threads="50" queue-length="0" keepalive-time="0" />
          <blocking-bounded-queue-thread-pool name="infinispan-transport" thread-factory="infinispan-factory" core-threads="5" max-threads="10" queue-length="100" keepalive-time="10000" />
          <scheduled-thread-pool name="infinispan-eviction" thread-factory="infinispan-factory" />
          <scheduled-thread-pool name="infinispan-repl-queue" thread-factory="infinispan-factory" />

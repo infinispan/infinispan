@@ -120,8 +120,14 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .build()
 ;
 
-
-    static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, LISTENER_EXECUTOR, EVICTION_EXECUTOR, REPLICATION_QUEUE_EXECUTOR, CACHE_CONTAINER_MODULE, STATISTICS};
+   static final SimpleAttributeDefinition STATE_TRANSFER_EXECUTOR =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.STATE_TRANSFER_EXECUTOR, ModelType.STRING, true)
+               .setXmlName(Attribute.STATE_TRANSFER_EXECUTOR.getLocalName())
+               .setAllowExpression(false)
+               .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+               .build();
+   
+    static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, LISTENER_EXECUTOR, EVICTION_EXECUTOR, STATE_TRANSFER_EXECUTOR, REPLICATION_QUEUE_EXECUTOR, CACHE_CONTAINER_MODULE, STATISTICS};
 
     // operations
     static final OperationDefinition ALIAS_ADD = new SimpleOperationDefinitionBuilder("add-alias", InfinispanExtension.getResourceDescriptionResolver("cache-container.alias"))

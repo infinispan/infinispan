@@ -22,6 +22,8 @@ public interface GlobalConfigurationChildBuilder {
    ThreadPoolConfigurationBuilder evictionThreadPool();
 
    ThreadPoolConfigurationBuilder persistenceThreadPool();
+   
+   ThreadPoolConfigurationBuilder stateTransferThreadPool();
 
    ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor();
 

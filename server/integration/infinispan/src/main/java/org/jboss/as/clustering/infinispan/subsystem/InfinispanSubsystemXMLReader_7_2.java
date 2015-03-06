@@ -107,6 +107,10 @@ public final class InfinispanSubsystemXMLReader_7_2 implements XMLElementReader<
                     CacheContainerResource.REPLICATION_QUEUE_EXECUTOR.parseAndSetParameter(value, container, reader);
                     break;
                 }
+                case STATE_TRANSFER_EXECUTOR: {
+                    CacheContainerResource.STATE_TRANSFER_EXECUTOR.parseAndSetParameter(value, container, reader);
+                    break;
+                }
                 case MODULE: {
                     CacheContainerResource.CACHE_CONTAINER_MODULE.parseAndSetParameter(value, container, reader);
                     break;

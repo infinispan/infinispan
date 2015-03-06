@@ -329,6 +329,8 @@
                                    description="The module whose class loader should be used when building this cache container&apos;s configuration. The default value is org.jboss.as.clustering.infinispan."/>
                 <c:simple-property name="replication-queue-executor" required="false" type="string" readOnly="true"
                                    description="The executor used for asynchronous cache operations"/>
+                <c:simple-property name="state-transfer-executor" required="false" type="string" readOnly="true"
+                                   description="The executor used for state transfer application"/>
             </resource-configuration>
 
             <service name="Cache" discovery="org.rhq.modules.plugins.jbossas7.SubsystemDiscovery"

@@ -180,6 +180,7 @@ public class ModelKeys {
     static final String START = "start";
     static final String STATE_TRANSFER = "state-transfer";
     static final String STATE_TRANSFER_NAME = "STATE_TRANSFER";
+    static final String STATE_TRANSFER_EXECUTOR = "state-transfer-executor";
     static final String STATISTICS = "statistics";
     static final String STOP_TIMEOUT = "stop-timeout";
     static final String STORE = "store";
