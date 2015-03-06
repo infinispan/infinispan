@@ -71,6 +71,7 @@ public class MockNearCacheService<K, V> extends NearCacheService<K, V> {
       @Override
       public void clear() {
          delegate.clear();
+         events.clear();
          events.add(new MockClearEvent());
       }
    }
