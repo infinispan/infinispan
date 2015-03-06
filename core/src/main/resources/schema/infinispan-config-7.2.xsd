@@ -249,6 +249,11 @@
         <xs:documentation>Configuration for the executor service used when interacting with the persistent store.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="state-transfer-executor" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Configuration for the executor service used when applying state from other nodes during the state transfer.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="module" type="xs:string" default="org.jboss.as.clustering.infinispan">
       <xs:annotation><xs:documentation>Unused XML attribute</xs:documentation></xs:annotation>
     </xs:attribute>

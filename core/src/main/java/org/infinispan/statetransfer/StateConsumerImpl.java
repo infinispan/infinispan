@@ -54,6 +54,8 @@ import javax.transaction.TransactionManager;
 
 import java.util.*;
 import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +63,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.infinispan.context.Flag.*;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
 /**
@@ -77,7 +79,6 @@ public class StateConsumerImpl implements StateConsumer {
    public static final int NO_REBALANCE_IN_PROGRESS = -1;
 
    private Cache cache;
-   private ExecutorService executorService;
    private StateTransferManager stateTransferManager;
    private String cacheName;
    private Configuration configuration;
@@ -101,6 +102,7 @@ public class StateConsumerImpl implements StateConsumer {
    private boolean isTotalOrder;
    private volatile KeyInvalidationListener keyInvalidationListener; //for test purpose only!
    private CommitManager commitManager;
+   private ExecutorService executorService;
 
    private volatile CacheTopology cacheTopology;
 
@@ -162,7 +164,7 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Inject
    public void init(Cache cache,
-                    @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService, //TODO Use a dedicated ExecutorService
+                    @ComponentName(STATE_TRANSFER_EXECUTOR) ExecutorService executorService,
                     StateTransferManager stateTransferManager,
                     InterceptorChain interceptorChain,
                     InvocationContextFactory icf,
@@ -439,7 +441,7 @@ public class StateConsumerImpl implements StateConsumer {
             : InfinispanCollections.<Integer>emptySet();
    }
 
-   public void applyState(Address sender, int topologyId, Collection<StateChunk> stateChunks) {
+   public void applyState(final Address sender, int topologyId, Collection<StateChunk> stateChunks) {
       ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
       // Ignore responses received after we are no longer a member
       if (!wCh.getMembers().contains(rpcManager.getAddress())) {
@@ -466,28 +468,23 @@ public class StateConsumerImpl implements StateConsumer {
       if (trace) {
          log.tracef("Before applying the received state the data container of cache %s has %d keys", cacheName, dataContainer.size());
       }
-
-      Set<Integer> mySegments = wCh.getSegmentsForOwner(rpcManager.getAddress());
-      for (StateChunk stateChunk : stateChunks) {
-         if (!mySegments.contains(stateChunk.getSegmentId())) {
-            log.warnf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.", stateChunk.getSegmentId(), cacheName);
-            continue;
-         }
-
-         // Notify the inbound task that a chunk of cache entries was received
-         InboundTransferTask inboundTransfer;
-         synchronized (transferMapsLock) {
-            inboundTransfer = transfersBySegment.get(stateChunk.getSegmentId());
-         }
-         if (inboundTransfer != null) {
-            if (stateChunk.getCacheEntries() != null) {
-               doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries());
+      final Set<Integer> mySegments = wCh.getSegmentsForOwner(rpcManager.getAddress());
+      final CountDownLatch countDownLatch = new CountDownLatch(stateChunks.size());
+      for (final StateChunk stateChunk : stateChunks) {
+         executorService.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+               applyChunk(sender, mySegments, stateChunk);
+               countDownLatch.countDown();
+               return null;
             }
-
-            inboundTransfer.onStateReceived(stateChunk.getSegmentId(), stateChunk.isLastChunk());
-         } else {
-            log.warnf("Received unsolicited state from node %s for segment %d of cache %s", sender, stateChunk.getSegmentId(), cacheName);
-         }
+         });
+      }
+      try {
+         countDownLatch.await(timeout, TimeUnit.MILLISECONDS);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);
       }
 
       if (trace) {
@@ -495,6 +492,28 @@ public class StateConsumerImpl implements StateConsumer {
          synchronized (transferMapsLock) {
             log.tracef("Segments not received yet for cache %s: %s", cacheName, transfersBySource);
          }
+      }
+   }
+
+   private void applyChunk(Address sender, Set<Integer> mySegments, StateChunk stateChunk) {
+      if (!mySegments.contains(stateChunk.getSegmentId())) {
+         log.warnf("Discarding received cache entries for segment %d of cache %s because they do not belong to this node.", stateChunk.getSegmentId(), cacheName);
+         return;
+      }
+
+      // Notify the inbound task that a chunk of cache entries was received
+      InboundTransferTask inboundTransfer;
+      synchronized (transferMapsLock) {
+         inboundTransfer = transfersBySegment.get(stateChunk.getSegmentId());
+      }
+      if (inboundTransfer != null) {
+         if (stateChunk.getCacheEntries() != null) {
+            doApplyState(sender, stateChunk.getSegmentId(), stateChunk.getCacheEntries());
+         }
+
+         inboundTransfer.onStateReceived(stateChunk.getSegmentId(), stateChunk.isLastChunk());
+      } else {
+         log.warnf("Received unsolicited state from node %s for segment %d of cache %s", sender, stateChunk.getSegmentId(), cacheName);
       }
    }
 

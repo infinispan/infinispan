@@ -103,6 +103,7 @@ public enum Attribute {
     SPIN_DURATION("deadlock-detection-spin"),
     STATISTICS("statistics"),
     START("start"),
+    STATE_TRANSFER_EXECUTOR("state-transfer-executor"),
     STORE_KEYS_AS_BINARY("keys"),
     STORE_VALUES_AS_BINARY("values"),
     STRATEGY("strategy"),

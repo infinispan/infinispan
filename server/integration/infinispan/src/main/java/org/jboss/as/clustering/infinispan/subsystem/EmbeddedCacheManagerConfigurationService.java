@@ -83,6 +83,7 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         AuthorizationConfiguration getAuthorizationConfiguration();
         MBeanServer getMBeanServer();
         Executor getListenerExecutor();
+        Executor getStateTransferExecutor();
         ScheduledExecutorService getEvictionExecutor();
         ScheduledExecutorService getReplicationQueueExecutor();
     }
@@ -226,6 +227,11 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         if (replicationQueueExecutor != null) {
             builder.replicationQueueThreadPool().threadPoolFactory(
                   ThreadPoolExecutorFactories.mkManagedScheduledExecutorFactory(replicationQueueExecutor));
+        }
+        Executor stateTransferExecutor = this.dependencies.getStateTransferExecutor();
+        if (stateTransferExecutor != null) {
+            builder.stateTransferThreadPool().threadPoolFactory(
+                ThreadPoolExecutorFactories.mkManagedExecutorFactory(stateTransferExecutor));
         }
 
         GlobalJmxStatisticsConfigurationBuilder jmxBuilder = builder.globalJmxStatistics().cacheManagerName(this.name);

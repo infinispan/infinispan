@@ -49,11 +49,13 @@ public class GlobalConfiguration {
    private final ThreadPoolConfiguration listenerThreadPool;
    private final ThreadPoolConfiguration replicationQueueThreadPool;
    private final ThreadPoolConfiguration persistenceThreadPool;
+   private final ThreadPoolConfiguration stateTransferThreadPool;
 
    GlobalConfiguration(ThreadPoolConfiguration evictionThreadPool,
          ThreadPoolConfiguration listenerThreadPool,
          ThreadPoolConfiguration replicationQueueThreadPool,
          ThreadPoolConfiguration persistenceThreadPool,
+         ThreadPoolConfiguration stateTransferThreadPool,
          GlobalJmxStatisticsConfiguration globalJmxStatistics,
          TransportConfiguration transport, GlobalSecurityConfiguration security,
          SerializationConfiguration serialization, ShutdownConfiguration shutdown,
@@ -62,6 +64,7 @@ public class GlobalConfiguration {
       this.listenerThreadPool = listenerThreadPool;
       this.replicationQueueThreadPool = replicationQueueThreadPool;
       this.persistenceThreadPool = persistenceThreadPool;
+      this.stateTransferThreadPool = stateTransferThreadPool;
       this.globalJmxStatistics = globalJmxStatistics;
       this.transport = transport;
       this.security = security;
@@ -147,6 +150,10 @@ public class GlobalConfiguration {
    public ThreadPoolConfiguration persistenceThreadPool() {
       return persistenceThreadPool;
    }
+   
+   public ThreadPoolConfiguration stateTransferThreadPool() {
+      return stateTransferThreadPool;
+   }
 
    public GlobalJmxStatisticsConfiguration globalJmxStatistics() {
       return globalJmxStatistics;
@@ -194,6 +201,7 @@ public class GlobalConfiguration {
             "listenerThreadPool=" + listenerThreadPool +
             ", evictionThreadPool=" + evictionThreadPool +
             ", persistenceThreadPool=" + persistenceThreadPool +
+            ", stateTransferThreadPool=" + stateTransferThreadPool +
             ", replicationQueueThreadPool=" + replicationQueueThreadPool +
             ", globalJmxStatistics=" + globalJmxStatistics +
             ", transport=" + transport +

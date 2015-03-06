@@ -36,6 +36,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ScheduledExecutorService evictionExecutor;
    private ScheduledExecutorService asyncReplicationExecutor;
    private BlockingTaskAwareExecutorService totalOrderExecutor;
+   private ExecutorService stateTransferExecutor;
 
    @Override
    @SuppressWarnings("unchecked")
@@ -113,6 +114,16 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                }
             }
             return (T) totalOrderExecutor;
+         } else if (componentName.equals(STATE_TRANSFER_EXECUTOR)) {
+            synchronized (this) {
+               if (stateTransferExecutor == null) {
+                  stateTransferExecutor = createExecutorService(
+                        globalConfiguration.stateTransferThreadPool(),
+                        globalConfiguration, STATE_TRANSFER_EXECUTOR,
+                        ExecutorServiceType.DEFAULT);
+               }
+            }
+            return (T) stateTransferExecutor;
          } else {
             throw new CacheConfigurationException("Unknown named executor " + componentName);
          }
@@ -132,6 +143,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (asyncReplicationExecutor != null) asyncReplicationExecutor.shutdownNow();
       if (evictionExecutor != null) evictionExecutor.shutdownNow();
       if (totalOrderExecutor != null) totalOrderExecutor.shutdownNow();
+      if (stateTransferExecutor != null) stateTransferExecutor.shutdownNow();
    }
 
    private <T extends ExecutorService> T createExecutorService(ThreadPoolConfiguration threadPoolConfiguration,
