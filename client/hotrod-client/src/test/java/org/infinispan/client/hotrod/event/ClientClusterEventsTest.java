@@ -142,8 +142,11 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
          statelessListener.expectNoEvents();
          failoverListener.expectNoEvents();
          statefulListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 1, 2);
+         c.put(3, "three");
+         statefulListener.expectUnorderedEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, 3);
          c.remove(1);
          c.remove(2);
+         c.remove(3);
       } finally {
          killRemoteCacheManager(newClient);
       }

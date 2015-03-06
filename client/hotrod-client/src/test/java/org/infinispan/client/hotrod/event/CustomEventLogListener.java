@@ -1,23 +1,26 @@
 package org.infinispan.client.hotrod.event;
 
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
-import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
-import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.notifications.cachelistener.filter.NamedFactory;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
-import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
-import org.infinispan.notifications.cachelistener.filter.EventType;
+import static org.infinispan.test.TestingUtil.assertAnyEquals;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.Serializable;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.test.TestingUtil.assertAnyEquals;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotNull;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
+import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.notifications.cachelistener.filter.NamedFactory;
 
 @ClientListener(converterFactoryName = "test-converter-factory")
 public abstract class CustomEventLogListener<E> {
@@ -35,7 +38,7 @@ public abstract class CustomEventLogListener<E> {
       }
    }
 
-   private BlockingQueue<E> queue(ClientEvent.Type type) {
+   protected BlockingQueue<E> queue(ClientEvent.Type type) {
       switch (type) {
          case CLIENT_CACHE_ENTRY_CREATED: return createdCustomEvents;
          case CLIENT_CACHE_ENTRY_MODIFIED: return modifiedCustomEvents;
@@ -58,7 +61,7 @@ public abstract class CustomEventLogListener<E> {
       E event = pollEvent(type);
       assertAnyEquals(expected, event);
    }
-
+   
    public void expectOnlyCreatedCustomEvent(E expected) {
       expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, expected);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
@@ -101,9 +104,11 @@ public abstract class CustomEventLogListener<E> {
    public static final class CustomEvent implements Serializable {
       final Integer key;
       final String value;
+      final Date timestamp;
       public CustomEvent(Integer key, String value) {
          this.key = key;
          this.value = value;
+         this.timestamp = new Date(System.currentTimeMillis());
       }
 
       @Override
@@ -129,7 +134,38 @@ public abstract class CustomEventLogListener<E> {
    }
 
    @ClientListener(converterFactoryName = "static-converter-factory")
-   public static class StaticCustomEventLogListener extends CustomEventLogListener<CustomEvent> {}
+   public static class StaticCustomEventLogListener extends CustomEventLogListener<CustomEvent> {
+      
+      @Override
+      public void expectSingleCustomEvent(ClientEvent.Type type, CustomEvent expected) {
+         CustomEvent event = pollEvent(type);
+         assertNotNull(event.key);
+         assertNotNull(event.timestamp); // check only custom field, value can be null
+         assertAnyEquals(expected, event);
+      }
+      
+      public void expectOrderedEventQueue(ClientEvent.Type type) {
+         BlockingQueue<CustomEvent> queue = queue(type);
+         if (queue.size() < 2) 
+            return;
+         
+         try {
+            CustomEvent before = queue.poll(10, TimeUnit.SECONDS);
+            Iterator<CustomEvent> iter = queue.iterator();
+            while (iter.hasNext()) {
+               CustomEvent after = iter.next();
+               expectTimeOrdered(before, after);
+               before = after;
+            }
+         } catch (InterruptedException e) {
+            throw new AssertionError(e);
+         }
+      }
+      
+      private void expectTimeOrdered(CustomEvent before, CustomEvent after) {
+         assertTrue(before.timestamp.before(after.timestamp));
+      }
+   }
 
    @ClientListener(converterFactoryName = "raw-static-converter-factory", useRawData = true)
    public static class RawStaticCustomEventLogListener extends CustomEventLogListener<byte[]> {}

@@ -50,6 +50,24 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
          }
       });
    }
+   
+   public void testTimeOrderedEvents() {
+      final StaticCustomEventLogListener eventListener = new StaticCustomEventLogListener();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
+         @Override
+         public void call() {
+            RemoteCache<Integer, String> cache = rcm.getCache();
+            eventListener.expectNoEvents();
+            cache.put(1, "one");
+            cache.replace(1, "newone");
+            cache.replace(1, "newnewone");
+            cache.replace(1, "newnewnewone");
+            cache.replace(1, "newnewnewnewone");
+            cache.replace(1, "newnewnewnewnewone");
+            eventListener.expectOrderedEventQueue(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+         }
+      });
+   }
 
    /**
     * Test that the HotRod server returns an error when a ClientListener is
