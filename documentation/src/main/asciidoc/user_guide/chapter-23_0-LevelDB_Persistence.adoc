@@ -1,6 +1,5 @@
 == LevelDB Cache Store
 The Infinispan Community
-:icons: font
 
 === Introduction
 link:$$http://code.google.com/p/leveldb/$$[LevelDB] is a fast key-value filesystem-based storage from Google.

@@ -1,6 +1,5 @@
 == JPA Cache Store
 The Infinispan Community
-:icons: font
 
 === Introduction
 The implementation depends on JPA 2.0 specification to access entity meta model.

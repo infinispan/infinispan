@@ -1,6 +1,5 @@
 == REST Cache Store
 The Infinispan Community
-:icons: font
 
 === Introduction
 *TODO* 
