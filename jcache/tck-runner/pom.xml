@@ -19,8 +19,6 @@
    <properties>
       <infinispan.server.version>7.2.0.Alpha1</infinispan.server.version>
 
-      <skipJSR107RemoteTests>true</skipJSR107RemoteTests>
-
       <domain-lib-dir>${project.build.directory}/domainlib</domain-lib-dir>
       <domain-jar>domain.jar</domain-jar>
       <tck.mbean.builder>org.infinispan.jcache.tck.TckMbeanServerBuilder</tck.mbean.builder>
@@ -149,34 +147,34 @@
             </executions>
          </plugin>
 
-         <!-- <plugin> -->
-         <!--    <groupId>org.wildfly.plugins</groupId> -->
-         <!--    <artifactId>wildfly-maven-plugin</artifactId> -->
-         <!--    <executions> -->
-         <!--       <execution> -->
-         <!--          <id>start-server</id> -->
-         <!--          <phase>pre-integration-test</phase> -->
-         <!--          <goals> -->
-         <!--             <goal>start</goal> -->
-         <!--          </goals> -->
-         <!--          <configuration> -->
-         <!--             <skip>${skipTests}</skip> -->
-         <!--             <jbossHome>${server.dir}</jbossHome> -->
-         <!--          </configuration> -->
-         <!--       </execution> -->
-         <!--       <execution> -->
-         <!--          <id>stop-server</id> -->
-         <!--          <phase>post-integration-test</phase> -->
-         <!--          <goals> -->
-         <!--             <goal>shutdown</goal> -->
-         <!--          </goals> -->
-         <!--          <configuration> -->
-         <!--             <skip>${skipTests}</skip> -->
-         <!--             <jbossHome>${server.dir}</jbossHome> -->
-         <!--          </configuration> -->
-         <!--       </execution> -->
-         <!--    </executions> -->
-         <!-- </plugin> -->
+         <plugin>
+            <groupId>org.wildfly.plugins</groupId>
+            <artifactId>wildfly-maven-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>start-server</id>
+                  <phase>pre-integration-test</phase>
+                  <goals>
+                     <goal>start</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <jbossHome>${server.dir}</jbossHome>
+                  </configuration>
+               </execution>
+               <execution>
+                  <id>stop-server</id>
+                  <phase>post-integration-test</phase>
+                  <goals>
+                     <goal>shutdown</goal>
+                  </goals>
+                  <configuration>
+                     <skip>${skipTests}</skip>
+                     <jbossHome>${server.dir}</jbossHome>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
 
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
@@ -260,7 +258,6 @@
                         <javax.cache.Cache>${remote.CacheImpl}</javax.cache.Cache>
                         <javax.cache.Cache.Entry>${remote.CacheEntryImpl}</javax.cache.Cache.Entry>
                      </systemPropertyVariables>
-                     <skipTests>${skipJSR107RemoteTests}</skipTests>
                   </configuration>
                </execution>
                <execution>
@@ -272,7 +269,6 @@
                   <configuration>
                      <summaryFile>${failsafe.summary.remote}</summaryFile>
                      <reportsDirectory>${failsafe.reportdir.remote}</reportsDirectory>
-                     <skipTests>${skipJSR107RemoteTests}</skipTests>
                   </configuration>
                </execution>
             </executions>
