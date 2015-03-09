@@ -91,6 +91,10 @@
         <module-def name="org.infinispan.jcache" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-jcache" />
         </module-def>
+        
+        <module-def name="org.infinispan.jcache.commons" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-jcache-commons" />
+        </module-def>
 
         <module-def name="org.infinispan.lucene-directory" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory" />
