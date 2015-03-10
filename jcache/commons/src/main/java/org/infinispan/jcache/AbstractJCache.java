@@ -1,5 +1,8 @@
 package org.infinispan.jcache;
 
+import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.STATISTICS;
+import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.CONFIGURATION;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -21,6 +24,7 @@ import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
 import javax.cache.integration.CompletionListener;
+import javax.cache.management.CacheMXBean;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorResult;
 import javax.management.MBeanServer;
@@ -44,11 +48,15 @@ public abstract class AbstractJCache<K, V> implements Cache<K, V> {
    protected CacheLoader<K, V> jcacheLoader;
    protected CacheWriter<? super K, ? super V> jcacheWriter;
 
+   private final CacheMXBean mxBean;
+
    public AbstractJCache(MutableConfiguration<K, V> configuration, CacheManager cacheManager, AbstractJCacheNotifier<K, V> notifier) {
       this.configuration = configuration;
       this.cacheManager = cacheManager;
       this.notifier = notifier;
       this.expiryPolicy = configuration.getExpiryPolicyFactory().create();
+
+      this.mxBean = new RIDelegatingCacheMXBean<K, V>(this);
    }
 
    protected void addConfigurationListeners() {
@@ -352,16 +360,30 @@ public abstract class AbstractJCache<K, V> implements Cache<K, V> {
    protected abstract MBeanServer getMBeanServer();
 
    //TODO: these were initially package-level
-   protected abstract Object getCacheMXBean();
+   protected Object getCacheMXBean() {
+      return mxBean;
+   }
 
    //TODO: these were initially package-level
    protected abstract Object getCacheStatisticsMXBean();
 
    //TODO: was package-level initially
-   public abstract void setManagementEnabled(boolean enabled);
+   public void setManagementEnabled(boolean enabled) {
+      configuration.setManagementEnabled(enabled);
+      if (enabled)
+         RIMBeanServerRegistrationUtility.registerCacheObject(this, CONFIGURATION);
+      else
+         RIMBeanServerRegistrationUtility.unregisterCacheObject(this, CONFIGURATION);
+   }
 
    //TODO: was package-level initially
-   public abstract void setStatisticsEnabled(boolean enabled);
+   public void setStatisticsEnabled(boolean enabled) {
+      configuration.setStatisticsEnabled(enabled);
+      if (enabled)
+         RIMBeanServerRegistrationUtility.registerCacheObject(this, STATISTICS);
+      else
+         RIMBeanServerRegistrationUtility.unregisterCacheObject(this, STATISTICS);
+   }
 
    protected abstract void addListener(AbstractJCacheListenerAdapter<K, V> listenerAdapter);
 
@@ -396,5 +418,9 @@ public abstract class AbstractJCache<K, V> implements Cache<K, V> {
 
    protected void removeCacheEntryListenerConfiguration(CacheEntryListenerConfiguration<K, V> listenerCfg) {
       configuration.removeCacheEntryListenerConfiguration(listenerCfg);
+   }
+
+   protected boolean statisticsEnabled() {
+      return getConfiguration(CompleteConfiguration.class).isStatisticsEnabled();
    }
 }

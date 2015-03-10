@@ -7,7 +7,7 @@ import javax.cache.integration.CacheWriter;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.jcache.Exceptions;
 
-public class RemoteCacheWithCacheStore<K, V> extends RemoteCacheWrapper<K, V> {
+public abstract class RemoteCacheWithCacheStore<K, V> extends RemoteCacheWrapper<K, V> {
    private final CacheLoader<K, V> jcacheLoader;
    private final CacheWriter<? super K, ? super V> jcacheWriter;
    private final MutableConfiguration<K, V> configuration;
@@ -47,8 +47,10 @@ public class RemoteCacheWithCacheStore<K, V> extends RemoteCacheWrapper<K, V> {
          throw Exceptions.launderCacheLoaderException(ex);
       }
       if (value != null) {
-         delegate.put(key, value);
+         onLoad(key, value);
       }
       return value;
    }
+
+   protected abstract void onLoad(K key, V value);
 }

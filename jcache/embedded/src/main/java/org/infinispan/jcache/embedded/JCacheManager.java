@@ -157,9 +157,4 @@ public class JCacheManager extends AbstractJCacheManager {
    protected <K, V, I extends BasicCache<K, V>> AbstractJCache<K, V> create(I ispnCache) {
       return new JCache<K, V>((AdvancedCache<K, V>) ispnCache, this, ConfigurationAdapter.<K, V>create());
    }
-
-   @Override
-   protected boolean supportsJmx() {
-      return true;
-   }
 }

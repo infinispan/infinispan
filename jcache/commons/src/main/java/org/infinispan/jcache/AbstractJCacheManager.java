@@ -240,9 +240,6 @@ public abstract class AbstractJCacheManager implements CacheManager {
       caches.put(cacheName, cache);
    }
 
-   //TODO: proper JMX!
-   protected abstract boolean supportsJmx();
-
    protected abstract void delegateLogIsClosed();
    protected abstract Iterable<String> delegateCacheNames();
    protected abstract void delegateStop();
@@ -261,9 +258,6 @@ public abstract class AbstractJCacheManager implements CacheManager {
    }
 
    private void unregisterCacheMBeans(AbstractJCache<?, ?> cache) {
-      if (!supportsJmx()) {
-         return;
-      }
       if (cache != null) {
          RIMBeanServerRegistrationUtility.unregisterCacheObject(cache, STATISTICS);
          RIMBeanServerRegistrationUtility.unregisterCacheObject(cache, CONFIGURATION);

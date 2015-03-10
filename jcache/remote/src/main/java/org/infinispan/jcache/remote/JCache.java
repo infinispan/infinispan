@@ -1,5 +1,6 @@
 package org.infinispan.jcache.remote;
 
+import java.lang.management.ManagementFactory;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,7 +18,6 @@ import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.management.MBeanServer;
 
-import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -34,9 +34,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    private volatile boolean isClosed = false;
 
+   private final RemoteCache<K, V> cacheWithoutStats;
    private final RemoteCache<K, V> cache;
-   private final RemoteCache<K, V> cacheForceReturnValue;
+   private final RemoteCache<K, V> cacheWithoutReturnValue;
    private final RemoteCache<K, V> cacheWithCacheStore;
+
+   private final LocalStatistics stats;
 
    public JCache(RemoteCache<K, V> cache, RemoteCache<K, V> cacheForceReturnValue, CacheManager cacheManager, ConfigurationAdapter<K, V> configurationAdapter) {
       super(configurationAdapter.getConfiguration(), cacheManager, new JCacheNotifier<K, V>());
@@ -44,11 +47,26 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       setCacheLoader(configuration);
       setCacheWriter(configuration);
 
-      this.cache = new RemoteCacheWithOldValue<>(cache);
-      this.cacheForceReturnValue = new RemoteCacheWithOldValue<>(cacheForceReturnValue);
-      this.cacheWithCacheStore = new RemoteCacheWithCacheStore<>(cache, jcacheLoader, jcacheWriter, configuration);
+      stats = new LocalStatistics();
+
+      this.cacheWithoutStats = new RemoteCacheWithOldValue<>(cache);
+
+      this.cache = new RemoteCacheWithOldValue<>(new RemoteCacheWithStats<>(new RemoteCacheWithSyncListeners<>(cacheForceReturnValue, notifier, this), stats));
+      this.cacheWithoutReturnValue = new RemoteCacheWithOldValue<>(new RemoteCacheWithStats<>(cache, stats));
+      this.cacheWithCacheStore = new RemoteCacheWithCacheStore<K, V>(this.cache, jcacheLoader, jcacheWriter, configuration) {
+         @Override
+         protected void onLoad(K key, V value) {
+            JCache.this.put(JCache.this.cache, JCache.this.cache, key, value, false);
+         }
+      };
 
       addConfigurationListeners();
+
+      if (configuration.isManagementEnabled())
+         setManagementEnabled(true);
+
+      if (configuration.isStatisticsEnabled())
+         setStatisticsEnabled(true);
    }
 
    @Override
@@ -61,7 +79,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          updateTTLForAccessed(cache, key, value);
       }
       return value;
-      //FIXME read through
    }
 
    @Override
@@ -116,7 +133,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(value, "value");
 
       writeToCacheWriter(key, value);
-      put(cache, cache, key, value, false);
+      put(cache, cacheWithoutStats, key, value, false);
       //FIXME locks
    }
 
@@ -149,7 +166,8 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(value, "value");
 
       //FIXME locks
-      V prev = put(cacheForceReturnValue, cache, key, value, false);
+      V prev = put(cache, cache, key, value, false);
+
       writeToCacheWriter(key, value);
       return prev;
    }
@@ -173,7 +191,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
       checkNotNull(value, "value");
 
-      boolean put = put(cacheForceReturnValue, cache, key, value, true) == null;
+      boolean put = put(cache, cacheWithoutStats, key, value, true) == null;
       if (put) {
          writeToCacheWriter(key, value);
       }
@@ -187,7 +205,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
 
       removeFromCacheWriter(key);
-      return cache.withFlags(Flag.FORCE_RETURN_VALUE).remove(key) != null;
+      return cache.remove(key) != null;
       //FIXME locks
    }
 
@@ -209,8 +227,15 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public V getAndRemove(K key) {
       checkNotClosed();
       checkNotNull(key, "key");
-      V prev = cache.withFlags(Flag.FORCE_RETURN_VALUE).remove(key);
+
+      V prev = cache.remove(key);
       removeFromCacheWriter(key);
+      if (prev != null) {
+         stats.incrementCacheHits();
+      } else {
+         stats.incrementCacheMisses();
+      }
+
       return prev;
       //FIXME locks
    }
@@ -222,7 +247,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(oldValue, "oldValue");
       checkNotNull(newValue, "newValue");
 
-      boolean replaced = replace(cacheForceReturnValue, cache, key, oldValue, newValue, true);
+      boolean replaced = replace(cache, cache, key, oldValue, newValue, true);
       if (replaced) {
          writeToCacheWriter(key, newValue);
       }
@@ -235,9 +260,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotClosed();
       checkNotNull(key, "key");
       checkNotNull(value, "value");
-      boolean replaced = replace(cacheForceReturnValue, cache, key, null, value, false);
+      boolean replaced = replace(cache, cacheWithoutStats, key, null, value, false);
       if (replaced) {
          writeToCacheWriter(key, value);
+      } else {
+         stats.incrementCacheMisses();
       }
       return replaced;
       //FIXME locks
@@ -249,9 +276,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       checkNotNull(key, "key");
       checkNotNull(value, "value");
 
-      V prev = replace(cacheForceReturnValue, key, value);
+      V prev = replace(cache, key, value);
       if (prev != null) {
          writeToCacheWriter(key, value);
+      } else {
+         stats.incrementCacheMisses();
       }
 
       return prev;
@@ -270,20 +299,24 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    @Override
    public void removeAll() {
-      clear();
+      checkNotClosed();
+
+      Iterator<K> it = cacheWithoutStats.keySet().iterator();
+      while (it.hasNext()) {
+         remove(it.next());
+      }
+      //FIXME locks
    }
 
    @Override
    public void clear() {
       checkNotClosed();
 
-      Iterator<javax.cache.Cache.Entry<K, V>> iterator = iterator();
-
-      while (iterator.hasNext()) {
-         javax.cache.Cache.Entry<K, V> entry = iterator.next();
-         remove(entry.getKey());
+      Iterator<K> it = cacheWithoutStats.keySet().iterator();
+      while (it.hasNext()) {
+         cacheWithoutStats.remove(it.next());
       }
-      //FIXME implement me
+      //FIXME locks
    }
 
    @Override
@@ -304,7 +337,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
       // Get old value skipping any listeners to impacting
       // listener invocation expectations set by the TCK.
-      V oldValue = cacheWithCacheStore.get(key);
+      V oldValue = cache.get(key);
 
       MutableJCacheEntry<K, V> mutable = createMutableCacheEntry(oldValue, key);
       T ret = processEntryProcessor(mutable, entryProcessor, arguments);
@@ -323,7 +356,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          if (oldValue != null) {
             // Only allow change to be applied if value has not
             // changed since the start of the processing.
-            replace(cache, cache, key, oldValue, newValue, true);
+            replace(cache, cacheWithoutStats, key, oldValue, newValue, true);
          } else {
             put(cache, cache, key, newValue, true);
          }
@@ -339,7 +372,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    }
 
    private MutableJCacheEntry<K, V> createMutableCacheEntry(V safeOldValue, K key) {
-      return new MutableJCacheEntry<K, V>(cacheWithCacheStore, cache, key, safeOldValue);
+      return new MutableJCacheEntry<K, V>(configuration.isReadThrough() ? cacheWithCacheStore : cache, cacheWithoutStats, key, safeOldValue);
    }
 
    @Override
@@ -380,30 +413,12 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    @Override
    protected MBeanServer getMBeanServer() {
-      return null;
-      //FIXME implement me
-   }
-
-   @Override
-   protected Object getCacheMXBean() {
-      return null;
-      //FIXME implement me
+      return ManagementFactory.getPlatformMBeanServer();
    }
 
    @Override
    protected Object getCacheStatisticsMXBean() {
-      return null;
-      //FIXME implement me
-   }
-
-   @Override
-   public void setManagementEnabled(boolean enabled) {
-      //FIXME implement me
-   }
-
-   @Override
-   public void setStatisticsEnabled(boolean enabled) {
-      //FIXME implement me
+      return stats;
    }
 
    protected AbstractJCache<K, V> checkNotClosed() {
@@ -486,7 +501,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
             V value = cache.get(key);
             next = new JCacheEntry<K, V>(key, value);
 //            if (statisticsEnabled()) {
-//               stats.increaseCacheHits(1);
+//             stats.incrementCacheHits();
 //               stats.addGetTimeNano(System.nanoTime() - start);
 //            }
          } else {

@@ -21,6 +21,7 @@ import org.infinispan.server.core.security.SaslUtils
 import org.infinispan.factories.ComponentRegistry
 import org.infinispan.registry.InternalCacheRegistry
 import java.util.EnumSet
+import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterFactory
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -80,6 +81,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
       queryFacades = loadQueryFacades()
       clientListenerRegistry = new ClientListenerRegistry(configuration)
+
+      addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory)
    }
 
    private def loadQueryFacades(): Seq[QueryFacade] =

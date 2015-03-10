@@ -4,43 +4,41 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.event.ClientCacheEntryCreatedEvent;
-import org.infinispan.client.hotrod.event.ClientCacheEntryModifiedEvent;
-import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
+import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
+import org.infinispan.commons.util.KeyValueWithPrevious;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheListenerAdapter;
 import org.infinispan.jcache.AbstractJCacheNotifier;
 
-@ClientListener
+@ClientListener(converterFactoryName = "key-value-with-previous-converter-factory")
 public class JCacheListenerAdapter<K, V> extends AbstractJCacheListenerAdapter<K, V> {
    public JCacheListenerAdapter(AbstractJCache<K, V> jcache, AbstractJCacheNotifier<K, V> notifier) {
       super(jcache, notifier);
    }
 
    @ClientCacheEntryCreated
-   public void handleCacheEntryCreatedEvent(ClientCacheEntryCreatedEvent<K> e) {
-      K key = e.getKey();
-      //TODO: this opens the door to race-conditions
-      V value = jcache.get(key);
-
-      notifier.notifyEntryCreated(jcache, key, value);
-   }
-
    @ClientCacheEntryModified
-   public void handleCacheEntryModifiedEvent(ClientCacheEntryModifiedEvent<K> e) {
-      K key = e.getKey();
-      //TODO: this opens the door to race-conditions
-      V value = jcache.get(key);
-
-      notifier.notifyEntryUpdated(jcache, key, value);
-   }
-
    @ClientCacheEntryRemoved
-   public void handleCacheEntryRemovedEvent(ClientCacheEntryRemovedEvent<K> e) {
-      K key = e.getKey();
-      //TODO: this opens the door to race-conditions
-      V value = jcache.get(key);
-
-      notifier.notifyEntryRemoved(jcache, key, value);
+   public void handleCacheEntryEvent(ClientCacheEntryCustomEvent<KeyValueWithPrevious<K, V>> e) {
+      KeyValueWithPrevious<K, V> event = e.getEventData();
+      switch (e.getType()) {
+      case CLIENT_CACHE_ENTRY_CREATED: {
+         notifier.notifyEntryCreated(jcache, event.getKey(), event.getValue());
+         break;
+      }
+      case CLIENT_CACHE_ENTRY_REMOVED: {
+         notifier.notifyEntryRemoved(jcache, event.getKey(), event.getPrev());
+         break;
+      }
+      case CLIENT_CACHE_ENTRY_MODIFIED: {
+         notifier.notifyEntryUpdated(jcache, event.getKey(), event.getValue());
+         break;
+      }
+      case CLIENT_CACHE_FAILOVER:
+         // No JSR107 correspondent.
+         break;
+      default:
+         break;
+      }
    }
 }
