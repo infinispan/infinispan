@@ -62,6 +62,7 @@ import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import javax.transaction.TransactionManager;
 >>>>>>> HHH-7197 reimport imports
 
+<<<<<<< HEAD
 import junit.framework.AssertionFailedError;
 import org.hibernate.cache.infinispan.util.Caches;
 import org.infinispan.test.CacheManagerCallable;
@@ -87,19 +88,24 @@ import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 >>>>>>> HHH-6191 - repackage org.hibernate.cache per api/spi/internal split
 =======
 >>>>>>> HHH-7197 reimport imports
+=======
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+>>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
 import org.hibernate.cache.infinispan.access.PutFromLoadValidator;
 import org.hibernate.cache.infinispan.access.TransactionalAccessDelegate;
 import org.hibernate.cache.infinispan.collection.CollectionRegionImpl;
+import org.hibernate.cache.infinispan.util.Caches;
 import org.hibernate.cache.internal.CacheDataDescriptionImpl;
 import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
-import org.hibernate.cfg.Configuration;
 import org.hibernate.internal.util.compare.ComparableComparator;
+
 import org.hibernate.test.cache.infinispan.AbstractNonFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.NodeEnvironment;
 import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
+<<<<<<< HEAD
 <<<<<<< HEAD
 import org.hibernate.testing.ServiceRegistryBuilder;
 <<<<<<< HEAD
@@ -107,6 +113,18 @@ import org.hibernate.util.ComparableComparator;
 <<<<<<< HEAD
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 =======
+=======
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import junit.framework.AssertionFailedError;
+
+import org.infinispan.test.CacheManagerCallable;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.transaction.tm.BatchModeTransactionManager;
+
+import org.jboss.logging.Logger;
+>>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.junit.Assert.assertEquals;
@@ -735,8 +753,8 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 	@Before
 	public void prepareResources() throws Exception {
 		// to mimic exactly the old code results, both environments here are exactly the same...
-		Configuration cfg = createConfiguration( getConfigurationName() );
-		localEnvironment = new NodeEnvironment( cfg );
+		StandardServiceRegistryBuilder ssrb = createStandardServiceRegistryBuilder( getConfigurationName() );
+		localEnvironment = new NodeEnvironment( ssrb );
 		localEnvironment.prepare();
 
 		localCollectionRegion = localEnvironment.getCollectionRegion( REGION_NAME, getCacheDataDescription() );
@@ -748,7 +766,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 		// Sleep a bit to avoid concurrent FLUSH problem
 		avoidConcurrentFlush();
 
-		remoteEnvironment = new NodeEnvironment( cfg );
+		remoteEnvironment = new NodeEnvironment( ssrb );
 		remoteEnvironment.prepare();
 
 		remoteCollectionRegion = remoteEnvironment.getCollectionRegion( REGION_NAME, getCacheDataDescription() );
@@ -757,12 +775,15 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 
 	protected abstract String getConfigurationName();
 
-	protected static Configuration createConfiguration(String configName) {
-		Configuration cfg = CacheTestUtil.buildConfiguration(
-				REGION_PREFIX, InfinispanRegionFactory.class, true, false
+	protected static StandardServiceRegistryBuilder createStandardServiceRegistryBuilder(String configName) {
+		final StandardServiceRegistryBuilder ssrb = CacheTestUtil.buildBaselineStandardServiceRegistryBuilder(
+				REGION_PREFIX,
+				InfinispanRegionFactory.class,
+				true,
+				false
 		);
-		cfg.setProperty( InfinispanRegionFactory.ENTITY_CACHE_RESOURCE_PROP, configName );
-		return cfg;
+		ssrb.applySetting( InfinispanRegionFactory.ENTITY_CACHE_RESOURCE_PROP, configName );
+		return ssrb;
 	}
 
 	protected CacheDataDescription getCacheDataDescription() {

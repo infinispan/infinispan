@@ -61,6 +61,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+<<<<<<< HEAD
 import junit.framework.AssertionFailedError;
 import org.hibernate.cache.infinispan.util.Caches;
 import org.infinispan.Cache;
@@ -87,12 +88,17 @@ import org.hibernate.cache.internal.CacheDataDescriptionImpl;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
 import org.hibernate.cache.infinispan.entity.EntityRegionImpl;
 =======
+=======
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+>>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
 import org.hibernate.cache.infinispan.entity.EntityRegionImpl;
+import org.hibernate.cache.infinispan.util.Caches;
 import org.hibernate.cache.internal.CacheDataDescriptionImpl;
 import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
+<<<<<<< HEAD
 >>>>>>> HHH-7197 reimport imports
 import org.hibernate.cfg.Configuration;
 <<<<<<< HEAD
@@ -119,6 +125,23 @@ import org.hibernate.internal.util.compare.ComparableComparator;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 =======
+=======
+import org.hibernate.internal.util.compare.ComparableComparator;
+
+import org.hibernate.test.cache.infinispan.AbstractNonFunctionalTestCase;
+import org.hibernate.test.cache.infinispan.NodeEnvironment;
+import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import junit.framework.AssertionFailedError;
+
+import org.infinispan.Cache;
+import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.tm.BatchModeTransactionManager;
+
+import org.jboss.logging.Logger;
+>>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -1022,8 +1045,8 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
    @Before
    public void prepareResources() throws Exception {
       // to mimic exactly the old code results, both environments here are exactly the same...
-      Configuration cfg = createConfiguration(getConfigurationName());
-      localEnvironment = new NodeEnvironment(cfg);
+      StandardServiceRegistryBuilder ssrb = createStandardServiceRegistryBuilder( getConfigurationName() );
+      localEnvironment = new NodeEnvironment( ssrb );
       localEnvironment.prepare();
 >>>>>>> HHH-7763 No need to clear caches when these are going to be stopped
 
@@ -1036,7 +1059,7 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
       // Sleep a bit to avoid concurrent FLUSH problem
       avoidConcurrentFlush();
 
-      remoteEnvironment = new NodeEnvironment(cfg);
+      remoteEnvironment = new NodeEnvironment( ssrb );
       remoteEnvironment.prepare();
 
       remoteEntityRegion = remoteEnvironment.getEntityRegion(REGION_NAME, getCacheDataDescription());
@@ -1562,15 +1585,15 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 =======
    protected abstract String getConfigurationName();
 
-   protected static Configuration createConfiguration(String configName) {
-      Configuration cfg = CacheTestUtil.buildConfiguration(
+   protected static StandardServiceRegistryBuilder createStandardServiceRegistryBuilder(String configName) {
+      StandardServiceRegistryBuilder ssrb = CacheTestUtil.buildBaselineStandardServiceRegistryBuilder(
             REGION_PREFIX,
             InfinispanRegionFactory.class,
             true,
             false
       );
-      cfg.setProperty(InfinispanRegionFactory.ENTITY_CACHE_RESOURCE_PROP, configName);
-      return cfg;
+      ssrb.applySetting( InfinispanRegionFactory.ENTITY_CACHE_RESOURCE_PROP, configName );
+      return ssrb;
    }
 
    protected CacheDataDescription getCacheDataDescription() {

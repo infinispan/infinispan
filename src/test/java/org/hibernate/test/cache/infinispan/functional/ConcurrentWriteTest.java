@@ -35,6 +35,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -45,16 +46,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import javax.transaction.TransactionManager;
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.junit.Test;
-
 import org.hibernate.FlushMode;
 import org.hibernate.Session;
-import org.hibernate.cfg.Configuration;
 import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.stat.SecondLevelCacheStatistics;
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -65,9 +62,13 @@ import org.junit.Test;
 >>>>>>> HHH-5942 - Migrate to JUnit 4
 =======
 >>>>>>> HHH-7197 reimport imports
+=======
+
+>>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeConnectionProviderImpl;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeJtaTransactionManagerImpl;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeTestCase;
+<<<<<<< HEAD
 <<<<<<< HEAD
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeTransactionManagerLookup;
 import org.hibernate.transaction.TransactionManagerLookup;
@@ -83,6 +84,12 @@ import org.infinispan.util.logging.LogFactory;
 /**
  * 
 =======
+=======
+import org.junit.Test;
+
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+>>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -118,10 +125,12 @@ public class ConcurrentWriteTest extends SingleNodeTestCase {
 	private TransactionManager tm;
 
 	@Override
-	public void configure(Configuration cfg) {
-		super.configure( cfg );
-		cfg.setProperty( DualNodeTestCase.NODE_ID_PROP, DualNodeTestCase.LOCAL );
-		cfg.setProperty( DualNodeTestCase.NODE_ID_FIELD, DualNodeTestCase.LOCAL );
+	@SuppressWarnings("unchecked")
+	protected void addSettings(Map settings) {
+		super.addSettings( settings );
+
+		settings.put( DualNodeTestCase.NODE_ID_PROP, DualNodeTestCase.LOCAL );
+		settings.put( DualNodeTestCase.NODE_ID_FIELD, DualNodeTestCase.LOCAL );
 	}
 
 	@Override
