@@ -1,10 +1,15 @@
 package org.infinispan.jcache;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 
 import javax.cache.Cache;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
@@ -37,6 +42,13 @@ public abstract class AbstractJCacheNotifier<K, V> {
 
    private static final boolean isTrace = log.isTraceEnabled();
 
+   private static final ConcurrentLinkedQueue<CountDownLatch> EMPTY_QUEUE = new ConcurrentLinkedQueue<CountDownLatch>() {
+      @Override
+      public boolean equals(Object obj) {
+         return (obj instanceof Queue) && ((Queue) obj).isEmpty();
+      }
+   };
+
    // Traversals are a not more common than mutations when it comes to
    // keeping track of registered listeners, so use copy-on-write lists.
 
@@ -57,6 +69,8 @@ public abstract class AbstractJCacheNotifier<K, V> {
 
    private AbstractJCacheListenerAdapter<K,V> listenerAdapter;
 
+   private ConcurrentMap<List<Object>, Queue<CountDownLatch>> latchesByEventSource = new ConcurrentHashMap<>();
+
    public void addListener(CacheEntryListenerConfiguration<K, V> reg,
          AbstractJCache<K, V> jcache, AbstractJCacheNotifier<K, V> notifier) {
       boolean addListenerAdapter = listenerCfgs.isEmpty();
@@ -76,42 +90,125 @@ public abstract class AbstractJCacheNotifier<K, V> {
          jcache.removeListener(listenerAdapter);
    }
 
+   public void addSyncNotificationLatch(Cache<K, V> cache, K key, V value, CountDownLatch latch) {
+      List<Object> eventSourceKey = Arrays.<Object>asList(cache, key, value);
+
+      Queue<CountDownLatch> latches = new ConcurrentLinkedQueue<>();
+      Queue<CountDownLatch> prev = latchesByEventSource.putIfAbsent(eventSourceKey, latches);
+      if (prev != null) {
+         latches = prev;
+      }
+      latches.add(latch);
+   }
+
+   public void removeSyncNotificationLatch(Cache<K, V> cache, K key, V value, CountDownLatch latch) {
+      List<Object> eventSourceKey = Arrays.<Object>asList(cache, key, value);
+      Queue<CountDownLatch> latches = latchesByEventSource.get(eventSourceKey);
+
+      if (latches == null) {
+         return;
+      }
+      latches.remove(latch);
+      if (latches.isEmpty()) {
+         latchesByEventSource.remove(eventSourceKey, EMPTY_QUEUE);
+      }
+   }
+
+   private void notifySync(Cache<K, V> cache, K key, V value) {
+      List<Object> eventSourceKey = Arrays.<Object>asList(cache, key, value);
+      notifySync(latchesByEventSource.get(eventSourceKey));
+   }
+
+   private void notifySync(Queue<CountDownLatch> latches) {
+      if (latches == null) {
+         return;
+      }
+      while (true) {
+         CountDownLatch latch = latches.poll();
+         if (latch == null) {
+            break;
+         }
+         latch.countDown();
+      }
+   }
+
    public void notifyEntryCreated(Cache<K, V> cache, K key, V value) {
-      if (!createdListeners.isEmpty()) {
-         List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value, EventType.CREATED);
-         for (CacheEntryCreatedListener<K, V> listener : createdListeners)
-            listener.onCreated(getEntryIterable(events, listenerCfgs.get(listener)));
+      try {
+         if (!createdListeners.isEmpty()) {
+            List<CacheEntryEvent<? extends K, ? extends V>> events =
+                  createEvent(cache, key, value, EventType.CREATED);
+            for (CacheEntryCreatedListener<K, V> listener : createdListeners)
+               listener.onCreated(getEntryIterable(events, listenerCfgs.get(listener)));
+         }
+      } finally {
+         notifySync(cache, key, value);
       }
    }
 
    public void notifyEntryUpdated(Cache<K, V> cache, K key, V value) {
-      if (!updatedListeners.isEmpty()) {
-         List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value, EventType.UPDATED);
-         for (CacheEntryUpdatedListener<K, V> listener : updatedListeners)
-            listener.onUpdated(getEntryIterable(events, listenerCfgs.get(listener)));
+      try {
+         if (!updatedListeners.isEmpty()) {
+            List<CacheEntryEvent<? extends K, ? extends V>> events =
+                  createEvent(cache, key, value, EventType.UPDATED);
+            for (CacheEntryUpdatedListener<K, V> listener : updatedListeners)
+               listener.onUpdated(getEntryIterable(events, listenerCfgs.get(listener)));
+         }
+      } finally {
+         notifySync(cache, key, value);
       }
    }
 
    public void notifyEntryRemoved(Cache<K, V> cache, K key, V value) {
-      if (!removedListeners.isEmpty()) {
-         List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value, EventType.REMOVED);
-         for (CacheEntryRemovedListener<K, V> listener : removedListeners) {
-            listener.onRemoved(getEntryIterable(events, listenerCfgs.get(listener)));
+      try {
+         if (!removedListeners.isEmpty()) {
+            List<CacheEntryEvent<? extends K, ? extends V>> events =
+                  createEvent(cache, key, value, EventType.REMOVED);
+            for (CacheEntryRemovedListener<K, V> listener : removedListeners) {
+               listener.onRemoved(getEntryIterable(events, listenerCfgs.get(listener)));
+            }
          }
+      } finally {
+         notifySync(cache, key, null);
       }
    }
 
    public void notifyEntryExpired(Cache<K, V> cache, K key, V value) {
-      if (!expiredListeners.isEmpty()) {
-         List<CacheEntryEvent<? extends K, ? extends V>> events =
-               createEvent(cache, key, value, EventType.EXPIRED);
-         for (CacheEntryExpiredListener<K, V> listener : expiredListeners) {
-            listener.onExpired(getEntryIterable(events, listenerCfgs.get(listener)));
+      try {
+         if (!expiredListeners.isEmpty()) {
+            List<CacheEntryEvent<? extends K, ? extends V>> events =
+                  createEvent(cache, key, value, EventType.EXPIRED);
+            for (CacheEntryExpiredListener<K, V> listener : expiredListeners) {
+               listener.onExpired(getEntryIterable(events, listenerCfgs.get(listener)));
+            }
+         }
+      } finally {
+         notifySync(cache, key, value);
+      }
+   }
+
+   public boolean hasSyncCreatedListener() {
+      return hasSyncListener(CacheEntryCreatedListener.class);
+   }
+
+   public boolean hasSyncRemovedListener() {
+      return hasSyncListener(CacheEntryRemovedListener.class);
+   }
+
+   public boolean hasSyncUpdatedListener() {
+      return hasSyncListener(CacheEntryUpdatedListener.class);
+   }
+
+   public boolean hasSyncExpiredListener() {
+      return hasSyncListener(CacheEntryExpiredListener.class);
+   }
+
+   private boolean hasSyncListener(Class<?> listenerClass) {
+      for (Map.Entry<CacheEntryListener<? super K, ? super V>, CacheEntryListenerConfiguration<K, V>> entry : listenerCfgs.entrySet()) {
+         if (entry.getValue().isSynchronous() && listenerClass.isInstance(entry.getKey())) {
+            return true;
          }
       }
+      return false;
    }
 
    private Iterable<CacheEntryEvent<? extends K, ? extends V>> getEntryIterable(

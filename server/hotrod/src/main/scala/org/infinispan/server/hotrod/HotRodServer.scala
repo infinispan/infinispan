@@ -19,6 +19,7 @@ import org.infinispan.util.concurrent.IsolationLevel
 import javax.security.sasl.SaslServerFactory
 import org.infinispan.server.core.security.SaslUtils
 import org.infinispan.factories.ComponentRegistry
+import org.infinispan.server.hotrod.event.KVPEventConverterFactory
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -78,6 +79,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
       queryFacades = loadQueryFacades()
       clientListenerRegistry = new ClientListenerRegistry(configuration)
+
+      addCacheEventConverterFactory("kvp-converter-factory", new KVPEventConverterFactory)
    }
 
    private def loadQueryFacades(): Seq[QueryFacade] =
