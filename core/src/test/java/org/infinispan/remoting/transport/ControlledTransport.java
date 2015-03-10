@@ -7,6 +7,7 @@ import org.infinispan.util.concurrent.ReclosableLatch;
 import org.infinispan.xsite.XSiteReplicateCommand;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -111,7 +112,7 @@ public class ControlledTransport extends AbstractDelegatingTransport {
    }
 
    @Override
-   protected void beforeInvokeRemotely(ReplicableCommand command) {
+   protected void beforeInvokeRemotely(ReplicableCommand command, Collection<Address> recipients) {
       failIfNeeded(command);
       waitBefore(command);
    }

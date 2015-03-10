@@ -1098,11 +1098,18 @@ public class TestingUtil {
    }
 
    public static DISCARD getDiscardForCache(Cache<?, ?> c) throws Exception {
-      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
+      return getDiscardForCache(c.getCacheManager());
+   }
+
+   public static DISCARD getDiscardForCache(CacheContainer container) throws Exception {
+      JGroupsTransport jgt = (JGroupsTransport) extractGlobalComponent(container, Transport.class);
       Channel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
-      DISCARD discard = new DISCARD();
-      ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
+      DISCARD discard = (DISCARD) ps.findProtocol(DISCARD.class);
+      if (discard == null) {
+         discard = new DISCARD();
+         ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
+      }
       return discard;
    }
 
