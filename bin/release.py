@@ -197,7 +197,7 @@ def upload_javadocs(base_dir, version):
   version_short = get_version_major_minor(version)
   
   os.mkdir(version_short)
-  os.rename("apidocs", "%s/apidocs" % version_short)
+  os.rename("api", "%s/apidocs" % version_short)
   
   ## rsync this stuff to filemgmt.jboss.org
   uploader.upload_rsync(version_short, "infinispan@filemgmt.jboss.org:/docs_htdocs/infinispan")
