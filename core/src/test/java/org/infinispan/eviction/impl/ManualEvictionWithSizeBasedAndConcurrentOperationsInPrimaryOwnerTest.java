@@ -9,6 +9,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
@@ -354,7 +355,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       int hashCode = 0;
       SameHashCodeKey key = new SameHashCodeKey(name, hashCode);
-      while (!distributionManager.getPrimaryLocation(key).equals(address)) {
+      while (!distributionManager.getPrimaryLocation(key, LookupMode.WRITE).equals(address)) {
          hashCode++;
          key = new SameHashCodeKey(name, hashCode);
       }

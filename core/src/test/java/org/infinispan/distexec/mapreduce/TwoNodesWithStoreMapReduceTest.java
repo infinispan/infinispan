@@ -2,6 +2,7 @@ package org.infinispan.distexec.mapreduce;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
@@ -85,7 +86,7 @@ public class TwoNodesWithStoreMapReduceTest extends BaseWordCountMapReduceTest {
    private void write(String key, Object value) {
       Cache cache1 = cache(0, cacheName());
       ClusteringDependentLogic cdl = cache1.getAdvancedCache().getComponentRegistry().getComponent(ClusteringDependentLogic.class);
-      boolean onCache1 = cdl.localNodeIsPrimaryOwner(key);
+      boolean onCache1 = cdl.localNodeIsPrimaryOwner(key, LookupMode.WRITE);
       CacheWriter cacheWriter;
       if (onCache1) {
          cacheWriter = (CacheWriter) TestingUtil.getCacheLoader(cache1);

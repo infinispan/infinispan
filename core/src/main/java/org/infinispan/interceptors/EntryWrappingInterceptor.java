@@ -30,6 +30,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
@@ -84,7 +85,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cdl,
+   public void init(EntryFactory entryFactory, DataContainer<Object, Object> dataContainer, ClusteringDependentLogic cdl,
                     CommandsFactory commandFactory, StateConsumer stateConsumer, StateTransferLock stateTransferLock,
                     XSiteStateConsumer xSiteStateConsumer, GroupManager groupManager) {
       this.entryFactory = entryFactory;
@@ -133,7 +134,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return visitDataReadCommand(ctx, command);
    }
 
-   private final Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+   private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       try {
          entryFactory.wrapEntryForReading(ctx, command.getKey(), null);
          return invokeNextInterceptor(ctx, command);
@@ -220,9 +221,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          result = true;
       } else {
          if (isUsingLockDelegation || isTransactional) {
-            result = cdl.localNodeIsPrimaryOwner(key) || (cdl.localNodeIsOwner(key) && !ctx.isOriginLocal());
+            result = cdl.localNodeIsPrimaryOwner(key, LookupMode.WRITE) || (cdl.localNodeIsOwner(key, LookupMode.WRITE) && !ctx.isOriginLocal());
          } else {
-            result = cdl.localNodeIsOwner(key);
+            result = cdl.localNodeIsOwner(key, LookupMode.WRITE);
          }
       }
 
@@ -502,10 +503,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         Map<Object, Object> newMap = new HashMap<Object, Object>(4);
+         Map<Object, Object> newMap = new HashMap<>(4);
          for (Map.Entry<Object, Object> e : command.getMap().entrySet()) {
             Object key = e.getKey();
-            if (cdl.localNodeIsOwner(key)) {
+            if (cdl.localNodeIsOwner(key, LookupMode.WRITE)) {
                entryFactory.wrapEntryForPut(ctx, key, null, true, command, false);
                newMap.put(key, e.getValue());
             }
@@ -522,7 +523,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       public Object visitInvalidateCommand(InvocationContext ctx, InvalidateCommand command) throws Throwable {
          if (command.getKeys() != null) {
             for (Object key : command.getKeys()) {
-               if (cdl.localNodeIsOwner(key)) {
+               if (cdl.localNodeIsOwner(key, LookupMode.WRITE)) {
                   entryFactory.wrapEntryForRemove(ctx, key, false, false, false);
                   invokeNextInterceptor(ctx, command);
                }
@@ -533,7 +534,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       @Override
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
+         if (cdl.localNodeIsOwner(command.getKey(), LookupMode.WRITE)) {
             boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
             entryFactory.wrapEntryForRemove(ctx, command.getKey(), false, false, forceWrap);
             invokeNextInterceptor(ctx, command);
@@ -543,7 +544,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
+         if (cdl.localNodeIsOwner(command.getKey(), LookupMode.WRITE)) {
             entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isConditional(), command, false);
             invokeNextInterceptor(ctx, command);
          }
@@ -552,7 +553,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       @Override
       public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
+         if (cdl.localNodeIsOwner(command.getKey(), LookupMode.WRITE)) {
             entryFactory.wrapEntryForDelta(ctx, command.getKey(), command.getDelta());
             invokeNextInterceptor(ctx, command);
          }
@@ -561,7 +562,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
+         if (cdl.localNodeIsOwner(command.getKey(), LookupMode.WRITE)) {
             if (command.getValueMatcher().nonExistentEntryCanMatch()) {
                //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
                // but we still need to apply the new value.

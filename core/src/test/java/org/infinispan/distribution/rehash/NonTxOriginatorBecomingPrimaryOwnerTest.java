@@ -5,6 +5,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.BlockingInterceptor;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.distribution.NonTxDistributionInterceptor;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -85,7 +86,7 @@ public class NonTxOriginatorBecomingPrimaryOwnerTest extends MultipleCacheManage
          distInterceptorBarrier.await(10, TimeUnit.SECONDS);
          distInterceptorBarrier.await(10, TimeUnit.SECONDS);
 
-         if (cache2.getAdvancedCache().getDistributionManager().getPrimaryLocation(key).equals(address(2))) {
+         if (cache2.getAdvancedCache().getDistributionManager().getPrimaryLocation(key, LookupMode.WRITE).equals(address(2))) {
             // cache2 forwards the command back to cache0, blocking again
             distInterceptorBarrier.await(10, TimeUnit.SECONDS);
             distInterceptorBarrier.await(10, TimeUnit.SECONDS);

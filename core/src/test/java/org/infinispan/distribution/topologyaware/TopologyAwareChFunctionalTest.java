@@ -54,11 +54,11 @@ public class TopologyAwareChFunctionalTest extends DistSyncFuncTest {
    }
 
    public void testHashesInitiated() {
-      ConsistentHash hash = advancedCache(0, cacheName).getDistributionManager().getConsistentHash();
+      ConsistentHash hash = advancedCache(0, cacheName).getDistributionManager().getWriteConsistentHash();
       containsAllHashes(hash);
-      containsAllHashes(advancedCache(1, cacheName).getDistributionManager().getConsistentHash());
-      containsAllHashes(advancedCache(2, cacheName).getDistributionManager().getConsistentHash());
-      containsAllHashes(advancedCache(3, cacheName).getDistributionManager().getConsistentHash());
+      containsAllHashes(advancedCache(1, cacheName).getDistributionManager().getWriteConsistentHash());
+      containsAllHashes(advancedCache(2, cacheName).getDistributionManager().getWriteConsistentHash());
+      containsAllHashes(advancedCache(3, cacheName).getDistributionManager().getWriteConsistentHash());
    }
 
    private void containsAllHashes(ConsistentHash ch) {

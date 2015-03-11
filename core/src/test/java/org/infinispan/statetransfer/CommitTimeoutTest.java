@@ -5,6 +5,7 @@ import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.StateSequencer;
@@ -83,7 +84,7 @@ public class CommitTimeoutTest extends MultipleCacheManagersTest {
             matchCommand(RollbackCommand.class).build())
             .after("tx1:after_rollback_on_backup");
 
-      assertEquals(Arrays.asList(address(1), address(2)), advancedCache(0).getDistributionManager().locate(TEST_KEY));
+      assertEquals(Arrays.asList(address(1), address(2)), advancedCache(0).getDistributionManager().locate(TEST_KEY, LookupMode.WRITE));
       sequencer.advance("tx1:begin");
 
       tm(0).begin();
@@ -142,7 +143,7 @@ public class CommitTimeoutTest extends MultipleCacheManagersTest {
             matchCommand(RollbackCommand.class).build())
             .before("tx1:block_rollback_on_backup").after("tx1:after_rollback_on_backup");
 
-      assertEquals(Arrays.asList(address(1), address(2)), advancedCache(0).getDistributionManager().locate(TEST_KEY));
+      assertEquals(Arrays.asList(address(1), address(2)), advancedCache(0).getDistributionManager().locate(TEST_KEY, LookupMode.WRITE));
       Future<Object> lockCheckFuture = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {

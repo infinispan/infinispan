@@ -19,7 +19,6 @@ import java.util.Arrays;
 import static org.infinispan.test.TestingUtil.killCacheManagers;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -71,8 +70,8 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
       // Check initial state
       StateTransferManager stm0 = TestingUtil.extractComponent(cache(0), StateTransferManager.class);
-      assertEquals(Arrays.asList(address(0), address(1)), stm0.getCacheTopology().getCurrentCH().getMembers());
-      assertNull(stm0.getCacheTopology().getPendingCH());
+      assertEquals(Arrays.asList(address(0), address(1)), stm0.getCacheTopology().getReadConsistentHash().getMembers());
+      assertEquals(stm0.getCacheTopology().getWriteConsistentHash(), stm0.getCacheTopology().getReadConsistentHash());
 
       assertTrue(mBeanServer.isRegistered(ltmName0));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName0, "RebalancingEnabled"));
@@ -97,8 +96,8 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       // Check that no rebalance happened after 1 second
       Thread.sleep(1000);
       assertFalse((Boolean) mBeanServer.getAttribute(ltmName1, "RebalancingEnabled"));
-      assertNull(stm0.getCacheTopology().getPendingCH());
-      assertEquals(Arrays.asList(address(0), address(1)), stm0.getCacheTopology().getCurrentCH().getMembers());
+      assertEquals(stm0.getCacheTopology().getWriteConsistentHash(), stm0.getCacheTopology().getReadConsistentHash());
+      assertEquals(Arrays.asList(address(0), address(1)), stm0.getCacheTopology().getReadConsistentHash().getMembers());
 
       // Re-enable rebalancing
       log.debugf("Rebalancing with nodes %s %s %s %s", address(0), address(1), address(2), address(3));
@@ -109,8 +108,8 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
       // Check that the cache now has 4 nodes, and the CH is balanced
       TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2), cache(3));
-      assertNull(stm0.getCacheTopology().getPendingCH());
-      ConsistentHash ch = stm0.getCacheTopology().getCurrentCH();
+      assertEquals(stm0.getCacheTopology().getWriteConsistentHash(), stm0.getCacheTopology().getReadConsistentHash());
+      ConsistentHash ch = stm0.getCacheTopology().getReadConsistentHash();
       assertEquals(Arrays.asList(address(0), address(1), address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
          assertEquals(2, ch.locateOwnersForSegment(i).size());
@@ -132,8 +131,8 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       // the CH factory would have assigned 2 owners.
       Thread.sleep(1000);
       StateTransferManager stm2 = TestingUtil.extractComponent(cache(2), StateTransferManager.class);
-      assertNull(stm2.getCacheTopology().getPendingCH());
-      ch = stm2.getCacheTopology().getCurrentCH();
+      assertEquals(stm2.getCacheTopology().getWriteConsistentHash(), stm2.getCacheTopology().getReadConsistentHash());
+      ch = stm2.getCacheTopology().getReadConsistentHash();
       assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
          assertEquals(1, ch.locateOwnersForSegment(i).size());
@@ -151,8 +150,8 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
 
       // Check that the CH is now balanced (and every segment has 2 copies)
       TestingUtil.waitForRehashToComplete(cache(2), cache(3));
-      assertNull(stm2.getCacheTopology().getPendingCH());
-      ch = stm2.getCacheTopology().getCurrentCH();
+      assertEquals(stm2.getCacheTopology().getWriteConsistentHash(), stm2.getCacheTopology().getReadConsistentHash());
+      ch = stm2.getCacheTopology().getReadConsistentHash();
       assertEquals(Arrays.asList(address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
          assertEquals(2, ch.locateOwnersForSegment(i).size());

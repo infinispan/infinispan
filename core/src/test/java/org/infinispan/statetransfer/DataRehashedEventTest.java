@@ -15,7 +15,10 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Dan Berindei
@@ -116,7 +119,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
 
    @Listener
    public class DataRehashedListener {
-      private volatile List<DataRehashedEvent<Object, Object>> events = new CopyOnWriteArrayList<DataRehashedEvent<Object, Object>>();
+      private volatile List<DataRehashedEvent<Object, Object>> events = new CopyOnWriteArrayList<>();
 
       @DataRehashed
       public void onDataRehashed(DataRehashedEvent<Object, Object> e) {
@@ -126,7 +129,7 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
 
       List<DataRehashedEvent<Object, Object>> removeEvents() {
          List<DataRehashedEvent<Object, Object>> oldEvents = events;
-         events = new CopyOnWriteArrayList<DataRehashedEvent<Object, Object>>();
+         events = new CopyOnWriteArrayList<>();
          return oldEvents;
       }
 

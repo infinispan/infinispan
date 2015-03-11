@@ -27,11 +27,11 @@ public class JoiningNode {
       cm.addListener(listener);
    }
 
-   public Cache getCache() {
+   public <K, V> Cache<K, V> getCache() {
       return cm.getCache();
    }
 
-   public Cache getCache(String cacheName) {
+   public <K, V> Cache<K, V> getCache(String cacheName) {
       return cm.getCache(cacheName);
    }
 

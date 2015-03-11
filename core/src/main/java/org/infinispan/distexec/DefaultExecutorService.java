@@ -26,6 +26,7 @@ import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -587,7 +588,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
             ownerOfKey = members.get(0);
          } else {
             // DIST mode
-            List<Address> owners = dm.locate(key);
+            List<Address> owners = dm.locate(key, LookupMode.READ);
             List<Address> filtered = filterMembers(policy, owners);
             if(!filtered.isEmpty()){
                ownerOfKey = filtered.get(0);

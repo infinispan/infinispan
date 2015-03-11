@@ -78,7 +78,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
       final long startTime = System.nanoTime();
       final long maxRunTime = TimeUnit.MILLISECONDS.toNanos(cacheConfig.clustering().stateTransfer().timeout());
       int expectedSize = cacheManager.getTransport().getMembers().size();
-      while (stm.getCacheTopology().getMembers().size() != expectedSize && stm.getCacheTopology().getPendingCH() != null) {
+      while (stm.getCacheTopology().getMembers().size() != expectedSize && !stm.getCacheTopology().isStable()) {
          Thread.sleep(50);
          long estimatedRunTime = System.nanoTime() - startTime;
          if (estimatedRunTime > maxRunTime) {

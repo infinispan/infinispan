@@ -190,8 +190,8 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, ch1.getMembers());
-      stateProvider.onTopologyUpdate(cacheTopology, false);
+      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1.getMembers());
+      stateProvider.onTopologyUpdate(cacheTopology);
 
       log.debug("ch1: " + ch1);
       Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
@@ -212,8 +212,8 @@ public class StateProviderTest {
       assertTrue(stateProvider.isStateTransferInProgress());
 
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, ch2.getMembers());
-      stateProvider.onTopologyUpdate(cacheTopology, true);
+      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2.getMembers());
+      stateProvider.onTopologyUpdate(cacheTopology);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 
@@ -303,8 +303,8 @@ public class StateProviderTest {
       when(transactionTable.getLocalTransactions()).thenReturn(Collections.<LocalTransaction>emptyList());
       when(transactionTable.getRemoteTransactions()).thenReturn(Collections.<RemoteTransaction>emptyList());
 
-      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch1, ch2.getMembers());
-      stateProvider.onTopologyUpdate(cacheTopology, false);
+      cacheTopology = new CacheTopology(1, 1, ch1, ch1, ch2.getMembers());
+      stateProvider.onTopologyUpdate(cacheTopology);
 
       log.debug("ch1: " + ch1);
       Set<Integer> segmentsToRequest = ch1.getSegmentsForOwner(members1.get(0));
@@ -326,8 +326,8 @@ public class StateProviderTest {
 
       // TestingUtil.sleepThread(15000);
       log.debug("ch2: " + ch2);
-      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2, ch2.getMembers());
-      stateProvider.onTopologyUpdate(cacheTopology, false);
+      cacheTopology = new CacheTopology(2, 1, ch2, ch2, ch2.getMembers());
+      stateProvider.onTopologyUpdate(cacheTopology);
 
       assertFalse(stateProvider.isStateTransferInProgress());
 

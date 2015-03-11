@@ -10,8 +10,6 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -22,7 +20,6 @@ import org.infinispan.distribution.ch.impl.DefaultConsistentHash;
 import org.infinispan.distribution.ch.impl.DefaultConsistentHashFactory;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -68,7 +65,9 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -102,8 +101,6 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             .versioning().enable().scheme(VersioningScheme.SIMPLE)
             .locking().lockAcquisitionTimeout(200).writeSkewCheck(true).isolationLevel(IsolationLevel.REPEATABLE_READ);
 
-      GlobalConfigurationBuilder gcb = GlobalConfigurationBuilder.defaultClusteredBuilder();
-      GlobalConfiguration globalConfiguration = gcb.build();
       Configuration configuration = cb.build();
 
       // create list of 6 members
@@ -140,7 +137,6 @@ public class StateConsumerTest extends AbstractInfinispanTest {
             new LinkedBlockingDeque<Runnable>(), threadFactory, new ThreadPoolExecutor.CallerRunsPolicy());
 
       StateTransferManager stateTransferManager = mock(StateTransferManager.class);
-      CacheNotifier cacheNotifier = mock(CacheNotifier.class);
       RpcManager rpcManager = mock(RpcManager.class);
       Transport transport = mock(Transport.class);
       CommandsFactory commandsFactory = mock(CommandsFactory.class);
@@ -154,7 +150,7 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       BlockingTaskAwareExecutorService remoteCommandsExecutor = mock(BlockingTaskAwareExecutorService.class);
       L1Manager l1Manager = mock(L1Manager.class);
 
-      when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), any(Set.class))).thenAnswer(new Answer<StateRequestCommand>() {
+      when(commandsFactory.buildStateRequestCommand(any(StateRequestCommand.Type.class), any(Address.class), anyInt(), anySetOf(Integer.class))).thenAnswer(new Answer<StateRequestCommand>() {
          @Override
          public StateRequestCommand answer(InvocationOnMock invocation) {
             return new StateRequestCommand("cache1", (StateRequestCommand.Type) invocation.getArguments()[0], (Address) invocation.getArguments()[1], (Integer) invocation.getArguments()[2], (Set) invocation.getArguments()[3]);
@@ -166,15 +162,15 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       when(rpcManager.getTransport()).thenReturn(transport);
 
       final Map<Address, Set<Integer>> requestedSegments = CollectionFactory.makeConcurrentMap();
-      final Set<Integer> flatRequestedSegments = new ConcurrentSkipListSet<Integer>();
-      when(rpcManager.invokeRemotely(any(Collection.class), any(StateRequestCommand.class), any(RpcOptions.class)))
+      final Set<Integer> flatRequestedSegments = new ConcurrentSkipListSet<>();
+      when(rpcManager.invokeRemotely(anyCollectionOf(Address.class), any(StateRequestCommand.class), any(RpcOptions.class)))
             .thenAnswer(new Answer<Map<Address, Response>>() {
                @Override
                public Map<Address, Response> answer(InvocationOnMock invocation) {
                   Collection<Address> recipients = (Collection<Address>) invocation.getArguments()[0];
                   Address recipient = recipients.iterator().next();
                   StateRequestCommand cmd = (StateRequestCommand) invocation.getArguments()[1];
-                  Map<Address, Response> results = new HashMap<Address, Response>(1);
+                  Map<Address, Response> results = new HashMap<>(1);
                   if (cmd.getType().equals(StateRequestCommand.Type.GET_TRANSACTIONS)) {
                      results.put(recipient, SuccessfulResponse.create(new ArrayList<TransactionInfo>()));
                      Set<Integer> segments = (Set<Integer>) cmd.getParameters()[3];
@@ -199,11 +195,11 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       // create state provider
       final StateConsumerImpl stateConsumer = new StateConsumerImpl();
       stateConsumer.init(cache, pooledExecutorService, stateTransferManager, interceptorChain, icf, configuration, rpcManager, null,
-            commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock, cacheNotifier,
+            commandsFactory, persistenceManager, dataContainer, transactionTable, stateTransferLock,
             totalOrderManager, remoteCommandsExecutor, l1Manager, new CommitManager(AnyEquivalence.getInstance()));
       stateConsumer.start();
 
-      final List<InternalCacheEntry> cacheEntries = new ArrayList<InternalCacheEntry>();
+      final List<InternalCacheEntry> cacheEntries = new ArrayList<>();
       Object key1 = new TestKey("key1", 0, ch1);
       Object key2 = new TestKey("key2", 0, ch1);
       cacheEntries.add(new ImmortalCacheEntry(key1, "value1"));
@@ -220,11 +216,11 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       assertFalse(stateConsumer.hasActiveTransfers());
 
       // node 4 leaves
-      stateConsumer.onTopologyUpdate(new CacheTopology(1, 1, ch2, null, ch2.getMembers()), false);
+      stateConsumer.onConsistentHashUpdate(new CacheTopology(1, 1, ch2, ch2, ch2.getMembers()));
       assertFalse(stateConsumer.hasActiveTransfers());
 
       // start a rebalance
-      stateConsumer.onTopologyUpdate(new CacheTopology(2, 2, ch2, ch3, ch23, ch23.getMembers()), true);
+      stateConsumer.onRebalanceStart(new CacheTopology(2, 2, ch2, ch23, ch23.getMembers()));
       assertTrue(stateConsumer.hasActiveTransfers());
 
       // check that all segments have been requested
@@ -238,23 +234,24 @@ public class StateConsumerTest extends AbstractInfinispanTest {
       Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers()), false);
+            stateConsumer.onConsistentHashUpdate(new CacheTopology(3, 2, ch2, ch2, ch2.getMembers()));
             return null;
          }
       });
-      stateConsumer.onTopologyUpdate(new CacheTopology(3, 2, ch2, null, ch2.getMembers()), false);
+      stateConsumer.onReadConsistentHashUpdate(new CacheTopology(4, 2, ch2, ch2, ch2.getMembers()));
+      stateConsumer.onWriteConsistentHashUpdate(new CacheTopology(5, 2, ch2, ch2, ch2.getMembers()));
       future.get();
       assertFalse(stateConsumer.hasActiveTransfers());
 
 
       // restart the rebalance
       requestedSegments.clear();
-      stateConsumer.onTopologyUpdate(new CacheTopology(4, 4, ch2, ch3, ch23, ch23.getMembers()), true);
+      stateConsumer.onRebalanceStart(new CacheTopology(6, 6, ch2, ch23, ch23.getMembers()));
       assertTrue(stateConsumer.hasActiveTransfers());
       assertEquals(flatRequestedSegments, newSegments);
 
       // apply state
-      ArrayList<StateChunk> stateChunks = new ArrayList<StateChunk>();
+      ArrayList<StateChunk> stateChunks = new ArrayList<>();
       for (Integer segment : newSegments) {
          stateChunks.add(new StateChunk(segment, InfinispanCollections.<InternalCacheEntry>emptyList(), true));
       }

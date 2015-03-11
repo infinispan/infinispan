@@ -64,10 +64,10 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
 
       log.debugf("Delaying the availability mode update on node %s", address(p0.node(0)));
       advanceOnGlobalComponentMethod(ss, manager(p0.node(0)), LocalTopologyManager.class,
-            matchMethodCall("handleTopologyUpdate").withParam(2, AvailabilityMode.DEGRADED_MODE).build())
+            matchMethodCall("handleTopologyUpdate").withParam(3, AvailabilityMode.DEGRADED_MODE).build())
             .before("main:block_availability_update_p0n0", "main:resume_availability_update_p0n0");
       advanceOnGlobalComponentMethod(ss, manager(p0.node(1)), LocalTopologyManager.class,
-            matchMethodCall("handleTopologyUpdate").withParam(2, AvailabilityMode.DEGRADED_MODE).build())
+            matchMethodCall("handleTopologyUpdate").withParam(3, AvailabilityMode.DEGRADED_MODE).build())
             .after("main:after_availability_update_p0n1");
 
       splitCluster(p0.getNodes(), p1.getNodes());

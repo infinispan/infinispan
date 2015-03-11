@@ -208,13 +208,13 @@ public class TestingUtil {
          Address cacheAddress = c.getAdvancedCache().getRpcManager().getAddress();
          while (true) {
             CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-            ConsistentHash currentCH = cacheTopology.getCurrentCH();
-            boolean rebalanceInProgress = cacheTopology.getPendingCH() != null;
-            boolean chContainsAllMembers = currentCH.getMembers().size() == caches.length;
+            ConsistentHash writeCH = cacheTopology.getWriteConsistentHash();
+            boolean rebalanceInProgress = !cacheTopology.getReadConsistentHash().equals(writeCH);
+            boolean chContainsAllMembers = writeCH.getMembers().size() == caches.length;
             boolean currentChIsBalanced = true;
-            int actualNumOwners = Math.min(currentCH.getNumOwners(), currentCH.getMembers().size());
-            for (int i = 0; i < currentCH.getNumSegments(); i++) {
-               if (currentCH.locateOwnersForSegment(i).size() < actualNumOwners) {
+            int actualNumOwners = Math.min(writeCH.getNumOwners(), writeCH.getMembers().size());
+            for (int i = 0; i < writeCH.getNumSegments(); i++) {
+               if (writeCH.locateOwnersForSegment(i).size() < actualNumOwners) {
                   currentChIsBalanced = false;
                   break;
                }
@@ -231,7 +231,7 @@ public class TestingUtil {
                   }
                   message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
                         "expected member list is %s, current member list is %s!",
-                        cacheAddress, Arrays.toString(addresses), cacheTopology.getCurrentCH().getMembers());
+                        cacheAddress, Arrays.toString(addresses), cacheTopology.getReadConsistentHash().getMembers());
                } else {
                   message = String.format("Timed out waiting for rebalancing to complete on node %s, " +
                         "current topology is %s. rebalanceInProgress=%s, currentChIsBalanced=%s", c.getCacheManager().getAddress(),
@@ -1098,11 +1098,18 @@ public class TestingUtil {
    }
 
    public static DISCARD getDiscardForCache(Cache<?, ?> c) throws Exception {
-      JGroupsTransport jgt = (JGroupsTransport) TestingUtil.extractComponent(c, Transport.class);
+      return getDiscardForCache(c.getCacheManager());
+   }
+
+   public static DISCARD getDiscardForCache(CacheContainer container) throws Exception {
+      JGroupsTransport jgt = (JGroupsTransport) extractGlobalComponent(container, Transport.class);
       Channel ch = jgt.getChannel();
       ProtocolStack ps = ch.getProtocolStack();
-      DISCARD discard = new DISCARD();
-      ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
+      DISCARD discard = (DISCARD) ps.findProtocol(DISCARD.class);
+      if (discard == null) {
+         discard = new DISCARD();
+         ps.insertProtocol(discard, ProtocolStack.ABOVE, TP.class);
+      }
       return discard;
    }
 

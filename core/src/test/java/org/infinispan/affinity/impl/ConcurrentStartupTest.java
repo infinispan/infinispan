@@ -3,9 +3,9 @@ package org.infinispan.affinity.impl;
 import org.infinispan.AdvancedCache;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
-import org.infinispan.affinity.impl.RndKeyGenerator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.AbstractCacheTest;
@@ -75,12 +75,12 @@ public class ConcurrentStartupTest extends AbstractCacheTest {
       log.trace("Test keys for cache2.");
       for (int i = 0; i < KEY_QUEUE_SIZE; i++) {
          Object keyForAddress = keyAffinityService2.getKeyForAddress(manager2.getAddress());
-         assertTrue(cache1.getDistributionManager().locate(keyForAddress).contains(manager2.getAddress()));
+         assertTrue(cache1.getDistributionManager().locate(keyForAddress, LookupMode.WRITE).contains(manager2.getAddress()));
       }
       log.trace("Test keys for cache1.");
       for (int i = 0; i < KEY_QUEUE_SIZE; i++) {
          Object keyForAddress = keyAffinityService1.getKeyForAddress(manager1.getAddress());
-         List<Address> locate = cache1.getDistributionManager().locate(keyForAddress);
+         List<Address> locate = cache1.getDistributionManager().locate(keyForAddress, LookupMode.WRITE);
          assertTrue("For key " + keyForAddress + " Locate " + locate + " should contain " + manager1.getAddress(), locate.contains(manager1.getAddress()));
       }
    }

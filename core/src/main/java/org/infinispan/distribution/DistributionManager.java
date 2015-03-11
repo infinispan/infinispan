@@ -16,6 +16,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @author Vladimir Blagojevic
  * @author anistor@redhat.com
+ * @author Pedro Ruivo
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
@@ -23,54 +24,68 @@ public interface DistributionManager {
 
    /**
     * Returns the data locality characteristics of a given key.
-    * @param key key to test
-    * @return a DataLocality that allows you to test whether a key is mapped to the local node or not, and the degree of
-    * certainty of such a result.
+    *
+    * @param key        key to test.
+    * @param lookupMode specifies if the lookup is for read or write.
+    * @return a {@link org.infinispan.distribution.DataLocality} that allows you to test whether a key is mapped to the
+    * local node or not, and the degree of certainty of such a result.
     */
-   DataLocality getLocality(Object key); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
+   DataLocality getLocality(Object key, LookupMode lookupMode);
 
    /**
     * Locates a key in a cluster.  The returned addresses <i>may not</i> be owners of the keys if a rehash happens to be
     * in progress or is pending, so when querying these servers, invalid responses should be checked for and the next
     * address checked accordingly.
     *
-    * @param key key to test
+    * @param key        key to test.
+    * @param lookupMode specifies if the lookup is for read or write.
     * @return a list of addresses where the key may reside
     */
-   List<Address> locate(Object key); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
+   List<Address> locate(Object key, LookupMode lookupMode);
 
    /**
-    * Returns the first Address containing the key.  Equivalent to returning the first element of {@link #locate(Object)}
-    * @param key key to test
+    * Returns the first Address containing the key. Equivalent to returning the first element of {@link #locate(Object,
+    * LookupMode)}
+    *
+    * @param key        key to test.
+    * @param lookupMode specifies if the lookup is for read or write.
     * @return the first address on which the key may reside
     */
-   Address getPrimaryLocation(Object key);  //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
+   Address getPrimaryLocation(Object key, LookupMode lookupMode);
 
    /**
-    * Locates a list of keys in a cluster.  Like {@link #locate(Object)} the returned addresses <i>may not</i> be owners
-    * of the keys if a rehash happens to be in progress or is pending, so when querying these servers, invalid responses
-    * should be checked for and the next address checked accordingly.
+    * Locates a list of keys in a cluster.  Like {@link #locate(Object, LookupMode)} the returned addresses <i>may
+    * not</i> be owners of the keys if a rehash happens to be in progress or is pending, so when querying these servers,
+    * invalid responses should be checked for and the next address checked accordingly.
     *
-    * @param keys list of keys to locate
-    * @return a list of addresses where the keys reside
+    * @param keys       list of keys to locate.
+    * @param lookupMode specifies if the lookup is for read or write.
+    * @return a list of addresses where the keys reside.
     */
-   Set<Address> locateAll(Collection<Object> keys); //todo [anistor] this has to take an additional parameter that specifies if the lookup is for read or write
+   Set<Address> locateAll(Collection<Object> keys, LookupMode lookupMode);
 
    /**
-    * Retrieves the consistent hash instance currently in use, an instance of the configured ConsistentHash
-    * class (which defaults to {@link org.infinispan.distribution.ch.impl.DefaultConsistentHash}.
+    * It returns the {@link org.infinispan.distribution.ch.ConsistentHash} used for reads.
+    * <p/>
+    * When not rehash is in place, it returns the same consistent hash as {@link #getWriteConsistentHash()}.
     *
-    * @return a ConsistentHash instance
+    * @return the {@link org.infinispan.distribution.ch.ConsistentHash} used for reads.
     */
-   ConsistentHash getConsistentHash();
-
    ConsistentHash getReadConsistentHash();
 
+   /**
+    * It returns the {@link org.infinispan.distribution.ch.ConsistentHash} used for writes.
+    * <p/>
+    * When not rehash is in place, it returns the same consistent hash as {@link #getReadConsistentHash()}.
+    *
+    * @return the {@link org.infinispan.distribution.ch.ConsistentHash} used for writes.
+    */
    ConsistentHash getWriteConsistentHash();
 
    /**
-    * Tests whether a given key is affected by a rehash that may be in progress.  If no rehash is in progress, this method
-    * returns false.  Helps determine whether additional steps are necessary in handling an operation with a given key.
+    * Tests whether a given key is affected by a rehash that may be in progress.  If no rehash is in progress, this
+    * method returns {@code false}. Helps determine whether additional steps are necessary in handling an operation with
+    * a given key.
     *
     * @param key key to test
     * @return whether a key is affected by a rehash
@@ -79,13 +94,15 @@ public interface DistributionManager {
 
    /**
     * Tests whether a rehash is in progress
-    * @return true if a rehash is in progress, false otherwise
+    *
+    * @return {@code true} if a rehash is in progress, {@code false} otherwise
     */
    boolean isRehashInProgress();
 
    /**
     * Tests whether the current instance has completed joining the cluster
-    * @return true if join is in progress, false otherwise
+    *
+    * @return {@code true} if node is joined, {@code false} otherwise
     */
    boolean isJoinComplete();
 }

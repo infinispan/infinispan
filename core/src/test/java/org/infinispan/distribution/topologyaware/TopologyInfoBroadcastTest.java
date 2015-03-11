@@ -6,14 +6,11 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.impl.DistributionManagerImpl;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.List;
 
 import static org.testng.Assert.assertEquals;
 
@@ -60,17 +57,15 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
 //      assert advancedCache(2).getDistributionManager().getConsistentHash() instanceof TopologyAwareConsistentHash;
 
       DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
-      log.trace("distributionManager.ConsistentHash() = " + dmi.getConsistentHash());
-      assertTopologyInfo3Nodes(dmi.getConsistentHash().getMembers());
-      dmi = (DistributionManagerImpl) advancedCache(1).getDistributionManager();
-      assertTopologyInfo3Nodes(dmi.getConsistentHash().getMembers());
-      dmi = (DistributionManagerImpl) advancedCache(2).getDistributionManager();
-      assertTopologyInfo3Nodes(dmi.getConsistentHash().getMembers());
+      log.trace("distributionManager.ConsistentHash() = " + dmi.getWriteConsistentHash());
+      assertTopologyInfo3Nodes();
+      assertTopologyInfo3Nodes();
+      assertTopologyInfo3Nodes();
 
-      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getConsistentHash();
-      ConsistentHash tach1 = advancedCache(1).getDistributionManager().getConsistentHash();
+      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash tach1 = advancedCache(1).getDistributionManager().getWriteConsistentHash();
       assertEquals(tach0.getMembers(), tach1.getMembers());
-      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getConsistentHash();
+      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getWriteConsistentHash();
       assertEquals(tach0.getMembers(), tach2.getMembers());
    }
 
@@ -80,25 +75,23 @@ public class TopologyInfoBroadcastTest extends MultipleCacheManagersTest {
       TestingUtil.blockUntilViewsReceived(60000, false, cache(0), cache(2));
       TestingUtil.waitForRehashToComplete(cache(0), cache(2));
 
-      DistributionManagerImpl dmi = (DistributionManagerImpl) advancedCache(0).getDistributionManager();
-      assertTopologyInfo2Nodes(dmi.getConsistentHash().getMembers());
-      dmi = (DistributionManagerImpl) advancedCache(2).getDistributionManager();
-      assertTopologyInfo2Nodes(dmi.getConsistentHash().getMembers());
+      assertTopologyInfo2Nodes();
+      assertTopologyInfo2Nodes();
 
-      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getConsistentHash();
-      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getConsistentHash();
+      ConsistentHash tach0 = advancedCache(0).getDistributionManager().getWriteConsistentHash();
+      ConsistentHash tach2 = advancedCache(2).getDistributionManager().getWriteConsistentHash();
       assertEquals(tach0.getMembers(), tach2.getMembers());
    }
 
-   private void assertTopologyInfo3Nodes(List<Address> caches) {
-      assertTopologyInfo2Nodes(caches);
+   private void assertTopologyInfo3Nodes() {
+      assertTopologyInfo2Nodes();
       TopologyAwareAddress address1 = (TopologyAwareAddress) address(1);
       assertEquals(address1.getSiteId(), "s1");
       assertEquals(address1.getRackId(), "r1");
       assertEquals(address1.getMachineId(), "m1");
    }
 
-   private void assertTopologyInfo2Nodes(List<Address> caches) {
+   private void assertTopologyInfo2Nodes() {
       TopologyAwareAddress address0 = (TopologyAwareAddress) address(0);
       assertEquals(address0.getSiteId(), "s0");
       assertEquals(address0.getRackId(), "r0");

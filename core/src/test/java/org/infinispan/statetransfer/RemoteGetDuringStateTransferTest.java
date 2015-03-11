@@ -34,7 +34,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Pedro Ruivo
  * @since 6.0
  */
-@Test(groups = "functional", testName = "statetransfer.RemoteGetDuringStateTransferTest")
+@Test(groups = "unstable", testName = "statetransfer.RemoteGetDuringStateTransferTest")
 @CleanupAfterMethod
 public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest {
 
@@ -346,8 +346,8 @@ public class RemoteGetDuringStateTransferTest extends MultipleCacheManagersTest 
 
    /**
     * ISPN-3315: the remote get is done after the REBALANCE_START command.
-    * The old owner receives the request after the CH_UPDATE and no longer has the key.
-    * The new owner receives the 2nd request before the CH_UPDATE command.
+    * The old owner receives the request after the READ_CH_UPDATE and no longer has the key.
+    * The new owner receives the 2nd request before the READ_CH_UPDATE command.
     */
    public void testScenario_121_11() throws Exception {
       assertClusterSize("Wrong cluster size.", 2);

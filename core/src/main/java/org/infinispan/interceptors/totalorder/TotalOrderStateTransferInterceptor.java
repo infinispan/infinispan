@@ -69,7 +69,7 @@ public class TotalOrderStateTransferInterceptor extends BaseStateTransferInterce
             needsToPrepare = false;
          } catch (Throwable throwable) {
             //if we receive a RetryPrepareException it was because the prepare was delivered during a state transfer.
-            //Remember that the REBALANCE_START and CH_UPDATE are totally ordered with the prepares and the prepares are
+            //Remember that the REBALANCE_START and READ_CH_UPDATE are totally ordered with the prepares and the prepares are
             //unblocked after the rebalance has finished.
             needsToPrepare = needsToRePrepare(throwable);
             if (log.isDebugEnabled()) {

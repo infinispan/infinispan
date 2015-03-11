@@ -45,6 +45,7 @@ import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
@@ -57,7 +58,6 @@ import org.infinispan.filter.NullValueConverter;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -105,7 +105,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.*;
+import static org.infinispan.context.Flag.FAIL_SILENTLY;
+import static org.infinispan.context.Flag.FORCE_ASYNCHRONOUS;
+import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
+import static org.infinispan.context.Flag.PUT_FOR_EXTERNAL_READ;
+import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
@@ -149,7 +153,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private PartitionHandlingManager partitionHandlingManager;
    private GlobalConfiguration globalCfg;
    private boolean isClassLoaderInContext;
-   private EntryRetriever<K, V> entryRetriever;
    private LocalTopologyManager localTopologyManager;
 
    public CacheImpl(String name) {
@@ -176,7 +179,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   LockManager lockManager,
                                   AuthorizationManager authorizationManager,
                                   GlobalConfiguration globalCfg,
-                                  EntryRetriever<K, V> entryRetriever,
                                   PartitionHandlingManager partitionHandlingManager,
                                   LocalTopologyManager localTopologyManager) {
       this.commandsFactory = commandsFactory;
@@ -201,7 +203,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.lockManager = lockManager;
       this.authorizationManager = authorizationManager;
       this.globalCfg = globalCfg;
-      this.entryRetriever = entryRetriever;
       this.partitionHandlingManager = partitionHandlingManager;
       this.localTopologyManager = localTopologyManager;
    }
@@ -1529,7 +1530,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          return true;
       }
       //finally, we will skip the thread if the key maps to the local node
-      return distributionManager.getLocality(key).isLocal();
+      return distributionManager.getLocality(key, LookupMode.READ).isLocal();
    }
 
    private boolean isSkipLoader(EnumSet<Flag> flags) {

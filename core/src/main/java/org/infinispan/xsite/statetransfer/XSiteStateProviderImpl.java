@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.XSiteStateTransferConfiguration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CollectionKeyFilter;
@@ -32,7 +33,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -153,15 +153,14 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
 
    private void notifyStateTransferEnd(final String siteName, final Address origin, final boolean error) {
       if (rpcManager.getAddress().equals(origin)) {
-         executorService.submit(new Callable<Void>() {
+         executorService.execute(new Runnable() {
             @Override
-            public Void call() throws Exception {
+            public void run() {
                try {
                   stateTransferManager.notifyStatePushFinished(siteName, origin, !error);
                } catch (Throwable throwable) {
                   //ignored
                }
-               return null;
             }
          });
       } else {
@@ -172,7 +171,7 @@ public class XSiteStateProviderImpl implements XSiteStateProvider {
    }
 
    private boolean shouldSendKey(Object key) {
-      return clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+      return clusteringDependentLogic.localNodeIsPrimaryOwner(key, LookupMode.READ);
    }
 
    private void sendFromSharedBuffer(XSiteBackup xSiteBackup, List<XSiteState> sharedBuffer, StatePushTask task) throws Throwable {

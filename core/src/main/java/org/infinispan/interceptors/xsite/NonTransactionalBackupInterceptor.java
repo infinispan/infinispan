@@ -9,6 +9,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 
@@ -59,7 +60,7 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       Object result = invokeNextInterceptor(ctx, command);
       if (skipXSiteBackup(command)) {
          return result;
-      } else if (command.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(command.getKey())) {
+      } else if (command.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(command.getKey(), LookupMode.WRITE)) {
          backupSender.processResponses(backupSender.backupWrite(transform(command)), command);
       }
       return result;

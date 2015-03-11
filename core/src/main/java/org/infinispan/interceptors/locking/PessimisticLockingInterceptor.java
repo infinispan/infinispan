@@ -18,6 +18,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -72,10 +73,10 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       return visitDataReadCommand(ctx, command);
    }
 
-   private final Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+   private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       try {
          if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
-            acquireRemoteIfNeeded(ctx, command, cdl.localNodeIsPrimaryOwner(command.getKey()));
+            acquireRemoteIfNeeded(ctx, command, cdl.localNodeIsPrimaryOwner(command.getKey(), LookupMode.WRITE));
             long lockTimeout = getLockAcquisitionTimeout(command, false);
             lockKeyAndCheckOwnership(ctx, command.getKey(), lockTimeout, false);
          }
@@ -105,10 +106,10 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          boolean skipLocking = hasSkipLocking(command);
          if (!skipLocking) {
-            boolean localLock = cdl.localNodeIsPrimaryOwner(command.getKey());
+            boolean localLock = cdl.localNodeIsPrimaryOwner(command.getKey(), LookupMode.WRITE);
             acquireRemoteIfNeeded(ctx, command, localLock);
-            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-            lockAndRegisterBackupLock(txContext, command.getKey(), localLock, lockTimeout, skipLocking);
+            long lockTimeout = getLockAcquisitionTimeout(command, false);
+            lockAndRegisterBackupLock(txContext, command.getKey(), localLock, lockTimeout, false);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -124,9 +125,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          if (!skipLocking) {
             acquireRemoteIfNeeded(ctx, command.getMap().keySet(), command);
             final TxInvocationContext txContext = (TxInvocationContext) ctx;
-            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+            long lockTimeout = getLockAcquisitionTimeout(command, false);
             for (Object key : command.getMap().keySet()) {
-               lockAndRegisterBackupLock(txContext, key, lockTimeout, skipLocking);
+               lockAndRegisterBackupLock(txContext, key, lockTimeout, false);
             }
          }
          return invokeNextInterceptor(ctx, command);
@@ -141,12 +142,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          boolean skipLocking = hasSkipLocking(command);
          if (!skipLocking) {
-            final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey());
+            final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey(), LookupMode.WRITE);
             acquireRemoteIfNeeded(ctx, command, localNodeOwnsLock);
             final TxInvocationContext txContext = (TxInvocationContext) ctx;
-            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+            long lockTimeout = getLockAcquisitionTimeout(command, false);
             lockAndRegisterBackupLock(txContext, command.getKey(),
-                  localNodeOwnsLock, lockTimeout, skipLocking);
+                  localNodeOwnsLock, lockTimeout, false);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -161,12 +162,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          boolean skipLocking = hasSkipLocking(command);
          if (!skipLocking) {
-            HashSet<Object> keysToLock = new HashSet<Object>(Arrays.asList(compositeKeys));
+            HashSet<Object> keysToLock = new HashSet<>(Arrays.asList(compositeKeys));
             acquireRemoteIfNeeded(ctx, keysToLock, command);
-            if (cdl.localNodeIsOwner(command.getKey())) {
-               long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+            if (cdl.localNodeIsOwner(command.getKey(), LookupMode.WRITE)) {
+               long lockTimeout = getLockAcquisitionTimeout(command, false);
                for (Object key : compositeKeys) {
-                  lockKey(ctx, key, lockTimeout, skipLocking);
+                  lockKey(ctx, key, lockTimeout, false);
                }
             }
          }
@@ -181,12 +182,12 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          boolean skipLocking = hasSkipLocking(command);
          if (!skipLocking) {
-            final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey());
+            final boolean localNodeOwnsLock = cdl.localNodeIsPrimaryOwner(command.getKey(), LookupMode.WRITE);
             acquireRemoteIfNeeded(ctx, command, localNodeOwnsLock);
             final TxInvocationContext txContext = (TxInvocationContext) ctx;
-            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+            long lockTimeout = getLockAcquisitionTimeout(command, false);
             lockAndRegisterBackupLock(txContext, command.getKey(),
-                  localNodeOwnsLock, lockTimeout, skipLocking);
+                  localNodeOwnsLock, lockTimeout, false);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -201,10 +202,10 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          boolean skipLocking = hasSkipLocking(command);
          if (!skipLocking) {
             // TODO The clear command doesn't acquire any remote locks. See ISPN-4140
-            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+            long lockTimeout = getLockAcquisitionTimeout(command, false);
             for (InternalCacheEntry entry : dataContainer.entrySet())
                lockAndRegisterBackupLock((TxInvocationContext) ctx,
-                     entry.getKey(), lockTimeout, skipLocking);
+                     entry.getKey(), lockTimeout, false);
          }
 
          return invokeNextInterceptor(ctx, command);
@@ -228,7 +229,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          // First go remotely - required by DLD.
          // Only acquire remote lock if multiple keys or the single key primary owner doesn't map to the local node.
          if (ctx.isOriginLocal()) {
-            final boolean isSingleKeyAndLocal = !command.multipleKeys() && cdl.localNodeIsPrimaryOwner(command.getSingleKey());
+            final boolean isSingleKeyAndLocal = !command.multipleKeys() && cdl.localNodeIsPrimaryOwner(command.getSingleKey(), LookupMode.WRITE);
             boolean needBackupLocks = !isSingleKeyAndLocal || isStateTransferInProgress();
             if (needBackupLocks && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
                LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
@@ -248,9 +249,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             return Boolean.FALSE;
          }
 
-         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+         long lockTimeout = getLockAcquisitionTimeout(command, false);
          for (Object key : command.getKeys()) {
-            lockAndRegisterBackupLock(ctx, key, lockTimeout, skipLocking);
+            lockAndRegisterBackupLock(ctx, key, lockTimeout, false);
          }
          return Boolean.TRUE;
       } catch (Throwable te) {
@@ -312,7 +313,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          Object key, boolean isLockOwner, long lockTimeout, boolean skipLocking) throws InterruptedException {
       if (isLockOwner) {
          lockKeyAndCheckOwnership(ctx, key, lockTimeout, skipLocking);
-      } else if (cdl.localNodeIsOwner(key)) {
+      } else if (cdl.localNodeIsOwner(key, LookupMode.WRITE)) {
          ctx.getCacheTransaction().addBackupLockForKey(key);
       }
    }

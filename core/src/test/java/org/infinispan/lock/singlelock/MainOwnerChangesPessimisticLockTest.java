@@ -62,7 +62,7 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
    }
 
    private void testLockMigration(int nodeThatPuts, boolean commit) throws Exception {
-      Map<Object, Transaction> key2Tx = new HashMap<Object, Transaction>();
+      Map<Object, Transaction> key2Tx = new HashMap<>();
       for (int i = 0; i < NUM_KEYS; i++) {
          Object key = getKeyForCache(0);
          if (key2Tx.containsKey(key)) continue;
@@ -89,7 +89,7 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
       // search for a key that was migrated to third node and the suspended TX that locked it
       Object migratedKey = null;
       Transaction migratedTransaction = null;
-      ConsistentHash consistentHash = advancedCache(2).getDistributionManager().getConsistentHash();
+      ConsistentHash consistentHash = advancedCache(2).getDistributionManager().getWriteConsistentHash();
       for (Object key : key2Tx.keySet()) {
          if (consistentHash.locatePrimaryOwner(key).equals(address(2))) {
             migratedKey = key;

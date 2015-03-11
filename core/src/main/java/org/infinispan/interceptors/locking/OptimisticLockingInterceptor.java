@@ -21,6 +21,7 @@ import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -222,7 +223,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
       @Override
       public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
-         if (cdl.localNodeIsOwner(command.getKey())) {
+         if (cdl.localNodeIsOwner(command.getKey(), LookupMode.WRITE)) {
             Object[] compositeKeys = command.getCompositeKeys();
             TxInvocationContext txC = (TxInvocationContext) ctx;
             boolean skipLocking = hasSkipLocking(command);

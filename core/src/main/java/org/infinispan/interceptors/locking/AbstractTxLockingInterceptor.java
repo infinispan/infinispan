@@ -9,6 +9,7 @@ import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -106,9 +107,9 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       Object keyToCheck = key instanceof DeltaCompositeKey ?
             ((DeltaCompositeKey) key).getDeltaAwareValueKey() :
             key;
-      if (cdl.localNodeIsPrimaryOwner(keyToCheck)) {
+      if (cdl.localNodeIsPrimaryOwner(keyToCheck, LookupMode.WRITE)) {
          lockKeyAndCheckOwnership(ctx, key, lockTimeout, skipLocking);
-      } else if (cdl.localNodeIsOwner(keyToCheck)) {
+      } else if (cdl.localNodeIsOwner(keyToCheck, LookupMode.WRITE)) {
          ctx.getCacheTransaction().addBackupLockForKey(key);
       }
    }
@@ -204,12 +205,7 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
    }
 
-   private TimeoutException newTimeoutException(Object key, TxInvocationContext txContext) {
-      return new TimeoutException("Could not acquire lock on " + key + " on behalf of transaction " +
-                                       txContext.getGlobalTransaction() + "." + "Lock is being held by " + lockManager.getOwner(key));
-   }
-   
-   private TimeoutException newTimeoutException(Object key, CacheTransaction tx, TxInvocationContext txContext) {                  
+   private TimeoutException newTimeoutException(Object key, CacheTransaction tx, TxInvocationContext txContext) {
       return new TimeoutException("Could not acquire lock on " + key + " on behalf of transaction " +
                                        txContext.getGlobalTransaction() + ". Waiting to complete tx: " + tx + ".");
    }

@@ -7,7 +7,6 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -19,12 +18,9 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.testng.Assert.assertEquals;
 
 @Test(groups = "functional", testName = "statetransfer.MergeDuringReplaceTest")
@@ -54,8 +50,8 @@ public class MergeDuringReplaceTest extends MultipleCacheManagersTest {
       cache(0).put(key, value);
 
       ConsistentHash ch = cache(0).getAdvancedCache().getComponentRegistry()
-            .getStateTransferManager().getCacheTopology().getCurrentCH();
-      List<Address> members = new ArrayList<Address>(ch.getMembers());
+            .getStateTransferManager().getCacheTopology().getReadConsistentHash();
+      List<Address> members = new ArrayList<>(ch.getMembers());
       List<Address> owners = ch.locateOwners(key);
       members.removeAll(owners);
       int nonOwner = ch.getMembers().indexOf(members.get(0));

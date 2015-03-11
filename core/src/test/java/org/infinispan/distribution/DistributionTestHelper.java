@@ -69,30 +69,30 @@ public class DistributionTestHelper {
 
    public static boolean isOwner(Cache<?, ?> c, Object key) {
       DistributionManager dm = c.getAdvancedCache().getDistributionManager();
-      List<Address> ownerAddresses = dm.locate(key);
+      List<Address> ownerAddresses = dm.locate(key, LookupMode.WRITE);
       return ownerAddresses.contains(addressOf(c));
    }
 
    public static boolean isFirstOwner(Cache<?, ?> c, Object key) {
       DistributionManager dm = c.getAdvancedCache().getDistributionManager();
-      Address primaryOwnerAddress = dm.getPrimaryLocation(key);
+      Address primaryOwnerAddress = dm.getPrimaryLocation(key, LookupMode.WRITE);
       return addressOf(c).equals(primaryOwnerAddress);
    }
 
    public static boolean hasOwners(Object key, Cache<?, ?> primaryOwner, Cache<?, ?>... backupOwners) {
       DistributionManager dm = primaryOwner.getAdvancedCache().getDistributionManager();
-      List<Address> ownerAddresses = dm.locate(key);
+      List<Address> ownerAddresses = dm.locate(key, LookupMode.WRITE);
       if (!addressOf(primaryOwner).equals(ownerAddresses.get(0)))
          return false;
-      for (int i = 0; i < backupOwners.length; i++) {
-         if (!ownerAddresses.contains(addressOf(backupOwners[i])))
+      for (Cache<?, ?> backupOwner : backupOwners) {
+         if (!ownerAddresses.contains(addressOf(backupOwner)))
             return false;
       }
       return true;
    }
 
    public static <K, V> Collection<Cache<K, V>> getOwners(Object key, List<Cache<K, V>> caches) {
-      List<Cache<K, V>> owners = new ArrayList<Cache<K, V>>();
+      List<Cache<K, V>> owners = new ArrayList<>();
       for (Cache<K, V> c : caches) {
          if (isFirstOwner(c, key)) {
             owners.add(c);
@@ -111,7 +111,7 @@ public class DistributionTestHelper {
    }
 
    public static <K, V> Collection<Cache<K, V>> getNonOwners(Object key, List<Cache<K, V>> caches) {
-      List<Cache<K, V>> nonOwners = new ArrayList<Cache<K, V>>();
+      List<Cache<K, V>> nonOwners = new ArrayList<>();
       for (Cache<K, V> c : caches)
          if (!isOwner(c, key)) nonOwners.add(c);
 

@@ -4,7 +4,6 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -14,7 +13,6 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -48,7 +46,6 @@ public class ClusteredGetCommand extends BaseRpcCommand implements LocalFlagAffe
    private GlobalTransaction gtx;
    private Set<Flag> flags;
 
-   private DistributionManager distributionManager;
    private TransactionTable txTable;
    private InternalEntryFactory entryFactory;
    private Equivalence keyEquivalence;
@@ -77,9 +74,7 @@ public class ClusteredGetCommand extends BaseRpcCommand implements LocalFlagAffe
    }
 
    public void initialize(InvocationContextFactory icf, CommandsFactory commandsFactory, InternalEntryFactory entryFactory,
-         InterceptorChain interceptorChain, DistributionManager distributionManager, TransactionTable txTable,
-         Equivalence keyEquivalence) {
-      this.distributionManager = distributionManager;
+                          InterceptorChain interceptorChain, TransactionTable txTable, Equivalence keyEquivalence) {
       this.icf = icf;
       this.commandsFactory = commandsFactory;
       this.invoker = interceptorChain;

@@ -3,6 +3,7 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
@@ -45,7 +46,7 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
    }
 
    private boolean skipLoadForNonTxCommand(WriteCommand cmd, Object key) {
-      if (cdl.localNodeIsPrimaryOwner(key) || cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+      if (cdl.localNodeIsPrimaryOwner(key, LookupMode.WRITE) || cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          if (isDeltaWrite(cmd)) {
             if (trace) {
                log.tracef("Don't skip load for DeltaWrite or conditional command %s.", cmd);
@@ -87,7 +88,7 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
       if (trace) {
          log.tracef("Skip load for command %s? %s", skip);
       }
-      return skip || (!ctx.isOriginLocal() && !cdl.localNodeIsPrimaryOwner(key));
+      return skip || (!ctx.isOriginLocal() && !cdl.localNodeIsPrimaryOwner(key, LookupMode.WRITE));
    }
 
    @Override

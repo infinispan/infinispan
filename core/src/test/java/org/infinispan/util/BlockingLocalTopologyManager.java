@@ -20,12 +20,16 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
 
    private final NotifierLatch blockConfirmRebalance;
    private final NotifierLatch blockConsistentHashUpdate;
+   private final NotifierLatch blockReadConsistentHashUpdate;
+   private final NotifierLatch blockWriteConsistentHashUpdate;
    private final NotifierLatch blockRebalanceStart;
 
    public BlockingLocalTopologyManager(LocalTopologyManager delegate) {
       super(delegate);
       blockRebalanceStart = new NotifierLatch();
       blockConsistentHashUpdate = new NotifierLatch();
+      blockReadConsistentHashUpdate = new NotifierLatch();
+      blockWriteConsistentHashUpdate = new NotifierLatch();
       blockConfirmRebalance = new NotifierLatch();
    }
 
@@ -69,10 +73,24 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
       getLatch(LatchType.CONFIRM_REBALANCE).blockIfNeeded();
    }
 
+   @Override
+   protected void beforeHandleReadCHUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
+      getLatch(LatchType.READ_CH_UPDATE).blockIfNeeded();
+   }
+
+   @Override
+   protected void beforeHandleWriteCHUpdate(String cacheName, CacheTopology cacheTopology, int viewId) {
+      getLatch(LatchType.WRITE_CH_UPDATE).blockIfNeeded();
+   }
+
    private NotifierLatch getLatch(LatchType type) {
       switch (type) {
          case CONSISTENT_HASH_UPDATE:
             return blockConsistentHashUpdate;
+         case READ_CH_UPDATE:
+            return blockReadConsistentHashUpdate;
+         case WRITE_CH_UPDATE:
+            return blockWriteConsistentHashUpdate;
          case CONFIRM_REBALANCE:
             return blockConfirmRebalance;
          case REBALANCE:
@@ -83,6 +101,8 @@ public class BlockingLocalTopologyManager extends AbstractControlledLocalTopolog
 
    public static enum LatchType {
       CONSISTENT_HASH_UPDATE,
+      WRITE_CH_UPDATE,
+      READ_CH_UPDATE,
       CONFIRM_REBALANCE,
       REBALANCE
    }

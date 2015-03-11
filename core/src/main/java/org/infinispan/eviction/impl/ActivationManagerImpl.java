@@ -2,6 +2,7 @@ package org.infinispan.eviction.impl;
 
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -76,7 +77,7 @@ public class ActivationManagerImpl implements ActivationManager {
          return;
       }
       //if we are the primary owner, we need to remove from the shared store,
-      final boolean primaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+      final boolean primaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key, LookupMode.WRITE);
       try {
          if (newEntry) {
             //the entry does not exists in data container. We need to remove from private and shared stores.

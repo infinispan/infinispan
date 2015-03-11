@@ -29,14 +29,14 @@ public abstract class AbstractDelegatingTransport implements Transport {
 
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder, boolean anycast) throws Exception {
-      beforeInvokeRemotely(rpcCommand);
+      beforeInvokeRemotely(rpcCommand, recipients);
       Map<Address, Response> result = actual.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter, totalOrder, anycast);
       return afterInvokeRemotely(rpcCommand, result);
    }
 
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
-      beforeInvokeRemotely(rpcCommand);
+      beforeInvokeRemotely(rpcCommand, recipients);
       Map<Address, Response> result = actual.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
       return afterInvokeRemotely(rpcCommand, result);
    }
@@ -112,8 +112,9 @@ public abstract class AbstractDelegatingTransport implements Transport {
     * method invoked before a remote invocation.
     *
     * @param command the command to be invoked remotely
+    * @param recipients
     */
-   protected void beforeInvokeRemotely(ReplicableCommand command) {
+   protected void beforeInvokeRemotely(ReplicableCommand command, Collection<Address> recipients) {
       //no-op by default
    }
 

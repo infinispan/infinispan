@@ -22,6 +22,7 @@ import org.infinispan.test.concurrent.StateSequencer;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -74,8 +75,8 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       final StateTransferManager stm0 = advancedCache(0).getComponentRegistry().getStateTransferManager();
       final int initialTopologyId = stm0.getCacheTopology().getTopologyId();
 
-      assertEquals(Arrays.asList(address(1), address(2), address(3)), stm0.getCacheTopology().getCurrentCH().locateOwners("k1"));
-      assertNull(stm0.getCacheTopology().getPendingCH());
+      assertEquals(Arrays.asList(address(1), address(2), address(3)), stm0.getCacheTopology().getReadConsistentHash().locateOwners("k1"));
+      Assert.assertEquals(stm0.getCacheTopology().getReadConsistentHash(), stm0.getCacheTopology().getWriteConsistentHash());
 
       // Block when cache 0 sends the first state request to cache 1
       CommandMatcher segmentRequestMatcher = new CommandMatcher() {
@@ -84,9 +85,8 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
             if (!(command instanceof StateRequestCommand))
                return false;
             StateRequestCommand stateRequestCommand = (StateRequestCommand) command;
-            if (stateRequestCommand.getType() != StateRequestCommand.Type.START_STATE_TRANSFER)
-               return false;
-            return stateRequestCommand.getTopologyId() == initialTopologyId + 1;
+            return stateRequestCommand.getType() == StateRequestCommand.Type.START_STATE_TRANSFER &&
+                  stateRequestCommand.getTopologyId() == initialTopologyId + 1;
          }
       };
       advanceOnOutboundRpc(sequencer, cache(0), segmentRequestMatcher)
@@ -98,8 +98,8 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
 
       sequencer.enter("st:simulate_old_response");
 
-      assertNotNull(stm0.getCacheTopology().getPendingCH());
-      assertEquals(Arrays.asList(address(0), address(1), address(2)), stm0.getCacheTopology().getPendingCH().locateOwners("k1"));
+      assertNotNull(stm0.getCacheTopology().getWriteConsistentHash());
+      assertEquals(Arrays.asList(address(1), address(2), address(3), address(0)), stm0.getCacheTopology().getWriteConsistentHash().locateOwners("k1"));
 
       // Cache 0 didn't manage to request any segments yet, but it has registered all the inbound transfer tasks.
       // We'll pretend it got a StateResponseCommand with an older topology id.
@@ -200,10 +200,10 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       final StateTransferManager stm0 = advancedCache(0).getComponentRegistry().getStateTransferManager();
 
       MagicKey k1 = new MagicKey("k1", cache(1));
-      assertEquals(Arrays.asList(address(1), address(2), address(3)), stm0.getCacheTopology().getCurrentCH().locateOwners(k1));
+      assertEquals(Arrays.asList(address(1), address(2), address(3)), stm0.getCacheTopology().getReadConsistentHash().locateOwners(k1));
       cache(0).put(k1, "v1");
       MagicKey k2 = new MagicKey("k2", cache(2));
-      assertEquals(Arrays.asList(address(2), address(1), address(3)), stm0.getCacheTopology().getCurrentCH().locateOwners(k2));
+      assertEquals(Arrays.asList(address(2), address(1), address(3)), stm0.getCacheTopology().getReadConsistentHash().locateOwners(k2));
       cache(0).put(k2, "v2");
 
       // Start the rebalance
@@ -213,7 +213,7 @@ public class StateResponseOrderingTest extends MultipleCacheManagersTest {
       // Wait for cache0 to receive the state response
       sequencer.enter("st:kill_node");
 
-      assertNotNull(stm0.getCacheTopology().getPendingCH());
+      assertNotNull(stm0.getCacheTopology().getWriteConsistentHash());
 
       // No need to update the owner indexes, the CH factory only knows about the cache members
       int nodeToKeep = managerIndex(firstResponseSender.get());

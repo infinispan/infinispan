@@ -6,6 +6,7 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
@@ -81,25 +82,22 @@ public class GroupManagerImpl implements GroupManager {
     @Override
     public String getGroup(Object key) {
         GroupMetadata metadata = getMetadata(key);
-        if (metadata != null) {
-            return applyGroupers(metadata.getGroup(key), key);
-        } else
-            return applyGroupers(null, key);
+        return applyGroupers(metadata.getGroup(key), key);
     }
 
    @Override
    public boolean isOwner(String group) {
-      return clusteringDependentLogic.localNodeIsOwner(group);
+      return clusteringDependentLogic.localNodeIsOwner(group, LookupMode.READ);
    }
 
    @Override
    public Address getPrimaryOwner(String group) {
-      return clusteringDependentLogic.getPrimaryOwner(group);
+      return clusteringDependentLogic.getPrimaryOwner(group, LookupMode.READ);
    }
 
    @Override
    public boolean isPrimaryOwner(String group) {
-      return clusteringDependentLogic.localNodeIsPrimaryOwner(group);
+      return clusteringDependentLogic.localNodeIsPrimaryOwner(group, LookupMode.READ);
    }
 
    private String applyGroupers(String group, Object key) {

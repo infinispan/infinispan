@@ -2,6 +2,7 @@ package org.infinispan.eviction.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
@@ -23,7 +24,7 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInBackupOwnerTest
       DistributionManager distributionManager = otherCache.getAdvancedCache().getDistributionManager();
       int hashCode = 0;
       SameHashCodeKey key = new SameHashCodeKey(name, hashCode);
-      while (!distributionManager.getPrimaryLocation(key).equals(address)) {
+      while (!distributionManager.getPrimaryLocation(key, LookupMode.WRITE).equals(address)) {
          hashCode++;
          key = new SameHashCodeKey(name, hashCode);
       }

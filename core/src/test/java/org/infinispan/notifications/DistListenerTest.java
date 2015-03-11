@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -34,7 +35,7 @@ public class DistListenerTest extends MultipleCacheManagersTest {
    public void testRemoteGet() {
       final String key1 = this.getClass().getName() + "K1";
 
-      List<Address> owners = cache(0).getAdvancedCache().getDistributionManager().locate(key1);
+      List<Address> owners = cache(0).getAdvancedCache().getDistributionManager().locate(key1, LookupMode.READ);
 
       assert owners.size() == 2: "Key should have 2 owners";
 

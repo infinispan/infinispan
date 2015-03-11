@@ -1,6 +1,7 @@
 package org.infinispan.xsite.statetransfer.failures;
 
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.fwk.CheckPoint;
@@ -100,7 +101,7 @@ public class SiteConsumerTopologyChangeTest extends AbstractTopologyChangeTest {
                                                   return;
                                                }
                                                for (XSiteState state : cmd.getChunk()) {
-                                                  addressSet.add(manager.getPrimaryLocation(state.key()));
+                                                  addressSet.add(manager.getPrimaryLocation(state.key(), LookupMode.WRITE));
                                                }
                                             }
                                             delegate.handleStateTransferState(cmd);

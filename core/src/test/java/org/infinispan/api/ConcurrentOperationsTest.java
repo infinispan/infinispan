@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
@@ -62,7 +63,7 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
       final CyclicBarrier barrier = new CyclicBarrier(threads);
       final Random rnd = new Random();
       final AtomicBoolean correctness = new AtomicBoolean(Boolean.TRUE);
-      List<Future<Boolean>> result = new ArrayList<Future<Boolean>>();
+      List<Future<Boolean>> result = new ArrayList<>();
       for (int t = 0; t < threads; t++) {
          final int part = t;
          Future<Boolean> f = fork(new Callable<Boolean>() {
@@ -119,7 +120,7 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
                   log.tracef("Checking correctness for iteration %s", i);
                   print("Checking correctness");
 
-                  List<Address> owners = advancedCache(0).getDistributionManager().locate("k");
+                  List<Address> owners = advancedCache(0).getDistributionManager().locate("k", LookupMode.WRITE);
                   assert owners.size() == 2;
 
                   InternalCacheEntry entry0 = advancedCache(owners.get(0)).getDataContainer().get("k");

@@ -3,23 +3,20 @@ package org.infinispan.commands.write;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.locks.LockSupport;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DataLocality;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Invalidates an entry in a L1 cache (used with DIST mode)
@@ -31,36 +28,33 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class InvalidateL1Command extends InvalidateCommand {
    public static final int COMMAND_ID = 7;
    private static final Log log = LogFactory.getLog(InvalidateL1Command.class);
-   private DistributionManager dm;
+   private DistributionManager distributionManager;
    private DataContainer dataContainer;
-   private Configuration config;
    private Address writeOrigin;
 
    public InvalidateL1Command() {
       writeOrigin = null;
    }
 
-   public InvalidateL1Command(DataContainer dc, Configuration config, DistributionManager dm,
+   public InvalidateL1Command(DataContainer dc, DistributionManager distributionManager,
                               CacheNotifier notifier, Set<Flag> flags, Object... keys) {
       super(notifier, flags, keys);
       writeOrigin = null;
-      this.dm = dm;
+      this.distributionManager = distributionManager;
       this.dataContainer = dc;
-      this.config = config;
    }
 
-   public InvalidateL1Command(DataContainer dc, Configuration config, DistributionManager dm,
+   public InvalidateL1Command(DataContainer dc, DistributionManager distributionManager,
                               CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
-      this(null, dc, config, dm, notifier, flags, keys);
+      this(null, dc, distributionManager, notifier, flags, keys);
    }
 
-   public InvalidateL1Command(Address writeOrigin, DataContainer dc, Configuration config,
-                              DistributionManager dm, CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
+   public InvalidateL1Command(Address writeOrigin, DataContainer dc,
+                              DistributionManager distributionManager, CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
       super(notifier, flags, keys);
       this.writeOrigin = writeOrigin;
-      this.dm = dm;
+      this.distributionManager = distributionManager;
       this.dataContainer = dc;
-      this.config = config;
    }
 
    @Override
@@ -70,8 +64,7 @@ public class InvalidateL1Command extends InvalidateCommand {
 
    public void init(Configuration config, DistributionManager dm, CacheNotifier n, DataContainer dc) {
       super.init(n, config);
-      this.dm = dm;
-      this.config = config;
+      this.distributionManager = dm;
       this.dataContainer = dc;
    }
 
@@ -82,7 +75,7 @@ public class InvalidateL1Command extends InvalidateCommand {
       for (Object k : getKeys()) {
          InternalCacheEntry ice = dataContainer.get(k);
          if (ice != null) {
-            DataLocality locality = dm.getLocality(k);
+            DataLocality locality = distributionManager.getLocality(k, LookupMode.WRITE);
 
             if (!locality.isLocal()) {
                if (trace) log.tracef("Invalidating key %s.", k);
@@ -105,7 +98,7 @@ public class InvalidateL1Command extends InvalidateCommand {
       for (Object k : getKeys()) {
          // If any key in the set of keys to invalidate is not local, or we are uncertain due to a rehash, then we
          // process this command.
-         DataLocality locality = dm.getLocality(k);
+         DataLocality locality = distributionManager.getLocality(k, LookupMode.WRITE);
          if (!locality.isLocal() || locality.isUncertain()) return true;
       }
       return false;

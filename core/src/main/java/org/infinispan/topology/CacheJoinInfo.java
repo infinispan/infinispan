@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.marshall.core.Ids;
@@ -42,7 +43,8 @@ public class CacheJoinInfo {
       this.capacityFactor = capacityFactor;
    }
 
-   public ConsistentHashFactory getConsistentHashFactory() {
+   public ConsistentHashFactory<ConsistentHash> getConsistentHashFactory() {
+      //noinspection unchecked
       return consistentHashFactory;
    }
 

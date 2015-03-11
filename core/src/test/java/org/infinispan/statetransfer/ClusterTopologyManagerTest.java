@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.transport.Address;
@@ -14,6 +15,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
+import org.infinispan.topology.TopologyState;
 import org.jgroups.protocols.DISCARD;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -30,7 +32,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anySet;
+import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.spy;
@@ -213,7 +215,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
 
    public void testClusterRecoveryWithRebalance() throws Exception {
       // Compute the merge coordinator by sorting the JGroups addresses, the same way MERGE2/3 do
-      List<Address> members = new ArrayList<Address>(manager(0).getMembers());
+      List<Address> members = new ArrayList<>(manager(0).getMembers());
       Collections.sort(members);
       Address mergeCoordAddress = members.get(0);
       log.debugf("The merge coordinator will be %s", mergeCoordAddress);
@@ -239,7 +241,6 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
       if (mergeCoordIndex == 1) d2.setDiscardAll(false);
       if (mergeCoordIndex == 2) d3.setDiscardAll(false);
 
-      int viewIdAfterSplit = mergeCoordManager.getTransport().getViewId();
       final CheckPoint checkpoint = new CheckPoint();
       blockRebalanceStart(mergeCoordManager, checkpoint, 2);
 
@@ -307,7 +308,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             }
             return invocation.callRealMethod();
          }
-      }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
+      }).when(spyLocalTopologyManager).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), any(ConsistentHash.class), anyInt(),
             any(Address.class));
       TestingUtil.replaceComponent(manager, LocalTopologyManager.class, spyLocalTopologyManager, true);
    }
@@ -340,7 +341,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             return invocation.callRealMethod();
          }
       }).when(spyLocalTopologyManager2).handleTopologyUpdate(eq(CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt(), any(Address.class));
+                                                             any(ConsistentHash.class), any(AvailabilityMode.class),
+                                                             any(TopologyState.class), anyInt(), any(Address.class));
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -351,7 +353,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             }
             return invocation.callRealMethod();
          }
-      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
+      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), any(ConsistentHash.class), anyInt(),
             any(Address.class));
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 
@@ -400,7 +402,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
          }
       }).when(spyLocalTopologyManager2).handleStatusRequest(anyInt());
 
-      // Delay the first CH_UPDATE after the merge so that it arrives after
+      // Delay the first READ_CH_UPDATE after the merge so that it arrives after
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -412,7 +414,8 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             return invocation.callRealMethod();
          }
       }).when(spyLocalTopologyManager2).handleTopologyUpdate(eq(CACHE_NAME), any(CacheTopology.class),
-            any(AvailabilityMode.class), anyInt(), any(Address.class));
+                                                             any(ConsistentHash.class), any(AvailabilityMode.class),
+                                                             any(TopologyState.class), anyInt(), any(Address.class));
       doAnswer(new Answer<Object>() {
          @Override
          public Object answer(InvocationOnMock invocation) throws Throwable {
@@ -423,7 +426,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             }
             return invocation.callRealMethod();
          }
-      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), anyInt(),
+      }).when(spyLocalTopologyManager2).handleRebalance(eq(CACHE_NAME), any(CacheTopology.class), any(ConsistentHash.class), anyInt(),
             any(Address.class));
       TestingUtil.replaceComponent(manager(1), LocalTopologyManager.class, spyLocalTopologyManager2, true);
 
@@ -457,7 +460,7 @@ public class ClusterTopologyManagerTest extends MultipleCacheManagersTest {
             checkpoint.awaitStrict("LEAVE", 10, TimeUnit.SECONDS);
             return invocation.callRealMethod();
          }
-      }).when(spyStateProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySet());
+      }).when(spyStateProvider).getTransactionsForSegments(any(Address.class), anyInt(), anySetOf(Integer.class));
       TestingUtil.replaceComponent(c2, StateProvider.class, spyStateProvider, true);
 
       long startTime = System.currentTimeMillis();

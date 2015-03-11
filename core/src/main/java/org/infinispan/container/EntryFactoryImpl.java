@@ -1,15 +1,13 @@
 package org.infinispan.container;
 
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.configuration.cache.VersioningScheme;
-import org.infinispan.distribution.DistributionManager;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -19,8 +17,11 @@ import org.infinispan.container.entries.RepeatableReadEntry;
 import org.infinispan.container.entries.StateChangingEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -39,16 +40,16 @@ public class EntryFactoryImpl implements EntryFactory {
    private final boolean trace = log.isTraceEnabled();
    
    protected boolean useRepeatableRead;
-   private DataContainer container;
+   private DataContainer<Object, Object> container;
    protected boolean clusterModeWriteSkewCheck;
    private boolean isL1Enabled; //cache the value
    private Configuration configuration;
-   private CacheNotifier notifier;
+   private CacheNotifier<Object, Object> notifier;
    private DistributionManager distributionManager;//is null for non-clustered caches
 
    @Inject
-   public void injectDependencies(DataContainer dataContainer, Configuration configuration, CacheNotifier notifier,
-                                  DistributionManager distributionManager) {
+   public void injectDependencies(DataContainer<Object, Object> dataContainer, Configuration configuration,
+                                  CacheNotifier<Object, Object> notifier, DistributionManager distributionManager) {
       this.container = dataContainer;
       this.configuration = configuration;
       this.notifier = notifier;
@@ -261,7 +262,7 @@ public class EntryFactoryImpl implements EntryFactory {
    }
 
    private InternalCacheEntry getFromContainer(Object key, boolean forceFetch) {
-      final boolean isLocal = distributionManager == null || distributionManager.getLocality(key).isLocal();
+      final boolean isLocal = distributionManager == null || distributionManager.getLocality(key, LookupMode.READ).isLocal();
       if (isLocal || forceFetch) {
          final InternalCacheEntry ice = container.get(key);
          if (trace) log.tracef("Retrieved from container %s (forceFetch=%s, isLocal=%s)", ice, forceFetch, isLocal);

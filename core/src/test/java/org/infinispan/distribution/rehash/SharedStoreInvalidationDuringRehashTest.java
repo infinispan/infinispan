@@ -10,6 +10,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
@@ -176,7 +177,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
 
          for (int j = 0; j < NUM_KEYS; j++) {
             String key = "key" + j;
-            if (!dm.getLocality(key).isLocal()) {
+            if (!dm.getLocality(key, LookupMode.WRITE).isLocal()) {
                assertFalse("Key '" + key + "' is not owned by node " + address(i) + " but it still appears there",
                      dataContainer.containsKey(key));
             } else if (preload) {
@@ -186,7 +187,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
          }
       }
 
-      DummyInMemoryStore store = (DummyInMemoryStore) TestingUtil.getFirstLoader(cache(0, TEST_CACHE_NAME));
+      DummyInMemoryStore store = TestingUtil.getFirstLoader(cache(0, TEST_CACHE_NAME));
       for (int i = 0; i < NUM_KEYS; i++) {
          String key = "key" + i;
          assertTrue("Key " + key + " is missing from the shared store", store.keySet().contains(key));
@@ -234,7 +235,7 @@ public class SharedStoreInvalidationDuringRehashTest extends MultipleCacheManage
    }
 
    private void printStoreContents() {
-      DummyInMemoryStore store = (DummyInMemoryStore) TestingUtil.getFirstLoader(cache(0, TEST_CACHE_NAME));
+      DummyInMemoryStore store = TestingUtil.getFirstLoader(cache(0, TEST_CACHE_NAME));
       Set<Object> keySet = store.keySet();
       log.debugf("Shared store has %d keys: %s", keySet.size(), keySet);
    }

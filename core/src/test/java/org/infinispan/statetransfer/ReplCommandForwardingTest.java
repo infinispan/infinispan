@@ -13,7 +13,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.CacheTopology;
-import org.infinispan.transaction.impl.LocalTransaction;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -63,7 +62,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(false));
       Cache<Object, Object> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 2, c1, c2);
+      waitForStateTransfer(initialTopologyId + 3, c1, c2);
 
       Future<Object> f = fork(new Callable<Object>() {
          @Override
@@ -82,7 +81,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(false));
       Cache<Object, Object> c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
+      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3);
 
       // Unblock the replicated command on c2.
       // NonTxConcurrentDistributionInterceptor on c3 will throw an OutdatedTopologyException,
@@ -101,7 +100,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(false));
       Cache<Object, Object> c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
+      waitForStateTransfer(initialTopologyId + 9, c1, c2, c3, c4);
 
       // Unblock the command with the new topology id from c1 on c3.
       // NonTxConcurrentDistributionInterceptor on c3 will throw an OutdatedTopologyException,
@@ -143,7 +142,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(true));
       Cache c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 2, c1, c2);
+      waitForStateTransfer(initialTopologyId + 3, c1, c2);
 
       Future<Object> f = fork(new Callable<Object>() {
          @Override
@@ -159,7 +158,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(true));
       Cache c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
+      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3);
 
       // Unblock the replicated command on c2.
       // StateTransferInterceptor will forward the command to c3.
@@ -171,7 +170,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(true));
       Cache c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
-      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
+      waitForStateTransfer(initialTopologyId + 9, c1, c2, c3, c4);
 
       // Unblock the forwarded command on c3.
       // StateTransferInterceptor will then forward the command to c2 and c4.
@@ -205,19 +204,24 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       assertEquals(di4.getCounter(), 2);
    }
 
-   private void waitForStateTransfer(int expectedTopologyId, Cache... caches) {
+   private void waitForStateTransfer(final int expectedTopologyId, final Cache... caches) {
       waitForRehashToComplete(caches);
-      for (Cache c : caches) {
-         CacheTopology cacheTopology = extractComponent(c, StateTransferManager.class).getCacheTopology();
-         assertEquals(cacheTopology.getTopologyId(), expectedTopologyId,
-               String.format("Wrong topology on cache %s, expected %d and got %s",
-                     c, expectedTopologyId, cacheTopology));
+      for (final Cache c : caches) {
+         eventually(String.format("Wrong topology on cache %s", c),
+                    new Condition() {
+                       @Override
+                       public boolean isSatisfied() throws Exception {
+                          CacheTopology cacheTopology = extractComponent(c, StateTransferManager.class).getCacheTopology();
+                          log.tracef("Expected topology: %d, topology=%s", expectedTopologyId, cacheTopology);
+                          return cacheTopology.getTopologyId() == expectedTopologyId;
+                       }
+                    });
       }
    }
 
    private class DelayInterceptor extends BaseCustomInterceptor {
       private final AtomicInteger counter = new AtomicInteger(0);
-      private final SynchronousQueue<Object> barrier = new SynchronousQueue<Object>(true);
+      private final SynchronousQueue<Object> barrier = new SynchronousQueue<>(true);
 
       public int getCounter() {
          return counter.get();
@@ -240,14 +244,13 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
             log.tracef("Command unblocked: %s", command);
          }
 
-         Object result = super.visitPutKeyValueCommand(ctx, command);
-         return result;
+         return super.visitPutKeyValueCommand(ctx, command);
       }
 
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
          Object result = super.visitPrepareCommand(ctx, command);
-         if (!ctx.isOriginLocal() || !((LocalTransaction)ctx.getCacheTransaction()).isFromStateTransfer()) {
+         if (!ctx.isOriginLocal() || !ctx.getCacheTransaction().isFromStateTransfer()) {
             log.tracef("Delaying command %s originating from %s", command, ctx.getOrigin());
             Integer myCount = counter.incrementAndGet();
             Object pollResult = barrier.poll(15, TimeUnit.SECONDS);

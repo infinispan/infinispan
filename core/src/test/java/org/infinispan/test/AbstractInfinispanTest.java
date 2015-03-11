@@ -70,10 +70,18 @@ public class AbstractInfinispanTest {
    }
 
    protected void eventually(Condition ec, long timeout) {
-      eventually(ec, timeout, 10);
+      eventually(null, ec, timeout);
+   }
+
+   protected void eventually(String message, Condition ec, long timeout) {
+      eventually(message, ec, timeout, 10);
    }
 
    protected void eventually(Condition ec, long timeout, int loops) {
+      eventually(null, ec, timeout, loops);
+   }
+
+   protected void eventually(String message, Condition ec, long timeout, int loops) {
       if (loops <= 0) {
          throw new IllegalArgumentException("Number of loops must be positive");
       }
@@ -87,7 +95,11 @@ public class AbstractInfinispanTest {
             if (ec.isSatisfied()) return;
             Thread.sleep(sleepDuration);
          }
-         assertTrue(ec.isSatisfied());
+         if (message != null) {
+            assertTrue(message, ec.isSatisfied());
+         } else {
+            assertTrue(ec.isSatisfied());
+         }
       } catch (Exception e) {
          throw new RuntimeException("Unexpected!", e);
       }
@@ -212,8 +224,8 @@ public class AbstractInfinispanTest {
       }
       CompletionService<V> completionService = completionService();
       CyclicBarrier barrier = new CyclicBarrier(tasks.length);
-      for (int i = 0; i < tasks.length; i++) {
-         completionService.submit(new ConcurrentCallable<V>(new LoggingCallable<V>(tasks[i]), barrier));
+      for (Callable task : tasks) {
+         completionService.submit(new ConcurrentCallable<>(new LoggingCallable<V>(task), barrier));
       }
 
       return completionService;
@@ -401,7 +413,11 @@ public class AbstractInfinispanTest {
 
 
    protected void eventually(Condition ec) {
-      eventually(ec, 10000);
+      eventually(null, ec);
+   }
+
+   protected void eventually(String message, Condition ec) {
+      eventually(message, ec, 10000);
    }
 
    protected interface Condition {

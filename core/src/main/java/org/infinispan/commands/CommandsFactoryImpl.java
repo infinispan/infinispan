@@ -65,7 +65,6 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -79,7 +78,6 @@ import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
-import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -137,13 +135,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private StateTransferManager stateTransferManager;
    private BackupSender backupSender;
    private CancellationService cancellationService;
-   private TimeService timeService;
    private XSiteStateProvider xSiteStateProvider;
    private XSiteStateConsumer xSiteStateConsumer;
    private XSiteStateTransferManager xSiteStateTransferManager;
    private EntryRetriever entryRetriever;
    private GroupManager groupManager;
-   private PartitionHandlingManager partitionHandlingManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -155,8 +151,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  RecoveryManager recoveryManager, StateProvider stateProvider, StateConsumer stateConsumer,
                                  LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
                                  StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
-                                 TimeService timeService, XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
-                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever, GroupManager groupManager, PartitionHandlingManager partitionHandlingManager) {
+                                  XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
+                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever, GroupManager groupManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -175,11 +171,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.stateTransferManager = stm;
       this.backupSender = backupSender;
       this.cancellationService = cancellationService;
-      this.timeService = timeService;
       this.xSiteStateConsumer = xSiteStateConsumer;
       this.xSiteStateProvider = xSiteStateProvider;
       this.xSiteStateTransferManager = xSiteStateTransferManager;
-      this.partitionHandlingManager = partitionHandlingManager;
       this.entryRetriever = entryRetriever;
       this.groupManager = groupManager;
    }
@@ -209,12 +203,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(Set<Flag> flags, Collection<Object> keys) {
-      return new InvalidateL1Command(dataContainer, configuration, distributionManager, notifier, flags, keys);
+      return new InvalidateL1Command(dataContainer, distributionManager, notifier, flags, keys);
    }
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(Address origin, Set<Flag> flags, Collection<Object> keys) {
-      return new InvalidateL1Command(origin, dataContainer, configuration, distributionManager, notifier, flags, keys);
+      return new InvalidateL1Command(origin, dataContainer, distributionManager, notifier, flags, keys);
    }
 
    @Override
@@ -392,7 +386,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;
             clusteredGetCommand.initialize(icf, this, entryFactory,
-                  interceptorChain, distributionManager, txTable,
+                  interceptorChain, txTable,
                   configuration.dataContainer().keyEquivalence());
             break;
          case LockControlCommand.COMMAND_ID:

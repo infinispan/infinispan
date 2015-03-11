@@ -1,6 +1,8 @@
 package org.infinispan.interceptors.locking;
 
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.distribution.LookupMode;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -51,18 +53,18 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.performWriteSkewCh
 @Scope(Scopes.NAMED_CACHE)
 public interface ClusteringDependentLogic {
 
-   boolean localNodeIsOwner(Object key);
+   boolean localNodeIsOwner(Object key, LookupMode lookupMode);
 
-   boolean localNodeIsPrimaryOwner(Object key);
+   boolean localNodeIsPrimaryOwner(Object key, LookupMode lookupMode);
 
-   Address getPrimaryOwner(Object key);
+   Address getPrimaryOwner(Object key, LookupMode lookupMode);
 
    void commitEntry(CacheEntry entry, Metadata metadata, FlagAffectedCommand command, InvocationContext ctx,
                     Flag trackFlag, boolean l1Invalidation);
 
-   List<Address> getOwners(Collection<Object> keys);
+   List<Address> getOwners(Collection<Object> keys, LookupMode lookupMode);
 
-   List<Address> getOwners(Object key);
+   List<Address> getOwners(Object key, LookupMode lookupMode);
 
    EntryVersionsMap createNewVersionsAndCheckForWriteSkews(VersionGenerator versionGenerator, TxInvocationContext context, VersionedPrepareCommand prepareCommand);
 
@@ -70,8 +72,8 @@ public interface ClusteringDependentLogic {
 
    public static abstract class AbstractClusteringDependentLogic implements ClusteringDependentLogic {
 
-      protected DataContainer dataContainer;
-      protected CacheNotifier notifier;
+      protected DataContainer<Object, Object> dataContainer;
+      protected CacheNotifier<Object, Object> notifier;
       protected boolean totalOrder;
       private WriteSkewHelper.KeySpecificLogic keySpecificLogic;
       protected CommitManager commitManager;
@@ -79,7 +81,7 @@ public interface ClusteringDependentLogic {
       protected TimeService timeService;
 
       @Inject
-      public void init(DataContainer dataContainer, CacheNotifier notifier, Configuration configuration,
+      public void init(DataContainer<Object, Object> dataContainer, CacheNotifier<Object, Object> notifier, Configuration configuration,
                        CommitManager commitManager, PersistenceManager persistenceManager, TimeService timeService) {
          this.dataContainer = dataContainer;
          this.notifier = notifier;
@@ -99,8 +101,7 @@ public interface ClusteringDependentLogic {
 
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder);
 
-      protected void notifyCommitEntry(boolean created, boolean removed,
-                                       boolean evicted, CacheEntry entry, InvocationContext ctx,
+      protected final void notifyCommitEntry(boolean created, boolean removed, CacheEntry entry, InvocationContext ctx,
                                        FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
          if (removed) {
             if (command instanceof RemoveCommand) {
@@ -181,27 +182,27 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public boolean localNodeIsOwner(Object key) {
+      public boolean localNodeIsOwner(Object key, LookupMode lookupMode) {
          return true;
       }
 
       @Override
-      public boolean localNodeIsPrimaryOwner(Object key) {
+      public boolean localNodeIsPrimaryOwner(Object key, LookupMode lookupMode) {
          return true;
       }
 
       @Override
-      public Address getPrimaryOwner(Object key) {
+      public Address getPrimaryOwner(Object key, LookupMode lookupMode) {
          throw new IllegalStateException("Cannot invoke this method for local caches");
       }
 
       @Override
-      public List<Address> getOwners(Collection<Object> keys) {
+      public List<Address> getOwners(Collection<Object> keys, LookupMode lookupMode) {
          return null;
       }
 
       @Override
-      public List<Address> getOwners(Object key) {
+      public List<Address> getOwners(Object key, LookupMode lookupMode) {
          return null;
       }
 
@@ -221,7 +222,6 @@ public interface ClusteringDependentLogic {
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
          boolean removed = entry.isRemoved();
-         boolean evicted = entry.isEvicted();
 
          InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
          Object previousValue = null;
@@ -233,7 +233,7 @@ public interface ClusteringDependentLogic {
          commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
-         notifyCommitEntry(created, removed, evicted, entry, ctx, command, previousValue, previousMetadata);
+         notifyCommitEntry(created, removed, entry, ctx, command, previousValue, previousMetadata);
       }
 
       @Override
@@ -255,7 +255,12 @@ public interface ClusteringDependentLogic {
 
       @Override
       public int compareTo(Address o) {
-         return 0;
+         return o == LOCAL_MODE_ADDRESS ? 0 : 1;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         return obj instanceof Address && compareTo((Address) obj) == 0;
       }
    };
 
@@ -274,18 +279,18 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public boolean localNodeIsOwner(Object key) {
-         return stateTransferManager.getCacheTopology().getWriteConsistentHash().isKeyLocalToNode(rpcManager.getAddress(), key);
+      public boolean localNodeIsOwner(Object key, LookupMode lookupMode) {
+         return getConsistentHash(lookupMode).isKeyLocalToNode(rpcManager.getAddress(), key);
       }
 
       @Override
-      public boolean localNodeIsPrimaryOwner(Object key) {
-         return stateTransferManager.getCacheTopology().getWriteConsistentHash().locatePrimaryOwner(key).equals(rpcManager.getAddress());
+      public boolean localNodeIsPrimaryOwner(Object key, LookupMode lookupMode) {
+         return getConsistentHash(lookupMode).locatePrimaryOwner(key).equals(rpcManager.getAddress());
       }
 
       @Override
-      public Address getPrimaryOwner(Object key) {
-         return stateTransferManager.getCacheTopology().getWriteConsistentHash().locatePrimaryOwner(key);
+      public Address getPrimaryOwner(Object key, LookupMode lookupMode) {
+         return getConsistentHash(lookupMode).locatePrimaryOwner(key);
       }
 
       @Override
@@ -295,7 +300,6 @@ public interface ClusteringDependentLogic {
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
          boolean removed = entry.isRemoved();
-         boolean evicted = entry.isEvicted();
 
          InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
          Object previousValue = null;
@@ -307,16 +311,16 @@ public interface ClusteringDependentLogic {
          commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
-         notifyCommitEntry(created, removed, evicted, entry, ctx, command, previousValue, previousMetadata);
+         notifyCommitEntry(created, removed, entry, ctx, command, previousValue, previousMetadata);
       }
 
       @Override
-      public List<Address> getOwners(Collection<Object> keys) {
+      public List<Address> getOwners(Collection<Object> keys, LookupMode lookupMode) {
          return null;    //todo [anistor] should I actually return this based on current CH?
       }
 
       @Override
-      public List<Address> getOwners(Object key) {
+      public List<Address> getOwners(Object key, LookupMode lookupMode) {
          return null;
       }
 
@@ -328,6 +332,10 @@ public interface ClusteringDependentLogic {
       @Override
       protected WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder) {
          return null; //not used because write skew check is not allowed with invalidation
+      }
+
+      private ConsistentHash getConsistentHash(LookupMode lookupMode) {
+         return lookupMode.getConsistentHash(stateTransferManager.getCacheTopology());
       }
    }
 
@@ -368,7 +376,7 @@ public interface ClusteringDependentLogic {
                   @Override
                   public boolean performCheckOnKey(Object key) {
                      //in two phase commit, only the primary owner should perform the write skew check
-                     return localNodeIsPrimaryOwner(key);
+                     return localNodeIsPrimaryOwner(key, LookupMode.WRITE);
                   }
                };
       }
@@ -394,8 +402,8 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public boolean localNodeIsOwner(Object key) {
-         return dm.getLocality(key).isLocal();
+      public boolean localNodeIsOwner(Object key, LookupMode lookupMode) {
+         return dm.getLocality(key, lookupMode).isLocal();
       }
 
       @Override
@@ -404,14 +412,13 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public boolean localNodeIsPrimaryOwner(Object key) {
-         final Address address = rpcManager.getAddress();
-         return dm.getPrimaryLocation(key).equals(address);
+      public boolean localNodeIsPrimaryOwner(Object key, LookupMode lookupMode) {
+         return dm.getPrimaryLocation(key, lookupMode).equals(getAddress());
       }
 
       @Override
-      public Address getPrimaryOwner(Object key) {
-         return dm.getPrimaryLocation(key);
+      public Address getPrimaryOwner(Object key, LookupMode lookupMode) {
+         return dm.getPrimaryLocation(key, lookupMode);
       }
 
       @Override
@@ -426,7 +433,7 @@ public interface ClusteringDependentLogic {
             boolean skipOwnershipCheck = command != null &&
                   command.hasFlag(Flag.SKIP_OWNERSHIP_CHECK);
 
-            boolean isForeignOwned = !skipOwnershipCheck && !localNodeIsOwner(entry.getKey());
+            boolean isForeignOwned = !skipOwnershipCheck && !localNodeIsOwner(entry.getKey(), LookupMode.WRITE);
             if (isForeignOwned && !entry.isRemoved()) {
                if (configuration.clustering().l1().enabled()) {
                   // transform for L1
@@ -454,11 +461,9 @@ public interface ClusteringDependentLogic {
 
             boolean created = false;
             boolean removed = false;
-            boolean evicted = false;
             if (!isForeignOwned) {
                created = entry.isCreated();
                removed = entry.isRemoved();
-               evicted = entry.isEvicted();
             }
 
             if (doCommit) {
@@ -471,7 +476,7 @@ public interface ClusteringDependentLogic {
                }
                commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
                if (!isForeignOwned) {
-                  notifyCommitEntry(created, removed, evicted, entry, ctx, command, previousValue, previousMetadata);
+                  notifyCommitEntry(created, removed, entry, ctx, command, previousValue, previousMetadata);
                }
             } else
                entry.rollback();
@@ -482,16 +487,16 @@ public interface ClusteringDependentLogic {
       }
 
       @Override
-      public List<Address> getOwners(Collection<Object> affectedKeys) {
+      public List<Address> getOwners(Collection<Object> affectedKeys, LookupMode lookupMode) {
          if (affectedKeys.isEmpty()) {
             return InfinispanCollections.emptyList();
          }
-         return Immutables.immutableListConvert(dm.locateAll(affectedKeys));
+         return Immutables.immutableListConvert(dm.locateAll(affectedKeys, lookupMode));
       }
 
       @Override
-      public List<Address> getOwners(Object key) {
-         return Immutables.immutableListConvert(dm.locate(key));
+      public List<Address> getOwners(Object key, LookupMode lookupMode) {
+         return Immutables.immutableListConvert(dm.locate(key, lookupMode));
       }
 
       @Override
@@ -501,14 +506,14 @@ public interface ClusteringDependentLogic {
                   @Override
                   public boolean performCheckOnKey(Object key) {
                      //in total order, all the owners can perform the write skew check.
-                     return localNodeIsOwner(key);
+                     return localNodeIsOwner(key, LookupMode.WRITE);
                   }
                } :
                new WriteSkewHelper.KeySpecificLogic() {
                   @Override
                   public boolean performCheckOnKey(Object key) {
                      //in two phase commit, only the primary owner should perform the write skew check
-                     return localNodeIsPrimaryOwner(key);
+                     return localNodeIsPrimaryOwner(key, LookupMode.WRITE);
                   }
                };
       }

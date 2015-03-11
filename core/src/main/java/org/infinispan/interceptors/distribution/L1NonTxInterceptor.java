@@ -21,6 +21,7 @@ import org.infinispan.container.EntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.L1Manager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
@@ -199,7 +200,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    protected boolean skipL1Lookup(LocalFlagAffectedCommand command, Object key) {
       return command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            || command.hasFlag(Flag.IGNORE_RETURN_VALUES) || cdl.localNodeIsOwner(key)
+            || command.hasFlag(Flag.IGNORE_RETURN_VALUES) || cdl.localNodeIsOwner(key, LookupMode.READ)
             || dataContainer.containsKey(key);
    }
 
@@ -222,9 +223,9 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       Future<Object> invalidationFuture = null;
       Set<Object> keys = command.getMap().keySet();
-      Set<Object> toInvalidate = new HashSet<Object>(keys.size());
+      Set<Object> toInvalidate = new HashSet<>(keys.size());
       for (Object k : keys) {
-         if (cdl.localNodeIsOwner(k)) {
+         if (cdl.localNodeIsOwner(k, LookupMode.WRITE)) {
             toInvalidate.add(k);
          }
       }
@@ -233,10 +234,10 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
 
       Object result = invokeNextInterceptor(ctx, command);
-      processInvalidationResult(ctx, command, invalidationFuture);
+      processInvalidationResult(command, invalidationFuture);
       //we also need to remove from L1 the keys that are not ours
       for (Object o : command.getAffectedKeys()) {
-         if (!cdl.localNodeIsOwner(o)) {
+         if (!cdl.localNodeIsOwner(o, LookupMode.WRITE)) {
             removeFromL1(ctx, o);
          }
       }
@@ -295,13 +296,13 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
       Future<Object> l1InvalidationFuture = invalidateL1(ctx, command, assumeOriginKeptEntryInL1);
       Object returnValue = invokeNextInterceptor(ctx, command);
-      processInvalidationResult(ctx, command, l1InvalidationFuture);
+      processInvalidationResult(command, l1InvalidationFuture);
       removeFromLocalL1(ctx, command);
       return returnValue;
    }
 
    private void removeFromLocalL1(InvocationContext ctx, DataWriteCommand command) throws Throwable {
-      if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey())) {
+      if (ctx.isOriginLocal() && !cdl.localNodeIsOwner(command.getKey(), LookupMode.WRITE)) {
          removeFromL1(ctx, command.getKey());
       } else if (trace) {
          log.trace("Allowing entry to commit as local node is owner");
@@ -320,7 +321,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       invokeNextInterceptor(ctx, command);
    }
 
-   private void processInvalidationResult(InvocationContext ctx, FlagAffectedCommand command, Future<Object> l1InvalidationFuture) throws InterruptedException, ExecutionException {
+   private void processInvalidationResult(FlagAffectedCommand command, Future<Object> l1InvalidationFuture) throws InterruptedException, ExecutionException {
       if (l1InvalidationFuture != null) {
          if (isSynchronous(command)) {
             l1InvalidationFuture.get();
@@ -330,7 +331,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    private Future<Object> invalidateL1(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) {
       Future<Object> l1InvalidationFuture = null;
-      if (cdl.localNodeIsOwner(command.getKey())) {
+      if (cdl.localNodeIsOwner(command.getKey(), LookupMode.READ)) {
          l1InvalidationFuture = l1Manager.flushCache(Collections.singletonList(command.getKey()), ctx.getOrigin(), assumeOriginKeptEntryInL1);
       } else if (trace) {
          log.tracef("Not invalidating key '%s' as local node(%s) is not owner", command.getKey(), rpcManager.getAddress());

@@ -101,7 +101,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       if (cacheTopology == null)
          return "N/A";
 
-      return cacheTopology.getCurrentCH().getMembers().toString();
+      return cacheTopology.getReadConsistentHash().getMembers().toString();
    }
 
    @ManagedAttribute(description = "Retrieves the pending view.", displayName = "Pending view", dataType = DataType.TRAIT)
@@ -110,7 +110,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       if (cacheTopology == null)
          return "N/A";
 
-      ConsistentHash pendingCH = cacheTopology.getPendingCH();
+      ConsistentHash pendingCH = cacheTopology.getWriteConsistentHash();
       return pendingCH != null ? pendingCH.getMembers().toString() : "null";
    }
 

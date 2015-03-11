@@ -203,7 +203,7 @@ object HotRodTestingUtil extends Log {
       // Assert segments
       val cache = servers.head.getCacheManager.getCache(cacheName)
       val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
-      val ch = stateTransferManager.getCacheTopology.getCurrentCH
+      val ch = stateTransferManager.getCacheTopology.getReadConsistentHash
       val numSegments = ch.getNumSegments
       val numOwners = ch.getNumOwners
       assertEquals(hashTopologyResp.segments.size, numSegments)
@@ -273,7 +273,7 @@ object HotRodTestingUtil extends Log {
    def assertHashIds(hashIds: Map[ServerAddress, Seq[Int]], servers: List[HotRodServer], cacheName: String) {
       val cache = servers.head.getCacheManager.getCache(cacheName)
       val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
-      val consistentHash = stateTransferManager.getCacheTopology.getCurrentCH
+      val consistentHash = stateTransferManager.getCacheTopology.getReadConsistentHash
       val numSegments = consistentHash.getNumSegments
       val numOwners = consistentHash.getNumOwners
       assertEquals(hashIds.size, servers.size)
@@ -304,7 +304,7 @@ object HotRodTestingUtil extends Log {
    def assertReplicatedHashIds(hashIds: Map[ServerAddress, Seq[Int]], servers: List[HotRodServer], cacheName: String) {
       val cache = servers.head.getCacheManager.getCache(cacheName)
       val stateTransferManager = TestingUtil.extractComponent(cache, classOf[StateTransferManager])
-      val consistentHash = stateTransferManager.getCacheTopology.getCurrentCH
+      val consistentHash = stateTransferManager.getCacheTopology.getReadConsistentHash
       val numSegments = consistentHash.getNumSegments
       val numOwners = consistentHash.getNumOwners
 

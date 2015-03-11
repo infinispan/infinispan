@@ -6,6 +6,7 @@ import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.DataContainer;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.distribution.rehash.XAResourceAdapter;
 import org.infinispan.manager.CacheContainer;
@@ -24,12 +25,9 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 
 /**
@@ -174,7 +172,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
     * Creates a new optionally transactional cache manager, starts it, and adds it to the list of known cache managers on
     * the current thread.  Uses a default clustered cache manager global config.
     *
-    * @param defaultConfig default cfg to use
+    * @param builder default cfg to use
     * @return the new CacheManager
     */
    protected EmbeddedCacheManager addClusterEnabledCacheManager(ConfigurationBuilder builder, TransportFlags flags) {
@@ -191,8 +189,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    /**
     * Creates a new cache manager, starts it, and adds it to the list of known cache managers on the current thread.
-    * @param mode cache mode to use
-    * @param transactional if true, the configuration will be decorated with necessary transactional settings
+    * @param builder default cfg to use
     * @return an embedded cache manager
     */
 
@@ -517,13 +514,13 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected <K, V> Cache<K, V> getLockOwner(Object key, String cacheName) {
       Configuration c = getCache(0, cacheName).getCacheConfiguration();
       if (c.clustering().cacheMode().isReplicated() || c.clustering().cacheMode().isInvalidation()) {
-         return (Cache<K, V>) getCache(0, cacheName); //for replicated caches only the coordinator acquires lock
+         return getCache(0, cacheName); //for replicated caches only the coordinator acquires lock
       }  else {
          if (!c.clustering().cacheMode().isDistributed()) throw new IllegalStateException("This is not a clustered cache!");
-         final Address address = getCache(0, cacheName).getAdvancedCache().getDistributionManager().locate(key).get(0);
-         for (Cache<?, ?> cache : caches(cacheName)) {
+         final Address address = getCache(0, cacheName).getAdvancedCache().getDistributionManager().getPrimaryLocation(key, LookupMode.WRITE);
+         for (Cache<K, V> cache : this.<K, V>caches(cacheName)) {
             if (cache.getAdvancedCache().getRpcManager().getTransport().getAddress().equals(address)) {
-               return (Cache<K, V>) cache;
+               return cache;
             }
          }
          throw new IllegalStateException();
@@ -544,8 +541,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
       }
    }
 
-   private Cache<?, ?> getCache(int index, String name) {
-      return name == null ? cache(index) : cache(index, name);
+   private <K, V> Cache<K, V> getCache(int index, String name) {
+      return name == null ? this.<K, V>cache(index) : this.<K, V>cache(index, name);
    }
 
    protected void forceTwoPhase(int cacheIndex) throws SystemException, RollbackException {

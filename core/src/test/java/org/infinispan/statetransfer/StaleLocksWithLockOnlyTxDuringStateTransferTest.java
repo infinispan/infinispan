@@ -66,7 +66,8 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
 
       int initialTopologyId = stm0.getCacheTopology().getTopologyId();
       int rebalanceTopologyId = initialTopologyId + 1;
-      final int finalTopologyId = rebalanceTopologyId + 1;
+      final int readCHTopologyId = rebalanceTopologyId + 1;
+      final int finalTopologyId = readCHTopologyId + 1;
 
       // Block state request commands on cache0 until the lock command has been sent to cache1
       advanceOnComponentMethod(sequencer, cache0, StateProvider.class,
@@ -74,7 +75,7 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
             .before("st:block_get_transactions", "st:resume_get_transactions");
       // Block the topology update on cache0 until the tx has finished
       advanceOnGlobalComponentMethod(sequencer, manager(0), LocalTopologyManager.class,
-            matchMethodCall("handleTopologyUpdate").withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
+            matchMethodCall("handleReadCHUpdate").withMatcher(1, new CacheTopologyMatcher(readCHTopologyId)).build())
             .before("st:block_ch_update", "st:resume_ch_update");
 
       // Start cache 1, but the state request will be blocked on cache 0

@@ -10,6 +10,7 @@ import org.infinispan.cli.interpreter.result.StatementException;
 import org.infinispan.cli.interpreter.result.StringResult;
 import org.infinispan.cli.interpreter.session.Session;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.LogFactory;
 
@@ -54,7 +55,7 @@ public class LocateStatement implements Statement {
       DistributionManager distributionManager = cache.getAdvancedCache().getDistributionManager();
       if(distributionManager!=null) {
          Object key = keyData.getKey();
-         List<Address> addresses = distributionManager.locate(codec.encodeKey(key));
+         List<Address> addresses = distributionManager.locate(codec.encodeKey(key), LookupMode.READ);
          return new StringResult(addresses.toString());
       } else {
          throw log.cacheNotDistributed();

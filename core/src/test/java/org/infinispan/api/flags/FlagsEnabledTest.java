@@ -1,12 +1,5 @@
 package org.infinispan.api.flags;
 
-import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
-import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
-import static org.infinispan.context.Flag.SKIP_CACHE_STORE;
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotSame;
-
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
@@ -14,6 +7,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.persistence.UnnecessaryLoadingTest;
@@ -26,6 +20,14 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.Callable;
+
+import static org.infinispan.context.Flag.CACHE_MODE_LOCAL;
+import static org.infinispan.context.Flag.SKIP_CACHE_LOAD;
+import static org.infinispan.test.TestingUtil.k;
+import static org.infinispan.test.TestingUtil.v;
+import static org.infinispan.test.TestingUtil.withTx;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotSame;
 
 /**
  * @author Sanne Grinovero <sanne@infinispan.org> (C) 2011 Red Hat Inc.
@@ -108,7 +110,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
 
    public void testWithFlagsAndDelegateCache() {
       final AdvancedCache<Integer, String> c1 =
-            new CustomDelegateCache<Integer, String>(this.<Integer, String>advancedCache(0, cacheName));
+            new CustomDelegateCache<>(this.<Integer, String>advancedCache(0, cacheName));
       final AdvancedCache<Integer, String> c2 = advancedCache(1, cacheName);
 
       c1.withFlags(CACHE_MODE_LOCAL).put(1, "v1");
@@ -195,7 +197,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
          super(cache, new AdvancedCacheWrapper<K, V>() {
             @Override
             public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-               return new CustomDelegateCache<K, V>(cache);
+               return new CustomDelegateCache<>(cache);
             }
          });
       }
@@ -210,7 +212,7 @@ public class FlagsEnabledTest extends MultipleCacheManagersTest {
    }
 
    private boolean isPrimaryOwner(Cache<?, ?> cache, Object key) {
-      return TestingUtil.extractComponent(cache, ClusteringDependentLogic.class).localNodeIsPrimaryOwner(key);
+      return TestingUtil.extractComponent(cache, ClusteringDependentLogic.class).localNodeIsPrimaryOwner(key, LookupMode.WRITE);
    }
 
    private boolean isTxCache() {

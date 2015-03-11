@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -36,12 +37,10 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.extractComponent;
@@ -79,11 +78,11 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
    }
 
    protected static Collection<Address> getOwners(Cache<?, ?> cache, Object key) {
-      return new ArrayList<>(cache.getAdvancedCache().getDistributionManager().locate(key));
+      return new ArrayList<>(cache.getAdvancedCache().getDistributionManager().locate(key, LookupMode.WRITE));
    }
 
    protected static Collection<Address> getOwners(Cache<?, ?> cache, Collection<Object> keys) {
-      return new ArrayList<>(cache.getAdvancedCache().getDistributionManager().locateAll(keys));
+      return new ArrayList<>(cache.getAdvancedCache().getDistributionManager().locateAll(keys, LookupMode.WRITE));
    }
 
    public void testPut() throws InterruptedException {

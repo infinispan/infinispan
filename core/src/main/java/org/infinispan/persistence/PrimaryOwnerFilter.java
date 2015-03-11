@@ -1,5 +1,6 @@
 package org.infinispan.persistence;
 
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 
@@ -17,6 +18,6 @@ public class PrimaryOwnerFilter<K> implements KeyFilter<K> {
 
    @Override
    public boolean accept(K key) {
-      return cdl.localNodeIsPrimaryOwner(key);
+      return cdl.localNodeIsPrimaryOwner(key, LookupMode.READ);
    }
 }

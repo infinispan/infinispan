@@ -1,5 +1,6 @@
 package org.infinispan.topology;
 
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -30,16 +31,26 @@ public interface ClusterTopologyManager {
    /**
     * Marks the rebalance as complete on the sender.
     */
-   void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId) throws Exception;
+   void handleRebalanceCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId);
+
+   void handleReadCHCompleted(String cacheName, Address node, int topologyId, Throwable throwable, int viewId);
 
    /**
     * Install a new cluster view.
     */
    void handleClusterView(boolean isMerge, int viewId);
 
-   void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed);
+   void broadcastRebalanceStart(String cacheName, CacheTopology cacheTopology, ConsistentHash newConsistentHash,
+                                boolean totalOrder, boolean distributed);
 
-   void broadcastTopologyUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode, boolean totalOrder, boolean distributed);
+   void broadcastReadConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode,
+                                          boolean totalOrder, boolean distributed);
+
+   void broadcastWriteConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, AvailabilityMode availabilityMode,
+                                           boolean totalOrder, boolean distributed);
+
+   void broadcastConsistentHashUpdate(String cacheName, CacheTopology cacheTopology, ConsistentHash newConsistentHash,
+                                      AvailabilityMode availabilityMode, TopologyState state, boolean totalOrder, boolean distributed);
 
    void broadcastStableTopologyUpdate(String cacheName, CacheTopology cacheTopology, boolean totalOrder, boolean distributed);
 

@@ -64,7 +64,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       final ControlledCommandFactory ccf = ControlledCommandFactory.registerControlledCommandFactory(advancedCache(1), toBlock);
       ccf.gate.close();
 
-      final Set<Object> keys = new HashSet<Object>(KEY_SET_SIZE);
+      final Set<Object> keys = new HashSet<>(KEY_SET_SIZE);
 
       //fork it into another test as this is going to block in commit
       Future<Object> future = fork(new Callable<Object>() {
@@ -106,7 +106,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
       log.trace("After state transfer");
 
-      final Set<Object> migratedKeys = new HashSet<Object>(KEY_SET_SIZE);
+      final Set<Object> migratedKeys = new HashSet<>(KEY_SET_SIZE);
       for (Object key : keys) {
          if (keyMapsToNode(key, 2)) {
             migratedKeys.add(key);
@@ -169,7 +169,7 @@ public class LockCleanupStateTransferTest extends MultipleCacheManagersTest {
    }
 
    private Address owner(Object key) {
-      return advancedCache(0).getDistributionManager().getConsistentHash().locateOwners(key).get(0);
+      return advancedCache(0).getDistributionManager().getWriteConsistentHash().locateOwners(key).get(0);
    }
 
 }

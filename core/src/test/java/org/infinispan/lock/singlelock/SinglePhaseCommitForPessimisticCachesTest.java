@@ -9,6 +9,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
@@ -43,8 +44,8 @@ public class SinglePhaseCommitForPessimisticCachesTest extends MultipleCacheMana
       final Object k0_2 = getKeyForCache(0);
 
       final List<Address> members = advancedCache(0).getRpcManager().getTransport().getMembers();
-      assert advancedCache(0).getDistributionManager().locate(k0_1).containsAll(members);
-      assert advancedCache(0).getDistributionManager().locate(k0_2).containsAll(members);
+      assert advancedCache(0).getDistributionManager().locate(k0_1, LookupMode.WRITE).containsAll(members);
+      assert advancedCache(0).getDistributionManager().locate(k0_2, LookupMode.WRITE).containsAll(members);
       TxCountInterceptor interceptor0 = new TxCountInterceptor();
       TxCountInterceptor interceptor1 = new TxCountInterceptor();
       advancedCache(0).addInterceptor(interceptor0, 1);

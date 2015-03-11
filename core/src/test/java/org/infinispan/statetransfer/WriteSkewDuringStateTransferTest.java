@@ -94,10 +94,10 @@ rebalance_start
 
       //node A thinks that node B is the primary owner. Node B is blocking the prepare command until it thinks that
       //node C is the primary owner
-      nodeAController.topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+      nodeAController.topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.WRITE_CH_UPDATE);
       nodeARpcManager.blockAfter(VersionedPrepareCommand.class);
       //node C thinks that node B is the primary owner.
-      //nodeC.controller.topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+      //nodeC.controller.topologyManager.waitToBlock(BlockingLocalTopologyManager.LatchType.WRITE_CH_UPDATE);
 
       //after this waiting phase, node A thinks that node B is the primary owner, node B thinks that node C is the
       // primary owner and node C thinks that node B is the primary owner
@@ -107,8 +107,8 @@ rebalance_start
 
       //it waits until all nodes has replied. then, we change the topology ID and let it collect the responses.
       nodeARpcManager.waitForCommandToBlock();
-      nodeAController.topologyManager.stopBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
-      awaitForTopology(currentTopologyId + 2, cache(0));
+      nodeAController.topologyManager.stopBlocking(BlockingLocalTopologyManager.LatchType.WRITE_CH_UPDATE);
+      awaitForTopology(currentTopologyId + 3, cache(0));
 
       nodeARpcManager.stopBlocking();
       assertNull("Wrong put() return value.", tx.get());
@@ -119,9 +119,9 @@ rebalance_start
 
       nodeC.joinerFuture.get();
 
-      awaitForTopology(currentTopologyId + 2, cache(0));
-      awaitForTopology(currentTopologyId + 2, cache(1));
-      awaitForTopology(currentTopologyId + 2, cache(2));
+      awaitForTopology(currentTopologyId + 3, cache(0));
+      awaitForTopology(currentTopologyId + 3, cache(1));
+      awaitForTopology(currentTopologyId + 3, cache(2));
 
       assertKeyVersionInDataContainer(key, cache(1), cache(2));
       cache(0).put(key, "v2");
@@ -208,12 +208,12 @@ rebalance_start
          public void after(InvocationContext context, VisitableCommand command, Cache cache) {
             log.tracef("After: command=%s. origin=%s", command, context.getOrigin());
             if (context.getOrigin().equals(address(cache(0)))) {
-               newNode.controller.topologyManager.stopBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+               newNode.controller.topologyManager.stopBlocking(BlockingLocalTopologyManager.LatchType.WRITE_CH_UPDATE);
             }
          }
       });
 
-      newNode.controller.topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+      newNode.controller.topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.WRITE_CH_UPDATE);
       newNode.joinerFuture = fork(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
@@ -279,7 +279,7 @@ rebalance_start
             //no-op
          }
       });
-      nodeA.topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.CONSISTENT_HASH_UPDATE);
+      nodeA.topologyManager.startBlocking(BlockingLocalTopologyManager.LatchType.WRITE_CH_UPDATE);
    }
 
    private static void setInitialPhaseForNodeB(NodeController nodeB, final int currentTopology) {

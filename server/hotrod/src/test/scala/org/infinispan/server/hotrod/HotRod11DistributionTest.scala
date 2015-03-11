@@ -54,7 +54,7 @@ class HotRod11DistributionTest extends HotRodMultiNodeTest {
       assertStatus(resp, Success)
       assertTopologyReceived(resp.topologyResponse.get, servers, currentServerTopologyId)
 
-      resp = client1.put(k(m) , 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE, 2)
+      resp = client1.put(k(m) , 0, 0, v(m, "v3-"), INTELLIGENCE_TOPOLOGY_AWARE, 3)
       assertStatus(resp, Success)
       assertEquals(resp.topologyResponse, None)
       assertSuccess(client2.get(k(m), 0), v(m, "v3-"))

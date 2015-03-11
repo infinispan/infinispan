@@ -9,18 +9,16 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.L1InternalCacheEntry;
-import org.infinispan.container.entries.MortalCacheEntry;
-import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
-import org.infinispan.distribution.group.Grouper;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.distribution.group.Grouper;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
-import org.infinispan.transaction.LockingMode;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 import javax.transaction.TransactionManager;
@@ -248,17 +246,12 @@ public abstract class BaseDistFunctionalTest<K, V> extends MultipleCacheManagers
       return nonOwners;
    }
 
-   protected List<Address> residentAddresses(Object key) {
-      DistributionManager dm = c1.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
-      return dm.locate(key);
-   }
-
    protected DistributionManager getDistributionManager(Cache<?, ?> c) {
       return c.getAdvancedCache().getComponentRegistry().getComponent(DistributionManager.class);
    }
 
    protected ConsistentHash getConsistentHash(Cache<?, ?> c) {
-      return getDistributionManager(c).getConsistentHash();
+      return getDistributionManager(c).getWriteConsistentHash();
    }
 
    /**

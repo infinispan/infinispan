@@ -8,6 +8,7 @@ import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.remoting.transport.Address;
@@ -30,18 +31,18 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
-   public boolean localNodeIsOwner(Object key) {
-      return clusteringDependentLogic.localNodeIsOwner(key);
+   public boolean localNodeIsOwner(Object key, LookupMode lookupMode) {
+      return clusteringDependentLogic.localNodeIsOwner(key, lookupMode);
    }
 
    @Override
-   public boolean localNodeIsPrimaryOwner(Object key) {
-      return clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+   public boolean localNodeIsPrimaryOwner(Object key, LookupMode lookupMode) {
+      return clusteringDependentLogic.localNodeIsPrimaryOwner(key, lookupMode);
    }
 
    @Override
-   public Address getPrimaryOwner(Object key) {
-      return clusteringDependentLogic.getPrimaryOwner(key);
+   public Address getPrimaryOwner(Object key, LookupMode lookupMode) {
+      return clusteringDependentLogic.getPrimaryOwner(key, lookupMode);
    }
 
    @Override
@@ -50,13 +51,13 @@ public class ClusteringDependentLogicDelegator implements ClusteringDependentLog
    }
 
    @Override
-   public List<Address> getOwners(Collection<Object> keys) {
-      return clusteringDependentLogic.getOwners(keys);
+   public List<Address> getOwners(Collection<Object> keys, LookupMode lookupMode) {
+      return clusteringDependentLogic.getOwners(keys, lookupMode);
    }
 
    @Override
-   public List<Address> getOwners(Object key) {
-      return clusteringDependentLogic.getOwners(key);
+   public List<Address> getOwners(Object key, LookupMode lookupMode) {
+      return clusteringDependentLogic.getOwners(key, lookupMode);
    }
 
    @Override

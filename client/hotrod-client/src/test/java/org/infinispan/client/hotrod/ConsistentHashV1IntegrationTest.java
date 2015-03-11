@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.retry.DistributionRetryTest;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
@@ -116,7 +115,7 @@ public class ConsistentHashV1IntegrationTest extends MultipleCacheManagersTest {
    }
 
    private void runTest(int cacheIndex) {
-      ConsistentHash serverCH = advancedCache(cacheIndex).getDistributionManager().getConsistentHash();
+      ConsistentHash serverCH = advancedCache(cacheIndex).getDistributionManager().getWriteConsistentHash();
 
       for (int i = 0; i < NUM_KEYS; i++) {
          byte[] keyBytes = (byte[]) kas.getKeyForAddress(address(cacheIndex));

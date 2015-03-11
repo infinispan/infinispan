@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.LookupMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -108,7 +109,7 @@ public class RehashAfterJoinWithPreloadTest extends MultipleCacheManagersTest {
          for (int j = 0; j < NUM_KEYS; j++) {
             String key = "key" + j;
             // each key must only occur once (numOwners is one)
-            if (dm.getLocality(key).isLocal()) {
+            if (dm.getLocality(key, LookupMode.WRITE).isLocal()) {
                assertTrue("Key '" + key + "' is owned by node " + address(i) + " but it doesn't appears there",
                      dataContainer.containsKey(key));
             } else {
