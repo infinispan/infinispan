@@ -84,7 +84,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                pw.print("<html><body>")
                keys.foreach(key => {
                   val hkey = Escaper.escapeHtml(key)
-                  pw.printf("<a href=\"%s\">%s</a><br/>", hkey, hkey)
+                  pw.printf("<a href=\"%s/%s\">%s</a><br/>", cacheName, hkey, hkey)
                })
                pw.print("</body></html>")
             })).build
