@@ -36,7 +36,6 @@ import javax.management.MBeanRegistrationException;
 import javax.management.ObjectName;
 import javax.naming.NamingException;
 import javax.transaction.Synchronization;
-import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.xml.namespace.QName;
@@ -1214,7 +1213,7 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot find a parser for element '%s' in namespace '%s'. Check that your configuration is up-to date for this version of Infinispan.", id = 327)
    CacheConfigurationException unsupportedConfiguration(String element, String namespaceUri);
 
-   @LogMessage(level = INFO)
+   @LogMessage(level = DEBUG)
    @Message(value = "Finished local rebalance for cache %s on node %s, topology id = %d", id = 328)
    void rebalanceCompleted(String cacheName, Address node, int topologyId);
 
@@ -1241,4 +1240,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Two-phase commit can only be used with synchronous backup strategy.", id = 335)
    CacheConfigurationException twoPhaseCommitAsyncBackup();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Finished cluster-wide rebalance for cache %s, topology id = %d", id = 336)
+   void clusterWideRebalanceCompleted(String cacheName, int topologyId);
 }

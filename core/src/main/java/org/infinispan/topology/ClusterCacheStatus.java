@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.infinispan.util.logging.LogFactory.CLUSTER;
+
 /**
 * Keeps track of a cache's status: members, current/pending consistent hashes, and rebalance status
 *
@@ -340,7 +342,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          }
 
          int currentTopologyId = currentTopology.getTopologyId();
-         log.debugf("Finished cluster-wide rebalance for cache %s, topology id = %d", cacheName, currentTopologyId);
+         CLUSTER.clusterWideRebalanceCompleted(cacheName, currentTopologyId);
          int newTopologyId = currentTopologyId + 1;
          ConsistentHash newCurrentCH = currentTopology.getPendingCH();
          CacheTopology newTopology = new CacheTopology(newTopologyId, getCurrentTopology().getRebalanceId(),
