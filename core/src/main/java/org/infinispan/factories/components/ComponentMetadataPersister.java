@@ -167,7 +167,7 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
    }
 
    private static String extractFqcn(String path, File f) {
-      return f.getAbsolutePath().replace(path, "").replace(File.separator, ".").replace(".class", "").replaceFirst("\\.+", "");
+      return f.getAbsolutePath().replace(path, "").replace(File.separator, ".").replaceAll("\\.class$", "").replaceFirst("\\.+", "");
    }
 
    private static void writeMetadata(String metadataFile) throws IOException {
