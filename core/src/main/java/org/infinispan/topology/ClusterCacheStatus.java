@@ -423,8 +423,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
 
          ConsistentHashFactory<ConsistentHash> chFactory = getJoinInfo().getConsistentHashFactory();
          // This update will only add the joiners to the CH, we have already checked that we don't have leavers
-         ConsistentHash updatedMembersCH = chFactory.updateMembers(readCH, newMembers, getCapacityFactors());
-         newConsistentHash = chFactory.rebalance(updatedMembersCH);
+         newConsistentHash = chFactory.rebalance(chFactory.updateMembers(readCH, newMembers, getCapacityFactors()));
          if (newConsistentHash.equals(readCH) && cacheTopology.isStable()) {
             newConsistentHash = null;
             log.tracef("The balanced CH is the same as the current CH, not rebalancing");

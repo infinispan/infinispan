@@ -1,5 +1,8 @@
 package org.infinispan.statetransfer;
 
+import org.infinispan.commons.CacheException;
+import org.infinispan.factories.annotations.Start;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -21,16 +24,29 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class StateTransferLockImpl implements StateTransferLock {
    private static final Log log = LogFactory.getLog(StateTransferLockImpl.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final int NO_TOPOLOGY = -1;
+   private static final int STOPPED = -2;
 
    private final ReadWriteLock ownershipLock = new ReentrantReadWriteLock();
 
-   private volatile int topologyId = -1;
+   private volatile int topologyId = NO_TOPOLOGY;
    private final Lock topologyLock = new ReentrantLock();
    private final Condition topologyCondition = topologyLock.newCondition();
 
-   private volatile int transactionDataTopologyId = -1;
+   private volatile int transactionDataTopologyId = NO_TOPOLOGY;
    private final Lock transactionDataLock = new ReentrantLock();
    private final Condition transactionDataCondition = transactionDataLock.newCondition();
+
+   @Start
+   public void start() {
+      this.topologyId = NO_TOPOLOGY;
+   }
+
+   @Stop(priority = 21) //after StateTransferManager
+   public void stop() {
+      this.topologyId = STOPPED;
+      notifyTopologyId();
+   }
 
    @SuppressWarnings("LockAcquiredButNotSafelyReleased")
    @Override
@@ -114,17 +130,8 @@ public class StateTransferLockImpl implements StateTransferLock {
          throw new IllegalStateException("Cannot set a topology id (" + topologyId +
                ") that is lower than the current one (" + this.topologyId + ")");
       }
-      if (trace) {
-         log.tracef("Signalling topology %d is installed", topologyId);
-      }
       this.topologyId = topologyId;
-
-      topologyLock.lock();
-      try {
-         topologyCondition.signalAll();
-      } finally {
-         topologyLock.unlock();
-      }
+      notifyTopologyId();
    }
 
    @Override
@@ -138,12 +145,18 @@ public class StateTransferLockImpl implements StateTransferLock {
       topologyLock.lock();
       try {
          long timeoutNanos = unit.toNanos(timeout);
-         while (topologyId < expectedTopologyId && timeoutNanos > 0) {
+         do {
+            final int currentTopologyId = topologyId; //avoid multiple reads
+            if (currentTopologyId >= expectedTopologyId) {
+               break;
+            } else if (currentTopologyId == STOPPED) {
+               throw new CacheException("Cache is stopped.");
+            } else if (timeoutNanos <= 0) {
+               throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId +
+                                                ". Current topology is " + currentTopologyId);
+            }
             timeoutNanos = topologyCondition.awaitNanos(timeoutNanos);
-         }
-         if (timeoutNanos <= 0) {
-            throw new TimeoutException("Timed out waiting for topology " + expectedTopologyId);
-         }
+         } while (true);
       } finally {
          topologyLock.unlock();
       }
@@ -155,5 +168,17 @@ public class StateTransferLockImpl implements StateTransferLock {
    @Override
    public boolean topologyReceived(int expectedTopologyId) {
       return topologyId >= expectedTopologyId;
+   }
+
+   private void notifyTopologyId() {
+      if (trace) {
+         log.tracef("Signalling topology %d is installed", topologyId);
+      }
+      topologyLock.lock();
+      try {
+         topologyCondition.signalAll();
+      } finally {
+         topologyLock.unlock();
+      }
    }
 }
