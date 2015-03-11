@@ -61,7 +61,8 @@ public class RetryOnFailureUnitTest {
          //ignore
       }
       if (failOnTransport) {
-         assertEquals("Wrong getTransport() invocation.", maxRetry + 1, mockOperation.transportInvocationCount.get());
+         // Number of retries doubles as a result of dealing with complete shutdown recoveries
+         assertEquals("Wrong getTransport() invocation.", (maxRetry + 1) * 2, mockOperation.transportInvocationCount.get());
          assertEquals("Wrong execute() invocation.", 0, mockOperation.executeInvocationCount.get());
       } else {
          assertEquals("Wrong getTransport() invocation.", maxRetry + 1, mockOperation.transportInvocationCount.get());

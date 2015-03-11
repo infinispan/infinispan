@@ -28,7 +28,7 @@ public interface TransportFactory {
 
    void start(Codec codec, Configuration configuration, AtomicInteger topologyId, ClientListenerNotifier listenerNotifier);
 
-   void updateServers(Collection<SocketAddress> newServers, byte[] cacheName);
+   void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet);
 
    void destroy();
 
@@ -57,4 +57,6 @@ public interface TransportFactory {
    void invalidateTransport(SocketAddress serverAddress, Transport transport);
 
    SSLContext getSSLContext();
+
+   void reset(byte[] cacheName);
 }
