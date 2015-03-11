@@ -387,7 +387,7 @@ public class Codec20 implements Codec, HotRodConstants {
          localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId,
                addresses.length, new HashSet<SocketAddress>(addressList));
       }
-      transport.getTransportFactory().updateServers(addressList, cacheName);
+      transport.getTransportFactory().updateServers(addressList, cacheName, false);
       if (hashFunctionVersion == 0) {
          if (trace)
             localLog.trace("Not using a consistent hash function (hash function version == 0).");

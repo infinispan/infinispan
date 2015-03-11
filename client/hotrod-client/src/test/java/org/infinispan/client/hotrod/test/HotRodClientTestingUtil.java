@@ -9,7 +9,6 @@ import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingS
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
-import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -23,7 +22,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.Collection;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -203,15 +201,22 @@ public class HotRodClientTestingUtil {
    }
 
    public static byte[] getKeyForServer(HotRodServer primaryOwner, String cacheName) {
+      GenericJBossMarshaller marshaller = new GenericJBossMarshaller();
       Cache<?, ?> cache = cacheName != null
             ? primaryOwner.getCacheManager().getCache(cacheName)
             : primaryOwner.getCacheManager().getCache();
       Random r = new Random();
       byte[] dummy = new byte[8];
       int attemptsLeft = 1000;
-      do {
-         r.nextBytes(dummy);
-      } while (!isFirstOwner(cache, dummy) && attemptsLeft >= 0);
+      try {
+         do {
+            r.nextBytes(dummy);
+         } while (!isFirstOwner(cache, marshaller.objectToByteBuffer(dummy)) && attemptsLeft >= 0);
+      } catch (IOException e) {
+         throw new AssertionError(e);
+      } catch (InterruptedException e) {
+         throw new AssertionError(e);
+      }
 
       if (attemptsLeft < 0)
          throw new IllegalStateException("Could not find any key owned by " + primaryOwner);

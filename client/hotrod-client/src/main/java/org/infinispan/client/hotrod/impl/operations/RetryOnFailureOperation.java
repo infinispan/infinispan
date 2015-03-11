@@ -32,6 +32,8 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
 
    protected final TransportFactory transportFactory;
 
+   private boolean triedCompleteRestart = false;
+
    protected RetryOnFailureOperation(Codec codec, TransportFactory transportFactory,
             byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
       super(codec, flags, cacheName, topologyId);
@@ -59,7 +61,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
                transportFactory.invalidateTransport(
                      te.getServerAddress(), transport);
             }
-            logErrorAndThrowExceptionIfNeeded(retryCount, te);
+            retryCount = logTransportErrorAndThrowExceptionIfNeeded(retryCount, te);
          } catch (RemoteNodeSuspectException | RemoteIllegalLifecycleStateException e) {
             // Do not invalidate transport because this exception is caused
             // as a result of a server finding out that another node has
@@ -77,6 +79,24 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
 
    protected boolean shouldRetry(int retryCount) {
       return retryCount <= transportFactory.getMaxRetries();
+   }
+
+   protected int logTransportErrorAndThrowExceptionIfNeeded(int i, TransportException e) {
+      String message = "Exception encountered. Retry %d out of %d";
+      if (i >= transportFactory.getMaxRetries() || transportFactory.getMaxRetries() < 0) {
+         if (!triedCompleteRestart) {
+            log.debug("Cluster might have completely shut down, try resetting transport layer and topology id");
+            transportFactory.reset(cacheName);
+            triedCompleteRestart = true;
+            return -1; // reset retry count
+         } else {
+            log.exceptionAndNoRetriesLeft(i,transportFactory.getMaxRetries(), e);
+            throw e;
+         }
+      } else {
+         log.tracef(e, message, i, transportFactory.getMaxRetries());
+         return i;
+      }
    }
 
    protected void logErrorAndThrowExceptionIfNeeded(int i, HotRodClientException e) {

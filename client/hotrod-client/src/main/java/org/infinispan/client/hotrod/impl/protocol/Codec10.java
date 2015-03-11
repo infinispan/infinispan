@@ -227,7 +227,7 @@ public class Codec10 implements Codec {
          localLog.newTopology(transport.getRemoteSocketAddress(), newTopologyId,
                socketAddresses.size(), socketAddresses);
       }
-      transport.getTransportFactory().updateServers(socketAddresses, cacheName);
+      transport.getTransportFactory().updateServers(socketAddresses, cacheName, false);
       if (hashFunctionVersion == 0) {
          localLog.trace("Not using a consistent hash function (hash function version == 0).");
       } else {
