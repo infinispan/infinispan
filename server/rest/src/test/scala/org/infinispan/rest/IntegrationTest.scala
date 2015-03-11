@@ -142,8 +142,8 @@ class IntegrationTest extends RestServerTestBase {
       call(post_b)
 
       val html = getCollection("text/html")
-      assertTrue(html.contains("<a href=\"a\">a</a>"))
-      assertTrue(html.contains("<a href=\"b\">b</a>"))
+      assertTrue(html.contains("<a href=\"" + cacheName + "/" + "a\">a</a>"))
+      assertTrue(html.contains("<a href=\"" + cacheName + "/" + "b\">b</a>"))
 
       val xml = getCollection("application/xml")
       assertTrue(xml.contains("<key>a</key>"))
