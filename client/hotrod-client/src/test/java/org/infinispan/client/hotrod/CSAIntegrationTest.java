@@ -63,11 +63,11 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
       addClusterEnabledCacheManager(builder);
 
       hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
-      hrServ2CacheManager.put(new InetSocketAddress(hotRodServer1.getHost(), hotRodServer1.getPort()), manager(0));
+      addr2hrServer.put(new InetSocketAddress(hotRodServer1.getHost(), hotRodServer1.getPort()), hotRodServer1);
       hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(manager(1));
-      hrServ2CacheManager.put(new InetSocketAddress(hotRodServer2.getHost(), hotRodServer2.getPort()), manager(1));
+      addr2hrServer.put(new InetSocketAddress(hotRodServer2.getHost(), hotRodServer2.getPort()), hotRodServer2);
       hotRodServer3 = HotRodClientTestingUtil.startHotRodServer(manager(2));
-      hrServ2CacheManager.put(new InetSocketAddress(hotRodServer3.getHost(), hotRodServer3.getPort()), manager(2));
+      addr2hrServer.put(new InetSocketAddress(hotRodServer3.getHost(), hotRodServer3.getPort()), hotRodServer3);
 
       assert manager(0).getCache() != null;
       assert manager(1).getCache() != null;
@@ -124,8 +124,8 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          byte[] key = generateKey(i);
          TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(key, null, RemoteCacheManager.cacheNameBytes());
          SocketAddress serverAddress = transport.getServerAddress();
-         CacheContainer cacheContainer = hrServ2CacheManager.get(serverAddress);
-         assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + hrServ2CacheManager, cacheContainer);
+         CacheContainer cacheContainer = addr2hrServer.get(serverAddress).getCacheManager();
+         assertNotNull("For server address " + serverAddress + " found " + cacheContainer + ". Map is: " + addr2hrServer, cacheContainer);
          DistributionManager distributionManager = cacheContainer.getCache().getAdvancedCache().getDistributionManager();
          Address clusterAddress = cacheContainer.getCache().getAdvancedCache().getRpcManager().getAddress();
 
@@ -149,7 +149,7 @@ public class CSAIntegrationTest extends HitsAwareCacheManagersTest {
          String keyStr = new String(key);
          remoteCache.put(keyStr, "value");
          TcpTransport transport = (TcpTransport) tcpConnectionFactory.getTransport(marshall(keyStr), null, RemoteCacheManager.cacheNameBytes());
-         assertHotRodEquals(hrServ2CacheManager.get(transport.getServerAddress()), keyStr, "value");
+         assertHotRodEquals(addr2hrServer.get(transport.getServerAddress()).getCacheManager(), keyStr, "value");
          tcpConnectionFactory.releaseTransport(transport);
       }
 

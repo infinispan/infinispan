@@ -81,7 +81,7 @@ public class AsymmetricRoutingTest extends HitsAwareCacheManagersTest {
       cm.defineConfiguration(DIST_ONE_CACHE_NAME, distOneBuilder.build());
       cm.defineConfiguration(DIST_TWO_CACHE_NAME, distTwoBuilder.build());
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm);
-      hrServ2CacheManager.put(new InetSocketAddress(server.getHost(), server.getPort()), cm);
+      addr2hrServer.put(new InetSocketAddress(server.getHost(), server.getPort()), server);
       return server;
    }
 

@@ -98,6 +98,7 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (unmarshall(command.getKey()).equals("FailFailFail")) {
             Thread.sleep(6000);
+            return null;
          }
 
          return super.visitPutKeyValueCommand(ctx, command);

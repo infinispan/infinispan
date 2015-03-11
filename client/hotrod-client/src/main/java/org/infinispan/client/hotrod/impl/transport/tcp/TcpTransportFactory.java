@@ -58,6 +58,7 @@ public class TcpTransportFactory implements TransportFactory {
    private Map<byte[], ConsistentHash> consistentHashes;
    private Configuration configuration;
    private Collection<SocketAddress> servers;
+   private Collection<SocketAddress> initialServers;
    private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
 
    // the primitive fields are often accessed separately from the rest so it makes sense not to require synchronization for them
@@ -78,16 +79,18 @@ public class TcpTransportFactory implements TransportFactory {
          hashFactory.init(configuration);
          boolean pingOnStartup = configuration.pingOnStartup();
          servers = new ArrayList<SocketAddress>();
+         initialServers = new ArrayList<SocketAddress>();
          for(ServerConfiguration server : configuration.servers()) {
             servers.add(new InetSocketAddress(server.host(), server.port()));
          }
+         initialServers.addAll(servers);
          servers = Collections.unmodifiableCollection(servers);
          tcpNoDelay = configuration.tcpNoDelay();
          tcpKeepAlive = configuration.tcpKeepAlive();
          soTimeout = configuration.socketTimeout();
          connectTimeout = configuration.connectionTimeout();
          maxRetries = configuration.maxRetries();
-         this.topologyId = topologyId;
+         topologyId = defaultCacheTopologyId;
 
          if (configuration.security().ssl().enabled()) {
             SslConfiguration ssl = configuration.security().ssl();
@@ -290,7 +293,7 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
-   public void updateServers(Collection<SocketAddress> newServers, byte[] cacheName) {
+   public void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet) {
       synchronized (lock) {
          Set<SocketAddress> addedServers = new HashSet<SocketAddress>(newServers);
          addedServers.removeAll(servers);
@@ -314,7 +317,7 @@ public class TcpTransportFactory implements TransportFactory {
             try {
                connectionPool.addObject(server);
             } catch (Exception e) {
-               log.failedAddingNewServer(server, e);
+               if (!quiet) log.failedAddingNewServer(server, e);
             }
          }
 
@@ -408,6 +411,12 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public SSLContext getSSLContext() {
       return sslContext;
+   }
+
+   @Override
+   public void reset(byte[] cacheName) {
+      updateServers(initialServers, cacheName, true);
+      topologyId.set(-1);
    }
 
    /**
