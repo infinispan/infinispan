@@ -19,6 +19,7 @@ import org.infinispan.commons.util.Util;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
 import java.nio.channels.CancelledKeyException;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
@@ -238,11 +239,14 @@ public class ClientListenerNotifier {
                // Nullify event, makes it easier to identify network vs invocation error messages
                clientEvent = null;
             } catch (TransportException e) {
-               if (e.getCause() instanceof ClosedChannelException) {
+               Throwable cause = e.getCause();
+               if (cause instanceof ClosedChannelException) {
                   // Channel closed, ignore and exit
                   log.debug("Channel closed, exiting event reader thread");
                   stopped = true;
                   return;
+               } else if (cause instanceof SocketTimeoutException) {
+                  log.debug("Timed out reading event, retry");
                } else if (clientEvent != null) {
                   log.unexpectedErrorConsumingEvent(clientEvent, e);
                }  else {
