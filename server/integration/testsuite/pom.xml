@@ -892,7 +892,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml" target="start-jbossas">
+                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
                                             <property name="server-dist" value="${server.old.dist}" />
                                             <property name="port-offset" value="100" />
                                             <property name="management-port" value="10090" />
@@ -911,7 +911,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml" target="kill-jbossas">
+                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod-port" value="11322" />
                                         </ant>
                                     </target>
@@ -947,7 +947,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml" target="start-jbossas">
+                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
                                             <property name="server-dist" value="${server2.old.dist}" />
                                             <property name="port-offset" value="200" />
                                             <property name="management-port" value="10190" />
@@ -966,7 +966,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml" target="start-jbossas">
+                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
                                             <property name="server-dist" value="${server3.old.dist}" />
                                             <property name="port-offset" value="300" />
                                             <property name="management-port" value="10290" />
@@ -985,7 +985,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml" target="kill-jbossas">
+                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod-port" value="11422" />
                                         </ant>
                                     </target>
@@ -999,7 +999,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml" target="kill-jbossas">
+                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod-port" value="11522" />
                                         </ant>
                                     </target>
@@ -1083,7 +1083,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/start-jbossas.xml" target="start-jbossas">
+                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
                                             <property name="server-dist" value="${server1.dist}" />
                                             <property name="port-offset" value="0" />
                                             <property name="management-port" value="9990" />
@@ -1102,7 +1102,7 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/kill-jbossas.xml" target="kill-jbossas">
+                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod-port" value="11222" />
                                         </ant>
                                     </target>
