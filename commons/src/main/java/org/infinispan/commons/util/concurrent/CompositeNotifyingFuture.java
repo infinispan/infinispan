@@ -1,5 +1,6 @@
 package org.infinispan.commons.util.concurrent;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
@@ -14,11 +15,12 @@ import java.util.concurrent.TimeoutException;
  * @author gustavonalle
  * @since 7.1
  */
-public final class CompositeNotifyingFuture<T> extends NotifyingFutureImpl<Void> {
+public final class CompositeNotifyingFuture<T> extends NotifyingFutureImpl<List<T>> {
 
    private final CountDownLatch remaining;
    private final List<NotifyingFuture<T>> futures;
    private volatile boolean cancelled = false;
+   private List<T> results = new ArrayList<>();
 
    public CompositeNotifyingFuture(List<NotifyingFuture<T>> futures) {
       this.futures = futures;
@@ -50,7 +52,7 @@ public final class CompositeNotifyingFuture<T> extends NotifyingFutureImpl<Void>
    }
 
    @Override
-   public Void get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+   public List<T> get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       if (unit == null) throw new IllegalArgumentException("provided unit is null");
       if (cancelled) throw new CancellationException();
       if (!remaining.await(timeout, unit)) throw new TimeoutException();
@@ -58,7 +60,7 @@ public final class CompositeNotifyingFuture<T> extends NotifyingFutureImpl<Void>
    }
 
    @Override
-   public Void get() throws InterruptedException, ExecutionException {
+   public List<T> get() throws InterruptedException, ExecutionException {
       if (cancelled) throw new CancellationException();
       remaining.await();
       return super.get();
@@ -70,7 +72,7 @@ public final class CompositeNotifyingFuture<T> extends NotifyingFutureImpl<Void>
          synchronized (this) {
             Throwable error = null;
             try {
-               future.get();
+               results.add(future.get());
             } catch (Throwable e) {
                error = e;
             }
@@ -79,10 +81,9 @@ public final class CompositeNotifyingFuture<T> extends NotifyingFutureImpl<Void>
                if (error != null) {
                   notifyException(error);
                } else {
-                  notifyDone(null);
-
+                  notifyDone(results);
                }
-               setFuture(new NoOpFuture<Void>(null));
+               setFuture(new NoOpFuture<>(results));
             }
          }
 

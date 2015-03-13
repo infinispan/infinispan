@@ -24,7 +24,7 @@ public final class Futures {
     * @param futures List of NotifyingFutures
     * @return a new composite NotifyingFuture
     */
-   public static <T> NotifyingFuture<Void> combine(final List<NotifyingFuture<T>> futures) {
+   public static <T> NotifyingFuture<List<T>> combine(final List<NotifyingFuture<T>> futures) {
       if (futures == null || futures.isEmpty()) return new NoOpFuture<>(null);
       return new CompositeNotifyingFuture<>(futures);
    }

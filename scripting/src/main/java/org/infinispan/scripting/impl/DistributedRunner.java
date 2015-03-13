@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.concurrent.Futures;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.scripting.logging.Log;
@@ -37,7 +38,7 @@ public class DistributedRunner implements ScriptRunner {
          for (Future<T> task : tasks) {
                notifyingTasks.add((NotifyingFuture<T>) task);
          }
-         NotifyingFuture<List<T>> combinedFutures = CompositeNotifyingFuture.combine(notifyingTasks);
+         NotifyingFuture<List<T>> combinedFutures = Futures.combine(notifyingTasks);
 
          return (NotifyingFuture<T>) combinedFutures;
       } finally {
