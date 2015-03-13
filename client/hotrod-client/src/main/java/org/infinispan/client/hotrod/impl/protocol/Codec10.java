@@ -47,6 +47,11 @@ public class Codec10 implements Codec {
       // No-op
    }
 
+   @Override
+   public void writeExpirationNanoTimes(Transport transport, int lifespanNanos, int maxIdleNanos, InternalFlag[] internalFlags) {
+      // No-op
+   }
+
    protected HeaderParams writeHeader(
             Transport transport, HeaderParams params, byte version) {
       transport.writeByte(HotRodConstants.REQUEST_MAGIC);

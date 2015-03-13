@@ -26,8 +26,8 @@ public class PutIfAbsentOperation extends AbstractKeyValueOperation<byte[]> {
 
    public PutIfAbsentOperation(Codec codec, TransportFactory transportFactory,
                                byte[] key, byte[] cacheName, AtomicInteger topologyId,
-                               Flag[] flags, byte[] value, int lifespan, int maxIdle) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, maxIdle);
+                               Flag[] flags, byte[] value, int lifespan, int lifespanNanos, int maxIdle, int maxIdleNanos) {
+      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, lifespanNanos, maxIdle, maxIdleNanos);
    }
 
    @Override

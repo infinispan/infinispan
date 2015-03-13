@@ -81,10 +81,10 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(byte[] key,
-            byte[] value, int lifespanSeconds, int maxIdleTimeSeconds, long version) {
+            byte[] value, int lifespanSeconds, int lifespanNanos, int maxIdleSeconds, int maxIdleNanos, long version) {
       return new ReplaceIfUnmodifiedOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespanSeconds, maxIdleTimeSeconds, version);
+            value, lifespanSeconds, lifespanNanos, maxIdleSeconds, maxIdleNanos, version);
    }
 
    public GetWithVersionOperation newGetWithVersionOperation(byte[] key) {
@@ -103,24 +103,27 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public PutOperation newPutKeyValueOperation(byte[] key, byte[] value,
-            int lifespanSecs, int maxIdleSecs) {
+            int lifespanSecs, int lifespanNanos,
+            int maxIdleSecs, int maxIdleNanos) {
       return new PutOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespanSecs, maxIdleSecs);
+            value, lifespanSecs, lifespanNanos, maxIdleSecs, maxIdleNanos);
    }
 
    public PutIfAbsentOperation newPutIfAbsentOperation(byte[] key, byte[] value,
-            int lifespanSecs, int maxIdleSecs) {
+            int lifespanSecs, int lifespanNanos,
+            int maxIdleSecs, int maxIdleNanos) {
       return new PutIfAbsentOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespanSecs, maxIdleSecs);
+            value, lifespanSecs, lifespanNanos, maxIdleSecs, maxIdleNanos);
    }
 
    public ReplaceOperation newReplaceOperation(byte[] key, byte[] values,
-            int lifespanSecs, int maxIdleSecs) {
+            int lifespanSecs, int lifespanNanos,
+            int maxIdleSecs, int maxIdleNanos) {
       return new ReplaceOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            values, lifespanSecs, maxIdleSecs);
+            values, lifespanSecs, lifespanNanos, maxIdleSecs, maxIdleNanos);
    }
 
    public ContainsKeyOperation newContainsKeyOperation(byte[] key) {

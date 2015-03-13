@@ -20,9 +20,10 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
    private final long version;
 
    public ReplaceIfUnmodifiedOperation(Codec codec, TransportFactory transportFactory, byte[] key, byte[] cacheName,
-                                       AtomicInteger topologyId, Flag[] flags, byte[] value, int lifespan,
-                                       int maxIdle, long version) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, maxIdle);
+                                       AtomicInteger topologyId, Flag[] flags, byte[] value,
+                                       int lifespan, int lifespanNanos,
+                                       int maxIdle, int maxIdleNanos, long version) {
+      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, lifespanNanos, maxIdle, maxIdleNanos);
       this.version = version;
    }
 
@@ -35,6 +36,7 @@ public class ReplaceIfUnmodifiedOperation extends AbstractKeyValueOperation<Vers
       transport.writeArray(key);
       transport.writeVInt(lifespan);
       transport.writeVInt(maxIdle);
+      codec.writeExpirationNanoTimes(transport, lifespanNanos, maxIdleNanos, internalFlags);
       transport.writeLong(version);
       transport.writeArray(value);
       transport.flush();

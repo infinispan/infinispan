@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
+import org.infinispan.client.hotrod.impl.protocol.InternalFlag;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 
 /**
@@ -22,6 +23,7 @@ import org.infinispan.client.hotrod.impl.transport.Transport;
 public abstract class HotRodOperation implements HotRodConstants {
 
    protected final Flag[] flags;
+   protected final InternalFlag[] internalFlags;
 
    public final byte[] cacheName;
 
@@ -33,7 +35,12 @@ public abstract class HotRodOperation implements HotRodConstants {
    private static final byte XA_TX = 1;
 
    protected HotRodOperation(Codec codec, Flag[] flags, byte[] cacheName, AtomicInteger topologyId) {
+      this(codec, flags, null, cacheName, topologyId);
+   }
+
+   protected HotRodOperation(Codec codec, Flag[] flags, InternalFlag[] internalFlags, byte[] cacheName, AtomicInteger topologyId) {
       this.flags = flags;
+      this.internalFlags = internalFlags;
       this.cacheName = cacheName;
       this.topologyId = topologyId;
       this.codec = codec;
@@ -43,7 +50,8 @@ public abstract class HotRodOperation implements HotRodConstants {
 
    protected final HeaderParams writeHeader(Transport transport, short operationCode) {
       HeaderParams params = new HeaderParams()
-            .opCode(operationCode).cacheName(cacheName).flags(flags)
+            .opCode(operationCode).cacheName(cacheName)
+            .flags(flags).internalFlags(internalFlags)
             .clientIntel(CLIENT_INTELLIGENCE_HASH_DISTRIBUTION_AWARE)
             .topologyId(topologyId).txMarker(NO_TX);
       return codec.writeHeader(transport, params);
