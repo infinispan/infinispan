@@ -34,7 +34,7 @@ public class CacheEventFilterAsKeyValueFilter<K, V> implements KeyValueFilter<K,
 
    @Override
    public boolean accept(K key, V value, Metadata metadata) {
-      return filter.accept(key, value, metadata, null, null, CREATE_EVENT);
+      return filter.accept(key, null, null, value, metadata, CREATE_EVENT);
    }
 
    @Inject
