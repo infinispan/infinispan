@@ -43,13 +43,13 @@ public class FuturesTest extends AbstractInfinispanTest {
          futures.add(createDelayedFuture(i, random.nextInt(25)));
       }
 
-      final NotifyingFuture<Void> compositeFuture = Futures.combine(futures);
+      final NotifyingFuture<List<Integer>> compositeFuture = Futures.combine(futures);
 
       final CountDownLatch endLatch = new CountDownLatch(1);
 
-      compositeFuture.attachListener(new FutureListener<Void>() {
+      compositeFuture.attachListener(new FutureListener<List<Integer>>() {
          @Override
-         public void futureDone(Future<Void> future) {
+         public void futureDone(Future<List<Integer>> future) {
             assertTrue(future.isDone());
             assertFalse(future.isCancelled());
             endLatch.countDown();
@@ -70,14 +70,14 @@ public class FuturesTest extends AbstractInfinispanTest {
          futures.add(createDelayedFuture(i, random.nextInt(20)));
       }
 
-      NotifyingFuture<Void> compositeFuture = Futures.combine(futures);
+      NotifyingFuture<List<Integer>> compositeFuture = Futures.combine(futures);
 
       final AtomicInteger fireCount = new AtomicInteger(0);
       final CountDownLatch listenersDone = new CountDownLatch(100);
       for (int i = 0; i < 100; i++) {
-         compositeFuture.attachListener(new FutureListener<Void>() {
+         compositeFuture.attachListener(new FutureListener<List<Integer>>() {
             @Override
-            public void futureDone(Future<Void> future) {
+            public void futureDone(Future<List<Integer>> future) {
                assertTrue(future.isDone());
                fireCount.incrementAndGet();
                listenersDone.countDown();
@@ -102,15 +102,21 @@ public class FuturesTest extends AbstractInfinispanTest {
          futures.add(createImmediate("res" + i, startLatch));
       }
 
-      NotifyingFuture<Void> compositeFuture = Futures.combine(futures);
+      NotifyingFuture<List<String>> compositeFuture = Futures.combine(futures);
 
       final AtomicInteger triggerCount = new AtomicInteger(0);
-      compositeFuture.attachListener(new FutureListener<Void>() {
+      compositeFuture.attachListener(new FutureListener<List<String>>() {
          @Override
-         public void futureDone(Future<Void> future) {
+         public void futureDone(Future<List<String>> future) {
             assertTrue(future.isDone());
             assertFalse(future.isCancelled());
             assertNoErrors(future);
+            try {
+               List<String> result = future.get();
+               for (int i = 0; i < 100; i++) {
+                  assertTrue(result.contains("res" + 1));
+               }
+            } catch (InterruptedException | ExecutionException ignored) {}
             triggerCount.incrementAndGet();
             endLatch.countDown();
          }
@@ -132,7 +138,7 @@ public class FuturesTest extends AbstractInfinispanTest {
       futures.add(createNeverCompletingFuture("ignored"));
       futures.add(createDelayedFuture("ignored", 40));
 
-      NotifyingFuture<Void> compositeFuture = Futures.combine(futures);
+      NotifyingFuture<?> compositeFuture = Futures.combine(futures);
 
       compositeFuture.get(20, TimeUnit.MILLISECONDS);
    }
@@ -144,7 +150,7 @@ public class FuturesTest extends AbstractInfinispanTest {
       futures.add(createFutureWithError(new CacheException()));
       futures.add(createFutureWithError(new CacheException()));
 
-      NotifyingFuture<Void> compositeFuture = Futures.combine(futures);
+      NotifyingFuture<?> compositeFuture = Futures.combine(futures);
 
       compositeFuture.get();
    }
@@ -157,7 +163,7 @@ public class FuturesTest extends AbstractInfinispanTest {
       futures.add(createNeverCompletingFuture("ignored2"));
       futures.add(createNeverCompletingFuture("ignored3"));
 
-      NotifyingFuture<Void> composite = Futures.combine(futures);
+      NotifyingFuture<?> composite = Futures.combine(futures);
 
       composite.cancel(true);
 
@@ -220,7 +226,7 @@ public class FuturesTest extends AbstractInfinispanTest {
       futures.add(createNeverCompletingFuture(42.0));
       futures.add(createNeverCompletingFuture(42.0));
 
-      NotifyingFuture<Void> combined = Futures.combine(futures);
+      NotifyingFuture<?> combined = Futures.combine(futures);
 
       NotifyingFuture<Void> andThenFuture = Futures.andThen(combined, new Runnable() {
          @Override
@@ -238,7 +244,7 @@ public class FuturesTest extends AbstractInfinispanTest {
    @Test(expectedExceptions = ExecutionException.class)
    public void testAndThenErrorPropagation() throws ExecutionException, InterruptedException {
 
-      NotifyingFuture<Void> combined = Futures.combine(Arrays.asList(createFutureWithError(new CacheException())));
+      NotifyingFuture<?> combined = Futures.combine(Arrays.asList(createFutureWithError(new CacheException())));
 
       NotifyingFuture<Void> andThenFuture = Futures.andThen(combined, new Runnable() {
          @Override

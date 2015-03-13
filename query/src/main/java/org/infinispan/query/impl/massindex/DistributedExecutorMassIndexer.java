@@ -55,7 +55,7 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
    @Override
    public NotifyingFuture<Void> startAsync() {
       final ExecutionResult<Void> executionResult = executeInternal();
-      NotifyingFuture<Void> combined = Futures.combine(executionResult.futures);
+      NotifyingFuture<?> combined = Futures.combine(executionResult.futures);
       return Futures.andThen(combined, new Runnable() {
          @Override
          public void run() {
