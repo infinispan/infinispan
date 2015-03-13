@@ -599,8 +599,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
       return new MetadataValueImpl<V>(value.getCreated(), value.getLifespan(), value.getLastUsed(), value.getMaxIdle(), value.getVersion(), valueObj);
    }
 
-   private int toSeconds(long duration, TimeUnit timeUnit) {
-      return (int) timeUnit.toSeconds(duration);
+   protected static int toSeconds(long duration, TimeUnit timeUnit) {
+      int seconds = (int) timeUnit.toSeconds(duration);
+      long inverseDuration = timeUnit.convert(seconds, TimeUnit.SECONDS);
+
+      if (duration > inverseDuration) {
+         //Round up.
+         seconds++;
+      }
+      return seconds;
    }
 
    private void assertRemoteCacheManagerIsStarted() {
