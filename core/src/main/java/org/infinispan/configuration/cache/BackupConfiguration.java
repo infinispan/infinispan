@@ -1,46 +1,47 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
 public class BackupConfiguration {
+   static final AttributeDefinition<String> SITE = AttributeDefinition.builder("site", null, String.class).immutable().build();
+   static final AttributeDefinition<BackupConfiguration.BackupStrategy> STRATEGY = AttributeDefinition.builder("strategy", BackupConfiguration.BackupStrategy.ASYNC).immutable().build();
+   static final AttributeDefinition<Long> REPLICATION_TIMEOUT = AttributeDefinition.builder("replicationTimeout", 10000l).build();
+   static final AttributeDefinition<BackupFailurePolicy> FAILURE_POLICY = AttributeDefinition.builder("backupFailurePolicy", BackupFailurePolicy.WARN).build();
+   static final AttributeDefinition<String> FAILURE_POLICY_CLASS = AttributeDefinition.builder("failurePolicyClass", null, String.class).immutable().build();
+   static final AttributeDefinition<Boolean> USE_TWO_PHASE_COMMIT = AttributeDefinition.builder("useTwoPhaseCommit", false).immutable().build();
+   static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", true).immutable().build();
+   static AttributeSet attributeSet() {
+      return new AttributeSet(BackupConfiguration.class, SITE, STRATEGY, REPLICATION_TIMEOUT, FAILURE_POLICY,  FAILURE_POLICY_CLASS, USE_TWO_PHASE_COMMIT, ENABLED);
+   }
 
-   private final String site;
-   private final BackupStrategy strategy;
-   private long timeout;
-   private final BackupFailurePolicy backupFailurePolicy;
-   private final String failurePolicyClass;
-   private final boolean useTwoPhaseCommit;
+   private final AttributeSet attributes;
    private final TakeOfflineConfiguration takeOfflineConfiguration;
-   private final XSiteStateTransferConfiguration stateTransferConfiguration;
-   private final boolean enabled;
+   private final XSiteStateTransferConfiguration xSiteStateTransferConfiguration ;
 
-   public BackupConfiguration(String site, BackupStrategy strategy, long timeout, BackupFailurePolicy backupFailurePolicy,
-                              String failurePolicyClass, boolean useTwoPhaseCommit, TakeOfflineConfiguration takeOfflineConfiguration, XSiteStateTransferConfiguration stateTransferConfiguration, boolean enabled) {
-      this.site = site;
-      this.strategy = strategy;
-      this.timeout = timeout;
-      this.backupFailurePolicy = backupFailurePolicy;
-      this.failurePolicyClass = failurePolicyClass;
-      this.useTwoPhaseCommit = useTwoPhaseCommit;
+   public BackupConfiguration(AttributeSet attributes, TakeOfflineConfiguration takeOfflineConfiguration, XSiteStateTransferConfiguration xSiteStateTransferConfiguration) {
+      attributes.checkProtection();
+      this.attributes = attributes;
       this.takeOfflineConfiguration = takeOfflineConfiguration;
-      this.stateTransferConfiguration = stateTransferConfiguration;
-      this.enabled = enabled;
+      this.xSiteStateTransferConfiguration = xSiteStateTransferConfiguration;
    }
 
    /**
     * Returns the name of the site where this cache backups its data.
     */
    public String site() {
-      return site;
+      return attributes.attribute(SITE).asString();
    }
 
    /**
     * How does the backup happen: sync or async.
     */
    public BackupStrategy strategy() {
-      return strategy;
+      return attributes.attribute(STRATEGY).asObject(BackupStrategy.class);
    }
 
    public TakeOfflineConfiguration takeOffline() {
@@ -52,7 +53,7 @@ public class BackupConfiguration {
     * should return the fully qualified name of a class implementing {@link org.infinispan.xsite.CustomFailurePolicy}
     */
    public String failurePolicyClass() {
-      return failurePolicyClass;
+      return attributes.attribute(FAILURE_POLICY_CLASS).asString();
    }
 
    public boolean isAsyncBackup() {
@@ -60,11 +61,16 @@ public class BackupConfiguration {
    }
 
    public long replicationTimeout() {
-      return timeout;
+      return attributes.attribute(REPLICATION_TIMEOUT).asLong();
+   }
+
+   public BackupConfiguration replicationTimeout(long timeout) {
+      attributes.attribute(REPLICATION_TIMEOUT).set(timeout);
+      return this;
    }
 
    public BackupFailurePolicy backupFailurePolicy() {
-      return backupFailurePolicy;
+      return attributes.attribute(FAILURE_POLICY).asObject(BackupFailurePolicy.class);
    }
 
    public enum BackupStrategy {
@@ -72,66 +78,65 @@ public class BackupConfiguration {
    }
 
    public boolean isTwoPhaseCommit() {
-      return useTwoPhaseCommit;
+      return attributes.attribute(USE_TWO_PHASE_COMMIT).asBoolean();
    }
 
    /**
     * @see BackupConfigurationBuilder#enabled(boolean).
     */
    public boolean enabled() {
-      return enabled;
+      return attributes.attribute(ENABLED).asBoolean();
    }
 
    public XSiteStateTransferConfiguration stateTransfer() {
-      return stateTransferConfiguration;
+      return xSiteStateTransferConfiguration;
+   }
+
+   AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof BackupConfiguration)) return false;
+   public String toString() {
+      return "BackupConfiguration [attributes=" + attributes + ", takeOfflineConfiguration=" + takeOfflineConfiguration
+            + ", xSiteStateTransferConfiguration=" + xSiteStateTransferConfiguration + "]";
+   }
 
-      BackupConfiguration that = (BackupConfiguration) o;
-
-      if (timeout != that.timeout) return false;
-      if (backupFailurePolicy != that.backupFailurePolicy) return false;
-      if (failurePolicyClass != null ? !failurePolicyClass.equals(that.failurePolicyClass) : that.failurePolicyClass != null)
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
          return false;
-      if (site != null ? !site.equals(that.site) : that.site != null) return false;
-      if (useTwoPhaseCommit != that.useTwoPhaseCommit) return false;
-      if (strategy != that.strategy) return false;
-      if (enabled != that.enabled) return false;
-      if (stateTransferConfiguration != null ?
-            !stateTransferConfiguration.equals(that.stateTransferConfiguration) :
-            that.stateTransferConfiguration != null)
+      if (getClass() != obj.getClass())
          return false;
-
+      BackupConfiguration other = (BackupConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
+      if (takeOfflineConfiguration == null) {
+         if (other.takeOfflineConfiguration != null)
+            return false;
+      } else if (!takeOfflineConfiguration.equals(other.takeOfflineConfiguration))
+         return false;
+      if (xSiteStateTransferConfiguration == null) {
+         if (other.xSiteStateTransferConfiguration != null)
+            return false;
+      } else if (!xSiteStateTransferConfiguration.equals(other.xSiteStateTransferConfiguration))
+         return false;
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = site != null ? site.hashCode() : 0;
-      result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
-      result = 31 * result + (int) (timeout ^ (timeout >>> 32));
-      result = 31 * result + (backupFailurePolicy != null ? backupFailurePolicy.hashCode() : 0);
-      result = 31 * result + (failurePolicyClass != null ? failurePolicyClass.hashCode() : 0);
-      result = 31 * result + (stateTransferConfiguration != null ? stateTransferConfiguration.hashCode() : 0);
-      result = 31 * result + (useTwoPhaseCommit ? 1 : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      result = prime * result + ((takeOfflineConfiguration == null) ? 0 : takeOfflineConfiguration.hashCode());
+      result = prime * result
+            + ((xSiteStateTransferConfiguration == null) ? 0 : xSiteStateTransferConfiguration.hashCode());
       return result;
-   }
-
-   @Override
-   public String toString() {
-      return "BackupConfiguration{" +
-            "site='" + site + '\'' +
-            ", strategy=" + strategy +
-            ", timeout=" + timeout +
-            ", useTwoPhaseCommit=" + useTwoPhaseCommit +
-            ", backupFailurePolicy=" + backupFailurePolicy +
-            ", failurePolicyClass='" + failurePolicyClass + '\'' +
-            ", stateTransferConfiguration=" + stateTransferConfiguration +
-            ", enabled='" + enabled + '\'' +
-            '}';
    }
 }

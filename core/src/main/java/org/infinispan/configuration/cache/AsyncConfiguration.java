@@ -1,5 +1,7 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.remoting.ReplicationQueue;
 import org.infinispan.remoting.ReplicationQueueImpl;
 
@@ -11,19 +13,21 @@ import org.infinispan.remoting.ReplicationQueueImpl;
  */
 public class AsyncConfiguration {
 
-   private final boolean asyncMarshalling;
-   private final ReplicationQueue replicationQueue;
-   private final long replicationQueueInterval;
-   private final int replicationQueueMaxElements;
-   private final boolean useReplicationQueue;
+   static final AttributeDefinition<Boolean> MARSHALLING  = AttributeDefinition.builder("asyncMarshalling", false).immutable().build();
+   static final AttributeDefinition<ReplicationQueue> REPLICATION_QUEUE  = AttributeDefinition.<ReplicationQueue>builder("replicationQueue", null, ReplicationQueue.class).immutable().build();
+   static final AttributeDefinition<Long> REPLICATION_QUEUE_INTERVAL = AttributeDefinition.builder("replicationQueueInterval", 10l).build();
+   static final AttributeDefinition<Integer> REPLICATION_QUEUE_MAX_ELEMENTS  = AttributeDefinition.builder("replicationQueueMaxElements", 1000).build();
+   static final AttributeDefinition<Boolean> USE_REPLICATION_QUEUE = AttributeDefinition.builder("useReplicationQueue", false).immutable().build();
 
-   AsyncConfiguration(boolean asyncMarshalling, ReplicationQueue replicationQueue, long replicationQueueInterval,
-         int replicationQueueMaxElements, boolean useReplicationQueue) {
-      this.asyncMarshalling = asyncMarshalling;
-      this.replicationQueue = replicationQueue;
-      this.replicationQueueInterval = replicationQueueInterval;
-      this.replicationQueueMaxElements = replicationQueueMaxElements;
-      this.useReplicationQueue = useReplicationQueue;
+   static final AttributeSet attributeSet() {
+      return new AttributeSet(AsyncConfiguration.class, MARSHALLING, REPLICATION_QUEUE, REPLICATION_QUEUE_INTERVAL, REPLICATION_QUEUE_MAX_ELEMENTS, USE_REPLICATION_QUEUE);
+   }
+   private AttributeSet attributes;
+
+
+   AsyncConfiguration(AttributeSet attributes) {
+      attributes.checkProtection();
+      this.attributes = attributes;
    }
 
    /**
@@ -33,14 +37,14 @@ public class AsyncConfiguration {
     * >https://docs.jboss.org/author/display/ISPN/Asynchronous+Options</a>.
     */
    public boolean asyncMarshalling() {
-      return asyncMarshalling;
+      return attributes.attribute(MARSHALLING).asBoolean();
    }
 
    /**
     * The replication queue in use, by default {@link ReplicationQueueImpl}.
     */
    public ReplicationQueue replQueue() {
-      return replicationQueue;
+      return attributes.attribute(REPLICATION_QUEUE).asObject(ReplicationQueue.class);
    }
 
    /**
@@ -48,7 +52,7 @@ public class AsyncConfiguration {
     * used to flush the replication queue runs.
     */
    public long replQueueInterval() {
-      return replicationQueueInterval;
+      return attributes.attribute(REPLICATION_QUEUE_INTERVAL).asLong();
    }
 
    /**
@@ -56,7 +60,7 @@ public class AsyncConfiguration {
     * when it reaches a specific threshold.
     */
    public int replQueueMaxElements() {
-      return replicationQueueMaxElements;
+      return attributes.attribute(REPLICATION_QUEUE_MAX_ELEMENTS).asInteger();
    }
 
    /**
@@ -64,47 +68,27 @@ public class AsyncConfiguration {
     * batch.
     */
    public boolean useReplQueue() {
-      return useReplicationQueue;
-   }
-
-   @Override
-   public String toString() {
-      return "AsyncConfiguration{" +
-            "asyncMarshalling=" + asyncMarshalling +
-            ", replicationQueue=" + replicationQueue +
-            ", replicationQueueInterval=" + replicationQueueInterval +
-            ", replicationQueueMaxElements=" + replicationQueueMaxElements +
-            ", useReplicationQueue=" + useReplicationQueue +
-            '}';
+      return attributes.attribute(USE_REPLICATION_QUEUE).asBoolean();
    }
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      AsyncConfiguration that = (AsyncConfiguration) o;
-
-      if (asyncMarshalling != that.asyncMarshalling) return false;
-      if (replicationQueueInterval != that.replicationQueueInterval)
-         return false;
-      if (replicationQueueMaxElements != that.replicationQueueMaxElements)
-         return false;
-      if (useReplicationQueue != that.useReplicationQueue) return false;
-      if (replicationQueue != null ? !replicationQueue.equals(that.replicationQueue) : that.replicationQueue != null)
-         return false;
-
-      return true;
+      AsyncConfiguration other = (AsyncConfiguration) o;
+      return this.attributes.equals(other.attributes);
    }
 
    @Override
    public int hashCode() {
-      int result = (asyncMarshalling ? 1 : 0);
-      result = 31 * result + (replicationQueue != null ? replicationQueue.hashCode() : 0);
-      result = 31 * result + (int) (replicationQueueInterval ^ (replicationQueueInterval >>> 32));
-      result = 31 * result + replicationQueueMaxElements;
-      result = 31 * result + (useReplicationQueue ? 1 : 0);
-      return result;
+      return attributes.hashCode();
+   }
+
+   @Override
+   public String toString() {
+      return attributes.toString();
+   }
+
+   AttributeSet values() {
+      return attributes;
    }
 
 }

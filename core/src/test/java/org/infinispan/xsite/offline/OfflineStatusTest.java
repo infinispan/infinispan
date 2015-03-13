@@ -1,13 +1,13 @@
 package org.infinispan.xsite.offline;
 
-import org.infinispan.configuration.cache.TakeOfflineConfiguration;
-import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.xsite.OfflineStatus;
-import org.testng.annotations.Test;
+import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
+import org.infinispan.configuration.cache.TakeOfflineConfigurationBuilder;
+import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.xsite.OfflineStatus;
+import org.testng.annotations.Test;
 
 /**
  * @author Mircea Markus
@@ -17,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 public class OfflineStatusTest extends AbstractInfinispanTest {
 
    public void timeBasedTakeOffline() {
-      final OfflineStatus offlineStatus = new OfflineStatus(new TakeOfflineConfiguration(10, 3000), TIME_SERVICE);
+      final OfflineStatus offlineStatus = new OfflineStatus(new TakeOfflineConfigurationBuilder(null, null).afterFailures(10).minTimeToWait(3000).create(), TIME_SERVICE);
 
       assert !offlineStatus.isOffline();
       for (int i = 0; i < 9; i++) {
@@ -48,7 +48,7 @@ public class OfflineStatusTest extends AbstractInfinispanTest {
    }
 
    public void testFailureBasedOnly() throws Throwable {
-      final OfflineStatus offlineStatus = new OfflineStatus(new TakeOfflineConfiguration(10, 0), TIME_SERVICE);
+      final OfflineStatus offlineStatus = new OfflineStatus(new TakeOfflineConfigurationBuilder(null, null).afterFailures(10).minTimeToWait(0).create(), TIME_SERVICE);
       test(offlineStatus);
       offlineStatus.reset();
       test(offlineStatus);

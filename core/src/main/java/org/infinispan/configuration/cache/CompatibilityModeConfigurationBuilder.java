@@ -1,9 +1,11 @@
 package org.infinispan.configuration.cache;
 
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.global.GlobalConfiguration;
 
+import static org.infinispan.configuration.cache.CompatibilityModeConfiguration.*;
 /**
  * Compatibility mode configuration builder
  *
@@ -13,11 +15,11 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 public class CompatibilityModeConfigurationBuilder
       extends AbstractConfigurationChildBuilder implements Builder<CompatibilityModeConfiguration> {
 
-   private boolean enabled;
-   private Marshaller marshaller;
+   private final AttributeSet attributes;
 
    CompatibilityModeConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
+      attributes = CompatibilityModeConfiguration.attributeSet();
    }
 
    /**
@@ -25,7 +27,7 @@ public class CompatibilityModeConfigurationBuilder
     * endpoints (Hot Rod, Memcached, REST...etc).
     */
    public CompatibilityModeConfigurationBuilder enable() {
-      enabled = true;
+      attributes.attribute(ENABLED).set(true);
       return this;
    }
 
@@ -33,7 +35,7 @@ public class CompatibilityModeConfigurationBuilder
     * Disables compatibility mode between embedded.
     */
    public CompatibilityModeConfigurationBuilder disable() {
-      enabled = false;
+      attributes.attribute(ENABLED).set(false);
       return this;
    }
 
@@ -43,7 +45,7 @@ public class CompatibilityModeConfigurationBuilder
     * @param enabled if true, compatibility mode is enabled.  If false, it is disabled.
     */
    public CompatibilityModeConfigurationBuilder enabled(boolean enabled) {
-      this.enabled = enabled;
+      attributes.attribute(ENABLED).set(enabled);
       return this;
    }
 
@@ -51,7 +53,7 @@ public class CompatibilityModeConfigurationBuilder
     * Sets the marshaller instance to be used by the interoperability layer.
     */
    public CompatibilityModeConfigurationBuilder marshaller(Marshaller marshaller) {
-      this.marshaller = marshaller;
+      attributes.attribute(MARSHALLER).set(marshaller);
       return this;
    }
 
@@ -66,13 +68,12 @@ public class CompatibilityModeConfigurationBuilder
 
    @Override
    public CompatibilityModeConfiguration create() {
-      return new CompatibilityModeConfiguration(enabled, marshaller);
+      return new CompatibilityModeConfiguration(attributes.protect());
    }
 
    @Override
    public Builder<?> read(CompatibilityModeConfiguration template) {
-      this.enabled = template.enabled();
-      this.marshaller = template.marshaller();
+      attributes.read(template.attributes());
       return this;
    }
 }

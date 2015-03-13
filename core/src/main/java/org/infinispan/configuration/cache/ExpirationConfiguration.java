@@ -1,40 +1,47 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * Controls the default expiration settings for entries in the cache.
  */
 public class ExpirationConfiguration {
+   static final AttributeDefinition<Long> LIFESPAN = AttributeDefinition.builder("lifespan", -1l).build();
+   static final AttributeDefinition<Long> MAX_IDLE = AttributeDefinition.builder("maxIdle", -1l).build();
+   static final AttributeDefinition<Boolean> REAPER_ENABLED = AttributeDefinition.builder("reaperEnabled", true).immutable().build();
+   static final AttributeDefinition<Long> WAKEUP_INTERVAL = AttributeDefinition.builder("wakeUpInterval", TimeUnit.MINUTES.toMillis(1)).build();
 
-   private final long lifespan;
-   private final long maxIdle;
-   private final boolean reaperEnabled;
-   private final long wakeUpInterval;
+   static AttributeSet attributeSet() {
+      return new AttributeSet(ExpirationConfiguration.class, LIFESPAN, MAX_IDLE, REAPER_ENABLED, WAKEUP_INTERVAL);
+   }
+   private final AttributeSet attributes;
 
-   ExpirationConfiguration(long lifespan, long maxIdle, boolean reaperEnabled, long wakeUpInterval) {
-      this.lifespan = lifespan;
-      this.maxIdle = maxIdle;
-      this.reaperEnabled = reaperEnabled;
-      this.wakeUpInterval = wakeUpInterval;
+   ExpirationConfiguration(AttributeSet attributes) {
+      attributes.checkProtection();
+      this.attributes = attributes;
    }
 
    /**
     * Maximum lifespan of a cache entry, after which the entry is expired cluster-wide, in
     * milliseconds. -1 means the entries never expire.
-    * 
+    *
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public long lifespan() {
-      return lifespan;
+      return attributes.attribute(LIFESPAN).asLong();
    }
 
    /**
     * Maximum idle time a cache entry will be maintained in the cache, in milliseconds. If the idle
     * time is exceeded, the entry will be expired cluster-wide. -1 means the entries never expire.
-    * 
+    *
     * Note that this can be overridden on a per-entry basis by using the Cache API.
     */
    public long maxIdle() {
-      return maxIdle;
+      return attributes.attribute(MAX_IDLE).asLong();
    }
 
    /**
@@ -43,7 +50,7 @@ public class ExpirationConfiguration {
     * touched.
     */
    public boolean reaperEnabled() {
-      return reaperEnabled;
+      return attributes.attribute(REAPER_ENABLED).asBoolean();
    }
 
    /**
@@ -52,41 +59,27 @@ public class ExpirationConfiguration {
     * wakeupInterval to -1.
     */
    public long wakeUpInterval() {
-      return wakeUpInterval;
+      return attributes.attribute(WAKEUP_INTERVAL).asLong();
    }
 
    @Override
    public String toString() {
-      return "ExpirationConfiguration{" +
-            "lifespan=" + lifespan +
-            ", maxIdle=" + maxIdle +
-            ", reaperEnabled=" + reaperEnabled +
-            ", wakeUpInterval=" + wakeUpInterval +
-            '}';
+      return attributes.toString();
    }
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ExpirationConfiguration that = (ExpirationConfiguration) o;
-
-      if (lifespan != that.lifespan) return false;
-      if (maxIdle != that.maxIdle) return false;
-      if (reaperEnabled != that.reaperEnabled) return false;
-      if (wakeUpInterval != that.wakeUpInterval) return false;
-
-      return true;
+      ExpirationConfiguration other = (ExpirationConfiguration) o;
+      return attributes.equals(other.attributes);
    }
 
    @Override
    public int hashCode() {
-      int result = (int) (lifespan ^ (lifespan >>> 32));
-      result = 31 * result + (int) (maxIdle ^ (maxIdle >>> 32));
-      result = 31 * result + (reaperEnabled ? 1 : 0);
-      result = 31 * result + (int) (wakeUpInterval ^ (wakeUpInterval >>> 32));
-      return result;
+      return attributes.hashCode();
+   }
+
+   AttributeSet attributes() {
+      return attributes;
    }
 
 }

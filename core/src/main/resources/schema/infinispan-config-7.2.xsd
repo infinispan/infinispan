@@ -1313,7 +1313,7 @@
 
   <xs:complexType name="backups">
     <xs:sequence>
-      <xs:element name="backup" type="tns:backup" maxOccurs="unbounded">
+      <xs:element name="backup" type="tns:backup" minOccurs="0" maxOccurs="unbounded">
         <xs:annotation>
           <xs:documentation>Configures a specific site where this cache backups data.</xs:documentation>
         </xs:annotation>
@@ -1602,6 +1602,11 @@
       <xs:enumeration value="FAIL">
         <xs:annotation>
           <xs:documentation>Fail local operations when a backup failure occurs.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="CUSTOM">
+        <xs:annotation>
+          <xs:documentation>Invoke a user-specified failure policy (set via the failure-policy-class attribute)</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>

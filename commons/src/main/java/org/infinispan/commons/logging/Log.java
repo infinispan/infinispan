@@ -85,5 +85,17 @@ public interface Log extends BasicLogger {
    @Message(value = "Unwrapping of any instances in %s to a type of %s is not a supported", id = 911)
    IllegalArgumentException unableToUnwrapAny(String objs, Class<?> clazz);
 
+   @Message(value = "Expecting a protected configuration for %s", id = 912)
+   IllegalStateException unprotectedAttributeSet(String name);
+
+   @Message(value = "Expecting a unprotected configuration for %s", id = 913)
+   IllegalStateException protectedAttributeSet(String name);
+
+   @Message(value = "Duplicate attribute '%s' in attribute set '%s'", id = 914)
+   IllegalArgumentException attributeSetDuplicateAttribute(String name, String setName);
+
+   @Message(value = "No such attribute '%s' in attribute set '%s'", id = 915)
+   IllegalArgumentException noSuchAttribute(String name, String setName);
+
 }
 

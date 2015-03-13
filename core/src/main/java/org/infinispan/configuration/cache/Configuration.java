@@ -150,27 +150,18 @@ public class Configuration {
 
    @Override
    public String toString() {
-      return "Configuration{" +
-            "clustering=" + clusteringConfiguration +
-            ", customInterceptors=" + customInterceptorsConfiguration +
-            ", dataContainer=" + dataContainerConfiguration +
-            ", deadlockDetection=" + deadlockDetectionConfiguration +
-            ", eviction=" + evictionConfiguration +
-            ", expiration=" + expirationConfiguration +
-            ", indexing=" + indexingConfiguration +
-            ", invocationBatching=" + invocationBatchingConfiguration +
-            ", jmxStatistics=" + jmxStatisticsConfiguration +
-            ", persistence=" + persistenceConfiguration +
-            ", locking=" + lockingConfiguration +
-            ", modules=" + moduleConfiguration +
-            ", security=" + securityConfiguration +
-            ", storeAsBinary=" + storeAsBinaryConfiguration +
-            ", transaction=" + transactionConfiguration +
-            ", versioning=" + versioningConfiguration +
-            ", unsafe=" + unsafeConfiguration +
-            ", sites=" + sitesConfiguration +
-            ", compatibility=" + compatibilityConfiguration +
-            '}';
+      return "Configuration [clusteringConfiguration=" + clusteringConfiguration + ", customInterceptorsConfiguration="
+            + customInterceptorsConfiguration + ", dataContainerConfiguration=" + dataContainerConfiguration
+            + ", deadlockDetectionConfiguration=" + deadlockDetectionConfiguration + ", evictionConfiguration="
+            + evictionConfiguration + ", expirationConfiguration=" + expirationConfiguration
+            + ", indexingConfiguration=" + indexingConfiguration + ", invocationBatchingConfiguration="
+            + invocationBatchingConfiguration + ", jmxStatisticsConfiguration=" + jmxStatisticsConfiguration
+            + ", persistenceConfiguration=" + persistenceConfiguration + ", lockingConfiguration="
+            + lockingConfiguration + ", storeAsBinaryConfiguration=" + storeAsBinaryConfiguration
+            + ", transactionConfiguration=" + transactionConfiguration + ", versioningConfiguration="
+            + versioningConfiguration + ", unsafeConfiguration=" + unsafeConfiguration + ", moduleConfiguration="
+            + moduleConfiguration + ", securityConfiguration=" + securityConfiguration + ", sitesConfiguration="
+            + sitesConfiguration + ", compatibilityConfiguration=" + compatibilityConfiguration + "]";
    }
 
    @Override
@@ -201,7 +192,7 @@ public class Configuration {
       result = prime * result + ((versioningConfiguration == null) ? 0 : versioningConfiguration.hashCode());
       return result;
    }
-   
+
    @Override
    public boolean equals(Object obj) {
       if (this == obj)

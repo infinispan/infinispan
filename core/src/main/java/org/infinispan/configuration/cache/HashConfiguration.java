@@ -1,32 +1,38 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.hash.Hash;
+import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
 
 /**
  * Allows fine-tuning of rehashing characteristics. Must only used with 'distributed' cache mode.
- * 
+ *
  * @author pmuir
  */
 public class HashConfiguration {
+   static final AttributeDefinition<ConsistentHashFactory> CONSISTENT_HASH_FACTORY  = AttributeDefinition.builder("consistentHashFactory", null, ConsistentHashFactory.class).immutable().build();
+   static final AttributeDefinition<Hash> HASH = AttributeDefinition.builder("hash", (Hash)MurmurHash3.getInstance()).immutable().build();
+   static final AttributeDefinition<Integer> NUM_OWNERS = AttributeDefinition.builder("numOwners" , 2).immutable().build();
+   // With the default consistent hash factory, this default gives us an even spread for clusters
+   // up to 6 members and the difference between nodes stays under 20% up to 12 members.
+   static final AttributeDefinition<Integer> NUM_SEGMENTS = AttributeDefinition.builder("numSegments" , 60).immutable().build();
+   static final AttributeDefinition<Float> CAPACITY_FACTOR= AttributeDefinition.builder("capacityFactor", 1.0f).immutable().build();
 
-   private final ConsistentHashFactory consistentHashFactory;
-   private final Hash hash;
-   private final int numOwners;
-   private final int numSegments;
-   private final float capacityFactor;
+   static AttributeSet attributeSet() {
+      return new AttributeSet(HashConfiguration.class, CONSISTENT_HASH_FACTORY, HASH, NUM_OWNERS, NUM_SEGMENTS, CAPACITY_FACTOR);
+   }
+
    private final GroupsConfiguration groupsConfiguration;
    private final StateTransferConfiguration stateTransferConfiguration;
+   private final AttributeSet attributes;
 
-   HashConfiguration(ConsistentHashFactory consistentHashFactory, Hash hash, int numOwners, int numSegments,
-                     float capacityFactor, GroupsConfiguration groupsConfiguration,
+   HashConfiguration(AttributeSet attributes, GroupsConfiguration groupsConfiguration,
                      StateTransferConfiguration stateTransferConfiguration) {
-      this.consistentHashFactory = consistentHashFactory;
-      this.hash = hash;
-      this.numOwners = numOwners;
-      this.numSegments = numSegments;
-      this.capacityFactor = capacityFactor;
+      attributes.checkProtection();
+      this.attributes = attributes;
       this.groupsConfiguration = groupsConfiguration;
       this.stateTransferConfiguration = stateTransferConfiguration;
    }
@@ -42,8 +48,8 @@ public class HashConfiguration {
    /**
     * The consistent hash factory in use.
     */
-   public ConsistentHashFactory consistentHashFactory() {
-       return consistentHashFactory;
+   public ConsistentHashFactory<?> consistentHashFactory() {
+       return attributes.attribute(CONSISTENT_HASH_FACTORY).asObject(ConsistentHashFactory.class);
    }
 
    /**
@@ -52,14 +58,14 @@ public class HashConfiguration {
     * implementations shipped.
     */
    public Hash hash() {
-      return hash;
+      return attributes.attribute(HASH).asObject(Hash.class);
    }
 
    /**
     * Number of cluster-wide replicas for each cache entry.
     */
    public int numOwners() {
-      return numOwners;
+      return attributes.attribute(NUM_OWNERS).asInteger();
    }
 
    /**
@@ -81,7 +87,7 @@ public class HashConfiguration {
     * {@code numSegments}. So we recommend keeping {@code numSegments <= 10 * clusterSize}.
     */
    public int numSegments() {
-      return numSegments;
+      return attributes.attribute(NUM_SEGMENTS).asInteger();
    }
 
    /**
@@ -117,7 +123,7 @@ public class HashConfiguration {
     * have twice as many entries as a node with a capacity factor of {@code 1}.
     */
    public float capacityFactor() {
-      return capacityFactor;
+      return attributes.attribute(CAPACITY_FACTOR).asFloat();
    }
 
    /**
@@ -127,47 +133,49 @@ public class HashConfiguration {
       return groupsConfiguration;
    }
 
-   @Override
-   public String toString() {
-      return "HashConfiguration{" +
-            "consistentHashFactory=" + consistentHashFactory +
-            ", hash=" + hash +
-            ", numOwners=" + numOwners +
-            ", numSegments=" + numSegments +
-            ", groupsConfiguration=" + groupsConfiguration +
-            ", stateTransferConfiguration=" + stateTransferConfiguration +
-            '}';
+   AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+   public String toString() {
+      return attributes.toString();
+   }
 
-      HashConfiguration that = (HashConfiguration) o;
-
-      if (numOwners != that.numOwners) return false;
-      if (numSegments != that.numSegments) return false;
-      if (consistentHashFactory != null ? !consistentHashFactory.equals(that.consistentHashFactory) : that.consistentHashFactory != null)
+   @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
          return false;
-      if (groupsConfiguration != null ? !groupsConfiguration.equals(that.groupsConfiguration) : that.groupsConfiguration != null)
+      if (getClass() != obj.getClass())
          return false;
-      if (hash != null ? !hash.equals(that.hash) : that.hash != null)
+      HashConfiguration other = (HashConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
          return false;
-      if (stateTransferConfiguration != null ? !stateTransferConfiguration.equals(that.stateTransferConfiguration) : that.stateTransferConfiguration != null)
+      if (groupsConfiguration == null) {
+         if (other.groupsConfiguration != null)
+            return false;
+      } else if (!groupsConfiguration.equals(other.groupsConfiguration))
          return false;
-
+      if (stateTransferConfiguration == null) {
+         if (other.stateTransferConfiguration != null)
+            return false;
+      } else if (!stateTransferConfiguration.equals(other.stateTransferConfiguration))
+         return false;
       return true;
    }
 
    @Override
    public int hashCode() {
-      int result = consistentHashFactory != null ? consistentHashFactory.hashCode() : 0;
-      result = 31 * result + (hash != null ? hash.hashCode() : 0);
-      result = 31 * result + numOwners;
-      result = 31 * result + numSegments;
-      result = 31 * result + (groupsConfiguration != null ? groupsConfiguration.hashCode() : 0);
-      result = 31 * result + (stateTransferConfiguration != null ? stateTransferConfiguration.hashCode() : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      result = prime * result + ((groupsConfiguration == null) ? 0 : groupsConfiguration.hashCode());
+      result = prime * result + ((stateTransferConfiguration == null) ? 0 : stateTransferConfiguration.hashCode());
       return result;
    }
 }

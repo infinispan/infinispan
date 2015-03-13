@@ -1,39 +1,56 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 public class InvocationBatchingConfiguration {
-
-   private final boolean enabled;
-
-   InvocationBatchingConfiguration(boolean enabled) {
-      this.enabled = enabled;
+   static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
+   static AttributeSet attributeSet() {
+      return new AttributeSet(InvocationBatchingConfiguration.class, ENABLED);
    }
-   
+   private final AttributeSet attributes;
+
+   InvocationBatchingConfiguration(AttributeSet attributes) {
+      attributes.checkProtection();
+      this.attributes = attributes;
+   }
+
    public boolean enabled() {
-      return enabled;
+      return attributes.attribute(ENABLED).asBoolean();
+   }
+
+   AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public String toString() {
-      return "InvocationBatchingConfiguration{" +
-            "enabled=" + enabled +
-            '}';
+      return "InvocationBatchingConfiguration [attributes=" + attributes + "]";
    }
 
    @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      InvocationBatchingConfiguration that = (InvocationBatchingConfiguration) o;
-
-      if (enabled != that.enabled) return false;
-
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      InvocationBatchingConfiguration other = (InvocationBatchingConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
       return true;
    }
 
    @Override
    public int hashCode() {
-      return (enabled ? 1 : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      return result;
    }
 
 }

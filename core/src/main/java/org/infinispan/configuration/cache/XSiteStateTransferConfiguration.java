@@ -1,5 +1,10 @@
 package org.infinispan.configuration.cache;
 
+import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * Configuration needed for State Transfer between different sites.
  *
@@ -7,66 +12,59 @@ package org.infinispan.configuration.cache;
  * @since 7.0
  */
 public class XSiteStateTransferConfiguration {
+   public static final int DEFAULT_CHUNK_SIZE = 512;
+   public static final long DEFAULT_TIMEOUT = TimeUnit.MINUTES.toMillis(20);
+   public static final int DEFAULT_MAX_RETRIES = 30;
+   public static final long DEFAULT_WAIT_TIME = TimeUnit.SECONDS.toMillis(2);
 
-   private final int chunkSize;
-   private final long timeout;
-   private final int maxRetries;
-   private final long waitTime;
+   static final AttributeDefinition<Integer> CHUNKSIZE = AttributeDefinition.builder("chunkSize", DEFAULT_CHUNK_SIZE).immutable().build();
+   static final AttributeDefinition<Long> TIMEOUT = AttributeDefinition.builder("timeout", DEFAULT_TIMEOUT).build();
+   static final AttributeDefinition<Integer> MAXRETRIES = AttributeDefinition.builder("maxRetries", DEFAULT_MAX_RETRIES).build();
+   static final AttributeDefinition<Long> WAITTIME = AttributeDefinition.builder("waitTime", DEFAULT_WAIT_TIME).build();
+   static AttributeSet attributeSet() {
+      return new AttributeSet(XSiteStateTransferConfiguration.class, CHUNKSIZE, TIMEOUT, MAXRETRIES, WAITTIME);
+   }
 
-   public XSiteStateTransferConfiguration(int chunkSize, long timeout, int maxRetries, long waitTime) {
-      this.chunkSize = chunkSize;
-      this.timeout = timeout;
-      this.maxRetries = maxRetries;
-      this.waitTime = waitTime;
+   private final AttributeSet attributes;
+
+   public XSiteStateTransferConfiguration(AttributeSet attributes) {
+      attributes.checkProtection();
+      this.attributes = attributes;
    }
 
    public int chunkSize() {
-      return chunkSize;
+      return this.attributes.attribute(CHUNKSIZE).asInteger();
    }
 
    public long timeout() {
-      return timeout;
+      return this.attributes.attribute(TIMEOUT).asLong();
    }
 
    public int maxRetries() {
-      return maxRetries;
+      return this.attributes.attribute(MAXRETRIES).asInteger();
    }
 
    public long waitTime() {
-      return waitTime;
-   }
-
-   @Override
-   public String toString() {
-      return "XSiteStateTransferConfiguration{" +
-            "chunkSize=" + chunkSize +
-            ", timeout=" + timeout +
-            ", maxRetries=" + maxRetries +
-            ", waitTime=" + waitTime +
-            '}';
+      return this.attributes.attribute(WAITTIME).asLong();
    }
 
    @Override
    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      XSiteStateTransferConfiguration that = (XSiteStateTransferConfiguration) o;
-
-      if (chunkSize != that.chunkSize) return false;
-      if (maxRetries != that.maxRetries) return false;
-      if (timeout != that.timeout) return false;
-      if (waitTime != that.waitTime) return false;
-
-      return true;
+      XSiteStateTransferConfiguration other = (XSiteStateTransferConfiguration) o;
+      return attributes.equals(other.attributes());
    }
 
    @Override
    public int hashCode() {
-      int result = chunkSize;
-      result = 31 * result + (int) (timeout ^ (timeout >>> 32));
-      result = 31 * result + maxRetries;
-      result = 31 * result + (int) (waitTime ^ (waitTime >>> 32));
-      return result;
+      return attributes.hashCode();
+   }
+
+   @Override
+   public String toString() {
+      return this.getClass().getSimpleName() + attributes;
+   }
+
+   AttributeSet attributes() {
+      return attributes;
    }
 }

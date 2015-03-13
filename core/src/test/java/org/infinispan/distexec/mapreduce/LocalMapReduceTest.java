@@ -1,23 +1,21 @@
 package org.infinispan.distexec.mapreduce;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.test.TestingUtil.now;
+import static org.testng.AssertJUnit.assertEquals;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.test.TestingUtil.now;
-import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * ReplicatedFourNodesMapReduceTest tests Map/Reduce functionality using four Infinispan nodes,
@@ -43,10 +41,12 @@ public class LocalMapReduceTest extends DistributedFourNodesMapReduceTest {
       cacheManagers.add(cacheManager);
    }
 
+   @Override
    protected MapReduceTask<String, String, String, Integer> createMapReduceTask(Cache c){
       return new MapReduceTask<String, String, String, Integer>(c, false, false);
    }
 
+   @Override
    public void testInvokeMapReduceOnSubsetOfKeysWithResultCache() throws Exception {
       String cacheName = "resultCache2";
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
@@ -54,7 +54,7 @@ public class LocalMapReduceTest extends DistributedFourNodesMapReduceTest {
       try {
          MapReduceTask<String, String, String, Integer> task = invokeMapReduce(new String[] { "1", "2", "3" });
          task.execute(cacheName);
-         Cache c1 = cache(0, cacheName);
+         Cache<String, Integer> c1 = cache(0, cacheName);
          assertPartialWordCount(countWords(c1));
          c1.clear();
       } finally {
@@ -62,13 +62,14 @@ public class LocalMapReduceTest extends DistributedFourNodesMapReduceTest {
       }
    }
 
+   @Override
    public void testInvokeMapReduceOnAllKeysWithResultCache() throws Exception {
       String cacheName = "resultCache";
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.LOCAL, true);
       defineConfigurationOnAllManagers(cacheName, builder);
       try {
          MapReduceTask<String, String, String, Integer> task = invokeMapReduce(null);
-         Cache c1 = cache(0, cacheName);
+         Cache<String, Integer> c1 = cache(0, cacheName);
          task.execute(c1);
          verifyResults(c1);
          c1.clear();

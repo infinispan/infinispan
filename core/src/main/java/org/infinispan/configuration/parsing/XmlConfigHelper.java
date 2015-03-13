@@ -1,12 +1,13 @@
 package org.infinispan.configuration.parsing;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.BeanUtils;
 import org.infinispan.commons.util.StringPropertyReplacer;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jboss.logging.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -33,6 +34,7 @@ import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 
 /**
@@ -387,6 +389,42 @@ public class XmlConfigHelper {
       return defaultValue;
    }
 
+   public static Object valueConverter(@SuppressWarnings("rawtypes") Class klass, String value) {
+      if (klass == Integer.class) {
+         return Integer.valueOf(value);
+      } else if (klass == Long.class) {
+         return Long.valueOf(value);
+      } else if (klass == Boolean.class) {
+         return Boolean.valueOf(value);
+      } else if (klass == String.class) {
+         return value;
+      } else if (klass == Float.class) {
+         return Float.valueOf(value);
+      } else if (klass == Double.class) {
+         return Double.valueOf(value);
+      } else if (klass .isEnum()) {
+         return Enum.valueOf(klass, value);
+      } else {
+         throw new CacheConfigurationException("Cannot convert "+ value + " to type " + klass.getName());
+      }
+   }
+
+   public static Map<Object, Object> setAttributes(AttributeSet attributes, Map<?, ?> attribs, boolean isXmlAttribs, boolean failOnMissingAttribute) {
+      Map<Object, Object> ignoredAttribs = new HashMap<Object, Object>();
+      for(Entry<?, ?> entry : attribs.entrySet()) {
+         String name = (String) entry.getKey();
+         if (attributes.contains(name)) {
+            Attribute<Object> attribute = attributes.attribute(name);
+            attribute.set(valueConverter(attribute.getAttributeDefinition().getType(), (String) entry.getValue()));
+         } else if (failOnMissingAttribute) {
+            throw new CacheConfigurationException("Couldn't find an attribute named [" + name + "] on attribute set [" + attributes.getName() + "]");
+         } else {
+            ignoredAttribs.put(name, entry.getValue());
+         }
+      }
+      return ignoredAttribs;
+   }
+
    public static Map<Object, Object> setValues(Object target, Map<?, ?> attribs, boolean isXmlAttribs, boolean failOnMissingSetter) {
       Class<?> objectClass = target.getClass();
       Map<Object, Object> ignoredAttribs = new HashMap<Object, Object>();
@@ -458,7 +496,7 @@ public class XmlConfigHelper {
       }
       return ignoredAttribs;
    }
-   
+
    public static void showUnrecognizedAttributes(Map<Object, Object> attribs) {
       for(Object propName : attribs.keySet()) {
          log.unrecognizedAttribute((String) propName);

@@ -26,6 +26,8 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
 
    private static final Log log = LogFactory.getLog(GenericTransactionManagerLookup.class);
 
+   public static final GenericTransactionManagerLookup INSTANCE = new GenericTransactionManagerLookup();
+
    /**
     * JNDI lookups performed?
     */
@@ -75,9 +77,9 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
     * WebSphere 4.0 TransactionManagerFactory
     */
    private static final String WS_FACTORY_CLASS_4 = "com.ibm.ejs.jts.jta.JTSXA";
-   
+
    private GlobalConfiguration globalCfg;
-   
+
    @Inject
    public void init(GlobalConfiguration globalCfg) {
       this.globalCfg = globalCfg;
@@ -108,12 +110,12 @@ public class GenericTransactionManagerLookup implements TransactionManagerLookup
       }
       return tm;
    }
-   
+
    private void useDummyTM() {
       tm = DummyTransactionManager.getInstance();
       log.fallingBackToDummyTm();
    }
-   
+
    private void tryEmbeddedJBossTM() {
       try {
          JBossStandaloneJTAManagerLookup jBossStandaloneJTAManagerLookup = new JBossStandaloneJTAManagerLookup();
