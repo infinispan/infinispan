@@ -2,7 +2,7 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath ${ISPN_HOME}/*.jar
+add_classpath ${ISPN_HOME}/infinispan-embedded-*.jar
 add_classpath ${ISPN_HOME}/demos/ec2/etc
 add_classpath ${ISPN_HOME}/demos/ec2/etc/config
 add_classpath ${ISPN_HOME}/demos/ec2/etc/runtime-classpath.txt

@@ -76,9 +76,7 @@ public class WordCountDemo extends Demo {
 
    private void loadData(Cache<String, String> cache) throws IOException {
       FileReader in = new FileReader(textFile);
-      try {
-         BufferedReader bufferedReader = new BufferedReader(in);
-
+      try(BufferedReader bufferedReader = new BufferedReader(in)) {
          //chunk and insert into cache
          int chunkSize = 10; // 10K
          int chunkId = 0;
@@ -102,7 +100,7 @@ public class WordCountDemo extends Demo {
             "WordCountDemo",
             "Count words in Infinispan cache usin MapReduceTask ",
             new Parameter[]{
-                  new FlaggedOption("configFile", JSAP.STRING_PARSER, "config-samples/distributed-udp.xml",
+                  new FlaggedOption("configFile", JSAP.STRING_PARSER, "configs/config-samples/distributed-udp.xml",
                                     JSAP.NOT_REQUIRED, 'c', "configFile",
                                     "Infinispan transport config file"),
                   new FlaggedOption("nodeType", JSAP.STRING_PARSER, "slave", JSAP.REQUIRED,
