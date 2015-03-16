@@ -2,6 +2,7 @@ package org.infinispan.server.core.logging;
 
 import io.netty.channel.Channel;
 import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
@@ -83,4 +84,16 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
 
    @Message(value = "Cannot configure custom KeyStore and/or TrustStore when specifying a SSLContext", id = 5018)
    CacheConfigurationException xorSSLContext();
+
+   @LogMessage(level = WARN)
+   @Message(value = "No members for new topology after applying consistent hash %s filtering into base topology %s", id = 5019)
+   void noMembersInHashTopology(ConsistentHash ch, String topologyMap);
+
+   @LogMessage(level = WARN)
+   @Message(value = "No members in new topology", id = 5020)
+   void noMembersInTopology();
+
+   @LogMessage(level = WARN)
+   @Message(value = "Server endpoint topology is empty, and cluster members are %s", id = 5021)
+   void serverEndpointTopologyEmpty(String clusterMembers);
 }
