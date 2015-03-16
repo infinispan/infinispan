@@ -15,7 +15,7 @@
 
    <dependencies>
       <dependency>
-         <groupId>org.infinispan</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-commons</artifactId>
       </dependency>
 
