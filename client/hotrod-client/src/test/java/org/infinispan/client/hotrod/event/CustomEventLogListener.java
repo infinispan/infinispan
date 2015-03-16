@@ -104,11 +104,11 @@ public abstract class CustomEventLogListener<E> {
    public static final class CustomEvent implements Serializable {
       final Integer key;
       final String value;
-      final Date timestamp;
+      final long timestamp;
       public CustomEvent(Integer key, String value) {
          this.key = key;
          this.value = value;
-         this.timestamp = new Date(System.currentTimeMillis());
+         this.timestamp = System.nanoTime();
       }
 
       @Override
@@ -163,7 +163,8 @@ public abstract class CustomEventLogListener<E> {
       }
       
       private void expectTimeOrdered(CustomEvent before, CustomEvent after) {
-         assertTrue(before.timestamp.before(after.timestamp));
+         assertTrue("Before timestamp=" + before.timestamp + ", after timestamp=" + after.timestamp,
+            before.timestamp < after.timestamp);
       }
    }
 

@@ -165,6 +165,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
       val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, false)
       val cacheMembers = cache.getRpcManager.getMembers
       val serverEndpointsMap = addressCache.toMap
+
       var responseTopologyId = currentTopologyId
       if (!serverEndpointsMap.keySet.containsAll(cacheMembers)) {
          // At least one cache member is missing from the topology cache
@@ -195,59 +196,77 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
 
    def writeHashTopologyUpdate(h: AbstractHashDistAwareResponse, server: HotRodServer, r: Response,
                                buffer: ByteBuf) {
-      trace("Write hash distribution change response header %s", h)
       val cache = server.getCacheInstance(r.cacheName, server.getCacheManager, false)
       val distManager = cache.getDistributionManager
       val ch = distManager.getConsistentHash
 
-      // This is not quite correct, as the ownership of segments on the 1.0/1.1/1.2 clients is not exactly
-      // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
-      // of the keys (at the "segment borders"), so it's still much better than having no hash information.
-      // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
-      // TODO Need a check somewhere on startup, this only works with the default consistent hash
-      val numSegments = ch.getNumSegments
-      val segmentHashIds = ch.asInstanceOf[DefaultConsistentHash].getSegmentEndHashes
-      val serverHashes = ArrayBuffer[(ServerAddress, Int)]()
-      for ((address, serverAddress) <- h.serverEndpointsMap) {
-         for (segmentIdx <- 0 until numSegments) {
-            val ownerIdx = ch.locateOwnersForSegment(segmentIdx).indexOf(address)
-            if (ownerIdx >= 0) {
-               val segmentHashId = segmentHashIds(segmentIdx)
-               val hashId = (segmentHashId + ownerIdx) & Int.MaxValue
-               serverHashes += ((serverAddress, hashId))
+      val topologyMap = h.serverEndpointsMap
+      if (topologyMap.isEmpty) {
+         logNoMembersInHashTopology(ch, topologyMap.toString())
+         buffer.writeByte(0) // Topology not changed
+      } else {
+         trace("Write hash distribution change response header %s", h)
+         // This is not quite correct, as the ownership of segments on the 1.0/1.1/1.2 clients is not exactly
+         // the same as on the server. But the difference appears only for (numSegment*numOwners/MAX_INT)
+         // of the keys (at the "segment borders"), so it's still much better than having no hash information.
+         // The idea here is to be able to be compatible with clients running version 1.0 of the protocol.
+         // TODO Need a check somewhere on startup, this only works with the default consistent hash
+         val numSegments = ch.getNumSegments
+         val segmentHashIds = ch.asInstanceOf[DefaultConsistentHash].getSegmentEndHashes
+         val serverHashes = ArrayBuffer[(ServerAddress, Int)]()
+         for ((address, serverAddress) <- topologyMap) {
+            for (segmentIdx <- 0 until numSegments) {
+               val ownerIdx = ch.locateOwnersForSegment(segmentIdx).indexOf(address)
+               if (ownerIdx >= 0) {
+                  val segmentHashId = segmentHashIds(segmentIdx)
+                  val hashId = (segmentHashId + ownerIdx) & Int.MaxValue
+                  serverHashes += ((serverAddress, hashId))
+               }
             }
          }
-      }
 
-      val totalNumServers = serverHashes.size
-      writeCommonHashTopologyHeader(buffer, h.topologyId, h.numOwners, h.hashFunction,
-         h.hashSpace, totalNumServers)
-      for ((serverAddress, hashId) <- serverHashes) {
-         writeString(serverAddress.host, buffer)
-         writeUnsignedShort(serverAddress.port, buffer)
-         log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
-         buffer.writeInt(hashId)
+         val totalNumServers = serverHashes.size
+         writeCommonHashTopologyHeader(buffer, h.topologyId, h.numOwners, h.hashFunction,
+            h.hashSpace, totalNumServers)
+         for ((serverAddress, hashId) <- serverHashes) {
+            writeString(serverAddress.host, buffer)
+            writeUnsignedShort(serverAddress.port, buffer)
+            log.tracef("Writing hash id %d for %s:%s", hashId, serverAddress.host, serverAddress.port)
+            buffer.writeInt(hashId)
+         }
       }
    }
 
    def writeLimitedHashTopologyUpdate(t: AbstractTopologyResponse, buffer: ByteBuf) {
       trace("Return limited hash distribution aware header because the client %s doesn't ", t)
-      writeCommonHashTopologyHeader(buffer, t.topologyId, 0, 0, 0, t.serverEndpointsMap.size)
-      for (address <- t.serverEndpointsMap.values) {
-         writeString(address.host, buffer)
-         writeUnsignedShort(address.port, buffer)
-         buffer.writeInt(0) // Address' hash id
+      val topologyMap = t.serverEndpointsMap
+      if (topologyMap.isEmpty) {
+         logNoMembersInTopology()
+         buffer.writeByte(0) // Topology not changed
+      } else {
+         writeCommonHashTopologyHeader(buffer, t.topologyId, 0, 0, 0, topologyMap.size)
+         for (address <- topologyMap.values) {
+            writeString(address.host, buffer)
+            writeUnsignedShort(address.port, buffer)
+            buffer.writeInt(0) // Address' hash id
+         }
       }
    }
 
    def writeTopologyUpdate(t: TopologyAwareResponse, buffer: ByteBuf) {
-      trace("Write topology change response header %s", t)
-      buffer.writeByte(1) // Topology changed
-      writeUnsignedInt(t.topologyId, buffer)
-      writeUnsignedInt(t.serverEndpointsMap.size, buffer)
-      for (address <- t.serverEndpointsMap.values) {
-         writeString(address.host, buffer)
-         writeUnsignedShort(address.port, buffer)
+      val topologyMap = t.serverEndpointsMap
+      if (topologyMap.isEmpty) {
+         logNoMembersInTopology()
+         buffer.writeByte(0) // Topology not changed
+      } else {
+         trace("Write topology change response header %s", t)
+         buffer.writeByte(1) // Topology changed
+         writeUnsignedInt(t.topologyId, buffer)
+         writeUnsignedInt(topologyMap.size, buffer)
+         for (address <- topologyMap.values) {
+            writeString(address.host, buffer)
+            writeUnsignedShort(address.port, buffer)
+         }
       }
    }
 
