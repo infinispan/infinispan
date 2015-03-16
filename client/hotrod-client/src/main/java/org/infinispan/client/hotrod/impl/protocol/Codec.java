@@ -29,6 +29,11 @@ public interface Codec {
          byte[][] filterFactoryParams, byte[][] converterFactoryParams);
 
    /**
+    * Writes the optional expiration time sub-second reminders with nanosecond precision.
+    */
+   void writeExpirationNanoTimes(Transport transport, int lifespanNanos, int maxIdleNanos, InternalFlag[] internalFlags);
+
+   /**
     * Reads a response header from the transport and returns the status
     * of the response.
     */

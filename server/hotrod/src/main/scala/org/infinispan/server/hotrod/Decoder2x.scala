@@ -113,18 +113,28 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    override def readParameters(header: HotRodHeader, buffer: ByteBuf): (RequestParameters, Boolean) = {
       header.op match {
          case RemoveRequest => (null, true)
-         case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, -1, -1, buffer.readLong), true)
+         case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, -1, -1, EXPIRATION_NANOS_DEFAULT, EXPIRATION_NANOS_DEFAULT, buffer.readLong), true)
          case ReplaceIfUnmodifiedRequest =>
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
+            val hasLifespanNano = hasFlag(header, ProtocolFlag.LifespanNano)
+            val hasMaxIdleNano = hasFlag(header, ProtocolFlag.MaxIdleNano)
+
+            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasLifespanNano)
+            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasMaxIdleNano)
+            val lifespanNanos = readLifespanOrMaxIdleNanos(buffer, !hasLifespanNano)
+            val maxIdleNanos = readLifespanOrMaxIdleNanos(buffer, !hasMaxIdleNano)
             val version = buffer.readLong
             val valueLength = readUnsignedInt(buffer)
-            (new RequestParameters(valueLength, lifespan, maxIdle, version), false)
+            (new RequestParameters(valueLength, lifespan, maxIdle, lifespanNanos, maxIdleNanos, version), false)
          case _ =>
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
+            val hasLifespanNano = hasFlag(header, ProtocolFlag.LifespanNano)
+            val hasMaxIdleNano = hasFlag(header, ProtocolFlag.MaxIdleNano)
+
+            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasLifespanNano)
+            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasMaxIdleNano)
+            val lifespanNanos = readLifespanOrMaxIdleNanos(buffer, !hasLifespanNano)
+            val maxIdleNanos = readLifespanOrMaxIdleNanos(buffer, !hasMaxIdleNano)
             val valueLength = readUnsignedInt(buffer)
-            (new RequestParameters(valueLength, lifespan, maxIdle, -1), false)
+            (new RequestParameters(valueLength, lifespan, maxIdle, lifespanNanos, maxIdleNanos, -1), false)
       }
    }
 
@@ -132,14 +142,29 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       (h.flag & f.id) == f.id
    }
 
-   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Int = {
+   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean, hasNanos: Boolean): Int = {
       val stream = readUnsignedInt(buffer)
       if (stream <= 0) {
          if (useDefault)
             EXPIRATION_DEFAULT
+         else if (hasNanos)
+            0
          else
             EXPIRATION_NONE
       } else stream
+   }
+
+   private def readLifespanOrMaxIdleNanos(buffer: ByteBuf, useDefault: Boolean): Int = {
+      if (useDefault)
+         EXPIRATION_NANOS_DEFAULT
+      else {
+        val stream = readUnsignedInt(buffer)
+        if (stream > 0) {
+           stream
+        } else {
+          EXPIRATION_NANOS_DEFAULT
+        }
+      }
    }
 
    override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): Response =
@@ -342,7 +367,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val filterFactoryInfo = readNamedFactory(buffer)
             val converterFactoryInfo = readNamedFactory(buffer)
             val useRawData = h.version match {
-               case VERSION_21 => buffer.readByte() == 1
+               case VERSION_21 | VERSION_22 => buffer.readByte() == 1
                case _ => false
             }
             val reg = server.getClientListenerRegistry

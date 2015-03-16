@@ -56,6 +56,11 @@ public class Codec20 implements Codec, HotRodConstants {
       writeNamedFactory(transport, clientListener.converterFactoryName(), converterFactoryParams);
    }
 
+   @Override
+   public void writeExpirationNanoTimes(Transport transport, int lifespanNanos, int maxIdleNanos, InternalFlag[] internalFlags) {
+      // No-op
+   }
+
    private void writeNamedFactory(Transport transport, String factoryName, byte[][] params) {
       transport.writeString(factoryName);
       if (!factoryName.isEmpty()) {
@@ -77,7 +82,7 @@ public class Codec20 implements Codec, HotRodConstants {
       transport.writeByte(version);
       transport.writeByte(params.opCode);
       transport.writeArray(params.cacheName);
-      int joinedFlags = HeaderParams.joinFlags(params.flags);
+      int joinedFlags = HeaderParams.joinFlags(params.flags, params.internalFlags);
       transport.writeVInt(joinedFlags);
       transport.writeByte(params.clientIntel);
       transport.writeVInt(params.topologyId.get());

@@ -11,6 +11,7 @@ import javax.security.auth.Subject
 trait ServerConstants {
    val EXPIRATION_NONE = -1
    val EXPIRATION_DEFAULT = -2
+   val EXPIRATION_NANOS_DEFAULT = 0
 
    val ANONYMOUS = new Subject
 }

@@ -16,6 +16,7 @@ public class HeaderParams {
    short opRespCode;
    byte[] cacheName;
    Flag[] flags;
+   InternalFlag[] internalFlags;
    byte clientIntel;
    byte txMarker;
    AtomicInteger topologyId;
@@ -34,6 +35,11 @@ public class HeaderParams {
 
    public HeaderParams flags(Flag[] flags) {
       this.flags = flags;
+      return this;
+   }
+
+   public HeaderParams internalFlags(InternalFlag[] internalFlags) {
+      this.internalFlags = internalFlags;
       return this;
    }
 
@@ -108,11 +114,16 @@ public class HeaderParams {
       }
    }
 
-   static int joinFlags(Flag[] flags) {
+   static int joinFlags(Flag[] flags, InternalFlag[] internalFlags) {
       int flagInt = 0;
       if (flags != null) {
          for (Flag flag : flags)
             flagInt = flag.getFlagInt() | flagInt;
+      }
+      if (internalFlags != null) {
+         for (InternalFlag internalFlag : internalFlags) {
+            flagInt = internalFlag.getFlagInt() | flagInt;
+         }
       }
       return flagInt;
    }

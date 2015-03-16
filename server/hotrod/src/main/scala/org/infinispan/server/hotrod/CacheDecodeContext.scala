@@ -163,11 +163,11 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
             metadata.lifespan(defaultLifespanTime)
             .maxIdle(defaultMaxIdleTime)
          case (_, EXPIRATION_DEFAULT) =>
-            metadata.lifespan(toMillis(params.lifespan))
+            metadata.lifespan(toMillis(params.lifespan, params.lifespanNanos))
             .maxIdle(defaultMaxIdleTime)
          case (_, _) =>
-            metadata.lifespan(toMillis(params.lifespan))
-            .maxIdle(toMillis(params.maxIdle))
+            metadata.lifespan(toMillis(params.lifespan, params.lifespanNanos))
+            .maxIdle(toMillis(params.maxIdle, params.maxIdleNanos))
       }
       metadata.build()
    }
@@ -256,23 +256,28 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
     * Otherwise it's just considered number of seconds from
     * now and it's returned in milliseconds unit.
     */
-   protected def toMillis(lifespan: Int): Long = {
-      if (lifespan > SecondsInAMonth) {
-         val unixTimeExpiry = TimeUnit.SECONDS.toMillis(lifespan) - System.currentTimeMillis
+   protected def toMillis(secsDuration: Int, extraNanosDuration: Int): Long = {
+      val extraSecond = if (extraNanosDuration > 0) 1 else 0
+
+      val millis = TimeUnit.SECONDS.toMillis(secsDuration) + TimeUnit.NANOSECONDS.toMillis(extraNanosDuration)
+      if (secsDuration + extraSecond > SecondsInAMonth) {
+         val unixTimeExpiry = millis - System.currentTimeMillis
          if (unixTimeExpiry < 0) 0 else unixTimeExpiry
       } else {
-         TimeUnit.SECONDS.toMillis(lifespan)
+         millis
       }
    }
 
 }
 
-class RequestParameters(val valueLength: Int, val lifespan: Int, val maxIdle: Int, val streamVersion: Long) {
+class RequestParameters(val valueLength: Int, val lifespan: Int, val maxIdle: Int, val lifespanNanos: Int, val maxIdleNanos: Int, val streamVersion: Long) {
    override def toString = {
       new StringBuilder().append("RequestParameters").append("{")
       .append("valueLength=").append(valueLength)
       .append(", lifespan=").append(lifespan)
+      .append(", lifespanNanos=").append(lifespanNanos)
       .append(", maxIdle=").append(maxIdle)
+      .append(", maxIdleNanos=").append(maxIdleNanos)
       .append(", streamVersion=").append(streamVersion)
       .append("}").toString()
    }
