@@ -47,8 +47,6 @@
       <mkdir dir="${output.dir}/demos" />
       <demo target="${output.dir}" demo="gui" />
       <demo target="${output.dir}" demo="distexec" />
-      <demo target="${output.dir}" demo="ec2" />
-      <demo target="${output.dir}" demo="ec2-ui" />
       <demo target="${output.dir}" demo="gridfs-webdav" />
       <demo target="${output.dir}" demo="lucene-directory-demo" />
 
