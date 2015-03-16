@@ -4,7 +4,8 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
-import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.BaseQuery;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +22,7 @@ import java.util.PriorityQueue;
  * @author anistor@redhat,com
  * @since 7.0
  */
-public final class EmbeddedQuery implements Query {
+public final class EmbeddedQuery extends BaseQuery {
 
    private static final int INITIAL_CAPACITY = 1000;
 
@@ -39,7 +40,8 @@ public final class EmbeddedQuery implements Query {
 
    private final int maxResults;
 
-   public EmbeddedQuery(AdvancedCache<?, ?> cache, String jpaQuery, long startOffset, int maxResults, Class<? extends Matcher> matcherImplClass) {
+   public EmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, long startOffset, int maxResults, Class<? extends Matcher> matcherImplClass) {
+      super(queryFactory, jpaQuery);
       this.cache = cache;
       this.startOffset = startOffset < 0 ? 0 : (int) startOffset;
       this.maxResults = maxResults;

@@ -30,6 +30,6 @@ public final class RemoteQueryBuilder extends BaseQueryBuilder<Query> {
       if (log.isTraceEnabled()) {
          log.tracef("JPQL string : %s", jpqlString);
       }
-      return new RemoteQuery(cache, serializationContext, jpqlString, startOffset, maxResults);
+      return new RemoteQuery(queryFactory, cache, serializationContext, jpqlString, startOffset, maxResults);
    }
 }

@@ -88,7 +88,7 @@ public class QueryFacadeImpl implements QueryFacade {
       boolean compatMode = cache.getCacheConfiguration().compatibility().enabled();
       Class<? extends Matcher> matcherImplClass = compatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class;
 
-      EmbeddedQuery eq = new EmbeddedQuery(cache, request.getJpqlString(), request.getStartOffset(), request.getMaxResults(), matcherImplClass);
+      EmbeddedQuery eq = new EmbeddedQuery(null, cache, request.getJpqlString(), request.getStartOffset(), request.getMaxResults(), matcherImplClass);
       List<?> list = eq.list();
       int projSize = 0;
       if (eq.getProjection() != null && eq.getProjection().length > 0) {

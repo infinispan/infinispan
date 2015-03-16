@@ -18,13 +18,7 @@ class RemoteJPAQueryGenerator extends JPAQueryGenerator {
       this.serializationContext = serializationContext;
    }
 
-   @Override
-   protected String renderEntityName(String rootType) {
-      // this just checks the type can actually be marshalled with current config
-      serializationContext.getMarshaller(rootType);
-
-      return rootType;
-   }
+   //TODO [anistor] these are only used for remote query with Lucene engine
 
    @Override
    protected <E extends Enum<E>> String renderEnum(E argument) {

@@ -45,7 +45,7 @@ public class JPAQueryGenerator implements Visitor<String> {
          sb.append(' ');
       }
 
-      sb.append("FROM ").append(renderEntityName(baseQueryBuilder.getRootTypeName())).append(' ').append(alias);
+      sb.append("FROM ").append(baseQueryBuilder.getRootTypeName()).append(' ').append(alias);
 
       if (baseQueryBuilder.getFilterCondition() != null) {
          BaseCondition baseCondition = baseQueryBuilder.getFilterCondition().getRoot();
@@ -69,10 +69,6 @@ public class JPAQueryGenerator implements Visitor<String> {
       }
 
       return sb.toString();
-   }
-
-   protected String renderEntityName(String rootType) {
-      return rootType;
    }
 
    protected <E extends Enum<E>> String renderEnum(E argument) {

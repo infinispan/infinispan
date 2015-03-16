@@ -8,6 +8,13 @@ import org.infinispan.objectfilter.impl.ReflectionMatcher;
  */
 public class ReflectionMatcherTest extends AbstractMatcherTest {
 
+   private final FilterQueryFactory queryFactory = new FilterQueryFactory();
+
+   @Override
+   public FilterQueryFactory createQueryFactory() {
+      return queryFactory;
+   }
+
    protected ReflectionMatcher createMatcher() {
       return new ReflectionMatcher(null);
    }

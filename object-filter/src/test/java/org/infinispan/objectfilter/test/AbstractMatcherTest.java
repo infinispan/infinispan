@@ -31,6 +31,8 @@ public abstract class AbstractMatcherTest {
    @Rule
    public ExpectedException expectedException = ExpectedException.none();
 
+   protected abstract QueryFactory createQueryFactory();
+
    protected Object createPerson1() throws Exception {
       Person person = new Person();
       person.setId(1);
@@ -322,8 +324,7 @@ public abstract class AbstractMatcherTest {
 
    @Test
    public void testDSL() throws Exception {
-      Matcher matcher = createMatcher();
-      QueryFactory qf = matcher.getQueryFactory();
+      QueryFactory qf = createQueryFactory();
       Query q = qf.from(Person.class)
             .having("phoneNumbers.number").eq("004012345").toBuilder().build();
       assertTrue(match(q, createPerson1()));
@@ -374,7 +375,7 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      QueryFactory qf = matcher.getQueryFactory();
+      QueryFactory qf = createQueryFactory();
 
       // use the same '< 1000' predicate on two different attributes to demonstrate they do not interfere (see ISPN-4654)
       Query q = qf.from(Person.class)
@@ -395,7 +396,7 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      QueryFactory qf = matcher.getQueryFactory();
+      QueryFactory qf = createQueryFactory();
 
       // use the same "like 'Jo%'" predicate (in positive and negative form) on the same attribute to demonstrate they do not interfere (see ISPN-4654)
       Query q = qf.from(Person.class)
@@ -415,7 +416,7 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      QueryFactory qf = matcher.getQueryFactory();
+      QueryFactory qf = createQueryFactory();
       Query q = qf.from(Person.class)
             .having("name").eq("John").toBuilder().build();
 
@@ -444,7 +445,7 @@ public abstract class AbstractMatcherTest {
       Matcher matcher = createMatcher();
       Object person = createPerson1();
 
-      QueryFactory qf = matcher.getQueryFactory();
+      QueryFactory qf = createQueryFactory();
       Query q = qf.from(Person.class)
             .having("name").eq("John").toBuilder().build();
 
