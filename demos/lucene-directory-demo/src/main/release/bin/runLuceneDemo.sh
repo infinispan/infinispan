@@ -2,7 +2,7 @@
 
 source "`dirname "$0"`/functions.sh"
 
-add_classpath ${ISPN_HOME}/*.jar
+add_classpath ${ISPN_HOME}/infinispan-embedded-*.jar
 add_classpath ${ISPN_HOME}/demos/lucene-directory-demo/etc
 add_classpath ${ISPN_HOME}/demos/lucene-directory-demo/*.jar
 add_classpath ${ISPN_HOME}/demos/lucene-directory-demo/etc/runtime-classpath.txt

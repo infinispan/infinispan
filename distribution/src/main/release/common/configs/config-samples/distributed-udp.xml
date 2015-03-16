@@ -4,12 +4,8 @@
       xsi:schemaLocation="urn:infinispan:config:7.2 http://www.infinispan.org/schemas/infinispan-config-7.2.xsd"
       xmlns="urn:infinispan:config:7.2">
 
-   <jgroups>
-      <stack-file name="udp" path="jgroups-udp.xml"/>
-   </jgroups>
-
    <cache-container name="udp-cache-container" default-cache="the-default-cache">
-      <transport stack="udp"/>
+      <transport/>
       <distributed-cache name="the-default-cache" l1-lifespan="30000" owners="2" mode="SYNC" />
    </cache-container>
 

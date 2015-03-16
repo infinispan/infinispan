@@ -17,23 +17,28 @@ public abstract class Demo {
    protected final boolean isMaster;
    protected final String cfgFile;
    protected final JSAPResult commandLineOptions;
+   protected SimpleJSAP jsap;
 
    public Demo(String[] args) throws Exception {
       commandLineOptions = parseParameters(args);
       String nodeType = commandLineOptions.getString("nodeType");
       isMaster = nodeType != null && nodeType.equals("master");
       cfgFile = commandLineOptions.getString("configFile");
+      if (cfgFile == null) {
+         System.err.println(jsap.getHelp());
+         System.exit(1);
+      }
    }
 
    protected JSAPResult parseParameters(String[] args) throws Exception {
-      SimpleJSAP jsap = buildCommandLineOptions();
+       jsap = buildCommandLineOptions();
 
       JSAPResult config = jsap.parse(args);
       if (!config.success() || jsap.messagePrinted()) {
          Iterator<?> messageIterator = config.getErrorMessageIterator();
          while (messageIterator.hasNext()) System.err.println(messageIterator.next());
          System.err.println(jsap.getHelp());
-         return null;
+         System.exit(1);
       }
 
       return config;

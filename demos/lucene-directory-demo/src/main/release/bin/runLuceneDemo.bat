@@ -6,7 +6,7 @@ set ISPN_HOME="%ISPN_HOME%.."
 set DEMO_HOME=%ISPN_HOME%\demos\lucene-directory-demo
 
 set CP=
-for %%i in (%ISPN_HOME%\*.jar) do call :append_to_cp %%i
+for %%i in (%ISPN_HOME%\infinispan-embedded-*.jar) do call :append_to_cp %%i
 
 set /p RUNTIME_CP=<%DEMO_HOME%\etc\runtime-classpath.txt
 set CP=%RUNTIME_CP::=;%;%CP%
