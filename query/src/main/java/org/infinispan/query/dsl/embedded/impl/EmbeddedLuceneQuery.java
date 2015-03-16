@@ -5,7 +5,9 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.LuceneQuery;
+import org.infinispan.query.dsl.impl.BaseQuery;
 
 import java.util.List;
 
@@ -15,7 +17,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
-final class EmbeddedLuceneQuery implements LuceneQuery {
+final class EmbeddedLuceneQuery extends BaseQuery implements LuceneQuery {
 
    private final SearchManager sm;
 
@@ -27,7 +29,8 @@ final class EmbeddedLuceneQuery implements LuceneQuery {
 
    private CacheQuery cacheQuery = null;
 
-   public EmbeddedLuceneQuery(SearchManager sm, LuceneQueryParsingResult parsingResult, long startOffset, int maxResults) {
+   public EmbeddedLuceneQuery(QueryFactory queryFactory, String jpaQuery, SearchManager sm, LuceneQueryParsingResult parsingResult, long startOffset, int maxResults) {
+      super(queryFactory, jpaQuery);
       this.sm = sm;
       this.parsingResult = parsingResult;
       this.startOffset = startOffset;

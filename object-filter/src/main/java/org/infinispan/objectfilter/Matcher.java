@@ -1,7 +1,6 @@
 package org.infinispan.objectfilter;
 
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
 
 /**
  * A matcher able to test a given object against multiple registered filters specified either as JPA queries or using
@@ -14,14 +13,6 @@ import org.infinispan.query.dsl.QueryFactory;
  * @since 7.0
  */
 public interface Matcher {
-
-   /**
-    * Creates a QueryFactory capable of creating DSL based queries that are accepted by this Matcher instance as
-    * arguments for the registerFilter and getObjectFilter methods.
-    *
-    * @return the DSL based query factory
-    */
-   QueryFactory<Query> getQueryFactory();
 
    FilterSubscription registerFilter(Query query, FilterCallback callback);
 

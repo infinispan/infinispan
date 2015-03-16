@@ -56,7 +56,7 @@ final class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
          parsingResult = parse(jpqlString);
       }
 
-      return new EmbeddedLuceneQuery(searchManager, parsingResult, startOffset, maxResults);
+      return new EmbeddedLuceneQuery(queryFactory, jpqlString, searchManager, parsingResult, startOffset, maxResults);
    }
 
    private LuceneQueryParsingResult parse(String jpqlString) {

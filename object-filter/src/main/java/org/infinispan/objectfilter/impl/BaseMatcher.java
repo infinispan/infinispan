@@ -10,10 +10,8 @@ import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
-import org.infinispan.objectfilter.query.FilterQuery;
-import org.infinispan.objectfilter.query.FilterQueryFactory;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.impl.BaseQuery;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,16 +38,6 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
 
    protected final Map<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByType = new HashMap<TypeMetadata, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>>();
 
-   private FilterQueryFactory queryFactory;
-
-   @Override
-   public QueryFactory<Query> getQueryFactory() {
-      if (queryFactory == null) {
-         queryFactory = new FilterQueryFactory();
-      }
-      return queryFactory;
-   }
-
    /**
     * Executes the registered filters and notifies each one of them whether it was satisfied or not by the given
     * instance.
@@ -75,11 +63,8 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
 
    @Override
    public ObjectFilter getObjectFilter(Query query) {
-      if (!(query instanceof FilterQuery)) {
-         throw new IllegalArgumentException("The Query object must be created by a QueryFactory returned by this Matcher");
-      }
-      FilterQuery filterQuery = (FilterQuery) query;
-      return getObjectFilter(filterQuery.getJpqlString());
+      BaseQuery baseQuery = (BaseQuery) query;
+      return getObjectFilter(baseQuery.getJPAQuery());
    }
 
    @Override
@@ -97,11 +82,8 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
 
    @Override
    public FilterSubscription registerFilter(Query query, FilterCallback callback) {
-      if (!(query instanceof FilterQuery)) {
-         throw new IllegalArgumentException("The Query object must be created by a QueryFactory returned by this Matcher");
-      }
-      FilterQuery filterQuery = (FilterQuery) query;
-      return registerFilter(filterQuery.getJpqlString(), callback);
+      BaseQuery baseQuery = (BaseQuery) query;
+      return registerFilter(baseQuery.getJPAQuery(), callback);
    }
 
    @Override
