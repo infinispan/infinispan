@@ -1290,7 +1290,6 @@ Request format:
 |==============================================================================
 | Field Name          | Size       | Value
 | Header | variable | Request header
-|==============================================================================
 | Script | string | Name of the script to execute
 | Parameter Count | vInt | The number of parameters
 | Parameter 1 Name | string | The name of the first parameter
