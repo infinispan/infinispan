@@ -38,6 +38,11 @@ public class WriteSkewHelper {
                                                                             TxInvocationContext context,
                                                                             KeySpecificLogic ksl, TimeService timeService) {
       EntryVersionsMap uv = new EntryVersionsMap();
+      if (prepareCommand.getVersionsSeen() == null) {
+         // Do not perform the write skew check if this prepare command is being replayed for state transfer
+         return uv;
+      }
+
       for (WriteCommand c : prepareCommand.getModifications()) {
          for (Object k : c.getAffectedKeys()) {
             if (ksl.performCheckOnKey(k)) {

@@ -212,8 +212,6 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
                visitPrepareCommand(ctx, prepareCommand);
             }
          }
-
-         txTable.markTransactionCompleted(gtx);
       }
 
       if (this.statisticsEnabled) commits.incrementAndGet();
