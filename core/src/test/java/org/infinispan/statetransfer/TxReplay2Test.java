@@ -2,6 +2,7 @@ package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -23,6 +24,8 @@ import org.infinispan.transaction.tm.DummyTransaction;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.ControlledConsistentHashFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import javax.transaction.Status;
@@ -32,9 +35,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInboundRpc;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * Tests that a transaction is replayed only once if the commit command is received twice.
@@ -50,9 +56,11 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
 
    public void testReplay() throws Exception {
       final StateSequencer sequencer = new StateSequencer();
-      sequencer.logicalThread("tx", "tx:before_prepare_replay", "tx:resume_prepare_replay");
-      sequencer.logicalThread("sim", "sim:before_extra_commit", "sim:during_extra_commit");
-      sequencer.order("tx:before_prepare_replay", "sim:before_extra_commit", "sim:during_extra_commit", "tx:resume_prepare_replay");
+      sequencer.logicalThread("tx", "tx:before_prepare_replay", "tx:resume_prepare_replay", "tx:mark_tx_completed");
+      sequencer.logicalThread("sim", "sim:before_extra_commit", "sim:during_extra_commit", "sim:after_extra_commit");
+      sequencer.order("tx:before_prepare_replay", "sim:before_extra_commit");
+      sequencer.order("sim:during_extra_commit", "tx:resume_prepare_replay");
+      sequencer.order("sim:after_extra_commit", "tx:mark_tx_completed");
 
       final Object key = "key";
       assertEquals(Arrays.asList(address(0), address(1), address(2)), advancedCache(0).getDistributionManager().locate(key));
@@ -68,6 +76,8 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       advanceOnInterceptor(sequencer, newBackupOwnerCache, TransactionSynchronizerInterceptor.class,
             matchCommand(CommitCommand.class).matchCount(1).build())
             .before("sim:during_extra_commit");
+      advanceOnInboundRpc(sequencer, newBackupOwnerCache, matchCommand(TxCompletionNotificationCommand.class).build())
+            .before("tx:mark_tx_completed");
 
       final DummyTransactionManager transactionManager = (DummyTransactionManager) tm(0);
       transactionManager.begin();
@@ -100,6 +110,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
                throw new CacheException(throwable);
             }
 
+            sequencer.advance("sim:after_extra_commit");
             return null;
          }
       });
@@ -113,8 +124,8 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
 
       assertNoTransactions();
 
-      assertEquals("Wrong number of prepares!", 1, newBackupCounter.numberPrepares.get());
-      assertEquals("Wrong number of commits!", 1, newBackupCounter.numberCommits.get());
+      assertEquals("Wrong number of prepares!", 2, newBackupCounter.numberPrepares.get());
+      assertEquals("Wrong number of commits!", 2, newBackupCounter.numberCommits.get());
       assertEquals("Wrong number of rollbacks!", 0, newBackupCounter.numberRollbacks.get());
 
       assertEquals("Wrong number of prepares!", 2, oldBackup2Counter.numberPrepares.get());
@@ -157,6 +168,8 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
    }
 
    private static class CountingInterceptor extends CommandInterceptor {
+      private static Log log = LogFactory.getLog(CountingInterceptor.class);
+
       //counters
       private final AtomicInteger numberPrepares = new AtomicInteger(0);
       private final AtomicInteger numberCommits = new AtomicInteger(0);
@@ -165,6 +178,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
          if (!ctx.isOriginLocal()) {
+            log.debugf("Received remote prepare for transaction %s", command.getGlobalTransaction());
             numberPrepares.incrementAndGet();
          }
          return invokeNextInterceptor(ctx, command);
@@ -173,6 +187,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
          if (!ctx.isOriginLocal()) {
+            log.debugf("Received remote commit for transaction %s", command.getGlobalTransaction());
             numberCommits.incrementAndGet();
          }
          return invokeNextInterceptor(ctx, command);
@@ -181,6 +196,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       @Override
       public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
          if (!ctx.isOriginLocal()) {
+            log.debugf("Received remote rollback for transaction %s", command.getGlobalTransaction());
             numberRollbacks.incrementAndGet();
          }
          return invokeNextInterceptor(ctx, command);
