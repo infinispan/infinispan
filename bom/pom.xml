@@ -167,6 +167,11 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-directory-provider</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-query</artifactId>
             <version>${project.version}</version>
          </dependency>

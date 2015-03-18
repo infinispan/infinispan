@@ -33,4 +33,5 @@ Infinispan logs fully support internationalization. The following is a list of m
     23001 - 24000    leveldb cache store
     24001 - 25000    couchbase cache store
     25001 - 26000    extended statistics
+    26001 - 27000    infinispan directory provider
 
