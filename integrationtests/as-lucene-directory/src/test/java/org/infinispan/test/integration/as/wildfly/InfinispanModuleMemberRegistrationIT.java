@@ -3,7 +3,6 @@ package org.infinispan.test.integration.as.wildfly;
 import org.infinispan.test.integration.as.VersionTestHelper;
 import org.infinispan.test.integration.as.wildfly.controller.MemberRegistration;
 import org.infinispan.test.integration.as.wildfly.model.Member;
-import org.infinispan.test.integration.as.wildfly.util.Resources;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
@@ -51,7 +50,7 @@ public class InfinispanModuleMemberRegistrationIT {
    private static Archive<?> createTestArchive() {
       return ShrinkWrap
             .create(WebArchive.class, InfinispanModuleMemberRegistrationIT.class.getSimpleName() + ".war")
-            .addClasses(Member.class, MemberRegistration.class, Resources.class)
+            .addClasses(Member.class, MemberRegistration.class)
             .addAsResource(persistenceXml(), "META-INF/persistence.xml")
             .add(VersionTestHelper.moduleDependencyManifest(), "META-INF/MANIFEST.MF")
                   //This test is simply reusing the default configuration file, but we copy
@@ -128,10 +127,52 @@ public class InfinispanModuleMemberRegistrationIT {
    @Test
    @InSequence(value = 3)
    @OperateOnDeployment("dep.active-2")
+   public void testNewMemberLuceneSearch() throws Exception {
+      List<Member> search = memberRegistration.luceneSearch("Peter");
+
+      assertFalse("Expected at least one result after the indexing", search.isEmpty());
+      assertEquals("Lucene search hasn't found a member", "Peter O'Tall", search.get(0).getName());
+   }
+
+   @Test
+   @InSequence(value = 4)
+   @OperateOnDeployment("dep.active-2")
    public void testNonExistingMember() throws Exception {
       List<Member> search = memberRegistration.search("TotallyInventedName");
 
       assertNotNull("Search should never return null", search);
       assertTrue("Search results should be empty", search.isEmpty());
+   }
+
+   @Test
+   @InSequence(value = 5)
+   @OperateOnDeployment("dep.active-2")
+   public void testLuceneNonExistingMember() throws Exception {
+      List<Member> search = memberRegistration.luceneSearch("TotallyInventedName");
+
+      assertNotNull("Search should never return null", search);
+      assertTrue("Search results should be empty", search.isEmpty());
+   }
+
+   @Test
+   @InSequence(value = 6)
+   @OperateOnDeployment("dep.active-2")
+   public void testPurgeIndex() throws Exception {
+      memberRegistration.purgeMemberIndex();
+      List<Member> search = memberRegistration.search("Peter");
+
+      assertNotNull("Search should never return null", search);
+      assertTrue("Search results should be empty", search.isEmpty());
+   }
+
+   @Test
+   @InSequence(value = 7)
+   @OperateOnDeployment("dep.active-2")
+   public void testReIndex() throws Exception {
+      memberRegistration.indexMembers();
+      List<Member> search = memberRegistration.search("Peter");
+
+      assertFalse("Expected at least one result after the indexing", search.isEmpty());
+      assertEquals("Search hasn't found a new member after reindex", "Peter O'Tall", search.get(0).getName());
    }
 }
