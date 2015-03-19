@@ -219,6 +219,10 @@
          <maven-resource group="org.infinispan" artifact="infinispan-server-websocket" />
       </module-def>
 
+      <module-def name="org.infinispan.hibernate-search.directory-provider">
+           <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
+      </module-def>
+
       <module-def name="org.iq80.leveldb">
          <maven-resource group="org.iq80.leveldb" artifact="leveldb" />
       </module-def>
@@ -249,7 +253,6 @@
          <maven-resource group="com.thoughtworks.paranamer" artifact="paranamer" />
          <maven-resource group="org.apache.avro" artifact="avro" />
          <maven-resource group="org.hibernate" artifact="hibernate-search-engine" />
-         <maven-resource group="org.hibernate" artifact="hibernate-search-infinispan" />
          <maven-resource group="org.xerial.snappy" artifact="snappy-java" />
       </module-def>
 

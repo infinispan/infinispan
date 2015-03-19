@@ -6,7 +6,7 @@ import static org.junit.Assert.fail;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
-import org.hibernate.search.infinispan.spi.InfinispanIntegration;
+import org.infinispan.hibernate.search.spi.InfinispanIntegration;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
