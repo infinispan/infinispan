@@ -66,9 +66,9 @@ import org.kohsuke.MetaInfServices;
 
 import java.util.Set;
 
-import static org.hibernate.search.infinispan.spi.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
-import static org.hibernate.search.infinispan.spi.InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME;
-import static org.hibernate.search.infinispan.spi.InfinispanIntegration.DEFAULT_LOCKING_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESDATA_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_INDEXESMETADATA_CACHENAME;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.DEFAULT_LOCKING_CACHENAME;
 import static org.infinispan.query.impl.IndexPropertyInspector.*;
 
 /**

@@ -100,6 +100,10 @@
             <maven-resource group="org.infinispan" artifact="infinispan-lucene-directory" />
         </module-def>
 
+        <module-def name="org.infinispan.hibernate-search.directory-provider" slot="${infinispan.slot}">
+            <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
+        </module-def>
+
         <module-def name="org.infinispan.objectfilter" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-objectfilter" />
         </module-def>
