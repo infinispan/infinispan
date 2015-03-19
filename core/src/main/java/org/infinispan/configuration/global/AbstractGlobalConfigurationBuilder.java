@@ -48,6 +48,11 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
       return globalConfig.persistenceExecutor();
    }
 
+   /**
+    * @deprecated This method always returns {@code null} now.
+    * Set thread pool via {@link TransportConfigurationBuilder#transportThreadPool()} instead.
+    */
+   @Deprecated
    @Override
    public ExecutorFactoryConfigurationBuilder asyncTransportExecutor() {
       return globalConfig.asyncTransportExecutor();
