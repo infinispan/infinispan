@@ -1,8 +1,8 @@
 package org.infinispan.query.backend;
 
-import org.hibernate.search.store.BaseDirectoryProviderService;
 import org.hibernate.search.store.DirectoryProvider;
 import org.hibernate.search.store.impl.FSDirectoryProvider;
+import org.hibernate.search.store.spi.BaseDirectoryProviderService;
 import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
 
 /**
