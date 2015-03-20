@@ -161,4 +161,12 @@ public class CacheResultInterceptorTest extends Arquillian {
       assertEquals(smallCache.size(), 1);
       assertEquals(smallCache.getCacheConfiguration().eviction().maxEntries(), 4);
    }
+
+   @Test
+   public void testCallingDifferentCachedMethodsWithinTheSameInterceptorChain() throws Exception {
+      service.defaultCacheResult1("ISPN-5195");
+      service.defaultCacheResult2("ISPN-5195");
+
+      assertEquals(service.getNbCall(), 2);
+   }
 }

@@ -50,6 +50,22 @@ public class CacheResultService {
       return "Bonjour " + user;
    }
 
+   @CacheResult
+   public String defaultCacheResult1(final String name) {
+      return getDefaultCacheResult(name);
+   }
+
+   @CacheResult
+   public String defaultCacheResult2(final String name) {
+      return getDefaultCacheResult(name);
+   }
+
+   private String getDefaultCacheResult(String name) {
+      ++nbCall;
+      return "Hi" +  name + "!";
+   }
+
+
    public int getNbCall() {
       return nbCall;
    }
