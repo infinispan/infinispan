@@ -365,6 +365,17 @@ No, it cannot. Use `CacheEntryModifiedEvent.getValue()` to retrieve the value of
 ==== When annotating a method with CacheEntryCreated, how do I retrieve the value of the cache entry added?
 Use `CacheEntryCreatedEvent.getValue()` to retrieve the value of the entry.
 
+==== What is the difference between classes in `org.infinispan.notifications.cachelistener.filter` vs `org.infinispan.filter`?
+Inside these packages you'll find classes that facilitate filtering and data conversion.
+The difference is that classes in `org.infinispan.filter` are used for filtering
+and conversion in multiple areas, such as cache loaders, entry iterators,...etc,
+whereas classes in `org.infinispan.notifications.cachelistener.filter` are purely
+used for listener event filtering, and provide more information than similarly
+named classes in `org.infinispan.filter`. More specifically, remote listener
+event filtering and conversion require `CacheEventFilter` and `CacheEventConverter`
+instances located in `org.infinispan.notifications.cachelistener.filter` package
+to be used.
+
 === IaaS/Cloud Infrastructure questions
 ==== How do you make Infinispan send replication traffic over a specific network when you don't know the IP address?
 Some cloud providers charge you less for traffic over internal IP addresses compared to public IP addresses, in fact, some cloud providers do not even charge a thing for traffic over the internal network (i.e. GoGrid). In these circumstances, it's really advantageous to configure Infinispan in such way that replication traffic is sent via the internal network. The problem though is that quite often you don't know which internal IP address you'll be assigned (unless you use elastic IPs and dyndns.org), so how do you configure Infinispan to cope with those situations?
