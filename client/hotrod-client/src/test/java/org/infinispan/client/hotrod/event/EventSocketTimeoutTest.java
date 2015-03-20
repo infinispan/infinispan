@@ -2,15 +2,16 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.SocketTimeoutErrorTest;
 import org.infinispan.client.hotrod.SocketTimeoutErrorTest.TimeoutInducingInterceptor;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -30,6 +31,13 @@ public class EventSocketTimeoutTest extends SingleHotRodServerTest {
       builder.customInterceptors().addInterceptor().interceptor(
          new TimeoutInducingInterceptor()).after(EntryWrappingInterceptor.class);
       return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration(builder));
+   }
+
+   @Override
+   protected HotRodServer createHotRodServer() {
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      builder.workerThreads(6); // TODO: Remove workerThreads configuration when ISPN-5083 implemented
+      return HotRodClientTestingUtil.startHotRodServer(cacheManager, builder);
    }
 
    @Override

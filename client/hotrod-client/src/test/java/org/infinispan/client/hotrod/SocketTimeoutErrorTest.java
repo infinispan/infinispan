@@ -1,31 +1,28 @@
 package org.infinispan.client.hotrod;
 
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.test.TestingUtil.*;
-
-import java.lang.reflect.Method;
-import java.net.SocketTimeoutException;
-import java.util.Properties;
-
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
-import org.infinispan.client.hotrod.impl.ConfigurationProperties;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.marshall.core.JBossMarshaller;
 import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.Method;
+import java.net.SocketTimeoutException;
+
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.infinispan.test.TestingUtil.k;
+import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * Tests the behaviour of the client upon a socket timeout exception
@@ -35,11 +32,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
  * @since 4.2
  */
 @Test(groups = "functional", testName = "client.hotrod.SocketTimeoutErrorTest")
-public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
-
-   protected HotRodServer hotrodServer;
-   protected RemoteCacheManager remoteCacheManager;
-   protected RemoteCache remoteCache;
+public class SocketTimeoutErrorTest extends SingleHotRodServerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
@@ -50,46 +43,38 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
    }
 
    @Override
-   protected void setup() throws Exception {
-      super.setup();
-      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
-      remoteCacheManager = new RemoteCacheManager(getClientProperties());
-      remoteCache = remoteCacheManager.getCache();
+   protected HotRodServer createHotRodServer() {
+      HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
+      builder.workerThreads(6); // TODO: Remove workerThreads configuration when ISPN-5083 implemented
+      return HotRodClientTestingUtil.startHotRodServer(cacheManager, builder);
    }
 
    @Override
-   protected void teardown() {
-      killRemoteCacheManager(remoteCacheManager);
-      killServers(hotrodServer);
-      super.teardown();
-   }
-
-   protected Properties getClientProperties() {
-      Properties props = new Properties();
-      props.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
-      props.setProperty(ConfigurationProperties.SO_TIMEOUT, "3000");
-      props.setProperty("maxActive", "1");
-      props.setProperty("maxTotal", "1");
-      props.setProperty("maxIdle", "1");
-      return props;
+   protected RemoteCacheManager getRemoteCacheManager() {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
+         new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
+      builder.socketTimeout(2000);
+      builder.maxRetries(0);
+      return new RemoteCacheManager(builder.build());
    }
 
    public void testErrorWhileDoingPut(Method m) throws Exception {
-      remoteCache = remoteCacheManager.getCache();
+      RemoteCache<String, Integer> cache = remoteCacheManager.getCache();
 
-      remoteCache.put(k(m), v(m));
-      assert remoteCache.get(k(m)).equals(v(m));
+      cache.put(k(m), 1);
+      assertEquals(1, cache.get(k(m)).intValue());
 
       try {
-         remoteCache.put("FailFailFail", "whatever...");
+         cache.put("FailFailFail", 2);
          Assert.fail("No exception was thrown.");
       } catch (HotRodClientException e) {
          // ignore
          assert e.getCause() instanceof SocketTimeoutException;
       }
 
-      // What counts is that socket timeout exception kicks in, operations
-      // after that do not add anything to the socket timeout test
+      cache.put("dos", 2);
+      assertEquals(2, cache.get("dos").intValue());
    }
 
    public static class TimeoutInducingInterceptor extends CommandInterceptor {

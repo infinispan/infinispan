@@ -92,7 +92,7 @@ object HotRodTestingUtil extends Log {
             cfg
          }
       }
-      builder.host(host).port(port).workerThreads(2)
+      builder.host(host).port(port)
       server.start(builder.build(), manager)
 
       server

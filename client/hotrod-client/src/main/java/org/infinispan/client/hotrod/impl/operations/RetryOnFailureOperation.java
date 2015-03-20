@@ -58,6 +58,9 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
             // Invalidate transport since this exception means that this
             // instance is no longer usable and should be destroyed.
             if (transport != null) {
+               if (log.isTraceEnabled())
+                  log.tracef("Invalidating transport %s as a result of transport exception", transport);
+
                transportFactory.invalidateTransport(
                      te.getServerAddress(), transport);
             }
@@ -85,7 +88,7 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
       String message = "Exception encountered. Retry %d out of %d";
       if (i >= transportFactory.getMaxRetries() || transportFactory.getMaxRetries() < 0) {
          if (!triedCompleteRestart) {
-            log.debug("Cluster might have completely shut down, try resetting transport layer and topology id");
+            log.debug("Cluster might have completely shut down, try resetting transport layer and topology id", e);
             transportFactory.reset(cacheName);
             triedCompleteRestart = true;
             return -1; // reset retry count
