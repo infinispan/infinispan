@@ -1,24 +1,28 @@
 package org.infinispan.jcache.annotation;
 
-import java.lang.annotation.Annotation;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import org.infinispan.cdi.InfinispanExtension;
+import org.infinispan.cdi.InfinispanExtensionEmbedded;
+import org.infinispan.cdi.util.BeanManagerProvider;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.jcache.embedded.JCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 
 import javax.cache.Cache;
 import javax.cache.Caching;
 import javax.cache.annotation.CacheInvocationContext;
 import javax.cache.annotation.CacheResolver;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.spi.CreationalContext;
+import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
-
-import org.infinispan.cdi.InfinispanExtension;
-import org.infinispan.cdi.InfinispanExtensionEmbedded.InstalledCacheManager;
-import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.jcache.embedded.JCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
+import java.lang.annotation.Annotation;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Injected cache resolver for situations where caches and/or cache managers
@@ -35,36 +39,55 @@ public class InjectedCacheResolver implements CacheResolver {
 
    private EmbeddedCacheManager defaultCacheManager;
 
-   private final Map<EmbeddedCacheManager, JCacheManager> jcacheManagers =
-         new HashMap<EmbeddedCacheManager, JCacheManager>();
+   private final Map<EmbeddedCacheManager, JCacheManager> jcacheManagers = new HashMap<>();
    private JCacheManager defaultJCacheManager;
+
+   private EmbeddedCacheManager getDefaultCacheManager() {
+      if (defaultCacheManager == null) {
+         defaultCacheManager = getBeanReference(EmbeddedCacheManager.class);
+      }
+      return defaultCacheManager;
+   }
+
+   private JCacheManager getDefaultJCacheManager() {
+      return defaultJCacheManager;
+   }
+
+   private void setDefaultJCacheManager(final JCacheManager defaultJCacheManager) {
+      this.defaultJCacheManager = defaultJCacheManager;
+   }
 
    // for proxy.
    public InjectedCacheResolver() {
    }
 
    @Inject
-   public void inject(InfinispanExtension extension, BeanManager beanManager) {
-      Set<InstalledCacheManager> installedCacheManagers = extension.getEmbeddedExtension().getInstalledEmbeddedCacheManagers(beanManager);
-      for (InstalledCacheManager installedCacheManager : installedCacheManagers) {
-         JCacheManager jcacheManager = toJCacheManager(installedCacheManager.getCacheManager());
-         if (installedCacheManager.isDefault()) {
-            this.defaultCacheManager = installedCacheManager.getCacheManager();
-            this.defaultJCacheManager = jcacheManager;
-         }
-
+   public InjectedCacheResolver(final InfinispanExtension extension, final BeanManager beanManager) {
+      final Set<InfinispanExtensionEmbedded.InstalledCacheManager> installedCacheManagers = extension.getEmbeddedExtension().getInstalledEmbeddedCacheManagers(beanManager);
+      for (final InfinispanExtensionEmbedded.InstalledCacheManager installedCacheManager : installedCacheManagers) {
+         final JCacheManager jcacheManager = toJCacheManager(installedCacheManager.getCacheManager());
          this.jcacheManagers.put(installedCacheManager.getCacheManager(), jcacheManager);
+      }
+      initializeDefaultCacheManagers();
+   }
+
+   private void initializeDefaultCacheManagers() {
+      if (this.jcacheManagers.containsKey(getDefaultCacheManager())) {
+         setDefaultJCacheManager(this.jcacheManagers.get(getDefaultCacheManager()));
+      } else {
+         setDefaultJCacheManager(toJCacheManager(getDefaultCacheManager()));
+         this.jcacheManagers.put(getDefaultCacheManager(), getDefaultJCacheManager());
       }
    }
 
-   private JCacheManager toJCacheManager(EmbeddedCacheManager cacheManager) {
-      GlobalConfiguration globalCfg = cacheManager.getCacheManagerConfiguration();
-      String name = globalCfg.globalJmxStatistics().cacheManagerName();
+   private JCacheManager toJCacheManager(final EmbeddedCacheManager cacheManager) {
+      final GlobalConfiguration globalCfg = cacheManager.getCacheManagerConfiguration();
+      final String name = globalCfg.globalJmxStatistics().cacheManagerName();
       return new JCacheManager(URI.create(name), cacheManager, Caching.getCachingProvider());
    }
 
    @Override
-   public <K, V> Cache<K, V> resolveCache(CacheInvocationContext<? extends Annotation> cacheInvocationContext) {
+   public <K, V> Cache<K, V> resolveCache(final CacheInvocationContext<? extends Annotation> cacheInvocationContext) {
       Contracts.assertNotNull(cacheInvocationContext, "cacheInvocationContext parameter must not be null");
 
       final String cacheName = cacheInvocationContext.getCacheName();
@@ -76,12 +99,12 @@ public class InjectedCacheResolver implements CacheResolver {
 
       // Iterate on all cache managers because the cache used by the
       // interceptor could use a specific cache manager.
-      for (EmbeddedCacheManager cm : jcacheManagers.keySet()) {
-         Set<String> cacheNames = cm.getCacheNames();
-         for (String name : cacheNames) {
+      for (final EmbeddedCacheManager cm : jcacheManagers.keySet()) {
+         final Set<String> cacheNames = cm.getCacheNames();
+         for (final String name : cacheNames) {
             if (name.equals(cacheName)) {
-               JCacheManager jcacheManager = jcacheManagers.get(cm);
-               Cache<K, V> cache = jcacheManager.getCache(cacheName);
+               final JCacheManager jcacheManager = jcacheManagers.get(cm);
+               final Cache<K, V> cache = jcacheManager.getCache(cacheName);
                if (cache != null)
                   return cache;
 
@@ -97,13 +120,34 @@ public class InjectedCacheResolver implements CacheResolver {
       return getCacheFromDefaultCacheManager(cacheName);
    }
 
-   private <K, V> Cache<K, V> getCacheFromDefaultCacheManager(String cacheName) {
-      Cache<K, V> cache = defaultJCacheManager.getCache(cacheName);
-      if (cache != null)
-         return cache;
+   private <K, V> Cache<K, V> getCacheFromDefaultCacheManager(final String cacheName) {
+      final Configuration defaultInjectedConfiguration = getBeanReference(Configuration.class);
 
-      return defaultJCacheManager.getOrCreateCache(cacheName,
-            defaultCacheManager.<K, V>getCache().getAdvancedCache());
+      getDefaultCacheManager().defineConfiguration(cacheName,
+            defaultInjectedConfiguration);
+
+      return getDefaultJCacheManager().getOrCreateCache(cacheName,
+                                                      getDefaultCacheManager().<K, V>getCache(cacheName).getAdvancedCache());
+   }
+
+   private BeanManager getBeanManager() {
+      return BeanManagerProvider.getInstance().getBeanManager();
+   }
+
+   @SuppressWarnings("unchecked")
+   private <T> T getBeanReference(final Class<T> beanType) {
+      final BeanManager bm = getBeanManager();
+      final Iterator<Bean<?>> iterator = bm.getBeans(beanType).iterator();
+      if (!iterator.hasNext()) {
+         throw new IllegalStateException(String.format(
+               "Default bean of type %s not found.", beanType.getName()));
+      }
+
+      final Bean<?> configurationBean = iterator.next();
+      final CreationalContext<?> createCreationalContext = bm
+            .createCreationalContext(configurationBean);
+      return (T) bm.getReference(configurationBean, beanType,
+            createCreationalContext);
    }
 
 }
