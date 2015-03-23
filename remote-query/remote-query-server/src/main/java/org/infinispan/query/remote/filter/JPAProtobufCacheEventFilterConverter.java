@@ -1,8 +1,8 @@
 package org.infinispan.query.remote.filter;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.ObjectFilter;
@@ -33,8 +33,8 @@ public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFil
    }
 
    @Inject
-   protected void injectDependencies(Cache cache) {
-      serCtx = ProtobufMetadataManager.getSerializationContextInternal(cache.getCacheManager());
+   protected void injectDependencies(EmbeddedCacheManager cacheManager) {
+      serCtx = ProtobufMetadataManager.getSerializationContextInternal(cacheManager);
    }
 
    @Override
