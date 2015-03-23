@@ -147,6 +147,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    private EntryRetriever<K, V> entryRetriever;
    private InternalEntryFactory entryFactory;
    private ClusterEventManager<K, V> eventManager;
+   private ComponentRegistry componentRegistry;
 
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<Object, UUID>();
 
@@ -202,6 +203,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public void start() {
       super.start();
       this.distExecutorService = SecurityActions.getDefaultExecutorService(cache);
+      componentRegistry = cache.getAdvancedCache().getComponentRegistry();
    }
 
    @Override
@@ -924,7 +926,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
 
       private <C> void wireFilterAndConverterDependencies(CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
-         ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
          if (filter != null) {
             componentRegistry.wireDependencies(filter);
          }
