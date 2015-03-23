@@ -571,7 +571,7 @@ operations `get` and `getVersioned` since data can potentially be located
 locally within the Hot Rod client instead of having to go remote.
 
 To enable near caching, the user must decide how to configure the near cache
-to work, either `lazy` or `eager`.
+to work, either `lazy` or `eager`, and define its size:
 
 * Lazy near caching: In lazy mode, near cache is only populated upon retrievals
 from the server via calls to `get` or `getVersioned` operations. When near
@@ -590,6 +590,16 @@ executed, the value is directly fetched from the near cache. The downside of
 eager mode is that it's a more heavyweight mode and hence takes up more
 resources in terms of bandwith.
 
+* Size: When near cache is enabled, its size must be configured by defining
+the maximum number of entries to keep in the near cache. When the maximum is
+reached, near cached entries are evicted using a least-recently-used (LRU)
+algorithm. If providing 0 or a negative value, it is assumed that the near
+cache is unbounded.
+
+WARNING: Users should be careful when configuring near cache to be
+unbounded since it shifts the responsibility to keep the near cache's size
+within the boundaries of the client JVM to the user.
+
 The Hot Rod client's near cache mode is configured using the `NearCacheMode`
 enumeration and calling:
 
@@ -600,27 +610,12 @@ import org.infinispan.client.hotrod.configuration.NearCacheMode;
 ...
 
 // For lazy near caches
-ConfigurationBuilder lazy = new ConfigurationBuilder();
-lazy.nearCache().mode(NearCacheMode.LAZY);
+ConfigurationBuilder lazyUnbounded = new ConfigurationBuilder();
+lazy.nearCache().mode(NearCacheMode.LAZY).maxEntries(-1);
 
 // For eager near caches
-ConfigurationBuilder eager = new ConfigurationBuilder();
-eager.nearCache().mode(NearCacheMode.EAGER);
-----
-
-By default near cache size is unbounded but this can be changed to set a
-maximum size in terms of number of entries for the near cache. When the
-maximum is reached, near cached entries are evicted using a least-recently-used
-(LRU) algorithm. Near cache's maximum size can be configured like this:
-
-[source,java]
-----
-import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
-...
-
-// Sets 100 as the maximum number of entries to keep in the near cache
-ConfigurationBuilder builder = new ConfigurationBuilder();
-builder.nearCache().maxEntries(100);
+ConfigurationBuilder eagerBounded = new ConfigurationBuilder();
+eager.nearCache().mode(NearCacheMode.EAGER).maxEntries(100);
 ----
 
 NOTE: Near caches work the same way for local caches as they do for clustered
