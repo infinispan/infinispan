@@ -6,6 +6,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
+import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
 
 import java.io.IOException;
@@ -18,7 +19,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public class JPACacheEventFilterConverter<K, V, C> extends AbstractCacheEventFilterConverter<K, V, C> {
+public class JPACacheEventFilterConverter<K, V, C> extends AbstractCacheEventFilterConverter<K, V, C> implements IndexedFilter<K, V, C> {
 
    protected final JPAFilterAndConverter<K, V> filterAndConverter;
 

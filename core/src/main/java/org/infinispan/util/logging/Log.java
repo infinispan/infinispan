@@ -1324,4 +1324,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Could not find status for remote transaction %s, please increase transaction.completedTxTimeout", id = 362)
    TimeoutException remoteTransactionStatusMissing(GlobalTransaction gtx);
+
+   @LogMessage(level = WARN)
+   @Message(value = "No indexing service provider found for indexed filter of type %s", id = 363)
+   void noFilterIndexingServiceProviderFound(String filterClassName);
 }

@@ -129,7 +129,7 @@ public class CacheManagerNotifierImpl extends AbstractListenerImpl<Event, Listen
 
    @Override
    public void addListener(Object listener) {
-      validateAndAddListenerInvocation(listener, new DefaultBuilder());
+      validateAndAddListenerInvocations(listener, new DefaultBuilder());
    }
 
    @Override

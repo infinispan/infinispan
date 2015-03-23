@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import java.lang.annotation.Annotation;
 import java.util.UUID;
 
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -24,6 +25,8 @@ public interface CacheEntryListenerInvocation<K, V> extends ListenerInvocation<E
    boolean isSync();
 
    UUID getIdentifier();
+
+   Class<? extends Annotation> getAnnotation();
 
    CacheEventFilter<? super K, ? super V> getFilter();
 

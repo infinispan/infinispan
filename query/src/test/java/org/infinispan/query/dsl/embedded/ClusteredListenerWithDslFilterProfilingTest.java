@@ -6,9 +6,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -36,7 +34,6 @@ public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheMa
    }
 
    public void testEventFilterPerformance() {
-      long startTs = System.nanoTime();
       QueryFactory qf = Search.getQueryFactory(cache(0));
 
       Query query = qf.from(Person.class)
@@ -52,6 +49,7 @@ public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheMa
          cache(0).addListener(listener, Search.makeFilter(query), null);
       }
 
+      long startTs = System.nanoTime();
       for (int i = 0; i < numEntries; ++i) {
          Person value = new Person();
          value.setName("John");
@@ -61,13 +59,13 @@ public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheMa
          Object key = new MagicKey(cache);
          cache.put(key, value);
       }
+      long endTs = System.nanoTime();
 
       for (NoOpEntryListener listener : listeners) {
          cache(0).removeListener(listener);
       }
-      long endTs = System.nanoTime();
 
-      System.out.printf("ClusteredListenerWithDslFilterTest.testEventFilterPerformance took %d ms\n", (endTs - startTs) / 1000000);
+      log.infof("ClusteredListenerWithDslFilterProfilingTest.testEventFilterPerformance took %d ms\n", (endTs - startTs) / 1000000);
    }
 
    @Listener(clustered = true)
@@ -75,10 +73,6 @@ public class ClusteredListenerWithDslFilterProfilingTest extends MultipleCacheMa
 
       @CacheEntryCreated
       public void handleEvent(CacheEntryCreatedEvent<?, ?> event) {
-      }
-
-      @CacheEntryModified
-      public void handleEvent(CacheEntryModifiedEvent<?, ?> event) {
       }
    }
 }
