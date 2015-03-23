@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
@@ -508,7 +507,7 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
-   public void addListener(Object listener, KeyFilter filter) {
+   public void addListener(Object listener, KeyFilter<? super K> filter) {
       cacheImplementation.notifier.addListener(listener, filter, classLoader.get());
    }
 
@@ -541,7 +540,6 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    public CacheEntry getCacheEntry(K key) {
       return cacheImplementation.getCacheEntry(key, flags, classLoader.get());
    }
-
 
    @Override
    public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {

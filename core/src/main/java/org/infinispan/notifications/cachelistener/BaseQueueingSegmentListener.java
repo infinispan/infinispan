@@ -1,7 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

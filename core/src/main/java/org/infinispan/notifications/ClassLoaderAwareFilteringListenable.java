@@ -1,8 +1,6 @@
 package org.infinispan.notifications;
 
-import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 
