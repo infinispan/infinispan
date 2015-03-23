@@ -6,14 +6,11 @@ import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;

@@ -6,7 +6,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
-import org.hibernate.search.exception.SearchException;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchIntegrator;

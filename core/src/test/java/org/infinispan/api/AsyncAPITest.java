@@ -2,7 +2,6 @@ package org.infinispan.api;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
-import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;

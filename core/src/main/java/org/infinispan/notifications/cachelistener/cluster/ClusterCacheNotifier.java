@@ -3,10 +3,8 @@ package org.infinispan.notifications.cachelistener.cluster;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
-import org.infinispan.notifications.cachelistener.event.Event;
 
 import java.util.Collection;
-import java.util.Set;
 import java.util.UUID;
 
 /**

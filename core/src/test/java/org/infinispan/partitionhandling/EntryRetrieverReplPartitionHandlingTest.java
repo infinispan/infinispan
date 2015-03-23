@@ -3,7 +3,6 @@ package org.infinispan.partitionhandling;
 import org.infinispan.configuration.cache.CacheMode;
 import org.testng.annotations.Test;
 
-import static org.testng.AssertJUnit.fail;
 
 /**
  * Tests to make sure that entry retriever pays attention to partition status

@@ -5,15 +5,12 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.marshall.core.Ids;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;

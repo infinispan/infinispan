@@ -103,6 +103,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    protected ExecutorService asyncProcessor;
 
    @Inject
+   @SuppressWarnings("unused")
    void injectExecutor(@ComponentName(KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR) ExecutorService executor) {
       this.asyncProcessor = executor;
    }
@@ -116,6 +117,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
     * Removes all listeners from the notifier
     */
    @Stop(priority = 99)
+   @SuppressWarnings("unused")
    void stop() {
       for (List<L> list : listenersMap.values()) {
          if (list != null) list.clear();
@@ -143,8 +145,8 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    private void removeListenerInvocation(Class<? extends Annotation> annotation, Object listener) {
       if (listener == null) return;
       List<L> l = getListenerCollectionForAnnotation(annotation);
-      Set<ListenerInvocation> markedForRemoval = new HashSet<ListenerInvocation>(4);
-      for (ListenerInvocation li : l) {
+      Set<L> markedForRemoval = new HashSet<L>(4);
+      for (L li : l) {
          if (listener.equals(li.getTarget())) markedForRemoval.add(li);
       }
       l.removeAll(markedForRemoval);
@@ -166,6 +168,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
     *
     * @param listener object to be considered as a listener.
     * @param builder The builder to use to build the invocation
+    * @return {@code true} if annotated listener methods were found or {@code false} otherwise
     */
    protected boolean validateAndAddListenerInvocation(Object listener, AbstractInvocationBuilder builder) {
       Listener l = testListenerClassValidity(listener.getClass());
@@ -212,7 +215,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
    protected static Listener testListenerClassValidity(Class<?> listenerClass) {
       Listener l = ReflectionUtil.getAnnotation(listenerClass, Listener.class);
       if (l == null)
-         throw new IncorrectListenerException(String.format("Cache listener class %s must be annotated with org.infinispan.notifications.annotation.Listener", listenerClass.getName()));
+         throw new IncorrectListenerException(String.format("Cache listener class %s must be annotated with org.infinispan.notifications.Listener", listenerClass.getName()));
       return l;
    }
 
@@ -254,7 +257,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
             public void run() {
                ClassLoader contextClassLoader = null;
                Transaction transaction = suspendIfNeeded();
-               if (classLoader != null && classLoader.get() != null) {
+               if (classLoader.get() != null) {
                   contextClassLoader = SecurityActions.setContextClassLoader(classLoader.get());
                }
                try {
@@ -292,7 +295,7 @@ public abstract class AbstractListenerImpl<T, L extends ListenerInvocation<T>> {
                   getLog().unableToInvokeListenerMethodAndRemoveListener(method, target, exception);
                   removeListener(target);
                } finally {
-                  if (classLoader != null && classLoader.get() != null) {
+                  if (classLoader.get() != null) {
                      SecurityActions.setContextClassLoader(contextClassLoader);
                   }
                   resumeIfNeeded(transaction);
