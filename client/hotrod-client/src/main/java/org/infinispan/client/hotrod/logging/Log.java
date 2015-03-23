@@ -183,4 +183,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = ERROR)
    @Message(value = "Unable to read %s bytes %s", id = 4044)
    void unableToUnmarshallBytesError(String element, String bytes, @Cause Exception e);
+
+   @Message(value = "When enabling near caching, number of max entries must be configured", id = 4045)
+   CacheConfigurationException nearCacheMaxEntriesUndefined();
 }
