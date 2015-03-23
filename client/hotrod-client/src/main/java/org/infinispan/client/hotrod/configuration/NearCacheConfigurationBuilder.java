@@ -1,11 +1,15 @@
 package org.infinispan.client.hotrod.configuration;
 
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 
 public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBuilder
       implements Builder<NearCacheConfiguration> {
+   private static final Log log = LogFactory.getLog(NearCacheConfigurationBuilder.class);
+
    private NearCacheMode mode = NearCacheMode.DISABLED;
-   private int maxEntries = -1;
+   private Integer maxEntries = null; // undefined
 
    protected NearCacheConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
@@ -23,12 +27,13 @@ public class NearCacheConfigurationBuilder extends AbstractConfigurationChildBui
 
    @Override
    public void validate() {
-      // No-op
+      if (mode.enabled() && maxEntries == null)
+         throw log.nearCacheMaxEntriesUndefined();
    }
 
    @Override
    public NearCacheConfiguration create() {
-      return new NearCacheConfiguration(mode, maxEntries);
+      return new NearCacheConfiguration(mode, maxEntries == null ? -1 : maxEntries.intValue());
    }
 
    @Override

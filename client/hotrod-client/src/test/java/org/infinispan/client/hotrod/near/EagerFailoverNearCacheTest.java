@@ -44,7 +44,7 @@ public class EagerFailoverNearCacheTest extends MultiHotRodServersTest {
       for (HotRodServer server : servers)
          clientBuilder.addServer().host("127.0.0.1").port(server.getPort());
       clientBuilder.balancingStrategy(StickyServerLoadBalancingStrategy.class);
-      clientBuilder.nearCache().mode(getNearCacheMode());
+      clientBuilder.nearCache().mode(getNearCacheMode()).maxEntries(-1);
       return AssertsNearCache.create(this.<byte[], Object>cache(0), clientBuilder);
    }
 
