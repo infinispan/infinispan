@@ -82,6 +82,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    protected PersistenceManager persistenceManager;
    protected ExecutorService executorService;
    protected Cache<K, V> cache;
+   protected ComponentRegistry componentRegistry;
    protected TimeService timeService;
    protected InternalEntryFactory entryFactory;
    protected Equivalence<K> keyEquivalence;
@@ -95,16 +96,16 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    public void inject(DataContainer<K, V> dataContainer, PersistenceManager persistenceManager,
                       @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService executorService,
                       TimeService timeService, InternalEntryFactory entryFactory, Cache<K, V> cache,
-                      Configuration config) {
+                      Configuration config, ComponentRegistry componentRegistry) {
       this.dataContainer = dataContainer;
       this.persistenceManager = persistenceManager;
       this.executorService = executorService;
       this.timeService = timeService;
       this.entryFactory = entryFactory;
       this.cache = cache;
-
       this.passivationEnabled = config.persistence().passivation();
       this.keyEquivalence = config.dataContainer().keyEquivalence();
+      this.componentRegistry = componentRegistry;
    }
 
    @Start
@@ -158,7 +159,6 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    }
 
    protected <C> void wireFilterAndConverterDependencies(KeyValueFilter<? super K, ? super V> filter, Converter<? super K, ? super V, C> converter) {
-      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       if (filter != null) {
          componentRegistry.wireDependencies(filter);
       }
