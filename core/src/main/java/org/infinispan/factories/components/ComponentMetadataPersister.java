@@ -171,7 +171,13 @@ public class ComponentMetadataPersister extends ComponentMetadataRepo {
    }
 
    private static void writeMetadata(String metadataFile) throws IOException {
-      FileOutputStream fileOutputStream = new FileOutputStream(metadataFile);
+      File file = new File(metadataFile);
+      File parent = file.getParentFile();
+      if(!parent.exists() && !parent.mkdirs()){
+         throw new IllegalStateException("Couldn't create dir: " + parent);
+      }
+
+      FileOutputStream fileOutputStream = new FileOutputStream(file);
       BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(fileOutputStream);
       ObjectOutputStream objectOutputStream = new ObjectOutputStream(bufferedOutputStream);
       objectOutputStream.writeObject(repo.componentMetadataMap);
