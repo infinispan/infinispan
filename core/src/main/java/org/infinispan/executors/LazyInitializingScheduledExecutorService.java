@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * A delegating scheduled executor that lazily constructs and initalizes the underlying scheduled executor, since
+ * A delegating scheduled executor that lazily constructs and initializes the underlying scheduled executor, since
  * unused JDK executors are expensive.
  *
  * @author Manik Surtani
@@ -24,11 +24,11 @@ import java.util.concurrent.TimeoutException;
 public class LazyInitializingScheduledExecutorService implements ScheduledExecutorService {
 
    private volatile ScheduledExecutorService delegate;
-   private final ThreadPoolExecutorFactory executorFactory;
+   private final ThreadPoolExecutorFactory<ScheduledExecutorService> executorFactory;
    private final ThreadFactory threadFactory;
 
    public LazyInitializingScheduledExecutorService(
-         ThreadPoolExecutorFactory executorFactory, ThreadFactory threadFactory) {
+         ThreadPoolExecutorFactory<ScheduledExecutorService> executorFactory, ThreadFactory threadFactory) {
       this.executorFactory = executorFactory;
       this.threadFactory = threadFactory;
    }
