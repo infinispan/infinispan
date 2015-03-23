@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
+import org.infinispan.commons.CacheConfigurationException;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "client.hotrod.near.EagerNearCacheTest")
@@ -25,7 +26,7 @@ public class EagerNearCacheTest extends SingleHotRodServerTest {
    protected <K, V> AssertsNearCache<K, V> createClient() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      builder.nearCache().mode(getNearCacheMode());
+      builder.nearCache().mode(getNearCacheMode()).maxEntries(-1);
       return AssertsNearCache.create(this.<byte[], Object>cache(), builder);
    }
 
@@ -41,7 +42,7 @@ public class EagerNearCacheTest extends SingleHotRodServerTest {
       cache.put(1, "one");
       cache.put(2, "two");
       
-      builder.nearCache().mode(getNearCacheMode());
+      builder.nearCache().mode(getNearCacheMode()).maxEntries(-1);
       assertClient = AssertsNearCache.create(this.<byte[], Object>cache(), builder);
       
       assertEquals(2, assertClient.remote.size());
@@ -89,6 +90,15 @@ public class EagerNearCacheTest extends SingleHotRodServerTest {
             newAsserts.get(1, "v1").expectNearGetNull(1).expectNearPutIfAbsent(1, "v1");
          }
       });
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class,
+      expectedExceptionsMessageRegExp = ".*When enabling near caching, number of max entries must be configured.*")
+   public void testConfigurationWithoutMaxEntries() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
+      builder.nearCache().mode(getNearCacheMode());
+      new RemoteCacheManager(builder.build());
    }
 
 }
