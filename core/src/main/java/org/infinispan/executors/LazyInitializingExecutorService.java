@@ -23,11 +23,11 @@ import java.util.concurrent.TimeoutException;
 public final class LazyInitializingExecutorService implements ExecutorService {
 
    private volatile ExecutorService delegate;
-   private final ThreadPoolExecutorFactory executorFactory;
+   private final ThreadPoolExecutorFactory<ExecutorService> executorFactory;
    private final ThreadFactory threadFactory;
 
    public LazyInitializingExecutorService(
-         ThreadPoolExecutorFactory executorFactory, ThreadFactory threadFactory) {
+         ThreadPoolExecutorFactory<ExecutorService> executorFactory, ThreadFactory threadFactory) {
       this.executorFactory = executorFactory;
       this.threadFactory = threadFactory;
    }

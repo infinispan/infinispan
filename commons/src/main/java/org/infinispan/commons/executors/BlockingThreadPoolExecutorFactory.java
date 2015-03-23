@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Galder Zamarreño
  */
-public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFactory {
+public class BlockingThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ExecutorService> {
 
    private static final Log log = LogFactory.getLog(BlockingThreadPoolExecutorFactory.class);
 

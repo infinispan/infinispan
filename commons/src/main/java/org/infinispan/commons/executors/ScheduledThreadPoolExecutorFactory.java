@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadFactory;
 /**
  * @author Galder Zamarreño
  */
-public class ScheduledThreadPoolExecutorFactory implements ThreadPoolExecutorFactory {
+public class ScheduledThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ScheduledExecutorService> {
 
    private static final ScheduledThreadPoolExecutorFactory INSTANCE = new ScheduledThreadPoolExecutorFactory();
 

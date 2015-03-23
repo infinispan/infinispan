@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadFactory;
 /**
  * @author Galder Zamarreño
  */
-public class CachedThreadPoolExecutorFactory implements ThreadPoolExecutorFactory {
+public class CachedThreadPoolExecutorFactory implements ThreadPoolExecutorFactory<ExecutorService> {
 
    private static final CachedThreadPoolExecutorFactory INSTANCE = new CachedThreadPoolExecutorFactory();
 

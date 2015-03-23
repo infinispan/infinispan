@@ -6,9 +6,9 @@ import java.util.concurrent.ThreadFactory;
 /**
  * @author Galder Zamarreño
  */
-public interface ThreadPoolExecutorFactory {
+public interface ThreadPoolExecutorFactory<T extends ExecutorService> {
 
-   <T extends ExecutorService> T createExecutor(ThreadFactory factory);
+   T createExecutor(ThreadFactory factory);
 
    /**
     * Validate parameters for the thread pool executor factory
