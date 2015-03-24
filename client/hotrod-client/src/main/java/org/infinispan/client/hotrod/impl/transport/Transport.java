@@ -67,4 +67,6 @@ public interface Transport {
     */
    void invalidate();
 
+   boolean isValid();
+
 }

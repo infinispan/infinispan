@@ -264,6 +264,10 @@ public class ClientListenerNotifier {
                   log.unexpectedErrorConsumingEvent(clientEvent, t);
                else
                   log.unableToReadEventFromServer(t, transport.getRemoteSocketAddress());
+               if (!transport.isValid()) {
+                  stopped = true;
+                  return;
+               }
             }
          }
       }
