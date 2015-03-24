@@ -51,17 +51,15 @@ public class StringBasedStoreMultinodeIT extends AbstractJdbcStoreMultinodeIT {
             mc1.set("k2", "v2");
             mc1.set("k3", "v3");
             assertNotNull(dbServer1.stringTable.getValueByKey("k1"));
+            
             startContainer(controller, CONTAINER2, CONFIG_FETCH_STATE_2);
             mc2 = createMemcachedClient(server2);
-            assertTrue(0 < server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
-            //the cache store should fetch state from the others
-            //since eviction.max-entries==2, first k2 and k3 is loaded from the other cache, then k1 is loaded
-            //from the other cache's loader and thus k2 is evicted and ends up in a cache loader
-            assertNull(dbServer2.stringTable.getValueByKey("k1"));
-            assertEquals("v1", mc2.get("k1"));
-            assertEquals("v2", mc2.get("k2"));
-            assertNull(dbServer2.stringTable.getValueByKey("k1"));
-            assertNull(dbServer2.stringTable.getValueByKey("k2"));
+            assertEquals(2, server2.getCacheManager(MANAGER_NAME).getCache(CACHE_NAME).getNumberOfEntries());
+            assertEquals(1, dbServer2.stringTable.getAllKeys().size());
+            
+            String evictedKey = dbServer2.stringTable.getAllKeys().get(0);
+            assertEquals("v" + evictedKey.charAt(1), mc2.get(evictedKey));
+            assertNull(dbServer2.stringTable.getValueByKey(evictedKey));
             assertCleanCacheAndStore2();
         } finally {
             controller.stop(CONTAINER2);
