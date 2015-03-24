@@ -294,6 +294,7 @@ public class TcpTransport extends AbstractTransport {
       }
    }
 
+   @Override
    public boolean isValid() {
       return !socket.isClosed() && !invalid;
    }
