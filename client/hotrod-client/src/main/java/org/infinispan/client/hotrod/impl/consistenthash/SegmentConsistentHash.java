@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Util;
@@ -12,6 +14,8 @@ import java.util.Set;
  * @author Galder Zamarreño
  */
 public final class SegmentConsistentHash implements ConsistentHash {
+
+   private static final Log log = LogFactory.getLog(SegmentConsistentHash.class);
 
    private final Hash hash = MurmurHash3.getInstance();
    private SocketAddress[][] segmentOwners;
@@ -30,6 +34,9 @@ public final class SegmentConsistentHash implements ConsistentHash {
    @Override
    public SocketAddress getServer(byte[] key) {
       int segmentId = getSegment(key);
+      if (log.isTraceEnabled())
+         log.tracef("Find server in segment id %s for key %s", segmentId, Util.toHexString(key));
+
       return segmentOwners[segmentId][0];
    }
 
