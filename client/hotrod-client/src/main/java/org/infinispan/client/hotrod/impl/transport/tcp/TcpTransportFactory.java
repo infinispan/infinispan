@@ -306,7 +306,7 @@ public class TcpTransportFactory implements TransportFactory {
             log.tracef("Removed servers: %s", failedServers);
          }
 
-         if (failedServers.isEmpty() && newServers.isEmpty()) {
+         if (failedServers.isEmpty() && addedServers.isEmpty()) {
             log.debug("Same list of servers, not changing the pool");
             return;
          }

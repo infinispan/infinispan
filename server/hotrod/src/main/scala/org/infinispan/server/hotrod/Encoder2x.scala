@@ -133,11 +133,18 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          for (segmentId <- 0 until numSegments) {
             val owners = ch.locateOwnersForSegment(segmentId).filter(members.contains)
             val numOwnersToSend = Math.min(2, owners.size)
-            buf.writeByte(numOwnersToSend)
-            owners.take(numOwnersToSend).foreach { ownerAddr =>
-               indexedMembers.get(ownerAddr) match {
-                  case Some(index) => writeUnsignedInt(index, buf)
-                  case None => // Do not add to indexes
+            if (numOwnersToSend == 0) {
+               // When sending partial updates, number of owners could be 0,
+               // in which case just take the first member in the list.
+               buf.writeByte(1)
+               writeUnsignedInt(0, buf)
+            } else {
+               buf.writeByte(numOwnersToSend)
+               owners.take(numOwnersToSend).foreach { ownerAddr =>
+                  indexedMembers.get(ownerAddr) match {
+                     case Some(index) => writeUnsignedInt(index, buf)
+                     case None => // Do not add to indexes
+                  }
                }
             }
          }
@@ -183,14 +190,23 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       val serverEndpoints = addressCache.toMap
 
       var topologyId = currentTopologyId
+      val isTrace = isTraceEnabled
+
+      if (isTrace) {
+         tracef("Check for partial topologies: members=%s, endpoints=%s, client-topology=%s, server-topology=%s",
+            cacheMembers, serverEndpoints, r.topologyId, topologyId)
+      }
+
       if (!serverEndpoints.keySet.containsAll(cacheMembers)) {
          // At least one cache member is missing from the topology cache
          val clientTopologyId = r.topologyId
          if (currentTopologyId - clientTopologyId < 2) {
+            if (isTrace) trace("Postpone topology update")
             return None // Postpone topology update
          } else {
             // Send partial topology update
             topologyId -= 1
+            if (isTrace) trace("Send partial topology update with topology id %s", topologyId)
          }
       }
 

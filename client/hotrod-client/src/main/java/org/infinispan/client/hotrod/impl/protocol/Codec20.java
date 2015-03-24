@@ -392,6 +392,9 @@ public class Codec20 implements Codec, HotRodConstants {
          if (trace)
             localLog.trace("Not using a consistent hash function (hash function version == 0).");
       } else {
+         if (trace)
+            localLog.tracef("Updating client hash function with %s number of segments", numSegments);
+
          transport.getTransportFactory().updateHashFunction(segmentOwners, numSegments, hashFunctionVersion, cacheName);
       }
    }
