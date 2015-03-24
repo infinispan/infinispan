@@ -1,0 +1,36 @@
+<project name="infinispan-remote" default="prepare-server">
+    <taskdef resource="net/sf/antcontrib/antlib.xml" classpath="${test_classpath}" />
+
+    <target name="prepare-server" description="Unpack infinispan server distribution">
+
+        <echo message="Creating test server distro at ${server1.dist}"/>
+        <if>
+            <equals arg1="${zip.dist}" arg2="false"/>
+            <then>
+                <echo message="Using distribution ${server.build.dist}"/>
+                <copy todir="${server1.dist}">
+                    <fileset dir="${server.build.dist}"/>
+                </copy>
+            </then>
+            <else>
+                <echo message="Using file ${zip.dist}"/>
+                <unzip src="${zip.dist}" dest="${server1.dist}-tmp"/>
+                <for param="file">
+                    <path>
+                        <fileset dir="${server1.dist}-tmp" includes="**/jboss-modules.jar"/>
+                    </path>
+                    <sequential>
+                        <propertyregex override="yes" property="dir.in.zip" input="@{file}"
+                                       regexp=".*[/\\]([^/\\]*)[/\\]jboss-modules\.jar" replace="\1"/>
+                    </sequential>
+                </for>
+                <move file="${server1.dist}-tmp/${dir.in.zip}" tofile="${server1.dist}"/>
+                <delete dir="${server1.dist}-tmp"/>
+            </else>
+        </if>
+
+        <copy file="${resources.dir}/clustered-indexing.xml"
+              tofile="${server1.dist}/standalone/configuration/clustered-indexing.xml"/>
+
+    </target>
+</project>

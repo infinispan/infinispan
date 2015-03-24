@@ -1,63 +1,180 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-   <modelVersion>4.0.0</modelVersion>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+         xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
 
-   <parent>
-      <groupId>org.infinispan</groupId>
-      <artifactId>infinispan-integrationtests-parent</artifactId>
-      <version>7.2.0-SNAPSHOT</version>
-   </parent>
+    <parent>
+        <groupId>org.infinispan</groupId>
+        <artifactId>infinispan-bom</artifactId>
+        <version>7.2.0-SNAPSHOT</version>
+        <relativePath>../../bom/pom.xml</relativePath>
+    </parent>
 
-   <artifactId>infinispan-remote-it</artifactId>
-   <name>Infinispan Remote Client Integration Tests</name>
-   <description>Infinispan Remote Client All-in-One module Integration Tests</description>
+    <artifactId>infinispan-remote-it</artifactId>
+    <name>Infinispan Remote Client Integration Tests</name>
+    <description>Infinispan Remote Client All-in-One module Integration Tests</description>
 
-   <dependencyManagement>
-      <dependencies>
-         <dependency>
-            <groupId>org.jboss.arquillian</groupId>
-            <artifactId>arquillian-bom</artifactId>
-            <version>1.1.5.Final</version>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.jboss.arquillian</groupId>
+                <artifactId>arquillian-bom</artifactId>
+                <version>1.1.5.Final</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-remote</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-embedded</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.spec</groupId>
+            <artifactId>jboss-javaee-6.0</artifactId>
+            <version>1.0.0.Final</version>
             <type>pom</type>
-            <scope>import</scope>
-         </dependency>
-      </dependencies>
-   </dependencyManagement>
+            <scope>provided</scope>
+        </dependency>
 
-   <dependencies>
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote</artifactId>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.spec</groupId>
-         <artifactId>jboss-javaee-6.0</artifactId>
-         <version>1.0.0.Final</version>
-         <type>pom</type>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>junit</groupId>
-         <artifactId>junit</artifactId>
-         <version>4.11</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.weld</groupId>
-         <artifactId>weld-core</artifactId>
-         <version>1.1.13.Final</version>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.arquillian.junit</groupId>
-         <artifactId>arquillian-junit-container</artifactId>
-         <scope>test</scope>
-      </dependency>
-      <dependency>
-         <groupId>org.jboss.arquillian.container</groupId>
-         <artifactId>arquillian-weld-ee-embedded-1.1</artifactId>
-         <version>1.0.0.CR8</version>
-         <scope>test</scope>
-      </dependency>
-   </dependencies>
+        <dependency>
+            <groupId>javax.cache</groupId>
+            <artifactId>cache-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.weld.se</groupId>
+            <artifactId>weld-se</artifactId>
+            <version>1.1.13.Final</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.protocol</groupId>
+            <artifactId>arquillian-protocol-servlet</artifactId>
+            <version>1.0.0.CR5</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.junit</groupId>
+            <artifactId>arquillian-junit-container</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-arquillian-container-managed</artifactId>
+            <version>8.1.0.Final</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jboss.logmanager</groupId>
+                    <artifactId>jboss-logmanager</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jboss.logmanager</groupId>
+                    <artifactId>log4j-jboss-logmanager</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- for antrun plugin to be able to work with IFs -->
+        <dependency>
+            <groupId>ant-contrib</groupId>
+            <artifactId>ant-contrib</artifactId>
+            <version>1.0b3</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>ant</groupId>
+                    <artifactId>ant</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant-nodeps</artifactId>
+            <version>1.8.1</version>
+        </dependency>
+    </dependencies>
+
+    <properties>
+        <server.jvm>${env.JAVA_HOME}</server.jvm>
+        <zip.dist>false</zip.dist>
+        <server.build.dist>${basedir}/../../server/integration/build/target/infinispan-server-${project.version}</server.build.dist>
+        <server1.dist>${basedir}/target/node0</server1.dist>
+        <node0.ip>127.0.0.1</node0.ip>
+        <jvm.memory.args>-Xmx512m -XX:MaxPermSize=128m</jvm.memory.args>
+        <jvm.x64.args/>
+        <default.transport.stack>udp</default.transport.stack>
+        <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
+        <hotrod.protocol.version/>
+        <mcast.ip>234.99.54.14</mcast.ip>
+        <jvm.ip.stack>-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false
+            -Djboss.default.multicast.address=${mcast.ip}
+        </jvm.ip.stack>
+        <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
+        <log4j.configuration>log4j.xml</log4j.configuration>
+
+        <resources.dir>${basedir}/src/test/resources</resources.dir>
+    </properties>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <id>id.generate.test.resources</id>
+                        <phase>generate-test-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <ant antfile="build.xml" inheritRefs="true" target="prepare-server">
+                                    <property name="test_classpath" refid="maven.test.classpath" />
+                                    <property name="zip.dist" value="${zip.dist}" />
+                                </ant>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skipTests>false</skipTests>
+                    <systemPropertyVariables>
+                        <arquillian.launch>infinispan-remote-arquillian-group</arquillian.launch>
+                        <server.jvm>${server.jvm}</server.jvm>
+                        <node0.ip>${node0.ip}</node0.ip>
+                        <server1.dist>${server1.dist}</server1.dist>
+                        <server.jvm>${server.jvm}</server.jvm>
+                        <server.jvm.args>${server.jvm.args}</server.jvm.args>
+                        <hotrod.protocol.version>${hotrod.protocol.version}</hotrod.protocol.version>
+                        <log4j.configuration>${log4j.configuration}</log4j.configuration>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
