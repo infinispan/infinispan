@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod;
 
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
@@ -41,19 +42,19 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       props.put("infinispan.client.hotrod.ping_on_startup", "true");
 
       withRemoteCacheManager(new RemoteCacheManagerCallable(
-            new RemoteCacheManager(props)) {
+            new InternalRemoteCacheManager(props)) {
          @Override
          public void call() {
-            TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory)
-                  TestingUtil.extractField(rcm, "transportFactory");
+            TcpTransportFactory tcpTransportFactory =
+                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
             for (int i = 0; i < 10; i++) {
-               if (tcpConnectionFactory.getServers().size() == 1) {
+               if (tcpTransportFactory.getServers().size() == 1) {
                   TestingUtil.sleepThread(1000);
                } else {
                   break;
                }
             }
-            assertEquals(2, tcpConnectionFactory.getServers().size());
+            assertEquals(2, tcpTransportFactory.getServers().size());
          }
       });
    }
@@ -66,12 +67,12 @@ public class PingOnStartupTest extends MultiHotRodServersTest {
       props.put("infinispan.client.hotrod.ping_on_startup", "false");
 
       withRemoteCacheManager(new RemoteCacheManagerCallable(
-            new RemoteCacheManager(props)) {
+            new InternalRemoteCacheManager(props)) {
          @Override
          public void call() {
-            TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory)
-                  TestingUtil.extractField(rcm, "transportFactory");
-            assertEquals(1, tcpConnectionFactory.getServers().size());
+            TcpTransportFactory tcpTransportFactory =
+                  (TcpTransportFactory) ((InternalRemoteCacheManager) rcm).getTransportFactory();
+            assertEquals(1, tcpTransportFactory.getServers().size());
          }
       });
    }

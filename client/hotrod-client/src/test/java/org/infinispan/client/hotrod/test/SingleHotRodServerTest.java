@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.test;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -39,7 +40,7 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
    protected RemoteCacheManager getRemoteCacheManager() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      return new RemoteCacheManager(builder.build());
+      return new InternalRemoteCacheManager(builder.build());
    }
 
    @AfterClass

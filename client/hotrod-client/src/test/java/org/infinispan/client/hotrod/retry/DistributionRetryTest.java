@@ -6,6 +6,7 @@ import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.affinity.KeyGenerator;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -114,7 +115,7 @@ public class DistributionRetryTest extends AbstractRetryTest {
 
       remoteCache.put(key, "v");
       assertOnlyServerHit(getAddress(hotRodServer2));
-      TcpTransportFactory tcpTp = TestingUtil.extractField(remoteCacheManager, "transportFactory");
+      TcpTransportFactory tcpTp = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
 
       Marshaller sm = new JBossMarshaller();
       TcpTransport transport = (TcpTransport) tcpTp.getTransport(sm.objectToByteBuffer(key, 64), null, RemoteCacheManager.cacheNameBytes());

@@ -5,6 +5,8 @@ import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.tcp.FailoverRequestBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -192,7 +194,7 @@ public class HotRodClientTestingUtil {
       builder.addServer()
             .host(server.getHost())
             .port(server.getPort());
-      return new RemoteCacheManager(builder.build());
+      return new InternalRemoteCacheManager(builder.build());
 
    }
 
@@ -257,9 +259,15 @@ public class HotRodClientTestingUtil {
    }
 
    public static <T extends FailoverRequestBalancingStrategy> T getLoadBalancer(RemoteCacheManager client) {
-      TcpTransportFactory transportFactory = TestingUtil.extractField(client, "transportFactory");
-      return (T) transportFactory.getBalancer(RemoteCacheManager.cacheNameBytes());
+      TcpTransportFactory transportFactory = null;
+      if (client instanceof InternalRemoteCacheManager) {
+         transportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) client).getTransportFactory();
+      } else {
+         transportFactory = TestingUtil.extractField(client, "transportFactory");
+      }
+      return (T) transportFactory.getBalancer(HotRodConstants.DEFAULT_CACHE_NAME_BYTES);
    }
+
 
    public static void findServerAndKill(RemoteCacheManager client,
          Collection<HotRodServer> servers, Collection<EmbeddedCacheManager> cacheManagers) {
