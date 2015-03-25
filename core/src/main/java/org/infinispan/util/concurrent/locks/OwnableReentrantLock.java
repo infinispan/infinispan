@@ -1,11 +1,10 @@
 package org.infinispan.util.concurrent.locks;
 
-import net.jcip.annotations.ThreadSafe;
-import org.infinispan.transaction.xa.GlobalTransaction;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
 import java.util.concurrent.locks.Lock;
+
+import net.jcip.annotations.ThreadSafe;
 
 /**
  * A lock that supports reentrancy based on owner (and not on current thread).  For this to work, the lock needs to be
@@ -27,7 +26,10 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
 
    private static final long serialVersionUID = 4932974734462848792L;
    private transient Object owner;
-   private final ThreadLocal<Object> requestorOnStack = new ThreadLocal<Object>();
+   // Since the requestorOnStack is always used only during lock() call and this is not
+   // recursive, we can make this static and don't need to allocate TL variable for each
+   // request anew.
+   private final static ThreadLocal<Object> requestorOnStack = new ThreadLocal<Object>();
 
    /**
     * @return a GlobalTransaction instance if the current call is participating in a transaction, or the current thread
@@ -40,6 +42,7 @@ public class OwnableReentrantLock extends AbstractQueuedSynchronizer implements 
    }
 
    private void setCurrentRequestor(Object requestor) {
+      assert requestorOnStack.get() == null;
       requestorOnStack.set(requestor);
    }
 

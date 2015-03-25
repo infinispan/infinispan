@@ -1,8 +1,8 @@
 package org.infinispan.util.concurrent.locks;
 
-import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import org.infinispan.util.concurrent.locks.containers.OwnableReentrantPerEntryLockContainer;
 
 /**
  * A version of {@link OwnableReentrantLock} that has a reference counter, and implements {@link RefCountingLock}.
@@ -13,15 +13,24 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @see OwnableReentrantPerEntryLockContainer
  */
 public class OwnableRefCountingReentrantLock extends OwnableReentrantLock implements RefCountingLock {
-   private final AtomicInteger references = new AtomicInteger(1);
+   private final static AtomicIntegerFieldUpdater<OwnableRefCountingReentrantLock> updater
+         = AtomicIntegerFieldUpdater.newUpdater(OwnableRefCountingReentrantLock.class, "references");
+
+   private volatile int references = 1;
 
    @Override
-   public AtomicInteger getReferenceCounter() {
-      return references;
+   public int incrementRefCountAndGet() {
+      return updater.incrementAndGet(this);
+   }
+
+   @Override
+   public int decrementRefCountAndGet() {
+      return updater.decrementAndGet(this);
    }
 
    @Override
    public String toString() {
-      return super.toString() + "[References: "+references.toString()+"]";
+      return super.toString() + "[References: "+references+"]";
    }
+
 }
