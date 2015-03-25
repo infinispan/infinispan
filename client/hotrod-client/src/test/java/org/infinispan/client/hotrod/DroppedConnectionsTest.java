@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod;
 
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransport;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
@@ -40,9 +41,9 @@ public class DroppedConnectionsTest extends SingleCacheManagerTest {
       hrClientConfig.put("maxIdle","2");
       hrClientConfig.put("maxActive","2");
       hrClientConfig.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotRodServer.getPort());
-      remoteCacheManager = new RemoteCacheManager(hrClientConfig);
+      remoteCacheManager = new InternalRemoteCacheManager(hrClientConfig);
       rc = remoteCacheManager.getCache();
-      transportFactory = (TcpTransportFactory) TestingUtil.extractField(remoteCacheManager, "transportFactory");
+      transportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
       return cacheManager;
    }
 

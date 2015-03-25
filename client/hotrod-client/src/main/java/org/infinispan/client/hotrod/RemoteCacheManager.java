@@ -149,7 +149,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
    private Codec codec;
 
    private Marshaller marshaller;
-   private TransportFactory transportFactory;
+   protected TransportFactory transportFactory;
    private ExecutorService asyncExecutorService;
    protected ClientListenerNotifier listenerNotifier;
 

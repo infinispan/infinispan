@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.retry;
 import org.infinispan.AdvancedCache;
 import org.infinispan.client.hotrod.HitsAwareCacheManagersTest;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.transport.tcp.RoundRobinBalancingStrategy;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
@@ -32,7 +33,7 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
 
    RemoteCacheImpl<Object, Object> remoteCache;
    protected RemoteCacheManager remoteCacheManager;
-   protected TcpTransportFactory tcpConnectionFactory;
+   protected TcpTransportFactory tcpTransportFactory;
    protected ConfigurationBuilder config;
    protected RoundRobinBalancingStrategy strategy;
 
@@ -70,9 +71,9 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       clientConfig.put("infinispan.client.hotrod.connect_timeout", "5");
       clientConfig.put("maxActive",1); //this ensures that only one server is active at a time
 
-      remoteCacheManager = new RemoteCacheManager(clientConfig);
+      remoteCacheManager = new InternalRemoteCacheManager(clientConfig);
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
-      tcpConnectionFactory = TestingUtil.extractField(remoteCacheManager, "transportFactory");
+      tcpTransportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
       strategy = getLoadBalancer(remoteCacheManager);
       addInterceptors();
 

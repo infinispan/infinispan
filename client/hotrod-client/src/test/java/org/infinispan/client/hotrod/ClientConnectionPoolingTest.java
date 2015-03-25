@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commands.VisitableCommand;
@@ -91,11 +92,11 @@ public class ClientConnectionPoolingTest extends MultipleCacheManagersTest {
       hotrodClientConf.setProperty("lifo", "true");
       hotrodClientConf.setProperty("infinispan.client.hotrod.ping_on_startup", "false");
 
-      remoteCacheManager = new RemoteCacheManager(hotrodClientConf);
+      remoteCacheManager = new InternalRemoteCacheManager(hotrodClientConf);
       remoteCache = remoteCacheManager.getCache();
 
-      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) extractField(remoteCacheManager, "transportFactory");
-      connectionPool = (GenericKeyedObjectPool<?, ?>) extractField(tcpConnectionFactory, "connectionPool");
+      TcpTransportFactory tcpConnectionFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
+      connectionPool = (GenericKeyedObjectPool<?, ?>) tcpConnectionFactory.getConnectionPool();
       workerThread1 = new WorkerThread(remoteCache);
       workerThread2 = new WorkerThread(remoteCache);
       workerThread3 = new WorkerThread(remoteCache);
