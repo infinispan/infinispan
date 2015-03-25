@@ -81,7 +81,7 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
       assert remoteCache.get(k(m)).equals(v(m));
 
       try {
-         remoteCache.put("FailFailFail", "whatever...");
+         remoteCache.put(TimeoutInducingInterceptor.TIMEOUT_KEY, "whatever...");
          Assert.fail("No exception was thrown.");
       } catch (HotRodClientException e) {
          // ignore
@@ -94,10 +94,13 @@ public class SocketTimeoutErrorTest extends SingleCacheManagerTest {
 
    public static class TimeoutInducingInterceptor extends CommandInterceptor {
 
+      public static final String TIMEOUT_KEY = "FailFailFail";
+      public static final int TIMEOUT = 6000;
+      
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-         if (unmarshall(command.getKey()).equals("FailFailFail")) {
-            Thread.sleep(6000);
+         if (unmarshall(command.getKey()).equals(TIMEOUT_KEY)) {
+            Thread.sleep(TIMEOUT);
             return null;
          }
 
