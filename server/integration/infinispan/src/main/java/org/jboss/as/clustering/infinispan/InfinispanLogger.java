@@ -22,15 +22,15 @@
 
 package org.jboss.as.clustering.infinispan;
 
+import org.jboss.logging.BasicLogger;
+import org.jboss.logging.Logger;
+import org.jboss.logging.annotations.LogMessage;
+import org.jboss.logging.annotations.Message;
+import org.jboss.logging.annotations.MessageLogger;
+
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
-
-import org.jboss.logging.BasicLogger;
-import org.jboss.logging.annotations.LogMessage;
-import org.jboss.logging.Logger;
-import org.jboss.logging.annotations.Message;
-import org.jboss.logging.annotations.MessageLogger;
 
 /**
  * InfinispanLogger
@@ -108,4 +108,24 @@ public interface InfinispanLogger extends BasicLogger {
     @Message(id = 10286, value = "Attribute 'virtual-nodes' has been deprecated and has no effect.")
     void virtualNodesAttributeDeprecated();
 
+   /**
+    * Logs an info message about installing implementation service.
+    */
+    @LogMessage(level = INFO)
+    @Message(id = 10287, value = "Registering Deployed Cache Store service for store '%s'")
+    void installDeployedCacheStore(String implementationClassName);
+
+   /**
+    * Logs debug message when starting Deployed Cache service.
+    */
+    @LogMessage(level = DEBUG)
+    @Message(id = 10288, value = "Started Deployed Cache service for implementation '%s'")
+    void deployedStoreStarted(String className);
+
+   /**
+    * Logs debug message when stopping Deployed Cache service.
+    */
+    @LogMessage(level = DEBUG)
+    @Message(id = 10289, value = "Stopped Deployed Cache service for implementation '%s'")
+    void deployedStoreStopped(String className);
 }
