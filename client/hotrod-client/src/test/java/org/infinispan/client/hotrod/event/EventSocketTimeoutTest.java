@@ -37,7 +37,7 @@ public class EventSocketTimeoutTest extends SingleHotRodServerTest {
       org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
          new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
-      builder.socketTimeout(2000);
+      builder.socketTimeout((int)Math.ceil(TimeoutInducingInterceptor.TIMEOUT/2));
       builder.maxRetries(0);
       return new RemoteCacheManager(builder.build());
    }
@@ -52,7 +52,7 @@ public class EventSocketTimeoutTest extends SingleHotRodServerTest {
             cache.put("uno", 1);
             eventListener.expectOnlyCreatedEvent("uno", cache());
             try {
-               cache.put("FailFailFail", 99);
+               cache.put(TimeoutInducingInterceptor.TIMEOUT_KEY, 99);
                Assert.fail("SocketTimeoutException expected");
             } catch (HotRodClientException e) {
                assertTrue(e.getCause() instanceof SocketTimeoutException); // ignore
