@@ -96,7 +96,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void inject(AdvancedCache<Object, Object> cache, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                       Configuration configuration, TransactionManager transactionManager,
                       TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
-                      ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory) {
+                      ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory, CacheStoreFactoryRegistry cacheStoreFactoryRegistry) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
@@ -105,7 +105,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       this.persistenceExecutor = persistenceExecutor;
       this.byteBufferFactory = byteBufferFactory;
       this.marshalledEntryFactory = marshalledEntryFactory;
-      this.cacheStoreFactoryRegistry = cache.getComponentRegistry().getGlobalComponentRegistry().getComponent(CacheStoreFactoryRegistry.class);
+      this.cacheStoreFactoryRegistry = cacheStoreFactoryRegistry;
    }
 
    @Override

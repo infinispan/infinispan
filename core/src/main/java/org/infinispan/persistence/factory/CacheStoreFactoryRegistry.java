@@ -1,6 +1,8 @@
 package org.infinispan.persistence.factory;
 
 import org.infinispan.configuration.cache.StoreConfiguration;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -13,6 +15,7 @@ import java.util.List;
  * @author Sebastian Laskawiec
  * @since 7.2
  */
+@Scope(Scopes.GLOBAL)
 public class CacheStoreFactoryRegistry {
 
    private static final Log log = LogFactory.getLog(CacheStoreFactoryRegistry.class);
