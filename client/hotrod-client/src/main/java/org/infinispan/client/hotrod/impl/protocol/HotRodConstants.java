@@ -19,6 +19,7 @@ public interface HotRodConstants {
    static final byte VERSION_13 = 13;
    static final byte VERSION_20 = 20;
    static final byte VERSION_21 = 21;
+   static final byte VERSION_22 = 22;
 
    //requests
    static final byte PUT_REQUEST = 0x01;

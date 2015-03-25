@@ -29,7 +29,7 @@ public class Codec12 extends Codec11 {
       transport.writeByte(params.opCode);
       transport.writeArray(params.cacheName);
 
-      int joinedFlags = HeaderParams.joinFlags(params.flags);
+      int joinedFlags = HeaderParams.joinFlags(params.flags, params.internalFlags);
       transport.writeVInt(joinedFlags);
       transport.writeByte(params.clientIntel);
       transport.writeVInt(params.topologyId.get());

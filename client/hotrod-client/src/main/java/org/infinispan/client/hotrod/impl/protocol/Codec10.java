@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -45,6 +46,12 @@ public class Codec10 implements Codec {
    public void writeClientListenerParams(Transport transport, ClientListener clientListener,
          byte[][] filterFactoryParams, byte[][] converterFactoryParams) {
       // No-op
+   }
+
+   @Override
+   public void writeExpirationParams(Transport transport, long lifespanNanos, long maxIdleNanos, InternalFlag[] internalFlags) {
+      transport.writeVInt((int) TimeUnit.SECONDS.convert(lifespanNanos, TimeUnit.NANOSECONDS));
+      transport.writeVInt((int) TimeUnit.SECONDS.convert(maxIdleNanos, TimeUnit.NANOSECONDS));
    }
 
    protected HeaderParams writeHeader(

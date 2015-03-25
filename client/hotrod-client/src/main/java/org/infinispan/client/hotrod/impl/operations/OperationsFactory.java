@@ -87,10 +87,10 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(byte[] key,
-            byte[] value, int lifespanSeconds, int maxIdleTimeSeconds, long version) {
+            byte[] value, long lifespan, long maxIdle, long version) {
       return new ReplaceIfUnmodifiedOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespanSeconds, maxIdleTimeSeconds, version);
+            value, lifespan, maxIdle, version);
    }
 
    public GetWithVersionOperation newGetWithVersionOperation(byte[] key) {
@@ -109,31 +109,31 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public PutOperation newPutKeyValueOperation(byte[] key, byte[] value,
-            int lifespanSecs, int maxIdleSecs) {
+            long lifespan, long maxIdle) {
       return new PutOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespanSecs, maxIdleSecs);
+            value, lifespan, maxIdle);
    }
 
    public PutAllOperation newPutAllOperation(Map<byte[], byte[]> map,
-         int lifespanSecs, int maxIdleSecs) {
+         int lifespan, int maxIdle) {
       return new PutAllOperation(
             codec, transportFactory, map, cacheNameBytes, topologyId, flags(),
-            lifespanSecs, maxIdleSecs);
+            lifespan, maxIdle);
    }
 
    public PutIfAbsentOperation newPutIfAbsentOperation(byte[] key, byte[] value,
-            int lifespanSecs, int maxIdleSecs) {
+            long lifespan, long maxIdle) {
       return new PutIfAbsentOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespanSecs, maxIdleSecs);
+            value, lifespan, maxIdle);
    }
 
    public ReplaceOperation newReplaceOperation(byte[] key, byte[] values,
-            int lifespanSecs, int maxIdleSecs) {
+            long lifespan, long maxIdle) {
       return new ReplaceOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            values, lifespanSecs, maxIdleSecs);
+            values, lifespan, maxIdle);
    }
 
    public ContainsKeyOperation newContainsKeyOperation(byte[] key) {

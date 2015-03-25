@@ -51,13 +51,14 @@ public class ConfigurationProperties {
    public static final int DEFAULT_SO_TIMEOUT = 60000;
    public static final int DEFAULT_CONNECT_TIMEOUT = 60000;
    public static final int DEFAULT_MAX_RETRIES = 10;
+   public static final String PROTOCOL_VERSION_22 = "2.2";
    public static final String PROTOCOL_VERSION_21 = "2.1";
    public static final String PROTOCOL_VERSION_20 = "2.0";
    public static final String PROTOCOL_VERSION_13 = "1.3";
    public static final String PROTOCOL_VERSION_12 = "1.2";
    public static final String PROTOCOL_VERSION_11 = "1.1";
    public static final String PROTOCOL_VERSION_10 = "1.0";
-   public static final String DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_21;
+   public static final String DEFAULT_PROTOCOL_VERSION = PROTOCOL_VERSION_22;
 
    private final TypedProperties props;
 
