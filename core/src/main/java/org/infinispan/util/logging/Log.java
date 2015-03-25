@@ -1296,4 +1296,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot define both interceptor class (%s) and interceptor instance (%s)", id = 354)
    CacheConfigurationException interceptorClassAndInstanceDefined(String customInterceptorClassName, String customInterceptor);
+
+   @Message(value = "Unable to instantiate loader/writer instance for StoreConfiguration %s", id = 355)
+   CacheConfigurationException unableToInstantiateClass(Class<?> storeConfigurationClass);
 }
