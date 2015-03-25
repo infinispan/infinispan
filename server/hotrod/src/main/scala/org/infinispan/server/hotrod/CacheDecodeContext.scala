@@ -31,7 +31,7 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
    type BytesResponse = Bytes => Response
 
    val isTrace = isTraceEnabled
-   val SecondsInAMonth = 60 * 60 * 24 * 30
+   val MillisInAMonth = 60 * 60 * 24 * 30 * 1000
 
    var isError = false
    var decoder: AbstractVersionedDecoder = _
@@ -256,18 +256,19 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
     * Otherwise it's just considered number of seconds from
     * now and it's returned in milliseconds unit.
     */
-   protected def toMillis(lifespan: Int): Long = {
-      if (lifespan > SecondsInAMonth) {
-         val unixTimeExpiry = TimeUnit.SECONDS.toMillis(lifespan) - System.currentTimeMillis
+   protected def toMillis(nanosDuration: Long): Long = {
+      val millis = TimeUnit.NANOSECONDS.toMillis(nanosDuration)
+      if (millis > MillisInAMonth) {
+         val unixTimeExpiry = millis - System.currentTimeMillis
          if (unixTimeExpiry < 0) 0 else unixTimeExpiry
       } else {
-         TimeUnit.SECONDS.toMillis(lifespan)
+         millis
       }
    }
 
 }
 
-class RequestParameters(val valueLength: Int, val lifespan: Int, val maxIdle: Int, val streamVersion: Long) {
+class RequestParameters(val valueLength: Int, val lifespan: Long, val maxIdle: Long, val streamVersion: Long) {
    override def toString = {
       new StringBuilder().append("RequestParameters").append("{")
       .append("valueLength=").append(valueLength)

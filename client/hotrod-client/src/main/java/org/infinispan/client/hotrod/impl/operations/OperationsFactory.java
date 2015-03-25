@@ -1,5 +1,10 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.client.hotrod.Flag;
@@ -10,16 +15,6 @@ import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.query.RemoteQuery;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
-import org.infinispan.commons.util.InfinispanCollections;
-
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Factory for {@link org.infinispan.client.hotrod.impl.operations.HotRodOperation} objects.
@@ -81,10 +76,10 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(byte[] key,
-            byte[] value, int lifespanSeconds, int maxIdleTimeSeconds, long version) {
+            byte[] value, long lifespan, long maxIdle, long version) {
       return new ReplaceIfUnmodifiedOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespanSeconds, maxIdleTimeSeconds, version);
+            value, lifespan, maxIdle, version);
    }
 
    public GetWithVersionOperation newGetWithVersionOperation(byte[] key) {
@@ -103,24 +98,24 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public PutOperation newPutKeyValueOperation(byte[] key, byte[] value,
-            int lifespanSecs, int maxIdleSecs) {
+            long lifespan, long maxIdle) {
       return new PutOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespanSecs, maxIdleSecs);
+            value, lifespan, maxIdle);
    }
 
    public PutIfAbsentOperation newPutIfAbsentOperation(byte[] key, byte[] value,
-            int lifespanSecs, int maxIdleSecs) {
+            long lifespan, long maxIdle) {
       return new PutIfAbsentOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespanSecs, maxIdleSecs);
+            value, lifespan, maxIdle);
    }
 
    public ReplaceOperation newReplaceOperation(byte[] key, byte[] values,
-            int lifespanSecs, int maxIdleSecs) {
+            long lifespan, long maxIdle) {
       return new ReplaceOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            values, lifespanSecs, maxIdleSecs);
+            values, lifespan, maxIdle);
    }
 
    public ContainsKeyOperation newContainsKeyOperation(byte[] key) {

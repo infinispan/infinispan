@@ -29,6 +29,11 @@ public interface Codec {
          byte[][] filterFactoryParams, byte[][] converterFactoryParams);
 
    /**
+    * Write lifespan/maxidle parameters.
+    */
+   void writeExpirationParams(Transport transport, long lifespanNanos, long maxIdleNanos, InternalFlag[] internalFlags);
+
+   /**
     * Reads a response header from the transport and returns the status
     * of the response.
     */

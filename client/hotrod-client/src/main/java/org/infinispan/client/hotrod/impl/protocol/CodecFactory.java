@@ -20,6 +20,7 @@ public class CodecFactory {
    private static final Codec CODEC_13 = new Codec13();
    private static final Codec CODEC_20 = new Codec20();
    private static final Codec CODEC_21 = new Codec21();
+   private static final Codec CODEC_22 = new Codec22();
 
    static {
       codecMap = new HashMap<String, Codec>();
@@ -29,6 +30,7 @@ public class CodecFactory {
       codecMap.put(PROTOCOL_VERSION_13, CODEC_13);
       codecMap.put(PROTOCOL_VERSION_20, CODEC_20);
       codecMap.put(PROTOCOL_VERSION_21, CODEC_21);
+      codecMap.put(PROTOCOL_VERSION_22, CODEC_22);
    }
 
    public static Codec getCodec(String version) {

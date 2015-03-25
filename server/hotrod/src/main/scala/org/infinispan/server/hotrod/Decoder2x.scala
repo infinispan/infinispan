@@ -40,6 +40,7 @@ import org.infinispan.server.core.transport.SaslQopHandler
 import org.infinispan.scripting.ScriptingManager
 import javax.script.SimpleBindings
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
+import java.util.concurrent.TimeUnit
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -115,14 +116,18 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case RemoveRequest => (null, true)
          case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, -1, -1, buffer.readLong), true)
          case ReplaceIfUnmodifiedRequest =>
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
+            val hasNanoExpirationFlag = hasFlag(header, ProtocolFlag.NanoExpiration)
+
+            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasNanoExpirationFlag)
+            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasNanoExpirationFlag)
             val version = buffer.readLong
             val valueLength = readUnsignedInt(buffer)
             (new RequestParameters(valueLength, lifespan, maxIdle, version), false)
          case _ =>
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
+            val hasNanoExpirationFlag = hasFlag(header, ProtocolFlag.NanoExpiration)
+
+            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasNanoExpirationFlag)
+            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasNanoExpirationFlag)
             val valueLength = readUnsignedInt(buffer)
             (new RequestParameters(valueLength, lifespan, maxIdle, -1), false)
       }
@@ -132,14 +137,14 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       (h.flag & f.id) == f.id
    }
 
-   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Int = {
-      val stream = readUnsignedInt(buffer)
+   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean, hasNanos: Boolean): Long = {
+      val stream = readUnsignedLong(buffer)
       if (stream <= 0) {
          if (useDefault)
             EXPIRATION_DEFAULT
          else
             EXPIRATION_NONE
-      } else stream
+      } else if (!hasNanos) TimeUnit.SECONDS.toNanos(stream) else stream
    }
 
    override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): Response =
@@ -342,7 +347,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val filterFactoryInfo = readNamedFactory(buffer)
             val converterFactoryInfo = readNamedFactory(buffer)
             val useRawData = h.version match {
-               case VERSION_21 => buffer.readByte() == 1
+               case VERSION_21 | VERSION_22 => buffer.readByte() == 1
                case _ => false
             }
             val reg = server.getClientListenerRegistry
