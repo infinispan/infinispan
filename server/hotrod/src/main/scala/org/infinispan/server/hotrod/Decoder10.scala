@@ -18,6 +18,7 @@ import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.Channel
+import java.util.concurrent.TimeUnit
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -105,14 +106,14 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       (h.flag & f.id) == f.id
    }
 
-   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Int = {
+   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Long = {
       val stream = readUnsignedInt(buffer)
       if (stream <= 0) {
          if (useDefault)
             EXPIRATION_DEFAULT
          else
             EXPIRATION_NONE
-      } else stream
+      } else TimeUnit.SECONDS.toNanos(stream)
    }
 
    override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): Response =

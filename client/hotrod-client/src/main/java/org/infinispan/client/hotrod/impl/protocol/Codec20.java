@@ -24,6 +24,7 @@ import java.net.SocketAddress;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -56,6 +57,12 @@ public class Codec20 implements Codec, HotRodConstants {
       writeNamedFactory(transport, clientListener.converterFactoryName(), converterFactoryParams);
    }
 
+   @Override
+   public void writeExpirationParams(Transport transport, long lifespanNanos, long maxIdleNanos, InternalFlag[] internalFlags) {
+      transport.writeVInt((int) TimeUnit.SECONDS.convert(lifespanNanos, TimeUnit.NANOSECONDS));
+      transport.writeVInt((int) TimeUnit.SECONDS.convert(maxIdleNanos, TimeUnit.NANOSECONDS));
+   }
+
    private void writeNamedFactory(Transport transport, String factoryName, byte[][] params) {
       transport.writeString(factoryName);
       if (!factoryName.isEmpty()) {
@@ -77,7 +84,7 @@ public class Codec20 implements Codec, HotRodConstants {
       transport.writeByte(version);
       transport.writeByte(params.opCode);
       transport.writeArray(params.cacheName);
-      int joinedFlags = HeaderParams.joinFlags(params.flags);
+      int joinedFlags = HeaderParams.joinFlags(params.flags, params.internalFlags);
       transport.writeVInt(joinedFlags);
       transport.writeByte(params.clientIntel);
       transport.writeVInt(params.topologyId.get());

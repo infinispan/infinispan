@@ -126,24 +126,30 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case RemoveRequest => (null, true)
          case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, -1, -1, buffer.readLong), true)
          case ReplaceIfUnmodifiedRequest =>
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
+            val hasNanoExpirationFlag = hasFlag(header, ProtocolFlag.NanoExpiration)
+
+            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasNanoExpirationFlag)
+            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasNanoExpirationFlag)
             val version = buffer.readLong
             val valueLength = readUnsignedInt(buffer)
             (new RequestParameters(valueLength, lifespan, maxIdle, version), false)
          case PutAllRequest =>
-            // Since we have custom code handling for valueLength to allocate an array
+            val hasNanoExpirationFlag = hasFlag(header, ProtocolFlag.NanoExpiration)
+
+           // Since we have custom code handling for valueLength to allocate an array
             // always we have to pass back false and set the checkpoint manually...
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
+            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasNanoExpirationFlag)
+            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasNanoExpirationFlag)
             val valueLength = readUnsignedInt(buffer)
             (new RequestParameters(valueLength, lifespan, maxIdle, -1), true)
          case GetAllRequest =>
            val count = readUnsignedInt(buffer)
            (new RequestParameters(count, -1, -1, -1), true)
          case _ =>
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
+            val hasNanoExpirationFlag = hasFlag(header, ProtocolFlag.NanoExpiration)
+
+            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasNanoExpirationFlag)
+            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasNanoExpirationFlag)
             val valueLength = readUnsignedInt(buffer)
             (new RequestParameters(valueLength, lifespan, maxIdle, -1), false)
       }
@@ -153,14 +159,14 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       (h.flag & f.id) == f.id
    }
 
-   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Int = {
-      val stream = readUnsignedInt(buffer)
+   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean, hasNanos: Boolean): Long = {
+      val stream = readUnsignedLong(buffer)
       if (stream <= 0) {
          if (useDefault)
             EXPIRATION_DEFAULT
          else
             EXPIRATION_NONE
-      } else stream
+      } else if (!hasNanos) TimeUnit.SECONDS.toNanos(stream) else stream
    }
 
    override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): Response =
@@ -365,7 +371,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val filterFactoryInfo = readNamedFactory(buffer)
             val converterFactoryInfo = readNamedFactory(buffer)
             val useRawData = h.version match {
-               case VERSION_21 => buffer.readByte() == 1
+               case VERSION_21 | VERSION_22 => buffer.readByte() == 1
                case _ => false
             }
             val reg = server.getClientListenerRegistry

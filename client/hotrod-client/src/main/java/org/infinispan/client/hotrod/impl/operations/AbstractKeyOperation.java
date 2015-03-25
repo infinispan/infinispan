@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
+import org.infinispan.client.hotrod.impl.protocol.InternalFlag;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.logging.BasicLogFactory;
@@ -29,8 +30,13 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
    protected final byte[] key;
 
    protected AbstractKeyOperation(Codec codec, TransportFactory transportFactory,
-            byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
-      super(codec, transportFactory, cacheName, topologyId, flags);
+         byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
+      this(codec, transportFactory, key, cacheName, topologyId, flags, null);
+   }
+
+   protected AbstractKeyOperation(Codec codec, TransportFactory transportFactory,
+            byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags, InternalFlag[] internalFlags) {
+      super(codec, transportFactory, cacheName, topologyId, flags, internalFlags);
       this.key = key;
    }
 

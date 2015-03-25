@@ -163,7 +163,7 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
       try {
          val decoder = version match {
             case VERSION_10 | VERSION_11 | VERSION_12 | VERSION_13 => Decoder10
-            case VERSION_20 | VERSION_21 => Decoder2x
+            case VERSION_20 | VERSION_21 | VERSION_22  => Decoder2x
             case _ => throw new UnknownVersionException("Unknown version:" + version, version, messageId)
          }
          val endOfOp = decoder.readHeader(buffer, version, messageId, header)
