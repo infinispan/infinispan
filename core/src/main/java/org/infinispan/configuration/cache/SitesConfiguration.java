@@ -6,26 +6,41 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeInitializer;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 /**
  * @author Mircea.Markus@jboss.com
  * @since 5.2
  */
 public class SitesConfiguration {
+   public static final AttributeDefinition<Boolean> DISABLE_BACKUPS = AttributeDefinition.builder("disableBackups", false).immutable().build();
+   public static final AttributeDefinition<Set<String>> IN_USE_BACKUP_SITES = AttributeDefinition.builder("inUseBackupSites", null, (Class<Set<String>>)(Class<?>)Set.class)
+         .initializer(new AttributeInitializer<Set<String>>() {
+            @Override
+            public Set<String> initialize() {
+               return new HashSet<>(2);
+            }
+         }).immutable().build();
 
-   private final List<BackupConfiguration> allBackups;
+   static final AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(SitesConfiguration.class, DISABLE_BACKUPS, IN_USE_BACKUP_SITES);
+   }
 
    private final BackupForConfiguration backupFor;
+   private final List<BackupConfiguration> allBackups;
+   private final Attribute<Boolean> disableBackups;
+   private final Attribute<Set<String>> inUseBackupSites;
+   private final AttributeSet attributes;
 
-   private final boolean disableBackups;
-
-   private final Set<String> inUseBackupSites;
-
-   public SitesConfiguration(List<BackupConfiguration> backups, BackupForConfiguration backupFor, boolean disableBackups,
-                             Set<String> backupSites) {
-      this.allBackups = Collections.unmodifiableList(new ArrayList<BackupConfiguration>(backups));
+   public SitesConfiguration(AttributeSet attributes, List<BackupConfiguration> allBackups, BackupForConfiguration backupFor) {
+      this.attributes = attributes.checkProtection();
+      this.allBackups = Collections.unmodifiableList(allBackups);
+      this.disableBackups = attributes.attribute(DISABLE_BACKUPS);
+      this.inUseBackupSites = attributes.attribute(IN_USE_BACKUP_SITES);
       this.backupFor = backupFor;
-      this.disableBackups = disableBackups;
-      this.inUseBackupSites = Collections.unmodifiableSet(new HashSet<String>(backupSites));
    }
 
    /**
@@ -33,7 +48,7 @@ public class SitesConfiguration {
     * It would still accept other sites backing up data on this site.
     */
    public boolean disableBackups() {
-      return disableBackups;
+      return disableBackups.get();
    }
 
    /**
@@ -49,7 +64,7 @@ public class SitesConfiguration {
     * Returns the list of {@link BackupConfiguration} that have {@link org.infinispan.configuration.cache.BackupConfiguration#enabled()} == true.
     */
    public List<BackupConfiguration> enabledBackups() {
-      List<BackupConfiguration> result = new ArrayList<BackupConfiguration>();
+      List<BackupConfiguration> result = new ArrayList<>();
       for (BackupConfiguration bc : allBackups) {
          if (bc.enabled()) result.add(bc);
       }
@@ -88,38 +103,47 @@ public class SitesConfiguration {
       return false;
    }
 
+   public Set<String> inUseBackupSites() {
+      return inUseBackupSites.get();
+   }
 
-   @Override
-   public boolean equals(Object o) {
-      if (this == o) return true;
-      if (!(o instanceof SitesConfiguration)) return false;
-
-      SitesConfiguration that = (SitesConfiguration) o;
-
-      if (disableBackups != that.disableBackups) return false;
-      if (backupFor != null ? !backupFor.equals(that.backupFor) : that.backupFor != null) return false;
-      if (inUseBackupSites != null ? !inUseBackupSites.equals(that.inUseBackupSites) : that.inUseBackupSites != null) return false;
-      if (allBackups != null ? !allBackups.equals(that.allBackups) : that.allBackups != null) return false;
-
-      return true;
+   public AttributeSet attributes() {
+      return attributes;
    }
 
    @Override
    public int hashCode() {
-      int result = allBackups != null ? allBackups.hashCode() : 0;
-      result = 31 * result + (backupFor != null ? backupFor.hashCode() : 0);
-      result = 31 * result + (disableBackups ? 1 : 0);
-      result = 31 * result + (inUseBackupSites != null ? inUseBackupSites.hashCode() : 0);
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
+      result = prime * result + ((backupFor == null) ? 0 : backupFor.hashCode());
       return result;
    }
 
    @Override
+   public boolean equals(Object obj) {
+      if (this == obj)
+         return true;
+      if (obj == null)
+         return false;
+      if (getClass() != obj.getClass())
+         return false;
+      SitesConfiguration other = (SitesConfiguration) obj;
+      if (attributes == null) {
+         if (other.attributes != null)
+            return false;
+      } else if (!attributes.equals(other.attributes))
+         return false;
+      if (backupFor == null) {
+         if (other.backupFor != null)
+            return false;
+      } else if (!backupFor.equals(other.backupFor))
+         return false;
+      return true;
+   }
+
+   @Override
    public String toString() {
-      return "SiteConfiguration{" +
-            "allBackups=" + allBackups +
-            ", backupFor=" + backupFor +
-            ", disableBackups=" + disableBackups +
-            ", inUseBackupSites=" + inUseBackupSites +
-            '}';
+      return "SitesConfiguration [backupFor=" + backupFor + ", attributes=" + attributes + "]";
    }
 }

@@ -376,6 +376,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       if (defaultConfigIfNotPresent != null) {
          builder.read(defaultConfigIfNotPresent);
+      } else {
+         builder.read(defaultConfiguration);
       }
       builder.read(configOverride);
       Configuration configuration = builder.build(globalConfiguration);

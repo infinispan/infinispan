@@ -160,7 +160,7 @@ public class TransportConfigurationBuilder extends AbstractGlobalConfigurationBu
    }
 
    public String getProperty(String key) {
-      return String.valueOf(attributes.attribute(PROPERTIES).get());
+      return String.valueOf(attributes.attribute(PROPERTIES).get().get(key));
    }
 
    /**
