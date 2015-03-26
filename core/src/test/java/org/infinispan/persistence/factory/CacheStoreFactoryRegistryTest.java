@@ -1,6 +1,7 @@
 package org.infinispan.persistence.factory;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.testng.annotations.Test;
@@ -117,7 +118,8 @@ public class CacheStoreFactoryRegistryTest {
    }
 
    private DummyInMemoryStoreConfiguration createDummyConfiguration() {
-      return new DummyInMemoryStoreConfiguration(false, false, false, null, null, false, false, null, false, false, "test", null);
+      AttributeSet protectedAttributesSet = DummyInMemoryStoreConfiguration.attributeDefinitionSet().protect();
+      return new DummyInMemoryStoreConfiguration(protectedAttributesSet, null, null);
    }
 
    private Object loadWithCustomClassLoader(String className) throws Exception {
