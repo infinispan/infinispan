@@ -46,6 +46,11 @@ public final class ScopedKey<S,K> {
       return result;
    }
 
+   @Override
+   public String toString() {
+      return "ScopedKey{scope = " + scope + ", key = " + key + "}";
+   }
+
    public K getKey() {
       return key;
    }
