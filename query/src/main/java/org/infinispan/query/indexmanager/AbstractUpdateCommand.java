@@ -68,7 +68,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
       if (ci.getCacheManager().cacheExists(cacheName)) {
          Cache cache = ci.getCacheManager().getCache(cacheName);
          SearchManager searchManager = Search.getSearchManager(cache);
-         searchFactory = searchManager.getSearchFactory();
+         searchFactory = searchManager.unwrap(SearchIntegrator.class);
          queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       }
       else {

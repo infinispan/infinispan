@@ -64,7 +64,7 @@ public class TuningOptionsAppliedTest {
       Cache<Object, Object> cache = embeddedCacheManager.getCache("Indexed");
       cache.put("hey this type exists", new Person("id", "name", 3));
       SearchManager searchManager = Search.getSearchManager(cache);
-      return searchManager.getSearchFactory();
+      return searchManager.unwrap(SearchIntegrator.class);
    }
 
    private NRTIndexManager verifyShardingOptions(SearchIntegrator searchIntegrator, int expectedShards) {

@@ -1,6 +1,7 @@
 package org.infinispan.query.dsl.embedded;
 
 import org.hibernate.hql.ParsingException;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.query.Search;
@@ -64,7 +65,7 @@ public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
    @Override
    public void testIndexPresence() {
       // this is expected to throw an exception
-      Search.getSearchManager((Cache) getCacheForQuery()).getSearchFactory();
+      Search.getSearchManager((Cache) getCacheForQuery()).unwrap(SearchIntegrator.class);
    }
 
    @Override

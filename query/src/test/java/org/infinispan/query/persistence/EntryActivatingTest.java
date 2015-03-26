@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.Query;
+import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
@@ -78,7 +79,7 @@ public class EntryActivatingTest extends AbstractInfinispanTest {
       verifyFullTextHasMatches(1);
 
       cache.stop();
-      assert search.getSearchFactory().isStopped();
+      assert search.unwrap(SearchIntegrator.class).isStopped();
       TestingUtil.killCacheManagers(cm);
 
       // Now let's check the entry is not re-indexed during data preloading:

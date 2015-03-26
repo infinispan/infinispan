@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.impl.SearchManagerImpl;
+import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 
@@ -23,7 +24,7 @@ public final class Search {
       ensureAccessPermissions(advancedCache);
 
       if (advancedCache.getCacheConfiguration().indexing().index().isEnabled()) {
-         return getSearchManager(advancedCache).getQueryFactory();
+         return getSearchManager(advancedCache).unwrap(SearchManagerImplementor.class).getQueryFactory();
       }
 
       return new EmbeddedQueryFactory(advancedCache);

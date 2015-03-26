@@ -108,4 +108,10 @@ public interface SearchManager {
     */
    void purge(Class<?> entityType);
 
+   /**
+    * This method gives access to internal Infinispan types, and should not be normally needed.
+    * The API of the internal types can (and probably will) change without notice.
+    */
+   <T> T unwrap(Class<T> cls);
+
 }
