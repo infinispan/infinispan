@@ -46,6 +46,8 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
       cache(0).addListener(listener, filterConverter, filterConverter);
 
       assertEquals(NUM_ENTRIES, listener.createEvents.size());
+
+      cache(0).removeListener(listener);
    }
 
    public void testEventFilter() {
@@ -61,6 +63,8 @@ public class ClusterListenerFilterWithDependenciesTest extends MultipleCacheMana
 
       assertEquals(NUM_ENTRIES, cache(0).size());
       assertEquals(NUM_ENTRIES, listener.createEvents.size());
+
+      cache(0).removeListener(listener);
    }
 
    @Listener(clustered = true, includeCurrentState = true)
