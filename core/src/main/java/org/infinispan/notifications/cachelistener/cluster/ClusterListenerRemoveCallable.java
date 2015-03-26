@@ -46,7 +46,7 @@ public class ClusterListenerRemoveCallable<K, V> implements DistributedCallable<
             RemoteClusterListener clusterListener = (RemoteClusterListener)listener;
             if (identifier.equals(clusterListener.getId())) {
                if (log.isTraceEnabled()) {
-                  log.trace("Removing local cluster listener due to parent cluster listener was removed");
+                  log.tracef("Removing local cluster listener due to parent cluster listener was removed : %s", identifier);
                }
                clusterListener.removeListener();
             }
