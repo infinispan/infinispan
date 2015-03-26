@@ -65,7 +65,7 @@ public class ClusteredQueryDslConditionsTest extends QueryDslConditionsTest {
    }
 
    private void checkIndexPresence(Cache cache) {
-      SearchIntegrator searchFactory = Search.getSearchManager(cache).getSearchFactory();
+      SearchIntegrator searchFactory = Search.getSearchManager(cache).unwrap(SearchIntegrator.class);
 
       assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getUserImplClass()));
       assertNotNull(searchFactory.getIndexManager(getModelFactory().getUserImplClass().getName()));

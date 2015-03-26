@@ -166,7 +166,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testIndexPresence() {
-      SearchIntegrator searchIntegrator = Search.getSearchManager((Cache) getCacheForQuery()).getSearchFactory();
+      SearchIntegrator searchIntegrator = Search.getSearchManager((Cache) getCacheForQuery()).unwrap(SearchIntegrator.class);
 
       assertTrue(searchIntegrator.getIndexedTypes().contains(getModelFactory().getUserImplClass()));
       assertNotNull(searchIntegrator.getIndexManager(getModelFactory().getUserImplClass().getName()));

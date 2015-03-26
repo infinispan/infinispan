@@ -32,7 +32,7 @@ public class StaticTestingErrorHandler implements ErrorHandler {
 
    public static void assertAllGood(Cache cache) {
       SearchManager searchManager = Search.getSearchManager(cache);
-      SearchIntegrator searchFactory = searchManager.getSearchFactory();
+      SearchIntegrator searchFactory = searchManager.unwrap(SearchIntegrator.class);
       ErrorHandler errorHandler = searchFactory.getErrorHandler();
       Assert.assertNotNull(errorHandler);
       Assert.assertTrue(errorHandler instanceof StaticTestingErrorHandler);

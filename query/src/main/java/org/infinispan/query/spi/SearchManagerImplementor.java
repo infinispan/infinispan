@@ -3,6 +3,8 @@ package org.infinispan.query.spi;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.Transformer;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.dsl.embedded.LuceneQuery;
 
 public interface SearchManagerImplementor extends SearchManager {
 
@@ -28,5 +30,12 @@ public interface SearchManagerImplementor extends SearchManager {
     *           the timeout exception factory to use
     */
    void setTimeoutExceptionFactory(TimeoutExceptionFactory timeoutExceptionFactory);
+
+   /**
+    * Experimental! Obtains the factory for DSL-based queries backed by Lucene indexes.
+    *
+    * @return a factory capable of building queries for the cache this SearchManager belongs to
+    */
+   public QueryFactory<LuceneQuery> getQueryFactory();
 
 }
