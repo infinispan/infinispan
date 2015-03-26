@@ -107,7 +107,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
    public void testIndexPresence() {
-      SearchIntegrator searchIntegrator = org.infinispan.query.Search.getSearchManager(cache).getSearchFactory();
+      SearchIntegrator searchIntegrator = org.infinispan.query.Search.getSearchManager(cache).unwrap(SearchIntegrator.class);
 
       assertTrue(searchIntegrator.getIndexedTypes().contains(ProtobufValueWrapper.class));
       assertNotNull(searchIntegrator.getIndexManager(ProtobufValueWrapper.class.getName()));
