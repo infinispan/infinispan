@@ -1,20 +1,21 @@
 package org.infinispan.configuration.cache;
 
-import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
-import static org.infinispan.configuration.cache.InterceptorConfiguration.*;
-
-import java.util.Properties;
-
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
+import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
-import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.configuration.cache.InterceptorConfiguration.*;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Properties;
+
+import static org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration.PROPERTIES;
+import static org.infinispan.configuration.cache.InterceptorConfiguration.*;
 
 /**
  * This builder defines details of a specific custom interceptor.
@@ -53,7 +54,18 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    }
 
    /**
+    * Class of the new custom interceptor to add to the configuration.
+    * @param interceptorClass an instance of {@link CommandInterceptor}
+    */
+   public InterceptorConfigurationBuilder interceptorClass(Class<? extends CommandInterceptor> interceptorClass) {
+      attributes.attribute(INTERCEPTOR_CLASS).set(interceptorClass);
+      return this;
+   }
+
+   /**
     * An instance of the new custom interceptor to add to the configuration.
+    * Warning: if you use this configuration for multiple caches, the interceptor instance will
+    * be shared, which will corrupt interceptor stack. Use {@link #interceptorClass} instead.
     * @param interceptor an instance of {@link CommandInterceptor}
     */
    public InterceptorConfigurationBuilder interceptor(CommandInterceptor interceptor) {
@@ -122,6 +134,28 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
 
    @Override
    public void validate() {
+      Attribute<Class> interceptorClassAttribute = attributes.attribute(INTERCEPTOR_CLASS);
+      Attribute<CommandInterceptor> interceptorAttribute = attributes.attribute(INTERCEPTOR);
+
+
+      if (!interceptorClassAttribute.isNull() && !interceptorAttribute.isNull()) {
+         throw log.interceptorClassAndInstanceDefined(interceptorClassAttribute.get().getName(), interceptorAttribute.get().toString());
+      } else if (interceptorClassAttribute.isNull() && interceptorAttribute.isNull()) {
+         throw log.customInterceptorMissingClass();
+      }
+      Class<? extends CommandInterceptor> interceptorClass = interceptorClassAttribute.get();
+      if (interceptorClass == null) {
+         interceptorClass = interceptorAttribute.get().getClass();
+      }
+
+      if (!BaseCustomInterceptor.class.isAssignableFrom(interceptorClass)) {
+         final String className = interceptorClass.getName();
+         //Suppress noisy warnings if the interceptor is one of our own (like one of those from Query):
+         if (! className.startsWith("org.infinispan.")) {
+            log.suggestCustomInterceptorInheritance(className);
+         }
+      }
+
       // Make sure more than one 'position' isn't picked.
       int positions = 0;
 
@@ -130,25 +164,13 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       if (attributes.attribute(INDEX).get() > -1) positions++;
       if (attributes.attribute(POSITION).isModified()) positions++;
 
-      CommandInterceptor interceptor = attributes.attribute(INTERCEPTOR).get();
       switch (positions) {
          case 0:
-            throw log.missingCustomInterceptorPosition(interceptor.getClass().getName());
+            throw log.missingCustomInterceptorPosition(interceptorClass.getName());
          case 1:
             break;
          default:
-            throw log.multipleCustomInterceptorPositions(interceptor.getClass().getName());
-      }
-
-      if (interceptor == null) {
-         throw log.customInterceptorMissingClass();
-      }
-      else if (!(interceptor instanceof BaseCustomInterceptor)) {
-         final String className = interceptor.getClass().getName();
-         //Suppress noisy warnings if the interceptor is one of our own (like one of those from Query):
-         if (! className.startsWith("org.infinispan.")) {
-            log.suggestCustomInterceptorInheritance(className);
-         }
+            throw log.multipleCustomInterceptorPositions(interceptorClass.getName());
       }
    }
 

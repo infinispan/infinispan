@@ -6,6 +6,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.CachedThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
@@ -16,7 +17,6 @@ import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
-import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.distribution.ch.ConsistentHashFactory;
@@ -35,7 +35,8 @@ import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
-import org.infinispan.transaction.*;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
@@ -44,7 +45,6 @@ import org.kohsuke.MetaInfServices;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -1242,7 +1242,7 @@ public class Parser70 implements ConfigurationParser {
                interceptorBuilder.before(Util.<CommandInterceptor>loadClass(value, holder.getClassLoader()));
                break;
             case CLASS:
-               interceptorBuilder.interceptor(Util.<CommandInterceptor>getInstance(value, holder.getClassLoader()));
+               interceptorBuilder.interceptorClass(Util.<CommandInterceptor>loadClass(value, holder.getClassLoader()));
                break;
             case INDEX:
                interceptorBuilder.index(Integer.parseInt(value));

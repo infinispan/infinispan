@@ -1,33 +1,5 @@
 package org.infinispan.util.logging;
 
-import static org.jboss.logging.Logger.Level.DEBUG;
-import static org.jboss.logging.Logger.Level.ERROR;
-import static org.jboss.logging.Logger.Level.FATAL;
-import static org.jboss.logging.Logger.Level.INFO;
-import static org.jboss.logging.Logger.Level.TRACE;
-import static org.jboss.logging.Logger.Level.WARN;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.nio.channels.FileChannel;
-import java.security.Permission;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.ObjectName;
-import javax.naming.NamingException;
-import javax.transaction.Synchronization;
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAException;
-import javax.xml.namespace.QName;
-
 import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -60,6 +32,28 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 import org.jgroups.View;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.ObjectName;
+import javax.naming.NamingException;
+import javax.transaction.Synchronization;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAException;
+import javax.xml.namespace.QName;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.nio.channels.FileChannel;
+import java.security.Permission;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+
+import static org.jboss.logging.Logger.Level.*;
 
 /**
  * Infinispan's log abstraction layer on top of JBoss Logging.
@@ -1299,4 +1293,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.", id = 353)
    CacheConfigurationException replicationQueueOnlyForAsyncCaches();
+
+   @Message(value = "Cannot define both interceptor class (%s) and interceptor instance (%s)", id = 354)
+   CacheConfigurationException interceptorClassAndInstanceDefined(String customInterceptorClassName, String customInterceptor);
 }
