@@ -1099,7 +1099,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             case CACHE_ENTRY_PASSIVATED:
             case CACHE_ENTRY_REMOVED:
             case CACHE_ENTRY_VISITED:
-               return new EventType(event.isPre(), event.isCommandRetried(), event.getType());
+               return new EventType(event.isCommandRetried(), event.isPre(), event.getType());
             default:
                return null;
          }
