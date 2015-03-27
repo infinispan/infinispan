@@ -8,12 +8,13 @@ import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
-import org.infinispan.notifications.cachelistener.filter.CompositeCacheEventFilter;
-import org.infinispan.notifications.cachelistener.filter.PostCacheEventFilter;
+import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -96,11 +97,30 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                }
                if (!alreadyInstalled) {
                   RemoteClusterListener listener = new RemoteClusterListener(identifier, origin, distExecutor, cacheNotifier,
-                                                                           cacheManagerNotifier, eventManager, sync);
+                                                                             cacheManagerNotifier, eventManager, sync);
                   // We only need to use the post cache event filter when a filter is provided, since the remote cluster listener
                   // will ignore pre events anyways.  This is mostly so a user filter is not notified of the pre event.
-                  cacheNotifier.addListener(listener,
-                        filter != null ? new CompositeCacheEventFilter(new PostCacheEventFilter(), filter) : null, converter);
+                  CacheEventFilter<K, V> actualFilter = null;
+                  if (filter instanceof CacheEventFilterConverter) {
+                     final CacheEventFilterConverter<K, V, ?> filterConverter = (CacheEventFilterConverter<K, V, ?>) filter;
+                     actualFilter = new AbstractCacheEventFilterConverter<K,V, Object>() {
+                        @Override
+                        public Object filterAndConvert(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType) {
+                           if (eventType.isPreEvent()) {
+                              return null;
+                           }
+                           return filterConverter.filterAndConvert(key, oldValue, oldMetadata, newValue, newMetadata, eventType);
+                        }
+                     };
+                  } else if (filter != null) {
+                     actualFilter = new CacheEventFilter<K, V>() {
+                        @Override
+                        public boolean accept(K key, V oldValue, Metadata oldMetadata, V newValue, Metadata newMetadata, EventType eventType) {
+                           return !eventType.isPreEvent() && filter.accept(key, oldValue, oldMetadata, newValue, newMetadata, eventType);
+                        }
+                     };
+                  }
+                  cacheNotifier.addListener(listener, actualFilter, converter);
                   cacheManagerNotifier.addListener(listener);
                   // It is possible the member is now gone after registered, if so we have to remove just to be sure
                   if (!cacheManager.getMembers().contains(origin)) {
