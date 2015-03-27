@@ -1,6 +1,5 @@
 package org.infinispan.stats.impl;
 
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -29,18 +28,12 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
    public CacheContainerStatsImpl(EmbeddedCacheManager cm) {
       this.cm = cm;
       cm.getGlobalComponentRegistry().registerComponent(this, CacheContainerStats.class);
+      boolean globalJmxStatsEnabled = cm.getCacheManagerConfiguration().globalJmxStatistics().enabled();
+      setStatisticsEnabled(globalJmxStatsEnabled);
    }
 
    @Override
    public void setStatisticsEnabled(boolean enabled) {
-      if (enabled) {
-         // TODO we force statistics collection on all caches beloning to this cache container?
-         for (String cn : cm.getCacheNames()) {
-            if (cm.cacheExists(cn)) {
-               cm.getCache(cn).getAdvancedCache().getStats().setStatisticsEnabled(true);
-            }
-         }
-      }
       this.statisticsEnabled = enabled;
    }
 
@@ -60,13 +53,6 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
          }
       }
    }
-
-   @Start(priority = 9)
-   private void start() {
-      //TODO how to read this property i.e. if cache container stats are enabled?
-      //setStatisticsEnabled();
-   }
-
 
    @ManagedAttribute(description = "Enables or disables the gathering of statistics by this component",
          displayName = "Statistics enabled",
