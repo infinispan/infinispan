@@ -1,13 +1,5 @@
 package org.infinispan.marshall.core;
 
-import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.atomic.impl.AtomicHashMap;
 import org.infinispan.atomic.impl.AtomicHashMapDelta;
@@ -23,6 +15,7 @@ import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -115,6 +108,14 @@ import org.infinispan.xsite.statetransfer.XSiteState;
 import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
+
+import static org.infinispan.factories.KnownComponentNames.GLOBAL_MARSHALLER;
 
 /**
  * The externalizer table maintains information necessary to be able to map a particular type with the corresponding
@@ -247,6 +248,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new DldGlobalTransaction.Externalizer());
       addInternalExternalizer(new RecoveryAwareDldGlobalTransaction.Externalizer());
       addInternalExternalizer(new JGroupsAddress.Externalizer());
+      addInternalExternalizer(new ImmutableListCopy.Externalizer());
       addInternalExternalizer(new Immutables.ImmutableMapWrapperExternalizer());
       addInternalExternalizer(new MarshalledValue.Externalizer(globalMarshaller));
       addInternalExternalizer(new ByteBufferImpl.Externalizer());

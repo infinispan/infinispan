@@ -1,6 +1,9 @@
 package org.infinispan.commons.util;
 
 import net.jcip.annotations.Immutable;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.marshall.Ids;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -8,11 +11,13 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.reflect.Array;
 import java.util.AbstractList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 
 /**
@@ -31,7 +36,6 @@ import java.util.NoSuchElementException;
 public class ImmutableListCopy<E> extends AbstractList<E> implements Externalizable, Immutables.Immutable {
    private static final long serialVersionUID = 10929568968966L;
    private E[] elements;
-   private int size;
 
    /**
     * Constructs a new ImmutableListCopy. Required by Serialization.
@@ -46,7 +50,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
     */
    @SuppressWarnings("unchecked")
    public ImmutableListCopy(Collection<? extends E> c) {
-      size = c.size();
+      int size = c.size();
       Object[] el = new Object[size]; // no room for growth;
       el = c.toArray(el);
       elements = (E[]) el;
@@ -58,7 +62,6 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
     * @param array to reference
     */
    public ImmutableListCopy(E[] array) {
-      size = array.length;
       elements = array;
    }
 
@@ -70,7 +73,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
     */
    @SuppressWarnings("unchecked")
    public ImmutableListCopy(Collection<? extends E> collection1, Collection<? extends E> collection2) {
-      size = collection1.size() + collection2.size();
+      int size = collection1.size() + collection2.size();
       elements = (E[]) new Object[size]; // no room for growth;
       Object[] c1 = new Object[collection1.size()];
       Object[] c2 = new Object[collection2.size()];
@@ -82,12 +85,12 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
 
    @Override
    public final int size() {
-      return size;
+      return elements.length;
    }
 
    @Override
    public final boolean isEmpty() {
-      return size == 0;
+      return elements.length == 0;
    }
 
    @Override
@@ -102,6 +105,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
 
    @Override
    public final Object[] toArray() {
+      int size = elements.length;
       Object[] result = new Object[size];
       System.arraycopy(elements, 0, result, 0, size);
       return result;
@@ -110,6 +114,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
    @Override
    @SuppressWarnings("unchecked")
    public final <T> T[] toArray(T[] a) {
+      int size = elements.length;
       if (a.length < size) {
          a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
       }
@@ -150,12 +155,12 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
 
    @Override
    public final E get(int index) {
-      if (index >= size || index < 0) throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
       return elements[index];
    }
 
    @Override
    public final int indexOf(Object o) {
+      int size = elements.length;
       if (o == null) {
          for (int i = 0; i < size; i++) {
             if (elements[i] == null) return i;
@@ -170,6 +175,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
 
    @Override
    public final int lastIndexOf(Object o) {
+      int size = elements.length;
       if (o == null) {
          for (int i = size - 1; i >= 0; i--) {
             if (elements[i] == null) return i;
@@ -197,6 +203,25 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
       return new ImmutableSubList<E>(fromIndex, toIndex);
    }
 
+   @Override
+   public boolean equals(Object o) {
+      if (this == o)
+         return true;
+      if (!(o instanceof ImmutableListCopy))
+         return super.equals(o);
+
+      ImmutableListCopy<?> that = (ImmutableListCopy<?>) o;
+      return Arrays.equals(elements, that.elements);
+
+   }
+
+   @Override
+   public int hashCode() {
+      int result = super.hashCode();
+      result = 31 * result + Arrays.hashCode(elements);
+      return result;
+   }
+
    /**
     * Format: - entry array size (int) - elements (Object)
     *
@@ -205,7 +230,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
     */
    @Override
    public void writeExternal(ObjectOutput out) throws IOException {
-      out.writeInt(size);
+      out.writeInt(elements.length);
       for (E e : elements) out.writeObject(e);
    }
 
@@ -219,7 +244,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
    @Override
    @SuppressWarnings("unchecked")
    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-      size = in.readInt();
+      int size = in.readInt();
       elements = (E[]) new Object[size];
       for (int i = 0; i < size; i++) elements[i] = (E) in.readObject();
    }
@@ -237,7 +262,7 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
 
       @Override
       public boolean hasNext() {
-         return cursor != size;
+         return cursor != elements.length;
       }
 
       @Override
@@ -296,10 +321,11 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
       private int size;
 
       ImmutableSubList(int fromIndex, int toIndex) {
-         if (fromIndex < 0 || toIndex > ImmutableListCopy.this.size || fromIndex > toIndex)
-            throw new IllegalArgumentException("fromIndex(" + fromIndex + "), toIndex(" + toIndex + "), size (" + ImmutableListCopy.this.size + "), List=" + ImmutableListCopy.this.toString());
+         int size = ImmutableListCopy.this.elements.length;
+         if (fromIndex < 0 || toIndex > size || fromIndex > toIndex)
+            throw new IllegalArgumentException("fromIndex(" + fromIndex + "), toIndex(" + toIndex + "), size (" + size + "), List=" + ImmutableListCopy.this.toString());
          offset = fromIndex;
-         size = toIndex - fromIndex;
+         this.size = toIndex - fromIndex;
       }
 
       @Override
@@ -401,5 +427,39 @@ public class ImmutableListCopy<E> extends AbstractList<E> implements Externaliza
       public final List<E> subList(int fromIndex, int toIndex) {
          return new ImmutableSubList<E>(offset + fromIndex, offset + toIndex);
       }
+   }
+
+   @Immutable
+   public static class Externalizer extends AbstractExternalizer<List> {
+
+      @Override
+      public void writeObject(ObjectOutput output, List list) throws IOException {
+         int size = list.size();
+         UnsignedNumeric.writeUnsignedInt(output, size);
+         for (int i = 0; i < size; i++) {
+            output.writeObject(list.get(i));
+         }
+      }
+
+      @Override
+      public List readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         int size = UnsignedNumeric.readUnsignedInt(input);
+         Object[] elements = new Object[size];
+         for (int i = 0; i < size; i++)
+            elements[i] = input.readObject();
+
+         return new ImmutableListCopy(elements);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.IMMUTABLE_LIST;
+      }
+
+      @Override
+      public Set<Class<? extends List>> getTypeClasses() {
+         return Util.<Class<? extends List>>asSet(ImmutableListCopy.class, ImmutableListCopy.ImmutableSubList.class);
+      }
+
    }
 }

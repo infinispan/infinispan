@@ -33,11 +33,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       this.members = Collections.unmodifiableList(new ArrayList<Address>(members));
       this.membersSet = Collections.unmodifiableSet(new HashSet<Address>(members));
       this.primaryOwners = primaryOwners;
-      Set<Integer> segmentIds = new HashSet<Integer>(primaryOwners.length);
-      for (int i = 0; i < primaryOwners.length; i++) {
-         segmentIds.add(i);
-      }
-      segments = Collections.unmodifiableSet(segmentIds);
+      this.segments = new RangeSet(primaryOwners.length);
    }
 
    @Override
@@ -137,19 +133,24 @@ public class ReplicatedConsistentHash implements ConsistentHash {
 
    @Override
    public String toString() {
-      OwnershipStatistics stats = new OwnershipStatistics(this, members);
       StringBuilder sb = new StringBuilder("ReplicatedConsistentHash{");
       sb.append("ns = ").append(segments.size());
       sb.append(", owners = (").append(members.size()).append(")[");
+
+      int[] primaryOwned = new int[members.size()];
+      for (int i = 0; i < primaryOwners.length; i++) {
+         primaryOwned[primaryOwners[i]] ++;
+      }
+
       boolean first = true;
-      for (Address a : members) {
+      for (int i = 0; i < members.size(); i++) {
+         Address a = members.get(i);
          if (first) {
             first = false;
          } else {
             sb.append(", ");
          }
-         int primaryOwned = stats.getPrimaryOwned(a);
-         sb.append(a).append(": ").append(primaryOwned);
+         sb.append(a).append(": ").append(primaryOwned[i]);
       }
       sb.append("]}");
       return sb.toString();
@@ -189,6 +190,120 @@ public class ReplicatedConsistentHash implements ConsistentHash {
       return true;
    }
 
+   public static class RangeSet implements Set<Integer> {
+      final int size;
+
+      public RangeSet(int size) {
+         this.size = size;
+      }
+
+      @Override
+      public int size() {
+         return size;
+      }
+
+      @Override
+      public boolean isEmpty() {
+         return size <= 0;
+      }
+
+      @Override
+      public boolean contains(Object o) {
+         if (!(o instanceof Integer))
+            return false;
+         int i = (int) o;
+         return 0 <= i && i < size;
+      }
+
+      @Override
+      public Iterator<Integer> iterator() {
+         return new RangeSetIterator(size);
+      }
+
+      @Override
+      public Object[] toArray() {
+         Object[] array = new Object[size];
+         for (int i = 0; i < size; i++) {
+            array[i] = i;
+         }
+         return array;
+      }
+
+      @Override
+      public <T> T[] toArray(T[] a) {
+         T[] array = a.length >= size ? a :
+               (T[])java.lang.reflect.Array
+                     .newInstance(a.getClass().getComponentType(), size);
+         for (int i = 0; i < size; i++) {
+            array[i] = (T) Integer.valueOf(i);
+         }
+         return array;
+      }
+
+      @Override
+      public boolean add(Integer integer) {
+         throw new UnsupportedOperationException("RangeSet is immutable");
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         throw new UnsupportedOperationException("RangeSet is immutable");
+      }
+
+      @Override
+      public boolean containsAll(Collection<?> c) {
+         for (Object o : c) {
+            if (!contains(o))
+               return false;
+         }
+         return true;
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends Integer> c) {
+         throw new UnsupportedOperationException("RangeSet is immutable");
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         throw new UnsupportedOperationException("RangeSet is immutable");
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         throw new UnsupportedOperationException("RangeSet is immutable");
+      }
+
+      @Override
+      public void clear() {
+         throw new UnsupportedOperationException("RangeSet is immutable");
+      }
+
+      private static class RangeSetIterator implements Iterator<Integer> {
+         private int size;
+         private int next;
+
+         public RangeSetIterator(int size) {
+            this.size = size;
+            this.next = 0;
+         }
+
+         @Override
+         public boolean hasNext() {
+            return next < size;
+         }
+
+         @Override
+         public Integer next() {
+            return next++;
+         }
+
+         @Override
+         public void remove() {
+            throw new UnsupportedOperationException("RangeSet is read-only");
+         }
+      }
+   }
 
 
    public static class Externalizer extends InstanceReusingAdvancedExternalizer<ReplicatedConsistentHash> {

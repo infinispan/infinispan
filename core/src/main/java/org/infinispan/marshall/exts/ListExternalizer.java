@@ -47,17 +47,18 @@ public class ListExternalizer extends AbstractExternalizer<List> {
    @Override
    public List readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       int magicNumber = input.readUnsignedByte();
+      int size = UnsignedNumeric.readUnsignedInt(input);
+
       List<Object> subject = null;
       switch (magicNumber) {
          case ARRAY_LIST:
-            subject = new ArrayList<Object>();
+            subject = new ArrayList<Object>(size);
             break;
          case LINKED_LIST:
             subject = new LinkedList<Object>();
             break;
       }
 
-      int size = UnsignedNumeric.readUnsignedInt(input);
       for (int i = 0; i < size; i++)
          subject.add(input.readObject());
 
