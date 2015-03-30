@@ -42,17 +42,21 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
     * Executes the registered filters and notifies each one of them whether it was satisfied or not by the given
     * instance.
     *
-    * @param instance the instance to match filters against
+    * @param userContext an optional user provided object to be passed to matching subscribers along with the matching
+    *                    instance; can be {@code null}
+    * @param instance    the object to test against the registered filters; never {@code null}
+    * @param eventType   on optional event type discriminator that is matched against the even type specified when the
+    *                    filter was registered; can be {@code null}
     */
    @Override
-   public void match(Object instance) {
+   public void match(Object userContext, Object instance, Object eventType) {
       if (instance == null) {
          throw new IllegalArgumentException("argument cannot be null");
       }
 
       read.lock();
       try {
-         MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startContext(instance);
+         MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startContext(userContext, instance, eventType);
          if (ctx != null) {
             ctx.match();
          }
@@ -81,13 +85,13 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
    }
 
    @Override
-   public FilterSubscription registerFilter(Query query, FilterCallback callback) {
+   public FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType) {
       BaseQuery baseQuery = (BaseQuery) query;
       return registerFilter(baseQuery.getJPAQuery(), callback);
    }
 
    @Override
-   public FilterSubscription registerFilter(String jpaQuery, FilterCallback callback) {
+   public FilterSubscription registerFilter(String jpaQuery, FilterCallback callback, Object... eventType) {
       FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery);
       BooleanExpr normalizedFilter = booleanFilterNormalizer.normalize(parsingResult.getQuery());
 
@@ -99,7 +103,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
             filtersByTypeName.put(parsingResult.getTargetEntityName(), filterRegistry);
             filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }
-         return filterRegistry.addFilter(jpaQuery, normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), callback);
+         return filterRegistry.addFilter(jpaQuery, normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), callback, eventType);
       } finally {
          write.unlock();
       }
@@ -137,11 +141,11 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
     * @param instance the instance to filter; never null
     * @return the context or null if no filter was registered for the instance
     */
-   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startContext(Object instance);
+   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startContext(Object userContext, Object instance, Object eventType);
 
-   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startContext(Object instance, FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription);
+   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startContext(Object userContext, Object instance, FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription, Object eventType);
 
-   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> createContext(Object instance);
+   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> createContext(Object userContext, Object instance, Object eventType);
 
    protected abstract FilterProcessingChain<TypeMetadata> createFilterProcessingChain(Map<String, Object> namedParameters);
 

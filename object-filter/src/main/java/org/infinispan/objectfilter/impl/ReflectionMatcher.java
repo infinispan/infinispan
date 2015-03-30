@@ -33,10 +33,10 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    }
 
    @Override
-   protected ReflectionMatcherEvalContext startContext(Object instance) {
+   protected ReflectionMatcherEvalContext startContext(Object userContext, Object instance, Object eventType) {
       FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> filterRegistry = getFilterRegistryForType(instance.getClass());
       if (filterRegistry != null) {
-         ReflectionMatcherEvalContext context = createContext(instance);
+         ReflectionMatcherEvalContext context = createContext(userContext, instance, eventType);
          context.initMultiFilterContext(filterRegistry);
          return context;
       }
@@ -44,17 +44,17 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    }
 
    @Override
-   protected ReflectionMatcherEvalContext startContext(Object instance, FilterSubscriptionImpl<Class<?>, ReflectionHelper.PropertyAccessor, String> filterSubscription) {
+   protected ReflectionMatcherEvalContext startContext(Object userContext, Object instance, FilterSubscriptionImpl<Class<?>, ReflectionHelper.PropertyAccessor, String> filterSubscription, Object eventType) {
       if (filterSubscription.getMetadataAdapter().getTypeMetadata() == instance.getClass()) {
-         return createContext(instance);
+         return createContext(userContext, instance, eventType);
       } else {
          return null;
       }
    }
 
    @Override
-   protected ReflectionMatcherEvalContext createContext(Object instance) {
-      return new ReflectionMatcherEvalContext(instance);
+   protected ReflectionMatcherEvalContext createContext(Object userContext, Object instance, Object eventType) {
+      return new ReflectionMatcherEvalContext(userContext, instance, eventType);
    }
 
    @Override

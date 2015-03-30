@@ -36,8 +36,8 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
    }
 
    @Override
-   protected ProtobufMatcherEvalContext startContext(Object instance) {
-      ProtobufMatcherEvalContext context = createContext(instance);
+   protected ProtobufMatcherEvalContext startContext(Object userContext, Object instance, Object eventType) {
+      ProtobufMatcherEvalContext context = createContext(userContext, instance, eventType);
       if (context.getEntityType() != null) {
          FilterRegistry<Descriptor, FieldDescriptor, Integer> filterRegistry = getFilterRegistryForType(context.getEntityType());
          if (filterRegistry != null) {
@@ -49,14 +49,14 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
    }
 
    @Override
-   protected ProtobufMatcherEvalContext startContext(Object instance, FilterSubscriptionImpl<Descriptor, FieldDescriptor, Integer> filterSubscription) {
-      ProtobufMatcherEvalContext ctx = createContext(instance);
+   protected ProtobufMatcherEvalContext startContext(Object userContext, Object instance, FilterSubscriptionImpl<Descriptor, FieldDescriptor, Integer> filterSubscription, Object eventType) {
+      ProtobufMatcherEvalContext ctx = createContext(userContext, instance, eventType);
       return ctx.getEntityType() != null && ctx.getEntityType().getFullName().equals(filterSubscription.getEntityTypeName()) ? ctx : null;
    }
 
    @Override
-   protected ProtobufMatcherEvalContext createContext(Object instance) {
-      ProtobufMatcherEvalContext ctx = new ProtobufMatcherEvalContext(instance, wrappedMessageDescriptor, serializationContext);
+   protected ProtobufMatcherEvalContext createContext(Object userContext, Object instance, Object eventType) {
+      ProtobufMatcherEvalContext ctx = new ProtobufMatcherEvalContext(userContext, instance, eventType, wrappedMessageDescriptor, serializationContext);
       ctx.unwrapPayload();
       return ctx;
    }

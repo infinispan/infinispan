@@ -55,7 +55,7 @@ import static org.junit.Assert.assertNotNull;
       for (int k = 0; k < NUM_FILTERS; k++) {
          matcher.registerFilter(query, new FilterCallback() {
             @Override
-            public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
+            public void onFilterResult(Object userContext, Object instance, Object eventType, Object[] projection, Comparable[] sortProjection) {
                matchCount[0]++;
             }
          });
@@ -64,7 +64,7 @@ import static org.junit.Assert.assertNotNull;
       long stime = System.nanoTime();
       for (int i = 0; i < ITERATIONS; i++) {
          matchCount[0] = 0;
-         matcher.match(obj);
+         matcher.match(null, obj, null);
          assertEquals(NUM_FILTERS, matchCount[0]);
       }
       return System.nanoTime() - stime;

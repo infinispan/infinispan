@@ -25,7 +25,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    private static final FilterCallback emptyCallback = new FilterCallback() {
       @Override
-      public void onFilterResult(Object instance, Object[] projection, Comparable[] sortProjection) {
+      public void onFilterResult(Object userContext, Object instance, Object eventType, Object[] projection, Comparable[] sortProjection) {
          // do nothing
       }
    };
@@ -37,7 +37,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
       //todo [anistor] we need an efficient single-filter registry
       FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = new FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>(metadataAdapter, false);
-      filterSubscription = filterRegistry.addFilter(jpaQuery, normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), emptyCallback);
+      filterSubscription = filterRegistry.addFilter(jpaQuery, normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), emptyCallback, null);
       root = filterRegistry.getPredicateIndex().getRoot();
    }
 
@@ -67,7 +67,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
          throw new IllegalArgumentException("argument cannot be null");
       }
 
-      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startContext(instance, filterSubscription);
+      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startContext(null, instance, filterSubscription, null);
       if (matcherEvalContext != null) {
          FilterEvalContext filterEvalContext = matcherEvalContext.initSingleFilterContext(filterSubscription);
          matcherEvalContext.process(root);

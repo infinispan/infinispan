@@ -31,8 +31,8 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, F
    private final SerializationContext serializationContext;
    private final Descriptor wrappedMessageDescriptor;
 
-   public ProtobufMatcherEvalContext(Object instance, Descriptor wrappedMessageDescriptor, SerializationContext serializationContext) {
-      super(instance);
+   public ProtobufMatcherEvalContext(Object userContext, Object instance, Object eventType, Descriptor wrappedMessageDescriptor, SerializationContext serializationContext) {
+      super(userContext, instance, eventType);
       this.wrappedMessageDescriptor = wrappedMessageDescriptor;
       this.serializationContext = serializationContext;
    }
