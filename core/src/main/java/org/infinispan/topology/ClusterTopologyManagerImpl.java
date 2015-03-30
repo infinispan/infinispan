@@ -6,6 +6,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.executors.SemaphoreCompletionService;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -322,7 +324,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       executeOnClusterAsync(command, getGlobalTimeout(), totalOrder, distributed);
    }
 
-   private void recoverClusterStatus(int newViewId, boolean isMergeView, List<Address> clusterMembers) throws Exception {
+   private void recoverClusterStatus(int newViewId, final boolean isMergeView, final List<Address> clusterMembers) throws Exception {
+      log.debugf("Recovering cluster status for view %d", newViewId);
       ReplicableCommand command = new CacheTopologyControlCommand(null,
             CacheTopologyControlCommand.Type.GET_STATUS, transport.getAddress(), newViewId);
       Map<Address, Object> statusResponses = executeOnClusterSync(command, getGlobalTimeout(), false, false,
@@ -347,9 +350,21 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
 
       isRebalancingEnabled = recoveredRebalancingStatus;
-      for (Map.Entry<String, Map<Address, CacheStatusResponse>> e : responsesByCache.entrySet()) {
-         ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(e.getKey());
-         cacheStatus.doMergePartitions(e.getValue(), clusterMembers, isMergeView);
+      // Compute the new consistent hashes on separate threads
+      int maxThreads = Runtime.getRuntime().availableProcessors() / 2 + 1;
+      CompletionService<Void> cs = new SemaphoreCompletionService<>(asyncTransportExecutor, maxThreads);
+      for (final Map.Entry<String, Map<Address, CacheStatusResponse>> e : responsesByCache.entrySet()) {
+         final ClusterCacheStatus cacheStatus = initCacheStatusIfAbsent(e.getKey());
+         cs.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+               cacheStatus.doMergePartitions(e.getValue(), clusterMembers, isMergeView);
+               return null;
+            }
+         });
+      }
+      for (int i = 0; i < responsesByCache.size(); i++) {
+         cs.take();
       }
    }
 
