@@ -1,19 +1,6 @@
 package org.infinispan.factories;
 
-import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
-import javax.management.MBeanServer;
-import javax.management.MBeanServerFactory;
-
 import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
@@ -32,6 +19,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.EmbeddedCacheManagerStartupException;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
+import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.transport.Transport;
@@ -41,6 +29,17 @@ import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import javax.management.MBeanServer;
+import javax.management.MBeanServerFactory;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * A global component registry where shared components are stored.
@@ -110,6 +109,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
          registerComponent(new ClusterRegistryImpl(), ClusterRegistry.class);
+         registerComponent(new CacheStoreFactoryRegistry(), CacheStoreFactoryRegistry.class);
 
          moduleProperties.loadModuleCommandHandlers(configuredClassLoader);
          Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories();

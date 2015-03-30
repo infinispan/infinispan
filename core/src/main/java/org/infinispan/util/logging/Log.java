@@ -1299,4 +1299,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Use of the replication queue is only allowed with an ASYNCHRONOUS cluster mode.", id = 353)
    CacheConfigurationException replicationQueueOnlyForAsyncCaches();
+
+   @Message(value = "Unable to instantiate loader/writer instance for StoreConfiguration %s", id = 354)
+   CacheConfigurationException unableToInstantiateClass(Class<?> storeConfigurationClass);
 }
