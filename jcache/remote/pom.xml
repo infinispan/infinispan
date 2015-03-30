@@ -24,6 +24,35 @@
       </dependency>
 
       <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-client-hotrod</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-jcache-commons</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.infinispan</groupId>
+         <artifactId>infinispan-server-hotrod</artifactId>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
       </dependency>
@@ -40,5 +69,35 @@
          <optional>true</optional>
       </dependency>
    </dependencies>
+
+   <build>
+      <plugins>
+         <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+               <parallel>none</parallel>
+               <threadCount>1</threadCount>
+               <testNGArtifactName>null:null</testNGArtifactName>
+               <groups combine.self="override"/>
+               <excludedGroups combine.self="override"/>
+               <includes>
+                  <include>
+                     **/*Test.java
+                  </include>
+               </includes>
+               <properties>
+                  <property>
+                     <name>listener</name>
+                     <value>org.infinispan.jcache.DummyTestListener</value>
+                  </property>
+               </properties>
+               <systemPropertyVariables>
+                  <infinispan.jcache.mgmt.lookup.skip>true</infinispan.jcache.mgmt.lookup.skip>
+               </systemPropertyVariables>
+            </configuration>
+         </plugin>
+      </plugins>
+   </build>
 
 </project>

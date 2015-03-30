@@ -1,7 +1,9 @@
 package org.infinispan.jcache;
 
 import org.infinispan.jcache.util.JCacheRunnable;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
 
 import javax.cache.Cache;
 import javax.cache.CacheException;
@@ -10,15 +12,12 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.MutableEntry;
 import javax.cache.spi.CachingProvider;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.fail;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Add {@link Cache#invoke(Object, javax.cache.processor.EntryProcessor, Object...)}
@@ -27,30 +26,35 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Galder Zamarreño
  * @since 5.3
  */
-@Test(groups = "functional", testName = "jcache.InvokeProcessorTest")
 public class InvokeProcessorTest {
 
-   public void testInvokeProcesorStoreByValueException(Method m) {
-      invokeProcessorThrowsException(m,
+   @Rule
+   public TestName testName = new TestName();
+
+   @Test
+   public void testInvokeProcesorStoreByValueException() {
+      invokeProcessorThrowsException(
             new MutableConfiguration<String, List<Integer>>(),
             new ArrayList<Integer>(Arrays.asList(1, 2, 3)));
    }
 
-   public void testInvokeProcesorStoreByReferenceException(Method m) {
+   @Test
+   public void testInvokeProcesorStoreByReferenceException() {
       // As per: https://github.com/jsr107/jsr107spec/issues/106
-      invokeProcessorThrowsException(m,
+      invokeProcessorThrowsException(
             new MutableConfiguration<String, List<Integer>>().setStoreByValue(false),
             new ArrayList<Integer>(Arrays.asList(1, 2, 3, 4)));
    }
 
-   public void testInvokeProcesorStoreByValue(Method m) {
-      invokeProcessor(m, new MutableConfiguration<String, List<Integer>>());
+   @Test
+   public void testInvokeProcesorStoreByValue() {
+      invokeProcessor(new MutableConfiguration<String, List<Integer>>());
    }
 
    private void invokeProcessorThrowsException(
-         Method m, final MutableConfiguration<String, List<Integer>> jcacheCfg,
+         final MutableConfiguration<String, List<Integer>> jcacheCfg,
          final List<Integer> expectedValue) {
-      final String name = getName(m);
+      final String name = testName.getMethodName();
       withCachingProvider(new JCacheRunnable() {
          @Override
          public void run(CachingProvider provider) {
@@ -79,8 +83,8 @@ public class InvokeProcessorTest {
    }
 
    private void invokeProcessor(
-         Method m, final MutableConfiguration<String, List<Integer>> jcacheCfg) {
-      final String name = getName(m);
+         final MutableConfiguration<String, List<Integer>> jcacheCfg) {
+      final String name = testName.getMethodName();
       withCachingProvider(new JCacheRunnable() {
          @Override
          public void run(CachingProvider provider) {
@@ -104,10 +108,6 @@ public class InvokeProcessorTest {
                   cache.get(query));
          }
       });
-   }
-
-   private String getName(Method m) {
-      return getClass().getName() + '.' + m.getName();
    }
 
    private static class UnexpectedException extends RuntimeException {}

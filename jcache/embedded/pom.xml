@@ -30,6 +30,14 @@
       </dependency>
 
       <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-jcache-commons</artifactId>
+         <version>${project.version}</version>
+         <type>test-jar</type>
+         <scope>test</scope>
+      </dependency>
+
+      <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
       </dependency>
@@ -42,8 +50,8 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jboss.arquillian.testng</groupId>
-         <artifactId>arquillian-testng-container</artifactId>
+         <groupId>org.jboss.arquillian.junit</groupId>
+         <artifactId>arquillian-junit-container</artifactId>
          <scope>test</scope>
       </dependency>
 
@@ -99,7 +107,21 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
                <parallel>none</parallel>
-               <groups>${defaultTestGroup}</groups>
+               <threadCount>1</threadCount>
+               <testNGArtifactName>null:null</testNGArtifactName>
+               <groups combine.self="override"/>
+               <excludedGroups combine.self="override"/>
+               <includes>
+                  <include>
+                     **/*Test.java
+                  </include>
+               </includes>
+               <properties>
+                  <property>
+                     <name>listener</name>
+                     <value>org.infinispan.jcache.DummyTestListener</value>
+                  </property>
+               </properties>
             </configuration>
          </plugin>
 
