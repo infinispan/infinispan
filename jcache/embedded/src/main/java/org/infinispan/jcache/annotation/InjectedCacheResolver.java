@@ -42,21 +42,6 @@ public class InjectedCacheResolver implements CacheResolver {
    private final Map<EmbeddedCacheManager, JCacheManager> jcacheManagers = new HashMap<>();
    private JCacheManager defaultJCacheManager;
 
-   private EmbeddedCacheManager getDefaultCacheManager() {
-      if (defaultCacheManager == null) {
-         defaultCacheManager = getBeanReference(EmbeddedCacheManager.class);
-      }
-      return defaultCacheManager;
-   }
-
-   private JCacheManager getDefaultJCacheManager() {
-      return defaultJCacheManager;
-   }
-
-   private void setDefaultJCacheManager(final JCacheManager defaultJCacheManager) {
-      this.defaultJCacheManager = defaultJCacheManager;
-   }
-
    // for proxy.
    public InjectedCacheResolver() {
    }
@@ -72,11 +57,13 @@ public class InjectedCacheResolver implements CacheResolver {
    }
 
    private void initializeDefaultCacheManagers() {
-      if (this.jcacheManagers.containsKey(getDefaultCacheManager())) {
-         setDefaultJCacheManager(this.jcacheManagers.get(getDefaultCacheManager()));
+      defaultCacheManager = getBeanReference(EmbeddedCacheManager.class);
+
+      if (jcacheManagers.containsKey(defaultCacheManager)) {
+         defaultJCacheManager = jcacheManagers.get(defaultCacheManager);
       } else {
-         setDefaultJCacheManager(toJCacheManager(getDefaultCacheManager()));
-         this.jcacheManagers.put(getDefaultCacheManager(), getDefaultJCacheManager());
+         defaultJCacheManager = toJCacheManager(defaultCacheManager);
+         jcacheManagers.put(defaultCacheManager, defaultJCacheManager);
       }
    }
 
@@ -122,12 +109,9 @@ public class InjectedCacheResolver implements CacheResolver {
 
    private <K, V> Cache<K, V> getCacheFromDefaultCacheManager(final String cacheName) {
       final Configuration defaultInjectedConfiguration = getBeanReference(Configuration.class);
-
-      getDefaultCacheManager().defineConfiguration(cacheName,
-            defaultInjectedConfiguration);
-
-      return getDefaultJCacheManager().getOrCreateCache(cacheName,
-                                                      getDefaultCacheManager().<K, V>getCache(cacheName).getAdvancedCache());
+      defaultCacheManager.defineConfiguration(cacheName, defaultInjectedConfiguration);
+      return defaultJCacheManager.getOrCreateCache(cacheName, defaultCacheManager.<K, V> getCache(cacheName)
+            .getAdvancedCache());
    }
 
    private BeanManager getBeanManager() {
@@ -144,10 +128,8 @@ public class InjectedCacheResolver implements CacheResolver {
       }
 
       final Bean<?> configurationBean = iterator.next();
-      final CreationalContext<?> createCreationalContext = bm
-            .createCreationalContext(configurationBean);
-      return (T) bm.getReference(configurationBean, beanType,
-            createCreationalContext);
+      final CreationalContext<?> createCreationalContext = bm.createCreationalContext(configurationBean);
+      return (T) bm.getReference(configurationBean, beanType, createCreationalContext);
    }
 
 }
