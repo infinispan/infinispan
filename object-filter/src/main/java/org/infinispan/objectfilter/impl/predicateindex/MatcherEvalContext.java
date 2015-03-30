@@ -27,7 +27,11 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
    private final Map<Predicate<?>, Counter> suspendedSubscriptionCounts = new HashMap<Predicate<?>, Counter>();
 
+   private final Object userContext;
+
    private final Object instance;
+
+   private final Object eventType;
 
    private FilterEvalContext singleFilterContext;
 
@@ -36,8 +40,10 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
     */
    private FilterEvalContext[] filterContexts;
 
-   protected MatcherEvalContext(Object instance) {
+   protected MatcherEvalContext(Object userContext, Object instance, Object eventType) {
+      this.userContext = userContext;
       this.instance = instance;
+      this.eventType = eventType;
    }
 
    public abstract TypeMetadata getEntityType();
@@ -47,6 +53,14 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
     */
    public Object getInstance() {
       return instance;
+   }
+
+   public Object getUserContext() {
+      return userContext;
+   }
+
+   public Object getEventType() {
+      return eventType;
    }
 
    public void initMultiFilterContext(FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry) {
@@ -59,7 +73,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       return singleFilterContext;
    }
 
-   public boolean isSingleFilter() {
+   private boolean isSingleFilter() {
       return singleFilterContext != null;
    }
 

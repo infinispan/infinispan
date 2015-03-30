@@ -64,7 +64,7 @@ public final class Predicates<AttributeDomain extends Comparable<AttributeDomain
 
       private void handleValue(MatcherEvalContext<?, ?, ?> ctx, boolean isMatching) {
          FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(filterSubscription);
-         if (!predicateNode.isDecided(filterEvalContext)) {
+         if (!predicateNode.isEvaluationComplete(filterEvalContext)) {
             if (predicateNode.isNegated()) {
                isMatching = !isMatching;
             }

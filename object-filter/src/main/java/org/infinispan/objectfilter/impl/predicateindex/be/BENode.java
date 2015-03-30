@@ -34,7 +34,7 @@ public abstract class BENode {
       this.endIndex = endIndex;
    }
 
-   public final boolean isDecided(FilterEvalContext evalContext) {
+   public final boolean isEvaluationComplete(FilterEvalContext evalContext) {
       return evalContext.treeCounters[0] <= 0 || evalContext.treeCounters[startIndex] <= 0;
    }
 

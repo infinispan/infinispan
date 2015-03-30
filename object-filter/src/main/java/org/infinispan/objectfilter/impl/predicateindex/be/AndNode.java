@@ -14,7 +14,7 @@ public final class AndNode extends BENode {
 
    @Override
    public void handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
-      if (isDecided(evalContext)) {
+      if (isEvaluationComplete(evalContext)) {
          throw new IllegalStateException("This should never be called again because the state of this node has been decided already.");
       }
 

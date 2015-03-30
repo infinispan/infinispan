@@ -42,11 +42,14 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private final List<List<AttributeId>> translatedSortProjection;
 
+   private final Object[] eventTypes;
+
    private Comparator<Comparable[]> comparator;
 
    protected FilterSubscriptionImpl(String queryString, boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
                                     List<String> projection, List<List<AttributeId>> translatedProjection,
-                                    List<SortField> sortFields, List<List<AttributeId>> translatedSortProjection) {
+                                    List<SortField> sortFields, List<List<AttributeId>> translatedSortProjection,
+                                    Object[] eventTypes) {
       this.queryString = queryString;
       this.useIntervals = useIntervals;
       this.metadataAdapter = metadataAdapter;
@@ -67,6 +70,7 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
       this.translatedProjection = translatedProjection;
       this.translatedSortProjection = translatedSortProjection;
+      this.eventTypes = eventTypes;
    }
 
    public String getQueryString() {
@@ -115,6 +119,11 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
          comparator = new ComparableArrayComparator(direction);
       }
       return comparator;
+   }
+
+   @Override
+   public Object[] getEventTypes() {
+      return eventTypes;
    }
 
    public void registerProjection(PredicateIndex<AttributeMetadata, AttributeId> predicateIndex) {

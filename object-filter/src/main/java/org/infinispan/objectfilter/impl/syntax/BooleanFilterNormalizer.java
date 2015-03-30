@@ -100,8 +100,8 @@ public final class BooleanFilterNormalizer {
          if (leftChild instanceof ConstantValueExpr) {
             if (rightChild instanceof ConstantValueExpr) {
                // replace the comparison of the two constants with the actual result
-               Comparable leftValue = (Comparable) ((ConstantValueExpr) leftChild).getConstantValue();
-               Comparable rightValue = (Comparable) ((ConstantValueExpr) rightChild).getConstantValue();
+               Comparable leftValue = ((ConstantValueExpr) leftChild).getConstantValue();
+               Comparable rightValue = ((ConstantValueExpr) rightChild).getConstantValue();
                int compRes = leftValue.compareTo(rightValue);
                switch (comparisonType) {
                   case LESS:
