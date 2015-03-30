@@ -28,7 +28,7 @@ public final class EmbeddedQuery extends BaseQuery {
 
    private final AdvancedCache<?, ?> cache;
 
-   private final FilterAndConverter filter;
+   private final JPAFilterAndConverter filter;
 
    private List results;
 
@@ -46,7 +46,7 @@ public final class EmbeddedQuery extends BaseQuery {
       this.startOffset = startOffset < 0 ? 0 : (int) startOffset;
       this.maxResults = maxResults;
 
-      filter = new FilterAndConverter(jpaQuery, matcherImplClass);
+      filter = new JPAFilterAndConverter(jpaQuery, matcherImplClass);
       filter.injectDependencies(cache);
 
       // this also triggers early validation

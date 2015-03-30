@@ -7,7 +7,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
-import org.infinispan.query.dsl.embedded.impl.FilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
@@ -22,16 +22,16 @@ import static org.junit.Assert.*;
  * @author anistor@redhat.com
  * @since 7.0
  */
-@Test(groups = "functional", testName = "query.dsl.embedded.FilterAndConverterDistTest")
-public class FilterAndConverterDistTest extends MultipleCacheManagersTest {
+@Test(groups = "functional", testName = "query.dsl.embedded.JPAFilterAndConverterDistTest")
+public class JPAFilterAndConverterDistTest extends MultipleCacheManagersTest {
 
    protected final int numNodes;
 
-   protected FilterAndConverterDistTest(int numNodes) {
+   protected JPAFilterAndConverterDistTest(int numNodes) {
       this.numNodes = numNodes;
    }
 
-   public FilterAndConverterDistTest() {
+   public JPAFilterAndConverterDistTest() {
       this(3);
    }
 
@@ -55,7 +55,7 @@ public class FilterAndConverterDistTest extends MultipleCacheManagersTest {
          cache.put(key, value);
       }
 
-      FilterAndConverter filterAndConverter = new FilterAndConverter<Object, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", ReflectionMatcher.class);
+      JPAFilterAndConverter filterAndConverter = new JPAFilterAndConverter<Object, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", ReflectionMatcher.class);
 
       CloseableIterator<Map.Entry<Object, ObjectFilter.FilterResult>> iterator = cache(0).getAdvancedCache().filterEntries(filterAndConverter).converter(filterAndConverter).iterator();
       Map<Object, ObjectFilter.FilterResult> results = mapFromIterator(iterator);

@@ -25,7 +25,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class FilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> {
+public final class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> {
 
    /**
     * Optional cache for query objects.
@@ -49,7 +49,7 @@ public final class FilterAndConverter<K, V> extends AbstractKeyValueFilterConver
     */
    private ObjectFilter objectFilter;
 
-   public FilterAndConverter(String jpaQuery, Class<? extends Matcher> matcherImplClass) {
+   public JPAFilterAndConverter(String jpaQuery, Class<? extends Matcher> matcherImplClass) {
       if (jpaQuery == null || matcherImplClass == null) {
          throw new IllegalArgumentException("Arguments cannot be null");
       }
@@ -73,12 +73,12 @@ public final class FilterAndConverter<K, V> extends AbstractKeyValueFilterConver
       if (objectFilter == null) {
          if (queryCache != null) {
             KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpaQuery, matcherImplClass);
-            ObjectFilter of = queryCache.get(queryCacheKey);
-            if (of == null) {
-               of = matcher.getObjectFilter(jpaQuery);
-               queryCache.put(queryCacheKey, of);
+            ObjectFilter objectFilter = queryCache.get(queryCacheKey);
+            if (objectFilter == null) {
+               objectFilter = matcher.getObjectFilter(jpaQuery);
+               queryCache.put(queryCacheKey, objectFilter);
             }
-            objectFilter = of;
+            this.objectFilter = objectFilter;
          } else {
             objectFilter = matcher.getObjectFilter(jpaQuery);
          }
@@ -86,8 +86,20 @@ public final class FilterAndConverter<K, V> extends AbstractKeyValueFilterConver
       return objectFilter;
    }
 
+   public String getJPAQuery() {
+      return jpaQuery;
+   }
+
+   public Matcher getMatcher() {
+      return matcher;
+   }
+
    @Override
    public ObjectFilter.FilterResult filterAndConvert(K key, V value, Metadata metadata) {
+      if (value == null) {
+         // this is a 'pre' invocation, ignore it
+         return null;
+      }
       return getObjectFilter().filter(value);
    }
 
@@ -98,29 +110,29 @@ public final class FilterAndConverter<K, V> extends AbstractKeyValueFilterConver
             '}';
    }
 
-   public static final class FilterAndConverterExternalizer extends AbstractExternalizer<FilterAndConverter> {
+   public static final class FilterAndConverterExternalizer extends AbstractExternalizer<JPAFilterAndConverter> {
 
       @Override
-      public void writeObject(ObjectOutput output, FilterAndConverter filterAndConverter) throws IOException {
+      public void writeObject(ObjectOutput output, JPAFilterAndConverter filterAndConverter) throws IOException {
          output.writeUTF(filterAndConverter.jpaQuery);
          output.writeObject(filterAndConverter.matcherImplClass);
       }
 
       @Override
-      public FilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public JPAFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String jpaQuery = input.readUTF();
          Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new FilterAndConverter(jpaQuery, matcherImplClass);
+         return new JPAFilterAndConverter(jpaQuery, matcherImplClass);
       }
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.FILTER_AND_CONVERTER;
+         return ExternalizerIds.JPA_FILTER_AND_CONVERTER;
       }
 
       @Override
-      public Set<Class<? extends FilterAndConverter>> getTypeClasses() {
-         return Collections.<Class<? extends FilterAndConverter>>singleton(FilterAndConverter.class);
+      public Set<Class<? extends JPAFilterAndConverter>> getTypeClasses() {
+         return Collections.<Class<? extends JPAFilterAndConverter>>singleton(JPAFilterAndConverter.class);
       }
    }
 
@@ -148,7 +160,7 @@ public final class FilterAndConverter<K, V> extends AbstractKeyValueFilterConver
 
       @Override
       public Integer getId() {
-         return ExternalizerIds.FILTER_RESULT;
+         return ExternalizerIds.JPA_FILTER_RESULT;
       }
 
       @Override
