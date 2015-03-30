@@ -442,7 +442,7 @@ By default each protocol stores data in the cache in the most efficient format f
 <cache-container name="local" default-cache="default">
     <local-cache name="default" start="EAGER">
         <transaction mode="NONE"/>
-        <compatibility enabled="true"/>
+        <compatibility />
     </local-cache>
 </cache-container>
 
@@ -453,7 +453,7 @@ To specify a custom server-side compatibility marshaller use the "marshaller" at
 [source,xml]
 ----
 
-<compatibility enabled="true" marshaller="com.acme.CustomMarshaller"/>
+<compatibility marshaller="com.acme.CustomMarshaller"/>
 
 ----
 
