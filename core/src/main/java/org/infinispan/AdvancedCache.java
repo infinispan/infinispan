@@ -309,6 +309,17 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    V put(K key, V value, Metadata metadata);
 
    /**
+    * An overloaded form of {@link #putAll(Map)}, which takes in an instance of
+    * {@link org.infinispan.metadata.Metadata} which can be used to provide metadata information for
+    * the entries being stored, such as lifespan, version of value...etc.
+    *
+    * @param map the values to store
+    * @param metadata information to store alongside the value(s)
+    * @since 7.2
+    */
+   void putAll(Map<? extends K, ? extends V> map, Metadata metadata);
+
+   /**
     * An overloaded form of {@link #replace(K, V)}, which takes in an
     * instance of {@link Metadata} which can be used to provide metadata
     * information for the entry being stored, such as lifespan, version

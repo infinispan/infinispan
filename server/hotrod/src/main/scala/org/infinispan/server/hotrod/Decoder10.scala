@@ -152,7 +152,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                h.topologyId, None, 0)
    }
 
-   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef = {
+   override def customReadHeader(h: HotRodHeader, hrCtx: CacheDecodeContext, 
+         buffer: ByteBuf, cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef = {
       h.op match {
          case ClearRequest =>
             // Get an optimised cache in case we can make the operation more efficient

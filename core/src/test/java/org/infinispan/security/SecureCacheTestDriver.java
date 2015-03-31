@@ -638,4 +638,10 @@ public class SecureCacheTestDriver {
    public void testRemoveGroup_String(SecureCache<String, String> cache) {
       cache.removeGroup("someGroup");
    }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testPutAll_Map_Metadata(SecureCache<String, String> cache) {
+      cache.putAll(Collections.singletonMap("a", "a"), new EmbeddedMetadata.Builder().
+            lifespan(10, TimeUnit.SECONDS).maxIdle(5, TimeUnit.SECONDS).build());
+   }
 }

@@ -43,6 +43,7 @@ public interface HotRodConstants {
    static final byte REMOVE_CLIENT_LISTENER_REQUEST = 0x27;
    static final byte SIZE_REQUEST = 0x29;
    static final byte EXEC_REQUEST = 0x2B;
+   static final byte PUT_ALL_REQUEST = 0x2D;
    
    //responses
    static final byte PUT_RESPONSE = 0x02;
@@ -67,6 +68,7 @@ public interface HotRodConstants {
    static final byte REMOVE_CLIENT_LISTENER_RESPONSE = 0x28;
    static final byte SIZE_RESPONSE = 0x2A;
    static final byte EXEC_RESPONSE = 0x2C;
+   static final byte PUT_ALL_RESPONSE = 0x2E;
    static final byte ERROR_RESPONSE = 0x50;
    static final byte CACHE_ENTRY_CREATED_EVENT_RESPONSE = 0x60;
    static final byte CACHE_ENTRY_MODIFIED_EVENT_RESPONSE = 0x61;

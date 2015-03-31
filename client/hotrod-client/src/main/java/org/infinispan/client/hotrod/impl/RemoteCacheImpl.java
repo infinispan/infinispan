@@ -165,9 +165,18 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
-         put(entry.getKey(), entry.getValue(), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      int lifespanSecs = toSeconds(lifespan, lifespanUnit);
+      int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
+      applyDefaultExpirationFlags(lifespan, maxIdleTime);
+      if (log.isTraceEnabled()) {
+         log.tracef("About to putAll entries (%s) lifespanSecs:%d, maxIdleSecs:%d", map, lifespanSecs, maxIdleSecs);
       }
+      Map<byte[], byte[]> byteMap = new HashMap<>();
+      for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
+         byteMap.put(obj2bytes(entry.getKey(),  true), obj2bytes(entry.getValue(), false));
+      }
+      PutAllOperation op = operationsFactory.newPutAllOperation(byteMap, lifespanSecs, maxIdleSecs);
+      op.execute();
    }
 
    @Override

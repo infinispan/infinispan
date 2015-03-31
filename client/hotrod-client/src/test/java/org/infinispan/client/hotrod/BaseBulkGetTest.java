@@ -65,9 +65,11 @@ public abstract class BaseBulkGetTest extends MultipleCacheManagersTest {
    }
 
    private void populateCacheManager() {
+      Map<Integer, Integer> map = new HashMap<>();
       for (int i = 0; i < 100; i++) {
-         remoteCache.put(i, i);
+         map.put(i, i);
       }
+      remoteCache.putAll(map);
    }
 
    public void testBulkGet() {

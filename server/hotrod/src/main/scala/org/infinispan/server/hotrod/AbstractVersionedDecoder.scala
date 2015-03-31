@@ -55,7 +55,8 @@ abstract class AbstractVersionedDecoder {
    /**
     * Handle a protocol specific header reading.
     */
-   def customReadHeader(header: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef
+   def customReadHeader(header: HotRodHeader, hrCtx: CacheDecodeContext, buffer: ByteBuf,
+       cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef
 
    /**
     * Handle a protocol specific key reading.

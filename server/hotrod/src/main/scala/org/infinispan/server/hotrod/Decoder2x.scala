@@ -40,6 +40,14 @@ import org.infinispan.server.core.transport.SaslQopHandler
 import org.infinispan.scripting.ScriptingManager
 import javax.script.SimpleBindings
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
+import java.util.concurrent.TimeUnit
+import org.infinispan.metadata.Metadata
+import org.infinispan.metadata.EmbeddedMetadata
+import org.infinispan.factories.ComponentRegistry
+import org.infinispan.container.versioning.EntryVersion
+import org.infinispan.container.versioning.VersionGenerator
+import org.infinispan.container.versioning.NumericVersionGenerator
+import org.infinispan.remoting.rpc.RpcManager
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -80,6 +88,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x27 => (RemoveClientListenerRequest, false)
          case 0x29 => (SizeRequest, true)
          case 0x2B => (ExecRequest, true)
+         case 0x2D => (PutAllRequest, true)
          case _ => throw new HotRodUnknownOperationException(
             "Unknown operation: " + streamOp, version, messageId)
       }
@@ -198,7 +207,9 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             h.topologyId, None, 0)
    }
 
-   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef = {
+   override def customReadHeader(h: HotRodHeader, hrCtx: CacheDecodeContext, 
+         buffer: ByteBuf, cache: Cache, server: HotRodServer,
+         ctx: ChannelHandlerContext): AnyRef = {
       h.op match {
          case ClearRequest =>
             // Get an optimised cache in case we can make the operation more efficient
@@ -285,6 +296,19 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val scriptingManager = SecurityActions.getCacheGlobalComponentRegistry(cache).getComponent(classOf[ScriptingManager]);
             val result: Any = scriptingManager.runScript(name, cache, new SimpleBindings(params)).get
             new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, marshaller.objectToByteBuffer(result))
+         case PutAllRequest =>
+            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(h, ProtocolFlag.DefaultLifespan))
+            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(h, ProtocolFlag.DefaultMaxIdle))
+            val size = readUnsignedInt(buffer)
+            val map = new HashMap[Bytes, Bytes]()
+            for (i <- 0 until size) {
+              val k = readRangedBytes(buffer)
+              val v = readRangedBytes(buffer)
+              map.put(k, v)
+            }
+            cache.putAll(map, hrCtx.buildMetadata(lifespan, maxIdle, h.cacheName))
+            new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
+               PutAllResponse, Success, h.topologyId)
       }
    }
 
