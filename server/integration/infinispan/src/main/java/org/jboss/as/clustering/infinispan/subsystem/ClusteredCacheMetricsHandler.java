@@ -37,7 +37,7 @@ public class ClusteredCacheMetricsHandler extends AbstractRuntimeOnlyHandler {
       AVERAGE_READ_TIME(ClusterWideMetricKeys.AVERAGE_READ_TIME, ModelType.LONG, true),
       AVERAGE_WRITE_TIME(ClusterWideMetricKeys.AVERAGE_WRITE_TIME, ModelType.LONG, true),
       AVERAGE_REMOVE_TIME(ClusterWideMetricKeys.AVERAGE_REMOVE_TIME, ModelType.LONG, true),
-      ELAPSED_TIME(ClusterWideMetricKeys.ELAPSED_TIME, ModelType.LONG, true),
+      TIME_SINCE_START(ClusterWideMetricKeys.TIME_SINCE_START, ModelType.LONG, true),
       EVICTIONS(ClusterWideMetricKeys.EVICTIONS, ModelType.LONG, true),
       HIT_RATIO(ClusterWideMetricKeys.HIT_RATIO, ModelType.DOUBLE, true),
       HITS(ClusterWideMetricKeys.HITS, ModelType.LONG, true),
@@ -129,7 +129,7 @@ public class ClusteredCacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             result.set(clusterCacheStats.getAverageReadTime());
             break;
          }
-         case ELAPSED_TIME: {
+         case TIME_SINCE_START: {
             result.set(clusterCacheStats.getTimeSinceStart());
             break;
          }

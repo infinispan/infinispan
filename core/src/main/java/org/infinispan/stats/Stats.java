@@ -2,7 +2,7 @@ package org.infinispan.stats;
 
 /**
  * Stats.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
@@ -12,6 +12,11 @@ public interface Stats {
     * @return Number of seconds since cache started.
     */
    long getTimeSinceStart();
+
+   /**
+    * @return Number of seconds since stats where reset
+    */
+   long getTimeSinceReset();
 
    /**
     * Returns the number of entries currently in this cache instance. When
@@ -61,7 +66,7 @@ public interface Stats {
 
    /**
     * @return Number of cache eviction.
-    */   
+    */
    long getEvictions();
 
    /**

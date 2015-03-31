@@ -53,7 +53,7 @@ public class MetricKeys {
     public static final String AVERAGE_READ_TIME = "average-read-time";
     public static final String AVERAGE_WRITE_TIME = "average-write-time";
     public static final String AVERAGE_REMOVE_TIME = "average-remove-time";
-    public static final String ELAPSED_TIME = "elapsed-time";
+    public static final String TIME_SINCE_START = "time-since-start";
     public static final String EVICTIONS = "evictions";
     public static final String HIT_RATIO = "hit-ratio";
     public static final String HITS = "hits";

@@ -45,7 +45,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         AVERAGE_READ_TIME(MetricKeys.AVERAGE_READ_TIME, ModelType.LONG, true),
         AVERAGE_WRITE_TIME(MetricKeys.AVERAGE_WRITE_TIME, ModelType.LONG, true),
         AVERAGE_REMOVE_TIME(MetricKeys.AVERAGE_REMOVE_TIME, ModelType.LONG, true),
-        ELAPSED_TIME(MetricKeys.ELAPSED_TIME, ModelType.LONG, true),
+        TIME_SINCE_START(MetricKeys.TIME_SINCE_START, ModelType.LONG, true),
         EVICTIONS(MetricKeys.EVICTIONS, ModelType.LONG, true),
         HIT_RATIO(MetricKeys.HIT_RATIO, ModelType.DOUBLE, true),
         HITS(MetricKeys.HITS, ModelType.LONG, true),
@@ -172,7 +172,7 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
                 case AVERAGE_REMOVE_TIME:
                    result.set(stats.getAverageRemoveTime());
                    break;
-                case ELAPSED_TIME:
+                case TIME_SINCE_START:
                    result.set(stats.getTimeSinceStart());
                    break;
                 case EVICTIONS:
