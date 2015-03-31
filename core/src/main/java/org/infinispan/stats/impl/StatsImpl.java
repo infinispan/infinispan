@@ -8,12 +8,13 @@ import org.infinispan.stats.Stats;
 
 /**
  * StatsImpl.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Immutable
 public class StatsImpl implements Stats {
+   final long timeSinceReset;
    final long timeSinceStart;
    final int currentNumberOfEntries;
    final long totalNumberOfEntries;
@@ -34,7 +35,8 @@ public class StatsImpl implements Stats {
             .getInterceptorsWhichExtend(CacheMgmtInterceptor.class).get(0);
 
       if (mgmtInterceptor.getStatisticsEnabled()) {
-         timeSinceStart = mgmtInterceptor.getElapsedTime();
+         timeSinceReset = mgmtInterceptor.getTimeSinceReset();
+         timeSinceStart = mgmtInterceptor.getTimeSinceStart();
          currentNumberOfEntries = mgmtInterceptor.getNumberOfEntries();
          totalNumberOfEntries = mgmtInterceptor.getStores();
          retrievals = mgmtInterceptor.getHits() + mgmtInterceptor.getMisses();
@@ -48,6 +50,7 @@ public class StatsImpl implements Stats {
          averageWriteTime = mgmtInterceptor.getAverageWriteTime();
          averageRemoveTime = mgmtInterceptor.getAverageRemoveTime();
       } else {
+         timeSinceReset = -1;
          timeSinceStart = -1;
          currentNumberOfEntries = -1;
          totalNumberOfEntries = -1;
@@ -67,6 +70,11 @@ public class StatsImpl implements Stats {
    @Override
    public long getTimeSinceStart() {
       return timeSinceStart;
+   }
+
+   @Override
+   public long getTimeSinceReset() {
+      return timeSinceReset;
    }
 
    @Override
@@ -138,5 +146,4 @@ public class StatsImpl implements Stats {
    public void setStatisticsEnabled(boolean enabled) {
       mgmtInterceptor.setStatisticsEnabled(enabled);
    }
-
 }

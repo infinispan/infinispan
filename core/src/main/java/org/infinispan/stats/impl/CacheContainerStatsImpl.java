@@ -1,5 +1,9 @@
 package org.infinispan.stats.impl;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -10,6 +14,7 @@ import org.infinispan.jmx.annotations.Units;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.stats.Stats;
+import org.infinispan.util.TimeService;
 
 
 /**
@@ -23,7 +28,9 @@ import org.infinispan.stats.Stats;
 public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisticsExposer {
 
    private EmbeddedCacheManager cm;
+   private final AtomicLong resetNanoseconds = new AtomicLong(0);
    private boolean statisticsEnabled = false;
+   private TimeService timeService;
 
    public CacheContainerStatsImpl(EmbeddedCacheManager cm) {
       this.cm = cm;
@@ -32,9 +39,18 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       setStatisticsEnabled(globalJmxStatsEnabled);
    }
 
+   @Inject
+   public void setDependencies(TimeService timeService) {
+      this.timeService = timeService;
+   }
+
    @Override
    public void setStatisticsEnabled(boolean enabled) {
       this.statisticsEnabled = enabled;
+      if (enabled) {
+         //yes technically we do not reset stats but we initialize them
+         resetNanoseconds.set(timeService.time());
+      }
    }
 
 
@@ -51,6 +67,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
                cm.getCache(cn).getAdvancedCache().getStats().reset();
             }
          }
+         resetNanoseconds.set(timeService.time());
       }
    }
 
@@ -401,6 +418,20 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       long result = -1;
       if (getStatisticsEnabled()) {
          result = calculateStores();
+      }
+      return result;
+   }
+
+   @ManagedAttribute(
+         description = "Number of seconds since the cache container statistics were last reset",
+         displayName = "Seconds since cache container statistics were reset",
+         units = Units.SECONDS,
+         displayType = DisplayType.SUMMARY
+   )
+   public long getTimeSinceReset() {
+      long result = -1;
+      if (getStatisticsEnabled()) {
+         result = timeService.timeDuration(resetNanoseconds.get(), TimeUnit.SECONDS);
       }
       return result;
    }

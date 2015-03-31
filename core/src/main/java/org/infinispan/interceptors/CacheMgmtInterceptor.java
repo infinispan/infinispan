@@ -351,7 +351,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
          measurementType = MeasurementType.TRENDSUP,
          displayType = DisplayType.SUMMARY
    )
-   public long getElapsedTime() {
+   public long getTimeSinceStart() {
       return timeService.timeDuration(startNanoseconds.get(), TimeUnit.SECONDS);
    }
 

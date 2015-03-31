@@ -45,7 +45,7 @@ public class ClusterWideMetricKeys {
    public static final String AVERAGE_READ_TIME = "clusterwide-average-read-time";
    public static final String AVERAGE_WRITE_TIME = "clusterwide-average-write-time";
    public static final String AVERAGE_REMOVE_TIME = "clusterwide-average-remove-time";
-   public static final String ELAPSED_TIME = "clusterwide-elapsed-time";
+   public static final String TIME_SINCE_START = "clusterwide-time-since-start";
    public static final String EVICTIONS = "clusterwide-evictions";
    public static final String HIT_RATIO = "clusterwide-hit-ratio";
    public static final String HITS = "clusterwide-hits";

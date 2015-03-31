@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
@@ -16,7 +17,6 @@ import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.PassivationManager;
-import org.infinispan.eviction.impl.PassivationManagerImpl;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -81,6 +81,7 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
    private boolean statisticsEnabled = false;
    private long staleStatsTreshold = DEFAULT_STALE_STATS_THRESHOLD;
    private long statsUpdateTimestamp = 0;
+   private final AtomicLong resetNanoseconds = new AtomicLong(0);
 
    private long stores;
    private long timeSinceStart;
@@ -144,12 +145,19 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
 
    @ManagedOperation(description = "Resets statistics gathered by this component", displayName = "Reset statistics")
    public void resetStatistics() {
-      reset();
+      if (isStatisticsEnabled()) {
+         reset();
+         resetNanoseconds.set(ts.time());
+      }
    }
 
    @Override
    public void setStatisticsEnabled(boolean enabled) {
       this.statisticsEnabled = enabled;
+      if (enabled) {
+         //yes technically we do not reset stats but we initialize them
+         resetNanoseconds.set(ts.time());
+      }
    }
 
    @Override
@@ -339,6 +347,20 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       } else {
          return -1;
       }
+   }
+
+   @ManagedAttribute(
+         description = "Number of seconds since the cluster-wide cache statistics were last reset",
+         displayName = "Seconds since cluster-wide cache statistics were reset",
+         units = Units.SECONDS,
+         displayType = DisplayType.SUMMARY
+   )
+   public long getTimeSinceReset() {
+      long result = -1;
+      if (isStatisticsEnabled()) {
+         result = ts.timeDuration(resetNanoseconds.get(), TimeUnit.SECONDS);
+      }
+      return result;
    }
 
    @Override
