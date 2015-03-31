@@ -109,6 +109,13 @@ public class OperationsFactory implements HotRodConstants {
             value, lifespanSecs, maxIdleSecs);
    }
 
+   public PutAllOperation newPutAllOperation(Map<byte[], byte[]> map,
+         int lifespanSecs, int maxIdleSecs) {
+      return new PutAllOperation(
+            codec, transportFactory, map, cacheNameBytes, topologyId, flags(),
+            lifespanSecs, maxIdleSecs);
+   }
+
    public PutIfAbsentOperation newPutIfAbsentOperation(byte[] key, byte[] value,
             int lifespanSecs, int maxIdleSecs) {
       return new PutIfAbsentOperation(

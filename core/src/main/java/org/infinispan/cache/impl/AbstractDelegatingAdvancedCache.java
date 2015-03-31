@@ -27,6 +27,7 @@ import javax.transaction.xa.XAResource;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Similar to {@link org.infinispan.cache.impl.AbstractDelegatingCache}, but for {@link AdvancedCache}.
@@ -243,6 +244,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       cache.putForExternalRead(key, value, metadata);
    }
 
+   @Override
+   public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
+      cache.putAll(map, metadata);
+   }
+
    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
       ((CacheImpl<K, V>) cache).putForExternalRead(key, value, flags, classLoader);
    }
@@ -254,5 +260,4 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    public interface AdvancedCacheWrapper<K, V> {
       AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache);
    }
-
 }

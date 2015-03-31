@@ -156,18 +156,22 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
    }
 
    private def buildMetadata: Metadata = {
+     buildMetadata(params.lifespan, params.maxIdle, header.cacheName)
+   }
+
+   def buildMetadata(lifespan: Int, maxIdle: Int, cacheName: String): Metadata = {
       val metadata = new EmbeddedMetadata.Builder
-      metadata.version(generateVersion(server.getCacheRegistry(header.cacheName), cache))
-      (params.lifespan, params.maxIdle) match {
+      metadata.version(generateVersion(server.getCacheRegistry(cacheName), cache))
+      (lifespan, maxIdle) match {
          case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) =>
             metadata.lifespan(defaultLifespanTime)
             .maxIdle(defaultMaxIdleTime)
          case (_, EXPIRATION_DEFAULT) =>
-            metadata.lifespan(toMillis(params.lifespan))
+            metadata.lifespan(toMillis(lifespan))
             .maxIdle(defaultMaxIdleTime)
          case (_, _) =>
-            metadata.lifespan(toMillis(params.lifespan))
-            .maxIdle(toMillis(params.maxIdle))
+            metadata.lifespan(toMillis(lifespan))
+            .maxIdle(toMillis(maxIdle))
       }
       metadata.build()
    }

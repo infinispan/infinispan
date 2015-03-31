@@ -189,7 +189,7 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
    }
 
    protected def customDecodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
-      writeResponse(ctx.channel, decodeCtx.decoder.customReadHeader(decodeCtx.header, buffer, decodeCtx.cache, server, ctx))
+      writeResponse(ctx.channel, decodeCtx.decoder.customReadHeader(decodeCtx.header, decodeCtx, buffer, decodeCtx.cache, server, ctx))
 
    protected def customDecodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
       writeResponse(ctx.channel, decodeCtx.decoder.customReadKey(decodeCtx.header, buffer, decodeCtx.cache, server, ctx.channel))

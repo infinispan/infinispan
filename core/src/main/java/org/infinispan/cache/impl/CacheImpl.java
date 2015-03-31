@@ -1649,6 +1649,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return put(key, value, merged, null, null);
    }
 
+   @Override
+   public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
+      Metadata merged = applyDefaultMetadata(metadata);
+      putAll(map, merged, null, null);
+   }
+
    private Metadata applyDefaultMetadata(Metadata metadata) {
       Metadata.Builder builder = metadata.builder();
       return builder != null ? builder.merge(defaultMetadata).build() : metadata;

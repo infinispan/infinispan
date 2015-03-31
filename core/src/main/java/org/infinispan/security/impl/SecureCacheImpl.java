@@ -597,6 +597,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public void putAll(Map<? extends K, ? extends V> m, Metadata metadata) {
+      authzManager.checkPermission(AuthorizationPermission.WRITE);
+      delegate.putAll(m, metadata);
+   }
+
+   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       authzManager.checkPermission(AuthorizationPermission.WRITE);
       delegate.putAll(m);
