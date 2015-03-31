@@ -99,6 +99,8 @@ public class LifecycleManager extends AbstractModuleLifecycle {
     */
    @Override
    public void cacheStarting(ComponentRegistry cr, Configuration cfg, String cacheName) {
+      cr.registerComponent(new ReflectionMatcher(null), ReflectionMatcher.class);
+
       if (cfg.indexing().index().isEnabled()) {
          log.registeringQueryInterceptor();
          SearchIntegrator searchFactory = getSearchFactory(cfg.indexing().properties(), cr);
@@ -164,9 +166,6 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    @Override
    public void cacheStarted(ComponentRegistry cr, String cacheName) {
       Configuration configuration = cr.getComponent(Configuration.class);
-
-      cr.registerComponent(new ReflectionMatcher(null), ReflectionMatcher.class);
-
       boolean indexingEnabled = configuration.indexing().index().isEnabled();
       if ( ! indexingEnabled ) {
          if ( verifyChainContainsQueryInterceptor(cr) ) {
