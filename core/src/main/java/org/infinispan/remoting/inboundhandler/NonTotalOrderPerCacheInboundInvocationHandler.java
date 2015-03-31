@@ -40,7 +40,10 @@ public class NonTotalOrderPerCacheInboundInvocationHandler extends BasePerCacheI
                                                 true, onExecutorService);
                break;
             case StateRequestCommand.COMMAND_ID:
-               runnable = createDefaultRunnable(command, reply, NO_TOPOLOGY_COMMAND, false, onExecutorService);
+               // StateRequestCommand is special in that it doesn't need transaction data
+               // In fact, waiting for transaction data could cause a deadlock
+               runnable = createDefaultRunnable(command, reply,
+                     extractCommandTopologyId(((StateRequestCommand) command)), false, onExecutorService);
                break;
             default:
                int commandTopologyId = NO_TOPOLOGY_COMMAND;
