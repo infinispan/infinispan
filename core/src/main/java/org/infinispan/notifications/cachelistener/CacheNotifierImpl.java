@@ -144,7 +144,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    private Configuration config;
    private DistributionManager distributionManager;
    private EntryRetriever<K, V> entryRetriever;
-   private InternalEntryFactory entryFactory;
+   private InternalEntryFactory entrgetEvictionMaxEntriesyFactory;
    private ClusterEventManager<K, V> eventManager;
 
    private final Map<Object, UUID> clusterListenerIDs = new ConcurrentHashMap<Object, UUID>();

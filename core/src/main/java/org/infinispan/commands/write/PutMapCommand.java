@@ -38,6 +38,14 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       this.flags = flags;
    }
 
+   public PutMapCommand(PutMapCommand command) {
+      this.map = command.map;
+      this.notifier = command.notifier;
+      this.metadata = command.metadata;
+      this.flags = command.flags;
+      this.isForwarded = command.isForwarded;
+   }
+
    public void init(CacheNotifier notifier) {
       this.notifier = notifier;
    }
