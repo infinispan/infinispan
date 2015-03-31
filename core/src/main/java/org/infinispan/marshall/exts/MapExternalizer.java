@@ -6,6 +6,7 @@ import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.FastCopyHashMap;
 import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.marshall.core.Ids;
 import org.jboss.marshalling.util.IdentityIntMap;
 
@@ -33,6 +34,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
 
    public MapExternalizer() {
       numbers.put(HashMap.class, HASHMAP);
+      numbers.put(ReadOnlySegmentAwareMap.class, HASHMAP);
       numbers.put(TreeMap.class, TREEMAP);
       numbers.put(FastCopyHashMap.class, FASTCOPYHASHMAP);
       numbers.put(EquivalentHashMap.class, EQUIVALENTHASHMAP);
@@ -90,6 +92,7 @@ public class MapExternalizer extends AbstractExternalizer<Map> {
    @Override
    public Set<Class<? extends Map>> getTypeClasses() {
       return Util.<Class<? extends Map>>asSet(
-            HashMap.class, TreeMap.class, FastCopyHashMap.class, EquivalentHashMap.class);
+            HashMap.class, TreeMap.class, FastCopyHashMap.class, EquivalentHashMap.class,
+            ReadOnlySegmentAwareMap.class);
    }
 }
