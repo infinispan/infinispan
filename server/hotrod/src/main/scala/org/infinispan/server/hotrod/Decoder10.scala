@@ -152,8 +152,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
                h.topologyId, None, 0)
    }
 
-   override def customReadHeader(h: HotRodHeader, hrCtx: CacheDecodeContext, 
-         buffer: ByteBuf, cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef = {
+   override def customReadHeader(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server:
+       HotRodServer, ctx: ChannelHandlerContext): AnyRef = {
       h.op match {
          case ClearRequest =>
             // Get an optimised cache in case we can make the operation more efficient
@@ -165,7 +165,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadKey(h: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ch: Channel): AnyRef = {
+   override def customReadKey(decoder: HotRodDecoder, h: HotRodHeader, buffer: ByteBuf,
+       cache: Cache, server: HotRodServer, ch: Channel): AnyRef = {
       h.op match {
          case RemoveIfUnmodifiedRequest =>
             val k = readKey(buffer)
@@ -233,7 +234,8 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def customReadValue(header: HotRodHeader, buffer: ByteBuf, cache: Cache): AnyRef = null
+   override def customReadValue(decoder: HotRodDecoder, header: HotRodHeader,
+       hrCtx: CacheDecodeContext, buffer: ByteBuf, cache: Cache): AnyRef = null
 
    override def createStatsResponse(h: HotRodHeader, cacheStats: Stats, t: NettyTransport): StatsResponse = {
       val stats = mutable.Map.empty[String, String]

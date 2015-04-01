@@ -55,18 +55,18 @@ abstract class AbstractVersionedDecoder {
    /**
     * Handle a protocol specific header reading.
     */
-   def customReadHeader(header: HotRodHeader, hrCtx: CacheDecodeContext, buffer: ByteBuf,
+   def customReadHeader(header: HotRodHeader, buffer: ByteBuf,
        cache: Cache, server: HotRodServer, ctx: ChannelHandlerContext): AnyRef
 
    /**
     * Handle a protocol specific key reading.
     */
-   def customReadKey(header: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ch: Channel): AnyRef
+   def customReadKey(decoder: HotRodDecoder, header: HotRodHeader, buffer: ByteBuf, cache: Cache, server: HotRodServer, ch: Channel): AnyRef
 
    /**
     * Handle a protocol specific value reading.
     */
-   def customReadValue(header: HotRodHeader, buffer: ByteBuf, cache: Cache): AnyRef
+   def customReadValue(decoder: HotRodDecoder, header: HotRodHeader, hrCtx: CacheDecodeContext, buffer: ByteBuf, cache: Cache): AnyRef
 
    /**
     * Create a response for the stats command.
