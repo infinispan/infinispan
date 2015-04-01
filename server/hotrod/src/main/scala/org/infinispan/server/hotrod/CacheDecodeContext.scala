@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod
 import java.io.IOException
 import java.nio.channels.ClosedChannelException
 import java.util.concurrent.TimeUnit
-
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.DecoderException
@@ -21,6 +20,7 @@ import org.infinispan.server.core.transport.ExtendedByteBuf._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.logging.Log
+import java.util.Map
 
 /**
  * Invokes operations against the cache based on the state kept during decoding process
@@ -42,10 +42,12 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
    var key: Bytes = _
    var rawValue: Bytes = _
    var params: RequestParameters = _
+   var putAllMap: Map[Bytes, Bytes] = _
 
    def resetParams(): Unit = {
       params = null
       rawValue = null
+      putAllMap = null
    }
 
    def createErrorResponse(t: Throwable): AnyRef = {
@@ -155,23 +157,19 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
       this.cache = decoder.getOptimizedCache(header, cache).getAdvancedCache
    }
 
-   private def buildMetadata: Metadata = {
-     buildMetadata(params.lifespan, params.maxIdle, header.cacheName)
-   }
-
-   def buildMetadata(lifespan: Int, maxIdle: Int, cacheName: String): Metadata = {
+   def buildMetadata: Metadata = {
       val metadata = new EmbeddedMetadata.Builder
-      metadata.version(generateVersion(server.getCacheRegistry(cacheName), cache))
-      (lifespan, maxIdle) match {
+      metadata.version(generateVersion(server.getCacheRegistry(header.cacheName), cache))
+      (params.lifespan, params.maxIdle) match {
          case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) =>
             metadata.lifespan(defaultLifespanTime)
             .maxIdle(defaultMaxIdleTime)
          case (_, EXPIRATION_DEFAULT) =>
-            metadata.lifespan(toMillis(lifespan))
+            metadata.lifespan(toMillis(params.lifespan))
             .maxIdle(defaultMaxIdleTime)
          case (_, _) =>
-            metadata.lifespan(toMillis(lifespan))
-            .maxIdle(toMillis(maxIdle))
+            metadata.lifespan(toMillis(params.lifespan))
+            .maxIdle(toMillis(params.maxIdle))
       }
       metadata.build()
    }

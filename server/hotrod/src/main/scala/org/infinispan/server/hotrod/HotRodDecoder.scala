@@ -110,10 +110,11 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
    private def decodeParameters(ctx: ChannelHandlerContext, buffer: ByteBuf, state: HotRodDecoderState): AnyRef = {
       val ch = ctx.channel
       val endOfOp = readParameters(ch, buffer)
+      checkpointTo(DECODE_VALUE)
       if (!endOfOp && decodeCtx.params.valueLength > 0) {
-         // Create value holder and checkpoint only if there's more to read
+         // Create value holder only if there's more to read
          decodeCtx.rawValue = new Bytes(decodeCtx.params.valueLength)
-         checkpointTo(DECODE_VALUE)
+         null
       } else if (decodeCtx.params.valueLength == 0) {
          decodeCtx.rawValue = Array.empty
          decodeValue(ctx, buffer, state)
@@ -189,13 +190,13 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
    }
 
    protected def customDecodeHeader(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
-      writeResponse(ctx.channel, decodeCtx.decoder.customReadHeader(decodeCtx.header, decodeCtx, buffer, decodeCtx.cache, server, ctx))
+      writeResponse(ctx.channel, decodeCtx.decoder.customReadHeader(decodeCtx.header,  buffer, decodeCtx.cache, server, ctx))
 
    protected def customDecodeKey(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
-      writeResponse(ctx.channel, decodeCtx.decoder.customReadKey(decodeCtx.header, buffer, decodeCtx.cache, server, ctx.channel))
+      writeResponse(ctx.channel, decodeCtx.decoder.customReadKey(this, decodeCtx.header, buffer, decodeCtx.cache, server, ctx.channel))
 
    protected def customDecodeValue(ctx: ChannelHandlerContext, buffer: ByteBuf): AnyRef =
-      writeResponse(ctx.channel, decodeCtx.decoder.customReadValue(decodeCtx.header, buffer, decodeCtx.cache))
+      writeResponse(ctx.channel, decodeCtx.decoder.customReadValue(this, decodeCtx.header, decodeCtx, buffer, decodeCtx.cache))
 
    def createStatsResponse: Response =
       decodeCtx.decoder.createStatsResponse(decodeCtx.header, decodeCtx.cache.getStats, transport)
@@ -219,8 +220,8 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
    }
 
    protected def writeResponse(ch: Channel, response: AnyRef): AnyRef = {
-      try {
-         if (response != null) {
+       if (response != null) {
+         try {
             if (decodeCtx.isTrace) trace("Write response %s", response)
             response match {
                // We only expect Lists of ChannelBuffer instances, so don't worry about type erasure
@@ -232,11 +233,11 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
                case pr: PartialResponse => return pr
                case _ => ch.writeAndFlush(response)
             }
+         } finally {
+           resetParams
          }
-         null
-      } finally {
-         resetParams()
       }
+         null
    }
 
    private def resetParams() = {
@@ -256,6 +257,9 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
       null // For netty's decoder that mandates a return
    }
 
+   override def checkpoint() = {
+     super.checkpoint
+   }
 }
 
 class UnknownVersionException(reason: String, val version: Byte, val messageId: Long)
