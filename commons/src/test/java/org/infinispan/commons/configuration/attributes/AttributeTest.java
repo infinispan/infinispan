@@ -1,12 +1,14 @@
 package org.infinispan.commons.configuration.attributes;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
+import org.infinispan.commons.util.TypedProperties;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class AttributeTest {
@@ -61,6 +63,55 @@ public class AttributeTest {
    }
 
    @Test
+   public void testDefaultAttributeCopy() {
+      AttributeDefinition<Boolean> def = AttributeDefinition.builder("test", false).build();
+      AttributeSet set1 = new AttributeSet("set", def);
+      set1.attribute(def).set(true);
+      AttributeSet set2 = new AttributeSet("set", def);
+      set2.read(set1);
+      assertEquals(set1.attribute(def).get(), set2.attribute(def).get());
+   }
+
+
+   @Test
+   public void testCollectionAttributeCopy() {
+      AttributeDefinition<TypedProperties> def = AttributeDefinition.builder("properties", null, TypedProperties.class).copier(TypedPropertiesAttributeCopier.INSTANCE).initializer(new AttributeInitializer<TypedProperties>() {
+         @Override
+         public TypedProperties initialize() {
+            return new TypedProperties();
+         }
+      }).build();
+      AttributeSet set1 = new AttributeSet("set", def);
+      TypedProperties typedProperties = set1.attribute(def).get();
+      typedProperties.setProperty("key", "value");
+      set1.attribute(def).set(typedProperties);
+      set1 = set1.protect();
+      typedProperties = set1.attribute(def).get();
+      typedProperties.setProperty("key", "anotherValue");
+      AttributeSet set2 = new AttributeSet("set", def);
+      set2.read(set1);
+   }
+
+   @Test
+   public void testCustomAttributeCopier() {
+      AttributeDefinition<List<String>> def = AttributeDefinition.builder("test", Arrays.asList("a", "b")).copier(new AttributeCopier<List<String>>() {
+         @Override
+         public List<String> copyAttribute(List<String> attribute) {
+            if (attribute == null)
+               return null;
+            else
+               return new ArrayList(attribute);
+         }
+      }).build();
+      AttributeSet set1 = new AttributeSet("set", def);
+      set1.attribute(def).set(Arrays.asList("b", "a"));
+      AttributeSet set2 = new AttributeSet("set", def);
+      set2.read(set1);
+      assertEquals(set1.attribute(def).get(), set2.attribute(def).get());
+      assertFalse(set1.attribute(def).get() == set2.attribute(def).get());
+   }
+
+   @Test
    public void testAttributeListener() {
       AttributeDefinition<Boolean> def = AttributeDefinition.builder("test", false).build();
       Attribute<Boolean> attribute = def.toAttribute();
@@ -97,4 +148,5 @@ public class AttributeTest {
          this.object = object;
       }
    }
+
 }

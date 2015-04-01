@@ -7,10 +7,11 @@ import java.util.Properties;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.TypedPropertiesAttributeCopier;
 import org.infinispan.commons.util.TypedProperties;
 
 public abstract class AbstractTypedPropertiesConfiguration {
-   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).initializer(new AttributeInitializer<TypedProperties>() {
+   public static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition.builder("properties", null, TypedProperties.class).copier(TypedPropertiesAttributeCopier.INSTANCE).initializer(new AttributeInitializer<TypedProperties>() {
       @Override
       public TypedProperties initialize() {
          return new TypedProperties();

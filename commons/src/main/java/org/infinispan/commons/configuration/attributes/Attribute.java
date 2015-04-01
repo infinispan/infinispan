@@ -135,8 +135,13 @@ public final class Attribute<T> implements Cloneable {
    }
 
    public void read(Attribute<T> other) {
-      Attribute<T> clone = other.clone();
-      this.value = clone.value;
+      AttributeCopier<T> copier = definition.copier();
+      if (copier == null) {
+         Attribute<T> clone = other.clone();
+         this.value = clone.value;
+      } else {
+         this.value = copier.copyAttribute(other.value);
+      }
       this.modified = other.modified;
    }
 

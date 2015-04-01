@@ -209,6 +209,7 @@ public class IndexingConfigurationBuilder extends AbstractConfigurationChildBuil
          } else {
             IndexOverlay.NON_DISTRIBUTED_FS.apply(typedProperties);
          }
+         attributes.attribute(PROPERTIES).set(typedProperties);
       }
       return new IndexingConfiguration(attributes.protect());
    }

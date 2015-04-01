@@ -4,6 +4,7 @@ import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.container.DataContainer;
@@ -16,11 +17,11 @@ import org.infinispan.container.DataContainer;
  */
 public class DataContainerConfiguration extends AbstractTypedPropertiesConfiguration {
    public static final AttributeDefinition<DataContainer> DATA_CONTAINER = AttributeDefinition
-         .builder("dataContainer", null, DataContainer.class).immutable().build();
+         .builder("dataContainer", null, DataContainer.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    public static final AttributeDefinition<Equivalence> KEY_EQUIVALENCE = AttributeDefinition
-         .<Equivalence> builder("keyEquivalence", AnyEquivalence.getInstance()).immutable().build();
+         .<Equivalence> builder("keyEquivalence", AnyEquivalence.getInstance()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    public static final AttributeDefinition<Equivalence> VALUE_EQUIVALENCE = AttributeDefinition
-         .<Equivalence> builder("valueEquivalence", AnyEquivalence.getInstance()).immutable().build();
+         .<Equivalence> builder("valueEquivalence", AnyEquivalence.getInstance()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
 
    static public AttributeSet attributeDefinitionSet() {
       return new AttributeSet(DataContainerConfiguration.class, AbstractTypedPropertiesConfiguration.attributeSet(),
@@ -49,12 +50,12 @@ public class DataContainerConfiguration extends AbstractTypedPropertiesConfigura
 
    @SuppressWarnings("unchecked")
    public <K> Equivalence<K> keyEquivalence() {
-      return (Equivalence<K>) keyEquivalence.get();
+      return keyEquivalence.get();
    }
 
    @SuppressWarnings("unchecked")
    public <V> Equivalence<V> valueEquivalence() {
-      return (Equivalence<V>) valueEquivalence.get();
+      return valueEquivalence.get();
    }
 
    public AttributeSet attributes() {

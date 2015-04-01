@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.TransactionProtocol;
@@ -26,8 +27,8 @@ public class TransactionConfiguration {
    public static final AttributeDefinition<LockingMode> LOCKING_MODE = AttributeDefinition.builder("lockingMode", LockingMode.OPTIMISTIC).build();
    public static final AttributeDefinition<Boolean> SYNC_COMMIT_PHASE = AttributeDefinition.builder("syncCommitPhase", true).immutable().build();
    public static final AttributeDefinition<Boolean> SYNC_ROLLBACK_PHASE = AttributeDefinition.builder("syncRollbackPhase", true).immutable().build();
-   public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder("transactionManagerLookup", GenericTransactionManagerLookup.INSTANCE).build();
-   public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transactionSynchronizationRegistryLookup", null, TransactionSynchronizationRegistryLookup.class).build();
+   public static final AttributeDefinition<TransactionManagerLookup> TRANSACTION_MANAGER_LOOKUP = AttributeDefinition.<TransactionManagerLookup>builder("transactionManagerLookup", GenericTransactionManagerLookup.INSTANCE).copier(IdentityAttributeCopier.INSTANCE).build();
+   public static final AttributeDefinition<TransactionSynchronizationRegistryLookup> TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP = AttributeDefinition.builder("transactionSynchronizationRegistryLookup", null, TransactionSynchronizationRegistryLookup.class).copier(IdentityAttributeCopier.INSTANCE).build();
    public static final AttributeDefinition<TransactionMode> TRANSACTION_MODE = AttributeDefinition.builder("transactionMode", TransactionMode.NON_TRANSACTIONAL).immutable().build();
    public static final AttributeDefinition<Boolean> USE_EAGER_LOCKING = AttributeDefinition.builder("useEagerLocking", false).build();
    public static final AttributeDefinition<Boolean> USE_SYNCHRONIZATION = AttributeDefinition.builder("useSynchronization", false).immutable().build();

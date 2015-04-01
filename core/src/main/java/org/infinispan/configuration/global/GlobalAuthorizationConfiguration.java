@@ -5,6 +5,7 @@ import java.util.Map;
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.Role;
@@ -18,7 +19,7 @@ import org.infinispan.security.impl.NullAuditLogger;
  */
 public class GlobalAuthorizationConfiguration {
    static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder("auditLogger", (AuditLogger)new NullAuditLogger()).immutable().build();
+   static final AttributeDefinition<AuditLogger> AUDIT_LOGGER = AttributeDefinition.builder("auditLogger", (AuditLogger)new NullAuditLogger()).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    static final AttributeDefinition<PrincipalRoleMapper> PRINCIPAL_ROLE_MAPPER = AttributeDefinition.builder("principalRoleMapper", null, PrincipalRoleMapper.class).immutable().build();
    static final AttributeDefinition<Map> ROLES = AttributeDefinition.builder("roles", null, Map.class).build();
 
