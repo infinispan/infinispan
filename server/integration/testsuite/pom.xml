@@ -893,12 +893,12 @@
                                 <configuration>
                                     <target>
                                         <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
-                                            <property name="server-dist" value="${server.old.dist}" />
-                                            <property name="port-offset" value="100" />
-                                            <property name="management-port" value="10090" />
-                                            <property name="hotrod-port" value="11322" />
+                                            <property name="server.dist" value="${server.old.dist}" />
+                                            <property name="port.offset" value="100" />
+                                            <property name="management.port" value="10090" />
+                                            <property name="hotrod.port" value="11322" />
                                             <property name="jboss.node.name" value="node1" />
-                                            <property name="configuration-file" value="standalone.xml" />
+                                            <property name="jboss.config.file" value="standalone.xml" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -912,7 +912,7 @@
                                 <configuration>
                                     <target>
                                         <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
-                                            <property name="hotrod-port" value="11322" />
+                                            <property name="hotrod.port" value="11322" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -947,13 +947,13 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
-                                            <property name="server-dist" value="${server2.old.dist}" />
-                                            <property name="port-offset" value="200" />
-                                            <property name="management-port" value="10190" />
-                                            <property name="hotrod-port" value="11422" />
+                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
+                                            <property name="server.dist" value="${server2.old.dist}" />
+                                            <property name="port.offset" value="200" />
+                                            <property name="management.port" value="10190" />
+                                            <property name="hotrod.port" value="11422" />
                                             <property name="jboss.node.name" value="node2" />
-                                            <property name="configuration-file" value="clustered.xml" />
+                                            <property name="jboss.config.file" value="clustered.xml" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -966,13 +966,13 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
-                                            <property name="server-dist" value="${server3.old.dist}" />
-                                            <property name="port-offset" value="300" />
-                                            <property name="management-port" value="10290" />
-                                            <property name="hotrod-port" value="11522" />
+                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
+                                            <property name="server.dist" value="${server3.old.dist}" />
+                                            <property name="port.offset" value="300" />
+                                            <property name="management.port" value="10290" />
+                                            <property name="hotrod.port" value="11522" />
                                             <property name="jboss.node.name" value="node3" />
-                                            <property name="configuration-file" value="clustered.xml" />
+                                            <property name="jboss.config.file" value="clustered.xml" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -985,8 +985,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
-                                            <property name="hotrod-port" value="11422" />
+                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
+                                            <property name="hotrod.port" value="11422" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -999,8 +999,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
-                                            <property name="hotrod-port" value="11522" />
+                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
+                                            <property name="hotrod.port" value="11522" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -1083,13 +1083,13 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
-                                            <property name="server-dist" value="${server1.dist}" />
-                                            <property name="port-offset" value="0" />
-                                            <property name="management-port" value="9990" />
-                                            <property name="hotrod-port" value="11222" />
-                                            <property name="jboss.node.name" value="jdg" />
-                                            <property name="configuration-file" value="testsuite/clustered-indexing.xml" />
+                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
+                                            <property name="server.dist" value="${server1.dist}" />
+                                            <property name="port.offset" value="0" />
+                                            <property name="management.port" value="9990" />
+                                            <property name="hotrod.port" value="11222" />
+                                            <property name="jboss.node.name" value="ispn-server" />
+                                            <property name="jboss.config.file" value="testsuite/clustered-indexing.xml" />
                                         </ant>
                                     </target>
                                 </configuration>
@@ -1102,8 +1102,8 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
-                                            <property name="hotrod-port" value="11222" />
+                                        <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
+                                            <property name="hotrod.port" value="11222" />
                                         </ant>
                                     </target>
                                 </configuration>
