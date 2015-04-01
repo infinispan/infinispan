@@ -25,14 +25,16 @@ public final class AttributeDefinition<T> {
    private final String name;
    private final T defaultValue;
    private boolean immutable;
-   private AttributeInitializer<? extends T> initializer;
+   private final AttributeCopier copier;
+   private final AttributeInitializer<? extends T> initializer;
    private final AttributeValidator<? super T> validator;
    private final Class<?> type;
 
-   AttributeDefinition(String name, T initialValue, Class<T> type, boolean immutable, AttributeValidator<? super T> validator, AttributeInitializer<? extends T> initializer) {
+   AttributeDefinition(String name, T initialValue, Class<T> type, boolean immutable, AttributeCopier copier, AttributeValidator<? super T> validator, AttributeInitializer<? extends T> initializer) {
       this.name = name;
       this.defaultValue = initialValue;
       this.immutable = immutable;
+      this.copier = copier;
       this.initializer = initializer;
       this.validator = validator;
       this.type = type;
@@ -53,6 +55,10 @@ public final class AttributeDefinition<T> {
 
    public boolean isImmutable() {
       return immutable;
+   }
+
+   public AttributeCopier copier() {
+      return copier;
    }
 
    public AttributeInitializer<? extends T> initializer() {
@@ -92,6 +98,7 @@ public final class AttributeDefinition<T> {
       private final Class<?> type;
 
       private boolean immutable = false;
+      private AttributeCopier copier = null;
       private AttributeInitializer<? extends T> initializer;
       private AttributeValidator<? super T> validator;
 
@@ -107,6 +114,11 @@ public final class AttributeDefinition<T> {
          return this;
       }
 
+      public Builder<T> copier(AttributeCopier copier) {
+         this.copier = copier;
+         return this;
+      }
+
       public Builder<T> initializer(AttributeInitializer<? extends T> initializer) {
          this.initializer = initializer;
          return this;
@@ -118,7 +130,7 @@ public final class AttributeDefinition<T> {
       }
 
       public AttributeDefinition<T> build() {
-         return new AttributeDefinition(name, defaultValue, type, immutable, validator, initializer);
+         return new AttributeDefinition(name, defaultValue, type, immutable, copier, validator, initializer);
       }
    }
 

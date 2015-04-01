@@ -4,6 +4,8 @@ import org.infinispan.commons.configuration.AbstractTypedPropertiesConfiguration
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
+import org.infinispan.commons.configuration.attributes.SimpleInstanceAttributeCopier;
 import org.infinispan.commons.util.Util;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
@@ -33,7 +35,7 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
    public static final AttributeDefinition<Position> POSITION = AttributeDefinition.builder("position", Position.OTHER_THAN_FIRST_OR_LAST).immutable().build();
    public static final AttributeDefinition<Class> AFTER = AttributeDefinition.builder("after", null, Class.class).immutable().build();
    public static final AttributeDefinition<Class> BEFORE = AttributeDefinition.builder("before", null, Class.class).immutable().build();
-   public static final AttributeDefinition<CommandInterceptor> INTERCEPTOR = AttributeDefinition.builder("interceptor", null, CommandInterceptor.class).immutable().build();
+   public static final AttributeDefinition<CommandInterceptor> INTERCEPTOR = AttributeDefinition.builder("interceptor", null, CommandInterceptor.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    public static final AttributeDefinition<Class> INTERCEPTOR_CLASS = AttributeDefinition.builder("interceptorClass", null, Class.class).immutable().build();
    public static final AttributeDefinition<Integer> INDEX = AttributeDefinition.builder("index", -1).immutable().build();
 

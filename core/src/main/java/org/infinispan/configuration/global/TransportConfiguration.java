@@ -6,6 +6,7 @@ import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeInitializer;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
+import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.remoting.transport.Transport;
 
@@ -23,7 +24,7 @@ public class TransportConfiguration {
    static final AttributeDefinition<Long> DISTRIBUTED_SYNC_TIMEOUT = AttributeDefinition.builder(
          "distributedSyncTimeout", TimeUnit.MINUTES.toMillis(4)).build();
    static final AttributeDefinition<Transport> TRANSPORT = AttributeDefinition
-         .builder("transport", null, Transport.class).immutable().build();
+         .builder("transport", null, Transport.class).copier(IdentityAttributeCopier.INSTANCE).immutable().build();
    static final AttributeDefinition<TypedProperties> PROPERTIES = AttributeDefinition
          .builder("properties", null, TypedProperties.class).initializer(new AttributeInitializer<TypedProperties>() {
             @Override

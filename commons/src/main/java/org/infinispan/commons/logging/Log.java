@@ -97,5 +97,8 @@ public interface Log extends BasicLogger {
    @Message(value = "No such attribute '%s' in attribute set '%s'", id = 915)
    IllegalArgumentException noSuchAttribute(String name, String setName);
 
+   @Message(value = "No attribute copier for type '%s'", id = 916)
+   IllegalArgumentException noAttributeCopierForType(Class<?> klass);
+
 }
 
