@@ -352,6 +352,7 @@
                         <id>copy-test-libs</id>
                         <phase>process-test-resources</phase>
                         <configuration>
+                            <skip>${skipTests}</skip>
                             <outputDirectory>${project.build.directory}/test-libs</outputDirectory>
                             <stripVersion>true</stripVersion>
                             <artifactItems>
@@ -379,6 +380,7 @@
                         </goals>
                         <phase>generate-resources</phase>
                         <configuration>
+                            <skip>${skipTests}</skip>
                             <target>
                                 <ant antfile="build-testsuite.xml" inheritRefs="true" target="create-all-distros">
                                     
@@ -417,6 +419,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
+                            <skip>${skipTests}</skip>
                             <target description="Verify if H2 TCP server will be running" name="setup-h2">
                                 <condition property="run.h2.server">
                                     <equals arg1="${database}" arg2="h2" />
@@ -436,6 +439,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
+                            <skip>${skipTests}</skip>
                             <target description="Starts Java H2 processes" if="run.h2.server" name="start-h2">
                                 <echo>Starting H2 TCP server!</echo>
                                 <echo>H2 jar: ${driver.dir}/${driver.jar}</echo>
@@ -455,6 +459,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
+                            <skip>${skipTests}</skip>
                             <target description="Stops Java H2 processes" if="run.h2.server" name="stop-h2">
                                 <echo>Stopping H2 TCP server!</echo>
                                 <echo>H2 jar: ${driver.dir}/${driver.jar}</echo>
@@ -478,6 +483,7 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <configuration>
                     <forkMode>once</forkMode>
+                    <failIfNoTests>false</failIfNoTests>
                     <excludedGroups>${groups.unstable}</excludedGroups>
                     <systemPropertyVariables>
                         <server1.dist>${server1.dist}</server1.dist>
@@ -891,6 +897,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server.old.dist}" />
@@ -910,6 +917,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="${basedir}/src/test/resources/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11322" />
@@ -946,6 +954,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server2.old.dist}" />
@@ -965,6 +974,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server3.old.dist}" />
@@ -984,6 +994,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11422" />
@@ -998,6 +1009,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11522" />
@@ -1082,6 +1094,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="start-server">
                                             <property name="server.dist" value="${server1.dist}" />
@@ -1101,6 +1114,7 @@
                                     <goal>run</goal>
                                 </goals>
                                 <configuration>
+                                    <skip>${skipTests}</skip>
                                     <target>
                                         <ant antfile="../src/main/ant/infinispan-server.xml" target="kill-server">
                                             <property name="hotrod.port" value="11222" />
@@ -1146,18 +1160,6 @@
                 <groups.client.local>org.infinispan.server.test.category.UnstableClientLocal</groups.client.local>
                 <groups.client.clustered>org.infinispan.server.test.category.UnstableClientClustered</groups.client.clustered>
             </properties>
-            
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <configuration>
-                            <failIfNoTests>false</failIfNoTests>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
 </project>
