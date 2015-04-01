@@ -181,7 +181,10 @@
                         <phase>generate-resources</phase>
                         <configuration>
                             <target>
-                               <ant antfile="build.xml" target="create-distro" />
+                               <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="create-distro">
+                                   <property name="server.build.dist" value="${server.build.dist}" />
+                                   <property name="server.dist" value="${server.dist}" />
+                               </ant>
                             </target>
                         </configuration>
                     </execution>
@@ -193,7 +196,14 @@
                         </goals>
                         <configuration>
                             <target>
-                               <ant antfile="build.xml" target="start-server" />
+                               <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="start-server">
+                                   <property name="server.dist" value="${server.dist}" />
+                                   <property name="port.offset" value="0" />
+                                   <property name="management.port" value="9990" />
+                                   <property name="hotrod.port" value="11222" />
+                                   <property name="jboss.node.name" value="ispn-server" />
+                                   <property name="jboss.config.file" value="standalone.xml" />
+                               </ant>
                             </target>
                         </configuration>
                     </execution>
@@ -205,7 +215,9 @@
                         </goals>
                         <configuration>
                             <target>
-                               <ant antfile="build.xml" target="kill-server" />
+                               <ant antfile="../../server/integration/src/main/ant/infinispan-server.xml" target="kill-server">
+                                   <property name="hotrod.port" value="11222" />
+                               </ant>
                             </target>
                         </configuration>
                     </execution>
