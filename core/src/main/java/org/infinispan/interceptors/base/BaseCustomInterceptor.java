@@ -27,7 +27,7 @@ public class BaseCustomInterceptor extends CommandInterceptor {
 
    @Inject
    private void setup(Cache<?, ?> cache, EmbeddedCacheManager embeddedCacheManager) {
-      if (this.cache != null) {
+      if (this.cache != null && this.cache != cache) {
          // see https://issues.jboss.org/browse/ISPN-5335
          throw new IllegalStateException("Setting up the interceptor second time;" +
                "this could be caused by the same instance of interceptor used by several caches.");
