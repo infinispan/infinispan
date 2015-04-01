@@ -71,7 +71,7 @@ public class BackupForBuilder extends AbstractConfigurationChildBuilder implemen
    }
 
    @Override
-   public Builder<?> read(BackupForConfiguration template) {
+   public BackupForBuilder read(BackupForConfiguration template) {
       attributes.read(template.attributes());
       return this;
    }
