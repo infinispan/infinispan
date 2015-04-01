@@ -59,7 +59,7 @@ public class TakeOfflineConfigurationBuilder extends AbstractConfigurationChildB
    }
 
    @Override
-   public Builder<?> read(TakeOfflineConfiguration template) {
+   public TakeOfflineConfigurationBuilder read(TakeOfflineConfiguration template) {
       this.attributes.read(template.attributes());
       return this;
    }
