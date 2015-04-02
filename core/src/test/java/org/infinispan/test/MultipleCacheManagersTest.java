@@ -24,12 +24,10 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 
 /**
@@ -59,7 +57,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
-   protected List<EmbeddedCacheManager> cacheManagers = new ArrayList<>();
+   protected List<EmbeddedCacheManager> cacheManagers = Collections.synchronizedList(new ArrayList<EmbeddedCacheManager>());
    protected IdentityHashMap<Cache<?, ?>, ReplListener> listeners = new IdentityHashMap<Cache<?, ?>, ReplListener>();
 
    @BeforeClass(alwaysRun = true)
@@ -212,7 +210,8 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
 
    protected  <K, V> List<Cache<K, V>> getCaches(String cacheName) {
       List<Cache<K, V>> caches = new ArrayList<Cache<K, V>>();
-      for (EmbeddedCacheManager cm : cacheManagers) {
+      List<EmbeddedCacheManager> managers = new ArrayList<>(cacheManagers);
+      for (EmbeddedCacheManager cm : managers) {
          Cache<K, V> c;
          if (cacheName == null)
             c = cm.getCache();
@@ -226,7 +225,7 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected void waitForClusterToForm(String cacheName) {
       List<Cache<Object, Object>> caches = getCaches(cacheName);
       Cache<Object, Object> cache = caches.get(0);
-      TestingUtil.blockUntilViewsReceived(10000, caches);
+      TestingUtil.blockUntilViewsReceived(30000, caches);
       if (cache.getCacheConfiguration().clustering().cacheMode().isClustered()) {
          TestingUtil.waitForRehashToComplete(caches);
       }

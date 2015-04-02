@@ -321,8 +321,8 @@ public class StateConsumerImpl implements StateConsumer {
                addedSegments.removeAll(previousSegments);
 
                if (trace) {
-                  log.tracef("On cache %s we have: new segments: %s; old segments: %s; removed segments: %s; added segments: %s",
-                        cacheName, newSegments, previousSegments, removedSegments, addedSegments);
+                  log.tracef("On cache %s we have: new segments: %s; old segments: %s", cacheName, newSegments, previousSegments);
+                  log.tracef("On cache %s we have: added segments: %s; removed segments: %s", addedSegments, removedSegments);
                }
 
                // remove inbound transfers for segments we no longer own
@@ -338,7 +338,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
 
          int rebalanceTopologyId = stateTransferTopologyId.get();
-         log.tracef("Topology update processed, stateTransferTopologyId = %s, isRebalance = %s, pending CH = %s",
+         if (trace) log.tracef("Topology update processed, stateTransferTopologyId = %s, isRebalance = %s, pending CH = %s",
                rebalanceTopologyId, isRebalance, cacheTopology.getPendingCH());
          if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS) {
             // there was a rebalance in progress
@@ -352,7 +352,7 @@ public class StateConsumerImpl implements StateConsumer {
                   // but we only want to notify the @DataRehashed listeners once
                   cacheNotifier.notifyDataRehashed(previousReadCh, cacheTopology.getCurrentCH(), previousWriteCh,
                         cacheTopology.getTopologyId(), false);
-                  if (log.isTraceEnabled()) {
+                  if (trace) {
                      log.tracef("Unlock State Transfer in Progress for topology ID %s", cacheTopology.getTopologyId());
                   }
                   if (isTotalOrder) {
@@ -406,7 +406,7 @@ public class StateConsumerImpl implements StateConsumer {
    private void awaitTotalOrderTransactions(CacheTopology cacheTopology, boolean isRebalance) {
       //in total order, we should wait for remote transactions before proceeding
       if (isTotalOrder) {
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.trace("State Transfer in Total Order cache. Waiting for remote transactions to finish");
          }
          try {
@@ -418,7 +418,7 @@ public class StateConsumerImpl implements StateConsumer {
             Thread.currentThread().interrupt();
             throw new CacheException(e);
          }
-         if (log.isTraceEnabled()) {
+         if (trace) {
             log.trace("State Transfer in Total Order cache. All remote transactions are finished. Moving on...");
          }
       }
@@ -466,7 +466,8 @@ public class StateConsumerImpl implements StateConsumer {
       }
 
       if (trace) {
-         log.tracef("Before applying the received state the data container of cache %s has %d keys", cacheName, dataContainer.size());
+         log.tracef("Before applying the received state the data container of cache %s has %d keys", cacheName,
+               dataContainer.size());
       }
       final Set<Integer> mySegments = wCh.getSegmentsForOwner(rpcManager.getAddress());
       final CountDownLatch countDownLatch = new CountDownLatch(stateChunks.size());
@@ -488,7 +489,8 @@ public class StateConsumerImpl implements StateConsumer {
       }
 
       if (trace) {
-         log.tracef("After applying the received state the data container of cache %s has %d keys", cacheName, dataContainer.size());
+         log.tracef("After applying the received state the data container of cache %s has %d keys", cacheName,
+               dataContainer.size());
          synchronized (transferMapsLock) {
             log.tracef("Segments not received yet for cache %s: %s", cacheName, transfersBySource);
          }
@@ -518,14 +520,8 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private void doApplyState(Address sender, int segmentId, Collection<InternalCacheEntry> cacheEntries) {
-      log.debugf("Applying new state chunk for segment %d of cache %s from node %s: received %d cache entries", segmentId, cacheName, sender, cacheEntries.size());
-      if (trace) {
-         List<Object> keys = new ArrayList<Object>(cacheEntries.size());
-         for (InternalCacheEntry e : cacheEntries) {
-            keys.add(e.getKey());
-         }
-         log.tracef("Received chunk with keys %s for segment %d of cache %s from node %s", keys, segmentId, cacheName, sender);
-      }
+      if (trace) log.tracef("Applying new state chunk for segment %d of cache %s from node %s: received %d cache entries",
+            segmentId, cacheName, sender, cacheEntries.size());
 
       // CACHE_MODE_LOCAL avoids handling by StateTransferInterceptor and any potential locks in StateTransferLock
       EnumSet<Flag> flags = EnumSet.of(PUT_FOR_STATE_TRANSFER, CACHE_MODE_LOCAL, IGNORE_RETURN_VALUES, SKIP_REMOTE_LOOKUP, SKIP_SHARED_CACHE_STORE, SKIP_OWNERSHIP_CHECK, SKIP_XSITE_BACKUP);
@@ -569,7 +565,7 @@ public class StateConsumerImpl implements StateConsumer {
             log.problemApplyingStateForKey(ex.getMessage(), e.getKey(), ex);
          }
       }
-      log.tracef("Finished applying chunk of segment %d of cache %s", segmentId, cacheName);
+      if (trace) log.tracef("Finished applying chunk of segment %d of cache %s", segmentId, cacheName);
    }
 
    private void applyTransactions(Address sender, Collection<TransactionInfo> transactions, int topologyId) {
@@ -657,7 +653,7 @@ public class StateConsumerImpl implements StateConsumer {
          requestSegments(segments, sources, excludedSources);
       }
 
-      log.debugf("Finished adding inbound state transfer for segments %s of cache %s", segments, cacheName);
+      if (trace) log.tracef("Finished adding inbound state transfer for segments %s of cache %s", segments, cacheName);
    }
 
    private void findSources(Set<Integer> segments, Map<Address, Set<Integer>> sources, Set<Address> excludedSources) {
@@ -777,7 +773,7 @@ public class StateConsumerImpl implements StateConsumer {
             }
          }
       }
-      log.trace("Unable to acquire cluster listeners from other members, assuming none are present");
+      if (trace) log.trace("Unable to acquire cluster listeners from other members, assuming none are present");
       return Collections.emptySet();
    }
 
@@ -900,6 +896,7 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private void removeStaleData(final Set<Integer> removedSegments) throws InterruptedException {
+      log.debugf("Removing no longer owned entries for cache %s", cacheName);
       if (keyInvalidationListener != null) {
          keyInvalidationListener.beforeInvalidation(removedSegments, InfinispanCollections.<Integer>emptySet());
       }
@@ -946,15 +943,13 @@ public class StateConsumerImpl implements StateConsumer {
          }
       }
 
-      log.debugf("Removing %s no longer owned entries for segments %s of cache %s", keysToRemove.size(), removedSegments, cacheName);
       if (!keysToRemove.isEmpty()) {
          try {
             InvalidateCommand invalidateCmd = commandsFactory.buildInvalidateCommand(EnumSet.of(CACHE_MODE_LOCAL, SKIP_LOCKING), keysToRemove.toArray());
             InvocationContext ctx = icf.createNonTxInvocationContext();
             interceptorChain.invoke(ctx, invalidateCmd);
 
-            log.debugf("Removed %d keys, data container now has %d keys", keysToRemove.size(), dataContainer.size());
-            if (trace) log.tracef("Removed keys: %s", keysToRemove);
+            if (trace) log.tracef("Removed %d keys, data container now has %d keys", keysToRemove.size(), dataContainer.size());
          } catch (CacheException e) {
             log.failedToInvalidateKeys(e);
          }
@@ -1003,10 +998,13 @@ public class StateConsumerImpl implements StateConsumer {
 
    private InboundTransferTask addTransfer(Address source, Set<Integer> segmentsFromSource) {
       synchronized (transferMapsLock) {
-         log.tracef("Adding transfer from %s for segments %s", source, segmentsFromSource);
+         if (trace) log.tracef("Adding transfer from %s for segments %s", source, segmentsFromSource);
          segmentsFromSource.removeAll(transfersBySegment.keySet());  // already in progress segments are excluded
-         if (!segmentsFromSource.isEmpty()) {
-            InboundTransferTask inboundTransfer = new InboundTransferTask(segmentsFromSource, source,
+         if (segmentsFromSource.isEmpty()) {
+            if (trace) log.tracef("All segments are already in progress, skipping");
+            return null;
+         } else {
+            final InboundTransferTask inboundTransfer = new InboundTransferTask(segmentsFromSource, source,
                   cacheTopology.getTopologyId(), this, rpcManager, commandsFactory, timeout, cacheName);
             for (int segmentId : segmentsFromSource) {
                transfersBySegment.put(segmentId, inboundTransfer);
@@ -1019,15 +1017,13 @@ public class StateConsumerImpl implements StateConsumer {
             inboundTransfers.add(inboundTransfer);
             taskQueue.add(inboundTransfer);
             return inboundTransfer;
-         } else {
-            return null;
          }
       }
    }
 
    private boolean removeTransfer(InboundTransferTask inboundTransfer) {
       synchronized (transferMapsLock) {
-         log.tracef("Removing inbound transfers for segments %s from source %s for cache %s",
+         if (trace) log.tracef("Removing inbound transfers for segments %s from source %s for cache %s",
                inboundTransfer.getSegments(), inboundTransfer.getSource(), cacheName);
          taskQueue.remove(inboundTransfer);
          List<InboundTransferTask> transfers = transfersBySource.get(inboundTransfer.getSource());

@@ -177,6 +177,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       } catch (Throwable t) {
          log.warn("Failed to obtain the rebalancing status", t);
       }
+      log.debugf("Sending cluster status response for view %d", viewId);
       return new ManagerStatusResponse(caches, rebalancingEnabled);
    }
 
@@ -252,12 +253,12 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          if (!sender.equals(transport.getCoordinator())) {
             log.debugf("Ignoring topology %d from old coordinator %s", cacheTopology.getTopologyId(), sender);
             return false;
-         } else {
-            log.debugf("Updating local topology for cache %s: %s", cacheName, cacheTopology);
-            cacheStatus.setCurrentTopology(cacheTopology);
-            return true;
          }
       }
+
+      log.debugf("Updating local topology for cache %s: %s", cacheName, cacheTopology);
+      cacheStatus.setCurrentTopology(cacheTopology);
+      return true;
    }
 
    private void resetLocalTopologyBeforeRebalance(String cacheName, CacheTopology newCacheTopology,

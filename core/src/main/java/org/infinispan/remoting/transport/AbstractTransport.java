@@ -7,6 +7,7 @@ import org.infinispan.partitionhandling.AvailabilityException;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 
@@ -37,7 +38,7 @@ public abstract class AbstractTransport implements Transport {
             Exception e = exceptionResponse.getException();
             if (e instanceof SuspectException)
                throw log.thirdPartySuspected(sender, (SuspectException) e);
-            if (e instanceof AvailabilityException)
+            if (e instanceof AvailabilityException || e instanceof OutdatedTopologyException)
                throw e;
 
             // if we have any application-level exceptions make sure we throw them!!
