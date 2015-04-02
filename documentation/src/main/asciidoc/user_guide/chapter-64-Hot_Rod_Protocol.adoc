@@ -586,7 +586,6 @@ idle before it's evicted from the cache. If 0, no max idle time.
 | Key 1               | byte array | Retrieved key
 | Value 1 Length      | vInt       | Length of value
 | Value 1             | byte array | Retrieved value
-| More                | 1 byte     |
 | Key 2 Length        | vInt       |
 | Key 2               | byte array |
 | Value 2 Length      | vInt       |
