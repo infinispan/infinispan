@@ -39,7 +39,6 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
 
    @Override
    protected Void executeOperation(Transport transport) {
-      // TODO: need to get consistent hash and then find where to target!!!
       HeaderParams params = writeHeader(transport, PUT_ALL_REQUEST);
       transport.writeVInt(lifespan);
       transport.writeVInt(maxIdle);
