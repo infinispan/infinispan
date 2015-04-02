@@ -7,7 +7,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.concurrent.locks.LockManager;
+
+import static java.lang.String.format;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Base class for {@link org.infinispan.test.SingleCacheManagerTest} and {@link org.infinispan.test.MultipleCacheManagersTest}.
@@ -16,7 +18,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
  */
 public class AbstractCacheTest extends AbstractInfinispanTest {
 
-   public static enum CleanupPhase {
+   public enum CleanupPhase {
       AFTER_METHOD, AFTER_TEST
    }
 
@@ -70,23 +72,31 @@ public class AbstractCacheTest extends AbstractInfinispanTest {
       return (b1 || b2) && !(b1 && b2);
    }
 
-   protected void assertNotLocked(final Cache cache, final Object key) {
+   protected void assertEventuallyNotLocked(final Cache cache, final Object key) {
       //lock release happens async, hence the eventually...
-      eventually(new Condition() {
+      eventually(format("Expected key '%s' to be unlocked on cache '%s'", key, cache), new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {
             return !checkLocked(cache, key);
          }
-      });
+      }, 20000);
+   }
+
+   protected void assertEventuallyLocked(final Cache cache, final Object key) {
+      eventually(format("Expected key '%s' to be locked on cache '%s'", key, cache), new Condition() {
+         @Override
+         public boolean isSatisfied() throws Exception {
+            return checkLocked(cache, key);
+         }
+      }, 20000);
    }
 
    protected void assertLocked(Cache cache, Object key) {
-      assert checkLocked(cache, key) : "expected key '" + key + "' to be locked on cache " + cache + ", but it is not";
+      assertTrue(format("Expected key '%s' to be locked on cache '%s'", key, cache), checkLocked(cache, key));
    }
 
    protected boolean checkLocked(Cache cache, Object key) {
-      LockManager lockManager = TestingUtil.extractLockManager(cache);
-      return lockManager.isLocked(key);
+      return TestingUtil.extractLockManager(cache).isLocked(key);
    }
 
    public EmbeddedCacheManager manager(Cache c) {

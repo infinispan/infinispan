@@ -20,7 +20,9 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheTopology;
@@ -207,6 +209,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
             log.tracef("Initial state transfer complete for cache %s on node %s", cacheName, rpcManager.getAddress());
          }
       }
+      partitionHandlingManager.onTopologyUpdate(newCacheTopology);
    }
 
    @Start(priority = 1000)
@@ -258,11 +261,17 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Override
    public Map<Address, Response> forwardCommandIfNeeded(TopologyAffectedCommand command, Set<Object> affectedKeys,
                                                         Address origin, boolean sync) {
+      final CacheTopology cacheTopology = getCacheTopology();
+      if (cacheTopology == null) {
+         if (trace) {
+            log.tracef("Not fowarding command %s because topology is null.", command);
+         }
+         return Collections.emptyMap();
+      }
       int cmdTopologyId = command.getTopologyId();
       // forward commands with older topology ids to their new targets
       // but we need to make sure we have the latest topology
-      CacheTopology cacheTopology = getCacheTopology();
-      int localTopologyId = cacheTopology != null ? cacheTopology.getTopologyId() : -1;
+      int localTopologyId = cacheTopology.getTopologyId();
       // if it's a tx/lock/write command, forward it to the new owners
       if (trace) {
          log.tracef("CommandTopologyId=%s, localTopologyId=%s", cmdTopologyId, localTopologyId);
@@ -270,7 +279,7 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       if (cmdTopologyId < localTopologyId) {
          ConsistentHash writeCh = cacheTopology.getWriteConsistentHash();
-         Set<Address> newTargets = new HashSet<Address>(writeCh.locateAllOwners(affectedKeys));
+         Set<Address> newTargets = new HashSet<>(writeCh.locateAllOwners(affectedKeys));
          newTargets.remove(rpcManager.getAddress());
          // Forwarding to the originator would create a cycle
          // TODO This may not be the "real" originator, but one of the original recipients
@@ -284,9 +293,12 @@ public class StateTransferManagerImpl implements StateTransferManager {
             if (trace) {
                log.tracef("Forwarding command %s to new targets %s", command, newTargets);
             }
+            final RpcOptions rpcOptions = sync ?
+                  rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build() :
+                  rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE);
             // TODO find a way to forward the command async if it was received async
             // TxCompletionNotificationCommands are the only commands forwarded asynchronously, and they must be OOB
-            return rpcManager.invokeRemotely(newTargets, command, rpcManager.getDefaultRpcOptions(sync, DeliverOrder.NONE));
+            return rpcManager.invokeRemotely(newTargets, command, rpcOptions);
          }
       }
       return Collections.emptyMap();

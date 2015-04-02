@@ -77,6 +77,6 @@ public class OptimisticTxFailureAfterLockingTest extends MultipleCacheManagersTe
       }
 
       assertNoTransactions();
-      assertNotLocked(cache(primaryOwnerIndex), key);
+      assertEventuallyNotLocked(cache(primaryOwnerIndex), key);
    }
 }

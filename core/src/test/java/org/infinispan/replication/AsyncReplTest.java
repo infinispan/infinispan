@@ -22,8 +22,8 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
 
    public void testWithNoTx() throws Exception {
 
-      Cache cache1 = cache(0,"asyncRepl");
-      Cache cache2 = cache(1,"asyncRepl");
+      Cache<String, String> cache1 = cache(0,"asyncRepl");
+      Cache<String, String> cache2 = cache(1,"asyncRepl");
       String key = "key";
 
       replListener(cache2).expect(PutKeyValueCommand.class);
@@ -44,15 +44,15 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
    }
 
    public void testWithTx() throws Exception {
-      Cache cache1 = cache(0,"asyncRepl");
-      Cache cache2 = cache(1,"asyncRepl");
+      Cache<String, String> cache1 = cache(0,"asyncRepl");
+      Cache<String, String> cache2 = cache(1,"asyncRepl");
       
       String key = "key";
       replListener(cache2).expect(PutKeyValueCommand.class);
       cache1.put(key, "value1");
       // allow for replication
       replListener(cache2).waitForRpc();
-      assertNotLocked(cache1, key);
+      assertEventuallyNotLocked(cache1, key);
 
       assertEquals("value1", cache1.get(key));
       assertEquals("value1", cache2.get(key));
@@ -65,7 +65,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
       assertEquals("value1", cache2.get(key));
       mgr.commit();
       replListener(cache2).waitForRpc();
-      assertNotLocked(cache1, key);
+      assertEventuallyNotLocked(cache1, key);
 
       assertEquals("value2", cache1.get(key));
       assertEquals("value2", cache2.get(key));
@@ -80,13 +80,13 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
       assertEquals("value2", cache1.get(key));
       assertEquals("value2", cache2.get(key));
 
-      assertNotLocked(cache1, key);
+      assertEventuallyNotLocked(cache1, key);
 
    }
 
    public void simpleTest() throws Exception {
-      Cache cache1 = cache(0,"asyncRepl");
-      Cache cache2 = cache(1,"asyncRepl");
+      Cache<String, String> cache1 = cache(0,"asyncRepl");
+      cache(1, "asyncRepl");
       
       String key = "key";
       TransactionManager mgr = TestingUtil.getTransactionManager(cache1);
@@ -95,7 +95,7 @@ public class AsyncReplTest extends MultipleCacheManagersTest {
       cache1.put(key, "value3");
       mgr.rollback();
 
-      assertNotLocked(cache1, key);
+      assertEventuallyNotLocked(cache1, key);
 
    }
 }

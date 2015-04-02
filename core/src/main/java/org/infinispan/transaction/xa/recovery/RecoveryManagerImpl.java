@@ -123,10 +123,10 @@ public class RecoveryManagerImpl implements RecoveryManager {
    }
 
    @Override
-   public void removeRecoveryInformationFromCluster(Collection<Address> lockOwners, Xid xid, boolean sync, GlobalTransaction gtx) {
+   public void removeRecoveryInformationFromCluster(Collection<Address> lockOwners, Xid xid, boolean sync, GlobalTransaction gtx, boolean skipTxCompletionCommand) {
       log.tracef("Forgetting tx information for %s", gtx);
       //todo make sure this gets broad casted or at least flushed
-      if (rpcManager != null) {
+      if (rpcManager != null && !skipTxCompletionCommand) {
          TxCompletionNotificationCommand ftc = commandFactory.buildTxCompletionNotificationCommand(xid, gtx);
          rpcManager.invokeRemotely(lockOwners, ftc, rpcManager.getDefaultRpcOptions(sync, DeliverOrder.NONE));
       }
@@ -302,7 +302,7 @@ public class RecoveryManagerImpl implements RecoveryManager {
             return "Could not commit transaction " + xid + " : " + e.getMessage();
          }
       }
-      removeRecoveryInformationFromCluster(null, xid, false, localTx.getGlobalTransaction());
+      removeRecoveryInformationFromCluster(null, xid, false, localTx.getGlobalTransaction(), false);
       return commit ? "Commit successful!" : "Rollback successful";
    }
 

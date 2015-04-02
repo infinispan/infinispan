@@ -32,7 +32,6 @@ import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
@@ -68,7 +67,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private static boolean trace = log.isTraceEnabled();
 
    private StateTransferManager stateTransferManager;
-   private Transport transport;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
 
@@ -78,9 +76,8 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Inject
-   public void init(StateTransferManager stateTransferManager, Transport transport) {
+   public void init(StateTransferManager stateTransferManager) {
       this.stateTransferManager = stateTransferManager;
-      this.transport = transport;
    }
 
    @Override

@@ -76,7 +76,7 @@ public class XaTransactionTable extends TransactionTable {
             transaction.enlistResource(new TransactionXaAdapter(
                   localTransaction, this, recoveryManager,
                   txCoordinator, commandsFactory, rpcManager,
-                  clusteringLogic, configuration, cacheName));
+                  clusteringLogic, configuration, cacheName, partitionHandlingManager));
          } catch (Exception e) {
             Xid xid = localTransaction.getXid();
             if (xid != null && !localTransaction.getLookedUpEntries().isEmpty()) {
