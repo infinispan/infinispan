@@ -54,6 +54,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.jgroups.Channel;
+import org.jgroups.View;
 import org.jgroups.protocols.DELAY;
 import org.jgroups.protocols.DISCARD;
 import org.jgroups.protocols.TP;
@@ -68,7 +69,6 @@ import javax.management.ObjectName;
 import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -287,15 +287,18 @@ public class TestingUtil {
    }
    private static void viewsTimedOut(CacheContainer[] cacheContainers) {
       int length = cacheContainers.length;
-      List<List<Address>> allViews = new ArrayList<List<Address>>(length);
+      List<View> incompleteViews = new ArrayList<>(length);
       for (int i = 0; i < length; i++) {
          EmbeddedCacheManager cm = (EmbeddedCacheManager) cacheContainers[i];
-         allViews.add(cm.getMembers());
+         if (cm.getMembers().size() != cacheContainers.length) {
+            incompleteViews.add(((JGroupsTransport) cm.getTransport()).getChannel().getView());
+            log.warnf("Manager %s has an incomplete view: %s", cm.getAddress(), cm.getMembers());
+         }
       }
 
       throw new RuntimeException(String.format(
          "Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",
-         cacheContainers.length, allViews));
+         cacheContainers.length, incompleteViews));
    }
 
    public static void blockUntilViewsReceivedInt(Cache[] caches, long timeout) throws InterruptedException {
@@ -690,14 +693,18 @@ public class TestingUtil {
 
       for (String cacheName : cacheContainer.getCacheNames()) {
          if (cacheContainer.isRunning(cacheName)) {
-            Cache c = cacheContainer.getCache(cacheName);
-            if (c.getStatus().allowInvocations()) running.add(c);
+            Cache c = cacheContainer.getCache(cacheName, false);
+            if (c != null && c.getStatus().allowInvocations()) {
+               running.add(c);
+            }
          }
       }
 
       if (cacheContainer.isDefaultRunning()) {
-         Cache defaultCache = cacheContainer.getCache();
-         if (defaultCache.getStatus().allowInvocations()) running.add(defaultCache);
+         Cache defaultCache = cacheContainer.getCache(EmbeddedCacheManager.DEFAULT_CACHE_NAME, false);
+         if (defaultCache != null && defaultCache.getStatus().allowInvocations()) {
+            running.add(defaultCache);
+         }
       }
 
       return running;

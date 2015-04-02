@@ -425,7 +425,11 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          throw new Exception(throwable);
       }
       if (!localResponse.isSuccessful()) {
-         throw new CacheException("Unsuccessful local response: " + localResponse);
+         Exception exception = null;
+         if (localResponse instanceof ExceptionResponse) {
+            exception = ((ExceptionResponse) localResponse).getException();
+         }
+         throw new CacheException("Unsuccessful local response: " + localResponse, exception);
       }
 
       // wait for the remote commands to finish
