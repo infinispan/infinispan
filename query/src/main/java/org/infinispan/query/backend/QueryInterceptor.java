@@ -1,5 +1,16 @@
 package org.infinispan.query.backend;
 
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.TransactionSynchronizationRegistry;
+
 import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
@@ -38,16 +49,6 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.registry.ScopedKey;
 import org.infinispan.util.logging.LogFactory;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.TransactionSynchronizationRegistry;
-import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This interceptor will be created when the System Property "infinispan.query.indexLocalOnly" is "false"
@@ -461,7 +462,12 @@ public final class QueryInterceptor extends CommandInterceptor {
    }
 
    private boolean shouldRemove(Object value, Object previousValue) {
-      return !(value == null || previousValue == null) && !value.getClass().equals(previousValue.getClass());
+      if (getSearchWorkCreator() instanceof ExtendedSearchWorkCreator) {
+         ExtendedSearchWorkCreator eswc = ExtendedSearchWorkCreator.class.cast(getSearchWorkCreator());
+         return eswc.shouldRemove(new SearchWorkCreatorContext(previousValue, value));
+      } else {
+         return !(value == null || previousValue == null) && !value.getClass().equals(previousValue.getClass());
+      }
    }
 
    /**
