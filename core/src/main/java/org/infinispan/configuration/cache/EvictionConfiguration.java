@@ -10,14 +10,14 @@ import org.infinispan.eviction.EvictionThreadPolicy;
  * Controls the eviction settings for the cache.
  */
 public class EvictionConfiguration {
-   public static final AttributeDefinition<Integer> MAX_ENTRIES  = AttributeDefinition.builder("maxEntries", -1).build();
+   public static final AttributeDefinition<Long> MAX_ENTRIES  = AttributeDefinition.builder("maxEntries", -1l).build();
    public static final AttributeDefinition<EvictionStrategy> STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).immutable().build();
    public static final AttributeDefinition<EvictionThreadPolicy> THREAD_POLICY = AttributeDefinition.builder("threadPolicy", EvictionThreadPolicy.DEFAULT).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(EvictionConfiguration.class, MAX_ENTRIES, STRATEGY, THREAD_POLICY);
    }
 
-   private final Attribute<Integer> maxEntries;
+   private final Attribute<Long> maxEntries;
    private final Attribute<EvictionStrategy> strategy;
    private final Attribute<EvictionThreadPolicy> threadPolicy;
    private final AttributeSet attributes;
@@ -49,7 +49,7 @@ public class EvictionConfiguration {
     * limit specified by max entries. However, due to the nature of eviction it is unlikely to ever
     * be exactly maximum number of entries specified here.
     */
-   public int maxEntries() {
+   public long maxEntries() {
       return maxEntries.get();
    }
 

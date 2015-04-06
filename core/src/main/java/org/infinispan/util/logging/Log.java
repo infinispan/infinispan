@@ -1299,4 +1299,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Unable to instantiate loader/writer instance for StoreConfiguration %s", id = 355)
    CacheConfigurationException unableToInstantiateClass(Class<?> storeConfigurationClass);
+
+   @Message(value = "Maximum data container size is currently 2^48 - 1, the number provided was %s", id = 356)
+   CacheConfigurationException evictionSizeTooLarge(long value);
 }

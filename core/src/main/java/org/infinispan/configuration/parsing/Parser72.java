@@ -1364,7 +1364,7 @@ public class Parser72 implements ConfigurationParser {
                break;
             }
             case MAX_ENTRIES: {
-               builder.eviction().maxEntries(Integer.parseInt(value));
+               builder.eviction().maxEntries(Long.parseLong(value));
                break;
             }
             case THREAD_POLICY: {

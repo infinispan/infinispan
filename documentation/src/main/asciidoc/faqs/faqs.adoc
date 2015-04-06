@@ -252,11 +252,6 @@ There're two ways to get around this issue, either:
 
 
 === Eviction and Expiration questions
-==== Cache's number of entries never reaches configured maxEntries, why is that?
-In the current eviction design, eviction happens per map segment, so when the segment gets filled up, eviction runs in that segment.
-This means that the theoretical maxEntries might never be achieved, but it'll be close enough.
-For more information, see the link:$$../user_guide/user_guide.html$$[User Guide] chapter on Eviction.
-
 ==== Expiration does not work, what is the problem?
 Multiple cache operations such as link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/Cache.html#put(K, V, long, java.util.concurrent.TimeUnit)$$[`put()`] can take a lifespan as parameter which defines the time when the entry should be expired.
 If you have no eviction configured and and you let this time expire, it can look as Infinispan has not removed the entry.
@@ -269,10 +264,6 @@ Removal of _expired_ entries happens in one of 2 ways:
 
 If you have not enabled (2), or your eviction thread wakeup interval is large and you probe jconsole before the eviction thread kicks in, you will still see the expired entry.
 You can be assured that if you tried to _retrieve_ the entry via a get() or containsKey() though, you won't see the entry (and the entry will be removed). 
-
-==== Why is cache size sometimes even higher than specified maxEntries of the eviction configuration element?
-Although one can specify maxEntries to be a value that is not a power of two, the underlying algorithm will size it to the value V closest to power of two that is larger than maxEntries specified.
-Eviction algorithms guarantee that the size of cache container will never be greater than V.
 
 ==== Why isn't there a notification for the expiration of a cache entry?
 Infinispan does not guarantee that an eviction will occur immediately on timeout, but instead uses a number of mechanisms to perform eviction:

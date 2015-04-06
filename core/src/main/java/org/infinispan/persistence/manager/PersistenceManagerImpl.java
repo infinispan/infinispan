@@ -6,6 +6,7 @@ import org.infinispan.commons.io.ByteBufferFactory;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.EvictionConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -50,6 +51,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+
 import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -218,7 +220,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       long start = timeService.time();
 
 
-      final int maxEntries = getMaxEntries();
+      final long maxEntries = getMaxEntries();
       final AtomicInteger loadedEntries = new AtomicInteger(0);
       final AdvancedCache<Object, Object> flaggedCache = getCacheForStateInsertion();
       preloadCl.process(null, new AdvancedCacheLoader.CacheLoaderTask() {
@@ -641,8 +643,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
       return configuration.indexing().indexShareable();
    }
 
-   private int getMaxEntries() {
-      int ne = Integer.MAX_VALUE;
+   private long getMaxEntries() {
+      long ne = EvictionConfigurationBuilder.EVICTION_MAX_SIZE;
       if (configuration.eviction().strategy().isEnabled()) ne = configuration.eviction().maxEntries();
       return ne;
    }

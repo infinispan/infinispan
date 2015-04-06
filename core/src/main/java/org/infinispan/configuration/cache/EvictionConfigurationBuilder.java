@@ -20,6 +20,8 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    private static final Log log = LogFactory.getLog(EvictionConfigurationBuilder.class);
    private final AttributeSet attributes;
 
+   public static final long EVICTION_MAX_SIZE = 0x00ffffffffffffffl;
+
    EvictionConfigurationBuilder(ConfigurationBuilder builder) {
       super(builder);
       attributes = EvictionConfiguration.attributeDefinitionSet();
@@ -57,7 +59,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
     *
     * @param maxEntries
     */
-   public EvictionConfigurationBuilder maxEntries(int maxEntries) {
+   public EvictionConfigurationBuilder maxEntries(long maxEntries) {
       attributes.attribute(MAX_ENTRIES).set(maxEntries);
       return this;
    }
@@ -65,7 +67,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
    @Override
    public void validate() {
       EvictionStrategy strategy = attributes.attribute(STRATEGY).get();
-      Integer maxEntries = attributes.attribute(MAX_ENTRIES).get();
+      Long maxEntries = attributes.attribute(MAX_ENTRIES).get();
       if (!strategy.isEnabled() && getBuilder().persistence().passivation())
          log.passivationWithoutEviction();
       if(strategy == EvictionStrategy.FIFO)
@@ -75,6 +77,9 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       if (maxEntries > 0 && !strategy.isEnabled()) {
          strategy(EvictionStrategy.LIRS);
          log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s", maxEntries, strategy);
+      }
+      if (maxEntries > EVICTION_MAX_SIZE) {
+         throw log.evictionSizeTooLarge(maxEntries);
       }
    }
 
