@@ -586,7 +586,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       cm.defineConfiguration(cacheName, preloadingCfg);
 
       final Cache<String, String> preloadingCache = cm.getCache(cacheName);
-      final int expectedEntriesInContainer = Math.min(4, preloadingCfg.eviction().maxEntries());
+      final long expectedEntriesInContainer = Math.min(4l, preloadingCfg.eviction().maxEntries());
       AdvancedCacheLoader preloadingCacheLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(preloadingCache);
 
       assertTrue("Preload not enabled in cache configuration",

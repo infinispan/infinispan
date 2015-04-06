@@ -49,9 +49,6 @@ In case there is an eviction element, this table describes behaviour of eviction
 
 |===============
 
-==== Advanced Eviction Internals
-Implementing eviction in a scalable, low lock contention  approach while  at the same time doing meaningful selection of entries for eviction is  not an easy feat. Data container needs to be locked until appropriate  eviction entries are selected. Having  such a lock protected data  container in turn causes high lock contention  offsetting any eviction  precision gained by sophisticated eviction  algorithms. In order to get  superior throughput while retaining high  eviction precision both low  lock contention data container and  high precision eviction algorithm  implementation are needed. Infinispan evicts entries from cache on a  segment level (segments  similar to ConcurrentHashMap), once segment is  full entries are evicted  according to eviction algorithm. However,  there are two drawbacks with this approach. Entries might get evicted  from cache even though maxEntries has not been reached yet and  maxEntries is a theoretical  limit for cache size but in practical   terms it will be slightly less  than maxEntries. For more details refer to link:http://infinispan.blogspot.com/2010/03/infinispan-eviction-batching-updates.html[Infinispan eviction design]. 
-
 === Expiration
 Similar to, but unlike eviction, is expiration. Expiration allows you to attach lifespan and/or maximum idle times to entries. Entries that exceed these times are treated as invalid and are removed. When removed expired entries are not passivated like evicted entries (if passivation is turned on).
 

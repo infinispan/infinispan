@@ -57,7 +57,7 @@ public class EvictionResource extends SimpleResourceDefinition {
                     .build();
 
     static final SimpleAttributeDefinition MAX_ENTRIES =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_ENTRIES, ModelType.INT, true)
+            new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_ENTRIES, ModelType.LONG, true)
                     .setXmlName(Attribute.MAX_ENTRIES.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)

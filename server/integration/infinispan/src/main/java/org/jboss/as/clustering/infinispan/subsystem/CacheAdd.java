@@ -497,7 +497,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             builder.eviction().strategy(strategy);
 
             if (strategy.isEnabled()) {
-                final int maxEntries = EvictionResource.MAX_ENTRIES.resolveModelAttribute(context, eviction).asInt();
+                final long maxEntries = EvictionResource.MAX_ENTRIES.resolveModelAttribute(context, eviction).asLong();
                 builder.eviction().maxEntries(maxEntries);
             }
         }

@@ -81,7 +81,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       extendedMap = new EquivalentConcurrentExtendedMap();
    }
 
-   protected DefaultDataContainer(int concurrencyLevel, int maxEntries,
+   protected DefaultDataContainer(int concurrencyLevel, long maxEntries,
          EvictionStrategy strategy, EvictionThreadPolicy policy,
          Equivalence<? super K> keyEquivalence) {
       DefaultEvictionListener evictionListener;
@@ -125,7 +125,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       this.timeService = timeService;
    }
 
-   public static <K, V> DataContainer<K, V> boundedDataContainer(int concurrencyLevel, int maxEntries,
+   public static <K, V> DataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
             EvictionStrategy strategy, EvictionThreadPolicy policy,
             Equivalence<? super K> keyEquivalence) {
       return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy,
