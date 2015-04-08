@@ -23,7 +23,6 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.partitionhandling.AvailabilityMode;
-import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -46,10 +45,10 @@ public class SharedCacheResource extends ClusteredCacheResource {
    static final SimpleAttributeDefinition CACHE_AVAILABILITY =
          new SimpleAttributeDefinitionBuilder(ModelKeys.CACHE_AVAILABILITY, ModelType.STRING, true)
                  .setFlags(AttributeAccess.Flag.STORAGE_RUNTIME)
-                 .setValidator(new EnumValidator<AvailabilityMode>(AvailabilityMode.class, false, false))
+                 .setValidator(new EnumValidator<>(AvailabilityMode.class, false, false))
                  .build();
 
-    public SharedCacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, AbstractAddStepHandler addHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
+    public SharedCacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd addHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(pathElement, descriptionResolver, addHandler, removeHandler, resolvePathHandler, runtimeRegistration);
     }
 
@@ -71,7 +70,7 @@ public class SharedCacheResource extends ClusteredCacheResource {
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
 
-        resourceRegistration.registerSubModel(new StateTransferResource());
-        resourceRegistration.registerSubModel(new PartitionHandlingResource());
+        resourceRegistration.registerSubModel(new StateTransferResource(this));
+        resourceRegistration.registerSubModel(new PartitionHandlingResource(this));
     }
 }

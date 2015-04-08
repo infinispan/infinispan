@@ -23,6 +23,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
 
+import org.infinispan.commons.util.Util;
 import org.jboss.as.controller.*;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.registry.AttributeAccess;
@@ -35,6 +36,7 @@ import org.jboss.dmr.ModelType;
  * Base class for store resources which require common store attributes only.
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
+ * @author Tristan Tarrant
  */
 public class BaseStoreResource extends BaseLoaderResource {
 
@@ -84,19 +86,8 @@ public class BaseStoreResource extends BaseLoaderResource {
         .setParameters(COMMON_STORE_PARAMETERS)
         .build();
 
-    public BaseStoreResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, OperationStepHandler addHandler, OperationStepHandler removeHandler) {
-        super(pathElement, descriptionResolver, addHandler, removeHandler);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(COMMON_STORE_ATTRIBUTES);
-        for (AttributeDefinition attr : COMMON_STORE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
+    public BaseStoreResource(PathElement path, String resourceKey, CacheResource cacheResource, AttributeDefinition[] attributes) {
+        super(path, resourceKey, cacheResource, Util.arrayConcat(COMMON_STORE_ATTRIBUTES,  attributes));
     }
 
     @Override

@@ -47,22 +47,8 @@ public class ClusterLoaderResource extends BaseLoaderResource {
         .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CLUSTER_LOADER))
         .build();
 
-    public ClusterLoaderResource() {
-        super(CLUSTER_LOADER_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CLUSTER_LOADER),
-                CacheConfigOperationHandlers.CLUSTER_LOADER_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(CLUSTER_LOADER_ATTRIBUTES);
-        for (AttributeDefinition attr : CLUSTER_LOADER_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
+    public ClusterLoaderResource(CacheResource cacheResource) {
+        super(CLUSTER_LOADER_PATH, ModelKeys.CLUSTER_LOADER, cacheResource, CLUSTER_LOADER_ATTRIBUTES);
     }
 
     @Override

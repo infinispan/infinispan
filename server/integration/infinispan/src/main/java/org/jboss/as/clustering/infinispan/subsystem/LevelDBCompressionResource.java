@@ -14,8 +14,9 @@ import org.jboss.dmr.ModelType;
  *    /subsystem=infinispan/cache-container=X/cache=Y/store=Z/expiration=COMPRESSION
  *
  * @author Galder Zamarreño
+ * @author Tristan Tarrant
  */
-public class LevelDBCompressionResource extends SimpleResourceDefinition {
+public class LevelDBCompressionResource extends CacheChildResource {
 
     public static final PathElement LEVELDB_COMPRESSION_PATH = PathElement.pathElement(ModelKeys.COMPRESSION, ModelKeys.COMPRESSION_NAME);
 
@@ -24,34 +25,15 @@ public class LevelDBCompressionResource extends SimpleResourceDefinition {
                     .setXmlName(Attribute.TYPE.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .setValidator(new EnumValidator<CompressionType>(CompressionType.class, true, false))
+                    .setValidator(new EnumValidator<>(CompressionType.class, true, false))
                     .setDefaultValue(new ModelNode().set(CompressionType.NONE.name()))
                     .build();
 
     static final AttributeDefinition[] LEVELDB_COMPRESSION_ATTRIBUTES = {TYPE};
 
 
-    public LevelDBCompressionResource() {
-        super(LEVELDB_COMPRESSION_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.COMPRESSION),
-                CacheConfigOperationHandlers.LEVELDB_COMPRESSION_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(LEVELDB_COMPRESSION_ATTRIBUTES);
-        for (AttributeDefinition attr : LEVELDB_COMPRESSION_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
-    }
-
-    @Override
-    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
-        super.registerOperations(resourceRegistration);
+    public LevelDBCompressionResource(CacheResource cacheResource) {
+        super(LEVELDB_COMPRESSION_PATH, ModelKeys.COMPRESSION, cacheResource, LEVELDB_COMPRESSION_ATTRIBUTES);
     }
 
 }

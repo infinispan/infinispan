@@ -28,8 +28,6 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
-import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
@@ -43,6 +41,7 @@ import org.jboss.dmr.ModelNode;
  * /subsystem=infinispan/cache-container=X/cache=Y/binary-keyed-jdbc-store=BINARY_KEYED_JDBC_STORE
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
+ * @author Tristan Tarrant
  */
 public class BinaryKeyedJDBCStoreResource extends BaseJDBCStoreResource {
 
@@ -64,27 +63,8 @@ public class BinaryKeyedJDBCStoreResource extends BaseJDBCStoreResource {
         .addParameter(BINARY_KEYED_TABLE)
         .build();
 
-    public BinaryKeyedJDBCStoreResource() {
-        super(BINARY_KEYED_JDBC_STORE_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.BINARY_KEYED_JDBC_STORE),
-                CacheConfigOperationHandlers.BINARY_KEYED_JDBC_STORE_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(BINARY_KEYED_JDBC_STORE_ATTRIBUTES);
-        for (AttributeDefinition attr : BINARY_KEYED_JDBC_STORE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
-    }
-
-    @Override
-    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
-        super.registerOperations(resourceRegistration);
+    public BinaryKeyedJDBCStoreResource(CacheResource cacheResource) {
+        super(BINARY_KEYED_JDBC_STORE_PATH, ModelKeys.BINARY_KEYED_JDBC_STORE, cacheResource, BINARY_KEYED_JDBC_STORE_ATTRIBUTES);
     }
 
     // override the add operation to provide a custom definition (for the optional PROPERTIES parameter to add())

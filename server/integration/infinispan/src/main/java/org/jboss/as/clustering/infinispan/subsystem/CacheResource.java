@@ -22,7 +22,6 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.AttributeMarshaller;
 import org.jboss.as.controller.OperationDefinition;
@@ -74,7 +73,7 @@ public class CacheResource extends SimpleResourceDefinition {
                     .setXmlName(Attribute.INDEX.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .setValidator(new EnumValidator<Indexing>(Indexing.class, true, false))
+                    .setValidator(new EnumValidator<>(Indexing.class, true, false))
                     .setDefaultValue(new ModelNode().set(Indexing.NONE.name()))
                     .build();
 
@@ -117,7 +116,7 @@ public class CacheResource extends SimpleResourceDefinition {
                     .setXmlName(Attribute.START.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .setValidator(new EnumValidator<StartMode>(StartMode.class, true, false))
+                    .setValidator(new EnumValidator<>(StartMode.class, true, false))
                     .setDefaultValue(new ModelNode().set(StartMode.EAGER.name()))
                     .build();
 
@@ -223,20 +222,30 @@ public class CacheResource extends SimpleResourceDefinition {
 
     protected final ResolvePathHandler resolvePathHandler;
     protected final boolean runtimeRegistration;
-    public CacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, AbstractAddStepHandler addHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
-        super(pathElement, descriptionResolver, addHandler, removeHandler);
+    private final CacheAdd cacheAddHandler;
+
+    public CacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd cacheAddHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
+        super(pathElement, descriptionResolver, cacheAddHandler, removeHandler);
+        this.cacheAddHandler = cacheAddHandler;
         this.resolvePathHandler = resolvePathHandler;
         this.runtimeRegistration = runtimeRegistration;
+    }
+
+    public CacheAdd getCacheAddHandler() {
+        return cacheAddHandler;
+    }
+
+    public boolean isRuntimeRegistration() {
+        return runtimeRegistration;
     }
 
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
 
-        // do we really need a special handler here?
-        final OperationStepHandler writeHandler = new CacheWriteAttributeHandler(CACHE_ATTRIBUTES);
+        final OperationStepHandler restartWriteHandler = new RestartCacheWriteAttributeHandler(getPathElement().getKey(), cacheAddHandler, CACHE_ATTRIBUTES);
         for (AttributeDefinition attr : CACHE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, writeHandler);
+            resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartWriteHandler);
         }
     }
 
@@ -263,22 +272,23 @@ public class CacheResource extends SimpleResourceDefinition {
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
 
-        resourceRegistration.registerSubModel(new LockingResource());
-        resourceRegistration.registerSubModel(new TransactionResource(runtimeRegistration));
-        resourceRegistration.registerSubModel(new EvictionResource());
-        resourceRegistration.registerSubModel(new ExpirationResource());
-        resourceRegistration.registerSubModel(new CompatibilityResource());
-        resourceRegistration.registerSubModel(new LoaderResource());
-        resourceRegistration.registerSubModel(new ClusterLoaderResource());
-        resourceRegistration.registerSubModel(new BackupSiteResource(runtimeRegistration));
-        resourceRegistration.registerSubModel(new StoreResource());
-        resourceRegistration.registerSubModel(new FileStoreResource(resolvePathHandler));
-        resourceRegistration.registerSubModel(new StringKeyedJDBCStoreResource());
-        resourceRegistration.registerSubModel(new BinaryKeyedJDBCStoreResource());
-        resourceRegistration.registerSubModel(new MixedKeyedJDBCStoreResource());
-        resourceRegistration.registerSubModel(new RemoteStoreResource());
-        resourceRegistration.registerSubModel(new LevelDBStoreResource(resolvePathHandler));
-        resourceRegistration.registerSubModel(new RestStoreResource());
-        resourceRegistration.registerSubModel(new CacheSecurityResource());
+        resourceRegistration.registerSubModel(new LockingResource(this));
+        resourceRegistration.registerSubModel(new TransactionResource(this));
+        resourceRegistration.registerSubModel(new EvictionResource(this));
+        resourceRegistration.registerSubModel(new ExpirationResource(this));
+        resourceRegistration.registerSubModel(new CompatibilityResource(this));
+        resourceRegistration.registerSubModel(new LoaderResource(this));
+        resourceRegistration.registerSubModel(new ClusterLoaderResource(this));
+        resourceRegistration.registerSubModel(new BackupSiteResource(this));
+        resourceRegistration.registerSubModel(new StoreResource(this));
+        resourceRegistration.registerSubModel(new FileStoreResource(this, resolvePathHandler));
+        resourceRegistration.registerSubModel(new StringKeyedJDBCStoreResource(this));
+        resourceRegistration.registerSubModel(new BinaryKeyedJDBCStoreResource(this));
+        resourceRegistration.registerSubModel(new MixedKeyedJDBCStoreResource(this));
+        resourceRegistration.registerSubModel(new RemoteStoreResource(this));
+        resourceRegistration.registerSubModel(new LevelDBStoreResource(this, resolvePathHandler));
+        resourceRegistration.registerSubModel(new RestStoreResource(this));
+        resourceRegistration.registerSubModel(new CacheSecurityResource(this));
     }
+
 }

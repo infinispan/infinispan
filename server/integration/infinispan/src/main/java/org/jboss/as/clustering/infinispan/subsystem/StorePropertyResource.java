@@ -23,26 +23,22 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
-import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
-import org.jboss.as.controller.SimpleAttributeDefinition;
-import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.SimpleResourceDefinition;
-import org.jboss.as.controller.registry.AttributeAccess;
-import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.dmr.ModelType;
 
 /**
  * Resource description for the addressable resource /subsystem=infinispan/cache-container=X/*-cache=Y/loader=Z/property=A
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
- * @author William Burn s(c) 2013 Red Hat Inc.
+ * @author William Burns (c) 2013 Red Hat Inc.
  */
 public class StorePropertyResource extends LoaderPropertyResource {
-
     static final PathElement STORE_PROPERTY_PATH = LOADER_PROPERTY_PATH;
 
     static final AttributeDefinition[] STORE_PROPERTY_ATTRIBUTES = LOADER_PROPERTY_ATTRIBUTES;
+
+
+    public StorePropertyResource(CacheResource cacheResource) {
+        super(cacheResource);
+    }
+
 }

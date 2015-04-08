@@ -22,18 +22,15 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.commons.util.Util;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
-import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -53,7 +50,7 @@ public class BaseJDBCStoreResource extends BaseStoreResource {
                     .build();
     static final SimpleAttributeDefinition DIALECT = new SimpleAttributeDefinitionBuilder(ModelKeys.DIALECT, ModelType.STRING, true)
                     .setXmlName(Attribute.DIALECT.getLocalName())
-                    .setValidator(new EnumValidator<DatabaseType>(DatabaseType.class, true, true))
+                    .setValidator(new EnumValidator<>(DatabaseType.class, true, true))
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .build();
@@ -159,24 +156,8 @@ public class BaseJDBCStoreResource extends BaseStoreResource {
     COLUMN_NAME, COLUMN_TYPE, ID_COLUMN, DATA_COLUMN, TIMESTAMP_COLUMN, ENTRY_TABLE, BUCKET_TABLE, STRING_KEYED_TABLE, BINARY_KEYED_TABLE, CREATE_ON_START, DROP_ON_EXIT};
 
 
-    public BaseJDBCStoreResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, OperationStepHandler addHandler, OperationStepHandler removeHandler) {
-        super(pathElement, descriptionResolver, addHandler, removeHandler);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(COMMON_JDBC_STORE_ATTRIBUTES);
-        for (AttributeDefinition attr : COMMON_JDBC_STORE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
-    }
-
-    @Override
-    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
-        super.registerOperations(resourceRegistration);
+    public BaseJDBCStoreResource(PathElement path, String resourceKey, CacheResource cacheResource, AttributeDefinition[] attributes) {
+        super(path, resourceKey, cacheResource, Util.arrayConcat(COMMON_JDBC_STORE_ATTRIBUTES, attributes));
     }
 
 }

@@ -25,14 +25,10 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import org.infinispan.transaction.LockingMode;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationDefinition;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
-import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
-import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.client.helpers.MeasurementUnit;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
@@ -45,7 +41,7 @@ import org.jboss.dmr.ModelType;
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
-public class TransactionResource extends SimpleResourceDefinition {
+public class TransactionResource extends CacheChildResource {
 
     public static final PathElement TRANSACTION_PATH = PathElement.pathElement(ModelKeys.TRANSACTION, ModelKeys.TRANSACTION_NAME);
 
@@ -106,31 +102,14 @@ public class TransactionResource extends SimpleResourceDefinition {
                 .addParameter(TX_INTERNAL_ID)
                 .build();
 
-    private final boolean runtimeRegistration;
-
-    public TransactionResource(boolean runtimeRegistration) {
-        super(TRANSACTION_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.TRANSACTION),
-                CacheConfigOperationHandlers.TRANSACTION_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
-        this.runtimeRegistration = runtimeRegistration;
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(TRANSACTION_ATTRIBUTES);
-        for (AttributeDefinition attr : TRANSACTION_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
+    public TransactionResource(CacheResource cacheResource) {
+        super(TRANSACTION_PATH, ModelKeys.TRANSACTION, cacheResource, TRANSACTION_ATTRIBUTES);
     }
 
     @Override
     public void registerOperations(ManagementResourceRegistration resourceRegistration) {
         super.registerOperations(resourceRegistration);
-        if (runtimeRegistration) {
+        if (cacheResource.isRuntimeRegistration()) {
             resourceRegistration.registerOperationHandler(TransactionResource.RESET_TX_STATISTICS, CacheCommands.ResetTxStatisticsCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(TransactionResource.LIST_IN_DOUBT_TRANSACTIONS, CacheCommands.TransactionListInDoubtCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(TransactionResource.TRANSACTION_FORCE_COMMIT, CacheCommands.TransactionForceCommitCommand.INSTANCE);

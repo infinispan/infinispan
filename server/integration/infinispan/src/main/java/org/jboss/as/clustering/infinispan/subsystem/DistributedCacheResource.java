@@ -117,10 +117,9 @@ public class DistributedCacheResource extends SharedCacheResource {
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
 
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(DISTRIBUTED_CACHE_ATTRIBUTES);
+        final OperationStepHandler restartWriteHandler = new RestartCacheWriteAttributeHandler(getPathElement().getKey(), getCacheAddHandler(), DISTRIBUTED_CACHE_ATTRIBUTES);
         for (AttributeDefinition attr : DISTRIBUTED_CACHE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
+            resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartWriteHandler);
         }
 
         if (runtimeRegistration) {

@@ -101,23 +101,9 @@ public class LevelDBStoreResource extends BaseStoreResource {
 
     private final ResolvePathHandler resolvePathHandler;
 
-    public LevelDBStoreResource(final ResolvePathHandler resolvePathHandler) {
-        super(LEVELDB_STORE_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LEVELDB_STORE),
-                CacheConfigOperationHandlers.LEVELDB_STORE_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
+    public LevelDBStoreResource(CacheResource cacheResource, final ResolvePathHandler resolvePathHandler) {
+        super(LEVELDB_STORE_PATH, ModelKeys.LEVELDB_STORE, cacheResource, LEVELDB_STORE_ATTRIBUTES);
         this.resolvePathHandler = resolvePathHandler;
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(LEVELDB_STORE_ATTRIBUTES);
-        for (AttributeDefinition attr : LEVELDB_STORE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
     }
 
     @Override
@@ -138,9 +124,9 @@ public class LevelDBStoreResource extends BaseStoreResource {
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
         // child resources
-        resourceRegistration.registerSubModel(new LevelDBExpirationResource());
-        resourceRegistration.registerSubModel(new LevelDBCompressionResource());
-        resourceRegistration.registerSubModel(new LevelDBImplementationResource());
+        resourceRegistration.registerSubModel(new LevelDBExpirationResource(cacheResource));
+        resourceRegistration.registerSubModel(new LevelDBCompressionResource(cacheResource));
+        resourceRegistration.registerSubModel(new LevelDBImplementationResource(cacheResource));
     }
 
 }

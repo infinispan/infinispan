@@ -147,27 +147,8 @@ public class RestStoreResource extends BaseStoreResource {
         .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.REST_STORE))
         .build();
 
-    public RestStoreResource() {
-        super(REST_STORE_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.REST_STORE),
-                CacheConfigOperationHandlers.REST_STORE_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(REST_STORE_ATTRIBUTES);
-        for (AttributeDefinition attr : REST_STORE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
-    }
-
-    @Override
-    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
-        super.registerOperations(resourceRegistration);
+    public RestStoreResource(CacheResource cacheResource) {
+        super(REST_STORE_PATH, ModelKeys.REST_STORE, cacheResource, REST_STORE_ATTRIBUTES);
     }
 
     // override the add operation to provide a custom definition (for the optional PROPERTIES parameter to add())

@@ -23,8 +23,6 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
-import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 
 /**
@@ -33,15 +31,15 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
  * @author Tristan Tarrant
  * @since 7.0
  */
-public class CacheSecurityResource extends SimpleResourceDefinition {
+public class CacheSecurityResource extends CacheChildResource {
 
-    CacheSecurityResource() {
-        super(PathElement.pathElement(ModelKeys.SECURITY), InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CACHE, ModelKeys.SECURITY), CacheConfigOperationHandlers.CACHE_SECURITY_ADD, ReloadRequiredRemoveStepHandler.INSTANCE);
+    CacheSecurityResource(CacheResource cacheResource) {
+        super(PathElement.pathElement(ModelKeys.SECURITY), String.format("%s.%s", ModelKeys.CACHE, ModelKeys.SECURITY), cacheResource);
     }
 
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
-        resourceRegistration.registerSubModel(new CacheAuthorizationResource());
+        resourceRegistration.registerSubModel(new CacheAuthorizationResource(cacheResource));
     }
 
 }
