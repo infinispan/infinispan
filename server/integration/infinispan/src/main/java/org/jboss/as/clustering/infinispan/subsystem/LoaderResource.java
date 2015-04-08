@@ -40,22 +40,8 @@ public class LoaderResource extends BaseLoaderResource {
         .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LOADER))
         .build();
 
-    public LoaderResource() {
-        super(LOADER_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LOADER),
-                CacheConfigOperationHandlers.LOADER_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(LOADER_ATTRIBUTES);
-        for (AttributeDefinition attr : LOADER_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
+    public LoaderResource(CacheResource cacheResource) {
+        super(LOADER_PATH, ModelKeys.LOADER, cacheResource, LOADER_ATTRIBUTES);
     }
 
     @Override

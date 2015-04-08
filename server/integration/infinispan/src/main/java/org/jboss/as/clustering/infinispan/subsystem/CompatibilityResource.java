@@ -22,17 +22,11 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.clustering.infinispan.subsystem.CacheConfigOperationHandlers.CacheConfigAdd;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
-import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.AttributeAccess;
-import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -42,7 +36,7 @@ import org.jboss.dmr.ModelType;
  * @author Tristan Tarrant
  * @since 5.3
  */
-public class CompatibilityResource extends SimpleResourceDefinition {
+public class CompatibilityResource extends CacheChildResource {
 
     static final SimpleAttributeDefinition ENABLED = new SimpleAttributeDefinitionBuilder(ModelKeys.ENABLED, ModelType.BOOLEAN, true)
             .setXmlName(Attribute.ENABLED.getLocalName())
@@ -61,15 +55,7 @@ public class CompatibilityResource extends SimpleResourceDefinition {
 
     static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { ENABLED, MARSHALLER };
 
-    CompatibilityResource() {
-        super(PathElement.pathElement(ModelKeys.COMPATIBILITY), InfinispanExtension.getResourceDescriptionResolver(ModelKeys.COMPATIBILITY), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration registration) {
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(ATTRIBUTES);
-        for (AttributeDefinition attribute: ATTRIBUTES) {
-            registration.registerReadWriteAttribute(attribute, null, writeHandler);
-        }
+    CompatibilityResource(CacheResource cacheResource) {
+        super(PathElement.pathElement(ModelKeys.COMPATIBILITY), ModelKeys.COMPATIBILITY, cacheResource, ATTRIBUTES);
     }
 }

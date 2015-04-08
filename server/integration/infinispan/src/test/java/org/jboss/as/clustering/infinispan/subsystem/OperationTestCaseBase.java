@@ -2,18 +2,20 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import static org.jboss.as.clustering.infinispan.subsystem.ModelKeys.DEFAULT_CACHE;
 import static org.jboss.as.clustering.infinispan.subsystem.ModelKeys.JNDI_NAME;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.NAME;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.READ_ATTRIBUTE_OPERATION;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.*;
+
+import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 
+import org.jboss.as.controller.ControlledProcessState;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.operations.common.Util;
+import org.jboss.as.model.test.ModelTestModelControllerService;
 import org.jboss.as.subsystem.test.AbstractSubsystemTest;
 import org.jboss.as.subsystem.test.AdditionalInitialization;
+import org.jboss.as.subsystem.test.KernelServices;
 import org.jboss.as.subsystem.test.KernelServicesBuilder;
 import org.jboss.dmr.ModelNode;
 
@@ -33,7 +35,7 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
 
     KernelServicesBuilder createKernelServicesBuilder() {
        return this.createKernelServicesBuilder(this.createAdditionalInitialization());
-    
+
     }
 
     AdditionalInitialization createAdditionalInitialization() {
@@ -217,6 +219,35 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
 
     protected String getSubsystemXml() throws IOException {
         return readResource(SUBSYSTEM_XML_FILE) ;
+    }
+
+    protected void assertServerState(final KernelServices services, String expected) throws Exception {
+        ModelTestModelControllerService controllerService = extractField(services, "controllerService");
+        ControlledProcessState processState = extractField(controllerService, "processState");
+        assertEquals(expected, processState.getState().toString());
+    }
+
+    public static <T> T extractField(Object target, String fieldName) {
+        return (T) extractField(target.getClass(), target, fieldName);
+    }
+
+    public static Object extractField(Class type, Object target, String fieldName) {
+        while (true) {
+            Field field;
+            try {
+                field = type.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                return field.get(target);
+            } catch (Exception e) {
+                if (type.equals(Object.class)) {
+                    e.printStackTrace();
+                    return null;
+                } else {
+                    // try with superclass!!
+                    type = type.getSuperclass();
+                }
+            }
+        }
     }
 
 }

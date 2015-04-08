@@ -28,8 +28,6 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
-import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
@@ -92,23 +90,9 @@ public class FileStoreResource extends BaseStoreResource {
 
     private final ResolvePathHandler resolvePathHandler;
 
-    public FileStoreResource(final ResolvePathHandler resolvePathHandler) {
-        super(FILE_STORE_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.FILE_STORE),
-                CacheConfigOperationHandlers.FILE_STORE_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
+    public FileStoreResource(CacheResource cacheResource, ResolvePathHandler resolvePathHandler) {
+        super(FILE_STORE_PATH, ModelKeys.FILE_STORE, cacheResource, FILE_STORE_ATTRIBUTES);
         this.resolvePathHandler = resolvePathHandler;
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(FILE_STORE_ATTRIBUTES);
-        for (AttributeDefinition attr : FILE_STORE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
     }
 
     @Override

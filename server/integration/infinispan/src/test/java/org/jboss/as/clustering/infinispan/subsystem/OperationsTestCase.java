@@ -69,6 +69,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
         result = servicesA.executeOperation(readCacheContainerDefaultCacheOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
         Assert.assertEquals("new-default-cache", result.get(RESULT).asString());
+        assertServerState(servicesA, "reload-required");
     }
 
     /*
@@ -94,6 +95,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
         result = servicesA.executeOperation(readLocalCacheBatchingOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
         Assert.assertEquals("false", result.get(RESULT).asString());
+        assertServerState(servicesA, "running");
     }
     /*
      * Tests access to local cache attributes
@@ -125,6 +127,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
         result = servicesA.executeOperation(readDistCacheMixedJDBCStoreStringKeyedTableOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
         Assert.assertEquals(stringKeyedTable.asString(), result.get(RESULT).asString());
+        assertServerState(servicesA, "running");
     }
 
     private ModelNode createStringKeyedTable() {

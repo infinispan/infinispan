@@ -346,10 +346,6 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             builder.addAliases(CacheService.getServiceName(containerName, null));
         }
 
-        if (initialMode == ServiceController.Mode.ACTIVE) {
-            builder.addListener(verificationHandler);
-        }
-
         builder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME, DeployedCacheStoreFactory.class, cacheDependencies.getDeployedCacheStoreFactoryInjector());
 
         return builder.install();

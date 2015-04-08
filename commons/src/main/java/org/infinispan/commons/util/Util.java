@@ -18,7 +18,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.Socket;
 import java.nio.ByteBuffer;
-import java.security.Principal;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -780,15 +779,33 @@ public final class Util {
 
       return hashCode;
    }
-   
+
    /**
-    * 
-    * Prints {@link Subject}'s principals as a one-liner 
+    *
+    * Prints {@link Subject}'s principals as a one-liner
     * (as opposed to default Subject's <code>toString()</code> method, which prints every principal on separate line).
-    * 
+    *
     */
    public static String prettyPrintSubject(Subject subject) {
       return (subject == null) ? "null" : "Subject with principal(s): " + toStr(subject.getPrincipals());
    }
+
+   /**
+    * Concatenates an arbitrary number of arrays returning a new array containing all elements
+    */
+   @SafeVarargs
+   public static <T> T[] arrayConcat(T[] first, T[]... rest) {
+      int totalLength = first.length;
+      for (T[] array : rest) {
+        totalLength += array.length;
+      }
+      T[] result = Arrays.copyOf(first, totalLength);
+      int offset = first.length;
+      for (T[] array : rest) {
+        System.arraycopy(array, 0, result, offset, array.length);
+        offset += array.length;
+      }
+      return result;
+    }
 
 }

@@ -23,15 +23,10 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
-import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.AttributeAccess;
-import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -39,8 +34,9 @@ import org.jboss.dmr.ModelType;
  * Resource description for the addressable resource /subsystem=infinispan/cache-container=X/cache=Y/partition-handling=PARTITION_HANDLING
  *
  * @author Dan Berindei (c) 2014 Red Hat Inc.
+ * @author Tristan Tarrant
  */
-public class PartitionHandlingResource extends SimpleResourceDefinition {
+public class PartitionHandlingResource extends CacheChildResource {
 
     public static final PathElement PARTITION_HANDLING_PATH = PathElement.pathElement(ModelKeys.PARTITION_HANDLING, ModelKeys.PARTITION_HANDLING_NAME);
 
@@ -55,26 +51,7 @@ public class PartitionHandlingResource extends SimpleResourceDefinition {
 
     static final AttributeDefinition[] PARTITION_HANDLING_ATTRIBUTES = {ENABLED};
 
-    public PartitionHandlingResource() {
-        super(PARTITION_HANDLING_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.PARTITION_HANDLING),
-                CacheConfigOperationHandlers.PARTITION_HANDLING_ADD,
-                ReloadRequiredRemoveStepHandler.INSTANCE);
-    }
-
-    @Override
-    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
-        super.registerAttributes(resourceRegistration);
-
-        // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(PARTITION_HANDLING_ATTRIBUTES);
-        for (AttributeDefinition attr : PARTITION_HANDLING_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
-        }
-    }
-
-    @Override
-    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
-        super.registerOperations(resourceRegistration);
+    public PartitionHandlingResource(CacheResource cacheResource) {
+        super(PARTITION_HANDLING_PATH, ModelKeys.PARTITION_HANDLING, cacheResource, PARTITION_HANDLING_ATTRIBUTES);
     }
 }
