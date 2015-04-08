@@ -40,7 +40,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
  * @author Michal Linhard
  * @since 4.0
  */
-@Test(groups = Array("unstable"), testName = "rest.IntegrationTest", description = "See ISPN-3994, original group: functional")
+@Test(groups = Array("functional"), testName = "rest.IntegrationTest")
 class IntegrationTest extends RestServerTestBase {
 
    private lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
@@ -142,14 +142,14 @@ class IntegrationTest extends RestServerTestBase {
       call(post_b)
 
       val html = getCollection("text/html")
-      assertTrue(html.contains("<a href=\"" + cacheName + "/" + "a\">a</a>"))
-      assertTrue(html.contains("<a href=\"" + cacheName + "/" + "b\">b</a>"))
+      assertTrue(html.contains(s"""<a href="$cacheName/a">a</a>"""))
+      assertTrue(html.contains(s"""<a href="$cacheName/b">b</a>"""))
 
       val xml = getCollection("application/xml")
       assertTrue(xml.contains("<key>a</key>"))
       assertTrue(xml.contains("<key>b</key>"))
 
-      val plain = getCollection("text/plain")
+      val plain = getCollection("text/plain;charset=UTF-8")
       assertTrue(plain.contains("a\n"))
       assertTrue(plain.contains("b\n"))
 
@@ -167,14 +167,14 @@ class IntegrationTest extends RestServerTestBase {
       call(post_b)
 
       val html = getCollection("text/html")
-      assertTrue(html.contains("<a href=\"&quot;a&quot;\">&quot;a&quot;</a>"))
-      assertTrue(html.contains("<a href=\"b&gt;\">b&gt;</a>"))
+      assertTrue(html.contains(s"""<a href="$cacheName/&quot;a&quot;">&quot;a&quot;</a>"""))
+      assertTrue(html.contains(s"""<a href="$cacheName/b&gt;">b&gt;</a>"""))
 
       val xml = getCollection("application/xml")
       assertTrue(xml.contains("<key>&quot;a&quot;</key>"))
       assertTrue(xml.contains("<key>b&gt;</key>"))
 
-      val plain = getCollection("text/plain")
+      val plain = getCollection("text/plain;charset=UTF-8")
       assertTrue(plain.contains("\"a\"\n"))
       assertTrue(plain.contains("b>\n"))
 
@@ -548,7 +548,6 @@ class IntegrationTest extends RestServerTestBase {
       assertEquals(HttpServletResponse.SC_NOT_FOUND, call(new HeadMethod(fullPathKey)).getStatusCode)
    }
 
-   @Test(groups = Array("unstable"))
    def testAsyncAddRemove(m: Method) {
       val fullPathKey = fullPath + "/" + m.getName
       val put = new PostMethod(fullPathKey)
