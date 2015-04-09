@@ -42,8 +42,9 @@ public class SitesConfigurationBuilder extends AbstractConfigurationChildBuilder
     * Returns true if this cache won't backup its data remotely.
     * It would still accept other sites backing up data on this site.
     */
-   public void disableBackups(boolean disable) {
+   public SitesConfigurationBuilder disableBackups(boolean disable) {
       attributes.attribute(DISABLE_BACKUPS).set(disable);
+      return this;
    }
 
    /**
