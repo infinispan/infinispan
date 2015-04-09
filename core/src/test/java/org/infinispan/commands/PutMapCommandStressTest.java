@@ -1,15 +1,10 @@
 package org.infinispan.commands;
 
-import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Exchanger;
 import java.util.concurrent.ExecutionException;
@@ -23,14 +18,10 @@ import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.context.Flag;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
-import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 /**
@@ -40,7 +31,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 7.2
  */
-@Test(groups = "stress", testName = "commands.GetManyCommandStressTest")
+@Test(groups = "stress", testName = "commands.PutMapCommandStressTest")
 public class PutMapCommandStressTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected final static int NUM_OWNERS = 3;
@@ -56,11 +47,13 @@ public class PutMapCommandStressTest extends MultipleCacheManagersTest {
       builderUsed.clustering().cacheMode(CacheMode.DIST_SYNC);
       builderUsed.clustering().hash().numOwners(NUM_OWNERS);
       builderUsed.clustering().stateTransfer().chunkSize(25000);
-      // Uncomment this line to make it transactional
-//      builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       // This is increased just for the put all command when doing full tracing
       builderUsed.clustering().sync().replTimeout(12000);
+      configure(builderUsed);
       createClusteredCaches(CACHE_COUNT, CACHE_NAME, builderUsed);
+   }
+
+   protected void configure(ConfigurationBuilder builder) {
    }
 
    protected EmbeddedCacheManager addClusterEnabledCacheManager(TransportFlags flags) {
@@ -193,7 +186,6 @@ public class PutMapCommandStressTest extends MultipleCacheManagersTest {
       try {
          // If this returns means we had an issue
          Throwable e = exchanger.exchange(null, 5, TimeUnit.MINUTES);
-         e.printStackTrace();
          fail("Found an throwable in at least 1 thread" + e);
       } catch (TimeoutException e) { }
 
@@ -201,12 +193,7 @@ public class PutMapCommandStressTest extends MultipleCacheManagersTest {
 
       // Make sure they all finish properly
       for (int i = 0; i < futures.length - 1; ++i) {
-         try {
-            futures[i].get(1, TimeUnit.MINUTES);
-         } catch (TimeoutException e) {
-            System.err.println("Future " + i + " did not complete in time allotted.");
-            throw e;
-         }
+         futures[i].get(1, TimeUnit.MINUTES);
       }
    }
 }
