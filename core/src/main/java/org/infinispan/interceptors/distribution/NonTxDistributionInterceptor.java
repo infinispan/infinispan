@@ -186,6 +186,15 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                }
             }
             command.setForwarded(false);
+            if (futures.size() > 0) {
+               CompositeNotifyingFuture<Object> compFuture = 
+                     new CompositeNotifyingFuture<Object>(futures);
+               try {
+                  compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+               } catch (TimeoutException e) {
+                  throw new CacheException(e);
+               }
+            }
          }
       }
 
