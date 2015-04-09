@@ -81,9 +81,6 @@ public class InfinispanExtension implements Extension {
 
         subsystem.registerSubsystemModel(new InfinispanSubsystemRootResource(resolvePathHandler, context.isRuntimeOnlyRegistrationValid()));
         subsystem.registerXMLElementWriter(new InfinispanSubsystemXMLWriter());
-        if (context.isRegisterTransformers()) {
-            InfinispanTransformers.registerTransformers(subsystem);
-        }
     }
 
     /**
