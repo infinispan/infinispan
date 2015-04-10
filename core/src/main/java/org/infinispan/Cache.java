@@ -124,18 +124,17 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @since 7.0
     */
    void putForExternalRead(K key, V value, long lifespan, TimeUnit unit);
-   
+
    /**
     * An overloaded form of {@link #putForExternalRead(K, V)}, which takes in lifespan parameters.
     *
-    * @param key             key to use
-    * @param value           value to store
-    * @param lifespan        lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
-    * @param lifespanUnit    time unit for lifespan
-    * @param maxIdleTime     the maximum amount of time this key is allowed to be idle for before it is considered as
-    *                        expired
-    * @param maxIdleTimeUnit time unit for max idle time
-    * 
+    * @param key          key to use
+    * @param value        value to store
+    * @param lifespan     lifespan of the entry.  Negative values are interpreted as unlimited lifespan.
+    * @param lifespanUnit time unit for lifespan
+    * @param maxIdle      the maximum amount of time this key is allowed to be idle for before it is considered as
+    *                     expired
+    * @param maxIdleUnit  time unit for max idle time
     * @since 7.0
     */
    void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit);
@@ -323,4 +322,15 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     */
    @Override
    CloseableIteratorSet<Entry<K, V>> entrySet();
+
+   /**
+    * Removes all mappings from the cache.
+    * <p/>
+    * <b>Note:</b> This should never be invoked in production unless you can guarantee no other invocations are ran
+    * concurrently.
+    * <p/>
+    * If the cache is transactional, it will not interact with the transaction.
+    */
+   @Override
+   void clear();
 }

@@ -131,17 +131,6 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      try {
-         for (Object key : dataContainer.keySet())
-            entryFactory.wrapEntryForClear(ctx, key);
-         return invokeNextInterceptor(ctx, command);
-      } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
-      }
-   }
-
-   @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       throw new InvalidCacheUsageException(
             "Explicit locking is not allowed with optimistic caches!");
@@ -153,7 +142,7 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
       }
       @Override
       public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         return visitMultiKeyCommand(ctx, command, dataContainer.keySet());
+         throw new IllegalStateException("No ClearCommand is allowed in Transaction");
       }
 
       @Override

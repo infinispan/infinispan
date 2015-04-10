@@ -98,7 +98,7 @@ public abstract class BaseSimpleTotalOrderTest extends MultipleCacheManagersTest
       assertTransactionSeenByEverybody(index2, true, KEY_1);
       assertCacheValue(KEY_1, VALUE_2);
 
-      Map<Object, Object> map = new HashMap<Object, Object>();
+      Map<Object, Object> map = new HashMap<>();
       map.put(KEY_2, VALUE_2);
       map.put(KEY_3, VALUE_3);
 
@@ -107,7 +107,7 @@ public abstract class BaseSimpleTotalOrderTest extends MultipleCacheManagersTest
       assertCacheValue(KEY_2, VALUE_2);
       assertCacheValue(KEY_3, VALUE_3);
 
-      map = new HashMap<Object, Object>();
+      map = new HashMap<>();
       map.put(KEY_2, VALUE_3);
       map.put(KEY_3, VALUE_2);
 

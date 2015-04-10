@@ -20,11 +20,11 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.util.Collections;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Tester for https://jira.jboss.org/browse/ISPN-629.
@@ -63,16 +63,6 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       return getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
    }
 
-   public void testClearTimeoutsInTx() throws Exception {
-      cache(0).put("k1", "value");
-      runAssertion(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache(0).clear();
-         }
-      });
-   }
-
    public void testPutTimeoutsInTx() throws Exception {
       runAssertion(new CacheOperation() {
          @Override
@@ -105,9 +95,7 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       runAssertion(new CacheOperation() {
          @Override
          public void execute() {
-            Map toAdd = new HashMap();
-            toAdd.put("k1", "v22222");
-            cache(0).putAll(toAdd);
+            cache(0).putAll(Collections.singletonMap("k1", "v22222"));
          }
       });
    }
@@ -117,13 +105,13 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
       tm.begin();
       cache(1).put("k1", "v1");
       DummyTransaction k1LockOwner = (DummyTransaction) tm.suspend();
-      assert !lm1.isLocked("k1");
+      assertFalse(lm1.isLocked("k1"));
 
       assertEquals(1, txTable1.getLocalTxCount());
       tm.begin();
       cache(0).put("k2", "v2");
-      assert !lm0.isLocked("k2");
-      assert !lm1.isLocked("k2");
+      assertFalse(lm0.isLocked("k2"));
+      assertFalse(lm1.isLocked("k2"));
 
       operation.execute();
 
@@ -139,7 +127,7 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
 
       try {
          tm.commit();
-         assert false;
+         fail("Rollback expected.");
       } catch (RollbackException re) {
          //expected
       }
@@ -159,7 +147,6 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
    }
 
    public interface CacheOperation {
-
-      public abstract void execute();
+      void execute();
    }
 }

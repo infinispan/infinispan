@@ -115,6 +115,10 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
       if (this.statisticsEnabled) prepares.incrementAndGet();
       if (!ctx.isOriginLocal()) {
          ((RemoteTransaction) ctx.getCacheTransaction()).setLookedUpEntriesTopology(command.getTopologyId());
+      } else {
+         if (ctx.getCacheTransaction().hasModification(ClearCommand.class)) {
+            throw new IllegalStateException("No ClearCommand is allowed in Transaction.");
+         }
       }
       Object result = invokeNextInterceptorAndVerifyTransaction(ctx, command);
       if (!ctx.isOriginLocal()) {
@@ -274,7 +278,7 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
 
    @Override
    public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return enlistWriteAndInvokeNext(ctx, command);
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override

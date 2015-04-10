@@ -2,16 +2,10 @@ package org.infinispan.stats;
 
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.transport.Address;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.infinispan.test.TestingUtil.extractComponent;
-import static org.infinispan.test.TestingUtil.k;
 
 /**
  * Implements the await methods for the total order caches (transactional and non-transactional)
@@ -39,12 +33,6 @@ public abstract class BaseTotalOrderClusteredExtendedStatisticsTest extends Base
    @Override
    protected void awaitRemove(int cacheIndex, Object key) throws InterruptedException {
       awaitSingleKeyOperation(Operation.REMOVE, cacheIndex, key);
-   }
-
-   @Override
-   protected void awaitClear(int cacheIndex) throws InterruptedException {
-      Set<Address> all = new HashSet<>(cache(cacheIndex).getAdvancedCache().getRpcManager().getMembers());
-      awaitOperation(Operation.CLEAR, all);
    }
 
    @Override

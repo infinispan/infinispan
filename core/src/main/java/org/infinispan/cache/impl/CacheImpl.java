@@ -57,7 +57,6 @@ import org.infinispan.filter.NullValueConverter;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -105,7 +104,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.context.Flag.*;
+import static org.infinispan.context.Flag.FAIL_SILENTLY;
+import static org.infinispan.context.Flag.FORCE_ASYNCHRONOUS;
+import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
+import static org.infinispan.context.Flag.PUT_FOR_EXTERNAL_READ;
+import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
@@ -149,7 +152,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private PartitionHandlingManager partitionHandlingManager;
    private GlobalConfiguration globalCfg;
    private boolean isClassLoaderInContext;
-   private EntryRetriever<K, V> entryRetriever;
    private LocalTopologyManager localTopologyManager;
 
    public CacheImpl(String name) {
@@ -176,7 +178,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   LockManager lockManager,
                                   AuthorizationManager authorizationManager,
                                   GlobalConfiguration globalCfg,
-                                  EntryRetriever<K, V> entryRetriever,
                                   PartitionHandlingManager partitionHandlingManager,
                                   LocalTopologyManager localTopologyManager) {
       this.commandsFactory = commandsFactory;
@@ -201,7 +202,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.lockManager = lockManager;
       this.authorizationManager = authorizationManager;
       this.globalCfg = globalCfg;
-      this.entryRetriever = entryRetriever;
       this.partitionHandlingManager = partitionHandlingManager;
       this.localTopologyManager = localTopologyManager;
    }
@@ -539,19 +539,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          displayName = "Clears the cache", name = "clear"
    )
    public final void clearOperation() {
-      //if we have a TM then this cache is transactional.
-      // We shouldn't rely on the auto-commit option as it might be disabled, so always start a tm.
-      if (transactionManager != null) {
-         try {
-            transactionManager.begin();
-            clear(null, null);
-            transactionManager.commit();
-         } catch (Throwable e) {
-            throw new CacheException(e);
-         }
-      } else {
-         clear(null, null);
-      }
+      clear(null, null);
    }
 
    @Override
@@ -560,13 +548,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final void clear(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, UNBOUNDED);
-      clearInternal(explicitFlags, ctx);
-   }
-
-   private void clearInternal(EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      ClearCommand command = commandsFactory.buildClearCommand(explicitFlags);
-      executeCommandAndCommitIfNeeded(ctx, command);
+      final Transaction tx = suspendOngoingTransactionIfExists();
+      try {
+         InvocationContext context = invocationContextFactory.createClearNonTxInvocationContext();
+         setInvocationContextClassLoader(context, explicitClassLoader);
+         ClearCommand command = commandsFactory.buildClearCommand(explicitFlags);
+         invoker.invoke(context, command);
+      } finally {
+         resumePreviousOngoingTransaction(tx, true, "Had problems trying to resume a transaction after clear()");
+      }
    }
 
    @Override
@@ -1253,14 +1243,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final NotifyingFuture<Void> clearAsync(final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
-      final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<Void>();
-      final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, UNBOUNDED);
+      final NotifyingFutureImpl<Void> result = new NotifyingFutureImpl<>();
       Future<Void> returnValue = asyncExecutor.submit(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
             try {
-               associateImplicitTransactionWithCurrentThread(ctx);
-               clearInternal(explicitFlags, ctx);
+               clear(explicitFlags, explicitClassLoader);
                try {
                   result.notifyDone(null);
                } catch (Throwable t) {

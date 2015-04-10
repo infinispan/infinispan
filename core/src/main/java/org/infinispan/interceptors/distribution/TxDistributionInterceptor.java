@@ -1,7 +1,5 @@
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
@@ -10,13 +8,13 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -54,18 +52,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
    private boolean isPessimisticCache;
    private boolean useClusteredWriteSkewCheck;
-
-   private static final RecipientGenerator CLEAR_COMMAND_GENERATOR = new RecipientGenerator() {
-      @Override
-      public List<Address> generateRecipients() {
-         return null;
-      }
-
-      @Override
-      public Collection<Object> getKeys() {
-         return InfinispanCollections.emptySet();
-      }
-   };
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
@@ -117,11 +103,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // don't bother with a remote get for the PutMapCommand!
       return handleTxWriteCommand(ctx, command, new MultipleKeysRecipientGenerator(command.getMap().keySet()), true);
-   }
-
-   @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleTxWriteCommand(ctx, command, CLEAR_COMMAND_GENERATOR, false);
    }
 
    @Override
@@ -204,17 +185,14 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       Object retVal = invokeNextInterceptor(ctx, command);
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         boolean affectsAllNodes = ctx.getCacheTransaction().hasModification(ClearCommand.class);
-         Collection<Address> recipients = affectsAllNodes ? dm.getWriteConsistentHash().getMembers() :
-               cdl.getOwners(getAffectedKeysFromContext(ctx));
+         Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(ctx));
          prepareOnAffectedNodes(ctx, command, recipients, defaultSynchronous);
-
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);
       }
       return retVal;
    }
 
-   protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
+   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
       try {
          // this method will return immediately if we're the only member (because exclude_self=true)
          RpcOptions rpcOptions;

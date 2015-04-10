@@ -1,6 +1,7 @@
 package org.infinispan.context;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.context.impl.ClearInvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
@@ -54,6 +55,12 @@ public interface InvocationContextFactory {
     * org.infinispan.context.impl.NonTxInvocationContext#isOriginLocal()} returning true.
     */
    InvocationContext createSingleKeyNonTxInvocationContext();
+
+   /**
+    * Will create an {@link ClearInvocationContext} with the {@link
+    * ClearInvocationContext#isOriginLocal()} returning true.
+    */
+   InvocationContext createClearNonTxInvocationContext();
 
    /**
     * Returns a {@link org.infinispan.context.impl.LocalTxInvocationContext}.

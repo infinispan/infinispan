@@ -7,6 +7,7 @@ import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
@@ -36,12 +37,17 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    protected ClusteringDependentLogic cdl;
 
    @Inject
-   public void setDependencies(LockManager lockManager, DataContainer dataContainer, EntryFactory entryFactory,
+   public void setDependencies(LockManager lockManager, DataContainer<Object, Object> dataContainer, EntryFactory entryFactory,
                                ClusteringDependentLogic cdl) {
       this.lockManager = lockManager;
       this.dataContainer = dataContainer;
       this.entryFactory = entryFactory;
       this.cdl = cdl;
+   }
+
+   @Override
+   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -111,7 +117,7 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
       Object[] keys = command.getKeys();
       try {
          if (keys != null && keys.length >= 1) {
-            ArrayList<Object> keysCopy = new ArrayList<Object>(Arrays.asList(keys));
+            ArrayList<Object> keysCopy = new ArrayList<>(Arrays.asList(keys));
             boolean skipLocking = hasSkipLocking(command);
             for (Object key : command.getKeys()) {
                try {

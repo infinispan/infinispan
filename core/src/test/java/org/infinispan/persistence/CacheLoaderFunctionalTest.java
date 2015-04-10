@@ -377,7 +377,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertInCacheAndStore("k2", "v2", lifespan);
 
       tm.begin();
-      cache.clear();
+      cache.remove("k1");
+      cache.remove("k2");
       t = tm.suspend();
 
       assertInCacheAndStore("k1", "v1");
@@ -405,7 +406,8 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       assertInCacheAndStore("k2", "v2", lifespan);
 
       tm.begin();
-      cache.clear();
+      cache.remove("k1");
+      cache.remove("k2");
       t = tm.suspend();
 
       assertInCacheAndStore("k1", "v1");

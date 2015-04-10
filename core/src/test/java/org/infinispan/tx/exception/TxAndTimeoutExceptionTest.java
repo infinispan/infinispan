@@ -14,11 +14,13 @@ import org.testng.annotations.Test;
 import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
+import java.util.Collections;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Tester for https://jira.jboss.org/browse/ISPN-629.
@@ -59,16 +61,6 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       });
    }
 
-   public void testClearTimeoutsInTx() throws Exception {
-      cache.put("k1", "value");
-      assertExpectedBehavior(new CacheOperation() {
-         @Override
-         public void execute() {
-            cache.clear();
-         }
-      });
-   }
-
    public void testReplaceTimeoutsInTx() throws Exception {
       assertExpectedBehavior(new CacheOperation() {
          @Override
@@ -82,9 +74,7 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       assertExpectedBehavior(new CacheOperation() {
          @Override
          public void execute() {
-            Map toAdd = new HashMap();
-            toAdd.put("k1", "v22222");
-            cache.putAll(toAdd);
+            cache.putAll(Collections.singletonMap("k1", "v22222"));
          }
       });
    }
@@ -96,17 +86,17 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       tm.begin();
       cache.put("k1", "v1");
       Transaction k1LockOwner = tm.suspend();
-      assert lm.isLocked("k1");
+      assertTrue(lm.isLocked("k1"));
 
       assertEquals(1, txTable.getLocalTxCount());
       tm.begin();
       cache.put("k2", "v2");
-      assert lm.isLocked("k2");
+      assertTrue(lm.isLocked("k2"));
       assertEquals(2, txTable.getLocalTxCount());
       assert tm.getTransaction() != null;
       try {
          op.execute();
-         assert false : "Timeout exception expected";
+         fail("TimeoutException expected.");
       } catch (TimeoutException e) {
          //expected
       }
@@ -114,34 +104,33 @@ public class TxAndTimeoutExceptionTest extends SingleCacheManagerTest {
       //make sure that locks acquired by that tx were released even before the transaction is rolled back, the tx object
       //was marked for rollback
       Transaction transaction = tm.getTransaction();
-      assert transaction != null;
-      assert transaction.getStatus() == Status.STATUS_MARKED_ROLLBACK;
-      assert !lm.isLocked("k2");
-      assert lm.isLocked("k1");
+      assertNotNull(transaction);
+      assertEquals(Status.STATUS_MARKED_ROLLBACK, transaction.getStatus());
+      assertFalse(lm.isLocked("k2"));
+      assertTrue(lm.isLocked("k1"));
       try {
          cache.put("k3", "v3");
-         assert false;
+         fail("IllegalStateException expected.");
       } catch (IllegalStateException e) {
          //expected
       }
-      assertEquals(txTable.getLocalTxCount(), 2);
+      assertEquals(2, txTable.getLocalTxCount());
 
       //now the TM is expected to rollback the tx
       tm.rollback();
-      assertEquals(txTable.getLocalTxCount(), 1);
+      assertEquals(1, txTable.getLocalTxCount());
 
       tm.resume(k1LockOwner);
       tm.commit();
 
       //now test that the other tx works as expected
       assertEquals(0, txTable.getLocalTxCount());
-      assertEquals(cache.get("k1"), "v1");
-      assert !lm.isLocked("k1");
-      assertEquals(txTable.getLocalTxCount(), 0);
+      assertEquals("v1", cache.get("k1"));
+      assertFalse(lm.isLocked("k1"));
+      assertEquals(0, txTable.getLocalTxCount());
    }
 
    public interface CacheOperation {
-
-      public abstract void execute();
+      void execute();
    }
 }
