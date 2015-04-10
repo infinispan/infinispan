@@ -1,7 +1,6 @@
 package org.infinispan.query.impl.massindex;
 
 import org.hibernate.search.backend.UpdateLuceneWork;
-import org.hibernate.search.backend.impl.batch.DefaultBatchBackend;
 import org.hibernate.search.bridge.spi.ConversionContext;
 import org.hibernate.search.bridge.util.impl.ContextualExceptionBridgeHelper;
 import org.hibernate.search.engine.spi.DocumentBuilderIndexedEntity;
@@ -29,16 +28,15 @@ public class IndexUpdater {
 
    private final SearchIntegrator searchIntegrator;
    private final KeyTransformationHandler keyTransformationHandler;
-   private final DefaultBatchBackend defaultBatchBackend;
-   private final QueryInterceptor queryInterceptor;
+   private final ExtendedBatchBackend defaultBatchBackend;
 
    public IndexUpdater(Cache<?, ?> cache) {
-      this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
+      QueryInterceptor queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       this.searchIntegrator = queryInterceptor.getSearchFactory();
       this.keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       DefaultMassIndexerProgressMonitor monitor = new DefaultMassIndexerProgressMonitor(componentRegistry.getTimeService());
-      this.defaultBatchBackend = new DefaultBatchBackend(searchIntegrator, monitor);
+      this.defaultBatchBackend = new ExtendedBatchBackend(searchIntegrator, monitor);
    }
 
    public void flush(Class<?> entityType) {
@@ -48,7 +46,7 @@ public class IndexUpdater {
 
    public void purge(Class<?> entityType) {
       LOG.purgingIndex(entityType.getName());
-      queryInterceptor.purgeIndex(entityType);
+      defaultBatchBackend.purge(Util.<Class<?>>asSet(entityType));
    }
 
    public void updateIndex(Object key, Object value) {

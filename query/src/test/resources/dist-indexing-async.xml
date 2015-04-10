@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:infinispan:config:7.2 http://www.infinispan.org/schemas/infinispan-config-7.2.xsd"
+        xmlns="urn:infinispan:config:7.2">
+
+    <cache-container name="QueryEnabledGrid-Dist" default-cache="default" statistics="true">
+        <transport cluster="Infinispan-Query-Cluster"/>
+        <jmx duplicate-domains="true"/>
+
+        <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
+            <indexing index="LOCAL">
+                <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager
+                </property>
+                <property name="default.worker.execution">async</property>
+                <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
+            </indexing>
+        </distributed-cache>
+
+        <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
+            <indexing index="NONE"/>
+            <state-transfer enabled="true"/>
+        </replicated-cache>
+
+        <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
+            <indexing index="NONE"/>
+            <state-transfer enabled="true"/>
+        </distributed-cache>
+
+        <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
+            <indexing index="NONE"/>
+        </replicated-cache>
+    </cache-container>
+</infinispan>

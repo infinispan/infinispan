@@ -3,11 +3,15 @@ package org.infinispan.query.indexmanager;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
+import org.hibernate.search.backend.FlushLuceneWork;
 import org.hibernate.search.backend.IndexingMonitor;
 import org.hibernate.search.backend.LuceneWork;
+import org.hibernate.search.backend.PurgeAllLuceneWork;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.util.Util;
 import org.infinispan.query.logging.Log;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -26,6 +30,8 @@ final class RemoteIndexingBackend implements IndexingBackend {
 
    private final int GRACE_MILLISECONDS_FOR_REPLACEMENT = 4000;
    private final int POLLING_MILLISECONDS_FOR_REPLACEMENT = 4000;
+   protected static final Set<Class<? extends LuceneWork>> SYNC_ONLY_WORKS =
+         Util.asSet(PurgeAllLuceneWork.class, FlushLuceneWork.class);
 
    private final String cacheName;
    private final String indexName;
@@ -61,7 +67,7 @@ final class RemoteIndexingBackend implements IndexingBackend {
       command.setIndexName(this.indexName);
       try {
          log.applyingChangeListRemotely(workList);
-         sendCommand(command, workList);
+         sendCommand(command, workList, shouldSendSync(workList));
       } catch (Exception e) {
          waitForReplacementBackend();
          if (replacement != null) {
@@ -72,6 +78,18 @@ final class RemoteIndexingBackend implements IndexingBackend {
       }
    }
 
+   /**
+    * Decides whether a command should be sent sync or async
+    */
+   private boolean shouldSendSync(LuceneWork operation) {
+      return SYNC_ONLY_WORKS.contains(operation.getClass()) || !async;
+   }
+
+   private boolean shouldSendSync(List<LuceneWork> operations) {
+      return operations.size() == 1 && shouldSendSync(operations.get(0));
+   }
+
+
    @Override
    public void applyStreamWork(LuceneWork singleOperation, IndexingMonitor monitor, DirectoryBasedIndexManager indexManager) {
       final IndexUpdateStreamCommand streamCommand = new IndexUpdateStreamCommand(cacheName);
@@ -80,7 +98,7 @@ final class RemoteIndexingBackend implements IndexingBackend {
       streamCommand.setSerializedWorkList(serializedModel);
       streamCommand.setIndexName(this.indexName);
       try {
-         sendCommand(streamCommand, operations);
+         sendCommand(streamCommand, operations, shouldSendSync(singleOperation));
       } catch (Exception e) {
          waitForReplacementBackend();
          if (replacement != null) {
@@ -112,8 +130,8 @@ final class RemoteIndexingBackend implements IndexingBackend {
       }
    }
 
-   private void sendCommand(ReplicableCommand command, List<LuceneWork> workList) {
-      rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(!async));
+   private void sendCommand(ReplicableCommand command, List<LuceneWork> workList, boolean sync) {
+      rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(sync));
       log.workListRemotedTo(workList, masterAddress);
    }
 
