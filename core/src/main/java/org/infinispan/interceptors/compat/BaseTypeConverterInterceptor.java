@@ -5,6 +5,7 @@ import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
+import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.CloseableIterable;
@@ -21,6 +22,9 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -61,6 +65,23 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       }
       Object ret = invokeNextInterceptor(ctx, command);
       return converter.unboxValue(ret);
+   }
+
+   @Override
+   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+      if (ctx.isOriginLocal()) {
+         Map<Object, Object> map = command.getMap();
+         TypeConverter<Object, Object, Object, Object> converter =
+               determineTypeConverter(command.getFlags());
+         Map<Object, Object> convertedMap = new HashMap<>(map.size());
+         for (Entry<Object, Object> entry : map.entrySet()) {
+            convertedMap.put(converter.boxKey(entry.getKey()),
+                  converter.boxValue(entry.getValue()));
+         }
+         command.setMap(convertedMap);
+      }
+      // There is no return value for putAll so nothing to convert
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
