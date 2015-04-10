@@ -1,13 +1,5 @@
 package org.infinispan.commands.read;
 
-import static org.infinispan.commons.util.Util.toStr;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.container.InternalEntryFactory;
@@ -20,6 +12,14 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Retrieves multiple entries at once.
@@ -78,10 +78,8 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
          if (entry == null) {
             if (trace) {
                log.tracef("Entry for key %s not found", key);
-            }
-            // Only put null values as null if we own that key
-            if (ch == null || ch.isKeyLocalToNode(localAddress, key)) {
-               map.put(key, null);
+               if (ctx.isOriginLocal())
+                  throw new IllegalStateException("All entries must exist in the context");
             }
             continue;
          }

@@ -2,8 +2,8 @@ package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.RemoteFetchingCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
@@ -24,6 +24,8 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -98,55 +100,65 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
       if (command.hasFlag(Flag.CACHE_MODE_LOCAL)
             || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
             || command.hasFlag(Flag.IGNORE_RETURN_VALUES)
             || !ctx.isOriginLocal()) {
-         return returnValue;
+         return invokeNextInterceptor(ctx, command);
       }
-      Map<Object, Object> map = returnValue == null ? command.createMap() : (Map<Object, Object>) returnValue;
-      ConsistentHash ch = command.getConsistentHash();
 
+      int commandTopologyId = command.getTopologyId();
+      int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+      boolean topologyChanged = currentTopologyId != commandTopologyId && commandTopologyId != -1;
+      log.tracef("Command topology id is %d, current topology id is %d", commandTopologyId, currentTopologyId);
+      if (topologyChanged) {
+         throw new OutdatedTopologyException("Cache topology changed while the command was executing: expected " +
+               commandTopologyId + ", got " + currentTopologyId);
+      }
+
+      // At this point, we know that an entry located on this node that exists in the data container/store
+      // must also exist in the context.
+      ConsistentHash ch = command.getConsistentHash();
       Set<Object> requestedKeys = new HashSet<>();
       for (Object key : command.getKeys()) {
-         if (map.get(key) == null) {
-            CacheEntry entry = ctx.lookupEntry(key);
-            if (entry == null || entry.isNull()) {
-               if (!isValueAvailableLocally(ch, key)) {
-                  requestedKeys.add(key);
-               } else {
-                  if (trace) {
-                     log.tracef("Not doing a remote get for key %s since entry is "
-                           + "mapped to current node (%s) or is in L1. Owners are %s",
-                           toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
-                  }
-                  InternalCacheEntry localEntry = localGetCacheEntry(ctx, key, false, command);
-                  // TODO: shouldn't we copy the entry as GetManyCommand.perform does?
-                  map.put(key, command.isReturnEntries() ? localEntry : localEntry != null ? localEntry.getValue()
-                        : null);
+         CacheEntry entry = ctx.lookupEntry(key);
+         if (entry == null || entry.isNull()) {
+            if (!isValueAvailableLocally(ch, key)) {
+               requestedKeys.add(key);
+            } else {
+               if (trace) {
+                  log.tracef("Not doing a remote get for missing key %s since entry is "
+                              + "mapped to current node (%s). Owners are %s",
+                        toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
                }
+               // forWrite=true forces a non-null entry to be created, because we know this entry is local
+               wrapInternalCacheEntry(null, ctx, key, true, command);
             }
          }
       }
+
+      boolean missingRemoteValues = false;
       if (!requestedKeys.isEmpty()) {
          if (trace) {
             log.tracef("Fetching entries for keys %s from remote nodes", requestedKeys);
          }
-         Map<Object, InternalCacheEntry> previouslyRetrieved = command.getRemotelyFetched();
+
          Map<Object, InternalCacheEntry> justRetrieved = retrieveFromRemoteSources(
                requestedKeys, ctx, command.getFlags());
-         if (previouslyRetrieved != null) {
-            previouslyRetrieved.putAll(justRetrieved);
-         } else {
-            command.setRemotelyFetched(justRetrieved);
-         }
-         for (Entry<Object, InternalCacheEntry> entry : justRetrieved.entrySet()) {
-            InternalCacheEntry value = entry.getValue();
-            map.put(entry.getKey(), command.isReturnEntries() ? value : value != null ? value.getValue() : null);
+         for (Object key : requestedKeys) {
+            if (!justRetrieved.containsKey(key)) {
+               missingRemoteValues = true;
+            } else {
+               wrapInternalCacheEntry(justRetrieved.get(key), ctx, key, true, command);
+            }
          }
       }
-      return map;
+
+      if (missingRemoteValues) {
+         throw new OutdatedTopologyException("Remote values are missing because of a topology change");
+      }
+
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override

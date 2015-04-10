@@ -22,18 +22,13 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.container.entries.InternalCacheValue;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseStateTransferInterceptor;
-import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
@@ -46,13 +41,8 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 //todo [anistor] command forwarding breaks the rule that we have only one originator for a command. this opens now the possibility to have two threads processing incoming remote commands for the same TX
@@ -175,100 +165,26 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       CacheTopology beginTopology = stateTransferManager.getCacheTopology();
       command.setConsistentHashAndAddress(beginTopology.getReadConsistentHash(),
             transport.getAddress());
-      Map<Object, Object> values = (Map<Object, Object>) invokeNextInterceptor(ctx, command);
-      
-      if (ctx.isOriginLocal()) {
-         CacheTopology afterTopology = stateTransferManager.getCacheTopology();
-         if (beginTopology.getTopologyId() != afterTopology.getTopologyId()) {
-            Map<Object, ?> remotelyRetrieved = command.getRemotelyFetched();
-            // Locally we have to see if anything is null, this could have meant we had
-            // a miss right when a topology changed - so find them and retry!
-            Collection<?> originalKeys = command.getKeys();
-            List<Object> keysToTryAgain = new ArrayList<Object>(originalKeys.size());
-            for (Object key : originalKeys) {
-               if (values.containsKey(key)) {
-                  Object value = values.get(key);
-                  if (value == null && !remotelyRetrieved.containsKey(key)) {
-                     // If the value was returned as null and it wasn't a remote lookup
-                     // that means it was a possible rehash miss, so we have to look
-                     // it up again
-                     keysToTryAgain.add(key);
-                  }
-               } else {
-                  // This occurs if a remote miss had a rehash while processing
-                  keysToTryAgain.add(key);
-               }
-            }
-            if (!keysToTryAgain.isEmpty()) {
-               try {
-                  log.tracef("Retrying keys %s", keysToTryAgain);
-                  command.setKeys(keysToTryAgain);
-                  values.putAll((Map<Object, Object>) visitGetAllCommand(ctx, command));
-               } finally {
-                  command.setKeys(originalKeys);
-               }
-            }
-         } else {
-            Collection<?> originalKeys = command.getKeys();
-            int missingKeys;
-            // If these don't match it means that a remote node saw a new topology and
-            // didn't have the value but our local node hasn't yet seen the new topology
-            if ((missingKeys = originalKeys.size() - values.size()) > 0) {
-               List<Object> keysToTryAgain = new ArrayList<Object>(missingKeys);
-               for (Object key : originalKeys) {
-                  if (!values.containsKey(key)) {
-                     keysToTryAgain.add(key);
-                  }
-               }
-               if (!keysToTryAgain.isEmpty()) {
-                  try {
-                     log.infof("Retrying keys %s from stable topology", keysToTryAgain);
-                     command.setKeys(keysToTryAgain);
-                     // Add in a random sleep here just to reduce the chance of getting
-                     // StackOverflow if it takes too long for a suspected node to be
-                     // removed from the view
-                     Thread.sleep(10);
-                     values.putAll((Map<Object, Object>) visitGetAllCommand(ctx, command));
-                  } finally {
-                     command.setKeys(originalKeys);
-                  }
-               }
-            }
+      updateTopologyId(command);
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } catch (CacheException e) {
+         Throwable ce = e;
+         while (ce instanceof RemoteException) {
+            ce = ce.getCause();
          }
-      } else {
-         // REMEMBER: remote are always returning InternalCacheEntries
-         if (beginTopology.getTopologyId() != stateTransferManager.getCacheTopology().getTopologyId()) {
-            // If the topology before and after don't match we can't know for certain if the
-            // misses were real or not so don't send those entries back
-            Iterator<Entry<Object, Object>> it = values.entrySet().iterator();
-            while (it.hasNext()) {
-               Entry<Object, Object> entry = it.next();
-               InternalCacheEntry ice = (InternalCacheEntry)entry.getValue();
-               if (ice == null) {
-                  it.remove();
-               }
-            }
-         } else {
-            ConsistentHash beginHash = beginTopology.getReadConsistentHash();
-            Address localAddress = transport.getAddress();
-            // It is possible we were sent a request for a key when we were the read owner
-            // but now we aren't
-            Iterator<Entry<Object, Object>> it = values.entrySet().iterator();
-            while (it.hasNext()) {
-               Entry<Object, Object> entry = it.next();
-               InternalCacheEntry ice = (InternalCacheEntry)entry.getValue();
-               if (ice == null) {
-                  // If the key wasn't local or the server is now being shut down
-                  // we can't trust the null value
-                  if (!beginHash.isKeyLocalToNode(localAddress, entry.getKey()) ||
-                        componentRegistry.getStatus() != ComponentStatus.RUNNING) {
-                     it.remove();
-                  }
-               }
-            }
-         }
+         if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
+            throw e;
+
+         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
+         // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
+         if (trace) log.tracef("Retrying command because of topology change, current topology is %d: %s", command);
+         int newTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
+         command.setTopologyId(newTopologyId);
+         waitForTopology(newTopologyId);
+
+         return visitGetAllCommand(ctx, command);
       }
-      return values;
    }
 
    /**

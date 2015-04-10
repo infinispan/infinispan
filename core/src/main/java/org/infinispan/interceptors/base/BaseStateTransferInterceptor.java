@@ -96,6 +96,10 @@ public abstract class BaseStateTransferInterceptor extends CommandInterceptor {
       stateTransferLock.waitForTransactionData(topologyId, transactionDataTimeout, TimeUnit.MILLISECONDS);
    }
 
+   protected final void waitForTopology(int topologyId) throws InterruptedException {
+      stateTransferLock.waitForTopology(topologyId, transactionDataTimeout, TimeUnit.MILLISECONDS);
+   }
+
    protected final void updateTopologyId(TopologyAffectedCommand command) throws InterruptedException {
       // set the topology id if it was not set before (ie. this is local command)
       // TODO Make tx commands extend FlagAffectedCommand so we can use CACHE_MODE_LOCAL in TransactionTable.cleanupStaleTransactions
