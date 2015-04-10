@@ -24,12 +24,15 @@ import org.jgroups.Channel;
 import org.jgroups.Message;
 import org.jgroups.SuspectedException;
 import org.jgroups.UpHandler;
+import org.jgroups.blocks.RequestCorrelator;
+import org.jgroups.blocks.RequestHandler;
 import org.jgroups.blocks.RequestOptions;
 import org.jgroups.blocks.ResponseMode;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.blocks.RspFilter;
 import org.jgroups.blocks.mux.Muxer;
 import org.jgroups.protocols.relay.SiteAddress;
+import org.jgroups.stack.Protocol;
 import org.jgroups.util.Buffer;
 import org.jgroups.util.FutureListener;
 import org.jgroups.util.NotifyingFuture;
@@ -91,6 +94,11 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
       channel.addChannelListener(this);
       asyncDispatching(true);
+   }
+
+   @Override
+   protected RequestCorrelator createRequestCorrelator(Protocol transport, RequestHandler handler, Address local_addr) {
+      return new CustomRequestCorrelator(transport, handler, local_addr);
    }
 
    private boolean isValid(Message req) {
