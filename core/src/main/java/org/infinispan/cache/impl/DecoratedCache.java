@@ -438,6 +438,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    }
 
    @Override
+   public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
+      cacheImplementation.putAll(map, metadata, flags, classLoader.get());
+   }
+
+   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       cacheImplementation.putAll(m, cacheImplementation.defaultMetadata, flags, classLoader.get());
    }
