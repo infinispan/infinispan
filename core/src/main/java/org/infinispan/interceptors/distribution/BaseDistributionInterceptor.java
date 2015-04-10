@@ -219,9 +219,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          List<Object> keys = entry.getValue();
          ClusteredGetAllCommand getMany = cf.buildClusteredGetAllCommand(keys, flags, gtx);
          commands.put(entry.getKey(), getMany);
-         if (trace) {
-            log.tracef("Sending %s to %s", getMany, entry.getKey());
-         }
       }
 
       RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(
