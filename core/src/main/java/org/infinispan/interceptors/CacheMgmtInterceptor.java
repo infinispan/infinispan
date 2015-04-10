@@ -355,6 +355,25 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       return timeService.timeDuration(startNanoseconds.get(), TimeUnit.SECONDS);
    }
 
+   /**
+    * Returns number of seconds since cache started
+    *
+    * @deprecated use {@link #getTimeSinceStart()} instead.
+    * @return number of seconds since cache started
+    */
+   @ManagedAttribute(
+         description = "Number of seconds since cache started",
+         displayName = "Seconds since cache started",
+         units = Units.SECONDS,
+         measurementType = MeasurementType.TRENDSUP,
+         displayType = DisplayType.SUMMARY
+   )
+   @Deprecated
+   public long getElapsedTime() {
+      // backward compatibility as we renamed ElapsedTime to TimeSinceStart
+      return getTimeSinceStart();
+   }
+
    @ManagedAttribute(
          description = "Number of seconds since the cache statistics were last reset",
          displayName = "Seconds since cache statistics were reset",
