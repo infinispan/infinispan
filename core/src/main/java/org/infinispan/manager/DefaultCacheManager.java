@@ -346,7 +346,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    @Override
    public Configuration defineConfiguration(String cacheName, String templateName, Configuration configurationOverride) {
       if (templateName != null) {
-         Configuration c = configurationOverrides.get(templateName);
+         Configuration c = DEFAULT_CACHE_NAME.equals(templateName) ? defaultConfiguration : configurationOverrides.get(templateName);
          if (c != null)
             return defineConfiguration(cacheName, configurationOverride, c, false);
          return defineConfiguration(cacheName, configurationOverride);
