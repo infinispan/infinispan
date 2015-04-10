@@ -69,7 +69,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       this.expectedMembers = InfinispanCollections.emptyList();
       this.capacityFactors = InfinispanCollections.emptyMap();
       this.joiners = InfinispanCollections.emptyList();
-      if (trace) log.tracef("Cache %s initialized, join info is %s", cacheName, joinInfo);
+      if (trace) log.tracef("Cache %s initialized", cacheName);
    }
 
    public CacheJoinInfo getJoinInfo() {
@@ -345,7 +345,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          CLUSTER.clusterWideRebalanceCompleted(cacheName, currentTopologyId);
          int newTopologyId = currentTopologyId + 1;
          ConsistentHash newCurrentCH = currentTopology.getPendingCH();
-         CacheTopology newTopology = new CacheTopology(newTopologyId, getCurrentTopology().getRebalanceId(),
+         CacheTopology newTopology = new CacheTopology(newTopologyId, currentTopology.getRebalanceId(),
                newCurrentCH, null, newCurrentCH.getMembers());
          setCurrentTopology(newTopology);
 

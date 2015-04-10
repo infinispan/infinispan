@@ -5,7 +5,6 @@ import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.RemoteFetchingCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
@@ -21,15 +20,21 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -81,20 +86,20 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          Object key = command.getKey();
          if (needsRemoteGet(ctx, command)) {
             InternalCacheEntry remoteEntry = remoteGetCacheEntry(ctx, key, command);
-            returnValue = computeGetReturn(remoteEntry, command, returnEntry);
+            returnValue = computeGetReturn(remoteEntry, returnEntry);
          }
          if (returnValue == null) {
             InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
             if (localEntry != null) {
                wrapInternalCacheEntry(localEntry, ctx, key, false, command);
             }
-            returnValue = computeGetReturn(localEntry, command, returnEntry);
+            returnValue = computeGetReturn(localEntry, returnEntry);
          }
       }
       return returnValue;
    }
 
-   private Object computeGetReturn(InternalCacheEntry entry, AbstractDataCommand command, boolean returnEntry) {
+   private Object computeGetReturn(InternalCacheEntry entry, boolean returnEntry) {
       if (!returnEntry && entry != null)
          return entry.getValue();
       return entry;
@@ -111,7 +116,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       ConsistentHash ch = dm.getConsistentHash();
       Address localAddress = rpcManager.getAddress();
       if (ctx.isOriginLocal()) {
-         List<NotifyingFuture<Object>> futures = new ArrayList<NotifyingFuture<Object>>(
+         List<NotifyingFuture<Object>> futures = new ArrayList<>(
                rpcManager.getMembers().size() - 1);
          // TODO: if async we don't need to do futures...
          RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
@@ -122,12 +127,12 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
             if (!segments.isEmpty()) {
                Map<Object, Object> segmentEntriesMap = 
-                     new ReadOnlySegmentAwareMap<Object, Object>(originalMap, ch, 
+                     new ReadOnlySegmentAwareMap<>(originalMap, ch,
                            segments);
                if (!segmentEntriesMap.isEmpty()) {
                   PutMapCommand copy = new PutMapCommand(command);
                   copy.setMap(segmentEntriesMap);
-                  NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl<Object>();
+                  NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl<>();
                   rpcManager.invokeRemotelyInFuture(Collections.singletonList(member), 
                         copy, options, future);
                   futures.add(future);
@@ -136,7 +141,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
          }
          if (futures.size() > 0) {
             CompositeNotifyingFuture<Object> compFuture = 
-                  new CompositeNotifyingFuture<Object>(futures);
+                  new CompositeNotifyingFuture<>(futures);
             try {
                compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
             } catch (TimeoutException e) {
@@ -166,7 +171,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
          int backupOwnerSize = backupOwnerSegments.size();
          if (backupOwnerSize > 0) {
-            List<NotifyingFuture<Object>> futures = new ArrayList<NotifyingFuture<Object>>(
+            List<NotifyingFuture<Object>> futures = new ArrayList<>(
                   backupOwnerSize);
             RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
             command.setFlags(Flag.SKIP_LOCKING);
@@ -175,11 +180,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
                Set<Integer> segments = entry.getValue();
                Map<Object, Object> segmentEntriesMap = 
-                     new ReadOnlySegmentAwareMap<Object, Object>(originalMap, ch, segments);
+                     new ReadOnlySegmentAwareMap<>(originalMap, ch, segments);
                if (!segmentEntriesMap.isEmpty()) {
                   PutMapCommand copy = new PutMapCommand(command);
                   copy.setMap(segmentEntriesMap);
-                  NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl<Object>();
+                  NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl<>();
                   rpcManager.invokeRemotelyInFuture(Collections.singletonList(entry.getKey()),
                         copy, options, future);
                   futures.add(future);
@@ -188,7 +193,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             command.setForwarded(false);
             if (futures.size() > 0) {
                CompositeNotifyingFuture<Object> compFuture = 
-                     new CompositeNotifyingFuture<Object>(futures);
+                     new CompositeNotifyingFuture<>(futures);
                try {
                   compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
                } catch (TimeoutException e) {
@@ -209,17 +214,6 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return handleNonTxWriteCommand(ctx, command);
-   }
-
-   /**
-    * Don't forward in the case of clear commands, just acquire local locks and broadcast.
-    */
-   @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      if (ctx.isOriginLocal() && !isLocalModeForced(command)) {
-         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));
-      }
-      return invokeNextInterceptor(ctx, command);
    }
 
    protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {

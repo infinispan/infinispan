@@ -2,7 +2,6 @@ package org.infinispan.commands.tx;
 
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -56,7 +55,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
 
       @Override
       public int compare(Object o1, Object o2) {
-         return Integer.valueOf(hash.hash(o1)).compareTo(hash.hash(o2));
+         return Integer.compare(hash.hash(o1), hash.hash(o2));
       }
    };
 
@@ -145,7 +144,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       Object[] retval = new Object[numMods + params];
       retval[i++] = globalTx;
       retval[i++] = onePhaseCommit;
-      retval[i++] = numMods;
+      retval[i] = numMods;
       if (numMods > 0) System.arraycopy(modifications, 0, retval, params, numMods);
       return retval;
    }
@@ -188,7 +187,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
          return InfinispanCollections.emptySet();
 
       if (modifications.length == 1) return modifications[0].getAffectedKeys();
-      Set<Object> keys = new HashSet<Object>(modifications.length);
+      Set<Object> keys = new HashSet<>(modifications.length);
       for (WriteCommand wc: modifications) keys.addAll(wc.getAffectedKeys());
       return keys;
    }
@@ -229,11 +228,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       if (modifications == null) {
          return EMPTY_ARRAY;
       }
-      Set<Object> set = new HashSet<Object>(modifications.length);
+      Set<Object> set = new HashSet<>(modifications.length);
       for (WriteCommand wc : modifications) {
          switch (wc.getCommandId()) {
-            case ClearCommand.COMMAND_ID:
-               return null;
             case PutKeyValueCommand.COMMAND_ID:
             case RemoveCommand.COMMAND_ID:
             case ReplaceCommand.COMMAND_ID:
@@ -246,6 +243,8 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
                ApplyDeltaCommand command = (ApplyDeltaCommand) wc;
                Object[] compositeKeys = command.getCompositeKeys();
                set.addAll(Arrays.asList(compositeKeys));
+               break;
+            default:
                break;
          }
       }

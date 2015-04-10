@@ -2,7 +2,6 @@ package org.infinispan.interceptors.locking;
 
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.context.InvocationContext;
@@ -38,23 +37,6 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    protected Object visitDataWriteCommand(InvocationContext ctx, DataWriteCommand command) throws Throwable {
       assertNonTransactional(ctx);
       return visitNonTxDataWriteCommand(ctx, command);
-   }
-
-   @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      assertNonTransactional(ctx);
-      boolean skipLocking = hasSkipLocking(command);
-      long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-      for (Object key: dataContainer.keySet()) {
-         if (shouldLock(key, command)) {
-            lockKey(ctx, key, lockTimeout, skipLocking);
-         }
-      }
-      try {
-         return invokeNextInterceptor(ctx, command);
-      } finally {
-         lockManager.unlockAll(ctx);
-      }
    }
 
    @Override

@@ -2,6 +2,7 @@ package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -315,6 +316,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry != null) {
          e.setMetadata(entry.getMetadata());
+      } else if (command instanceof ClearCommand) {
+         e.setMetadata(previousMetadata);
       }
       Set<Flag> flags;
       if (command != null && (flags = command.getFlags()) != null && flags.contains(Flag.COMMAND_RETRY)) {

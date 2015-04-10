@@ -30,7 +30,7 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    }
 
    @Override
-   protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean ignored) {
+   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients, boolean ignored) {
       // Perform the RPC
       try {
          Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));

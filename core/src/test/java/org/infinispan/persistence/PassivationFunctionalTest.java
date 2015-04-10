@@ -31,7 +31,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 @Test(groups = "functional", testName = "persistence.PassivationFunctionalTest")
 public class PassivationFunctionalTest extends AbstractInfinispanTest {
-   Cache cache;
+   Cache<String, String> cache;
    AdvancedLoadWriteStore store;
    TransactionManager tm;
    ConfigurationBuilder cfg;
@@ -199,7 +199,8 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assertInCacheNotInStore("k2", "v2", lifespan);
 
       tm.begin();
-      cache.clear();
+      cache.remove("k1");
+      cache.remove("k2");
       t = tm.suspend();
 
       assertInCacheNotInStore("k1", "v1");
@@ -243,7 +244,7 @@ public class PassivationFunctionalTest extends AbstractInfinispanTest {
       assertInCacheNotInStore("k1", "v1");
       assertInStoreNotInCache("k2", "v2");
 
-      Map m = new HashMap();
+      Map<String, String> m = new HashMap<>();
       m.put("k1", "v1-NEW");
       m.put("k2", "v2-NEW");
       m.put("k3", "v3-NEW");

@@ -1,15 +1,14 @@
 package org.infinispan.tx.locking;
 
-import java.util.Collections;
-import java.util.Map;
-import javax.transaction.HeuristicMixedException;
-import javax.transaction.SystemException;
-
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.SystemException;
+import java.util.Collections;
+import java.util.Map;
+
 import static org.testng.Assert.assertNull;
 
 /**
@@ -43,13 +42,6 @@ public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest 
 
       tm(0).begin();
       cache(0).replace(k, "v2");
-      assertLocking();
-   }
-
-   public void testClear() throws Exception {
-      cache(0).put(k, "v");
-      tm(0).begin();
-      cache(0).clear();
       assertLocking();
    }
 

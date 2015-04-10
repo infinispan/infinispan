@@ -1,9 +1,5 @@
 package org.infinispan.interceptors.locking;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -11,10 +7,8 @@ import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -24,6 +18,10 @@ import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Locking interceptor to be used by pessimistic caches.
@@ -89,9 +87,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          if (!skipLocking) {
             acquireRemoteIfNeeded(ctx, command.getMap().keySet(), command);
             final TxInvocationContext txContext = (TxInvocationContext) ctx;
-            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+            long lockTimeout = getLockAcquisitionTimeout(command, false);
             for (Object key : command.getMap().keySet()) {
-               lockAndRegisterBackupLock(txContext, key, lockTimeout, skipLocking);
+               lockAndRegisterBackupLock(txContext, key, lockTimeout, false);
             }
          }
          return invokeNextInterceptor(ctx, command);
@@ -109,8 +107,8 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             final boolean localLock = cdl.localNodeIsPrimaryOwner(command.getKey());
             acquireRemoteIfNeeded(ctx, command, localLock);
             final TxInvocationContext txContext = (TxInvocationContext) ctx;
-            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-            lockAndRegisterBackupLock(txContext, command.getKey(), localLock, lockTimeout, skipLocking);
+            long lockTimeout = getLockAcquisitionTimeout(command, false);
+            lockAndRegisterBackupLock(txContext, command.getKey(), localLock, lockTimeout, false);
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -125,37 +123,18 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       try {
          boolean skipLocking = hasSkipLocking(command);
          if (!skipLocking) {
-            HashSet<Object> keysToLock = new HashSet<Object>(Arrays.asList(compositeKeys));
+            HashSet<Object> keysToLock = new HashSet<>(Arrays.asList(compositeKeys));
             acquireRemoteIfNeeded(ctx, keysToLock, command);
             if (cdl.localNodeIsOwner(command.getKey())) {
-               long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+               long lockTimeout = getLockAcquisitionTimeout(command, false);
                for (Object key : compositeKeys) {
-                  lockKey(ctx, key, lockTimeout, skipLocking);
+                  lockKey(ctx, key, lockTimeout, false);
                }
             }
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
          throw cleanLocksAndRethrow(ctx, te);
-      }
-   }
-
-   @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      try {
-         boolean skipLocking = hasSkipLocking(command);
-         if (!skipLocking) {
-            // TODO The clear command doesn't acquire any remote locks. See ISPN-4140
-            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-            for (InternalCacheEntry entry : dataContainer.entrySet())
-               lockAndRegisterBackupLock((TxInvocationContext) ctx,
-                     entry.getKey(), lockTimeout, skipLocking);
-         }
-
-         return invokeNextInterceptor(ctx, command);
-      } catch (Throwable te) {
-         releaseLocksOnFailureBeforePrepare(ctx);
-         throw te;
       }
    }
 
@@ -193,9 +172,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             return Boolean.FALSE;
          }
 
-         long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
+         long lockTimeout = getLockAcquisitionTimeout(command, false);
          for (Object key : command.getKeys()) {
-            lockAndRegisterBackupLock(ctx, key, lockTimeout, skipLocking);
+            lockAndRegisterBackupLock(ctx, key, lockTimeout, false);
          }
          return Boolean.TRUE;
       } catch (Throwable te) {

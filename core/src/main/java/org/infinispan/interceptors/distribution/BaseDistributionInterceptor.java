@@ -3,6 +3,7 @@ package org.infinispan.interceptors.distribution;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
@@ -97,6 +98,14 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                entryFactory.wrapEntryForReading(ctx, entry.getKey(), entry);
             }
          }
+      }
+      return invokeNextInterceptor(ctx, command);
+   }
+
+   @Override
+   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      if (ctx.isOriginLocal() && !isLocalModeForced(command)) {
+         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(isSynchronous(command)));
       }
       return invokeNextInterceptor(ctx, command);
    }

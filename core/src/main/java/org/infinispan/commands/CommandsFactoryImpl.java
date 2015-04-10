@@ -118,7 +118,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
 
    private DataContainer dataContainer;
-   private CacheNotifier notifier;
+   private CacheNotifier<Object, Object> notifier;
    private Cache<Object, Object> cache;
    private String cacheName;
    private boolean totalOrderProtocol;
@@ -137,18 +137,16 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private StateTransferManager stateTransferManager;
    private BackupSender backupSender;
    private CancellationService cancellationService;
-   private TimeService timeService;
    private XSiteStateProvider xSiteStateProvider;
    private XSiteStateConsumer xSiteStateConsumer;
    private XSiteStateTransferManager xSiteStateTransferManager;
    private EntryRetriever entryRetriever;
    private GroupManager groupManager;
-   private PartitionHandlingManager partitionHandlingManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
    @Inject
-   public void setupDependencies(DataContainer container, CacheNotifier notifier, Cache<Object, Object> cache,
+   public void setupDependencies(DataContainer container, CacheNotifier<Object, Object> notifier, Cache<Object, Object> cache,
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
                                  InvocationContextFactory icf, TransactionTable txTable, Configuration configuration,
                                  @ComponentName(KnownComponentNames.MODULE_COMMAND_INITIALIZERS) Map<Byte, ModuleCommandInitializer> moduleCommandInitializers,
@@ -175,11 +173,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.stateTransferManager = stm;
       this.backupSender = backupSender;
       this.cancellationService = cancellationService;
-      this.timeService = timeService;
       this.xSiteStateConsumer = xSiteStateConsumer;
       this.xSiteStateProvider = xSiteStateProvider;
       this.xSiteStateTransferManager = xSiteStateTransferManager;
-      this.partitionHandlingManager = partitionHandlingManager;
       this.entryRetriever = entryRetriever;
       this.groupManager = groupManager;
    }
@@ -259,7 +255,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public ClearCommand buildClearCommand(Set<Flag> flags) {
-      return new ClearCommand(notifier, flags);
+      return new ClearCommand(notifier, dataContainer, flags);
    }
 
    @Override
@@ -387,7 +383,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
             break;
          case ClearCommand.COMMAND_ID:
             ClearCommand cc = (ClearCommand) c;
-            cc.init(notifier);
+            cc.init(notifier, dataContainer);
             break;
          case ClusteredGetCommand.COMMAND_ID:
             ClusteredGetCommand clusteredGetCommand = (ClusteredGetCommand) c;

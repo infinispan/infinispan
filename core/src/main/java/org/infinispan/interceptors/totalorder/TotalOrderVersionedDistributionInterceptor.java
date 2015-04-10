@@ -50,7 +50,7 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
    }
 
    @Override
-   protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
+   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
       if (log.isTraceEnabled()) {
          log.tracef("Total Order Anycast transaction %s with Total Order", command.getGlobalTransaction().globalId());
       }

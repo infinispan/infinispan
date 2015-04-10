@@ -44,13 +44,11 @@ public class TotalOrderManager {
     * this map is used to keep track of concurrent transactions.
     */
    private final ConcurrentMap<Object, TotalOrderLatch> keysLocked;
-   private final AtomicReference<TotalOrderLatch> clear;
    private final AtomicReference<TotalOrderLatch> stateTransferInProgress;
    private BlockingTaskAwareExecutorService totalOrderExecutor;
 
    public TotalOrderManager() {
       keysLocked = CollectionFactory.makeConcurrentMap();
-      clear = new AtomicReference<>(null);
       stateTransferInProgress = new AtomicReference<>(null);
    }
 
@@ -73,21 +71,6 @@ public class TotalOrderManager {
       state.awaitUntilReset();
       TotalOrderLatch transactionSynchronizedBlock = new TotalOrderLatchImpl(state.getGlobalTransaction().globalId());
       state.setTransactionSynchronizedBlock(transactionSynchronizedBlock);
-      if (keysModified == null) { //clear state
-         TotalOrderLatch oldClear = clear.get();
-         if (oldClear != null) {
-            state.addSynchronizedBlock(oldClear);
-            clear.set(transactionSynchronizedBlock);
-         }
-         //add all other "locks"
-         state.addAllSynchronizedBlocks(keysLocked.values());
-         keysLocked.clear();
-         state.addKeysLockedForClear();
-      } else {
-         TotalOrderLatch clearTx = clear.get();
-         if (clearTx != null) {
-            state.addSynchronizedBlock(clearTx);
-         }
          //this will collect all the count down latch corresponding to the previous transactions in the queue
          for (Object key : keysModified) {
             TotalOrderLatch prevTx = keysLocked.put(key, transactionSynchronizedBlock);
@@ -95,7 +78,7 @@ public class TotalOrderManager {
                state.addSynchronizedBlock(prevTx);
             }
             state.addLockedKey(key);
-         }
+
       }
 
       TotalOrderLatch stateTransfer = stateTransferInProgress.get();
@@ -123,16 +106,11 @@ public class TotalOrderManager {
       }
       Collection<Object> lockedKeys = state.getLockedKeys();
       synchronizedBlock.unBlock();
-      if (lockedKeys == null) {
-         clear.compareAndSet(synchronizedBlock, null);
-      } else {
          for (Object key : lockedKeys) {
             keysLocked.remove(key, synchronizedBlock);
          }
-      }
       if (log.isTraceEnabled()) {
-         log.tracef("Release %s and locked keys %s. Checking pending tasks!", synchronizedBlock,
-                    lockedKeys == null ? "[ClearCommand]" : lockedKeys);
+         log.tracef("Release %s and locked keys %s. Checking pending tasks!", synchronizedBlock, lockedKeys);
       }
       state.reset();
    }
@@ -149,10 +127,6 @@ public class TotalOrderManager {
       }
       List<TotalOrderLatch> preparingTransactions = new ArrayList<>(keysLocked.size());
       preparingTransactions.addAll(keysLocked.values());
-      TotalOrderLatch clearBlock = clear.get();
-      if (clearBlock != null) {
-         preparingTransactions.add(clearBlock);
-      }
       if (isRebalance) {
          stateTransferInProgress.set(new TotalOrderLatchImpl("StateTransfer-" + topologyId));
       }
@@ -177,6 +151,6 @@ public class TotalOrderManager {
    }
 
    public final boolean hasAnyLockAcquired() {
-      return !keysLocked.isEmpty() || clear.get() != null;
+      return !keysLocked.isEmpty();
    }
 }

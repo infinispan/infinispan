@@ -41,13 +41,6 @@ public abstract class AbstractLocalTest extends SingleCacheManagerTest {
       assertLocking();
    }
 
-   public void testClear() throws Exception {
-      cache.put("k", "v");
-      tm().begin();
-      cache.clear();
-      assertLocking();
-   }
-
    public void testPutAll() throws Exception {
       Map m = Collections.singletonMap("k", "v");
       tm().begin();

@@ -316,7 +316,11 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
 
    protected abstract void awaitRemove(int cacheIndex, Object key) throws InterruptedException;
 
-   protected abstract void awaitClear(int cacheIndex) throws InterruptedException;
+   private void awaitClear(int cacheIndex) throws InterruptedException {
+      Set<Address> all = new HashSet<>(cache(cacheIndex).getAdvancedCache().getRpcManager().getMembers());
+      all.remove(address(cacheIndex));
+      awaitOperation(Operation.CLEAR, all);
+   }
 
    protected abstract void awaitPutMap(int cacheIndex, Collection<Object> keys) throws InterruptedException;
 
@@ -406,7 +410,7 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
       return handler;
    }
 
-   protected static enum Operation {
+   protected enum Operation {
       PUT, REMOVE, REPLACE, CLEAR, PUT_MAP
    }
 
@@ -437,7 +441,7 @@ public abstract class BaseClusteredExtendedStatisticTest extends MultipleCacheMa
             while (operationQueue.peek() != operation && System.nanoTime() - timeoutNanos < 0) {
                operationQueue.wait(timeUnit.toMillis(timeout));
             }
-            AssertJUnit.assertEquals(operation, operationQueue.remove());
+            AssertJUnit.assertEquals(operation, operationQueue.poll());
          }
       }
 

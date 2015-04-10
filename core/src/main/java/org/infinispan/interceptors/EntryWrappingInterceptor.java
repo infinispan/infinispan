@@ -84,7 +84,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    }
 
    @Inject
-   public void init(EntryFactory entryFactory, DataContainer dataContainer, ClusteringDependentLogic cdl,
+   public void init(EntryFactory entryFactory, DataContainer<Object, Object> dataContainer, ClusteringDependentLogic cdl,
                     CommandsFactory commandFactory, StateConsumer stateConsumer, StateTransferLock stateTransferLock,
                     XSiteStateConsumer xSiteStateConsumer, GroupManager groupManager) {
       this.entryFactory = entryFactory;
@@ -133,7 +133,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return visitDataReadCommand(ctx, command);
    }
 
-   private final Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+   private Object visitDataReadCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
       try {
          entryFactory.wrapEntryForReading(ctx, command.getKey(), null);
          return invokeNextInterceptor(ctx, command);
@@ -164,9 +164,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      for (InternalCacheEntry entry : dataContainer.entrySet())
-         entryFactory.wrapEntryForClear(ctx, entry.getKey());
-      return setSkipRemoteGetsAndInvokeNextForClear(ctx, command);
+      return invokeNextAndApplyChanges(ctx, command, command.getMetadata());
    }
 
    @Override
@@ -327,18 +325,12 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return null;
    }
 
-   private boolean hasClearCommand(InvocationContext ctx, FlagAffectedCommand command) {
-      return ctx instanceof TxInvocationContext ?
-            ((TxInvocationContext) ctx).getCacheTransaction().hasModification(ClearCommand.class) :
-            command instanceof ClearCommand;
-   }
-
    protected final void commitContextEntries(InvocationContext ctx, FlagAffectedCommand command, Metadata metadata) {
       final Flag stateTransferFlag = extractStateTransferFlag(ctx, command);
 
       if (stateTransferFlag == null) {
          //it is a normal operation
-         stopStateTransferIfNeeded(ctx, command);
+         stopStateTransferIfNeeded(command);
       }
 
       if (ctx instanceof SingleKeyNonTxInvocationContext) {
@@ -369,8 +361,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       cdl.commitEntry(entry, metadata, command, ctx, stateTransferFlag, l1Invalidation);
    }
 
-   private void stopStateTransferIfNeeded(InvocationContext context, FlagAffectedCommand command) {
-      if (hasClearCommand(context, command)) {
+   private void stopStateTransferIfNeeded(FlagAffectedCommand command) {
+      if (command instanceof ClearCommand) {
          // If we are committing a ClearCommand now then no keys should be written by state transfer from
          // now on until current rebalance ends.
          if (stateConsumer != null) {
@@ -430,29 +422,6 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    /**
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
-   private Object setSkipRemoteGetsAndInvokeNextForClear(InvocationContext context, ClearCommand command) throws Throwable {
-      boolean txScope = context.isInTxScope();
-      if (txScope) {
-         for (CacheEntry entry : context.getLookedUpEntries().values()) {
-            if (entry != null) {
-               entry.setSkipLookup(true);
-            }
-         }
-      }
-      Object retVal = invokeNextAndApplyChanges(context, command, command.getMetadata());
-      if (txScope) {
-         for (CacheEntry entry : context.getLookedUpEntries().values()) {
-            if (entry != null) {
-               entry.setSkipLookup(true);
-            }
-         }
-      }
-      return retVal;
-   }
-
-   /**
-    * Locks the value for the keys accessed by the command to avoid being override from a remote get.
-    */
    private Object setSkipRemoteGetsAndInvokeNextForPutMapCommand(InvocationContext context, PutMapCommand command) throws Throwable {
       Object retVal = invokeNextAndApplyChanges(context, command, command.getMetadata());
       if (context.isInTxScope()) {
@@ -484,25 +453,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private final class EntryWrappingVisitor extends AbstractVisitor {
 
       @Override
-      public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-         boolean wrapped = false;
-         for (Object key : dataContainer.keySet()) {
-            entryFactory.wrapEntryForClear(ctx, key);
-            wrapped = true;
-         }
-         if (wrapped)
-            invokeNextInterceptor(ctx, command);
-         if (stateConsumer != null && !ctx.isInTxScope()) {
-            // If a non-tx ClearCommand was executed successfully we must stop recording updated keys and do not
-            // allow any further updates to be written by state transfer from now on until current rebalance ends.
-            stateConsumer.stopApplyingState();
-         }
-         return null;
-      }
-
-      @Override
       public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-         Map<Object, Object> newMap = new HashMap<Object, Object>(4);
+         Map<Object, Object> newMap = new HashMap<>(4);
          for (Map.Entry<Object, Object> e : command.getMap().entrySet()) {
             Object key = e.getKey();
             if (cdl.localNodeIsOwner(key)) {

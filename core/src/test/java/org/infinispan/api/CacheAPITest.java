@@ -68,7 +68,7 @@ public abstract class CacheAPITest extends APINonTxTest {
 
    public void testRollbackAfterOverwrite() throws Exception {
       String key = "key", value = "value", value2 = "value2";
-      int size = 0;
+      int size;
       cache.put(key, value);
       assert cache.get(key).equals(value);
       size = 1;
@@ -97,7 +97,7 @@ public abstract class CacheAPITest extends APINonTxTest {
 
    public void testRollbackAfterRemove() throws Exception {
       String key = "key", value = "value";
-      int size = 0;
+      int size;
       cache.put(key, value);
       assert cache.get(key).equals(value);
       size = 1;
@@ -122,42 +122,8 @@ public abstract class CacheAPITest extends APINonTxTest {
       assert cache.values().contains(value);
    }
 
-   public void testRollbackAfterClear() throws Exception {
-      String key = "key", value = "value";
-      int size = 0;
-      cache.put(key, value);
-      assert cache.get(key).equals(value);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
-
-
-      final TransactionManager transactionManager = cache.getAdvancedCache().getTransactionManager();
-      transactionManager.begin();
-      try {
-         log.trace("Here is where it begins: " + transactionManager.getTransaction());
-   
-         cache.size();
-   
-         cache.clear();
-         assert cache.get(key) == null;
-         size = 0;
-         assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      } finally {
-         transactionManager.rollback();
-      }
-   
-      assert cache.get(key).equals(value);
-      size = 1;
-      assert size == cache.size() && size == cache.keySet().size() && size == cache.values().size() && size == cache.entrySet().size();
-      assert cache.keySet().contains(key);
-      assert cache.values().contains(value);
-     
-   }
-
    public void testEntrySetEqualityInTx(Method m) throws Exception {
-      Map<Integer, String> dataIn = new HashMap<Integer, String>();
+      Map<Object, Object> dataIn = new HashMap<>();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
 
@@ -166,9 +132,9 @@ public abstract class CacheAPITest extends APINonTxTest {
       TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
       tm.begin();
       try {
-         Map<Integer, String> txDataIn = new HashMap<Integer, String>();
+         Map<Integer, String> txDataIn = new HashMap<>();
          txDataIn.put(3, v(m, 3));
-         Map<Integer, String> allEntriesIn = new HashMap<Integer, String>(dataIn);
+         Map<Object, Object> allEntriesIn = new HashMap<>(dataIn);
 
          // Modify expectations to include data to be included
          allEntriesIn.putAll(txDataIn);
@@ -176,7 +142,7 @@ public abstract class CacheAPITest extends APINonTxTest {
          // Add an entry within tx
          cache.putAll(txDataIn);
 
-         Set entries = cache.entrySet();
+         Set<Map.Entry<Object, Object>> entries = cache.entrySet();
          assertEquals(allEntriesIn.entrySet(), entries);
       } finally {
          tm.rollback();
@@ -184,7 +150,7 @@ public abstract class CacheAPITest extends APINonTxTest {
    }
 
    public void testEntrySetIterationBeforeInTx(Method m) throws Exception {
-      Map<Integer, String> dataIn = new HashMap<Integer, String>();
+      Map<Integer, String> dataIn = new HashMap<>();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
 
@@ -200,10 +166,7 @@ public abstract class CacheAPITest extends APINonTxTest {
          cache.put(3, v(m, 3));
          cache.put(4, v(m, 4));
 
-         Iterator<Entry<Object, Object>> itr = entries.iterator();
-
-         while (itr.hasNext()) {
-            Entry<Object, Object> entry = itr.next();
+         for (Entry<Object, Object> entry : entries) {
             foundValues.put(entry.getKey(), entry.getValue());
          }
       } finally {
@@ -217,7 +180,7 @@ public abstract class CacheAPITest extends APINonTxTest {
    }
 
    public void testEntrySetIterationAfterInTx(Method m) throws Exception {
-      Map<Integer, String> dataIn = new HashMap<Integer, String>();
+      Map<Integer, String> dataIn = new HashMap<>();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
 
@@ -251,7 +214,7 @@ public abstract class CacheAPITest extends APINonTxTest {
 
    public void testRollbackAfterPut() throws Exception {
       String key = "key", value = "value", key2 = "keyTwo", value2 = "value2";
-      int size = 0;
+      int size;
       cache.put(key, value);
       assert cache.get(key).equals(value);
       size = 1;

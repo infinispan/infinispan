@@ -3,8 +3,8 @@ package org.infinispan.commands.write;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -19,18 +19,21 @@ import java.util.Set;
 public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCommand {
    
    public static final byte COMMAND_ID = 5;
-   CacheNotifier notifier;
+   private CacheNotifier<Object, Object> notifier;
+   private DataContainer<?,?> dataContainer;
 
    public ClearCommand() {
    }
 
-   public ClearCommand(CacheNotifier notifier, Set<Flag> flags) {
+   public ClearCommand(CacheNotifier<Object, Object> notifier, DataContainer<?,?> dataContainer, Set<Flag> flags) {
       this.notifier = notifier;
+      this.dataContainer = dataContainer;
       this.flags = flags;
    }
 
-   public void init(CacheNotifier notifier) {
+   public void init(CacheNotifier<Object, Object> notifier, DataContainer<?,?> dataContainer) {
       this.notifier = notifier;
+      this.dataContainer = dataContainer;
    }
 
    @Override
@@ -40,15 +43,8 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      for (CacheEntry e : ctx.getLookedUpEntries().values()) {
-         if (e instanceof MVCCEntry) {
-            MVCCEntry me = (MVCCEntry) e;
-            Object k = me.getKey(), v = me.getValue();
-            notifier.notifyCacheEntryRemoved(k, v, me.getMetadata(), true, ctx, this);
-            me.setRemoved(true);
-            me.setValid(false);
-            me.setChanged(true);
-         }
+      for (CacheEntry e : dataContainer.entrySet()) {
+         notifier.notifyCacheEntryRemoved(e.getKey(), e.getValue(), e.getMetadata(), true, ctx, this);
       }
       return null;
    }

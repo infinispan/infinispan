@@ -46,7 +46,7 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
    }
 
    @Override
-   protected void prepareOnAffectedNodes(TxInvocationContext ctx, PrepareCommand command, Collection<Address> recipients,
+   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients,
                                          boolean sync) {
       if (log.isTraceEnabled()) {
          log.tracef("Total Order Anycast transaction %s with Total Order", command.getGlobalTransaction().globalId());
