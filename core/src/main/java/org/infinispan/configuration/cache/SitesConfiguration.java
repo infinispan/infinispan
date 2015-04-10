@@ -144,6 +144,6 @@ public class SitesConfiguration {
 
    @Override
    public String toString() {
-      return "SitesConfiguration [backupFor=" + backupFor + ", attributes=" + attributes + "]";
+      return "SitesConfiguration [backupFor=" + backupFor + ", allBackups=" + allBackups + ", attributes=" + attributes + "]";
    }
 }

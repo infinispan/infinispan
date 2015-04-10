@@ -6,7 +6,6 @@ import java.lang.invoke.MethodHandles;
 
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
-import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

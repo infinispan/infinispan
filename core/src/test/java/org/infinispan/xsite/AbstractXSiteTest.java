@@ -2,6 +2,7 @@ package org.infinispan.xsite;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -106,12 +107,11 @@ public abstract class AbstractXSiteTest extends AbstractCacheTest {
       return Collections.unmodifiableList(site(site).<K,V>getCaches(cacheName));
    }
 
-
    protected void startCache(String siteName, String cacheName, ConfigurationBuilder configurationBuilder) {
       TestSite site = site(siteName);
       for (EmbeddedCacheManager ecm : site.cacheManagers) {
          Configuration config = configurationBuilder.build();
-         ecm.defineConfiguration(cacheName, config);
+         ecm.defineConfiguration(cacheName, BasicCacheContainer.DEFAULT_CACHE_NAME, config);
       }
       site.waitForClusterToForm(cacheName);
    }
