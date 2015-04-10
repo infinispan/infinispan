@@ -100,6 +100,7 @@
       <version.arquillian>1.1.5.Final</version.arquillian>
       <version.arquillian.container.weld>1.0.0.CR3</version.arquillian.container.weld>
       <version.aspectj.aspectjweaver>1.8.1</version.aspectj.aspectjweaver>
+      <version.byteman>2.1.4</version.byteman>
       <version.avro>1.7.6</version.avro>
       <version.c3p0>0.9.5-pre8</version.c3p0>
       <version.c3p0_dep.mchange-commons-java>0.2.7</version.c3p0_dep.mchange-commons-java>
@@ -984,6 +985,18 @@
               <artifactId>metainf-services</artifactId>
               <version>${version.metainf-services}</version>
               <optional>true</optional>
+          </dependency>
+          <dependency>
+              <groupId>org.jboss.byteman</groupId>
+              <artifactId>byteman</artifactId>
+              <version>${version.byteman}</version>
+              <scope>test</scope>
+          </dependency>
+          <dependency>
+              <groupId>org.jboss.byteman</groupId>
+              <artifactId>byteman-bmunit</artifactId>
+              <version>${version.byteman}</version>
+              <scope>test</scope>
           </dependency>
       </dependencies>
    </dependencyManagement>

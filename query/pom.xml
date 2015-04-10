@@ -13,7 +13,7 @@
    <name>Infinispan Query API</name>
    <description>Infinispan Query API module</description>
 
-   
+
    <properties>
       <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
       <infinispan.test.parallel.threads>5</infinispan.test.parallel.threads>
@@ -101,6 +101,17 @@
            <groupId>org.kohsuke.metainf-services</groupId>
            <artifactId>metainf-services</artifactId>
            <optional>true</optional>
+       </dependency>
+
+       <dependency>
+           <groupId>org.jboss.byteman</groupId>
+           <artifactId>byteman</artifactId>
+           <scope>test</scope>
+       </dependency>
+       <dependency>
+           <groupId>org.jboss.byteman</groupId>
+           <artifactId>byteman-bmunit</artifactId>
+           <scope>test</scope>
        </dependency>
 
    </dependencies>
