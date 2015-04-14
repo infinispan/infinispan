@@ -40,7 +40,6 @@ public class ServerBootstrap implements ServletContextListener {
 
    public static void setCacheManager(ServletContext ctx, EmbeddedCacheManager cacheManager) {
       ctx.setAttribute(CACHE_MANAGER, cacheManager);
-      ctx.setAttribute(MANAGER_INSTANCE, new ManagerInstance(cacheManager));
    }
 
    public static EmbeddedCacheManager getCacheManager(ServletContext ctx) {
@@ -54,11 +53,6 @@ public class ServerBootstrap implements ServletContextListener {
    public static void setConfiguration(ServletContext ctx, RestServerConfiguration cfg) {
       ctx.setAttribute(CONFIGURATION, cfg);
    }
-
-   public static ManagerInstance getManagerInstance(ServletContext ctx) {
-      return (ManagerInstance) ctx.getAttribute(MANAGER_INSTANCE);
-   }
-
 
    @Override
    public void contextInitialized(ServletContextEvent sce) {

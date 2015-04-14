@@ -32,10 +32,6 @@ import org.jboss.as.controller.services.path.PathManagerService;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
-import org.jboss.msc.service.ServiceName;
-import org.wildfly.extension.undertow.Host;
-import org.wildfly.extension.undertow.Server;
-import org.wildfly.extension.undertow.UndertowService;
 
 /**
  * RestSubsystemAdd.
@@ -44,7 +40,6 @@ import org.wildfly.extension.undertow.UndertowService;
  * @since 5.1
  */
 class RestSubsystemAdd extends AbstractAddStepHandler {
-   private static final String DEFAULT_VIRTUAL_SERVER = "default-host";
    static final RestSubsystemAdd INSTANCE = new RestSubsystemAdd();
 
    @Override
@@ -56,21 +51,22 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       // Create the service
       final RestService service = new RestService(config);
 
-      String virtualServer = config.hasDefined(ModelKeys.VIRTUAL_SERVER) ? config.get(ModelKeys.VIRTUAL_SERVER).asString() : DEFAULT_VIRTUAL_SERVER;
-      String serverName = "default-server";
-      final ServiceName virtualHostServiceName = UndertowService.virtualHostName(serverName, virtualServer);
       // Setup the various dependencies with injectors and install the service
       ServiceBuilder<?> builder = context.getServiceTarget().addService(EndpointUtils.getServiceName(operation, "rest"), service);
       EndpointUtils.addCacheContainerDependency(builder, service.getCacheContainerName(), service.getCacheManager());
+      EndpointUtils.addSocketBindingDependency(builder, getSocketBindingName(operation), service.getSocketBinding());
       builder
-         .addDependency(PathManagerService.SERVICE_NAME, PathManager.class, service.getPathManagerInjector())
-         .addDependency(virtualHostServiceName, Host.class, service.getHostInjector());
+         .addDependency(PathManagerService.SERVICE_NAME, PathManager.class, service.getPathManagerInjector());
       if (service.getSecurityDomain()!=null) {
          EndpointUtils.addSecurityDomainDependency(builder, service.getSecurityDomain(), service.getSecurityDomainContextInjector());
       }
       builder.addListener(verificationHandler);
       builder.setInitialMode(ServiceController.Mode.ACTIVE);
       builder.install();
+   }
+
+   protected String getSocketBindingName(ModelNode config) {
+      return config.hasDefined(ModelKeys.SOCKET_BINDING) ? config.get(ModelKeys.SOCKET_BINDING).asString() : null;
    }
 
    @Override

@@ -49,20 +49,26 @@ class IntegrationTest extends RestServerTestBase {
    val cacheName = BasicCacheContainer.DEFAULT_CACHE_NAME
    val fullPath = HOST + "/rest/" + cacheName
    val DATE_PATTERN_RFC1123 = "EEE, dd MMM yyyy HH:mm:ss zzz"
+   private var cacheManager: EmbeddedCacheManager = null
 
-   //val HOST = "http://localhost:8080/infinispan/"
+   private def fullPathWithPort(m: Method, port: Int): String =
+      s"http://localhost:$port/rest/$cacheName/${m.getName}"
 
    @BeforeClass(alwaysRun = true)
    def setUp() {
-      addServer("single", 8888, TestCacheManagerFactory.fromXml("test-config.xml"))
+      cacheManager = TestCacheManagerFactory.fromXml("test-config.xml")
+      addServer("single", 8888, cacheManager)
       startServers()
       createClient()
    }
 
+   def createCacheManager(): EmbeddedCacheManager = TestCacheManagerFactory.fromXml("test-config.xml")
+
    @AfterClass(alwaysRun = true)
    def tearDown() {
-      stopServers()
       destroyClient()
+      stopServers()
+      TestingUtil.killCacheManagers(cacheManager)
    }
 
    def testBasicOperation(m: Method) {
@@ -130,6 +136,13 @@ class IntegrationTest extends RestServerTestBase {
       assertEquals(
          HttpServletResponse.SC_NOT_FOUND,
          call(new GetMethod(HOST + "/rest/" + cacheName + "/nodata")).getStatusCode
+      )
+   }
+
+   def testDeleteNonExistent() {
+      assertEquals(
+         HttpServletResponse.SC_NOT_FOUND,
+         call(new DeleteMethod(HOST + "/rest/" + cacheName + "/nodata")).getStatusCode
       )
    }
 
@@ -613,7 +626,7 @@ class IntegrationTest extends RestServerTestBase {
    def testInsertSerializableObjects(m: Method) {
       val bout = new ByteArrayOutputStream
       new ObjectOutputStream(bout).writeObject(new MySer)
-      put(m, bout.toByteArray, "application/x-java-serialized-object")
+      put(fullPathKey(m), bout.toByteArray, "application/x-java-serialized-object")
       getCacheManager("single").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME)
               .get(m.getName).asInstanceOf[Array[Byte]]
    }
@@ -643,7 +656,7 @@ class IntegrationTest extends RestServerTestBase {
 
    private def sendByteArrayAs(m: Method, contentType: String) {
       val serializedOnClient = Array[Byte](0x65, 0x66, 0x67)
-      put(m, serializedOnClient, contentType)
+      put(fullPathKey(m), serializedOnClient, contentType)
       val dataRead = new BufferedInputStream(
          get(m, None, Some(contentType)).getResponseBodyAsStream)
       val bytesRead = new Array[Byte](3)
@@ -677,23 +690,19 @@ class IntegrationTest extends RestServerTestBase {
    }
 
    def testConcurrentETagChanges(m: Method) {
-      put(m, "data1")
-
       val v2PutLatch = new CountDownLatch(1)
       val v3PutLatch = new CountDownLatch(1)
       val v2FinishLatch = new CountDownLatch(1)
-      val origCacheManager = getCacheManager("single")
-      val mockCacheManager = new ControlledCacheManager(origCacheManager, v2PutLatch, v3PutLatch, v2FinishLatch)
-      val knownCaches = getManagerInstance("single").knownCaches
-      try {
-         knownCaches.put(
-            BasicCacheContainer.DEFAULT_CACHE_NAME,
-            mockCacheManager.getCache[String, Array[Byte]]())
 
+      val cacheManager = createCacheManager()
+      val mockCacheManager = new ControlledCacheManager(cacheManager, v2PutLatch, v3PutLatch, v2FinishLatch)
+      val server = RestTestingUtil.startRestServer(mockCacheManager)
+      put(fullPathWithPort(m, server.getPort), "data1", "application/text")
+      try {
          val replaceFuture = Future {
             // Put again, with a different client (separate thread)
             val newClient = new HttpClient
-            val put = new PutMethod(fullPathKey(m))
+            val put = new PutMethod(fullPathWithPort(m, server.getPort))
             put.setRequestHeader("Content-Type", "application/text")
             put.setRequestEntity(new StringRequestEntity("data2", null, null))
             newClient.executeMethod(put)
@@ -706,7 +715,7 @@ class IntegrationTest extends RestServerTestBase {
          val continue = v3PutLatch.await(10, TimeUnit.SECONDS)
          assertTrue("Timed out waiting for concurrent put", continue)
          // Ready to do concurrent put which should not be allowed
-         val put = new PutMethod(fullPathKey(m))
+         val put = new PutMethod(fullPathWithPort(m, server.getPort))
          put.setRequestHeader("Content-Type", "application/text")
          put.setRequestEntity(new StringRequestEntity("data3", null, null))
          call(put)
@@ -718,11 +727,9 @@ class IntegrationTest extends RestServerTestBase {
          // Final data should be v2
          assertEquals("data2", get(m).getResponseBodyAsString)
       } finally {
-         knownCaches.put(
-            BasicCacheContainer.DEFAULT_CACHE_NAME,
-            origCacheManager.getCache[String, Array[Byte]]().getAdvancedCache)
+         server.stop()
+         TestingUtil.killCacheManagers(cacheManager)
       }
-
    }
 
    def testSerializedStringGetBytes(m: Method) {
@@ -734,7 +741,7 @@ class IntegrationTest extends RestServerTestBase {
       oo.flush()
 
       val bytes = bout.toByteArray
-      put(m, bytes, "application/x-java-serialized-object")
+      put(fullPathKey(m), bytes, "application/x-java-serialized-object")
 
       val bytesRead = get(m, None, Some("application/x-java-serialized-object")).getResponseBody
       assertTrue(util.Arrays.equals(bytes, bytesRead))
@@ -919,12 +926,12 @@ class IntegrationTest extends RestServerTestBase {
       }
    }
 
-   private def put(m: Method): HttpMethodBase = put(m, "data", "application/text")
+   private def put(m: Method): HttpMethodBase = put(fullPathKey(m), "data", "application/text")
 
-   private def put(m: Method, data: Any): HttpMethodBase = put(m, data, "application/text")
+   private def put(m: Method, data: Any): HttpMethodBase = put(fullPathKey(m), data, "application/text")
 
-   private def put(m: Method, data: Any, contentType: String): HttpMethodBase = {
-      val put = new PutMethod(fullPathKey(m))
+   private def put(path: String, data: Any, contentType: String): HttpMethodBase = {
+      val put = new PutMethod(path)
       put.setRequestHeader("Content-Type", contentType)
       val reqEntity = data match {
          case s: String => new StringRequestEntity(s, null, null)
@@ -956,6 +963,8 @@ class IntegrationTest extends RestServerTestBase {
    }
 
    private def fullPathKey(m: Method): String = fullPath + "/" + m.getName
+
+   private def fullPathKey(m: Method, port: Int): String = fullPath + "/" + m.getName
 
    def addDay(aDate: String, days: Int): String = {
       val format = new SimpleDateFormat(DATE_PATTERN_RFC1123, Locale.US)

@@ -2,7 +2,7 @@
 <!-- See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
 <config default-supplement="default">
    <extension-module>org.infinispan.server.endpoint</extension-module>
-   <subsystem xmlns="urn:infinispan:server:endpoint:7.0">
+   <subsystem xmlns="urn:infinispan:server:endpoint:7.2">
       <?CONNECTORS?>
    </subsystem>
    <supplement name="hotrod-rolling-upgrade">
@@ -16,13 +16,13 @@
    <supplement name="rest-auth">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CONNECTORS">
-         <rest-connector virtual-server="default-host" cache-container="local" security-domain="other" auth-method="BASIC" />
+         <rest-connector socket-binding="rest" cache-container="local" security-domain="other" auth-method="BASIC" />
       </replacement>
    </supplement>
    <supplement name="rest-rolling-upgrade">
       <replacement placeholder="@@default-cache-container@@" attributeValue="local"/>
       <replacement placeholder="CONNECTORS">
-         <rest-connector virtual-server="default-host" cache-container="local"/>
+         <rest-connector socket-binding="rest" cache-container="local"/>
          <hotrod-connector socket-binding="hotrod" cache-container="local">
             <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
          </hotrod-connector>
@@ -55,7 +55,7 @@
             <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
          </hotrod-connector>
          <memcached-connector socket-binding="memcached" cache-container="local" cache="default" />
-         <rest-connector virtual-server="default-host" cache-container="local" />
+         <rest-connector socket-binding="rest" cache-container="local" />
       </replacement>
    </supplement>
    <supplement name="auth">
@@ -72,4 +72,5 @@
    <socket-binding name="hotrod" port="11222" />
    <socket-binding name="hotrod-internal" port="11223" />
    <socket-binding name="memcached" port="11211" />
+   <socket-binding name="rest" port="8080" />
 </config>

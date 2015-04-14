@@ -33,6 +33,13 @@ import org.jboss.dmr.ModelType;
 public class RestConnectorResource extends CommonConnectorResource {
    public static final PathElement REST_CONNECTOR_PATH = PathElement.pathElement(ModelKeys.REST_CONNECTOR);
 
+   static final SimpleAttributeDefinition SOCKET_BINDING =
+      new SimpleAttributeDefinitionBuilder(ModelKeys.SOCKET_BINDING, ModelType.STRING, false)
+         .setAllowExpression(true)
+         .setXmlName(ModelKeys.SOCKET_BINDING)
+         .setRestartAllServices()
+         .build();
+
    static final SimpleAttributeDefinition AUTH_METHOD =
          new SimpleAttributeDefinitionBuilder(ModelKeys.AUTH_METHOD, ModelType.STRING, true)
                  .setAllowExpression(true)
@@ -73,6 +80,14 @@ public class RestConnectorResource extends CommonConnectorResource {
                  .setRestartAllServices()
                  .build();
 
+   static final SimpleAttributeDefinition VIRTUAL_HOST =
+      new SimpleAttributeDefinitionBuilder(ModelKeys.VIRTUAL_HOST, ModelType.STRING, true)
+         .setAllowExpression(true)
+         .setXmlName(ModelKeys.VIRTUAL_HOST)
+         .setRestartAllServices()
+         .build();
+
+   @Deprecated
    static final SimpleAttributeDefinition VIRTUAL_SERVER =
          new SimpleAttributeDefinitionBuilder(ModelKeys.VIRTUAL_SERVER, ModelType.STRING, true)
                  .setAllowExpression(true)
@@ -80,7 +95,7 @@ public class RestConnectorResource extends CommonConnectorResource {
                  .setRestartAllServices()
                  .build();
 
-   static final SimpleAttributeDefinition[] REST_ATTRIBUTES = { AUTH_METHOD, CONTEXT_PATH, EXTENDED_HEADERS, SECURITY_DOMAIN, SECURITY_MODE, VIRTUAL_SERVER };
+   static final SimpleAttributeDefinition[] REST_ATTRIBUTES = { SOCKET_BINDING, AUTH_METHOD, CONTEXT_PATH, EXTENDED_HEADERS, SECURITY_DOMAIN, SECURITY_MODE, VIRTUAL_SERVER, VIRTUAL_HOST };
 
    public RestConnectorResource(boolean isRuntimeRegistration) {
       super(REST_CONNECTOR_PATH, EndpointExtension.getResourceDescriptionResolver(ModelKeys.REST_CONNECTOR), RestSubsystemAdd.INSTANCE, RestSubsystemRemove.INSTANCE, isRuntimeRegistration);

@@ -173,4 +173,8 @@ public interface EndpointLogger extends BasicLogger {
    @Message(id = 10029, value = "Ignoring duplicate marshaller deployment found in %s. A marshaller has already been installed")
    void duplicateMarshallerDeployment(String deploymentName);
 
+   @LogMessage(level = WARN)
+   @Message(id = 10030, value = "virtual-host attribute not in use")
+   void virtualHostNotInUse();
+
 }

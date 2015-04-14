@@ -56,6 +56,10 @@
          <groupId>org.jboss.resteasy</groupId>
          <artifactId>resteasy-jaxrs</artifactId>
       </dependency>
+      <dependency>
+         <groupId>org.jboss.resteasy</groupId>
+         <artifactId>resteasy-netty4</artifactId>
+      </dependency>
 
       <dependency>
          <groupId>org.codehaus.jackson</groupId>
@@ -67,6 +71,7 @@
          <artifactId>xstream</artifactId>
       </dependency>
 
+      <!-- TODO - REMOVE -->
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>

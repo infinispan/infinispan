@@ -118,21 +118,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.wildfly</groupId>
-         <artifactId>wildfly-undertow</artifactId>
-         <exclusions>
-             <exclusion>
-                 <artifactId>wildfly-clustering-infinispan</artifactId>
-                 <groupId>org.wildfly</groupId>
-             </exclusion>
-             <exclusion>
-                 <artifactId>wildfly-ee</artifactId>
-                 <groupId>org.wildfly</groupId>
-             </exclusion>
-         </exclusions>
-      </dependency>
-
-      <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-hotrod</artifactId>
       </dependency>
@@ -151,6 +136,17 @@
       <dependency>
          <groupId>org.infinispan</groupId>
          <artifactId>infinispan-server-websocket</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>org.wildfly</groupId>
+         <artifactId>wildfly-security</artifactId>
+         <exclusions>
+            <exclusion>
+               <groupId>org.wildfly</groupId>
+               <artifactId>wildfly-clustering-infinispan</artifactId>
+            </exclusion>
+         </exclusions>
       </dependency>
 
       <dependency>

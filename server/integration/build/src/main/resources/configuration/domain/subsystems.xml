@@ -17,6 +17,5 @@
       <subsystem supplement="domain">configuration/subsystems/security.xml</subsystem>
       <subsystem>configuration/subsystems/threads.xml</subsystem>
       <subsystem>configuration/subsystems/transactions.xml</subsystem>
-      <subsystem>configuration/subsystems/undertow.xml</subsystem>
    </subsystems>
 </config>

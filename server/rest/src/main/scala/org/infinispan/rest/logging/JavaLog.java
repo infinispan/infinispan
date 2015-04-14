@@ -1,6 +1,7 @@
 package org.infinispan.rest.logging;
 
 import static org.jboss.logging.Logger.Level.ERROR;
+import static org.jboss.logging.Logger.Level.INFO;
 
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -24,4 +25,9 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @LogMessage(level = ERROR)
    @Message(value = "Error while retrieving cache manager from JBoss Microcontainer", id = 12002)
    void errorRetrievingCacheManagerFromMC(@Cause Throwable t);
+
+   @LogMessage(level = INFO)
+   @Message(value = "REST server starting, listening on %s:%s", id = 12003)
+   void startRestServer(String host, int port);
+
 }

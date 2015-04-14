@@ -98,14 +98,9 @@ public abstract class AbstractRESTClientIT {
         put(fullPathKey, byteData, "application/octet-stream");
 
         HttpResponse resp = getWithoutClose(fullPathKey);
-        int respLength = new Long(resp.getEntity().getContentLength()).intValue();
-        byte[] bytesBack = new byte[respLength];
-        resp.getEntity().getContent().read(bytesBack, 0, respLength);
-        EntityUtils.consume(resp.getEntity());
-        assertEquals(byteData.length, bytesBack.length);
-
-        ObjectInputStream oin = new ObjectInputStream(new ByteArrayInputStream(bytesBack));
+        ObjectInputStream oin = new ObjectInputStream(resp.getEntity().getContent());
         TestSerializable ts = (TestSerializable) oin.readObject();
+        EntityUtils.consume(resp.getEntity());
         assertEquals("CONTENT", ts.getContent());
     }
 
@@ -264,13 +259,9 @@ public abstract class AbstractRESTClientIT {
         byte[] byteData = bout.toByteArray();
         put(fullPathKey, byteData, "application/x-java-serialized-object");
         HttpResponse resp = get(fullPathKey, null, HttpServletResponse.SC_OK, false, "Accept", "application/x-java-serialized-object");
-        int respLength = new Long(resp.getEntity().getContentLength()).intValue();
-        byte[] bytesBack = new byte[respLength];
-        resp.getEntity().getContent().read(bytesBack, 0, respLength);
-        EntityUtils.consume(resp.getEntity());
-        assertEquals(byteData.length, bytesBack.length);
-        ObjectInputStream oin = new ObjectInputStream(new ByteArrayInputStream(bytesBack));
+        ObjectInputStream oin = new ObjectInputStream(resp.getEntity().getContent());
         TestSerializable ts = (TestSerializable) oin.readObject();
+        EntityUtils.consume(resp.getEntity());
         assertEquals("CONTENT", ts.getContent());
     }
 
@@ -285,13 +276,9 @@ public abstract class AbstractRESTClientIT {
         byte[] byteData = bout.toByteArray();
         put(fullPathKey, byteData, "application/x-java-serialized-object");
         HttpResponse resp = get(fullPathKey, null, HttpServletResponse.SC_OK, false, "Accept", "application/x-java-serialized-object");
-        int respLength = new Long(resp.getEntity().getContentLength()).intValue();
-        byte[] bytesBack = new byte[respLength];
-        resp.getEntity().getContent().read(bytesBack, 0, respLength);
-        EntityUtils.consume(resp.getEntity());
-        assertEquals(byteData.length, bytesBack.length);
-        ObjectInputStream oin = new ObjectInputStream(new ByteArrayInputStream(bytesBack));
+        ObjectInputStream oin = new ObjectInputStream(resp.getEntity().getContent());
         Integer i2 = (Integer) oin.readObject();
+        EntityUtils.consume(resp.getEntity());
         assertEquals(i1, i2);
     }
 
@@ -419,14 +406,9 @@ public abstract class AbstractRESTClientIT {
 
         HttpResponse resp = get(fullPathKey(0, KEY_Z), null, HttpServletResponse.SC_OK, false, "Accept",
                 "application/x-java-serialized-object");
-        int respLength = new Long(resp.getEntity().getContentLength()).intValue();
-        byte[] serializedDataBack = new byte[respLength];
-        resp.getEntity().getContent().read(serializedDataBack, 0, respLength);
-        EntityUtils.consume(resp.getEntity());
-        assertTrue(Arrays.equals(serializedData, serializedDataBack));
-
-        ObjectInputStream oin = new ObjectInputStream(new ByteArrayInputStream(serializedDataBack));
+        ObjectInputStream oin = new ObjectInputStream(resp.getEntity().getContent());
         byte[] dataBack = (byte[]) oin.readObject();
+        EntityUtils.consume(resp.getEntity());
         assertTrue(Arrays.equals(data, dataBack));
     }
 

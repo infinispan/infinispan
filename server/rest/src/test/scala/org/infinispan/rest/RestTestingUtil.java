@@ -15,11 +15,13 @@ public class RestTestingUtil {
    }
 
    public static EmbeddedRestServer startRestServer(EmbeddedCacheManager manager, int port) {
-      return startRestServer(manager, port, new RestServerConfigurationBuilder());
+      RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
+      builder.port(port);
+      return startRestServer(manager, builder);
    }
 
-   public static EmbeddedRestServer startRestServer(EmbeddedCacheManager manager, int port, RestServerConfigurationBuilder builder) {
-      EmbeddedRestServer server = new EmbeddedRestServer(port, manager, builder.build());
+   public static EmbeddedRestServer startRestServer(EmbeddedCacheManager manager, RestServerConfigurationBuilder builder) {
+      EmbeddedRestServer server = new EmbeddedRestServer(manager, builder.build());
       try {
          server.start();
       } catch (Exception e) {

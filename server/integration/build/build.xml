@@ -260,6 +260,15 @@
       <module-def name="org.hibernate.hql.lucene">
          <maven-resource group="org.hibernate.hql" artifact="hibernate-hql-lucene" />
       </module-def>
+
+      <module-def name="org.jboss.resteasy.resteasy-jaxrs">
+         <maven-resource group="org.jboss.resteasy" artifact="resteasy-jaxrs" />
+      </module-def>
+
+      <module-def name="org.jboss.resteasy.resteasy-netty4">
+         <maven-resource group="org.jboss.resteasy" artifact="resteasy-netty4" />
+      </module-def>
+
    </target>
 
    <target name="trim-modules">

@@ -16,7 +16,7 @@
 
     <!-- New rest-connector definition -->
     <xsl:variable name="newRESTEndpointDefinition">
-        <rest-connector virtual-server="default-host">
+        <rest-connector socket-binding="rest" virtual-server="default-host">
             <xsl:attribute name="cache-container">
                 <xsl:value-of select="$cache.container"/>
             </xsl:attribute>
