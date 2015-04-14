@@ -22,7 +22,6 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -60,24 +59,12 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      try {
-         return visitRemoteFetchingCommand(ctx, command, false);
-      }
-      catch (SuspectException e) {
-         //retry
-         return visitGetKeyValueCommand(ctx, command);
-      }
+      return visitRemoteFetchingCommand(ctx, command, false);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      try {
-         return visitRemoteFetchingCommand(ctx, command, true);
-      }
-      catch (SuspectException e) {
-         //retry
-         return visitGetCacheEntryCommand(ctx, command);
-      }
+      return visitRemoteFetchingCommand(ctx, command, true);
    }
 
    private <T extends AbstractDataCommand & RemoteFetchingCommand> Object visitRemoteFetchingCommand(InvocationContext ctx, T command, boolean returnEntry) throws Throwable {

@@ -59,7 +59,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -349,7 +348,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    }
 
    protected void initRPCDispatcher() {
-      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, gcr, globalHandler);
+      dispatcher = new CommandAwareRpcDispatcher(channel, this, asyncExecutor, gcr.getTimeService(), globalHandler);
       MarshallerAdapter adapter = new MarshallerAdapter(marshaller);
       dispatcher.setRequestMarshaller(adapter);
       dispatcher.setResponseMarshaller(adapter);
@@ -524,10 +523,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       Address self = getAddress();
       boolean ignoreLeavers = mode == ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS || mode == ResponseMode.WAIT_FOR_VALID_RESPONSE;
       if (mode.isSynchronous() && recipients != null && !getMembers().containsAll(recipients)) {
-         if (ignoreLeavers) { // SYNCHRONOUS_IGNORE_LEAVERS || WAIT_FOR_VALID_RESPONSE
-            recipients = new HashSet<>(recipients);
-            recipients.retainAll(getMembers());
-         } else { // SYNCHRONOUS
+         if (!ignoreLeavers) { // SYNCHRONOUS
             throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
          }
       }
