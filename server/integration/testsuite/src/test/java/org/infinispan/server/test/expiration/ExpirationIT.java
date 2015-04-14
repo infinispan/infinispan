@@ -79,9 +79,9 @@ public class ExpirationIT {
         sleepForSecs(1);
         // k1 expired
         head(key1Path, HttpServletResponse.SC_NOT_FOUND);
-        // k2 should be expired too because without timeToLive/maxIdle parameters,
-        // the servers defaults are used.
-        head(key2Path, HttpServletResponse.SC_NOT_FOUND);
+        // k2 should not be expired because without timeToLive/maxIdle parameters,
+        // the entries live forever. To use default values, 0 must be passed in.
+        head(key2Path, HttpServletResponse.SC_OK);
     }
 
     @Test
