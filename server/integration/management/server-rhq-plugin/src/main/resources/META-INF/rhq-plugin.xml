@@ -233,7 +233,9 @@
                 </c:simple-property>
                 <c:simple-property name="virtual-server" required="false"
                                    description="The virtual server on which the REST connector should be published"/>
-            </resource-configuration>
+                <c:simple-property name="virtual-host" required="false"
+                                   description="The virtual host on which the REST connector should be published"/>
+           </resource-configuration>
         </service>
     </service>
 

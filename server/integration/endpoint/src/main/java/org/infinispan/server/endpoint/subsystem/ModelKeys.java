@@ -37,6 +37,7 @@ public class ModelKeys {
    public static final String TCP_NODELAY = "tcp-nodelay"; // boolean
    public static final String SEND_BUFFER_SIZE = "send-buffer-size"; // integer
    public static final String RECEIVE_BUFFER_SIZE = "receive-buffer-size"; // integer
+   public static final String VIRTUAL_HOST = "virtual-host"; // string
    public static final String VIRTUAL_SERVER = "virtual-server"; // string
    public static final String CONTEXT_PATH = "context-path"; // string
    public static final String REQUIRE_SSL_CLIENT_AUTH = "require-ssl-client-auth"; // boolean

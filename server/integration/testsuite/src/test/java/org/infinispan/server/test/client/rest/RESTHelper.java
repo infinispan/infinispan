@@ -253,7 +253,8 @@ public class RESTHelper {
         }
         HttpResponse resp = client.execute(post);
         EntityUtils.consume(resp.getEntity());
-        assertEquals(expectedCode, resp.getStatusLine().getStatusCode());
+        int statusCode = resp.getStatusLine().getStatusCode();
+        assertEquals("URI=" + uri, expectedCode, statusCode);
         return resp;
     }
 

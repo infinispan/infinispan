@@ -8,34 +8,21 @@ import java.util.concurrent.TimeUnit.{SECONDS => SECS}
 import javax.ws.rs._
 import core._
 import core.Response.{ResponseBuilder, Status}
-import org.infinispan.commons.api.BasicCacheContainer
-import org.infinispan.manager._
 import org.codehaus.jackson.map.ObjectMapper
 import org.infinispan.AdvancedCache
 import org.infinispan.commons.CacheException
 import org.infinispan.commons.hash.MurmurHash3
 import javax.ws.rs._
 import javax.servlet.http.HttpServletResponse
-import javax.servlet.ServletContext
 import scala.collection.JavaConverters._
 import scala.xml.Utility
 import org.infinispan.tasks.GlobalKeySetTask
-import org.infinispan.commons.util.CollectionFactory
-import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.entries.InternalCacheEntry
-import org.infinispan.rest.configuration.ExtendedHeaders
-import org.infinispan.remoting.transport.jgroups.JGroupsTransport
-import org.infinispan.distribution.DistributionManager
-import org.infinispan.remoting.transport.Address
+import org.infinispan.rest.configuration.{RestServerConfiguration, ExtendedHeaders}
 import org.infinispan.configuration.cache.Configuration
 import org.infinispan.metadata.Metadata
 import java.text.SimpleDateFormat
 import org.jboss.resteasy.util.HttpHeaderNames
-import org.infinispan.server.hotrod.RestSourceMigrator
-import org.infinispan.upgrade.RollingUpgradeManager
-import org.infinispan.Cache
-import org.infinispan.container.entries.MVCCEntry
-import org.infinispan.context.Flag
 
 /**
  * Integration server linking REST requests with Infinispan calls.
@@ -45,39 +32,16 @@ import org.infinispan.context.Flag
  * @since 4.0
  */
 @Path("/rest")
-class Server(@Context request: Request, @Context servletContext: ServletContext, @HeaderParam("performAsync") useAsync: Boolean) {
-
-   val TEXT_PLAIN_UTF8_TYPE = new MediaType("text", "plain", "UTF-8")
-   val TEXT_PLAIN_UTF8 = TEXT_PLAIN_UTF8_TYPE.toString()
-   val ApplicationXJavaSerializedObjectType = new MediaType("application" , "x-java-serialized-object")
-   val ApplicationXJavaSerializedObject = ApplicationXJavaSerializedObjectType.toString
-   val TIME_TO_LIVE_HEADER = "timeToLiveSeconds"
-   val MAX_IDLE_TIME_HEADER = "maxIdleTimeSeconds"
-   /**For dealing with binary entries in the cache */
-   lazy val variantList = Variant.VariantListBuilder.newInstance.mediaTypes(
-      MediaType.APPLICATION_XML_TYPE, ApplicationXJavaSerializedObjectType, MediaType.APPLICATION_JSON_TYPE).build
-   lazy val collectionVariantList = Variant.VariantListBuilder.newInstance.mediaTypes(
-            MediaType.TEXT_HTML_TYPE,
-            MediaType.APPLICATION_XML_TYPE,
-            MediaType.APPLICATION_JSON_TYPE,
-            MediaType.TEXT_PLAIN_TYPE,
-            TEXT_PLAIN_UTF8_TYPE
-         ).build
-   lazy val jsonMapper = new ObjectMapper
-   lazy val xstream = new XStream
-   val manager = ServerBootstrap.getManagerInstance(servletContext)
-   val configuration = ServerBootstrap.getConfiguration(servletContext)
-   val datePatternRfc1123LocaleUS = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)
-
-   datePatternRfc1123LocaleUS.setTimeZone(TimeZone.getTimeZone("GMT"))
+class Server(configuration: RestServerConfiguration, manager: RestCacheManager) {
 
    @GET
    @Path("/{cacheName}")
-   def getKeys(@PathParam("cacheName") cacheName: String, @QueryParam("global") globalKeySet: String): Response = {
+   def getKeys(@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean,
+         @PathParam("cacheName") cacheName: String, @QueryParam("global") globalKeySet: String): Response = {
       protectCacheNotFound(request, useAsync) { (request, useAsync) => {
          val cache = manager.getCache(cacheName)
          val keys = (if (globalKeySet !=null) GlobalKeySetTask.getGlobalKeySet(cache) else cache.keySet()).asScala
-         val variant = request.selectVariant(collectionVariantList)
+         val variant = request.selectVariant(Server.CollectionVariantList)
          val selectedMediaType = if (variant != null) variant.getMediaType.toString else null
          selectedMediaType match {
             case MediaType.TEXT_HTML => Response.ok.`type`(MediaType.TEXT_HTML).entity(printIt( pw => {
@@ -104,13 +68,13 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                pw.print("]")
             })).build
             case MediaType.TEXT_PLAIN => Response.ok.`type`(MediaType.TEXT_PLAIN).entity(printIt( pw => keys.foreach(pw.println(_)) )).build
-            case TEXT_PLAIN_UTF8 => Response.ok.`type`(TEXT_PLAIN_UTF8_TYPE).entity(printItUTF8( writer => {
+            case Server.TextPlainUtf8 => Response.ok.`type`(Server.TextPlainUtf8Type).entity(printItUTF8( writer => {
                keys.foreach(key => {
                   writer.write(key)
-                  writer.write(System.lineSeparator());
+                  writer.write(System.lineSeparator())
                })
             })).build
-            case null => Response.notAcceptable(collectionVariantList).build
+            case null => Response.notAcceptable(Server.CollectionVariantList).build
          }
       }
       }
@@ -118,7 +82,8 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    @GET
    @Path("/{cacheName}/{cacheKey}")
-   def getEntry[V](@PathParam("cacheName") cacheName: String,
+   def getEntry[V](@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean,
+                @PathParam("cacheName") cacheName: String,
                 @PathParam("cacheKey") key: String,
                 @QueryParam("extended") extended: String,
                 @DefaultValue("") @HeaderParam("Cache-Control") cacheControl: String): Response = {
@@ -131,9 +96,9 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                ensureFreshEnoughEntry(expires, minFreshSeconds) {
                   ice.getMetadata match {
                      case meta: MimeMetadata =>
-                        getMimeEntry(ice, meta, lastMod, expires, cacheName, extended)
+                        getMimeEntry(request, ice, meta, lastMod, expires, cacheName, extended)
                      case meta: Metadata =>
-                        getAnyEntry(ice, meta, lastMod, expires, cacheName, extended)
+                        getAnyEntry(request, ice, meta, lastMod, expires, cacheName, extended)
                   }
                }
             }
@@ -167,7 +132,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
       case expiry => ((expiry.getTime - new Date().getTime) / 1000).toInt
    }
 
-   private def getMimeEntry[V](ice: InternalCacheEntry[String, V], meta: MimeMetadata,
+   private def getMimeEntry[V](request: Request, ice: InternalCacheEntry[String, V], meta: MimeMetadata,
            lastMod: Date, expires: Date, cacheName: String, extended: String): Response = {
       val key = ice.getKey
       request.evaluatePreconditions(lastMod, calcETAG(ice, meta)) match {
@@ -183,7 +148,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
       }
    }
 
-   private def getAnyEntry[V](ice: InternalCacheEntry[String, V], meta: Metadata,
+   private def getAnyEntry[V](request: Request, ice: InternalCacheEntry[String, V], meta: Metadata,
          lastMod: Date, expires: Date, cacheName: String, extended: String): Response = {
       val key = ice.getKey
       ice.getValue match {
@@ -205,7 +170,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                                  .entity(streamIt(_.write(ba)))
                                  .build
          case obj: Any => {
-            val variant = request.selectVariant(variantList)
+            val variant = request.selectVariant(Server.VariantList)
             val selectedMediaType = if (variant != null) variant.getMediaType.toString
                                     else null
 
@@ -218,7 +183,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                        .cacheControl(calcCacheControl(expires))
                        .mortality(meta)
                        .extended(cacheName, key, wantExtendedHeaders(extended))
-                       .entity(streamIt(jsonMapper.writeValue(_, obj)))
+                       .entity(streamIt(Server.JsonMapper.writeValue(_, obj)))
                        .build
                case MediaType.APPLICATION_XML => Response.ok
                        .`type`(selectedMediaType)
@@ -227,9 +192,9 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                        .cacheControl(calcCacheControl(expires))
                        .mortality(meta)
                        .extended(cacheName, key, wantExtendedHeaders(extended))
-                       .entity(streamIt(xstream.toXML(obj, _)))
+                       .entity(streamIt(Server.Xstream.toXML(obj, _)))
                        .build
-               case ApplicationXJavaSerializedObject =>
+               case Server.ApplicationXJavaSerializedObject =>
                   obj match {
                      case ser: Serializable => Response.ok
                              .`type`(selectedMediaType)
@@ -240,10 +205,10 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                              .extended(cacheName, key, wantExtendedHeaders(extended))
                              .entity(streamIt(new ObjectOutputStream(_).writeObject(ser)))
                              .build
-                     case _ => Response.notAcceptable(variantList).build
+                     case _ => Response.notAcceptable(Server.VariantList).build
                   }
                case _ => {
-                 Response.notAcceptable(variantList).build
+                 Response.notAcceptable(Server.VariantList).build
                }
 
             }
@@ -255,7 +220,7 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
       if (date == null)
          null
       else
-         datePatternRfc1123LocaleUS.format(date)
+         Server.DatePatternRfc1123LocaleUS.format(date)
    }
 
    private def calcCacheControl(expires: Date): CacheControl = expires match {
@@ -278,9 +243,9 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
    implicit private class ResponseBuilderExtender(val bld: Response.ResponseBuilder) {
       def mortality(meta: Metadata) = {
          if (meta.lifespan() > -1)
-            bld.header(TIME_TO_LIVE_HEADER, MILLIS.toSeconds(meta.lifespan()))
+            bld.header(Server.TimeToLiveHeader, MILLIS.toSeconds(meta.lifespan()))
          if (meta.maxIdle() > -1)
-            bld.header(MAX_IDLE_TIME_HEADER, MILLIS.toSeconds(meta.maxIdle()))
+            bld.header(Server.TimeToLiveHeader, MILLIS.toSeconds(meta.maxIdle()))
          bld
       }
       def extended(cacheName: String, key: String, b: Boolean) = {
@@ -328,7 +293,8 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    @HEAD
    @Path("/{cacheName}/{cacheKey}")
-   def headEntry[V](@PathParam("cacheName") cacheName: String,
+   def headEntry[V](@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean,
+                 @PathParam("cacheName") cacheName: String,
                  @PathParam("cacheKey") key: String,
                  @QueryParam("extended") extended: String,
                  @DefaultValue("") @HeaderParam("Cache-Control") cacheControl: String): Response = {
@@ -371,7 +337,8 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
    @PUT
    @POST
    @Path("/{cacheName}/{cacheKey}")
-   def putEntry[V](@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
+   def putEntry[V](@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean,
+                @PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String,
                 @HeaderParam("Content-Type") mediaType: String, data: Array[Byte],
                 @DefaultValue("-1") @HeaderParam("timeToLiveSeconds") ttl: Long,
                 @DefaultValue("-1") @HeaderParam("maxIdleTimeSeconds") idleTime: Long): Response = {
@@ -391,21 +358,21 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
                            // One of the preconditions failed, build a response
                            case bldr: ResponseBuilder => bldr.build
                            // Preconditions passed
-                           case null => putInCache(cache, key, data, mediaType,
+                           case null => putInCache(useAsync, cache, key, data, mediaType,
                               ttl, idleTime, Some(ice.getValue.asInstanceOf[Array[Byte]]))
                         }
                      case _ =>
-                        putInCache(cache, key, data, mediaType, ttl, idleTime, None)
+                        putInCache(useAsync, cache, key, data, mediaType, ttl, idleTime, None)
                   }
                }
                case _ =>
-                  putInCache(cache, key, data, mediaType, ttl, idleTime, None)
+                  putInCache(useAsync, cache, key, data, mediaType, ttl, idleTime, None)
             }
          }
       }
    }
 
-   private def putInCache(cache: AdvancedCache[String, Array[Byte]], key: String,
+   private def putInCache(useAsync: Boolean, cache: AdvancedCache[String, Array[Byte]], key: String,
            data: Array[Byte], dataType: String, ttl: Long, idleTime: Long,
            prevCond: Option[Array[Byte]]): Response = {
       if (useAsync)
@@ -462,7 +429,8 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
    @DELETE
    @Path("/{cacheName}/{cacheKey}")
-   def removeEntry[V](@PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
+   def removeEntry[V](@Context request: Request, @HeaderParam("performAsync") useAsync: Boolean,
+         @PathParam("cacheName") cacheName: String, @PathParam("cacheKey") key: String): Response = {
       manager.getInternalEntry(cacheName, key) match {
          case ice: InternalCacheEntry[String, V] => {
             val lastMod = lastModified(ice)
@@ -535,67 +503,31 @@ class Server(@Context request: Request, @Context servletContext: ServletContext,
 
 }
 
-/**
- * Just wrap a single instance of the Infinispan cache manager.
- */
-class ManagerInstance(instance: EmbeddedCacheManager) {
-   private[rest] val knownCaches : java.util.Map[String, AdvancedCache[String, Array[Byte]]] =
-      CollectionFactory.makeConcurrentMap(4, 0.9f, 16)
+object Server {
+   val TextPlainUtf8Type = new MediaType("text", "plain", "UTF-8")
+   val TextPlainUtf8 = TextPlainUtf8Type.toString
+   val ApplicationXJavaSerializedObjectType = new MediaType("application" , "x-java-serialized-object")
+   val ApplicationXJavaSerializedObject = ApplicationXJavaSerializedObjectType.toString
+   val TimeToLiveHeader = "timeToLiveSeconds"
+   val MaxIdleTimeHeader = "maxIdleTimeSeconds"
 
-   def getCache(name: String): AdvancedCache[String, Array[Byte]] = {
-      val isKnownCache = knownCaches.containsKey(name)
-      if (name != BasicCacheContainer.DEFAULT_CACHE_NAME && !isKnownCache && !instance.getCacheNames.contains(name))
-         throw new CacheNotFoundException("Cache with name '" + name + "' not found amongst the configured caches")
+   /**For dealing with binary entries in the cache */
+   lazy val VariantList = Variant.VariantListBuilder.newInstance.mediaTypes(
+      MediaType.APPLICATION_XML_TYPE, ApplicationXJavaSerializedObjectType,
+      MediaType.APPLICATION_JSON_TYPE).build
+   lazy val CollectionVariantList = Variant.VariantListBuilder.newInstance.mediaTypes(
+      MediaType.TEXT_HTML_TYPE,
+      MediaType.APPLICATION_XML_TYPE,
+      MediaType.APPLICATION_JSON_TYPE,
+      MediaType.TEXT_PLAIN_TYPE,
+      TextPlainUtf8Type
+   ).build
 
-      if (isKnownCache) {
-         knownCaches.get(name)
-      } else {
-         val cache =
-            if (name == BasicCacheContainer.DEFAULT_CACHE_NAME)
-               instance.getCache[String, Array[Byte]]()
-            else
-               instance.getCache[String, Array[Byte]](name)
-         tryRegisterMigrationManager(cache)
-         knownCaches.put(name, cache.getAdvancedCache)
-         cache.getAdvancedCache
-      }
-   }
+   lazy val JsonMapper = new ObjectMapper
+   lazy val Xstream = new XStream
 
-   def getEntry(cacheName: String, key: String): Array[Byte] = getCache(cacheName).get(key)
-
-   def getInternalEntry[V](cacheName: String, key: String, skipListener: Boolean = false): CacheEntry[String, V] = {
-      val cache =
-         if (skipListener) getCache(cacheName).withFlags(Flag.SKIP_LISTENER_NOTIFICATION)
-         else getCache(cacheName)
-
-      cache.getCacheEntry(key) match {
-         case ice: InternalCacheEntry[String, V] => ice
-         case null => null
-         case mvcc: MVCCEntry[String, V] => cache.getCacheEntry(key)  // FIXME: horrible re-get to be fixed by ISPN-3460
-      }
-   }
-
-   def getNodeName: Address = instance.getAddress
-
-   def getServerAddress: String =
-      instance.getTransport match {
-         case trns: JGroupsTransport => trns.getPhysicalAddresses.toString
-         case null => null
-      }
-
-   def getPrimaryOwner(cacheName: String, key: String): String =
-      getCache(cacheName).getDistributionManager match {
-         case dm: DistributionManager => dm.getPrimaryLocation(key).toString
-         case null => null
-      }
-
-   def getInstance = instance
-
-   def tryRegisterMigrationManager(cache: Cache[String, Array[Byte]]) {
-      val cr = cache.getAdvancedCache.getComponentRegistry
-      val migrationManager = cr.getComponent(classOf[RollingUpgradeManager])
-      if (migrationManager != null) migrationManager.addSourceMigrator(new RestSourceMigrator(cache))
-   }
+   val DatePatternRfc1123LocaleUS = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US)
+   DatePatternRfc1123LocaleUS.setTimeZone(TimeZone.getTimeZone("GMT"))
 
 }
 

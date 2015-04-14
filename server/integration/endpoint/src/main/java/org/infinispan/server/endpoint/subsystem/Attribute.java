@@ -62,6 +62,7 @@ public enum Attribute {
     TCP_NODELAY(ModelKeys.TCP_NODELAY),
     UPDATE_TIMEOUT(ModelKeys.UPDATE_TIMEOUT),
     VALUE(ModelKeys.VALUE),
+    VIRTUAL_HOST(ModelKeys.VIRTUAL_HOST),
     VIRTUAL_SERVER(ModelKeys.VIRTUAL_SERVER),
     WORKER_THREADS(ModelKeys.WORKER_THREADS),
     ;

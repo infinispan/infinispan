@@ -47,18 +47,17 @@ public class TwoServerTest extends RestServerTestBase {
       cfgBuilder.clustering().hash().numOwners(2);
       cfgBuilder.clustering().stateTransfer().fetchInMemoryState(true);
       cfgBuilder.clustering().stateTransfer().timeout(20000);
-      RestServerConfigurationBuilder restCfgBuilder = new RestServerConfigurationBuilder();
 
       ConfigurationBuilder expiryCfgBuilder = AbstractCacheTest.getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       expiryCfgBuilder.expiration().lifespan(2000).maxIdle(2000);
 
       EmbeddedCacheManager cm1 = TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder);
       cm1.defineConfiguration("expiry", expiryCfgBuilder.build());
-      addServer("1", 8890, cm1, restCfgBuilder.build());
+      addServer("1", cm1, new RestServerConfigurationBuilder().port(8890).build());
 
       EmbeddedCacheManager cm2 = TestCacheManagerFactory.createClusteredCacheManager(cfgBuilder);
       cm2.defineConfiguration("expiry", expiryCfgBuilder.build());
-      addServer("2", 8891, cm2, restCfgBuilder.build());
+      addServer("2", cm2, new RestServerConfigurationBuilder().port(8891).build());
 
       startServers();
       TestingUtil.blockUntilViewsReceived(10000, getCacheManager("1").getCache(BasicCacheContainer.DEFAULT_CACHE_NAME),

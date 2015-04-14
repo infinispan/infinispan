@@ -12,4 +12,12 @@ trait Log extends org.infinispan.server.core.logging.Log {
 
    private lazy val log: JavaLog = LogFactory.getLog(getClass, classOf[JavaLog])
 
+   def logErrorReadingConfigurationFile(t: Throwable, path: String): Unit = {
+      log.errorReadingConfigurationFile(t, path)
+   }
+
+   def logStartRestServer(host: String, port: Int): Unit = {
+      log.startRestServer(host, port)
+   }
+
 }

@@ -409,7 +409,7 @@ The REST connector differs from the above connectors because it piggybacks on th
 [source,xml]
 ----
 
-<rest-connector virtual-server="default-host" cache-container="local" security-domain="other" auth-method="BASIC"/>
+<rest-connector socket-binding="rest" cache-container="local" security-domain="other" auth-method="BASIC"/>
 
 ----
 
