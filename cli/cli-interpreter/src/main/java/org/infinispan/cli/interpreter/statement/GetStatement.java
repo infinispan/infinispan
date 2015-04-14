@@ -19,18 +19,11 @@ import org.infinispan.util.logging.LogFactory;
  * @author Tristan Tarrant
  * @since 5.2
  */
-public class GetStatement implements Statement {
-   private static final Log log = LogFactory.getLog(GetStatement.class, Log.class);
-
-   private enum Options {
-      CODEC
-   };
-
+public class GetStatement extends CodecAwareStatement {
    final KeyData keyData;
-   final private List<Option> options;
 
    public GetStatement(List<Option> options, KeyData key) {
-      this.options = options;
+      super(options);
       this.keyData = key;
    }
 
@@ -38,20 +31,7 @@ public class GetStatement implements Statement {
    public Result execute(Session session) throws StatementException {
       Cache<Object, Object> cache = session.getCache(keyData.getCacheName());
       Object key = keyData.key;
-      Codec codec = session.getCodec();
-      if (options.size() > 0) {
-         for (Option option : options) {
-            switch (option.toEnum(Options.class)) {
-            case CODEC: {
-               if (option.getParameter() == null) {
-                  throw log.missingOptionParameter(option.getName());
-               } else {
-                  codec = session.getCodec(option.getParameter());
-               }
-            }
-            }
-         }
-      }
+      Codec codec = getCodec(session);
       Object value = cache.get(codec.encodeKey(key));
       if (value == null) {
          return new StringResult("null");

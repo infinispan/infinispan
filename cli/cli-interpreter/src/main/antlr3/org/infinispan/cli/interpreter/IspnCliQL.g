@@ -124,7 +124,7 @@ endBatchStatement returns [EndBatchStatement stmt]
    ;
 
 evictStatement returns [EvictStatement stmt]
-   : EVICT key = keyIdentifier (EOL | ';')! { $stmt = new EvictStatement($key.key); }
+   : EVICT opts = statementOptions key = keyIdentifier (EOL | ';')! { $stmt = new EvictStatement($opts.options, $key.key); }
    ;
 
 getStatement returns [GetStatement stmt]
@@ -152,7 +152,7 @@ putStatement returns [PutStatement stmt]
    ;
 
 removeStatement returns [RemoveStatement stmt]
-   : REMOVE key = keyIdentifier (value = literal)? (EOL | ';')! { $stmt = new RemoveStatement($key.key, $value.o); }
+   : REMOVE opts = statementOptions key = keyIdentifier (value = literal)? (EOL | ';')! { $stmt = new RemoveStatement($opts.options, $key.key, $value.o); }
    ;
 
 replaceStatement returns [ReplaceStatement stmt]
