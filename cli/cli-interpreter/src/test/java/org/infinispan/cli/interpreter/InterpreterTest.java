@@ -132,6 +132,16 @@ public class InterpreterTest extends SingleCacheManagerTest {
       assertTrue(cache.containsKey("b"));
    }
 
+   public void testEvict() throws Exception {
+      Interpreter interpreter = getInterpreter();
+      String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
+      interpreter.execute(sessionId, "put 'a' 'a';");
+      Object a = cache.get("a");
+      assertEquals("a", a);
+      interpreter.execute(sessionId, "evict 'a';");
+      assertFalse(cache.containsKey("a"));
+   }
+
    public void testReplace() throws Exception {
       Interpreter interpreter = getInterpreter();
       String sessionId = interpreter.createSessionId(BasicCacheContainer.DEFAULT_CACHE_NAME);
