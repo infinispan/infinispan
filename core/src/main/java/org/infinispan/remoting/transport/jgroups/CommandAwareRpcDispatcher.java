@@ -6,7 +6,6 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
-import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
@@ -68,18 +67,18 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean FORCE_MCAST = Boolean.getBoolean("infinispan.unsafe.force_multicast");
    private final JGroupsTransport transport;
-   private final GlobalComponentRegistry gcr;
+   private final TimeService timeService;
    private final InboundInvocationHandler handler;
 
    public CommandAwareRpcDispatcher(Channel channel,
-                                    JGroupsTransport transport,
-                                    ExecutorService asyncExecutor,
-                                    GlobalComponentRegistry gcr,
-                                    InboundInvocationHandler globalHandler) {
+         JGroupsTransport transport,
+         ExecutorService asyncExecutor,
+         TimeService timeService,
+         InboundInvocationHandler globalHandler) {
       this.server_obj = transport;
       this.asyncExecutor = asyncExecutor;
       this.transport = transport;
-      this.gcr = gcr;
+      this.timeService = timeService;
       this.handler = globalHandler;
 
       // MessageDispatcher superclass constructors will call start() so perform all init here
@@ -434,7 +433,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             // This is possibly a remote GET.
             // These UNICASTs happen in parallel using sendMessageWithFuture.  Each future has a listener attached
             // (see FutureCollator) and the first successful response is used.
-            FutureCollator futureCollator = new FutureCollator(filter, dests.size(), timeout, card.gcr.getTimeService());
+            FutureCollator futureCollator = new FutureCollator(filter, dests.size(), timeout, card.timeService);
             for (Address a : dests) {
                NotifyingFuture<Object> f = card.sendMessageWithFuture(constructMessage(buf, a, mode, rsvp, deliverOrder), opts);
                futureCollator.watchFuture(f, a);
@@ -593,17 +592,20 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             } catch (InterruptedException e) {
                Thread.currentThread().interrupt();
             } catch (ExecutionException e) {
-               exception = e;
-               if (e.getCause() instanceof org.jgroups.TimeoutException)
+               Throwable cause = e.getCause();
+               if (cause instanceof org.jgroups.SuspectedException) {
+                  // Do not set the exception field, RpcException should be thrown if there is no other valid response
+                  return;
+               } else if (cause instanceof org.jgroups.TimeoutException) {
                   exception = new TimeoutException("Timeout!", e);
-               else if (e.getCause() instanceof Exception)
-                  exception = (Exception) e.getCause();
-               else
-                  exception = new CacheException("Caught a throwable", e.getCause());
+               } else if (cause instanceof Exception) {
+                  exception = (Exception) cause;
+               } else {
+                  exception = new CacheException("Caught a throwable", cause);
+               }
 
                if (log.isDebugEnabled())
-                  log.debugf("Caught exception %s from sender %s.  Will skip this response.", exception.getClass().getName(), sender);
-               log.trace("Exception caught: ", exception);
+                  log.debugf("Caught exception from sender %s: %s", sender, exception);
             } finally {
                expectedResponses--;
                if (expectedResponses == 0 || done) {
