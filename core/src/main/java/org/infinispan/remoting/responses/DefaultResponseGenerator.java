@@ -12,7 +12,9 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 public class DefaultResponseGenerator implements ResponseGenerator {
    @Override
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
-      if (returnValue == null) return null;
+      if (returnValue instanceof Response)
+         return (Response) returnValue;
+
       if (returnValue instanceof EntryVersionsMap || command.isReturnValueExpected()) {
          return SuccessfulResponse.create(returnValue);
       } else {
