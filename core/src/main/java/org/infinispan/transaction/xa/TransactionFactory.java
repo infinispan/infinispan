@@ -6,6 +6,8 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.versioning.NumericVersion;
 import org.infinispan.container.versioning.VersionGenerator;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.transport.Address;
@@ -266,7 +268,9 @@ public class TransactionFactory {
    }
 
    @Inject
-   public void init(Configuration configuration, VersionGenerator clusterIdGenerator, TimeService timeService) {
+   public void init(Configuration configuration,
+                    @ComponentName(value = KnownComponentNames.TRANSACTION_VERSION_GENERATOR)VersionGenerator clusterIdGenerator,
+                    TimeService timeService) {
       this.configuration = configuration;
       this.clusterIdGenerator = clusterIdGenerator;
       this.timeService = timeService;
