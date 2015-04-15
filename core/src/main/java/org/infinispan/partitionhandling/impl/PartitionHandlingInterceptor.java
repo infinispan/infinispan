@@ -5,6 +5,8 @@ import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.tx.CommitCommand;
+import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -15,9 +17,11 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.transport.Transport;
 
@@ -132,6 +136,28 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
       }
       postOperationPartitionCheck(ctx, command, key, result);
       return result;
+   }
+
+   @Override
+   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      Object result = super.visitPrepareCommand(ctx, command);
+      postTxCommandCheck(ctx);
+      return result;
+   }
+
+   @Override
+   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      Object result = super.visitCommitCommand(ctx, command);
+      postTxCommandCheck(ctx);
+      return result;
+   }
+
+   protected void postTxCommandCheck(TxInvocationContext ctx) {
+      if (ctx.hasModifications() && partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
+         for (Object key : ctx.getAffectedKeys()) {
+            partitionHandlingManager.checkWrite(key);
+         }
+      }
    }
 
    private Object postOperationPartitionCheck(InvocationContext ctx, AbstractDataCommand command, Object key, Object result) throws Throwable {
