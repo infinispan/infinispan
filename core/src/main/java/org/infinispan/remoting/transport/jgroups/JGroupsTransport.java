@@ -46,7 +46,6 @@ import org.jgroups.protocols.relay.SiteMaster;
 import org.jgroups.protocols.tom.TOA;
 import org.jgroups.stack.AddressGenerator;
 import org.jgroups.util.Buffer;
-import org.jgroups.util.ExtendedUUID;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
 import org.jgroups.util.TopologyUUID;
@@ -723,6 +722,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
          n.emitNotification(oldMembers, newView);
       }
+
+      JGroupsAddressCache.pruneAddressCache();
    }
 
    @Override
@@ -748,11 +749,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       return ((JGroupsAddress) a).address;
    }
 
-   static Address fromJGroupsAddress(org.jgroups.Address addr) {
-      if (addr instanceof ExtendedUUID)
-         return new JGroupsTopologyAwareAddress((ExtendedUUID)addr);
-      else
-         return new JGroupsAddress(addr);
+   static Address fromJGroupsAddress(final org.jgroups.Address addr) {
+      return JGroupsAddressCache.fromJGroupsAddress(addr);
    }
 
    private List<org.jgroups.Address> toJGroupsAddressListExcludingSelf(Collection<Address> list, boolean totalOrder) {

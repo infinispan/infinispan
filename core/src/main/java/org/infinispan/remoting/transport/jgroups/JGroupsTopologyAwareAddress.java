@@ -1,6 +1,5 @@
 package org.infinispan.remoting.transport.jgroups;
 
-import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
@@ -88,7 +87,7 @@ public class JGroupsTopologyAwareAddress extends JGroupsAddress implements Topol
       public JGroupsTopologyAwareAddress doReadObject(ObjectInput unmarshaller) throws IOException, ClassNotFoundException {
          try {
             ExtendedUUID jgroupsAddress = (ExtendedUUID) org.jgroups.util.Util.readAddress(unmarshaller);
-            return new JGroupsTopologyAwareAddress(jgroupsAddress);
+            return (JGroupsTopologyAwareAddress) JGroupsAddressCache.fromJGroupsAddress(jgroupsAddress);
          } catch (Exception e) {
             throw new IOException(e);
          }
