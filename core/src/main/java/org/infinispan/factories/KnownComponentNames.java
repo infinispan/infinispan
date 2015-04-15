@@ -26,12 +26,13 @@ public class KnownComponentNames {
    public static final String CLASS_LOADER = "java.lang.ClassLoader";
    public static final String TOTAL_ORDER_EXECUTOR = "org.infinispan.executors.totalOrderExecutor";
    public static final String STATE_TRANSFER_EXECUTOR = "org.infinispan.executors.stateTransferExecutor";
+   public static final String TRANSACTION_VERSION_GENERATOR = "org.infinispan.transaction.versionGenerator";
 
    // Please make sure this is kept up to date
    public static final Collection<String> ALL_KNOWN_COMPONENT_NAMES = Arrays.asList(
       ASYNC_TRANSPORT_EXECUTOR, ASYNC_NOTIFICATION_EXECUTOR, PERSISTENCE_EXECUTOR, EVICTION_SCHEDULED_EXECUTOR, ASYNC_REPLICATION_QUEUE_EXECUTOR,
       MODULE_COMMAND_INITIALIZERS, MODULE_COMMAND_FACTORIES, GLOBAL_MARSHALLER, CACHE_MARSHALLER, CLASS_LOADER,
-      REMOTE_COMMAND_EXECUTOR, TOTAL_ORDER_EXECUTOR, STATE_TRANSFER_EXECUTOR
+      REMOTE_COMMAND_EXECUTOR, TOTAL_ORDER_EXECUTOR, STATE_TRANSFER_EXECUTOR, TRANSACTION_VERSION_GENERATOR
    );
 
    public static final Collection<String> PER_CACHE_COMPONENT_NAMES = Arrays.asList(CACHE_MARSHALLER);
