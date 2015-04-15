@@ -23,6 +23,7 @@ import org.testng.annotations.Test;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -30,44 +31,40 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.infinispan.test.TestingUtil.extractComponent;
 import static org.infinispan.test.TestingUtil.findInterceptor;
 import static org.infinispan.test.TestingUtil.waitForRehashToComplete;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 /**
- * Test that commands are properly forwarded during/after state transfer.
+ * Test that commands are properly retried during/after state transfer.
  *
  * @author Dan Berindei
- * @since 5.2
+ * @since 7.2
  */
-@Test(groups = "functional", testName = "statetransfer.ReplCommandForwardingTest")
+@Test(groups = "functional", testName = "statetransfer.ReplCommandRetryTest")
 @CleanupAfterMethod
-public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
+public class ReplCommandRetryTest extends MultipleCacheManagersTest {
 
    @Override
    protected void createCacheManagers() {
       // do nothing, each test will create its own cache managers
    }
 
-   private ConfigurationBuilder buildConfig(boolean transactional, boolean onePhase) {
-      CacheMode mode = (transactional && !onePhase) ? CacheMode.REPL_SYNC : CacheMode.REPL_ASYNC;
+   private ConfigurationBuilder buildConfig(boolean transactional) {
       // The coordinator will always be the primary owner
-      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(mode, transactional);
-      if (mode.isSynchronous()) configurationBuilder.clustering().sync().replTimeout(15000);
+      ConfigurationBuilder configurationBuilder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactional);
+      configurationBuilder.clustering().sync().replTimeout(15000);
       configurationBuilder.clustering().stateTransfer().fetchInMemoryState(true);
-      configurationBuilder.transaction().syncCommitPhase(false);
-      // We must block after the commit was replicated, but before the entries are committed
-      configurationBuilder.customInterceptors()
-            .addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new DelayInterceptor(onePhase));
+      configurationBuilder.customInterceptors().addInterceptor().after(EntryWrappingInterceptor.class).interceptor(new DelayInterceptor(true));
       return configurationBuilder;
    }
 
-   public void testForwardToJoinerNonTransactional() throws Exception {
-      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(false, false));
+   public void testRetryAfterJoinNonTransactional() throws Exception {
+      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(false));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
       int initialTopologyId = extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
 
-      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(false, false));
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(false));
       Cache<Object, Object> c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 2, c1, c2);
@@ -81,53 +78,70 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
          }
       });
 
-      // The put command is replicated to cache c2, and it blocks in the DelayInterceptor on both c1 and c2.
-      di1.waitToBlock(1);
-      di2.waitToBlock(1);
+      // The command is replicated to c2, and blocks in the DelayInterceptor on c2
+      di2.waitUntilBlocked(1);
 
       // c3 joins, topology id changes
-      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(false, false));
+      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(false));
       Cache<Object, Object> c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
 
-      // Unblock the replicated command on c2 and c1
-      // Neither cache will forward the command to c3
+      // Unblock the replicated command on c2.
+      log.tracef("Triggering retry 1");
       di2.unblock(1);
+
+      // c2 will return UnsureResponse, and c1 will retry the command.
+      // c1 will send the command to c2 and c3, blocking on both in the DelayInterceptor
+      di2.waitUntilBlocked(2);
+      di3.waitUntilBlocked(1);
+
+      // Unblock the command with the new topology id on c2
+      di2.unblock(2);
+
+      // c4 joins, topology id changes
+      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(false));
+      Cache<Object, Object> c4 = cm4.getCache();
+      DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
+      waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
+
+      // Unblock the command with the new topology id on c3.
+      log.tracef("Triggering retry 2");
+      di3.unblock(1);
+
+      // c3 will send an UnsureResponse, and c1 will retry the command.
+      // c1 will send the command to c2, c3, and c4, blocking everywhere in the DelayInterceptor
+      // Unblock every node except c1
+      di2.unblock(3);
+      di3.unblock(2);
+      di4.unblock(1);
+
+      // Now c1 blocks
       di1.unblock(1);
 
-      Thread.sleep(2000);
-      assertEquals(0, di3.getCounter(), "The command shouldn't have been forwarded to " + c3);
-
       log.tracef("Waiting for the put command to finish on %s", c1);
-      Object retval = f.get(10, SECONDS);
+      Object retval = f.get(10, TimeUnit.SECONDS);
       log.tracef("Put command finished on %s", c1);
 
       assertNull(retval);
 
-      // 1 direct invocation
+      // 1 for the last retry
       assertEquals(1, di1.getCounter());
-      // 1 from c1
-      assertEquals(1, di2.getCounter());
-      // 0 invocations
-      assertEquals(0, di3.getCounter());
+      // 1 for the initial invocation + 1 for each retry
+      assertEquals(3, di2.getCounter());
+      // 1 for each retry
+      assertEquals(2, di3.getCounter());
+      // just the last retry
+      assertEquals(1, di4.getCounter());
    }
 
-   public void testForwardToJoinerAsyncPrepare() throws Exception {
-      testForwardToJoinerAsyncTx(true);
-   }
-
-   public void testForwardToJoinerAsyncCommit() throws Exception {
-      testForwardToJoinerAsyncTx(false);
-   }
-
-   protected void testForwardToJoinerAsyncTx(boolean onePhase) throws Exception {
-      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(true, onePhase));
+   public void testRetryAfterJoinTransactional() throws Exception {
+      EmbeddedCacheManager cm1 = addClusterEnabledCacheManager(buildConfig(true));
       final Cache<Object, Object> c1 = cm1.getCache();
       DelayInterceptor di1 = findInterceptor(c1, DelayInterceptor.class);
       int initialTopologyId = extractComponent(c1, StateTransferManager.class).getCacheTopology().getTopologyId();
 
-      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(true, onePhase));
+      EmbeddedCacheManager cm2 = addClusterEnabledCacheManager(buildConfig(true));
       Cache c2 = cm2.getCache();
       DelayInterceptor di2 = findInterceptor(c2, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 2, c1, c2);
@@ -141,106 +155,91 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
          }
       });
 
-      // The prepare command is replicated to cache c2, and it blocks in the DelayInterceptor on c1 and c2
-      di1.waitToBlock(1);
-      di2.waitToBlock(1);
+      // The prepare command is replicated to cache c2, and it blocks in the DelayInterceptor
+      di2.waitUntilBlocked(1);
 
       // c3 joins, topology id changes
-      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(true, onePhase));
+      EmbeddedCacheManager cm3 = addClusterEnabledCacheManager(buildConfig(true));
       Cache c3 = cm3.getCache();
       DelayInterceptor di3 = findInterceptor(c3, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 4, c1, c2, c3);
 
       // Unblock the replicated command on c2.
-      // StateTransferInterceptor will forward the command to c3.
-      // The DelayInterceptor on c3 will then block, waiting for an unblock() call.
-      log.tracef("Forwarding the prepare command from %s", c2);
+      // c2 will return an UnsureResponse, and c1 will retry (1)
+      log.tracef("Triggering retry 1 from node %s", c2);
       di2.unblock(1);
-      di3.waitToBlock(1);
+
+      // The prepare command will again block on c2 and c3
+      di2.waitUntilBlocked(2);
+      di3.waitUntilBlocked(1);
 
       // c4 joins, topology id changes
-      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(true, onePhase));
+      EmbeddedCacheManager cm4 = addClusterEnabledCacheManager(buildConfig(true));
       Cache c4 = cm4.getCache();
       DelayInterceptor di4 = findInterceptor(c4, DelayInterceptor.class);
       waitForStateTransfer(initialTopologyId + 6, c1, c2, c3, c4);
 
-      // Unblock the forwarded command on c3.
-      // StateTransferInterceptor will then forward the command to c2 and c4.
-      log.tracef("Forwarding the prepare command from %s", c3);
+      // Unblock the replicated command on c2
+      di2.unblock(2);
+
+      // Unblock the replicated command on c3, c1 will retry (2)
+      log.tracef("Triggering retry 2 from %s", c3);
       di3.unblock(1);
 
-      // Check that the c2 and c4 received the forwarded command.
-      if (onePhase) {
-         // Commit command would not execute a second time, because the remote tx was removed
-         di2.unblock(2);
-      }
+      // Check that the c2, c3, and c4 all received the retried command
+      di2.unblock(3);
+      di3.unblock(2);
       di4.unblock(1);
 
-      // Allow the command to proceed on the originator (c1).
-      // StateTransferInterceptor will forward the command to c2, c3, and c4.
-      log.tracef("Forwarding the prepare command from %s", c1);
+      // Allow the command to finish on the originator (c1).
+      log.tracef("Finishing tx on %s", c1);
       di1.unblock(1);
 
-      // Check that c2, c3, and c4 received the forwarded command.
-      if (onePhase) {
-         di2.unblock(3);
-         di3.unblock(2);
-         di4.unblock(2);
-      }
-
       log.tracef("Waiting for the transaction to finish on %s", c1);
-      f.get(10, SECONDS);
+      f.get(10, TimeUnit.SECONDS);
       log.tracef("Transaction finished on %s", c1);
 
-      if (onePhase) {
-         assertEquals(di1.getCounter(), 1);
-         // 1 from replication + 1 re-forwarded by C + 1 forwarded by A
-         assertEquals(di2.getCounter(), 3);
-         // 1 forwarded by B + 1 forwarded by A
-         assertEquals(di3.getCounter(), 2);
-         // 1 re-1forwarded by C + 1 forwarded by A
-         assertEquals(di4.getCounter(), 2);
-      } else {
-         // The commit is executed only once on all the nodes
-         assertEquals(di1.getCounter(), 1);
-         assertEquals(di2.getCounter(), 1);
-         assertEquals(di3.getCounter(), 1);
-         assertEquals(di4.getCounter(), 1);
-      }
+      // 1 for the last retry
+      assertEquals(di1.getCounter(), 1);
+      // 1 for the initial call + 1 for each retry (2)
+      assertEquals(di2.getCounter(), 3);
+      // 1 for each retry
+      assertEquals(di3.getCounter(), 2);
+      // 1 for the last retry
+      assertEquals(di4.getCounter(), 1);
    }
 
    private void waitForStateTransfer(int expectedTopologyId, Cache... caches) {
       waitForRehashToComplete(caches);
       for (Cache c : caches) {
          CacheTopology cacheTopology = extractComponent(c, StateTransferManager.class).getCacheTopology();
-         assertEquals(cacheTopology.getTopologyId(), expectedTopologyId,
-                      String.format("Wrong topology on cache %s, expected %d and got %s",
-                                    c, expectedTopologyId, cacheTopology));
+         assertEquals(String.format("Wrong topology on cache %s, expected %d and got %s", c, expectedTopologyId, cacheTopology),
+               expectedTopologyId, cacheTopology.getTopologyId());
       }
    }
 
    private class DelayInterceptor extends BaseCustomInterceptor {
       private final AtomicInteger counter = new AtomicInteger(0);
       private final CheckPoint checkPoint = new CheckPoint();
-      private final boolean onePhase;
+      private final boolean blockPrepare;
 
-      public DelayInterceptor(boolean onePhase) {
-         this.onePhase = onePhase;
+      public DelayInterceptor(boolean blockPrepare) {
+         this.blockPrepare = blockPrepare;
       }
 
       public int getCounter() {
          return counter.get();
       }
 
-      public void waitToBlock(int count) throws TimeoutException, InterruptedException {
-         String event = checkPoint.peek(5, SECONDS, "blocked_" + count);
-         assertEquals("blocked_" + count, event);
+      public void waitUntilBlocked(int count) throws TimeoutException, InterruptedException {
+         String event = checkPoint.peek(5, SECONDS, "blocked_" + count + "_on_" + cache);
+         assertEquals("blocked_" + count + "_on_" + cache, event);
       }
 
       public void unblock(int count) throws InterruptedException, TimeoutException, BrokenBarrierException {
          log.tracef("Unblocking command on cache %s", cache);
-         checkPoint.awaitStrict("blocked_" + count, 5, SECONDS);
-         checkPoint.trigger("resume_" + count);
+         checkPoint.awaitStrict("blocked_" + count + "_on_" + cache, 5, SECONDS);
+         checkPoint.trigger("resume_" + count + "_on_" + cache);
       }
 
       @Override
@@ -255,7 +254,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       @Override
       public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
          Object result = super.visitPrepareCommand(ctx, command);
-         if (!ctx.isOriginLocal() || !((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
+         if (blockPrepare && !((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
             doBlock(ctx, command);
          }
          return result;
@@ -264,7 +263,7 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
       @Override
       public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
          Object result = super.visitCommitCommand(ctx, command);
-         if (!ctx.isOriginLocal() || !((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
+         if (!blockPrepare && !((LocalTransaction) ctx.getCacheTransaction()).isFromStateTransfer()) {
             doBlock(ctx, command);
          }
          return result;
@@ -274,8 +273,8 @@ public class ReplCommandForwardingTest extends MultipleCacheManagersTest {
             TimeoutException {
          log.tracef("Delaying command %s originating from %s", command, ctx.getOrigin());
          Integer myCount = counter.incrementAndGet();
-         checkPoint.trigger("blocked_" + myCount);
-         checkPoint.awaitStrict("resume_" + myCount, 15, SECONDS);
+         checkPoint.trigger("blocked_" + myCount + "_on_" + cache);
+         checkPoint.awaitStrict("resume_" + myCount + "_on_" + cache, 15, SECONDS);
          log.tracef("Command unblocked: %s", command);
       }
 

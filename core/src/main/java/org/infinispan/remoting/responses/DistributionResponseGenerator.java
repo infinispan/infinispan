@@ -51,12 +51,14 @@ public class DistributionResponseGenerator implements ResponseGenerator {
 
    @Override
    public Response getResponse(CacheRpcCommand command, Object returnValue) {
+      if (returnValue instanceof Response)
+         return (Response) returnValue;
+
       if (command.getCommandId() == ClusteredGetCommand.COMMAND_ID) {
-         if (returnValue == null) return null;
          ClusteredGetCommand clusteredGet = (ClusteredGetCommand) command;
          if (distributionManager.isAffectedByRehash(clusteredGet.getKey()))
             return UnsureResponse.INSTANCE;
-         return SuccessfulResponse.create(returnValue);
+         return returnValue != null ? SuccessfulResponse.create(returnValue) : null;
       } else if (command instanceof SingleRpcCommand) {
          SingleRpcCommand src = (SingleRpcCommand) command;
          ReplicableCommand c = src.getCommand();

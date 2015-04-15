@@ -55,7 +55,8 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
 
       // Perform the RPC
       try {
-         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, true, true);
+         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, true);
+         checkTxCommandResponses(resps);
 
          // Now store newly generated versions from lock owners for use during the commit phase.
          CacheTransaction ct = ctx.getCacheTransaction();
