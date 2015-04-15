@@ -22,10 +22,14 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.logging.Log;
@@ -33,6 +37,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKey;
@@ -175,7 +180,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          sendCommitCommand(ctx, command);
-
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -201,7 +205,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          } else {
             rpcOptions = rpcManager.getDefaultRpcOptions(sync);
          }
-         rpcManager.invokeRemotely(recipients, command, rpcOptions);
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, rpcOptions);
+         checkTxCommandResponses(responseMap);
       } finally {
          transactionRemotelyPrepared(ctx);
       }
@@ -212,7 +217,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          boolean syncRollback = cacheConfiguration.transaction().syncRollbackPhase();
          ResponseMode responseMode = syncRollback ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS;
-         rpcManager.invokeRemotely(getCommitNodes(ctx), command, rpcManager.getRpcOptionsBuilder(responseMode, DeliverOrder.NONE).build());
+         RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(responseMode, DeliverOrder.NONE).build();
+         Collection<Address> recipients = getCommitNodes(ctx);
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, rpcOptions);
+         checkTxCommandResponses(responseMap);
       }
 
       return invokeNextInterceptor(ctx, command);
@@ -234,7 +242,27 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       } else {
          rpcOptions = rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE);
       }
-      rpcManager.invokeRemotely(recipients, command, rpcOptions);
+      Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, rpcOptions);
+      checkTxCommandResponses(responseMap);
+   }
+
+   protected void checkTxCommandResponses(Map<Address, Response> responseMap) {
+      for (Map.Entry<Address, Response> e : responseMap.entrySet()) {
+         Address recipient = e.getKey();
+         Response response = e.getValue();
+         // TODO Use a set to speed up the check?
+         if (response instanceof CacheNotFoundResponse) {
+            if (!rpcManager.getMembers().contains(recipient)) {
+               log.tracef("Ignoring response from node not targeted %s", recipient);
+            } else {
+               log.tracef("Cache not running on node %s, or the node is missing", recipient);
+               throw new OutdatedTopologyException("Cache not running on node " + recipient);
+            }
+         } else if (response instanceof UnsureResponse) {
+            log.tracef("Node %s has a newer topology id", recipient);
+            throw new OutdatedTopologyException("Cache not running on node " + recipient);
+         }
+      }
    }
 
    private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {

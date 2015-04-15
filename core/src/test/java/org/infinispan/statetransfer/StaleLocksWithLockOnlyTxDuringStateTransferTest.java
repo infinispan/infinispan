@@ -45,13 +45,14 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
 
    private void doTest(CacheMode cacheMode) throws Throwable {
       final StateSequencer sequencer = new StateSequencer();
-      sequencer.logicalThread("st", "st:block_get_transactions", "st:resume_get_transactions", "st:block_ch_update", "st:resume_ch_update");
+      sequencer.logicalThread("st", "st:block_get_transactions", "st:resume_get_transactions",
+            "st:block_ch_update_on_0", "st:block_ch_update_on_1", "st:resume_ch_update_on_0", "st:resume_ch_update_on_1");
       sequencer.logicalThread("tx", "tx:before_lock", "tx:block_remote_lock", "tx:resume_remote_lock", "tx:after_commit");
 
       // The lock will be acquired after rebalance has started, but before cache0 starts sending the transaction data to cache1
       sequencer.order("st:block_get_transactions", "tx:before_lock", "tx:block_remote_lock", "st:resume_get_transactions");
       // The tx will be committed (1PC) after cache1 has received all the state, but before the topology is updated
-      sequencer.order("st:block_ch_update", "tx:resume_remote_lock", "tx:after_commit", "st:resume_ch_update");
+      sequencer.order("st:block_ch_update_on_1", "tx:resume_remote_lock", "tx:after_commit", "st:resume_ch_update_on_0");
 
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.clustering().cacheMode(cacheMode)
@@ -72,10 +73,13 @@ public class StaleLocksWithLockOnlyTxDuringStateTransferTest extends MultipleCac
       advanceOnComponentMethod(sequencer, cache0, StateProvider.class,
             matchMethodCall("getTransactionsForSegments").build())
             .before("st:block_get_transactions", "st:resume_get_transactions");
-      // Block the topology update on cache0 until the tx has finished
+      // Block the final topology update until the tx has finished
       advanceOnGlobalComponentMethod(sequencer, manager(0), LocalTopologyManager.class,
             matchMethodCall("handleTopologyUpdate").withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
-            .before("st:block_ch_update", "st:resume_ch_update");
+            .before("st:block_ch_update_on_0", "st:resume_ch_update_on_0");
+      advanceOnGlobalComponentMethod(sequencer, manager(1), LocalTopologyManager.class,
+            matchMethodCall("handleTopologyUpdate").withMatcher(1, new CacheTopologyMatcher(finalTopologyId)).build())
+            .before("st:block_ch_update_on_1", "st:resume_ch_update_on_1");
 
       // Start cache 1, but the state request will be blocked on cache 0
       AdvancedCache<Object, Object> cache1 = advancedCache(1, CACHE_NAME);

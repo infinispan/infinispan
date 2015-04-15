@@ -30,6 +30,7 @@ import org.infinispan.interceptors.base.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -37,7 +38,6 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -157,7 +157,55 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private Object handleTxCommand(TxInvocationContext ctx, TransactionBoundaryCommand command) throws Throwable {
       // For local commands we may not have a GlobalTransaction yet
       Address address = ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
-      return handleTopologyAffectedCommand(ctx, command, address, true);
+      if (trace) log.tracef("handleTxCommand for command %s, origin %s", command, address);
+
+      if (isLocalOnly(ctx, command)) {
+         return invokeNextInterceptor(ctx, command);
+      }
+      updateTopologyId(command);
+
+      int retryTopologyId = -1;
+      Object localResult = null;
+      try {
+         localResult = invokeNextInterceptor(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         // This can only happen on the originator
+         retryTopologyId = command.getTopologyId() + 1;
+      }
+
+      if (currentTopologyId() > command.getTopologyId()) {
+         retryTopologyId = currentTopologyId();
+      }
+
+      boolean async = isTxCommandAsync(command);
+      if (async) {
+         // We still need to forward the command to the new owners, if the command was asynchronous
+         stateTransferManager.forwardCommandIfNeeded(command, getAffectedKeys(ctx, command), address, false);
+      } else if (retryTopologyId > 0) {
+         // If the command was synchronous, we just retry on the originator
+         if (ctx.isOriginLocal()) {
+            // Only the originator can retry the command
+            command.setTopologyId(retryTopologyId);
+            waitForTransactionData(retryTopologyId);
+
+            log.tracef("Retrying command %s for topology %d", command, retryTopologyId);
+            handleTxCommand(ctx, command);
+         } else {
+            // Signal the originator to retry
+            return UnsureResponse.INSTANCE;
+         }
+      }
+      return localResult;
+   }
+
+   private boolean isTxCommandAsync(TransactionBoundaryCommand command) {
+      boolean async = false;
+      if (command instanceof CommitCommand || command instanceof RollbackCommand) {
+         async = !cacheConfiguration.transaction().syncCommitPhase();
+      } else if (command instanceof PrepareCommand) {
+         async = !cacheConfiguration.clustering().cacheMode().isSynchronous();
+      }
+      return async;
    }
 
    /**
@@ -179,8 +227,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          return invokeNextInterceptor(ctx, command);
       }
 
-      int initialViewId = transport.getViewId();
-      List<Address> initialViewMembers = transport.getMembers();
       int commandTopologyId = command.getTopologyId();
       Object localResult;
       try {
@@ -214,14 +260,14 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    @Override
    protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
       if (command instanceof TopologyAffectedCommand) {
-         return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin(), true);
+         return handleTopologyAffectedCommand(ctx, command, ctx.getOrigin());
       } else {
          return invokeNextInterceptor(ctx, command);
       }
    }
 
    private Object handleTopologyAffectedCommand(InvocationContext ctx, VisitableCommand command,
-                                                Address origin, boolean sync) throws Throwable {
+                                                Address origin) throws Throwable {
       if (trace) log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
 
       if (isLocalOnly(ctx, command)) {
@@ -229,23 +275,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       }
       updateTopologyId((TopologyAffectedCommand) command);
 
-      // TODO we may need to skip local invocation for read/write/tx commands if the command is too old and none of its keys are local
-      Object localResult = invokeNextInterceptor(ctx, command);
-
-      boolean isNonTransactionalWrite = !ctx.isInTxScope() && command instanceof WriteCommand;
-      boolean isTransactionalAndNotRolledBack = false;
-      if (ctx.isInTxScope()) {
-         isTransactionalAndNotRolledBack = command instanceof TransactionBoundaryCommand
-               && !((TxInvocationContext)ctx).getCacheTransaction().isMarkedForRollback();
-      }
-
-      if (isNonTransactionalWrite || isTransactionalAndNotRolledBack) {
-         Map<Address, Response> responseMap =  stateTransferManager
-               .forwardCommandIfNeeded(((TopologyAffectedCommand) command), getAffectedKeys(ctx, command), origin, sync);
-         localResult = mergeResponses(responseMap, localResult, ctx, command);
-      }
-
-      return localResult;
+      return invokeNextInterceptor(ctx, command);
    }
 
    private Object mergeResponses(Map<Address, Response> responseMap, Object localResult, InvocationContext context,

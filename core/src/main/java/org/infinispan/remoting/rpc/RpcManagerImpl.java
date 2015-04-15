@@ -5,6 +5,7 @@ import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -240,7 +241,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
             log.tracef("Using replication queue for command [%s]", rpc);
          }
          replicationQueue.add(rpc);
-         return null;
+         return InfinispanCollections.emptyMap();
       }
       if (!configuration.clustering().cacheMode().isClustered())
          throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
@@ -262,7 +263,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
       long startTimeNanos = 0;
       if (statisticsEnabled) startTimeNanos = timeService.time();
       try {
-         // TODO Re-enable the filter (and test MirrsingRpcDispatcherTest) after we find a way to update the cache members list before state transfer has started
+         // TODO Re-enable the filter (and test MissingRpcDispatcherTest) after we find a way to update the cache members list before state transfer has started
          // add a response filter that will ensure we don't wait for replies from non-members
          // but only if the target is the whole cluster and the call is synchronous
          // if strict peer-to-peer is enabled we have to wait for replies from everyone, not just cache members
