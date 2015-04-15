@@ -5,6 +5,7 @@ import org.infinispan.transaction.tm.DummyTransactionManager;
 import org.testng.annotations.Test;
 
 import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
 import javax.transaction.SystemException;
 import java.util.Collections;
 import java.util.Map;
@@ -72,19 +73,15 @@ public abstract class AbstractClusteredTxTest extends MultipleCacheManagersTest 
    protected void commit() {
       DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
       try {
-         dtm.getTransaction().runCommitTx();
-      } catch (HeuristicMixedException e) {
+         dtm.getTransaction().runCommit(false);
+      } catch (HeuristicMixedException | HeuristicRollbackException e) {
          throw new RuntimeException(e);
       }
    }
 
    protected void prepare() {
       DummyTransactionManager dtm = (DummyTransactionManager) tm(0);
-      try {
-         dtm.getTransaction().runPrepare();
-      } catch (SystemException e) {
-         throw new RuntimeException(e);
-      }
+      dtm.getTransaction().runPrepare();
    }
 
    protected void rollback() {

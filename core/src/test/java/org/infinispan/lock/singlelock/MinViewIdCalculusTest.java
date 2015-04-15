@@ -102,7 +102,7 @@ public class MinViewIdCalculusTest extends MultipleCacheManagersTest {
       assertEquals(tt1.getMinTopologyId(), topologyId);
 
       tm(1).resume(t);
-      t.runCommitTx();
+      t.runCommit(false);
 
       eventually(new Condition() {
          @Override

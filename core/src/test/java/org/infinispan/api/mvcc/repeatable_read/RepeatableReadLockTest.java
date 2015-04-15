@@ -126,7 +126,7 @@ public class RepeatableReadLockTest extends LockTestBase {
       cache.put("k", "v");
       tm.getTransaction().runPrepare();
       assertLocked("k");
-      tm.getTransaction().runCommitTx();
+      tm.getTransaction().runCommit(false);
       tm.suspend();
 
       assertNoLocks();
@@ -144,7 +144,7 @@ public class RepeatableReadLockTest extends LockTestBase {
       cache.remove("k");
       tm.getTransaction().runPrepare();
       assertLocked("k");
-      tm.getTransaction().runCommitTx();
+      tm.getTransaction().runCommit(false);
 
       assertNoLocks();
    }

@@ -68,7 +68,7 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
 
       // now release the lock
       tm().resume(transaction);
-      transaction.runRollback();
+      transaction.runCommit(true);
       transactionThread.join();
 
       assertNotLocked(cache, k);

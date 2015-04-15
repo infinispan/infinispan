@@ -173,7 +173,7 @@ public class InvocationContextInterceptor extends CommandInterceptor {
       } catch (SystemException e) {
          throw new CacheException("Unexpected!", e);
       }
-      return status == Status.STATUS_ACTIVE || status == Status.STATUS_PREPARING;
+      return status == Status.STATUS_ACTIVE;
    }
 
    private boolean isOngoingTransaction(InvocationContext ctx) throws SystemException {

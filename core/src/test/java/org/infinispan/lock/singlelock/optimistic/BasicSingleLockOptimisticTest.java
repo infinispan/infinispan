@@ -6,8 +6,6 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.DummyTransaction;
 import org.testng.annotations.Test;
 
-import javax.transaction.Status;
-
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -38,8 +36,7 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
       assert lockManager(1).isLocked(k);
       assert !lockManager(2).isLocked(k);
 
-      dtm.runCommitTx();
-      tm(0).suspend();
+      dtm.runCommit(false);
 
       assertNotLocked(k);
 
@@ -66,8 +63,7 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
       assert !lockManager(1).isLocked(k2);
       assert lockManager(2).isLocked(k2);
 
-      dtm.runCommitTx();
-      tm(0).suspend();
+      dtm.runCommit(false);
 
       assertNotLocked(k1);
       assertNotLocked(k2);
@@ -124,9 +120,7 @@ public class BasicSingleLockOptimisticTest extends AbstractNoCrashTest {
 
 
       tm(0).resume(dtm);
-      dtm.runCommitTx();
-      dtm.notifyAfterCompletion(Status.STATUS_COMMITTED);
-      tm(0).suspend();
+      dtm.runCommit(false);
 
       assertValue(k, false);
 

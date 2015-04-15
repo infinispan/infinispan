@@ -137,7 +137,7 @@ public class TxAndRemoteTimeoutExceptionTest extends MultipleCacheManagersTest {
 
       log.trace("Right before second commit");
       tm.resume(k1LockOwner);
-      tm.commit();
+      k1LockOwner.runCommit(false);
       assertEquals("v1", cache(0).get("k1"));
       assertEquals("v1", cache(1).get("k1"));
       assertEquals(0, txTable1.getLocalTxCount());

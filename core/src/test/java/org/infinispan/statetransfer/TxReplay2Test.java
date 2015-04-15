@@ -118,7 +118,7 @@ public class TxReplay2Test extends MultipleCacheManagersTest {
       checkIfTransactionExists(newBackupOwnerCache);
       assertEquals("Wrong transaction status after killing backup owner.",
             Status.STATUS_PREPARED, transaction.getStatus());
-      transaction.runCommitTx();
+      transaction.runCommit(false);
 
       secondCommitFuture.get(10, SECONDS);
 
