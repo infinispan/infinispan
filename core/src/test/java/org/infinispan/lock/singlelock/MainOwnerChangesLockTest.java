@@ -97,7 +97,7 @@ public class MainOwnerChangesLockTest extends MultipleCacheManagersTest {
       log.trace("Committing the tx to the new node.");
       for (Transaction tx : key2Tx.values()) {
          tm(nodeThatPuts).resume(tx);
-         dummyTm(nodeThatPuts).getTransaction().runCommitTx();
+         dummyTm(nodeThatPuts).getTransaction().runCommit(false);
       }
       
       for (Object key : key2Tx.keySet()) {

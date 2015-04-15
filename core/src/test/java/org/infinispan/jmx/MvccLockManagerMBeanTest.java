@@ -66,7 +66,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
       cache.put("key", "value");
       tm.getTransaction().runPrepare();
       assertAttributeValue("NumberOfLocksHeld", 1);
-      tm.getTransaction().runCommitTx();
+      tm.getTransaction().runCommit(false);
       assertAttributeValue("NumberOfLocksHeld", 0);
    }
 
@@ -79,7 +79,7 @@ public class MvccLockManagerMBeanTest extends SingleCacheManagerTest {
 
       assertAttributeValue("NumberOfLocksHeld", 1);
       assertAttributeValue("NumberOfLocksAvailable", initialAvailable - 1);
-      tm.rollback();
+      tm.getTransaction().runCommit(true);
       assertAttributeValue("NumberOfLocksAvailable", initialAvailable);
       assertAttributeValue("NumberOfLocksHeld", 0);
    }

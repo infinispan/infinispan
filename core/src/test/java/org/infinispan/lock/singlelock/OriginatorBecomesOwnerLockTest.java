@@ -116,7 +116,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
       log.trace("About to commit existing transactions.");
       tm.resume(tx);
-      tx.runCommitTx();
+      tx.runCommit(false);
 
       // read the data from the container, just to make sure all replicas are correctly set
       checkValue(key, "value");
@@ -152,7 +152,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
       log.trace("About to commit existing transaction.");
       tm.resume(tx);
-      tx.runCommitTx();
+      tx.runCommit(false);
 
       // read the data from the container, just to make sure all replicas are correctly set
       checkValue(key, "value");
@@ -183,7 +183,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
             assert success;
 
             log.trace("About to commit transaction.");
-            tx.runCommitTx();
+            tx.runCommit(false);
             return null;
          }
       });

@@ -191,7 +191,7 @@ public class LockOwnerCrashPessimisticTest extends AbstractLockOwnerCrashTest {
 
       tm(1).resume(transaction);
       if (!crashBeforePrepare) {
-         transaction.runCommitTx();
+         transaction.runCommit(false);
       } else {
          tm(1).commit();
       }

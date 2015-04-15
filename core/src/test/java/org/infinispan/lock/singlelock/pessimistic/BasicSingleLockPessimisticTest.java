@@ -123,9 +123,7 @@ public class BasicSingleLockPessimisticTest extends AbstractNoCrashTest {
 
       log.trace("about to commit transaction.");
       tm(0).resume(dtm);
-      dtm.runPrepare();
-      dtm.runCommitTx();
-      tm(0).suspend();
+      tm(0).commit();
 
       assertValue(k, false);
 

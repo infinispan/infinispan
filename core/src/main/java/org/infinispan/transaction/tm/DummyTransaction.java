@@ -16,34 +16,71 @@ import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+
+import static java.lang.String.format;
 
 /**
  * @author bela
  * @since 4.0
  */
 public class DummyTransaction implements Transaction {
+   /*
+    * Developer notes:
+    *
+    * => prepare() XA_RDONLY: the resource is finished and we shouldn't invoke the commit() or rollback().
+    * => prepare() XA_RB*: the resource is rolled back and we shouldn't invoke the rollback().
+    * //note// for both cases above, the commit() or rollback() will return XA_NOTA that we will ignore.
+    *
+    * => 1PC optimization: if we have a single XaResource, we can skip the prepare() and invoke commit(1PC).
+    * => Last Resource Commit optimization: if all the resources (except last) vote XA_OK or XA_RDONLY, we can skip the
+    * prepare() on the last resource and invoke commit(1PC).
+    * //note// both optimization not supported since we split the commit in 2 phases for debugging
+    */
+
    private static final Log log = LogFactory.getLog(DummyTransaction.class);
    private static boolean trace = log.isTraceEnabled();
-
+   private final Xid xid;
    private volatile int status = Status.STATUS_UNKNOWN;
-   protected final DummyBaseTransactionManager tm_;
-   protected final Xid xid;
-
-   protected Set<Synchronization> syncs;
-   private final List<XAResource> enlistedResources = new ArrayList<XAResource>(2);
-   private int prepareStatus;
+   private final List<Synchronization> syncs;
+   private final List<XAResource> resources;
+   private RollbackException firstRollbackException;
 
    public DummyTransaction(DummyBaseTransactionManager tm) {
-      tm_ = tm;
       status = Status.STATUS_ACTIVE;
       if (tm.isUseXaXid()) {
          xid = new DummyXid(tm.transactionManagerId);
       } else {
          xid = new DummyNoXaXid();
       }
+      if (trace) {
+         log.tracef("Created new transaction with Xid=%s", xid);
+      }
+      syncs = new ArrayList<>(2);
+      resources = new ArrayList<>(2);
+   }
+
+   private static boolean isRollbackCode(XAException ex) {
+      /*
+      XA_RBBASE      the inclusive lower bound of the rollback codes
+      XA_RBROLLBACK  the rollback was caused by an unspecified reason
+      XA_RBCOMMFAIL  the rollback was caused by a communication failure
+      XA_RBDEADLOCK  a deadlock was detected
+      XA_RBINTEGRITY a condition that violates the integrity of the resources was detected
+      XA_RBOTHER     the resource manager rolled back the transaction branch for a reason not on this list
+      XA_RBPROTO     a protocol error occurred in the resource manager
+      XA_RBTIMEOUT   a transaction branch took too long
+      XA_RBTRANSIENT may retry the transaction branch
+      XA_RBEND       the inclusive upper bound of the rollback codes
+       */
+      return ex.errorCode >= XAException.XA_RBBASE && ex.errorCode <= XAException.XA_RBEND;
+   }
+
+   private static RollbackException newRollbackException(String message, Throwable cause) {
+      RollbackException exception = new RollbackException(message);
+      exception.initCause(cause);
+      return exception;
    }
 
    /**
@@ -59,16 +96,14 @@ public class DummyTransaction implements Transaction {
     */
    @Override
    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, SystemException {
-
-      try {
-         runPrepare();
-         if (status == Status.STATUS_MARKED_ROLLBACK || status == Status.STATUS_ROLLING_BACK) {
-            runRollback();
-            throw new RollbackException("Exception rolled back, status is: " + status);
-         }
-         runCommitTx();
-      } finally {
-         DummyBaseTransactionManager.setTransaction(null);
+      if (trace) {
+         log.tracef("Transaction.commit() invoked in transaction with Xid=%s", xid);
+      }
+      checkDone("Cannot commit transaction.");
+      runPrepare();
+      runCommit(false);
+      if (firstRollbackException != null) {
+         throw firstRollbackException;
       }
    }
 
@@ -82,17 +117,18 @@ public class DummyTransaction implements Transaction {
     */
    @Override
    public void rollback() throws IllegalStateException, SystemException {
-      try {
-         status = Status.STATUS_ROLLING_BACK;
-         runRollback();
-         status = Status.STATUS_ROLLEDBACK;
-         notifyAfterCompletion(Status.STATUS_ROLLEDBACK);
-      } catch (Throwable t) {
-         log.errorRollingBack(t);
-         throw new IllegalStateException(t);
+      if (trace) {
+         log.tracef("Transaction.rollback() invoked in transaction with Xid=%s", xid);
       }
-      // Disassociate tx from thread.
-      DummyBaseTransactionManager.setTransaction(null);
+      checkDone("Cannot rollback transaction");
+      try {
+         status = Status.STATUS_MARKED_ROLLBACK;
+         endResources();
+         runCommit(false);
+      } catch (HeuristicMixedException | HeuristicRollbackException e) {
+         log.errorRollingBack(e);
+         throw new SystemException("Unable to rollback transaction");
+      }
    }
 
    /**
@@ -103,7 +139,11 @@ public class DummyTransaction implements Transaction {
     */
    @Override
    public void setRollbackOnly() throws IllegalStateException, SystemException {
-      status = Status.STATUS_MARKED_ROLLBACK;
+      if (trace) {
+         log.tracef("Transaction.setRollbackOnly() invoked in transaction with Xid=%s", xid);
+      }
+      checkDone("Cannot change status");
+      markRollbackOnly(new RollbackException("Transaction marked as rollback only."));
    }
 
    /**
@@ -128,11 +168,38 @@ public class DummyTransaction implements Transaction {
     * @throws SystemException       If the transaction service fails in an unexpected way.
     */
    @Override
-   public boolean enlistResource(XAResource xaRes) throws RollbackException, IllegalStateException, SystemException {
-      this.enlistedResources.add(xaRes);
+   public boolean enlistResource(XAResource resource) throws RollbackException, IllegalStateException, SystemException {
+      if (trace) {
+         log.tracef("Transaction.enlistResource(%s) invoked in transaction with Xid=%s", resource, xid);
+      }
+      checkStatusBeforeRegister("resource");
+
+      //avoid duplicates
+      for (XAResource otherResource : resources) {
+         try {
+            if (otherResource.isSameRM(resource)) {
+               log.debug("Ignoring resource. It is already there.");
+               return true;
+            }
+         } catch (XAException e) {
+            //ignored
+         }
+      }
+
+      resources.add(resource);
+
       try {
-         xaRes.start(xid, 0);
+         if (trace) {
+            log.tracef("XaResource.start() invoked in transaction with Xid=%s", xid);
+         }
+         resource.start(xid, XAResource.TMNOFLAGS);
       } catch (XAException e) {
+         if (isRollbackCode(e)) {
+            RollbackException exception = newRollbackException(format("Resource %s rolled back the transaction while XaResource.start()", resource), e);
+            markRollbackOnly(exception);
+            log.errorEnlistingResource(e);
+            throw exception;
+         }
          log.errorEnlistingResource(e);
          throw new SystemException(e.getMessage());
       }
@@ -164,158 +231,79 @@ public class DummyTransaction implements Transaction {
     */
    @Override
    public void registerSynchronization(Synchronization sync) throws RollbackException, IllegalStateException, SystemException {
-      if (sync == null)
-         throw new IllegalArgumentException("null synchronization " + this);
-      if (syncs == null) syncs = new HashSet<Synchronization>(8);
-
-      switch (status) {
-         case Status.STATUS_ACTIVE:
-         case Status.STATUS_PREPARING:
-            break;
-         case Status.STATUS_PREPARED:
-            throw new IllegalStateException("already prepared. " + this);
-         case Status.STATUS_COMMITTING:
-            throw new IllegalStateException("already started committing. " + this);
-         case Status.STATUS_COMMITTED:
-            throw new IllegalStateException("already committed. " + this);
-         case Status.STATUS_MARKED_ROLLBACK:
-            throw new RollbackException("already marked for rollback " + this);
-         case Status.STATUS_ROLLING_BACK:
-            throw new RollbackException("already started rolling back. " + this);
-         case Status.STATUS_ROLLEDBACK:
-            throw new RollbackException("already rolled back. " + this);
-         case Status.STATUS_NO_TRANSACTION:
-            throw new IllegalStateException("no transaction. " + this);
-         case Status.STATUS_UNKNOWN:
-            throw new IllegalStateException("unknown state " + this);
-         default:
-            throw new IllegalStateException("illegal status: " + status + " tx=" + this);
-      }
-
       if (trace) {
-         log.tracef("registering synchronization handler %s", sync);
+         log.tracef("Transaction.registerSynchronization(%s) invoked in transaction with Xid=%s", sync, xid);
+      }
+      checkStatusBeforeRegister("synchronization");
+      if (trace) {
+         log.tracef("Registering synchronization handler %s", sync);
       }
       syncs.add(sync);
-
    }
 
-   public boolean notifyBeforeCompletion() {
-      boolean retval = true;
-      if (syncs == null) return true;
-      for (Synchronization s : syncs) {
-         if (trace) log.tracef("processing beforeCompletion for %s", s);
-         try {
-            s.beforeCompletion();
-         } catch (Throwable t) {
-            retval = false;
-            status = Status.STATUS_MARKED_ROLLBACK;
-            log.beforeCompletionFailed(s, t);
-         }
-      }
-      return retval;
+   public Collection<XAResource> getEnlistedResources() {
+      return Collections.unmodifiableList(resources);
    }
 
-   public boolean runPrepare() throws SystemException {
-
-      boolean successfulInit = notifyBeforeCompletion();
-
-      if (successfulInit) {
-         status = Status.STATUS_PREPARING;
-      } else {
-         status = Status.STATUS_ROLLING_BACK;
+   public boolean runPrepare() {
+      if (trace) {
+         log.tracef("runPrepare() invoked in transaction with Xid=%s", xid);
       }
+      notifyBeforeCompletion();
+      endResources();
 
-      DummyTransaction transaction = tm_.getTransaction();
-      Collection<XAResource> resources = transaction.getEnlistedResources();
-      for (XAResource res : resources) {
-         try {
-            int prepareStatus = res.prepare(xid);
-            transaction.setPrepareStatus(prepareStatus);
-         } catch (XAException e) {
-            log.trace("The resource wants to rollback!", e);
-            status = Status.STATUS_ROLLING_BACK;
-            return false;
-         } catch (Throwable th) {
-            log.unexpectedErrorFromResourceManager(th);
-            throw new SystemException(th.getMessage());
-         }
-      }
-
-      if (status == Status.STATUS_MARKED_ROLLBACK || status == Status.STATUS_ROLLING_BACK) {
+      if (status == Status.STATUS_MARKED_ROLLBACK) {
          return false;
       }
 
+      status = Status.STATUS_PREPARING;
+
+      for (XAResource res : getEnlistedResources()) {
+         //note: it is safe to return even if we don't prepare all the resources. rollback will be invoked.
+         try {
+            if (trace) {
+               log.tracef("XaResource.prepare() for %s", res);
+            }
+            //don't need to check return value. the only possible values are OK or READ_ONLY.
+            res.prepare(xid);
+         } catch (XAException e) {
+            if (trace) {
+               log.trace("The resource wants to rollback!", e);
+            }
+            markRollbackOnly(newRollbackException(format("XaResource.prepare() for %s wants to rollback.", res), e));
+            return false;
+         } catch (Throwable th) {
+            markRollbackOnly(newRollbackException(format("Unexpected error in XaResource.prepare() for %s. Rollback transaction.", res), th));
+            log.unexpectedErrorFromResourceManager(th);
+            return false;
+         }
+      }
       status = Status.STATUS_PREPARED;
       return true;
    }
 
-   private void setPrepareStatus(int prepareStatus) {
-      this.prepareStatus = prepareStatus;
-   }
-
-   public void notifyAfterCompletion(int status) {
-      if (syncs == null) return;
-      for (Synchronization s : syncs) {
-         if (trace) {
-            log.tracef("processing afterCompletion for %s", s);
-         }
-         try {
-            s.afterCompletion(status);
-         } catch (Throwable t) {
-            log.afterCompletionFailed(s, t);
-         }
+   public void runCommit(boolean forceRollback) throws HeuristicMixedException, HeuristicRollbackException {
+      if (trace) {
+         log.tracef("runCommit(forceRollback=%b) invoked in transaction with Xid=%s", forceRollback, xid);
       }
-      syncs.clear();
-   }
-
-   public Collection<XAResource> getEnlistedResources() {
-      return enlistedResources;
-   }
-
-   public void runRollback() {
-      DummyTransaction transaction = tm_.getTransaction();
-      Collection<XAResource> resources = transaction.getEnlistedResources();
-      for (XAResource res : resources) {
-         try {
-            res.rollback(xid);
-         } catch (XAException e) {
-            log.errorRollingBack(e);
-         }
+      if (forceRollback) {
+         markRollbackOnly(new RollbackException("Force rollback invoked. (debug mode)"));
       }
-   }
 
-   public void runCommitTx() throws HeuristicMixedException {
+      int notifyAfterStatus = 0;
+
       try {
-         status = Status.STATUS_COMMITTING;
-
-         DummyTransaction transaction = tm_.getTransaction();
-         if (transaction.getPrepareStatus() == XAResource.XA_RDONLY) {
-            log.debug("This is a read-only tx");
+         if (status == Status.STATUS_MARKED_ROLLBACK) {
+            notifyAfterStatus = Status.STATUS_ROLLEDBACK;
+            rollbackResources();
          } else {
-            Collection<XAResource> resources = transaction.getEnlistedResources();
-            for (XAResource res : resources) {
-               try {
-                  //we only do 2-phase commits
-                  res.commit(xid, false);
-               } catch (XAException e) {
-                  log.errorCommittingTx(e);
-                  throw new HeuristicMixedException(e.getMessage());
-               }
-            }
+            notifyAfterStatus = Status.STATUS_COMMITTED;
+            commitResources();
          }
-         status = Status.STATUS_COMMITTED;
-      } catch (HeuristicMixedException e) {
-         status = Status.STATUS_UNKNOWN;
-         throw e;
       } finally {
-         //notify synchronizations
-         notifyAfterCompletion(status);
+         notifyAfterCompletion(notifyAfterStatus);
          DummyBaseTransactionManager.setTransaction(null);
       }
-   }
-
-   public void setStatus(int stat) {
-      this.status = stat;
    }
 
    @Override
@@ -324,10 +312,6 @@ public class DummyTransaction implements Transaction {
             "xid=" + xid +
             ", status=" + status +
             '}';
-   }
-
-   public int getPrepareStatus() {
-      return prepareStatus;
    }
 
    public XAResource firstEnlistedResource() {
@@ -339,7 +323,7 @@ public class DummyTransaction implements Transaction {
    }
 
    public Collection<Synchronization> getEnlistedSynchronization() {
-      return syncs;
+      return Collections.unmodifiableList(syncs);
    }
 
    /**
@@ -355,4 +339,157 @@ public class DummyTransaction implements Transaction {
       return this == obj;
    }
 
+   private void markRollbackOnly(RollbackException e) {
+      if (status == Status.STATUS_MARKED_ROLLBACK) {
+         return;
+      }
+      status = Status.STATUS_MARKED_ROLLBACK;
+      if (firstRollbackException == null) {
+         firstRollbackException = e;
+      }
+   }
+
+   private void finishResource(boolean commit) throws HeuristicRollbackException, HeuristicMixedException {
+      boolean ok = false;
+      boolean heuristic = false;
+      boolean error = false;
+
+      for (XAResource res : getEnlistedResources()) {
+         try {
+            if (commit) {
+               if (trace) {
+                  log.tracef("XaResource.commit() for %s", res);
+               }
+               //we only do 2-phase commits
+               res.commit(xid, false);
+            } else {
+               if (trace) {
+                  log.tracef("XaResource.rollback() for %s", res);
+               }
+               res.rollback(xid);
+            }
+            ok = true;
+         } catch (XAException e) {
+            log.errorCommittingTx(e);
+            switch (e.errorCode) {
+               case XAException.XA_HEURCOM:
+               case XAException.XA_HEURRB:
+               case XAException.XA_HEURMIX:
+                  heuristic = true;
+                  break;
+               case XAException.XAER_NOTA:
+                  //just ignore it...
+                  ok = true;
+                  break;
+               default:
+                  error = true;
+                  break;
+            }
+         }
+      }
+
+      resources.clear();
+      if (heuristic && !ok && !error) {
+         //all the resources thrown an heuristic exception
+         throw new HeuristicRollbackException();
+      } else if (error || heuristic) {
+         status = Status.STATUS_UNKNOWN;
+         //some resources commits, other rollbacks and others we don't know...
+         throw new HeuristicMixedException();
+      }
+   }
+
+   private void commitResources() throws HeuristicRollbackException, HeuristicMixedException {
+      status = Status.STATUS_COMMITTING;
+      try {
+         finishResource(true);
+      } catch (HeuristicRollbackException | HeuristicMixedException e) {
+         status = Status.STATUS_UNKNOWN;
+         throw e;
+      }
+      status = Status.STATUS_COMMITTED;
+   }
+
+   private void rollbackResources() throws HeuristicRollbackException, HeuristicMixedException {
+      status = Status.STATUS_ROLLING_BACK;
+      try {
+         finishResource(false);
+      } catch (HeuristicRollbackException | HeuristicMixedException e) {
+         status = Status.STATUS_UNKNOWN;
+         throw e;
+      }
+      status = Status.STATUS_ROLLEDBACK;
+   }
+
+   private void notifyBeforeCompletion() {
+      for (Synchronization s : getEnlistedSynchronization()) {
+         if (trace) {
+            log.tracef("Synchronization.beforeCompletion() for %s", s);
+         }
+         try {
+            s.beforeCompletion();
+         } catch (Throwable t) {
+            markRollbackOnly(newRollbackException(format("Synchronization.beforeCompletion() for %s wants to rollback.", s), t));
+            log.beforeCompletionFailed(s, t);
+         }
+      }
+   }
+
+   private void notifyAfterCompletion(int status) {
+      for (Synchronization s : getEnlistedSynchronization()) {
+         if (trace) {
+            log.tracef("Synchronization.afterCompletion() for %s", s);
+         }
+         try {
+            s.afterCompletion(status);
+         } catch (Throwable t) {
+            log.afterCompletionFailed(s, t);
+         }
+      }
+      syncs.clear();
+   }
+
+   private void endResources() {
+      for (XAResource resource : getEnlistedResources()) {
+         if (trace) {
+            log.tracef("XAResource.end() for %s", resource);
+         }
+         try {
+            resource.end(xid, XAResource.TMSUCCESS);
+         } catch (XAException e) {
+            markRollbackOnly(newRollbackException(format("XaResource.end() for %s wants to rollback.", resource), e));
+            log.xaResourceEndFailed(resource, e);
+         } catch (Throwable t) {
+            markRollbackOnly(newRollbackException(format("Unexpected error in XaResource.end() for %s. Marked as rollback", resource), t));
+            log.xaResourceEndFailed(resource, t);
+         }
+      }
+   }
+
+   private void checkStatusBeforeRegister(String component) throws RollbackException, IllegalStateException {
+      if (status == Status.STATUS_MARKED_ROLLBACK) {
+         throw new RollbackException("Transaction has been marked as rollback only");
+      }
+      checkDone(format("Cannot register any more %s", component));
+   }
+
+   private void checkDone(String message) {
+      if (isDone()) {
+         throw new IllegalStateException(format("Transaction is done. %s", message));
+      }
+   }
+
+   private boolean isDone() {
+      switch (status) {
+         case Status.STATUS_PREPARING:
+         case Status.STATUS_PREPARED:
+         case Status.STATUS_COMMITTING:
+         case Status.STATUS_COMMITTED:
+         case Status.STATUS_ROLLING_BACK:
+         case Status.STATUS_ROLLEDBACK:
+         case Status.STATUS_UNKNOWN:
+            return true;
+      }
+      return false;
+   }
 }

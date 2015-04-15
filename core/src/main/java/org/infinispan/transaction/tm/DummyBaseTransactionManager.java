@@ -67,18 +67,10 @@ public class DummyBaseTransactionManager implements TransactionManager, Serializ
    public void commit() throws RollbackException, HeuristicMixedException,
                                HeuristicRollbackException, SecurityException,
                                IllegalStateException, SystemException {
-      int status;
       DummyTransaction tx = getTransaction();
       if (tx == null)
          throw new IllegalStateException("thread not associated with transaction");
-      status = tx.getStatus();
-      if (status == Status.STATUS_MARKED_ROLLBACK) {
-         tx.setStatus(Status.STATUS_ROLLEDBACK);
-         rollback();
-         throw new RollbackException("Transaction status is Status.STATUS_MARKED_ROLLBACK");
-      } else {
-         tx.commit();
-      }
+      tx.commit();
 
       // Disassociate tx from thread.
       setTransaction(null);

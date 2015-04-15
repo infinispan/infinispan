@@ -116,6 +116,10 @@ public abstract class SingleCacheManagerTest extends AbstractCacheTest {
    }
 
    protected void assertNoTransactions() {
+      assertNoTransactions(cache);
+   }
+
+   protected void assertNoTransactions(final Cache<?, ?> cache) {
       eventually(new Condition() {
          @Override
          public boolean isSatisfied() throws Exception {

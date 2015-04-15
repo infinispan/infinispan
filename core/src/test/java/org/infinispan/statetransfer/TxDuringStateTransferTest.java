@@ -87,7 +87,7 @@ public class TxDuringStateTransferTest extends MultipleCacheManagersTest {
 
       assertEquals("Wrong transaction status after killing backup owner.",
                    Status.STATUS_PREPARED, transaction.getStatus());
-      transaction.runCommitTx();
+      transaction.runCommit(false);
 
       for (Cache<Object, Object> cache : caches()) {
          //all the caches are owner

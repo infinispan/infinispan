@@ -40,6 +40,7 @@ import javax.naming.NamingException;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 import javax.xml.namespace.QName;
 import java.io.File;
 import java.io.IOException;
@@ -1302,4 +1303,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Maximum data container size is currently 2^48 - 1, the number provided was %s", id = 356)
    CacheConfigurationException evictionSizeTooLarge(long value);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "end() failed for %s", id = 357)
+   void xaResourceEndFailed(XAResource resource, @Cause Throwable t);
 }
