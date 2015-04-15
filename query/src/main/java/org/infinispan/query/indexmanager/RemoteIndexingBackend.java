@@ -82,11 +82,11 @@ final class RemoteIndexingBackend implements IndexingBackend {
     * Decides whether a command should be sent sync or async
     */
    private boolean shouldSendSync(LuceneWork operation) {
-      return SYNC_ONLY_WORKS.contains(operation.getClass()) || !async;
+      return !async || SYNC_ONLY_WORKS.contains(operation.getClass());
    }
 
    private boolean shouldSendSync(List<LuceneWork> operations) {
-      return operations.size() == 1 && shouldSendSync(operations.get(0));
+      return !async || (operations.size() == 1 && shouldSendSync(operations.get(0)));
    }
 
 
