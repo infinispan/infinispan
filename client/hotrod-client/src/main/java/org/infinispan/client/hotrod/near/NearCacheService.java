@@ -23,6 +23,11 @@ import org.infinispan.commons.util.Util;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Near cache service, manages the lifecycle of the near cache.
+ *
+ * @since 7.1
+ */
 public class NearCacheService<K, V> implements NearCache<K, V> {
    private static final Log log = LogFactory.getLog(NearCacheService.class);
 
@@ -65,7 +70,7 @@ public class NearCacheService<K, V> implements NearCache<K, V> {
 
    protected NearCache<K, V> createNearCache(NearCacheConfiguration config) {
       return config.maxEntries() > 0
-            ? LinkedMapNearCache.<K, V>create(config)
+            ? BoundedConcurrentMapNearCache.<K, V>create(config)
             : ConcurrentMapNearCache.<K, V>create();
    }
 
