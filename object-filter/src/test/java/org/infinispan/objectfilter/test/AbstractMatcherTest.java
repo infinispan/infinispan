@@ -108,6 +108,48 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
+   public void testPredicateDuplication1() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John' or name = 'John'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testPredicateDuplication2() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John' and name = 'John'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testPredicateDuplication3() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where name != 'Johnny' or name != 'Johnny'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testPredicateDuplication4() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where name != 'Johnny' and name != 'Johnny'";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testSimpleTautology() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name = 'Noone' or not(name = 'Noone')";  // this should match anything
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testSimpleContradiction() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John' and name != 'John'";  // this should not match anything
+      assertFalse(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testTautology() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where (name = 'Noone' and name = 'Noone') or (name != 'Noone' and name != 'Noone')";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
    @Ignore
    //todo this triggers a bug in hql parser (https://hibernate.atlassian.net/browse/HQLPARSER-44): NPE in SingleEntityQueryRendererDelegate.addComparisonPredicate due to null property path.
    public void testNoOpFilter1() throws Exception {

@@ -29,6 +29,19 @@ public final class LikeExpr implements PrimaryPredicateExpr {
    }
 
    @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      LikeExpr likeExpr = (LikeExpr) o;
+      return pattern.equals(likeExpr.pattern) && child.equals(likeExpr.child);
+   }
+
+   @Override
+   public int hashCode() {
+      return 31 * child.hashCode() + pattern.hashCode();
+   }
+
+   @Override
    public String toString() {
       return "RegexExpr{" +
             "child=" + child +

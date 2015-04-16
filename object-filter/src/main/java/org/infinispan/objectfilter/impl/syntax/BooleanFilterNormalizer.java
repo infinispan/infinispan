@@ -6,11 +6,12 @@ import java.util.List;
 /**
  * Applies some optimisations to a boolean expression. Most notably, it brings it to NNF (Negation normal form, see
  * http://en.wikipedia.org/wiki/Negation_normal_form). Moves negation directly near the variable by repeatedly applying
- * the DeMorgan laws. Eliminates double negation. Normalizes comparison operators by replacing 'greater' with 'less'.
- * Detects sub-expressions that are boolean constants. Simplifies boolean constants by applying boolean
- * short-circuiting. Eliminates resulting trivial conjunctions or disjunctions that have only one child. Ensures all
- * paths from root to leafs contain an alternation of conjunction and disjunction. This is achieved by absorbing the
- * children whenever a boolean sub-expression if of the same kind as the parent.
+ * the De Morgan's laws (see http://en.wikipedia.org/wiki/De_Morgan%27s_laws). Eliminates double negation. Normalizes
+ * comparison operators by replacing 'greater' with 'less'. Detects sub-expressions that are boolean constants.
+ * Simplifies boolean constants by applying boolean short-circuiting. Eliminates resulting trivial conjunctions or
+ * disjunctions that have only one child. Ensures all paths from root to leafs contain an alternation of conjunction and
+ * disjunction. This is achieved by absorbing the children whenever a boolean sub-expression if of the same kind as the
+ * parent.
  *
  * @author anistor@redhat.com
  * @since 7.0
@@ -49,6 +50,8 @@ public final class BooleanFilterNormalizer {
             }
          }
 
+         removeRedundantPredicates(children, false);
+
          // simplify trivial expressions
          if (children.size() == 1) {
             return children.get(0);
@@ -77,12 +80,100 @@ public final class BooleanFilterNormalizer {
             }
          }
 
+         removeRedundantPredicates(children, true);
+
          // simplify trivial expressions
          if (children.size() == 1) {
             return children.get(0);
          }
 
          return new AndExpr(children);
+      }
+
+      /**
+       * Removes duplicate occurrences of same predicate in a conjunction or disjunction. Also detects and removes tautology and contradiction.
+       * The following translation rules are applied:
+       * <ul>
+       * <li>X || X => X</li>
+       * <li>X && X => X</li>
+       * <li>!X || !X => !X</li>
+       * <li>!X && !X => !X</li>
+       * <li>X || !X => TRUE (tautology)</li>
+       * <li>X && !X => FALSE (contradiction)</li>
+       * </ul>
+       * @param children the list of children expressions
+       * @param isConjunction is the parent boolean expression a conjunction or a disjunction?
+       */
+      private void removeRedundantPredicates(List<BooleanExpr> children, boolean isConjunction) {
+         for (int i = 0; i < children.size(); i++) {
+            BooleanExpr ci = children.get(i);
+            if (ci instanceof BooleanOperatorExpr) {
+               // we may encounter non-predicate expressions, just ignore them
+               continue;
+            }
+            boolean isCiNegated = ci instanceof NotExpr;
+            if (isCiNegated) {
+               ci = ((NotExpr) ci).getChild();
+            }
+            assert ci instanceof PrimaryPredicateExpr;
+            int j = i + 1;
+            while (j < children.size()) {
+               BooleanExpr cj = children.get(j);
+               // we may encounter non-predicate expressions, just ignore them
+               if (!(cj instanceof BooleanOperatorExpr)) {
+                  boolean isCjNegated = cj instanceof NotExpr;
+                  if (isCjNegated) {
+                     cj = ((NotExpr) cj).getChild();
+                  }
+                  int res = comparePrimaryPredicateExpr(isCiNegated, (PrimaryPredicateExpr) ci, isCjNegated, (PrimaryPredicateExpr) cj);
+                  if (res == 0) {
+                     // found duplication
+                     children.remove(j);
+                     continue;
+                  } else if (res == 1) {
+                     // found tautology or contradiction
+                     children.clear();
+                     children.add(ConstantBooleanExpr.forBoolean(!isConjunction));
+                     return;
+                  }
+               }
+               j++;
+            }
+         }
+      }
+
+      /**
+       * Checks if two predicates are identical or opposite.
+       *
+       * @param isFirstNegated is first predicate negated?
+       * @param first the first predicate expression
+       * @param isSecondNegated is second predicate negated?
+       * @param second the second predicate expression
+       * @return -1 if unrelated predicates, 0 if identical predicates, 1 if opposite predicates
+       */
+      private int comparePrimaryPredicateExpr(boolean isFirstNegated, PrimaryPredicateExpr first, boolean isSecondNegated, PrimaryPredicateExpr second) {
+         if (first.getClass() == second.getClass()) {
+            if (first instanceof ComparisonExpr) {
+               ComparisonExpr comparison1 = (ComparisonExpr) first;
+               ComparisonExpr comparison2 = (ComparisonExpr) second;
+               assert comparison1.getLeftChild() instanceof PropertyValueExpr;
+               assert comparison2.getLeftChild() instanceof PropertyValueExpr;
+               if (comparison1.getLeftChild().equals(comparison2.getLeftChild()) && comparison1.getRightChild().equals(comparison2.getRightChild())) {
+                  ComparisonExpr.Type cmpType1 = comparison1.getComparisonType();
+                  if (isFirstNegated) {
+                     cmpType1 = cmpType1.negate();
+                  }
+                  ComparisonExpr.Type cmpType2 = comparison2.getComparisonType();
+                  if (isSecondNegated) {
+                     cmpType2 = cmpType2.negate();
+                  }
+                  return cmpType1 == cmpType2 ? 0 : (cmpType1 == cmpType2.negate() ? 1 : -1);
+               }
+            } else if (first.equals(second)) {
+               return isFirstNegated == isSecondNegated ? 0 : 1;
+            }
+         }
+         return -1;
       }
 
       @Override
@@ -127,28 +218,7 @@ public final class BooleanFilterNormalizer {
             leftChild = temp;
 
             // now reverse the operator too to restore the semantics
-            switch (comparisonType) {
-               case LESS:
-                  comparisonType = ComparisonExpr.Type.GREATER;
-                  break;
-               case LESS_OR_EQUAL:
-                  comparisonType = ComparisonExpr.Type.GREATER_OR_EQUAL;
-                  break;
-               case EQUAL:
-                  comparisonType = ComparisonExpr.Type.NOT_EQUAL;
-                  break;
-               case NOT_EQUAL:
-                  comparisonType = ComparisonExpr.Type.EQUAL;
-                  break;
-               case GREATER_OR_EQUAL:
-                  comparisonType = ComparisonExpr.Type.LESS_OR_EQUAL;
-                  break;
-               case GREATER:
-                  comparisonType = ComparisonExpr.Type.LESS;
-                  break;
-               default:
-                  throw new IllegalStateException("Unknown comparison type: " + comparisonType);
-            }
+            comparisonType = comparisonType.reverse();
          }
 
          // comparison operators are never negated using NotExpr
