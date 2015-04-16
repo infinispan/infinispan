@@ -1,6 +1,7 @@
 package org.infinispan.factories;
 
 import net.jcip.annotations.ThreadSafe;
+
 import org.infinispan.Version;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
@@ -21,7 +22,9 @@ import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifierImpl;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.registry.ClusterRegistry;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
+import org.infinispan.registry.impl.InternalCacheRegistryImpl;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.topology.ClusterTopologyManager;
 import org.infinispan.topology.LocalTopologyManager;
@@ -32,6 +35,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
+
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -108,6 +112,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(cacheManager, EmbeddedCacheManager.class);
          registerComponent(new CacheManagerJmxRegistration(), CacheManagerJmxRegistration.class);
          registerComponent(new CacheManagerNotifierImpl(), CacheManagerNotifier.class);
+         registerComponent(new InternalCacheRegistryImpl(), InternalCacheRegistry.class);
          registerComponent(new ClusterRegistryImpl(), ClusterRegistry.class);
          registerComponent(new CacheStoreFactoryRegistry(), CacheStoreFactoryRegistry.class);
 

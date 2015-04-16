@@ -42,6 +42,7 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.xml.namespace.QName;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -1308,6 +1309,9 @@ public interface Log extends BasicLogger {
    @Message(value = "end() failed for %s", id = 357)
    void xaResourceEndFailed(XAResource resource, @Cause Throwable t);
 
-   @Message(value = "Keys '%s' are not available. Not all owners are in this partition", id = 358)
+   @Message(value = "A cache configuration named %s already exists. This cannot be configured externally by the user.", id = 358)
+   CacheConfigurationException existingConfigForInternalCache(String name);
+
+   @Message(value = "Keys '%s' are not available. Not all owners are in this partition", id = 359)
    AvailabilityException degradedModeKeysUnavailable(Collection<?> keys);
 }
