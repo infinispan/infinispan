@@ -90,10 +90,12 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -445,7 +447,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public final Map<K, V> getAll(Set<?> keys, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, keys.size());
       GetAllCommand command = commandsFactory.buildGetAllCommand(keys, explicitFlags, false);
-      return (Map<K, V>) invoker.invoke(ctx, command);
+      Map<K, V> map = (Map<K, V>) invoker.invoke(ctx, command);
+      Iterator<Map.Entry<K, V>> entryIterator = map.entrySet().iterator();
+      while (entryIterator.hasNext()) {
+         Map.Entry<K , V> entry = entryIterator.next();
+         if (entry.getValue() == null) {
+            entryIterator.remove();
+         }
+      }
+      return map;
    }
 
    @Override
@@ -457,7 +467,15 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, keys.size());
       GetAllCommand command = commandsFactory.buildGetAllCommand(keys, explicitFlags, true);
-      return (Map<K, CacheEntry<K, V>>) invoker.invoke(ctx, command);
+      Map<K, CacheEntry<K, V>> map = (Map<K, CacheEntry<K, V>>) invoker.invoke(ctx, command);
+      Iterator<Map.Entry<K, CacheEntry<K, V>>> entryIterator = map.entrySet().iterator();
+      while (entryIterator.hasNext()) {
+         Map.Entry<K , CacheEntry<K, V>> entry = entryIterator.next();
+         if (entry.getValue() == null) {
+            entryIterator.remove();
+         }
+      }
+      return map;
    }
 
    @Override

@@ -270,6 +270,13 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     */
    Map<K, V> getBulk(int size);
 
+   /**
+    * Retrieves all of the entries for the provided keys.  A key will not be present in
+    * the resulting map if the entry was not found in the cache.
+    * @param keys The keys to find values for
+    * @return The entries that were present for the given keys
+    */
+   public Map<K, V> getAll(Set<? extends K> keys);
 
    /**
     * Returns the HotRod protocol version supported by this RemoteCache implementation

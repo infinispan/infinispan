@@ -423,8 +423,8 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * the local node.
     *
     * @param keys The keys whose associated values are to be returned.
-    * @return A map of entries that were found for the given keys. Keys not found
-    *         in the cache are present in the map with null values.
+    * @return A map of entries that were found for the given keys. If an entry is not
+    *         found for a given key, it will not be in the returned map.
     * @throws NullPointerException  if keys is null or if keys contains a null
     */
    Map<K, V> getAll(Set<?> keys);

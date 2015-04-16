@@ -21,6 +21,7 @@ import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.server.hotrod.logging.Log
 import java.util.Map
+import java.util.Set
 
 /**
  * Invokes operations against the cache based on the state kept during decoding process
@@ -43,11 +44,13 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
    var rawValue: Bytes = _
    var params: RequestParameters = _
    var putAllMap: Map[Bytes, Bytes] = _
+   var getAllSet: Set[Bytes] = _
 
    def resetParams(): Unit = {
       params = null
       rawValue = null
       putAllMap = null
+      getAllSet = null
    }
 
    def createErrorResponse(t: Throwable): AnyRef = {

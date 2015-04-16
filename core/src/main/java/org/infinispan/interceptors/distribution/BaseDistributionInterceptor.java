@@ -467,6 +467,12 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
             Map<Object, InternalCacheEntry> justRetrieved = retrieveFromRemoteSources(
                   requestedKeys, ctx, command.getFlags());
+            Map<Object, InternalCacheEntry> previouslyFetched = command.getRemotelyFetched();
+            if (previouslyFetched != null) {
+               previouslyFetched.putAll(justRetrieved);
+            } else {
+               command.setRemotelyFetched(justRetrieved);
+            }
             for (Object key : requestedKeys) {
                if (!justRetrieved.containsKey(key)) {
                   missingRemoteValues = true;

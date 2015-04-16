@@ -64,6 +64,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    }
 
    @Override
+   public Map<K, V> getAll(Set<? extends K> keys) {
+      return delegate.getAll(keys);
+   }
+
+   @Override
    public NotifyingFuture<V> getAsync(K key) {
       return delegate.getAsync(key);
    }

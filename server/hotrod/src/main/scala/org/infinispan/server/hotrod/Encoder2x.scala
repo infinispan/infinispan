@@ -279,6 +279,17 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                }
                buf.writeByte(0) // Done
             }
+         case g: GetAllResponse =>
+           if (isTraceEnabled)
+             log.trace("About to respond to getAll request")
+           if (g.status == Success) {
+             writeUnsignedInt(g.entries.size, buf)
+             val iterator = asScalaIterator(g.entries.iterator)
+             for (entry <- iterator) {
+                writeRangedBytes(entry._1, buf)
+                writeRangedBytes(entry._2, buf)
+             }
+           }
          case g: GetResponse =>
             if (g.status == Success) writeRangedBytes(g.data.get, buf)
          case q: QueryResponse =>

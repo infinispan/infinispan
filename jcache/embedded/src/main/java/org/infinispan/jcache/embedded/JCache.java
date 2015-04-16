@@ -205,15 +205,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
       AdvancedCache<K, V> cache = configuration.isReadThrough() ? this.cache : 
          this.skipCacheLoadCache;
-      Map<K, V> result = cache.getAll(keys);
-      Iterator<Map.Entry<K, V>> entryIterator = result.entrySet().iterator();
-      while (entryIterator.hasNext()) {
-         Map.Entry<K , V> entry = entryIterator.next();
-         if (entry.getValue() == null) {
-            entryIterator.remove();
-         }
-      }
-      return result;
+      return cache.getAll(keys);
    }
 
    @Override

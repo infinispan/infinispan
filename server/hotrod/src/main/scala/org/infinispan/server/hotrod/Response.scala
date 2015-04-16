@@ -88,6 +88,22 @@ class BulkGetKeysResponse(override val version: Byte, override val messageId: Lo
    }
 }
 
+class GetAllResponse(override val version: Byte, override val messageId: Long, override val cacheName: String, override val clientIntel: Short,
+                  override val operation: OperationResponse, override val status: OperationStatus,
+                  override val topologyId: Int, val entries: Map[Bytes, Bytes])
+      extends Response(version, messageId, cacheName, clientIntel, operation, status, topologyId) {
+   override def toString = {
+      new StringBuilder().append("GetAllResponse").append("{")
+         .append("version=").append(version)
+         .append(", messageId=").append(messageId)
+         .append(", operation=").append(operation)
+         .append(", status=").append(status)
+         .append(", keys=")
+         .append(entries.map {case(k, v) => (Util.printArray(k, true), Util.printArray(v, true))}.mkString("[", ",", "]"))
+         .append("}").toString
+   }
+}
+
 class GetWithVersionResponse(override val version: Byte, override val messageId: Long, override val cacheName: String,
                              override val clientIntel: Short, override val operation: OperationResponse,
                              override val status: OperationStatus,

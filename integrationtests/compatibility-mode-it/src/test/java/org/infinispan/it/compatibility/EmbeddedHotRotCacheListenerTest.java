@@ -11,7 +11,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -78,6 +80,19 @@ public class EmbeddedHotRotCacheListenerTest extends AbstractInfinispanTest {
       assertTrue(l.visited.isEmpty());
 
       //resetting so don't have to type "== 2" etc. all over again
+      l.reset();
+
+      Set<String> keys = new HashSet<>();
+      keys.add("k");
+      keys.add("key");
+      Map<String, String> results = remote.getAll(keys);
+      assertTrue(l.created.isEmpty());
+      assertTrue(l.removed.isEmpty());
+      assertTrue(l.modified.isEmpty());
+      assertEquals(2, l.visitedCounter);
+      assertEquals("replacedValue", l.visited.get("k"));
+      assertEquals("modifiedValue", l.visited.get("key"));
+
       l.reset();
 
       remote.remove("key");

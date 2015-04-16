@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -68,6 +69,11 @@ public class OperationsFactory implements HotRodConstants {
    public GetOperation newGetKeyOperation(byte[] key) {
       return new GetOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags());
+   }
+
+   public GetAllOperation newGetAllOperation(Set<byte[]> keys) {
+      return new GetAllOperation(
+            codec, transportFactory, keys, cacheNameBytes, topologyId, flags());
    }
 
    public RemoveOperation newRemoveOperation(byte[] key) {
