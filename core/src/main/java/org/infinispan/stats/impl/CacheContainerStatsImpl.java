@@ -257,7 +257,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
          }
       }
       if (totalRequests > 0) {
-         rwRatio = (double) totalHits / totalRequests;
+         rwRatio = totalHits / totalRequests;
       }
       return rwRatio;
    }
@@ -422,6 +422,7 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       return result;
    }
 
+   @Override
    @ManagedAttribute(
          description = "Number of seconds since the cache container statistics were last reset",
          displayName = "Seconds since cache container statistics were reset",
@@ -440,7 +441,10 @@ public class CacheContainerStatsImpl implements CacheContainerStats, JmxStatisti
       long totalStores = 0;
       for (String cn : cm.getCacheNames()) {
          if (cm.cacheExists(cn)) {
-            totalStores+= cm.getCache(cn).getAdvancedCache().getStats().getStores();
+            long stores = cm.getCache(cn).getAdvancedCache().getStats().getStores();
+            if (stores > 0) {
+               totalStores+= stores;
+            }
          }
       }
       return totalStores;
