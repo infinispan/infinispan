@@ -1,7 +1,10 @@
 package org.infinispan.interceptors.xsite;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -27,6 +30,20 @@ public class BaseBackupInterceptor extends CommandInterceptor {
    void init(BackupSender sender, TransactionTable txTable) {
       this.backupSender = sender;
       this.txTable = txTable;
+   }
+
+   @Override
+   public final Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
+      return handleMultipleKeysWriteCommand(ctx, command);
+   }
+
+   protected Object handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
+      if (!ctx.isOriginLocal() || skipXSiteBackup(command)) {
+         return invokeNextInterceptor(ctx, command);
+      }
+      Object result = invokeNextInterceptor(ctx, command);
+      backupSender.processResponses(backupSender.backupWrite(command), command);
+      return result;
    }
    
    protected boolean isTxFromRemoteSite(GlobalTransaction gtx) {
