@@ -8,8 +8,10 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * A concurrent-map-based near cache implementation.
  * It does not provide eviction capabilities.
+ *
+ * @since 7.1
  */
-public class ConcurrentMapNearCache<K, V> implements NearCache<K, V> {
+final class ConcurrentMapNearCache<K, V> implements NearCache<K, V> {
 
    private final ConcurrentMap<K, VersionedValue<V>> cache = CollectionFactory.makeConcurrentMap();
 

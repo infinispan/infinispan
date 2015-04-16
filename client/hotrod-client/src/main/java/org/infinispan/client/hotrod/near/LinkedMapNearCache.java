@@ -13,8 +13,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * {@link java.util.LinkedHashMap} based near cache implementation.
  * Concurrent access is controlled by a reentrant RW lock.
+ *
+ * @since 7.1
+ * @deprecated Use {@link BoundedConcurrentMapNearCache} instead
  */
-public class LinkedMapNearCache<K, V> implements NearCache<K, V> {
+@Deprecated
+final class LinkedMapNearCache<K, V> implements NearCache<K, V> {
 
    private final LinkedHashMap<K, VersionedValue<V>> cache;
 

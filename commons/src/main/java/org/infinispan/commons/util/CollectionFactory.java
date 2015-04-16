@@ -5,6 +5,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashMap;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.equivalence.EquivalentLinkedHashMap;
+import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
 import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentParallelHashMapV8;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
@@ -187,6 +188,11 @@ public class CollectionFactory {
                initCapacity, loadFactor, concurrencyLevel, keyEq, valueEq);
       else
          return MAP_CREATOR.createConcurrentMap(initCapacity, loadFactor, concurrencyLevel);
+   }
+
+   public static <K, V> ConcurrentMap<K, V> makeBoundedConcurrentMap(int maxSize) {
+      return new BoundedEquivalentConcurrentHashMapV8<K, V>(maxSize,
+         AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
    }
 
    public static <K, V> Map<K, V> makeMap(
