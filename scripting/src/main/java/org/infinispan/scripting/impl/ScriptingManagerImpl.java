@@ -1,5 +1,6 @@
 package org.infinispan.scripting.impl;
 
+import java.util.EnumSet;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.script.Bindings;
@@ -16,7 +17,6 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.NoOpFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.container.entries.CacheEntry;
@@ -25,6 +25,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.scripting.ScriptingManager;
 import org.infinispan.scripting.impl.ScriptMetadata.MetadataProperties;
 import org.infinispan.scripting.logging.Log;
@@ -53,22 +54,16 @@ public class ScriptingManagerImpl implements ScriptingManager {
    ConcurrentMap<String, CompiledScript> compiledScripts = CollectionFactory.makeConcurrentMap();
    private AuthorizationManager authzManager;
 
+
    public ScriptingManagerImpl() {
    }
 
    @Inject
-   public void initialize(final EmbeddedCacheManager cacheManager) {
+   public void initialize(final EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
       ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
       this.scriptEngineManager = new ScriptEngineManager(classLoader);
-      configureCache(SCRIPT_CACHE, getScriptCacheConfiguration());
-   }
-
-   private void configureCache(String name, ConfigurationBuilder builder) {
-      Configuration cacheConfiguration = cacheManager.getCacheConfiguration(name);
-      if (cacheConfiguration == null) {
-         cacheManager.defineConfiguration(name, builder.build());
-      }
+      internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(InternalCacheRegistry.Flag.USER));
    }
 
    Cache<String, String> getScriptCache() {

@@ -4,7 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
@@ -25,13 +24,16 @@ import org.infinispan.query.remote.client.MarshallerRegistration;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerMBean;
 import org.infinispan.query.remote.indexing.IndexingMetadata;
 import org.infinispan.query.remote.indexing.IndexingMetadataCreator;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 
 import javax.management.MBeanException;
 import javax.management.ObjectName;
+
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -81,16 +83,9 @@ public final class ProtobufMetadataManager implements ProtobufMetadataManagerMBe
    }
 
    @Inject
-   public void init(EmbeddedCacheManager cacheManager) {
+   public void init(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
-      // define the cache configuration if it was not already defined by the user
-      Configuration cacheConfiguration = cacheManager.getCacheConfiguration(PROTOBUF_METADATA_CACHE_NAME);
-      if (cacheConfiguration == null) {
-         cacheManager.defineConfiguration(PROTOBUF_METADATA_CACHE_NAME, getProtobufMetadataCacheConfig().build());
-      } else {
-         throw new IllegalStateException("A cache configuration named " + PROTOBUF_METADATA_CACHE_NAME
-                                               + " already exists. This must not be configured externally by the user.");
-      }
+      internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME, getProtobufMetadataCacheConfig().build(), EnumSet.of(InternalCacheRegistry.Flag.USER));
    }
 
    /**

@@ -8,6 +8,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.RecoveryConfiguration;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.transaction.xa.recovery.RecoveryAwareRemoteTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryInfoKey;
@@ -49,12 +50,9 @@ public class RecoveryManagerFactory extends AbstractNamedCacheComponentFactory i
             if (!cm.getCacheNames().contains(recoveryCacheName)) {
                throw new CacheConfigurationException("Recovery cache (" + recoveryCacheName + ") does not exist!!");
             }
-          } else {
-            //this might have already been defined by other caches
-            if (!cm.getCacheNames().contains(recoveryCacheName)) {
-               Configuration config = getDefaultRecoveryCacheConfig();
-               cm.defineConfiguration(recoveryCacheName, config);
-            }
+         } else {
+            InternalCacheRegistry internalCacheRegistry = componentRegistry.getGlobalComponentRegistry().getComponent(InternalCacheRegistry.class);
+            internalCacheRegistry.registerInternalCache(recoveryCacheName, getDefaultRecoveryCacheConfig());
          }
          return (RecoveryManager) buildRecoveryManager(componentRegistry.getCacheName(),
                recoveryCacheName, cm, useDefaultCache);

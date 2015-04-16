@@ -35,6 +35,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseMode;
@@ -55,6 +56,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -734,7 +736,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       // Since caches could be modified dynamically, make a safe copy of keys
       names.addAll(Immutables.immutableSetConvert(caches.keySet()));
       names.remove(DEFAULT_CACHE_NAME);
-      names.remove(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
+      InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+      internalCacheRegistry.filterInternalCaches(names);
       if (names.isEmpty())
          return InfinispanCollections.emptySet();
       else
