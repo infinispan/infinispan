@@ -38,8 +38,12 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import static org.infinispan.commons.util.Util.toStr;
@@ -162,74 +166,110 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       Map<Object, Object> map = (Map<Object, Object>) invokeNextInterceptor(ctx, command);
-      if (map == null) map = command.createMap();
-      if (!ctx.isOriginLocal() || command.hasFlag(Flag.CACHE_MODE_LOCAL)
+      int commandTopologyId = command.getTopologyId();
+      int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+      boolean topologyChanged = currentTopologyId != commandTopologyId && commandTopologyId != -1;
+      // If the topology changed while invoking, this means we could have a null value
+      // but there really wasn't so we have to suspect that entry.
+      if (topologyChanged) {
+         if (trace) {
+            log.tracef("Command topology id is %d, after topology id is %d",
+                  commandTopologyId, currentTopologyId);
+         }
+         Iterator<Entry<Object, Object>> valueIterator = map.entrySet().iterator();
+         while (valueIterator.hasNext()) {
+            Entry<Object, Object> entry = valueIterator.next();
+            if (entry.getValue() == null) {
+               valueIterator.remove();
+            }
+         }
+      }
+      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)
             || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            || command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+            || command.hasFlag(Flag.IGNORE_RETURN_VALUES)
+            || !ctx.isOriginLocal()) {
          return map;
       }
 
+      boolean missingRemoteValues = false;
       Set<Object> requestedKeys = new HashSet<>(command.getKeys().size());
       for (Object key : command.getKeys()) {
-         //if the cache entry has the value lock flag set, skip the remote get.
-         CacheEntry entry = ctx.lookupEntry(key);
-         boolean skipRemoteGet = entry != null && entry.skipLookup();
-
-         // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
-         // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
-         // the entry is mapped to the local node.
-         if (!skipRemoteGet && map.get(key) == null) {
-            // TODO: what about the deltaCompositeKey? It's kind of messy, where should we use the composite key
-            //       and where the regular one?
-            //key = filterDeltaCompositeKey(key);
-            boolean shouldFetchFromRemote = false;
-            if (entry == null || entry.isNull()) {
-               ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
-               shouldFetchFromRemote = !isValueAvailableLocally(ch, key);
-               if (!shouldFetchFromRemote && getLog().isTraceEnabled()) {
-                  getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
+         // If the local map already found the key that means we don't need to go
+         // remote for it
+         if (!map.containsKey(key)) {
+            //if the cache entry has the value lock flag set, skip the remote get.
+            CacheEntry entry = ctx.lookupEntry(key);
+            boolean skipRemoteGet = entry != null && entry.skipLookup();
+   
+            // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
+            // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
+            // the entry is mapped to the local node.
+            if (!skipRemoteGet) {
+               // TODO: what about the deltaCompositeKey? It's kind of messy, where should we use the composite key
+               //       and where the regular one?
+               //key = filterDeltaCompositeKey(key);
+               boolean shouldFetchFromRemote = false;
+               if (entry == null || entry.isNull()) {
+                  ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
+                  shouldFetchFromRemote = !isValueAvailableLocally(ch, key);
+                  if (!shouldFetchFromRemote && trace) {
+                     getLog().tracef("Not performing remote lookup of key %s as we own it"
+                        + " now, we didn't when we looked - will have to retry command after", key);
+                  }
                }
-            }
-            if (shouldFetchFromRemote) {
-               requestedKeys.add(key);
-            } else if (!ctx.isEntryRemovedInContext(key)) {
-               // Try again locally in case if we now are an owner for a key
-               Object localValue = localGet(ctx, key, false, command, command.isReturnEntries());
-               if (localValue != null) {
-                  map.put(key, localValue);
+               if (shouldFetchFromRemote) {
+                  requestedKeys.add(key);
+               } else if (!ctx.isEntryRemovedInContext(key)) {
+                  // Try again locally in case if we now are an owner for a key
+                  Object localValue = localGet(ctx, key, false, command, command.isReturnEntries());
+                  if (localValue != null) {
+                     map.put(key, localValue);
+                  } else {
+                     // Just in case rerun it again
+                     missingRemoteValues = true;
+                  }
                }
             }
          }
       }
+      
       if (!requestedKeys.isEmpty()) {
          if (trace) {
             log.tracef("Fetching entries for keys %s from remote nodes", requestedKeys);
          }
-         Map<Object, InternalCacheEntry> previouslyRetrieved = command.getRemotelyFetched();
+
          Map<Object, InternalCacheEntry> justRetrieved = retrieveFromRemoteSources(
                requestedKeys, ctx, command.getFlags());
+         Map<Object, InternalCacheEntry> previouslyRetrieved = command.getRemotelyFetched();
          if (previouslyRetrieved != null) {
             previouslyRetrieved.putAll(justRetrieved);
          } else {
             command.setRemotelyFetched(justRetrieved);
          }
-         for (Entry<Object, InternalCacheEntry> entry : justRetrieved.entrySet()) {
-            Object key = entry.getKey();
-            InternalCacheEntry value = entry.getValue();
-            map.put(entry.getKey(), command.isReturnEntries() ? value : value != null ? value.getValue() : null);
-            if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
-               ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(
-                     key, value.getMetadata().version());
-            }
-
-            if (!ctx.replaceValue(key, value)) {
-               ctx.putLookedUpEntry(key, value);
-               if (ctx.isInTxScope()) {
-                  ((TxInvocationContext) ctx).getCacheTransaction().replaceVersionRead(
+         for (Object key : requestedKeys) {
+            if (!justRetrieved.containsKey(key)) {
+               missingRemoteValues = true;
+            } else {
+               InternalCacheEntry value = justRetrieved.get(key);
+               if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
+                  ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(
                         key, value.getMetadata().version());
                }
+
+               if (!ctx.replaceValue(key, value)) {
+                  ctx.putLookedUpEntry(key, value);
+                  if (ctx.isInTxScope()) {
+                     ((TxInvocationContext) ctx).getCacheTransaction().replaceVersionRead(
+                           key, value.getMetadata().version());
+                  }
+               }
+               map.put(key, command.isReturnEntries() ? value : value != null ? value.getValue() : null);
             }
          }
+      }
+
+      if (missingRemoteValues) {
+         throw new OutdatedTopologyException("Remote values are missing because of a topology change");
       }
       return map;
    }

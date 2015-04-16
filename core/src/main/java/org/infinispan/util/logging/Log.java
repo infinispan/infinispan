@@ -1309,5 +1309,5 @@ public interface Log extends BasicLogger {
    void xaResourceEndFailed(XAResource resource, @Cause Throwable t);
 
    @Message(value = "Keys '%s' are not available. Not all owners are in this partition", id = 358)
-   AvailabilityException degradedModeKeysUnavailable(Collection<Object> keys);
+   AvailabilityException degradedModeKeysUnavailable(Collection<?> keys);
 }

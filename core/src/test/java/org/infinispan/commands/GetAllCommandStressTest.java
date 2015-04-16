@@ -77,7 +77,6 @@ public class GetAllCommandStressTest extends MultipleCacheManagersTest {
       return cm;
    }
 
-   @Test(invocationCount=100)
    public void testStressNodesLeavingWhileMultipleIterators() throws InterruptedException, ExecutionException, TimeoutException {
       final Map<Integer, Integer> masterValues = new HashMap<Integer, Integer>();
       final Set<Integer>[] keys = new Set[THREAD_WORKER_COUNT];

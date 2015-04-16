@@ -78,8 +78,11 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
          if (entry == null) {
             if (trace) {
                log.tracef("Entry for key %s not found", key);
-               if (ctx.isOriginLocal())
-                  throw new IllegalStateException("All entries must exist in the context");
+            }
+            // We have to put null even if it isn't in the context.  This is because
+            // context won't have a value for null unless it is repeatable read.
+            if (ch == null || ch.isKeyLocalToNode(localAddress, key)) {
+               map.put(key, null);
             }
             continue;
          }
