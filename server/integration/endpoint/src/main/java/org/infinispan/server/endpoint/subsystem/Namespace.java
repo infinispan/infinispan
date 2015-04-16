@@ -30,11 +30,6 @@ public enum Namespace {
     // must be first
     UNKNOWN(null, 0, 0, null),
 
-    INFINISPAN_ENDPOINT_1_0("jboss:domain:datagrid", 1, 0, new EndpointSubsystemReader_1_0()),
-    INFINISPAN_ENDPOINT_5_2("infinispan:server:endpoint", 5, 2, new EndpointSubsystemReader_1_0()),
-    INFINISPAN_ENDPOINT_5_3("infinispan:server:endpoint", 5, 3, new EndpointSubsystemReader_5_3()),
-    INFINISPAN_ENDPOINT_6_0("infinispan:server:endpoint", 6, 0, new EndpointSubsystemReader_6_0()),
-    INFINISPAN_ENDPOINT_7_0("infinispan:server:endpoint", 7, 0, new EndpointSubsystemReader_7_0()),
     INFINISPAN_ENDPOINT_7_2("infinispan:server:endpoint", 7, 2, new EndpointSubsystemReader_7_2()),
     ;
     private static final String URN_PATTERN = "urn:%s:%d.%d";

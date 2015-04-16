@@ -19,7 +19,6 @@
 package org.infinispan.server.endpoint.subsystem;
 
 import org.infinispan.server.endpoint.Constants;
-import org.infinispan.server.endpoint.subsystem.*;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.operations.common.Util;
