@@ -1,7 +1,6 @@
 package org.infinispan.interceptors.xsite;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
@@ -46,11 +45,6 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
    }
 
    @Override
-   public Object visitClearCommand(InvocationContext ctx, ClearCommand command) throws Throwable {
-      return handleMultipleKeysWriteCommand(ctx, command);
-   }
-
-   @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       return handleMultipleKeysWriteCommand(ctx, command);
    }
@@ -62,15 +56,6 @@ public class NonTransactionalBackupInterceptor extends BaseBackupInterceptor {
       } else if (command.isSuccessful() && clusteringDependentLogic.localNodeIsPrimaryOwner(command.getKey())) {
          backupSender.processResponses(backupSender.backupWrite(transform(command)), command);
       }
-      return result;
-   }
-
-   private Object handleMultipleKeysWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
-      if (!ctx.isOriginLocal() || skipXSiteBackup(command)) {
-         return invokeNextInterceptor(ctx, command);
-      }
-      Object result = invokeNextInterceptor(ctx, command);
-      backupSender.processResponses(backupSender.backupWrite(command), command);
       return result;
    }
 
