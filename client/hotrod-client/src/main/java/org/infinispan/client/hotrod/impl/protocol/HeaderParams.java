@@ -105,6 +105,8 @@ public class HeaderParams {
             return HotRodConstants.EXEC_RESPONSE;
          case HotRodConstants.PUT_ALL_REQUEST:
             return HotRodConstants.PUT_ALL_RESPONSE;
+         case HotRodConstants.GET_ALL_REQUEST:
+            return HotRodConstants.GET_ALL_RESPONSE;
          default:
             throw new IllegalStateException("Unknown operation code: " + opCode);
       }

@@ -152,11 +152,11 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
                   unboxed.put(entry.getKey(), null);
                } else {
                   if (command.getRemotelyFetched() == null || !command.getRemotelyFetched().containsKey(entry.getKey())) {
-                     unboxed.put(entry.getKey(), entryFactory.create(entry.getKey(),
+                     unboxed.put(converter.unboxKey(entry.getKey()), entryFactory.create(entry.getKey(),
                            converter.unboxValue(cacheEntry.getValue()),
                            cacheEntry.getMetadata(), cacheEntry.getLifespan(), cacheEntry.getMaxIdle()));
                   } else {
-                     unboxed.put(entry.getKey(), cacheEntry);
+                     unboxed.put(converter.unboxKey(entry.getKey()), cacheEntry);
                   }
                }
             }
@@ -167,9 +167,9 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
             for (Map.Entry<Object, Object> entry : map.entrySet()) {
                Object value = entry == null ? null : entry.getValue();
                if (command.getRemotelyFetched() == null || !command.getRemotelyFetched().containsKey(entry.getKey())) {
-                  unboxed.put(entry.getKey(), entry == null ? null : converter.unboxValue(value));
+                  unboxed.put(converter.unboxKey(entry.getKey()), entry == null ? null : converter.unboxValue(value));
                } else {
-                  unboxed.put(entry.getKey(), value);
+                  unboxed.put(converter.unboxKey(entry.getKey()), value);
                }
             }
             return unboxed;

@@ -25,4 +25,5 @@ object HotRodOperation extends Enumeration(20) {
    val SizeRequest = Value
    val ExecRequest = Value
    val PutAllRequest = Value
+   val GetAllRequest = Value
 }

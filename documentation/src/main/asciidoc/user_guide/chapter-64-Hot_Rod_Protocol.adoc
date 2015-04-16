@@ -82,6 +82,7 @@ In this particular case, this is +10+
 +0x17+ = ping +
 +0x19+ = bulkGet +
 +0x2D+ = putAll +
++0x2F+ = getAll +
 | Cache Name Length   | vInt       | Length of cache name. If the passed
 length is +0+ (followed by no cache name), the operation will interact with
 the default cache.
@@ -144,6 +145,7 @@ for which the response is sent.
 +0x18+ = ping +
 +0x1A+ = bulkGet +
 +0x2E+ = putAll +
++0x30+ = getAll +
 +0x50+ = error +
 | Status                 | 1 byte     | Status of the response, possible values: +
 +0x00+ = No error +
@@ -603,6 +605,47 @@ Response:
 | Header              | variable   | Response header
 | Response status     | 1 byte     |
 +0x00+ = success, if all put +
+|==============================================================================
+
+.GetAll
+
+Bulk operation to get all entries that map to a given set of keys.
+
+Request:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Request header
+| Key count           | vInt       | How many keys to find entries for
+| Key 1 Length        | vInt       | Length of key
+| Key 1               | byte array | Retrieved key
+| Key 2 Length        | vInt       |
+| Key 2               | byte array |
+|... continues until key count is reached||
+
+|==============================================================================
+
+Response:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
+| Entry count         | vInt       | How many entries are being returned
+| Key 1 Length        | vInt       | Length of key
+| Key 1               | byte array | Retrieved key
+| Value 1 Length      | vInt       | Length of value
+| Value 1             | byte array | Retrieved value
+| Key 2 Length        | vInt       |
+| Key 2               | byte array |
+| Value 2 Length      | vInt       |
+| Value 2             | byte array |
+|... continues until entry count is reached ||
++0x00+ = success, if the get returned sucessfully +
 |==============================================================================
 
 

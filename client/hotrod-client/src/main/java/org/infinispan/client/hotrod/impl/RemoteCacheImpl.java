@@ -436,6 +436,27 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    }
 
    @Override
+   public Map<K, V> getAll(Set<? extends K> keys) {
+      assertRemoteCacheManagerIsStarted();
+      if (log.isTraceEnabled()) {
+         log.tracef("About to getAll entries (%s)", keys);
+      }
+      Set<byte[]> byteKeys = new HashSet<>(keys.size());
+      for (K key : keys) {
+         byteKeys.add(obj2bytes(key, true));
+      }
+      GetAllOperation op = operationsFactory.newGetAllOperation(byteKeys);
+      Map<byte[], byte[]> result = op.execute();
+      Map<K,V> toReturn = new HashMap<K,V>();
+      for (Map.Entry<byte[], byte[]> entry : result.entrySet()) {
+         V value = MarshallerUtil.bytes2obj(marshaller, entry.getValue());
+         K key = MarshallerUtil.bytes2obj(marshaller, entry.getKey());
+         toReturn.put(key, value);
+      }
+      return Collections.unmodifiableMap(toReturn);
+   }
+
+   @Override
    public Map<K, V> getBulk() {
       return getBulk(0);
    }
@@ -671,5 +692,5 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 		}
 		ExecuteOperation op = operationsFactory.newExecuteOperation(taskName, marshalledParams);
 		return MarshallerUtil.bytes2obj(marshaller, op.execute());
-	} 
+	}
 }

@@ -32,7 +32,6 @@ import java.security.Principal
 import org.infinispan.server.core.security.InetAddressPrincipal
 import java.net.InetSocketAddress
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal
-import java.util.HashMap
 import scala.collection.immutable
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -48,6 +47,8 @@ import org.infinispan.container.versioning.EntryVersion
 import org.infinispan.container.versioning.VersionGenerator
 import org.infinispan.container.versioning.NumericVersionGenerator
 import org.infinispan.remoting.rpc.RpcManager
+import java.util.HashSet
+import java.util.HashMap
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -89,6 +90,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x29 => (SizeRequest, true)
          case 0x2B => (ExecRequest, true)
          case 0x2D => (PutAllRequest, false)
+         case 0x2F => (GetAllRequest, false)
          case _ => throw new HotRodUnknownOperationException(
             "Unknown operation: " + streamOp, version, messageId)
       }
@@ -136,6 +138,9 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
             val valueLength = readUnsignedInt(buffer)
             (new RequestParameters(valueLength, lifespan, maxIdle, -1), true)
+         case GetAllRequest =>
+           val count = readUnsignedInt(buffer)
+           (new RequestParameters(count, -1, -1, -1), true)
          case _ =>
             val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
             val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
@@ -375,7 +380,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                createSuccessResponse(h, null)
             else
                createNotExecutedResponse(h, null)
-         case PutAllRequest =>
+         case PutAllRequest | GetAllRequest =>
             decoder.checkpointTo(HotRodDecoderState.DECODE_PARAMETERS)
          case _ => null
       }
@@ -438,6 +443,20 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             cache.putAll(map, hrCtx.buildMetadata)
             new Response(h.version, h.messageId, h.cacheName, h.clientIntel,
                PutAllResponse, Success, h.topologyId)
+         case GetAllRequest =>
+           var set = hrCtx.getAllSet
+           if (set == null) {
+             set = new HashSet[Bytes]
+             hrCtx.getAllSet = set
+           }
+           for (i <- set.size until hrCtx.params.valueLength) {
+             val key = readRangedBytes(buffer)
+             set.add(key)
+             decoder.checkpoint
+           }
+           val results = cache.getAll(set)
+           new GetAllResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
+               GetAllResponse, Success, h.topologyId, immutable.Map[Bytes, Bytes]() ++ results.asScala)
         case _ => null
      }
    }

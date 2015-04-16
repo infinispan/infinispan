@@ -2,7 +2,7 @@ package org.infinispan.commands;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.assertFalse;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,6 +19,7 @@ import org.testng.annotations.Test;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
+ * @author William Burns
  */
 @Test(groups = "functional")
 public abstract class GetAllCommandTest extends MultipleCacheManagersTest {
@@ -40,7 +41,7 @@ public abstract class GetAllCommandTest extends MultipleCacheManagersTest {
       List<Cache<String, String>> caches = caches();
       for (Cache<String, String> cache : caches) {
          Map<String, String> result = cache.getAdvancedCache().getAll(Collections.singleton("not-present"));
-         assertTrue(result.containsKey("not-present"));
+         assertFalse(result.containsKey("not-present"));
          assertNull(result.get("not-presnt"));
       }
    }
