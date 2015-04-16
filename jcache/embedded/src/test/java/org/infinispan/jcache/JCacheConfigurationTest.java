@@ -4,12 +4,12 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.net.URI;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.junit.Assert.assertTrue;
 
 /**
  * // TODO: Document this
@@ -17,9 +17,9 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Galder Zamarreño
  * @since // TODO
  */
-@Test(groups = "functional", testName = "jcache.JCacheConfigurationTest")
 public class JCacheConfigurationTest {
 
+   @Test
    public void testNamedCacheConfiguration() {
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.createCacheManager(false)) {

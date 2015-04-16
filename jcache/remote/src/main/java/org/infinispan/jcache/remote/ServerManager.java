@@ -187,6 +187,10 @@ public class ServerManager {
     */
    private static void checkServerManagementAvailable() throws NotAvailableException {
       try {
+         boolean skipServerMgmtLookup = Boolean.parseBoolean(System.getProperty("infinispan.jcache.mgmt.lookup.skip", "false"));
+         if (skipServerMgmtLookup) {
+            throw new NotAvailableException();
+         }
          Class.forName("org.jboss.as.controller.client.ModelControllerClient");
       } catch (ClassNotFoundException e) {
          throw new NotAvailableException();

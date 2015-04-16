@@ -1,7 +1,9 @@
 package org.infinispan.jcache;
 
 import org.infinispan.jcache.util.JCacheRunnable;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
@@ -10,10 +12,9 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.spi.CachingProvider;
-import java.lang.reflect.Method;
 
 import static org.infinispan.jcache.util.JCacheTestingUtil.withCachingProvider;
-import static org.testng.AssertJUnit.*;
+import static org.junit.Assert.*;
 
 /**
  * JCache expiry tests not covered by the TCK.
@@ -21,10 +22,13 @@ import static org.testng.AssertJUnit.*;
  * @author Galder Zamarreño
  * @since 5.3
  */
-@Test(groups = "functional", testName = "jcache.JCacheExpiryTest")
 public class JCacheExpiryTest {
 
-   public void testGetAndReplace(Method m) {
+   @Rule
+   public TestName testName = new TestName();
+
+   @Test
+   public void testGetAndReplace() {
       final MutableConfiguration<Integer, String>
             cfg = new MutableConfiguration<Integer, String>();
 
@@ -50,7 +54,7 @@ public class JCacheExpiryTest {
          }
       });
 
-      final String name = getName(m);
+      final String name = testName.getMethodName();
       withCachingProvider(new JCacheRunnable() {
          @Override
          public void run(CachingProvider provider) {
@@ -66,10 +70,6 @@ public class JCacheExpiryTest {
             assertNull(cache.get(1));
          }
       });
-   }
-
-   private String getName(Method m) {
-      return getClass().getName() + '.' + m.getName();
    }
 
 }
