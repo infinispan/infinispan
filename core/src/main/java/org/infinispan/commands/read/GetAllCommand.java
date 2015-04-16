@@ -79,11 +79,6 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
             if (trace) {
                log.tracef("Entry for key %s not found", key);
             }
-            // We have to put null even if it isn't in the context.  This is because
-            // context won't have a value for null unless it is repeatable read.
-            if (ch == null || ch.isKeyLocalToNode(localAddress, key)) {
-               map.put(key, null);
-            }
             continue;
          }
          if (entry.isNull()) {
