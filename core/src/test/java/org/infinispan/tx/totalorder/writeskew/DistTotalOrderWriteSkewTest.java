@@ -35,7 +35,7 @@ public class DistTotalOrderWriteSkewTest extends DistWriteSkewTest {
          assert false;
       } catch (Throwable e) {
          //expected
-         e.printStackTrace();
+         log.trace("Expected Exception", e);
       }
       assertEquals("v3", cache(0).get("k"));
       assertEventuallyEquals(1, "k", "v3");

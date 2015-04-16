@@ -67,7 +67,7 @@ public class ExplicitUnlockTest extends SingleCacheManagerTest {
          cache.put("" + key, "value");
       }
 
-      List<Future<Boolean>> results = new ArrayList<Future<Boolean>>(nThreads);
+      List<Future<Boolean>> results = new ArrayList<>(nThreads);
 
       for (int i = 1; i <= nThreads; i++) {
          results.add(fork(new Worker(i, cache, withUnlock, stepDelayMsec)));
@@ -80,7 +80,7 @@ public class ExplicitUnlockTest extends SingleCacheManagerTest {
       assertTrue("All worker should complete without exceptions", success);
       assertNoTransactions();
       for (int i = 0; i < NUMBER_OF_KEYS; ++i) {
-         assertNotLocked(cache, valueOf(i));
+         assertEventuallyNotLocked(cache, valueOf(i));
       }
    }
 

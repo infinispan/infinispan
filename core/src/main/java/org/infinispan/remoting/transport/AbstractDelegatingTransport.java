@@ -108,6 +108,10 @@ public abstract class AbstractDelegatingTransport implements Transport {
       return actual.getLog();
    }
 
+   public Transport getDelegate() {
+      return actual;
+   }
+
    /**
     * method invoked before a remote invocation.
     *

@@ -89,11 +89,11 @@ public class PostCommitRecoveryStateTest extends MultipleCacheManagersTest {
       }
 
       @Override
-      public void removeRecoveryInformationFromCluster(Collection<Address> where, Xid xid, boolean sync, GlobalTransaction gtx) {
+      public void removeRecoveryInformationFromCluster(Collection<Address> where, Xid xid, boolean sync, GlobalTransaction gtx, boolean skipTxCompletionCommand) {
          if (swallowRemoveRecoveryInfoCalls){
             log.trace("PostCommitRecoveryStateTest$RecoveryManagerDelegate.removeRecoveryInformation");
          } else {
-            this.rm.removeRecoveryInformationFromCluster(where, xid, sync, null);
+            this.rm.removeRecoveryInformationFromCluster(where, xid, sync, null, false);
          }
       }
 

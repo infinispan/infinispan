@@ -31,8 +31,8 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       assert checkTxCount(1, 0, 0);
       assert checkTxCount(2, 0, 1);
 
-      assertNotLocked(cache(0), k);
-      assertNotLocked(cache(1), k);
+      assertEventuallyNotLocked(cache(0), k);
+      assertEventuallyNotLocked(cache(1), k);
       assertLocked(cache(2), k);
 
       killMember(1);
@@ -56,8 +56,8 @@ public abstract class AbstractInitiatorCrashTest extends AbstractCrashTest {
       transaction.runPrepare();
       tm(1).suspend();
 
-      assertNotLocked(cache(0), k);
-      assertNotLocked(cache(1), k);
+      assertEventuallyNotLocked(cache(0), k);
+      assertEventuallyNotLocked(cache(1), k);
       assertLocked(cache(2), k);
 
       checkTxCount(0, 0, 1);

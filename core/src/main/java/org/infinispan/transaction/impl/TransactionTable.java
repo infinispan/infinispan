@@ -27,6 +27,7 @@ import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.LockingMode;
@@ -69,13 +70,13 @@ import java.util.concurrent.locks.ReentrantLock;
 @Listener
 public class TransactionTable implements org.infinispan.transaction.TransactionTable {
 
+   private static final Log log = LogFactory.getLog(TransactionTable.class);
    public static final int CACHE_STOPPED_TOPOLOGY_ID = -1;
    /**
     * minTxTopologyId is the minimum topology ID across all ongoing local and remote transactions.
     */
    private volatile int minTxTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
    private volatile int currentTopologyId = CACHE_STOPPED_TOPOLOGY_ID;
-   private static final Log log = LogFactory.getLog(TransactionTable.class);
    protected Configuration configuration;
    protected InvocationContextFactory icf;
    protected TransactionCoordinator txCoordinator;
@@ -83,19 +84,21 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    protected RpcManager rpcManager;
    protected CommandsFactory commandsFactory;
    protected ClusteringDependentLogic clusteringLogic;
-   protected boolean clustered = false;
-   private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
-   private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
-   private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
    private InterceptorChain invoker;
    private CacheNotifier notifier;
    private TransactionSynchronizationRegistry transactionSynchronizationRegistry;
-   private Lock minTopologyRecalculationLock;
    private CompletedTransactionsInfo completedTransactionsInfo;
    private ScheduledExecutorService executorService;
    private String cacheName;
    private TimeService timeService;
    private CacheManagerNotifier cacheManagerNotifier;
+   protected PartitionHandlingManager partitionHandlingManager;
+
+   private ConcurrentMap<Transaction, LocalTransaction> localTransactions;
+   private ConcurrentMap<GlobalTransaction, LocalTransaction> globalToLocalTransactions;
+   private ConcurrentMap<GlobalTransaction, RemoteTransaction> remoteTransactions;
+   private Lock minTopologyRecalculationLock;
+   protected boolean clustered = false;
 
    @Inject
    public void initialize(RpcManager rpcManager, Configuration configuration,
@@ -103,7 +106,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
                           TransactionFactory gtf, TransactionCoordinator txCoordinator,
                           TransactionSynchronizationRegistry transactionSynchronizationRegistry,
                           CommandsFactory commandsFactory, ClusteringDependentLogic clusteringDependentLogic, Cache cache,
-                          TimeService timeService, CacheManagerNotifier cacheManagerNotifier) {
+                          TimeService timeService, CacheManagerNotifier cacheManagerNotifier, PartitionHandlingManager partitionHandlingManager) {
       this.rpcManager = rpcManager;
       this.configuration = configuration;
       this.icf = icf;
@@ -117,6 +120,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       this.cacheManagerNotifier = cacheManagerNotifier;
       this.cacheName = cache.getName();
       this.timeService = timeService;
+      this.partitionHandlingManager = partitionHandlingManager;
 
       this.clustered = configuration.clustering().cacheMode().isClustered();
    }
@@ -226,7 +230,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       if (!localTransaction.isEnlisted()) {
          SynchronizationAdapter sync = new SynchronizationAdapter(
                 localTransaction, txCoordinator, commandsFactory, rpcManager,
-                this, clusteringLogic, configuration);
+                this, clusteringLogic, configuration, partitionHandlingManager);
          if (transactionSynchronizationRegistry != null) {
             try {
                transactionSynchronizationRegistry.registerInterposedSynchronization(sync);
@@ -276,10 +280,9 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       log.tracef("Checking for transactions originated on leavers. Current cache members are %s, remote transactions: %d",
             members, remoteTransactions.size());
       HashSet<Address> membersSet = new HashSet<>(members);
-      List<GlobalTransaction> toKill = new ArrayList<GlobalTransaction>();
+      List<GlobalTransaction> toKill = new ArrayList<>();
       for (Map.Entry<GlobalTransaction, RemoteTransaction> e : remoteTransactions.entrySet()) {
          GlobalTransaction gt = e.getKey();
-         RemoteTransaction remoteTx = e.getValue();
          log.tracef("Checking transaction %s", gt);
          if (!membersSet.contains(gt.getAddress())) {
             toKill.add(gt);
@@ -293,8 +296,12 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       }
 
       for (GlobalTransaction gtx : toKill) {
-         log.debugf("Rolling back transaction %s because originator %s left the cluster", gtx, gtx.getAddress());
-         killTransaction(gtx);
+         if (partitionHandlingManager.canRollbackTransactionAfterOriginatorLeave(gtx)) {
+            log.debugf("Rolling back transaction %s because originator %s left the cluster", gtx, gtx.getAddress());
+            killTransaction(gtx);
+         } else {
+            log.debugf("Keeping transaction %s after the originator %s left the cluster.", gtx, gtx.getAddress());
+         }
       }
 
       log.tracef("Completed cleaning transactions originating on leavers. Remote transactions remaining: %d",
@@ -305,7 +312,7 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       log.tracef("About to cleanup remote transactions older than %d ms", configuration.transaction().completedTxTimeout());
       long beginning = timeService.time();
       long cutoffCreationTime = beginning - TimeUnit.MILLISECONDS.toNanos(configuration.transaction().completedTxTimeout());
-      List<GlobalTransaction> toKill = new ArrayList<GlobalTransaction>();
+      List<GlobalTransaction> toKill = new ArrayList<>();
 
       // Check remote transactions.
       for(Map.Entry<GlobalTransaction, RemoteTransaction> e : remoteTransactions.entrySet()) {
@@ -609,10 +616,8 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction)
     */
    public boolean isTransactionCompleted(GlobalTransaction gtx) {
-      if (completedTransactionsInfo == null)
-         return false;
+      return completedTransactionsInfo != null && completedTransactionsInfo.isTransactionCompleted(gtx);
 
-      return completedTransactionsInfo.isTransactionCompleted(gtx);
    }
 
    private class CompletedTransactionsInfo {

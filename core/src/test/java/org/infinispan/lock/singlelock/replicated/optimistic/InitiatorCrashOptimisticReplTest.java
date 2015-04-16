@@ -34,8 +34,8 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       txControlInterceptor.commitReceived.await();
 
       assertLocked(cache(0), "k");
-      assertNotLocked(cache(1), "k");
-      assertNotLocked(cache(2), "k");
+      assertEventuallyNotLocked(cache(1), "k");
+      assertEventuallyNotLocked(cache(2), "k");
 
       checkTxCount(0, 0, 1);
       checkTxCount(1, 1, 0);
@@ -65,8 +65,8 @@ public class InitiatorCrashOptimisticReplTest extends AbstractCrashTest {
       assert checkTxCount(2, 0, 1);
 
       assertLocked(cache(0), "k");
-      assertNotLocked(cache(1), "k");
-      assertNotLocked(cache(2), "k");
+      assertEventuallyNotLocked(cache(1), "k");
+      assertEventuallyNotLocked(cache(2), "k");
 
       killMember(1);
 

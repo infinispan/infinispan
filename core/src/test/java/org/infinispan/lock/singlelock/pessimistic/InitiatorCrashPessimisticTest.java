@@ -31,15 +31,15 @@ public class InitiatorCrashPessimisticTest extends AbstractInitiatorCrashTest {
       cache(1).put(k2, "v2");
 
       assertLocked(cache(0), k0);
-      assertNotLocked(cache(1), k0);
-      assertNotLocked(cache(2), k0);
+      assertEventuallyNotLocked(cache(1), k0);
+      assertEventuallyNotLocked(cache(2), k0);
 
-      assertNotLocked(cache(0), k1);
+      assertEventuallyNotLocked(cache(0), k1);
       assertLocked(cache(1), k1);
-      assertNotLocked(cache(2), k1);
+      assertEventuallyNotLocked(cache(2), k1);
 
-      assertNotLocked(cache(0), k2);
-      assertNotLocked(cache(1), k2);
+      assertEventuallyNotLocked(cache(0), k2);
+      assertEventuallyNotLocked(cache(1), k2);
       assertLocked(cache(2), k2);
 
       assert checkTxCount(0, 0, 1);

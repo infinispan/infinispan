@@ -1,14 +1,11 @@
 package org.infinispan.interceptors.totalorder;
 
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.configuration.cache.Configurations;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.remoting.responses.KeysValidateFilter;
@@ -75,11 +72,6 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
       } finally {
          transactionRemotelyPrepared(ctx);
       }
-   }
-
-   @Override
-   protected void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
-      entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
    }
 
    @Override

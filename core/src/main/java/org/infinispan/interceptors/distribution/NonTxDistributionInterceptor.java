@@ -203,13 +203,11 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return handleNonTxWriteCommand(ctx, command);
    }
 
-   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {
-      for (Object k : keygen.getKeys()) {
-         if (cdl.localNodeIsPrimaryOwner(k)) {
-            // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
-            // earlier when the EntryWrappingInterceptor executed during current invocation context but it should be now.
-            localGetCacheEntry(ctx, k, true, command);
-         }
+   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
+      if (cdl.localNodeIsPrimaryOwner(key)) {
+         // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
+         // earlier when the EntryWrappingInterceptor executed during current invocation context but it should be now.
+         localGetCacheEntry(ctx, key, true, command);
       }
    }
 

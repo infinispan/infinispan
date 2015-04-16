@@ -37,7 +37,7 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
    public void doTest() throws Throwable {
       cache.put(k, "value"); // init value
 
-      assertNotLocked(cache, k);
+      assertEventuallyNotLocked(cache, k);
 
 //      InvocationContextContainerImpl icc = (InvocationContextContainerImpl) TestingUtil.extractComponent(cache, InvocationContextContainer.class);
 //      InvocationContext ctx = icc.getInvocationContext();
@@ -71,7 +71,7 @@ public class StaleLockAfterTxAbortTest extends SingleCacheManagerTest {
       transaction.runCommit(true);
       transactionThread.join();
 
-      assertNotLocked(cache, k);
+      assertEventuallyNotLocked(cache, k);
    }
 
    private class TxThread extends Thread {

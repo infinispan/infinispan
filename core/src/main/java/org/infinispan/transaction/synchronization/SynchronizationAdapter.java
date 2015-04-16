@@ -4,6 +4,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -32,8 +33,8 @@ public class SynchronizationAdapter extends AbstractEnlistmentAdapter implements
    public SynchronizationAdapter(LocalTransaction localTransaction, TransactionCoordinator txCoordinator,
                                  CommandsFactory commandsFactory, RpcManager rpcManager,
                                  TransactionTable transactionTable, ClusteringDependentLogic clusteringLogic,
-                                 Configuration configuration) {
-      super(localTransaction, commandsFactory, rpcManager, transactionTable, clusteringLogic, configuration, txCoordinator);
+                                 Configuration configuration, PartitionHandlingManager partitionHandlingManager) {
+      super(localTransaction, commandsFactory, rpcManager, transactionTable, clusteringLogic, configuration, txCoordinator, partitionHandlingManager);
       this.localTransaction = localTransaction;
    }
 

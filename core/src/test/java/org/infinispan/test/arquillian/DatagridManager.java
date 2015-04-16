@@ -79,7 +79,7 @@ public class DatagridManager extends MultipleCacheManagersTest
 
    //name change
    public void assertKeyNotLocked(Cache cache, Object key) {
-      assertNotLocked(cache, key);
+      assertEventuallyNotLocked(cache, key);
    }
 
    //name change
