@@ -30,6 +30,19 @@ public final class PropertyValueExpr implements ValueExpr {
    }
 
    @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      PropertyValueExpr other = (PropertyValueExpr) o;
+      return propertyPath.equals(other.propertyPath);
+   }
+
+   @Override
+   public int hashCode() {
+      return propertyPath.hashCode();
+   }
+
+   @Override
    public String toString() {
       return "PropertyValueExpr(" + propertyPath + ')';
    }
