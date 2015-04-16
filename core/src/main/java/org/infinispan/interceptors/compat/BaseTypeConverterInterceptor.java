@@ -23,7 +23,9 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;

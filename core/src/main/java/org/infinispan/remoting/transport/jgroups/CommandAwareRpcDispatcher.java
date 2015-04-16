@@ -554,7 +554,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       }
 
       // a get() on each future will block till that call completes.
-      TimeService timeService = card.gcr.getTimeService();
+      TimeService timeService = card.timeService;
       long waitTime = timeService.expectedEndTime(timeout, MILLISECONDS);
       for (Map.Entry<Address, Future<Object>> entry : futures.entrySet()) {
          Address target = entry.getKey();

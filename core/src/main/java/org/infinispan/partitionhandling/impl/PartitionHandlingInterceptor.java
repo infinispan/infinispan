@@ -1,5 +1,10 @@
 package org.infinispan.partitionhandling.impl;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
