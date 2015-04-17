@@ -22,6 +22,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -137,6 +139,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                   new CompositeNotifyingFuture<>(futures);
             try {
                compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+            } catch (ExecutionException e) {
+               throw new RemoteException("Exception while processing put on primary owner", e.getCause());
             } catch (TimeoutException e) {
                throw new CacheException(e);
             }
@@ -189,6 +193,8 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                      new CompositeNotifyingFuture<>(futures);
                try {
                   compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+               } catch (ExecutionException e) {
+                  throw new RemoteException("Exception while processing put on backup owner", e.getCause());
                } catch (TimeoutException e) {
                   throw new CacheException(e);
                }

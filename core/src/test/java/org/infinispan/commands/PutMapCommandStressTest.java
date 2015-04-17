@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.fail;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Exchanger;
@@ -20,7 +21,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
@@ -146,42 +149,42 @@ public class PutMapCommandStressTest extends MultipleCacheManagersTest {
 
       // TODO: need to figure out code to properly test having a node dying constantly
       // Then spawn a thread that just constantly kills the last cache and recreates over and over again
-//      futures[futures.length - 1] = fork(new Callable<Void>() {
-//         @Override
-//         public Void call() throws Exception {
+      futures[futures.length - 1] = fork(new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
 //            TestResourceTracker.setThreadTestName("main");
-////            TestResourceTracker.backgroundTestStarted(PutMapCommandStressTest.this);
-//            try {
-//               Cache<?, ?> cacheToKill = cache(CACHE_COUNT - 1);
-//               while (!complete.get()) {
-//                  Thread.sleep(1000);
-//                  if (cacheManagers.remove(cacheToKill.getCacheManager())) {
-//                     log.trace("Killing cache to force rehash");
-//                     cacheToKill.getCacheManager().stop();
-//                     List<Cache<Object, Object>> caches = caches(CACHE_NAME);
-//                     if (caches.size() > 0) {
-//                        TestingUtil.blockUntilViewsReceived(60000, false, caches);
-//                        TestingUtil.waitForRehashToComplete(caches);
-//                     }
-//                  } else {
-//                     throw new IllegalStateException("Cache Manager " + cacheToKill.getCacheManager() +
-//                                                           " wasn't found for some reason!");
-//                  }
-//
-//                  log.trace("Adding new cache again to force rehash");
-//                  // We should only create one so just make it the next cache manager to kill
-//                  cacheToKill = createClusteredCaches(1, CACHE_NAME, builderUsed).get(0);
-//                  log.trace("Added new cache again to force rehash");
-//               }
-//               return null;
-//            } catch (Exception e) {
-//               // Stop all the others as well
-//               complete.set(true);
-//               exchanger.exchange(e);
-//               throw e;
-//            }
-//         }
-//      });
+            TestResourceTracker.backgroundTestStarted(PutMapCommandStressTest.this);
+            try {
+               Cache<?, ?> cacheToKill = cache(CACHE_COUNT - 1);
+               while (!complete.get()) {
+                  Thread.sleep(1000);
+                  if (cacheManagers.remove(cacheToKill.getCacheManager())) {
+                     log.trace("Killing cache to force rehash");
+                     cacheToKill.getCacheManager().stop();
+                     List<Cache<Object, Object>> caches = caches(CACHE_NAME);
+                     if (caches.size() > 0) {
+                        TestingUtil.blockUntilViewsReceived(60000, false, caches);
+                        TestingUtil.waitForRehashToComplete(caches);
+                     }
+                  } else {
+                     throw new IllegalStateException("Cache Manager " + cacheToKill.getCacheManager() +
+                                                           " wasn't found for some reason!");
+                  }
+
+                  log.trace("Adding new cache again to force rehash");
+                  // We should only create one so just make it the next cache manager to kill
+                  cacheToKill = createClusteredCaches(1, CACHE_NAME, builderUsed).get(0);
+                  log.trace("Added new cache again to force rehash");
+               }
+               return null;
+            } catch (Exception e) {
+               // Stop all the others as well
+               complete.set(true);
+               exchanger.exchange(e);
+               throw e;
+            }
+         }
+      });
 
       try {
          // If this returns means we had an issue
