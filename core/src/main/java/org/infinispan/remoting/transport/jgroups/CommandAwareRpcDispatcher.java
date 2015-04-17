@@ -32,6 +32,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.remoting.InboundInvocationHandler;
 import org.infinispan.remoting.RpcException;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.statetransfer.StateRequestCommand;
@@ -369,6 +370,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                } catch (ExecutionException e) {
                   if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
                      log.tracef(formatString("Ignoring node %s that left during the remote call", target));
+                     retval.addRsp(target, CacheNotFoundResponse.INSTANCE);
                   } else {
                      throw e;
                   }

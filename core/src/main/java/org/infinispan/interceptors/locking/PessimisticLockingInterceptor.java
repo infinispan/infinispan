@@ -41,6 +41,8 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -161,12 +163,15 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          lockAndRegisterBackupLock(txContext, command.getKey(),
                localNodeOwnsLock, lockTimeout, skipLocking);
          return invokeNextInterceptor(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         // The command will be retried, no need to release this or other locks
+         throw e;
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
       }
    }
-   
+
    @Override
    public Object visitApplyDeltaCommand(InvocationContext ctx, ApplyDeltaCommand command) throws Throwable {
       Object[] compositeKeys = command.getCompositeKeys();
@@ -178,7 +183,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          if (cdl.localNodeIsOwner(command.getKey())) {
             for (Object key : compositeKeys) {
                lockKey(ctx, key, lockTimeout, skipLocking);
-            }      
+            }
          }
          return invokeNextInterceptor(ctx, command);
       } catch (Throwable te) {
@@ -299,7 +304,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          TxCompletionNotificationCommand command = cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
          final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();
-         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, true, true);
+         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, false, true);
       }
    }
 

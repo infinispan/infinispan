@@ -23,6 +23,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
@@ -55,8 +56,9 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
 
       // Perform the RPC
       try {
-         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, true);
-         checkTxCommandResponses(resps);
+         long replTimeout = cacheConfiguration.clustering().sync().replTimeout();
+         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, replTimeout);
+         checkTxCommandResponses(resps, command);
 
          // Now store newly generated versions from lock owners for use during the commit phase.
          CacheTransaction ct = ctx.getCacheTransaction();

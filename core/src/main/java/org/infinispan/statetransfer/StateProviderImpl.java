@@ -41,6 +41,7 @@ import org.infinispan.notifications.cachelistener.event.TopologyChangedEvent;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.topology.CacheTopology;
+import org.infinispan.transaction.LocalTransaction;
 import org.infinispan.transaction.TransactionTable;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
@@ -240,8 +241,10 @@ public class StateProviderImpl implements StateProvider {
       // no need to filter out state transfer generated transactions because there should not be any such transactions running for any of the requested segments
       for (CacheTransaction tx : transactions) {
          // Skip transactions whose originators left. The topology id check is needed for joiners.
-         if (tx.getTopologyId() < topologyId && !members.contains(tx.getGlobalTransaction().getAddress()))
+         if (tx.getTopologyId() < topologyId && !members.contains(tx.getGlobalTransaction().getAddress())) {
+            log.tracef("Skipping transaction %s as it was started in the current topology or by a leaver", tx);
             continue;
+         }
 
          // transfer only locked keys that belong to requested segments
          Set<Object> filteredLockedKeys = new HashSet<Object>();
@@ -261,14 +264,16 @@ public class StateProviderImpl implements StateProvider {
                }
             }
          }
-         if (!filteredLockedKeys.isEmpty()) {
-            List<WriteCommand> txModifications = tx.getModifications();
-            WriteCommand[] modifications = null;
-            if (!txModifications.isEmpty()) {
-               modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
-            }
-            transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getTopologyId(), modifications, filteredLockedKeys));
+         if (filteredLockedKeys.isEmpty()) {
+            log.tracef("Skipping transaction %s because the state requestor doesn't own any key", tx);
+            continue;
          }
+         List<WriteCommand> txModifications = tx.getModifications();
+         WriteCommand[] modifications = null;
+         if (!txModifications.isEmpty()) {
+            modifications = txModifications.toArray(new WriteCommand[txModifications.size()]);
+         }
+         transactionsToTransfer.add(new TransactionInfo(tx.getGlobalTransaction(), tx.getTopologyId(), modifications, filteredLockedKeys));
       }
    }
 
