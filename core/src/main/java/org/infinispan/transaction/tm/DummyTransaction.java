@@ -127,7 +127,9 @@ public class DummyTransaction implements Transaction {
          runCommit(false);
       } catch (HeuristicMixedException | HeuristicRollbackException e) {
          log.errorRollingBack(e);
-         throw new SystemException("Unable to rollback transaction");
+         SystemException systemException = new SystemException("Unable to rollback transaction");
+         systemException.initCause(e);
+         throw systemException;
       }
    }
 
@@ -353,6 +355,7 @@ public class DummyTransaction implements Transaction {
       boolean ok = false;
       boolean heuristic = false;
       boolean error = false;
+      Exception cause = null;
 
       for (XAResource res : getEnlistedResources()) {
          try {
@@ -370,6 +373,7 @@ public class DummyTransaction implements Transaction {
             }
             ok = true;
          } catch (XAException e) {
+            cause = e;
             log.errorCommittingTx(e);
             switch (e.errorCode) {
                case XAException.XA_HEURCOM:
@@ -391,11 +395,15 @@ public class DummyTransaction implements Transaction {
       resources.clear();
       if (heuristic && !ok && !error) {
          //all the resources thrown an heuristic exception
-         throw new HeuristicRollbackException();
+         HeuristicRollbackException exception = new HeuristicRollbackException();
+         exception.initCause(cause);
+         throw exception;
       } else if (error || heuristic) {
          status = Status.STATUS_UNKNOWN;
          //some resources commits, other rollbacks and others we don't know...
-         throw new HeuristicMixedException();
+         HeuristicMixedException exception = new HeuristicMixedException();
+         exception.initCause(cause);
+         throw exception;
       }
    }
 

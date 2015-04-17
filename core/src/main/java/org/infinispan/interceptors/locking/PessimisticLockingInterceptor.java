@@ -15,6 +15,7 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.logging.Log;
@@ -130,6 +131,9 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
             lockAndRegisterBackupLock(txContext, command.getKey(), localLock, lockTimeout, false);
          }
          return invokeNextInterceptor(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         // The command will be retried, no need to release this or other locks
+         throw e;
       } catch (Throwable te) {
          releaseLocksOnFailureBeforePrepare(ctx);
          throw te;
@@ -247,7 +251,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          TxCompletionNotificationCommand command = cf.buildTxCompletionNotificationCommand(null, txContext.getGlobalTransaction());
          final LocalTransaction cacheTransaction = (LocalTransaction) txContext.getCacheTransaction();
-         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
+         rpcManager.invokeRemotely(cacheTransaction.getRemoteLocksAcquired(), command, rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE));
       }
    }
 

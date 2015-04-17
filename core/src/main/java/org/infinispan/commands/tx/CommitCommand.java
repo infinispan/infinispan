@@ -33,6 +33,17 @@ public class CommitCommand extends AbstractTransactionBoundaryCommand {
    }
 
    @Override
+   protected Object invalidRemoteTxReturnValue(boolean completedSuccessfully) {
+      if (completedSuccessfully) {
+         // The transaction was already committed on this node
+         // TODO: ISPN-5386 Tx succeeds on coord, while being rolled back on other participants due to Tx pruning
+         return null;
+      } else {
+         throw new IllegalStateException("Remote transaction not found");
+      }
+   }
+
+   @Override
    public byte getCommandId() {
       return COMMAND_ID;
    }

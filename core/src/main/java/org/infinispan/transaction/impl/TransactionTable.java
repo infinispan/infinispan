@@ -599,14 +599,14 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
     * on a remote node. This might cause leaks, e.g. if the transaction is prepared, committed and prepared again.
     * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
     */
-   public void markTransactionCompleted(GlobalTransaction gtx) {
+   public void markTransactionCompleted(GlobalTransaction gtx, boolean successful) {
       if (completedTransactionsInfo != null) {
-         completedTransactionsInfo.markTransactionCompleted(gtx);
+         completedTransactionsInfo.markTransactionCompleted(gtx, successful);
       }
    }
 
    /**
-    * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction)
+    * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction, boolean)
     */
    public boolean isTransactionCompleted(GlobalTransaction gtx) {
       if (completedTransactionsInfo == null)
@@ -615,14 +615,24 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       return completedTransactionsInfo.isTransactionCompleted(gtx);
    }
 
+   /**
+    * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction, boolean)
+    */
+   public boolean isTransactionCompletedSuccessfully(GlobalTransaction gtx) {
+      if (completedTransactionsInfo == null)
+         return false;
+
+      return completedTransactionsInfo.isTransactionCompletedSuccessfully(gtx);
+   }
+
    private class CompletedTransactionsInfo {
       final EquivalentConcurrentHashMapV8<Address, Long> nodeMaxPrunedTxIds;
-      final EquivalentConcurrentHashMapV8<GlobalTransaction, Long> completedTransactions;
+      final EquivalentConcurrentHashMapV8<GlobalTransaction, CompletedTransactionInfo> completedTransactions;
       volatile long globalMaxPrunedTxId;
 
       public CompletedTransactionsInfo() {
-         nodeMaxPrunedTxIds = new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
-         completedTransactions = new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+         nodeMaxPrunedTxIds = new EquivalentConcurrentHashMapV8<Address, Long>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
+         completedTransactions = new EquivalentConcurrentHashMapV8<GlobalTransaction, CompletedTransactionInfo>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
          globalMaxPrunedTxId = -1;
       }
 
@@ -632,13 +642,13 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
        * on a remote node. This might cause leaks, e.g. if the transaction is prepared, committed and prepared again.
        * Once marked as completed (because of commit or rollback) any further prepare received on that transaction are discarded.
        */
-      public void markTransactionCompleted(GlobalTransaction globalTx) {
+      public void markTransactionCompleted(GlobalTransaction globalTx, boolean successful) {
          log.tracef("Marking transaction %s as completed", globalTx);
-         completedTransactions.put(globalTx, timeService.time());
+         completedTransactions.put(globalTx, new CompletedTransactionInfo(timeService.time(), successful));
       }
 
       /**
-       * @see #markTransactionCompleted(org.infinispan.transaction.xa.GlobalTransaction)
+       * @see #markTransactionCompleted(GlobalTransaction, boolean)
        */
       public boolean isTransactionCompleted(GlobalTransaction gtx) {
          if (completedTransactionsInfo == null)
@@ -654,6 +664,18 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             return false;
          Long nodeMaxPrunedTxId = nodeMaxPrunedTxIds.get(gtx.getAddress());
          return nodeMaxPrunedTxId != null && gtx.getId() <= nodeMaxPrunedTxId;
+      }
+
+      public boolean isTransactionCompletedSuccessfully(GlobalTransaction gtx) {
+         if (completedTransactionsInfo == null)
+            return false;
+
+         CompletedTransactionInfo completedTx = completedTransactions.get(gtx);
+         if (completedTx != null)
+            return completedTx.successful;
+
+         // If we don't have the transaction info, it means it was either pruned, or it wasn't committed yet
+         return false;
       }
 
       public void cleanupCompletedTransactions() {
@@ -675,11 +697,11 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
             }
 
             // Remove stale completed transactions.
-            Iterator<Map.Entry<GlobalTransaction, Long>> txIterator = completedTransactions.entrySet().iterator();
+            Iterator<Map.Entry<GlobalTransaction, CompletedTransactionInfo>> txIterator = completedTransactions.entrySet().iterator();
             while (txIterator.hasNext()) {
-               Map.Entry<GlobalTransaction, Long> e = txIterator.next();
-               long completedTime = e.getValue();
-               if (minCompleteTimestamp - completedTime > 0) {
+               Map.Entry<GlobalTransaction, CompletedTransactionInfo> e = txIterator.next();
+               CompletedTransactionInfo completedTx = e.getValue();
+               if (minCompleteTimestamp - completedTx.timestamp > 0) {
                   // Need to update lastPrunedTxId *before* removing the tx from the map
                   // Don't need atomic operations, there can't be more than one thread updating lastPrunedTxId.
                   final long txId = e.getKey().getId();
@@ -722,6 +744,16 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
                return txId;
             }
          });
+      }
+   }
+
+   private static class CompletedTransactionInfo {
+      public final long timestamp;
+      public final boolean successful;
+
+      private CompletedTransactionInfo(long timestamp, boolean successful) {
+         this.timestamp = timestamp;
+         this.successful = successful;
       }
    }
 }

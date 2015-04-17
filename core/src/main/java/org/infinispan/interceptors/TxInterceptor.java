@@ -46,6 +46,7 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -364,6 +365,9 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
       Object rv;
       try {
          rv = invokeNextInterceptor(ctx, command);
+      } catch (OutdatedTopologyException e) {
+         // The command will be retried, so we shouldn't mark the transaction for rollback
+         throw e;
       } catch (Throwable throwable) {
          // Don't mark the transaction for rollback if it's fail silent (i.e. putForExternalRead)
          if (ctx.isOriginLocal() && ctx.isInTxScope() && !command.hasFlag(Flag.FAIL_SILENTLY)) {
