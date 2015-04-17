@@ -260,6 +260,11 @@
          </dependency>
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-directory-provider</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-lucene-directory</artifactId>
             <version>${project.version}</version>
             <type>test-jar</type>
@@ -1002,6 +1007,25 @@
               <artifactId>byteman-bmunit</artifactId>
               <version>${version.byteman}</version>
               <scope>test</scope>
+          </dependency>
+          <dependency>
+              <groupId>org.hibernate</groupId>
+              <artifactId>hibernate-testing</artifactId>
+              <version>${version.hibernate.core}</version>
+              <exclusions>
+                  <exclusion>
+                      <groupId>org.jboss.logging</groupId>
+                      <artifactId>jboss-logging-spi</artifactId>
+                  </exclusion>
+                  <exclusion>
+                      <groupId>org.jboss.jbossts</groupId>
+                      <artifactId>jbossjta</artifactId>
+                  </exclusion>
+                  <exclusion>
+                      <groupId>com.experlog</groupId>
+                      <artifactId>xapool</artifactId>
+                  </exclusion>
+              </exclusions>
           </dependency>
       </dependencies>
    </dependencyManagement>

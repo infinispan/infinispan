@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<infinispan
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="urn:infinispan:config:7.2 http://www.infinispan.org/schemas/infinispan-config-7.2.xsd"
+    xmlns="urn:infinispan:config:7.2">
+
+    <cache-container name="HibernateSearch-NotClustered" default-cache="default" statistics="false" shutdown-hook="DONT_REGISTER">
+
+        <!-- Duplicate domains are allowed so that multiple deployments with default configuration
+            of Hibernate Search applications work - if possible it would be better to use JNDI to share
+            the CacheManager across applications -->
+        <jmx duplicate-domains="true" />
+
+         <!-- *************************************** -->
+         <!--  Cache to store Lucene's file metadata  -->
+         <!-- *************************************** -->
+         <local-cache name="LuceneIndexesMetadata">
+            <transaction mode="NONE"/>
+            <eviction max-entries="-1" strategy="NONE"/>
+            <expiration max-idle="-1"/>
+         </local-cache>
+
+         <!-- **************************** -->
+         <!--  Cache to store Lucene data  -->
+         <!-- **************************** -->
+         <local-cache name="LuceneIndexesData">
+            <transaction mode="NONE"/>
+            <eviction max-entries="-1" strategy="NONE"/>
+            <expiration max-idle="-1"/>
+         </local-cache>
+
+         <!-- ***************************** -->
+         <!--  Cache to store Lucene locks  -->
+         <!-- ***************************** -->
+        <local-cache name="LuceneIndexesLocking">
+            <transaction mode="NONE"/>
+            <eviction max-entries="-1" strategy="NONE"/>
+            <expiration max-idle="-1"/>
+        </local-cache>
+    </cache-container>
+
+</infinispan>

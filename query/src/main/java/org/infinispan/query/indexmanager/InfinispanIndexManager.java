@@ -4,7 +4,7 @@ import java.util.Properties;
 
 import org.hibernate.search.backend.spi.BackendQueueProcessor;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
-import org.hibernate.search.infinispan.spi.InfinispanDirectoryProvider;
+import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
 import org.hibernate.search.spi.WorkerBuildContext;
 import org.hibernate.search.store.DirectoryProvider;
 import org.infinispan.query.logging.Log;

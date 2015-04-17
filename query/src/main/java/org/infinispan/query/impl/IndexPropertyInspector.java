@@ -6,7 +6,7 @@ import org.infinispan.query.indexmanager.InfinispanIndexManager;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.hibernate.search.infinispan.spi.InfinispanIntegration.*;
+import static org.infinispan.hibernate.search.spi.InfinispanIntegration.*;
 
 /**
  * Extract useful information from indexing configuration

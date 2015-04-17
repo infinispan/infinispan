@@ -52,8 +52,8 @@
       </dependency>
 
       <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-search-infinispan</artifactId>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-directory-provider</artifactId>
       </dependency>
 
       <dependency>

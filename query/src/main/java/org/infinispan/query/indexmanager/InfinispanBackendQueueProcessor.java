@@ -11,7 +11,7 @@ import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.backend.spi.BackendQueueProcessor;
 import org.hibernate.search.engine.service.spi.ServiceManager;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
-import org.hibernate.search.infinispan.spi.CacheManagerService;
+import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.hibernate.search.spi.WorkerBuildContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
