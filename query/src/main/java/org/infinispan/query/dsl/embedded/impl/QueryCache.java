@@ -8,14 +8,16 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.logging.Log;
+import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.util.KeyValuePair;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A local cache for 'parsed' queries. Each cache manager has one instance.
+ * A local cache for 'parsed' queries. Each cache manager has one (lazily created) instance.
  *
  * @author anistor@redhat.com
  * @since 7.0
@@ -43,11 +45,14 @@ public class QueryCache {
 
    private EmbeddedCacheManager cacheManager;
 
+   private InternalCacheRegistry internalCacheRegistry;
+
    private volatile Cache<KeyValuePair<String, Class>, Object> lazyCache;
 
    @Inject
-   public void init(EmbeddedCacheManager cacheManager) {
+   public void init(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
+      this.internalCacheRegistry = internalCacheRegistry;
    }
 
    /**
@@ -79,9 +84,7 @@ public class QueryCache {
       synchronized (this) {
          if (lazyCache == null) {
             // define the query cache configuration if it does not already exist (from a previous call or manually defined by the user)
-            if (cacheManager.getCacheConfiguration(QUERY_CACHE_NAME) == null) {
-               cacheManager.defineConfiguration(QUERY_CACHE_NAME, getDefaultQueryCacheConfig().build());
-            }
+            internalCacheRegistry.registerInternalCache(QUERY_CACHE_NAME, getDefaultQueryCacheConfig().build(), EnumSet.of(InternalCacheRegistry.Flag.USER));
             lazyCache = cacheManager.getCache(QUERY_CACHE_NAME);
          }
          return lazyCache;

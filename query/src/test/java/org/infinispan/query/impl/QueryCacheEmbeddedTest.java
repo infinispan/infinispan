@@ -1,11 +1,8 @@
 package org.infinispan.query.impl;
 
 import org.hibernate.hql.lucene.LuceneQueryParsingResult;
-import org.infinispan.Cache;
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
@@ -27,7 +24,6 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
@@ -114,27 +110,6 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       inOrder.verify(queryCacheSpy, never()).put(any(KeyValuePair.class), any(LuceneQueryParsingResult.class));
       inOrder.verifyNoMoreInteractions();
       assertTrue(lastGetResult.get() == cachedParsingResult);  // == is intentional here!
-   }
-
-   public void testQueryCacheConfigOverriding() throws Exception {
-      ConfigurationBuilder queryCacheConfigBuilder = getDefaultStandaloneCacheConfig(true);
-      queryCacheConfigBuilder
-            .clustering().cacheMode(CacheMode.LOCAL)
-            .transaction().transactionMode(TransactionMode.NON_TRANSACTIONAL)
-            .expiration().maxIdle(777777, TimeUnit.MILLISECONDS)
-            .eviction().maxEntries(42)
-            .strategy(EvictionStrategy.LIRS);
-
-      cacheManager.defineConfiguration(QueryCache.QUERY_CACHE_NAME, queryCacheConfigBuilder.build());
-
-      QueryCache queryCache = TestingUtil.extractGlobalComponent(cacheManager, QueryCache.class);
-
-      // a dummy call to force init
-      queryCache.get(new KeyValuePair<String, Class>("dontcare", Void.class));
-
-      Cache internalQueryCache = TestingUtil.extractField(queryCache, "lazyCache");
-      assertEquals(777777, internalQueryCache.getCacheConfiguration().expiration().maxIdle());
-      assertEquals(42, internalQueryCache.getCacheConfiguration().eviction().maxEntries());
    }
 
    private AtomicReference<Object> captureLastGetResult(QueryCache queryCacheSpy) {

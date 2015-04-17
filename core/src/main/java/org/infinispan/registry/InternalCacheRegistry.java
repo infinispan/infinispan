@@ -16,7 +16,7 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.GLOBAL)
 public interface InternalCacheRegistry {
-   public enum Flag {
+   enum Flag {
       EXCLUSIVE, // means that the cache must be declared only once
       USER, // means that this cache is visible to users
    }
