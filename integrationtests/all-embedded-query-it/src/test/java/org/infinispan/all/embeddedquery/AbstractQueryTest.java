@@ -1,11 +1,12 @@
 package org.infinispan.all.embeddedquery;
 
+import java.util.Arrays;
+import java.util.HashSet;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.QueryBuilder;
-import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
-import org.hibernate.search.engine.spi.EntityIndexBinding;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commons.api.BasicCache;
@@ -21,11 +22,8 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.transaction.TransactionMode;
 
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Set;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Abstract class for query tests for uber jars.
@@ -65,17 +63,12 @@ public abstract class AbstractQueryTest {
       return cacheQuery;
    }
 
-   protected void assertIndexingKnows(Cache<Object, Object> cache, Class... types) {
+   protected void assertIndexingKnows(Cache<Object, Object> cache, Class<?>... types) {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
       assertNotNull(searchIntegrator);
 
-      Map<Class<?>, EntityIndexBinding> indexBindingForEntity = searchIntegrator.unwrap(ExtendedSearchIntegrator.class).getIndexBindings();
-      assertNotNull(indexBindingForEntity);
-
-      Set<Class<?>> keySet = indexBindingForEntity.keySet();
-      assertEquals(types.length, keySet.size());
-      assertTrue(keySet.containsAll(Arrays.asList(types)));
+      assertEquals(new HashSet<Class<?>>(Arrays.asList(types)), searchIntegrator.getIndexedTypes());
    }
 
    protected static BasicCache<Object, Object> getCacheForWrite() {

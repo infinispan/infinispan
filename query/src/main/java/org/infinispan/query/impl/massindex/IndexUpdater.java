@@ -62,6 +62,7 @@ public class IndexUpdater {
             DocumentBuilderIndexedEntity docBuilder = entityIndexBinding.getDocumentBuilder();
             final String idInString = keyTransformationHandler.keyToString(key);
             UpdateLuceneWork updateTask = docBuilder.createUpdateWork(
+                  null,
                   clazz,
                   value,
                   idInString,

@@ -1,5 +1,8 @@
 package org.infinispan.query.indexmanager;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hibernate.search.backend.LuceneWork;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
@@ -16,9 +19,6 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.impl.CustomQueryCommand;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Base class for index commands
@@ -91,7 +91,7 @@ public abstract class AbstractUpdateCommand extends BaseRpcCommand implements Re
 
    protected LuceneWork transformKeyToStrings(final LuceneWork luceneWork) {
       final KeyTransformationHandler keyTransformationHandler = queryInterceptor.getKeyTransformationHandler();
-      return luceneWork.getWorkDelegate(LuceneWorkTransformationVisitor.INSTANCE).cloneOverridingIdString(luceneWork, keyTransformationHandler);
+      return luceneWork.acceptIndexWorkVisitor(LuceneWorkTransformationVisitor.INSTANCE, keyTransformationHandler);
    }
 
 

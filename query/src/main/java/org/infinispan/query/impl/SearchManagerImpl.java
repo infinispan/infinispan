@@ -5,11 +5,9 @@ import java.util.concurrent.ExecutorService;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.query.engine.spi.TimeoutExceptionFactory;
 import org.hibernate.search.spi.SearchIntegrator;
-import org.hibernate.search.spi.impl.SearchFactoryState;
 import org.hibernate.search.stat.Statistics;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
@@ -148,8 +146,7 @@ public class SearchManagerImpl implements SearchManagerImplementor {
 
    @Override
    public <T> T unwrap(Class<T> cls) {
-      if (SearchIntegrator.class.isAssignableFrom(cls) || ExtendedSearchIntegrator.class.isAssignableFrom(cls)
-            || SearchFactoryState.class.isAssignableFrom(cls)) {
+      if (SearchIntegrator.class.isAssignableFrom(cls)) {
          return (T) this.searchFactory;
       }
       if (SearchManagerImplementor.class.isAssignableFrom(cls)) {
