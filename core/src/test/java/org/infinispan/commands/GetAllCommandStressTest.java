@@ -38,7 +38,7 @@ import org.testng.annotations.Test;
  * @author wburns
  * @since 7.2
  */
-@Test(groups = "stress", testName = "commands.GetManyCommandStressTest")
+@Test(groups = "stress", testName = "commands.GetAllCommandStressTest")
 public class GetAllCommandStressTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected final static int CACHE_COUNT = 6;

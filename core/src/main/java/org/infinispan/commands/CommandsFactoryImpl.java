@@ -488,8 +488,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
             getKeysInGroupCommand.setGroupManager(groupManager);
             break;
          case ClusteredGetAllCommand.COMMAND_ID:
-            ClusteredGetAllCommand clusteredGetManyCommand = (ClusteredGetAllCommand) c;
-            clusteredGetManyCommand.init(icf, this, entryFactory, interceptorChain, txTable,
+            ClusteredGetAllCommand clusteredGetAllCommand = (ClusteredGetAllCommand) c;
+            clusteredGetAllCommand.init(icf, this, entryFactory, interceptorChain, txTable,
                   configuration.dataContainer().keyEquivalence());
             break;
          default:

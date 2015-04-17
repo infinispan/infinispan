@@ -24,7 +24,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 /**
- * Issues a remote getMany call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
+ * Issues a remote getAll call.  This is not a {@link org.infinispan.commands.VisitableCommand} and hence not passed up the
  * {@link org.infinispan.interceptors.base.CommandInterceptor} chain.
  *
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -143,7 +143,7 @@ public class ClusteredGetAllCommand<K, V> extends LocalFlagAffectedRpcCommand {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder("ClusteredGetManyCommand{");
+      final StringBuilder sb = new StringBuilder("ClusteredGetAllCommand{");
       sb.append("keys=").append(keys);
       sb.append(", flags=").append(flags);
       sb.append('}');

@@ -108,7 +108,7 @@ public class ExtendedStatisticInterceptor extends BaseCustomInterceptor {
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (log.isTraceEnabled()) {
-         log.tracef("Visit GetMany command %s. Is it in transaction scope? %s. Is it local? %s", command,
+         log.tracef("Visit Get All Command %s. Is it in transaction scope? %s. Is it local? %s", command,
                ctx.isInTxScope(), ctx.isOriginLocal());
       }
       Object retVal;

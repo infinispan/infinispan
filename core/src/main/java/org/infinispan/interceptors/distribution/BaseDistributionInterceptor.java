@@ -221,8 +221,8 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       Map<Address, ReplicableCommand> commands = new HashMap<>();
       for (Map.Entry<Address, List<Object>> entry : ownerKeys.entrySet()) {
          List<Object> keys = entry.getValue();
-         ClusteredGetAllCommand getMany = cf.buildClusteredGetAllCommand(keys, flags, gtx);
-         commands.put(entry.getKey(), getMany);
+         ClusteredGetAllCommand remoteGetAll = cf.buildClusteredGetAllCommand(keys, flags, gtx);
+         commands.put(entry.getKey(), remoteGetAll);
       }
 
       RpcOptionsBuilder rpcOptionsBuilder = rpcManager.getRpcOptionsBuilder(

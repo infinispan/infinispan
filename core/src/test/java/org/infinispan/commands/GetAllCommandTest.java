@@ -34,7 +34,7 @@ public abstract class GetAllCommandTest extends MultipleCacheManagersTest {
       this.cleanup = CleanupPhase.AFTER_METHOD;
    }
 
-   public void testGetManyKeyNotPresent() {
+   public void testGetAllKeyNotPresent() {
       for (int i = 0; i < numEntries; ++i)
          advancedCache(i % numNodes).put("key" + i, "value" + i);
       List<Cache<String, String>> caches = caches();
@@ -60,7 +60,7 @@ public abstract class GetAllCommandTest extends MultipleCacheManagersTest {
       waitForClusterToForm();
    }
 
-   public void testGetMany() {
+   public void testGetAll() {
       for (int i = 0; i < numEntries; ++i)
          advancedCache(i % numNodes).put("key" + i, "value" + i);
       for (int i = 0; i < numEntries; ++i)

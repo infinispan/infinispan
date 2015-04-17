@@ -189,7 +189,7 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
 
    @Override
    public String toString() {
-      final StringBuilder sb = new StringBuilder("GetManyCommand{");
+      final StringBuilder sb = new StringBuilder("GetAllCommand{");
       sb.append("keys=").append(keys);
       sb.append(", returnEntries=").append(returnEntries);
       sb.append(", flags=").append(flags);
