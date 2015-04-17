@@ -76,7 +76,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    private final AdvancedCache<K, V> skipListenerCache;
    private final AdvancedCache<K, V> skipStatisticsCache;
    private final RICacheStatistics stats;
-   private final CacheMXBean mxBean;
 
    private final LockContainer processorLocks;
    private final long lockTimeout; // milliseconds
@@ -94,7 +93,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       this.skipListenerCache = cache.withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
       this.skipStatisticsCache = cache.withFlags(Flag.SKIP_STATISTICS);
 
-      this.mxBean = new RIDelegatingCacheMXBean<K, V>(this);
       this.stats = new RICacheStatistics(this.cache);
       this.lockTimeout =  cache.getCacheConfiguration()
             .locking().lockAcquisitionTimeout();
@@ -605,27 +603,9 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
       removeCacheEntryListenerConfiguration(listenerCfg);
    }
 
-   //TODO: was package-level initially
-   public void setManagementEnabled(boolean enabled) {
-      configuration.setManagementEnabled(enabled);
-      if (enabled)
-         RIMBeanServerRegistrationUtility.registerCacheObject(this, CONFIGURATION);
-      else
-         RIMBeanServerRegistrationUtility.unregisterCacheObject(this, CONFIGURATION);
-   }
-
-   //TODO: was package-level initially
    public void setStatisticsEnabled(boolean enabled) {
       cache.getStats().setStatisticsEnabled(enabled);
-      configuration.setStatisticsEnabled(enabled);
-      if (enabled)
-         RIMBeanServerRegistrationUtility.registerCacheObject(this, STATISTICS);
-      else
-         RIMBeanServerRegistrationUtility.unregisterCacheObject(this, STATISTICS);
-   }
-
-   protected CacheMXBean getCacheMXBean() {
-      return mxBean;
+      super.setStatisticsEnabled(enabled);
    }
 
    protected CacheStatisticsMXBean getCacheStatisticsMXBean() {
@@ -690,10 +670,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          log.errorLoadingAll(keysToLoad, t);
          setListenerException(listener, t);
       }
-   }
-
-   private boolean statisticsEnabled() {
-      return getConfiguration(CompleteConfiguration.class).isStatisticsEnabled();
    }
 
    private class WithProcessorLock<V> {

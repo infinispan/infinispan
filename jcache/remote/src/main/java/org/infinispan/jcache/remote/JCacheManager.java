@@ -46,12 +46,6 @@ public class JCacheManager extends AbstractJCacheManager {
    }
 
    @Override
-   protected boolean supportsJmx() {
-      //TODO
-      return false;
-   }
-
-   @Override
    public ClassLoader getClassLoader() {
       return cm.getConfiguration().classLoader();
    }
