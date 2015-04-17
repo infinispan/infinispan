@@ -245,7 +245,7 @@ class Server(configuration: RestServerConfiguration, manager: RestCacheManager) 
          if (meta.lifespan() > -1)
             bld.header(Server.TimeToLiveHeader, MILLIS.toSeconds(meta.lifespan()))
          if (meta.maxIdle() > -1)
-            bld.header(Server.TimeToLiveHeader, MILLIS.toSeconds(meta.maxIdle()))
+            bld.header(Server.MaxIdleTimeHeader, MILLIS.toSeconds(meta.maxIdle()))
          bld
       }
       def extended(cacheName: String, key: String, b: Boolean) = {
