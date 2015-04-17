@@ -79,7 +79,11 @@ public final class CompositeNotifyingFuture<T> extends NotifyingFutureImpl<List<
             remaining.countDown();
             if (remaining.getCount() == 0) {
                if (error != null) {
-                  notifyException(error);
+                  if (error instanceof ExecutionException) {
+                     notifyException(((ExecutionException)error).getCause());
+                  } else {
+                     notifyException(error);
+                  }
                } else {
                   notifyDone(results);
                }
