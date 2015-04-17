@@ -12,6 +12,7 @@ import org.infinispan.hibernate.search.spi.CacheManagerService;
 import org.infinispan.hibernate.search.util.impl.JNDIHelper;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.kohsuke.MetaInfServices;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -25,6 +26,7 @@ import java.util.Properties;
  *
  * @author Sanne Grinovero
  */
+@MetaInfServices(CacheManagerService.class)
 public class DefaultCacheManagerService implements CacheManagerService, Startable, Stoppable {
 
    private static final Log log = LoggerFactory.make();

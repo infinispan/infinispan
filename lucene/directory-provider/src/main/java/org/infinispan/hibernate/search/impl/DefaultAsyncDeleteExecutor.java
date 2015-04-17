@@ -6,6 +6,7 @@ import org.hibernate.search.spi.BuildContext;
 import org.hibernate.search.util.impl.Executors;
 import org.hibernate.search.util.logging.impl.LoggerFactory;
 import org.infinispan.hibernate.search.logging.Log;
+import org.kohsuke.MetaInfServices;
 
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author Sanne Grinovero <sanne@hibernate.org> (C) 2014 Red Hat Inc.
  */
+@MetaInfServices(AsyncDeleteExecutorService.class)
 public class DefaultAsyncDeleteExecutor implements AsyncDeleteExecutorService, Startable, Stoppable {
 
    private static final Log log = LoggerFactory.make(Log.class);
