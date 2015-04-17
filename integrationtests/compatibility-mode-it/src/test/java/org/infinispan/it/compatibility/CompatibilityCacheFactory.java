@@ -7,21 +7,17 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.rest.ServerBootstrap;
+import org.infinispan.rest.NettyRestServer;
+import org.infinispan.rest.configuration.RestServerConfigurationBuilder;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.server.memcached.MemcachedServer;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.jboss.resteasy.plugins.server.servlet.HttpServletDispatcher;
-import org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrap;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.servlet.Context;
-import javax.servlet.ServletContext;
-import java.util.Collections;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
@@ -44,7 +40,7 @@ public class CompatibilityCacheFactory<K, V> {
    private EmbeddedCacheManager cacheManager;
    private HotRodServer hotrod;
    private RemoteCacheManager hotrodClient;
-   private Server rest;
+   private Lifecycle rest;
    private MemcachedServer memcached;
 
    private Cache<K, V> embeddedCache;
@@ -169,14 +165,9 @@ public class CompatibilityCacheFactory<K, V> {
    }
 
    void createRestCache(int port) throws Exception {
-      rest = new Server(port);
-      Context ctx = new Context(rest, "/", Context.SESSIONS);
-      ctx.setInitParams(Collections.singletonMap("resteasy.resources", "org.infinispan.rest.Server"));
-      ctx.addEventListener(new ResteasyBootstrap());
-      ctx.addEventListener(new ServerBootstrap());
-      ctx.addServlet(HttpServletDispatcher.class, "/rest/*");
-      ServletContext servletContext = ctx.getServletContext();
-      ServerBootstrap.setCacheManager(servletContext, cacheManager);
+      RestServerConfigurationBuilder builder = new RestServerConfigurationBuilder();
+      builder.port(port);
+      rest = NettyRestServer.apply(builder.build(), cacheManager);
       rest.start();
       restClient = new HttpClient();
    }
@@ -204,7 +195,7 @@ public class CompatibilityCacheFactory<K, V> {
       killCacheManagers(cacheManager);
    }
 
-   void killRestServer(Server rest) {
+   void killRestServer(Lifecycle rest) {
       if (rest != null) {
          try {
             rest.stop();
