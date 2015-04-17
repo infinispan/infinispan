@@ -19,6 +19,8 @@ import org.infinispan.util.concurrent.IsolationLevel
 import javax.security.sasl.SaslServerFactory
 import org.infinispan.server.core.security.SaslUtils
 import org.infinispan.factories.ComponentRegistry
+import org.infinispan.registry.InternalCacheRegistry
+import java.util.EnumSet
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -128,12 +130,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    }
 
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
-      val topoCfg = cacheManager.getCacheConfiguration(configuration.topologyCacheName)
-      if (topoCfg != null) {
-         throw log.invalidTopologyCache(configuration.topologyCacheName)
-      }
-      cacheManager.defineConfiguration(configuration.topologyCacheName,
-         createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build())
+      val internalCacheRegistry = cacheManager.getGlobalComponentRegistry.getComponent(classOf[InternalCacheRegistry])
+      internalCacheRegistry.registerInternalCache(configuration.topologyCacheName, 
+          createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build(),
+          EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE))
    }
 
    protected def createTopologyCacheConfig(distSyncTimeout: Long): ConfigurationBuilder = {
