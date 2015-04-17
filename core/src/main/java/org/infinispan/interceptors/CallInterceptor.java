@@ -1,15 +1,19 @@
 package org.infinispan.interceptors;
 
 
+import java.util.Map;
+
+import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
@@ -72,7 +76,7 @@ public class CallInterceptor extends CommandInterceptor {
       if (trace) log.trace("Executing command: " + command + ".");
       Object ret = command.perform(ctx);
       if (ret != null) {
-         notifyCacheEntryVisit(ctx, command, ret);
+         notifyCacheEntryVisit(ctx, command, command.getKey(), ret);
       }
       return ret;
    }
@@ -82,13 +86,34 @@ public class CallInterceptor extends CommandInterceptor {
       if (trace) log.trace("Executing command: " + command + ".");
       Object ret = command.perform(ctx);
       if (ret != null) {
-         notifyCacheEntryVisit(ctx, command, ((CacheEntry) ret).getValue());
+         notifyCacheEntryVisit(ctx, command, command.getKey(), ((CacheEntry) ret).getValue());
       }
       return ret;
    }
 
-   private void notifyCacheEntryVisit(InvocationContext ctx, AbstractDataCommand command, Object value) {
-      Object key = command.getKey();
+   @Override
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      if (trace) log.trace("Executing command: " + command + ".");
+      Object ret = command.perform(ctx);
+      if (ret != null) {
+         Map<Object, Object> map = (Map<Object, Object>) ret;
+         // TODO: it would be nice to know if a listener was registered for this and
+         // not do the full iteration if there was no visitor listener registered
+         if (command.getFlags() == null || !command.getFlags().contains(Flag.SKIP_LISTENER_NOTIFICATION)) {
+            for (Map.Entry<Object, Object> entry : map.entrySet()) {
+               Object value = entry.getValue();
+               if (value != null) {
+                  value = command.isReturnEntries() ? ((CacheEntry) value).getValue() : entry.getValue();
+                  notifyCacheEntryVisit(ctx, command, entry.getKey(), value);
+               }
+            }
+         }
+      }
+      return ret;
+   }
+
+   private void notifyCacheEntryVisit(InvocationContext ctx, FlagAffectedCommand command,
+         Object key, Object value) {
       notifier.notifyCacheEntryVisited(key, value, true, ctx, command);
       notifier.notifyCacheEntryVisited(key, value, false, ctx, command);
    }

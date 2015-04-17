@@ -1,5 +1,18 @@
 package org.infinispan.remoting.rpc;
 
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+
+import java.text.NumberFormat;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
@@ -33,16 +46,6 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.text.NumberFormat;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
 /**
  * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation,
@@ -285,6 +288,67 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
                options.responseFilter(), options.deliverOrder(), configuration.clustering().cacheMode().isDistributed());
          if (statisticsEnabled) replicationCount.incrementAndGet();
          if (trace) log.tracef("Response(s) to %s is %s", rpc, result);
+         return result;
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException("Thread interrupted while invoking RPC", e);
+      } catch (CacheException e) {
+         log.trace("replication exception: ", e);
+         if (statisticsEnabled) replicationFailures.incrementAndGet();
+         throw e;
+      } catch (Throwable th) {
+         log.unexpectedErrorReplicating(th);
+         if (statisticsEnabled) replicationFailures.incrementAndGet();
+         throw new CacheException(th);
+      } finally {
+         if (statisticsEnabled) {
+            long timeTaken = timeService.timeDuration(startTimeNanos, TimeUnit.MILLISECONDS);
+            totalReplicationTime.getAndAdd(timeTaken);
+         }
+      }
+   }
+
+   @Override
+   public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
+      if (trace) log.tracef("%s invoking %s with options %s", t.getAddress(), rpcs, options);
+
+      // don't use replication queue as we don't want to send the command to all other nodes
+      if (!configuration.clustering().cacheMode().isClustered())
+         throw new IllegalStateException("Trying to invoke a remote command but the cache is not clustered");
+
+      Map<Address, ReplicableCommand> replacedCommands = null;
+      for (Map.Entry<Address, ReplicableCommand> entry : rpcs.entrySet()) {
+         ReplicableCommand rpc = entry.getValue();
+         // Set the topology id of the command, in case we don't have it yet
+         if (rpc instanceof TopologyAffectedCommand) {
+            TopologyAffectedCommand topologyAffectedCommand = (TopologyAffectedCommand) rpc;
+            if (topologyAffectedCommand.getTopologyId() == -1) {
+               int currentTopologyId = stateTransferManager.getCacheTopology().getTopologyId();
+               if (trace) log.tracef("Topology id missing on command %s, setting it to %d", rpc, currentTopologyId);
+               topologyAffectedCommand.setTopologyId(currentTopologyId);
+            }
+         }
+         if (!(rpc instanceof CacheRpcCommand)) {
+            rpc = cf.buildSingleRpcCommand(rpc);
+            // we can't modify the map during iteration
+            if (replacedCommands == null) {
+               replacedCommands = new HashMap<>();
+            }
+            replacedCommands.put(entry.getKey(), rpc);
+         }
+      }
+      if (replacedCommands != null) {
+         rpcs.putAll(replacedCommands);
+      }
+
+      long startTimeNanos = 0;
+      if (statisticsEnabled) startTimeNanos = timeService.time();
+      try {
+         Map<Address, Response> result = t.invokeRemotely(rpcs, options.responseMode(), options.timeUnit().toMillis(options.timeout()),
+               !options.fifoOrder(), options.responseFilter(), options.totalOrder(),
+               configuration.clustering().cacheMode().isDistributed());
+         if (statisticsEnabled) replicationCount.incrementAndGet();
+         if (trace) log.tracef("Response(s) to %s is %s", rpcs, result);
          return result;
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();

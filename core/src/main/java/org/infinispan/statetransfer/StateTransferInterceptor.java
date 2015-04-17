@@ -4,6 +4,7 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -25,6 +26,7 @@ import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -34,10 +36,12 @@ import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -69,6 +73,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private StateTransferManager stateTransferManager;
    private Transport transport;
+   private ComponentRegistry componentRegistry;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
 
@@ -78,9 +83,11 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Inject
-   public void init(StateTransferManager stateTransferManager, Transport transport) {
+   public void init(StateTransferManager stateTransferManager, Transport transport,
+         ComponentRegistry componentRegistry) {
       this.stateTransferManager = stateTransferManager;
       this.transport = transport;
+      this.componentRegistry = componentRegistry;
    }
 
    @Override
@@ -148,6 +155,36 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
       // it's not necessary to propagate eviction to the new owners in case of state transfer
       return invokeNextInterceptor(ctx, command);
+   }
+
+   @Override
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      if (isLocalOnly(ctx, command)) {
+         return invokeNextInterceptor(ctx, command);
+      }
+      CacheTopology beginTopology = stateTransferManager.getCacheTopology();
+      command.setConsistentHashAndAddress(beginTopology.getReadConsistentHash(),
+            transport.getAddress());
+      updateTopologyId(command);
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } catch (CacheException e) {
+         Throwable ce = e;
+         while (ce instanceof RemoteException) {
+            ce = ce.getCause();
+         }
+         if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
+            throw e;
+
+         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
+         // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
+         if (trace) log.tracef("Retrying command because of topology change, current topology is %d: %s", command);
+         int newTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
+         command.setTopologyId(newTopologyId);
+         waitForTopology(newTopologyId);
+
+         return visitGetAllCommand(ctx, command);
+      }
    }
 
    /**

@@ -1,5 +1,20 @@
 package org.infinispan.remoting.transport.jgroups;
 
+import static java.lang.String.format;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.infinispan.commons.util.Util.*;
+import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
+
+import java.io.NotSerializableException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+
 import net.jcip.annotations.GuardedBy;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -12,6 +27,9 @@ import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
+import org.infinispan.topology.CacheTopologyControlCommand;
+import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -37,21 +55,6 @@ import org.jgroups.util.FutureListener;
 import org.jgroups.util.NotifyingFuture;
 import org.jgroups.util.Rsp;
 import org.jgroups.util.RspList;
-
-import java.io.NotSerializableException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-
-import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.commons.util.Util.*;
-import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
 
 /**
  * A JGroups RPC dispatcher that knows how to deal with {@link ReplicableCommand}s.
@@ -163,6 +166,50 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             return null;
          else
             return response;
+      }
+   }
+
+   /**
+    * Runs a command on each node for each entry in the provided map.
+    * NOTE: if ignoreLeavers is true and the node is suspected while executing this 
+    * method will return a RspList containing for that node a value of ExceptionResponse
+    * containing the SuspectException
+    * 
+    * @param commands The commands and where to run them
+    * @param mode The response mode to determine how many members must return
+    * @param timeout How long to wait before timing out
+    * @param oob Whether these should be submitted using out of band thread pool
+    * @param asyncMarshalling If marshalling should be done asynchronously
+    * @param ignoreLeavers Whether to ignore leavers.  If this is true and a node leaves
+    *        it will send back a response of SuspectException
+    * @return The responses that came back in the provided time
+    * @throws InterruptedException
+    */
+   public RspList<Object> invokeRemoteCommands(final Map<Address, ReplicableCommand> commands, final ResponseMode mode, final long timeout,
+                                               final boolean oob, boolean asyncMarshalling, final boolean ignoreLeavers) throws InterruptedException {
+      if (asyncMarshalling) {
+         asyncExecutor.submit(new Callable<RspList<Object>>() {
+            @Override
+            public RspList<Object> call() throws Exception {
+               return processCalls(commands, timeout, mode, req_marshaller,
+                     CommandAwareRpcDispatcher.this, oob, ignoreLeavers);
+            }
+         });
+         return null; // don't wait for a response!
+      } else {
+         try {
+            return processCalls(commands, timeout, mode,
+                  req_marshaller, this, oob, ignoreLeavers);
+         } catch (InterruptedException e) {
+            throw e;
+         } catch (SuspectedException e) {
+            throw new SuspectException("One of the nodes " + commands.keySet() + " was suspected", e);
+         } catch (org.jgroups.TimeoutException e) {
+            // TODO consider ignoreTimeout flag
+            throw new TimeoutException("One of the nodes " + commands.keySet() + " timed out", e);
+         } catch (Exception e) {
+            throw rewrapAsCacheException(e);
+         }
       }
    }
 
@@ -483,6 +530,47 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                                      + command.getClass().getSimpleName() + " not being serializable.");
       }
 
+      return retval;
+   }
+
+   private static RspList<Object> processCalls(Map<Address, ReplicableCommand> commands, long timeout,
+                                               ResponseMode mode, Marshaller marshaller, CommandAwareRpcDispatcher card,
+                                               boolean oob, boolean ignoreLeavers) throws Exception {
+      if (trace) log.tracef("Replication task sending %s with response mode %s", commands, mode);
+
+      if (commands.isEmpty()) return new RspList<>();
+
+      RequestOptions opts = new RequestOptions(mode, timeout);
+      //opts.setExclusionList(card.getChannel().getAddress());
+
+      Map<Address, Future<Object>> futures = new HashMap<Address, Future<Object>>(commands.size());
+      RspList<Object> retval = new RspList<>();
+
+      for (Map.Entry<Address, ReplicableCommand> cmd : commands.entrySet()) {
+         Buffer buf = marshallCall(marshaller, cmd.getValue());
+         Address dest = cmd.getKey();
+         boolean rsvp = isRsvpCommand(cmd.getValue());
+         futures.put(dest, card.sendMessageWithFuture(constructMessage(buf, dest, oob, mode, rsvp, false), opts));
+      }
+
+      // a get() on each future will block till that call completes.
+      TimeService timeService = card.timeService;
+      long waitTime = timeService.expectedEndTime(timeout, MILLISECONDS);
+      for (Map.Entry<Address, Future<Object>> entry : futures.entrySet()) {
+         Address target = entry.getKey();
+         try {
+            retval.addRsp(target, entry.getValue().get(timeService.remainingTime(waitTime, MILLISECONDS), MILLISECONDS));
+         } catch (java.util.concurrent.TimeoutException te) {
+            throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",
+                  prettyPrintTime(timeout), target));
+         } catch (ExecutionException e) {
+            if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
+               retval.addRsp(target, new ExceptionResponse((SuspectedException) e.getCause()));
+            } else {
+               throw wrapThrowableInException(e.getCause());
+            }
+         }
+      }
       return retval;
    }
 

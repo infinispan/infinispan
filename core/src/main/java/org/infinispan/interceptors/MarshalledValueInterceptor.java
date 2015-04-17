@@ -1,18 +1,26 @@
 package org.infinispan.interceptors;
 
+import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
+import static org.infinispan.marshall.core.MarshalledValue.isTypeExcluded;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.KeySetCommand;
-import org.infinispan.commands.read.ValuesCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.ComponentName;
@@ -20,22 +28,8 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.marshall.core.MarshalledValue;
-import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.Immutables;
-import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
-import static org.infinispan.marshall.core.MarshalledValue.isTypeExcluded;
 
 /**
  * Interceptor that handles the wrapping and unwrapping of cached data using {@link
@@ -172,6 +166,29 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
       }
       Object retVal = invokeNextInterceptor(ctx, command);
       return processRetVal(retVal, ctx);
+   }
+
+   @Override
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      if (wrapKeys) {
+         Set<Object> marshalledKeys = new HashSet<>();
+         for (Object key : command.getKeys()) {
+            if (!isTypeExcluded(key.getClass())) {
+               MarshalledValue mv = createMarshalledValue(key, ctx);
+               marshalledKeys.add(mv);
+            } else {
+               marshalledKeys.add(key);
+            }
+         }
+         command.setKeys(marshalledKeys);
+      }
+      Map<Object, Object> map = (Map<Object, Object>) invokeNextInterceptor(ctx, command);
+      Map<Object, Object> unmarshalled = command.createMap();
+      for (Map.Entry<Object, Object> entry : map.entrySet()) {
+         // TODO: how does this apply to CacheEntries if command.isReturnEntries()?
+         unmarshalled.put(processRetVal(entry.getKey(), ctx), processRetVal(entry.getValue(), ctx));
+      }
+      return unmarshalled;
    }
 
    @Override

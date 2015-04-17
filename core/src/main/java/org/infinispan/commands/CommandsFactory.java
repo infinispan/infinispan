@@ -12,12 +12,14 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
@@ -148,6 +150,16 @@ public interface CommandsFactory {
    GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags);
 
    /**
+    * Builds a GetManyCommand
+    * @param keys keys to get
+    * @param flags Command flags provided by cache
+    * @param returnEntries boolean indicating whether entire cache entries are
+    *                      returned, otherwise return just the value parts
+    * @return a GetKeyValueCommand
+    */
+   GetAllCommand buildGetAllCommand(Collection<?> keys, Set<Flag> flags, boolean returnEntries);
+
+   /**
     * Builds a KeySetCommand
     * @param flags Command flags provided by cache
     * @return a KeySetCommand
@@ -275,6 +287,13 @@ public interface CommandsFactory {
    ClusteredGetCommand buildClusteredGetCommand(Object key, Set<Flag> flags, boolean acquireRemoteLock, GlobalTransaction gtx);
 
    /**
+    * Builds a ClusteredGetManyCommand, which is a remote lookup command
+    * @param keys key to look up
+    * @return a ClusteredGetManyCommand
+    */
+   ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, Set<Flag> flags, GlobalTransaction gtx);
+
+   /**
     * Builds a LockControlCommand to control explicit remote locking
     *
     *
@@ -282,7 +301,7 @@ public interface CommandsFactory {
     * @param gtx
     * @return a LockControlCommand
     */
-   LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags, GlobalTransaction gtx);
+   LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags, GlobalTransaction gtx);
 
    /**
     * Same as {@link #buildLockControlCommand(Object, java.util.Set, org.infinispan.transaction.xa.GlobalTransaction)}
@@ -291,7 +310,7 @@ public interface CommandsFactory {
    LockControlCommand buildLockControlCommand(Object key, Set<Flag> flags, GlobalTransaction gtx);
 
 
-   LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags);
+   LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags);
 
    /**
     * Builds a StateRequestCommand used for requesting transactions and locks and for starting or canceling transfer of cache entries.

@@ -1,5 +1,12 @@
 package org.infinispan;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.cache.impl.DecoratedCache;
@@ -22,13 +29,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import javax.transaction.TransactionManager;
-import javax.transaction.xa.XAResource;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * An advanced interface that exposes additional methods not available on {@link Cache}.
@@ -405,6 +405,31 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    // That way, you could do comparison not only on the cache value, but also based on version...etc
 
    /**
+    * Gets a collection of entries, returning them as {@link Map} of the values
+    * associated with the set of keys requested.
+    * <p>
+    * If the cache is configured read-through, and a get for a key would
+    * return null because an entry is missing from the cache, the Cache's
+    * {@link CacheLoader} is called in an attempt to load the entry. If an
+    * entry cannot be loaded for a given key, the returned Map will contain null for
+    * value of the key.
+    * <p>
+    * Unlike other bulk methods if this invoked in an existing transaction all entries
+    * will be stored in the current transactional context
+    * <p>
+    * The returned {@link Map} will be a copy and updates to the map will not be reflected
+    * in the Cache and vice versa.  The keys and values themselves however may not be
+    * copies depending on if storeAsBinary is enabled and the value was retrieved from
+    * the local node.
+    *
+    * @param keys The keys whose associated values are to be returned.
+    * @return A map of entries that were found for the given keys. Keys not found
+    *         in the cache are present in the map with null values.
+    * @throws NullPointerException  if keys is null or if keys contains a null
+    */
+   Map<K, V> getAll(Set<?> keys);
+
+   /**
     * Retrieves a CacheEntry corresponding to a specific key.
     *
     * @param key the key whose associated cache entry is to be returned
@@ -414,6 +439,31 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @since 5.3
     */
    CacheEntry<K, V> getCacheEntry(K key);
+
+   /**
+    * Gets a collection of entries from the {@link AdvancedCache}, returning them as
+    * {@link Map} of the cache entries associated with the set of keys requested.
+    * <p>
+    * If the cache is configured read-through, and a get for a key would
+    * return null because an entry is missing from the cache, the Cache's
+    * {@link CacheLoader} is called in an attempt to load the entry. If an
+    * entry cannot be loaded for a given key, the returned Map will contain null for
+    * value of the key.
+    * <p>
+    * Unlike other bulk methods if this invoked in an existing transaction all entries
+    * will be stored in the current transactional context
+    * <p>
+    * The returned {@link Map} will be a copy and updates to the map will not be reflected
+    * in the Cache and vice versa.  The keys and values themselves however may not be
+    * copies depending on if storeAsBinary is enabled and the value was retrieved from
+    * the local node.
+    *
+    * @param keys The keys whose associated values are to be returned.
+    * @return A map of entries that were found for the given keys. Keys not found
+    *         in the cache are present in the map with null values.
+    * @throws NullPointerException  if keys is null or if keys contains a null
+    */
+   Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys);
 
    /**
     * Retrieve the entry iterable that can be used to iterate over the contents of this cache.  Note that every

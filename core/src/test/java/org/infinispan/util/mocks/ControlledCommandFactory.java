@@ -18,12 +18,14 @@ import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
@@ -175,6 +177,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
+   public GetAllCommand buildGetAllCommand(Collection<?> keys, Set<Flag> flags, boolean returnEntries) {
+      return actual.buildGetAllCommand(keys, flags, returnEntries);
+   }
+
+   @Override
    public KeySetCommand buildKeySetCommand(Set<Flag> flags) {
       return actual.buildKeySetCommand(flags);
    }
@@ -250,7 +257,12 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection<Object> keys, Set<Flag> flags, GlobalTransaction gtx) {
+   public ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
+      return actual.buildClusteredGetAllCommand(keys, flags, gtx);
+   }
+
+   @Override
+   public LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
       return actual.buildLockControlCommand(keys, flags, gtx);
    }
 
@@ -260,7 +272,7 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public LockControlCommand buildLockControlCommand(Collection keys, Set<Flag> flags) {
+   public LockControlCommand buildLockControlCommand(Collection<?> keys, Set<Flag> flags) {
       return actual.buildLockControlCommand(keys, flags);
    }
 

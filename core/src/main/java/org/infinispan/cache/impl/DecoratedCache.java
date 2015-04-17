@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.AdvancedCache;
@@ -424,6 +425,11 @@ public class DecoratedCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> 
    @Override
    public V get(Object key) {
       return cacheImplementation.get(key, flags, classLoader.get());
+   }
+
+   @Override
+   public Map<K, V> getAll(Set<?> keys) {
+      return cacheImplementation.getAll(keys, flags, classLoader.get());
    }
 
    @Override

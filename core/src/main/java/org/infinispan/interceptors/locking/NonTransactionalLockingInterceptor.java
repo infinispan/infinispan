@@ -2,6 +2,7 @@ package org.infinispan.interceptors.locking;
 
 import org.infinispan.InvalidCacheUsageException;
 import org.infinispan.commands.DataCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.context.InvocationContext;
@@ -40,6 +41,15 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    }
 
    @Override
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      assertNonTransactional(ctx);
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         lockManager.unlockAll(ctx);//possibly needed because of L1 locks being acquired
+      }
+   }
+
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {

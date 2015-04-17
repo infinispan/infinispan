@@ -4,6 +4,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -20,8 +21,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Locking interceptor to be used by pessimistic caches.
@@ -71,6 +72,24 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
          throw t;
       } finally {
          if (!ctx.isInTxScope()) lockManager.unlockAll(ctx);
+      }
+   }
+
+   @Override
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      try {
+         if (ctx.isInTxScope() && command.hasFlag(Flag.FORCE_WRITE_LOCK) && !hasSkipLocking(command)) {
+            acquireRemoteIfNeeded(ctx, command.getKeys(), command);
+            final TxInvocationContext txContext = (TxInvocationContext) ctx;
+            long lockTimeout = getLockAcquisitionTimeout(command, false);
+            for (Object key : command.getKeys()) {
+               lockAndRegisterBackupLock(txContext, key, lockTimeout, false);
+            }
+         }
+         return invokeNextInterceptor(ctx, command);
+      } catch (Throwable t) {
+         releaseLocksOnFailureBeforePrepare(ctx);
+         throw t;
       }
    }
 
@@ -183,7 +202,7 @@ public class PessimisticLockingInterceptor extends AbstractTxLockingInterceptor 
       }
    }
 
-   private void acquireRemoteIfNeeded(InvocationContext ctx, Set<Object> keys, FlagAffectedCommand command) throws Throwable {
+   private void acquireRemoteIfNeeded(InvocationContext ctx, Collection<?> keys, FlagAffectedCommand command) throws Throwable {
       if (ctx.isOriginLocal() && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          final TxInvocationContext txContext = (TxInvocationContext) ctx;
          LocalTransaction localTransaction = (LocalTransaction) txContext.getCacheTransaction();

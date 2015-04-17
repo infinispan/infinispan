@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import static org.testng.AssertJUnit.assertNotNull;
+
 @Test(groups = "unit", testName = "commands.CommandIdUniquenessTest")
 public class CommandIdUniquenessTest extends AbstractInfinispanTest {
    public void testCommandIdUniqueness() throws Exception {
@@ -29,6 +31,7 @@ public class CommandIdUniquenessTest extends AbstractInfinispanTest {
                }
             }
 
+            assertNotNull("Empty constructor not found for " + c.getSimpleName(), constructor);
             ReplicableCommand cmd = (ReplicableCommand) constructor.newInstance();
             byte b = cmd.getCommandId();
             assert b > 0 : "Command " + c.getSimpleName() + " has a command id of " + b + " and does not implement LocalCommand!";

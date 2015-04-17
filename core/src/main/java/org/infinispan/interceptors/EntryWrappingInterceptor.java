@@ -1,26 +1,24 @@
 package org.infinispan.interceptors;
 
+import static org.infinispan.commons.util.Util.toStr;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.DataWriteCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -46,13 +44,6 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.statetransfer.XSiteStateConsumer;
-
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Interceptor in charge with wrapping entries and add them in caller's context.
@@ -145,6 +136,25 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
             CacheEntry entry = ctx.lookupEntry(command.getKey());
             if (entry != null) {
                entry.setSkipLookup(true);
+            }
+         }
+      }
+   }
+
+   @Override
+   public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
+      try {
+         for (Object key : command.getKeys()) {
+            entryFactory.wrapEntryForReading(ctx, key, null);
+         }
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         if (ctx.isInTxScope()) {
+            for (Object key : command.getKeys()) {
+               CacheEntry entry = ctx.lookupEntry(key);
+               if (entry != null) {
+                  entry.setSkipLookup(true);
+               }
             }
          }
       }

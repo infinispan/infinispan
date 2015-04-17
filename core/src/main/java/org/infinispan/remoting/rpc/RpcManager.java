@@ -215,6 +215,8 @@ public interface RpcManager {
     */
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options);
 
+   Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options);
+
    /**
     * The same as {@link #invokeRemotely(java.util.Collection, org.infinispan.commands.ReplicableCommand, RpcOptions)}
     * except that the task is passed to the transport executor and a Future is returned.  The transport always deals

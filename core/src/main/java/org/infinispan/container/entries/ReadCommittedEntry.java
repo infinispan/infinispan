@@ -123,7 +123,7 @@ public class ReadCommittedEntry implements MVCCEntry {
 
    @Override
    public boolean isNull() {
-      return false;
+      return value == null;
    }
 
    @Override
