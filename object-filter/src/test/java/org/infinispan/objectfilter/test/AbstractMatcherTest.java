@@ -132,14 +132,38 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
-   public void testSimpleTautology() throws Exception {
+   public void testSimpleTautology1() throws Exception {
       String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name = 'Noone' or not(name = 'Noone')";  // this should match anything
       assertTrue(match(queryString, createPerson1()));
    }
 
    @Test
-   public void testSimpleContradiction() throws Exception {
+   public void testSimpleTautology2() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name = 'Noone' or name != 'Noone'";  // this should match anything
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testSimpleTautology3() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name > 'Noone' or name <= 'Noone'";  // this should match anything
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testSimpleContradiction1() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John' and not(name = 'John')";  // this should not match anything
+      assertFalse(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testSimpleContradiction2() throws Exception {
       String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John' and name != 'John'";  // this should not match anything
+      assertFalse(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testSimpleContradiction3() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where name > 'John' and name <= 'John'";  // this should not match anything
       assertFalse(match(queryString, createPerson1()));
    }
 
