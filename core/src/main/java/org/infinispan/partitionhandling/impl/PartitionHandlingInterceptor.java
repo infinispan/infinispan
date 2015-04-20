@@ -145,14 +145,18 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       Object result = super.visitPrepareCommand(ctx, command);
-      postTxCommandCheck(ctx);
+      if (ctx.isOriginLocal()) {
+         postTxCommandCheck(ctx);
+      }
       return result;
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       Object result = super.visitCommitCommand(ctx, command);
-      postTxCommandCheck(ctx);
+      if (ctx.isOriginLocal()) {
+         postTxCommandCheck(ctx);
+      }
       return result;
    }
 
