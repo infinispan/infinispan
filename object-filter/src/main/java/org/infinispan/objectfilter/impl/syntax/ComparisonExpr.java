@@ -29,9 +29,9 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
             case NOT_EQUAL:
                return EQUAL;
             case GREATER_OR_EQUAL:
-               return LESS_OR_EQUAL;
-            case GREATER:
                return LESS;
+            case GREATER:
+               return LESS_OR_EQUAL;
             default:
                return this;
          }
