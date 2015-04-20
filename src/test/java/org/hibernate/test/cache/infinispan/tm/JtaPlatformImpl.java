@@ -42,7 +42,7 @@ import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
  */
 public class JtaPlatformImpl implements JtaPlatform {
 	@Override
-	public TransactionManager retrieveTransactionManager() {
+	public TransactionManager retrieveTransactionManager(){
 		return XaTransactionManagerImpl.getInstance();
 	}
 
