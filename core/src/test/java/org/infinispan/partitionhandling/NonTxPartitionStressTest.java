@@ -1,6 +1,7 @@
 package org.infinispan.partitionhandling;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -12,9 +13,12 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TransportFlags;
+import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.TransactionMode;
 import org.jgroups.protocols.DISCARD;
 import org.testng.annotations.Test;
 
+import javax.transaction.xa.XAException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -26,18 +30,21 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 
-@Test(groups = "stress", testName = "partitionhandling.org.infinispan.partitionhandling.PartitionStressTest")
-public class PartitionStressTest extends MultipleCacheManagersTest {
+@Test(groups = "stress", testName = "partitionhandling.NonTxPartitionStressTest")
+public class NonTxPartitionStressTest extends MultipleCacheManagersTest {
 
    public static final int NUM_NODES = 4;
+   public TransactionMode transactionMode = TransactionMode.NON_TRANSACTIONAL;
+   public LockingMode lockingMode = null;
 
-   public PartitionStressTest() {
+   public NonTxPartitionStressTest() {
    }
 
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      builder.transaction().transactionMode(transactionMode).lockingMode(lockingMode);
       builder.clustering().partitionHandling().enabled(true);
       for (int i = 0; i < NUM_NODES; i++) {
          addClusterEnabledCacheManager(builder, new TransportFlags().withFD(true).withMerge(true));
@@ -68,6 +75,10 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
                      insertedKeys.put(key, count);
                   } catch (AvailabilityException e) {
                      // expected, ignore
+                  } catch (CacheException e) {
+                     if (e.getCause() instanceof XAException && e.getCause().getCause() instanceof AvailabilityException) {
+                        // expected, ignore
+                     }
                   }
                   count++;
                   Thread.sleep(0);
@@ -150,7 +161,7 @@ public class PartitionStressTest extends MultipleCacheManagersTest {
 
       for (String key : insertedKeys.keySet()) {
          for (int i = 0; i < NUM_NODES; i++) {
-            assertEquals(insertedKeys.get(key), cache(i).get(key));
+            assertEquals("Failure for key " + key + " on " + cache(i), insertedKeys.get(key), cache(i).get(key));
          }
       }
 
