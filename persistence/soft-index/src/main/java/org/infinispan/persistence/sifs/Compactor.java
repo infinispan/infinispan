@@ -154,7 +154,9 @@ class Compactor extends Thread {
                continue;
             }
 
-            log.debug("Compacting file " + scheduledFile);
+            if (log.isDebugEnabled()) {
+               log.debugf("Compacting file %d", scheduledFile);
+            }
             int scheduledOffset = 0;
             FileProvider.Handle handle = fileProvider.getFile(scheduledFile);
             if (handle == null) {
@@ -189,13 +191,13 @@ class Compactor extends Thread {
                            log.tracef("Key for %d:%d was found in index on %d:%d",
                                  scheduledFile, scheduledOffset, position.file, position.offset);
                         } else {
-                           log.tracef("Key for %d:%d was not found in index!", scheduledFile, scheduledOffset);
+                           log.tracef("Key for %d:%d was not found in index!", scheduledFile, (Object)scheduledOffset);
                         }
                      }
                   }
                   if (drop) {
                      if (trace) {
-                        log.tracef("Drop %d:%d (%s)", scheduledFile, scheduledOffset,
+                        log.tracef("Drop %d:%d (%s)", scheduledFile, (Object)scheduledOffset,
                               header.valueLength() > 0 ? "record" : "tombstone");
                      }
                      scheduledOffset += header.totalLength();
@@ -209,7 +211,9 @@ class Compactor extends Thread {
                      }
                      currentOffset = 0;
                      logFile = fileProvider.getFileForLog();
-                     log.debug("Compacting to " + logFile.fileId);
+                     if (log.isDebugEnabled()) {
+                        log.debugf("Compacting to %d", (Object)logFile.fileId);
+                     }
                   }
 
                   byte[] serializedValue;

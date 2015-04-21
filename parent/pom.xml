@@ -171,7 +171,7 @@
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.13.Final</version.weld>
       <version.wildfly>8.1.0.Final</version.wildfly>
-      <version.wildfly.maven.plugin>1.1.0.Alpha1</version.wildfly.maven.plugin>
+      <version.wildfly.maven.plugin>1.1.0.Alpha2</version.wildfly.maven.plugin>
       <version.javassist>3.18.1-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>

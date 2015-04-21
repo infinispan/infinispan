@@ -3,7 +3,6 @@ package org.infinispan.client.hotrod;
 import org.infinispan.affinity.KeyAffinityService;
 import org.infinispan.affinity.KeyAffinityServiceFactory;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
-import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.retry.DistributionRetryTest;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
