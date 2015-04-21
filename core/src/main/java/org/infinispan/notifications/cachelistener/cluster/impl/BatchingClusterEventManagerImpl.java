@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.cluster.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -57,10 +58,10 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
       localContext.remove();
    }
    
-   private static interface EventContext<K, V> {
-      public void addTargets(Address address, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync);
+   private interface EventContext<K, V> {
+      void addTargets(Address address, UUID identifier, Collection<ClusterEvent<K, V>> events, boolean sync);
       
-      public void sendToTargets(DistributedExecutorService service);
+      void sendToTargets(DistributedExecutorService service);
    }
    
    protected static class UnicastEventContext<K, V> implements EventContext<K, V> {
@@ -73,13 +74,16 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
             targetEvents = new TargetEvents<>();
             targets.put(address, targetEvents);
          }
-         
+
          Map<UUID, Collection<ClusterEvent<K, V>>> listenerEvents = targetEvents.events;
          // This shouldn't be set before, so do put instead of doing get then put
          Collection<ClusterEvent<K, V>> prevEvents = listenerEvents.put(identifier, events);
          if (prevEvents != null) {
             // If we have multiple events to the same node for the same uuid condense them.  This shouldn't really happen...
-            events.addAll(prevEvents);
+            Collection<ClusterEvent<K, V>> union = new ArrayList<>(prevEvents.size() + events.size());
+            union.addAll(prevEvents);
+            union.addAll(events);
+            listenerEvents.put(identifier, union);
          }
          if (sync) {
             targetEvents.sync = true;
