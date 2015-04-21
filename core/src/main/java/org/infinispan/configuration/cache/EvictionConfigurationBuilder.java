@@ -64,6 +64,11 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       return this;
    }
 
+   @Deprecated
+   public EvictionConfigurationBuilder maxEntries(int maxEntries) {
+      return maxEntries((long)maxEntries);
+   }
+
    @Override
    public void validate() {
       EvictionStrategy strategy = attributes.attribute(STRATEGY).get();
