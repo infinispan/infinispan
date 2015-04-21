@@ -189,13 +189,13 @@ class Compactor extends Thread {
                            log.tracef("Key for %d:%d was found in index on %d:%d",
                                  scheduledFile, scheduledOffset, position.file, position.offset);
                         } else {
-                           log.tracef("Key for %d:%d was not found in index!", scheduledFile, scheduledOffset);
+                           log.tracef("Key for %d:%d was not found in index!", scheduledFile, (Object)scheduledOffset);
                         }
                      }
                   }
                   if (drop) {
                      if (trace) {
-                        log.tracef("Drop %d:%d (%s)", scheduledFile, scheduledOffset,
+                        log.tracef("Drop %d:%d (%s)", scheduledFile, (Object)scheduledOffset,
                               header.valueLength() > 0 ? "record" : "tombstone");
                      }
                      scheduledOffset += header.totalLength();

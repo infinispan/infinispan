@@ -58,6 +58,7 @@ import static org.infinispan.util.logging.LogFactory.CLUSTER;
  */
 public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private static final Log log = LogFactory.getLog(ClusterTopologyManagerImpl.class);
+   private static final boolean trace = log.isTraceEnabled();
 
    private Transport transport;
    private GlobalConfiguration globalConfiguration;
@@ -188,11 +189,11 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
       cacheStatus.doConfirmRebalance(node, topologyId);
    }
-   
+
    private static class CacheTopologyFilterReuser implements ResponseFilter {
       Map<CacheTopology, CacheTopology> seenTopologies = new HashMap<>();
       Map<CacheJoinInfo, CacheJoinInfo> seenInfos = new HashMap<>();
-      
+
       @Override
       public boolean isAcceptable(Response response, Address sender) {
          if (response.isSuccessful() && response.isValid()) {
@@ -201,13 +202,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                CacheStatusResponse csr = entry.getValue();
                CacheTopology cacheTopology = csr.getCacheTopology();
                CacheTopology stableTopology = csr.getStableTopology();
-               
+
                CacheTopology replaceCacheTopology = seenTopologies.get(cacheTopology);
                if (replaceCacheTopology == null) {
                   seenTopologies.put(cacheTopology, cacheTopology);
                   replaceCacheTopology = cacheTopology;
                }
-               
+
                CacheTopology replaceStableTopology = null;
                // If the don't equal check if we replace - note stableTopology can be null
                if (!cacheTopology.equals(stableTopology)) {
@@ -215,28 +216,28 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                   if (replaceStableTopology == null) {
                      seenTopologies.put(stableTopology, stableTopology);
                   }
-                  
+
                } else {
                   // Since they were equal replace it with the cache topology we are going to use
                   replaceStableTopology = replaceCacheTopology != null ? replaceCacheTopology : cacheTopology;
                }
-               
+
                CacheJoinInfo info = csr.getCacheJoinInfo();
                CacheJoinInfo replaceInfo = seenInfos.get(info);
                if (replaceInfo == null) {
                   seenInfos.put(info, info);
                }
-               
+
                if (replaceCacheTopology != null || replaceStableTopology != null || replaceInfo != null) {
-                  entry.setValue(new CacheStatusResponse(replaceInfo != null ? replaceInfo : info, 
-                        replaceCacheTopology != null ? replaceCacheTopology : cacheTopology, 
+                  entry.setValue(new CacheStatusResponse(replaceInfo != null ? replaceInfo : info,
+                        replaceCacheTopology != null ? replaceCacheTopology : cacheTopology,
                         replaceStableTopology != null ? replaceStableTopology : stableTopology, csr.getAvailabilityMode()));
                }
             }
          }
          return true;
       }
-      
+
       @Override
       public boolean needMoreResponses() {
          return true;
@@ -254,8 +255,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
          boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
          isCoordinator = transport.isCoordinator();
-         log.tracef("Received new cluster view: %s, isCoordinator = %s, becameCoordinator = %s", newViewId,
-               isCoordinator, becameCoordinator);
+         if (trace) {
+            log.tracef("Received new cluster view: %d, isCoordinator = %s, becameCoordinator = %s", (Object)newViewId,
+                  isCoordinator, becameCoordinator);
+         }
          mustRecoverClusterStatus |= mergeView || becameCoordinator;
          if (!isCoordinator)
             return;
@@ -399,7 +402,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          boolean totalOrder, boolean distributed) throws Exception {
       return executeOnClusterSync(command, timeout, totalOrder, distributed, null);
    }
-   
+
    private Map<Address, Object> executeOnClusterSync(final ReplicableCommand command, final int timeout,
                                                      boolean totalOrder, boolean distributed, final ResponseFilter filter)
          throws Exception {

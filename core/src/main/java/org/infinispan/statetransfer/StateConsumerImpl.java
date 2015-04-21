@@ -361,8 +361,8 @@ public class StateConsumerImpl implements StateConsumer {
          }
 
          int rebalanceTopologyId = stateTransferTopologyId.get();
-         if (trace) log.tracef("Topology update processed, stateTransferTopologyId = %s, isRebalance = %s, pending CH = %s",
-               rebalanceTopologyId, isRebalance, cacheTopology.getPendingCH());
+         if (trace) log.tracef("Topology update processed, stateTransferTopologyId = %d, isRebalance = %s, pending CH = %s",
+               (Object)rebalanceTopologyId, isRebalance, cacheTopology.getPendingCH());
          if (rebalanceTopologyId != NO_REBALANCE_IN_PROGRESS) {
             // there was a rebalance in progress
             if (!isRebalance && cacheTopology.getPendingCH() == null) {
@@ -465,6 +465,7 @@ public class StateConsumerImpl implements StateConsumer {
             : InfinispanCollections.<Integer>emptySet();
    }
 
+   @Override
    public void applyState(final Address sender, int topologyId, Collection<StateChunk> stateChunks) {
       ConsistentHash wCh = cacheTopology.getWriteConsistentHash();
       // Ignore responses received after we are no longer a member
@@ -485,7 +486,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
       if (topologyId < rebalanceTopologyId) {
          log.debugf("Discarding state response with old topology id %d for cache %s, state transfer request topology was %d",
-               topologyId, cacheName, waitingForState.get());
+               (Object)topologyId, cacheName, waitingForState.get());
          return;
       }
 

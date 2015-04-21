@@ -117,7 +117,9 @@ public class TransactionTrackInterceptor extends BaseCustomInterceptor {
          sleep();
       }
       boolean completed = completedLocalTransactions(globalTransaction);
-      log.debugf("[local] is %s completed? %s", globalTransaction.getId(), completed);
+      if (log.isDebugEnabled()) {
+         log.debugf("[local] is %d completed? %s", (Object)globalTransaction.getId(), completed);
+      }
       return completed;
    }
 
@@ -127,7 +129,9 @@ public class TransactionTrackInterceptor extends BaseCustomInterceptor {
          sleep();
       }
       boolean completed = completedRemoteTransactions(globalTransaction);
-      log.debugf("[remote] is %s completed? %s", globalTransaction.getId(), completed);
+      if (log.isDebugEnabled()) {
+         log.debugf("[remote] is %d completed? %s", (Object)globalTransaction.getId(), completed);
+      }
       return completed;
    }
 
@@ -136,7 +140,9 @@ public class TransactionTrackInterceptor extends BaseCustomInterceptor {
       while (System.currentTimeMillis() < endTimeout && completedLocalTransactions() < expectedTransactions) {
          sleep();
       }
-      log.debugf("[local] check for completion. seen=%s, expected=%s", localTransactionsSeen.size(), expectedTransactions);
+      if (log.isDebugEnabled()) {
+         log.debugf("[local] check for completion. seen=%s, expected=%s", localTransactionsSeen.size(), expectedTransactions);
+      }
       return completedLocalTransactions() >= expectedTransactions;
    }
 
@@ -145,7 +151,9 @@ public class TransactionTrackInterceptor extends BaseCustomInterceptor {
       while (System.currentTimeMillis() < endTimeout && completedRemoteTransactions() < expectedTransactions) {
          sleep();
       }
-      log.debugf("[remote] check for completion. seen=%s, expected=%s", remoteTransactionsSeen.size(), expectedTransactions);
+      if (log.isDebugEnabled()) {
+         log.debugf("[remote] check for completion. seen=%s, expected=%s", remoteTransactionsSeen.size(), expectedTransactions);
+      }
       return completedRemoteTransactions() >= expectedTransactions;
    }
 

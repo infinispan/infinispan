@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
@@ -291,8 +290,10 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       // TotalOrderStateTransferInterceptor doesn't set the topology id for PFERs.
       // TODO Shouldn't PFERs be executed in a tx with total order?
       boolean topologyChanged = isSync && currentTopologyId != commandTopologyId && commandTopologyId != -1;
-      log.tracef("Command topology id is %d, current topology id is %d, successful? %s",
-            commandTopologyId, currentTopologyId, command.isSuccessful());
+      if (trace) {
+         log.tracef("Command topology id is %d, current topology id is %d, successful? %s",
+               (Object)commandTopologyId, currentTopologyId, command.isSuccessful());
+      }
       // We need to check for topology changes on the origin even if the command was unsuccessful
       // otherwise we execute the command on the correct primary owner, and then we still
       // throw an OutdatedTopologyInterceptor when we return in EntryWrappingInterceptor.
