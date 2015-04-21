@@ -41,4 +41,11 @@ trait Log extends org.infinispan.server.core.logging.Log {
 
    def warnMarshallerAlreadySet(existingMarshaller: Marshaller, newMarshaller: Marshaller) =
       log.warnMarshallerAlreadySet(existingMarshaller, newMarshaller)
+
+   def missingCacheEventFactory(factoryType: String, name: String) =
+      log.missingCacheEventFactory(factoryType, name)
+
+   def illegalFilterConverterEventFactory(name: String) =
+      log.illegalFilterConverterEventFactory(name)
+
 }

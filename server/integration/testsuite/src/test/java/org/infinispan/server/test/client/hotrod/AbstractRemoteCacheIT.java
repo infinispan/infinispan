@@ -876,6 +876,35 @@ public abstract class AbstractRemoteCacheIT {
         }
     }
 
+    @Test
+    public void testCustomFilterEvents() {
+        final FilterCustomEventLogListener eventListener = new FilterCustomEventLogListener();
+        remoteCache.addClientListener(eventListener, new Object[]{3}, null);
+        try {
+            eventListener.expectNoEvents();
+            remoteCache.put(1, "one");
+            eventListener.expectSingleCustomEvent(1, "one");
+            remoteCache.put(1, "uno");
+            eventListener.expectSingleCustomEvent(1, "uno");
+            remoteCache.put(2, "two");
+            eventListener.expectSingleCustomEvent(2, "two");
+            remoteCache.put(2, "dos");
+            eventListener.expectSingleCustomEvent(2, "dos");
+            remoteCache.put(3, "three");
+            eventListener.expectSingleCustomEvent(3, null);
+            remoteCache.put(3, "tres");
+            eventListener.expectSingleCustomEvent(3, null);
+            remoteCache.remove(1);
+            eventListener.expectSingleCustomEvent(1, null);
+            remoteCache.remove(2);
+            eventListener.expectSingleCustomEvent(2, null);
+            remoteCache.remove(3);
+            eventListener.expectSingleCustomEvent(3, null);
+        } finally {
+            remoteCache.removeClientListener(eventListener);
+        }
+    }
+
     public static <K> void expectOnlyCreatedEvent(K key, EventLogListener eventListener) {
         expectSingleEvent(key, eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
         expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
@@ -943,6 +972,9 @@ public abstract class AbstractRemoteCacheIT {
 
     @ClientListener(converterFactoryName = "dynamic-converter-factory")
     public static class DynamicCustomEventLogListener extends CustomEventLogListener {}
+
+    @ClientListener(filterFactoryName = "filter-converter-factory", converterFactoryName = "filter-converter-factory")
+    public static class FilterCustomEventLogListener extends CustomEventLogListener {}
 
     static class Person implements Serializable {
 

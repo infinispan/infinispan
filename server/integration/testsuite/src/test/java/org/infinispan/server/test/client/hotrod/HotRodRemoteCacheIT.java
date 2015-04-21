@@ -3,6 +3,8 @@ package org.infinispan.server.test.client.hotrod;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.server.test.category.HotRodClustered;
 import org.infinispan.server.test.category.HotRodLocal;
@@ -50,6 +52,13 @@ public class HotRodRemoteCacheIT extends AbstractRemoteCacheIT {
         return createConverterArchive();
     }
 
+    @Deployment(testable = false, name = "filter-converter-1")
+    @TargetsContainer("container1")
+    @OverProtocol("jmx-as7")
+    public static Archive<?> deployFilterConverter1() {
+        return createFilterConverterArchive();
+    }
+
     @Deployment(testable = false, name = "converter-2")
     @TargetsContainer("container2")
     @OverProtocol("jmx-as7")
@@ -64,18 +73,31 @@ public class HotRodRemoteCacheIT extends AbstractRemoteCacheIT {
         return createFilterArchive();
     }
 
+    @Deployment(testable = false, name = "filter-converter-2")
+    @TargetsContainer("container2")
+    @OverProtocol("jmx-as7")
+    public static Archive<?> deployFilterConverter2() {
+        return createFilterConverterArchive();
+    }
+
     private static Archive<?> createFilterArchive() {
         return ShrinkWrap.create(JavaArchive.class, "filter.jar")
                 .addClasses(StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class)
                 .addAsServiceProvider(CacheEventFilterFactory.class,
-                        StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class);
+                   StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class);
     }
 
    private static Archive<?> createConverterArchive() {
       return ShrinkWrap.create(JavaArchive.class, "converter.jar")
-            .addClasses(StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class, CustomEvent.class)
-            .addAsServiceProvider(CacheEventConverterFactory.class,
-                  StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class);
+         .addClasses(StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class, CustomEvent.class)
+         .addAsServiceProvider(CacheEventConverterFactory.class,
+            StaticCacheEventConverterFactory.class, DynamicCacheEventConverterFactory.class);
+   }
+
+   private static Archive<?> createFilterConverterArchive() {
+      return ShrinkWrap.create(JavaArchive.class, "filter-converter.jar")
+         .addClasses(FilterConverterFactory.class, CustomEvent.class)
+         .addAsServiceProvider(CacheEventFilterConverterFactory.class, FilterConverterFactory.class);
    }
 
    @Override

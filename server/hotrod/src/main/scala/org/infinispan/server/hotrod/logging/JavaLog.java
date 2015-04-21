@@ -5,6 +5,7 @@ import java.util.Set;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.notifications.cachelistener.event.Event;
+import org.infinispan.server.hotrod.MissingFactoryException;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.jboss.logging.annotations.Cause;
 import org.jboss.logging.annotations.LogMessage;
@@ -68,4 +69,9 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Marshaller already set to '%s', ignoring passed '%s'", id = 6012)
    void warnMarshallerAlreadySet(Marshaller existingMarshaller, Marshaller newMarshaller);
 
+   @Message(value = "Listener %s factory '%s' not found in server", id = 6013)
+   MissingFactoryException missingCacheEventFactory(String factoryType, String name);
+
+   @Message(value = "Trying to add a filter and converter factory with name '%s' but it does not extend CacheEventFilterConverterFactory", id = 6014)
+   IllegalStateException illegalFilterConverterEventFactory(String name);
 }

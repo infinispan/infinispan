@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod
 
 import logging.Log
 import org.infinispan.commons.marshall.Marshaller
-import org.infinispan.notifications.cachelistener.filter.{CacheEventConverterFactory, CacheEventFilterFactory}
+import org.infinispan.notifications.cachelistener.filter.{CacheEventFilterConverterFactory, CacheEventConverterFactory, CacheEventFilterFactory}
 import scala.collection.JavaConversions._
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.{QueryFacade, AbstractProtocolServer}
@@ -241,6 +241,14 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    def removeCacheEventConverterFactory(name: String): Unit = {
       clientListenerRegistry.removeCacheEventConverterFactory(name)
+   }
+
+   def addCacheEventFilterConverterFactory(name: String, factory: CacheEventFilterConverterFactory): Unit = {
+      clientListenerRegistry.addCacheEventFilterConverterFactory(name, factory)
+   }
+
+   def removeCacheEventFilterConverterFactory(name: String): Unit = {
+      clientListenerRegistry.removeCacheEventFilterConverterFactory(name)
    }
 
    def setEventMarshaller(marshaller: Marshaller): Unit = {

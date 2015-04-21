@@ -232,7 +232,8 @@ class StaticCacheEventFilterFactory implements CacheEventFilterFactory {
 // needed when running in a cluster
 class StaticCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
    @Override
-   public boolean accept(Integer key, String value, Metadata metadata, String oldValue, Metadata oldMetadata, EventType eventType) {
+   public boolean accept(Integer key, String oldValue, Metadata oldMetadata,
+         String newValue, Metadata newMetadata, EventType eventType) {
       if (key.equals(1)) // static key
          return true;
 
@@ -298,7 +299,8 @@ class DynamicCacheEventFilter implements CacheEventFilter<Integer, String>, Seri
    }
 
    @Override
-   public boolean accept(Integer key, String value, Metadata metadata, String oldValue, Metadata oldMetadata, EventType eventType) {
+   public boolean accept(Integer key, String oldValue, Metadata oldMetadata,
+         String newValue, Metadata newMetadata, EventType eventType) {
       if (key.equals(params[0])) // dynamic key
          return true;
 
@@ -348,8 +350,8 @@ class StaticConverterFactory implements CacheEventConverterFactory {
 // Serializable, Externalizable or marshallable with Infinispan Externalizers
 // needed when running in a cluster
 class StaticCacheEventConverter implements CacheEventConverter<Integer, String, CustomEvent>, Serializable {
-   public CustomEvent convert(Integer key, String value, Metadata metadata, String prevValue, Metadata prevMetadata, EventType eventType) {
-      return new CustomEvent(key, value);
+   public CustomEvent convert(Integer key, String oldValue, Metadata oldMetadata, String newValue, Metadata newMetadata, EventType eventType) {
+      return new CustomEvent(key, newValue);
    }
 }
 
@@ -439,6 +441,7 @@ by the converter factories to enable this option. For example:
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 
+@NamedFactory(name = "dynamic-converter")
 class DynamicCacheEventConverterFactory implements CacheEventConverterFactory {
    public CacheEventConverter<Integer, String, CustomEvent> getConverter(final Object[] params) {
       return new DynamicCacheEventConverter(params);
@@ -453,12 +456,13 @@ class DynamicCacheEventConverter implements CacheEventConverter<Integer, String,
       this.params = params;
    }
 
-   public CustomEvent convert(Integer key, String value, Metadata metadata, String prevValue, Metadata prevMetadata, EventType eventType) {
+   public CustomEvent convert(Integer key, String oldValue, Metadata oldMetadata,
+         String newValue, Metadata newMetadata, EventType eventType) {
       // If the key matches a key given via parameter, only send the key information
       if (params[0].equals(key))
          return new CustomEvent(key, null);
 
-      return new CustomEvent(key, value);
+      return new CustomEvent(key, newValue);
    }
 }
 ----
@@ -477,6 +481,80 @@ cluster, so that the conversion can happen right where the event is generated,
 even if the even is generated in a different node to where the listener is
 registered. To make them marshallable, either make them extend `Serializable`,
 `Externalizable`, or provide a custom `Externalizer` for them.
+
+====== Filtering and Customizing Client Events
+
+If you want to do both event filtering and customization, it's easier to
+implement `org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter`
+which allows both filter and customization to happen in a single step.
+For convenience, it's recommended to extend
+`org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter`
+instead of implementing `org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter`
+directly. For example:
+
+[source,java]
+----
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+
+@NamedFactory(name = "dynamic-filter-converter")
+class DynamicCacheEventFilterConverterFactory implements CacheEventFilterConverterFactory {
+   public CacheEventFilterConverter<Integer, String, CustomEvent> getFilterConverter(final Object[] params) {
+      return new DynamicCacheEventFilterConverter(params);
+   }
+}
+
+// Serializable, Externalizable or marshallable with Infinispan Externalizers needed when running in a cluster
+//
+class DynamicCacheEventFilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>, Serializable {
+   final Object[] params;
+
+   DynamicCacheEventFilterConverter(Object[] params) {
+      this.params = params;
+   }
+
+   public CustomEvent filterAndConvert(Integer key, String oldValue, Metadata oldMetadata,
+         String newValue, Metadata newMetadata, EventType eventType) {
+      // If the key matches a key given via parameter, only send the key information
+      if (params[0].equals(key))
+         return new CustomEvent(key, null);
+
+      return new CustomEvent(key, newValue);
+   }
+}
+----
+
+Similar to filters and converters, to be able to register a listener with this
+combined filter/converter factory, the factory has to be given a unique name via the
+`@NamedFactory` annotation, and the Hot Rod server needs to be plugged with the
+name and the cache event converter factory instance. Plugging the Infinispan
+Server with an event converter involves the following steps:
+
+1. Create a JAR file with the converter implementation within it.
+2. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory` file
+within the JAR file and within it, write the fully qualified class name of the
+converter class implementation.
+3. Deploy the JAR file in the Infinispan Server.
+
+From a client perspective, to be able to use the combined filter and
+converter class, the client listener must define the same filter factory and
+converter factory names, e.g.:
+
+[source,java]
+----
+@ClientListener(filterFactoryName = "dynamic-filter-converter", converterFactoryName = "dynamic-filter-converter")
+public class CustomEventPrintListener { ... }
+----
+
+The dynamic parameters required in the example above are provided when the
+listener is registered via either filter or converter parameters. If filter
+parameters are non-empty, those are used, otherwise, the converter parameters:
+
+[source,java]
+----
+RemoteCache<?, ?> cache = ...
+cache.addClientListener(new CustomEventPrintListener(), new Object[]{1}, null);
+----
 
 ====== Event Marshalling
 

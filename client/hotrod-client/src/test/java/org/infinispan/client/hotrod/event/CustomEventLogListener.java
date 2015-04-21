@@ -17,8 +17,11 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.notifications.cachelistener.filter.NamedFactory;
 
@@ -236,6 +239,36 @@ public abstract class CustomEventLogListener<E> {
          }
       }
    }
+
+   @NamedFactory(name = "filter-converter-factory")
+   public static class FilterConverterFactory implements CacheEventFilterConverterFactory {
+
+      @Override
+      public CacheEventFilterConverter<Integer, String, CustomEvent> getFilterConverter(Object[] params) {
+         return new FilterConverter(params);
+      }
+
+      static class FilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>
+         implements Serializable {
+         private final Object[] params;
+
+         public FilterConverter(Object[] params) {
+            this.params = params;
+         }
+
+         @Override
+         public CustomEvent filterAndConvert(Integer key, String oldValue, Metadata oldMetadata,
+            String newValue, Metadata newMetadata, EventType eventType) {
+            if (params[0].equals(key))
+               return new CustomEvent(key, null);
+
+            return new CustomEvent(key, newValue);
+         }
+      }
+   }
+
+   @ClientListener(filterFactoryName = "filter-converter-factory", converterFactoryName = "filter-converter-factory")
+   public static class FilterCustomEventLogListener extends CustomEventLogListener<CustomEvent> {}
 
    static byte[] concat(byte[] a, byte[] b) {
       int aLen = a.length;
