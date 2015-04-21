@@ -1,10 +1,8 @@
 package org.infinispan.query.remote.filter;
 
 import org.infinispan.commons.CacheException;
-import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
-import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
-import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
-import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.NamedFactory;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.ProtobufUtil;
@@ -12,6 +10,7 @@ import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
+import org.kohsuke.MetaInfServices;
 
 import java.io.IOException;
 
@@ -20,7 +19,8 @@ import java.io.IOException;
  * @since 7.2
  */
 @NamedFactory(name = JPACacheEventFilterConverterFactory.FACTORY_NAME)
-public class JPACacheEventFilterConverterFactory implements CacheEventFilterFactory, CacheEventConverterFactory {
+@MetaInfServices
+public class JPACacheEventFilterConverterFactory implements CacheEventFilterConverterFactory {
 
    public static final String FACTORY_NAME = "query-dsl-filter-converter-factory";
 
@@ -35,16 +35,7 @@ public class JPACacheEventFilterConverterFactory implements CacheEventFilterFact
    };
 
    @Override
-   public CacheEventFilter<byte[], byte[]> getFilter(Object[] params) {
-      return getCacheEventFilterConverter(params);
-   }
-
-   @Override
-   public CacheEventConverter<byte[], byte[], byte[]> getConverter(Object[] params) {
-      return getCacheEventFilterConverter(params);
-   }
-
-   private JPAProtobufCacheEventFilterConverter getCacheEventFilterConverter(Object[] params) {
+   public CacheEventFilterConverter<byte[], byte[], byte[]> getFilterConverter(Object[] params) {
       String jpql;
       try {
          jpql = (String) paramMarshaller.objectFromByteBuffer((byte[]) params[0]);
