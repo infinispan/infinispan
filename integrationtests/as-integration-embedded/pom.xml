@@ -82,7 +82,7 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.wildfly</groupId>
+         <groupId>org.wildfly.arquillian</groupId>
          <artifactId>wildfly-arquillian-container-managed</artifactId>
          <scope>test</scope>
       </dependency>
