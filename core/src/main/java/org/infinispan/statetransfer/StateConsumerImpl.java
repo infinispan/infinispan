@@ -868,6 +868,9 @@ public class StateConsumerImpl implements StateConsumer {
                transfersBySegment.keySet().removeAll(cancelledSegments);
                //this will also remove it from transfersBySource if the entire task gets cancelled
                inboundTransfer.cancelSegments(cancelledSegments);
+               if (inboundTransfer.isCancelled()) {
+                  removeTransfer(inboundTransfer);
+               };
             }
          }
       }
@@ -1033,7 +1036,7 @@ public class StateConsumerImpl implements StateConsumer {
          public Void call() throws Exception {
             removeTransfer(inboundTransfer);
 
-            if (!inboundTransfer.isCompletedSuccessfully()) {
+            if (!inboundTransfer.isCompletedSuccessfully() && !inboundTransfer.isCancelled()) {
                retryTransferTask(inboundTransfer);
             } else {
                if (trace) log.tracef("Inbound transfer finished: %s", inboundTransfer);
