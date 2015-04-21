@@ -147,7 +147,8 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    public void updateTopologiesAfterMerge(CacheTopology currentTopology, CacheTopology stableTopology, AvailabilityMode availabilityMode) {
       // This method must be called while holding the lock anyway
       synchronized (this) {
-         log.debugf("Updating topologies after merge for cache %s, current topology = %s, stable topology = %s, availability mode = %s",
+         log.debugf("Updating topologies after merge for cache %s, current topology = %s, stable topology = %s, " +
+                     "availability mode = %s",
                cacheName, currentTopology, stableTopology, availabilityMode);
          this.currentTopology = currentTopology;
          this.stableTopology = stableTopology;
@@ -373,7 +374,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
          if (currentTopology == null) {
             createInitialCacheTopology();
          }
-         ConsistentHashFactory consistentHashFactory = getJoinInfo().getConsistentHashFactory();
+         ConsistentHashFactory<ConsistentHash> consistentHashFactory = getJoinInfo().getConsistentHashFactory();
          int topologyId = currentTopology.getTopologyId();
          int rebalanceId = currentTopology.getRebalanceId();
          ConsistentHash currentCH = currentTopology.getCurrentCH();
@@ -395,21 +396,32 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
             return;
          }
 
-         // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
+
          List<Address> newCurrentMembers = pruneInvalidMembers(currentCH.getMembers());
+         ConsistentHash newCurrentCH;
+         List<Address> actualMembers;
+         ConsistentHash newPendingCH = null;
          if (newCurrentMembers.isEmpty()) {
             // All the current members left, try to replace them with the joiners
-            createInitialCacheTopology();
-            return;
-         }
+            log.tracef("All current members left, re-initializing status for cache %s", cacheName);
+            if (isRebalanceInProgress()) {
+               removeRebalanceConfirmationCollector();
+            }
 
-         ConsistentHash newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
-         List<Address> actualMembers = newCurrentMembers;
-         ConsistentHash newPendingCH = null;
-         if (pendingCH != null) {
-            List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());
-            newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, getCapacityFactors());
-            actualMembers = newPendingMembers;
+            newCurrentMembers = getExpectedMembers();
+            actualMembers = newCurrentMembers;
+            newCurrentCH = joinInfo.getConsistentHashFactory().create(
+                  joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),
+                  newCurrentMembers, getCapacityFactors());
+         } else {
+            // ReplicatedConsistentHashFactory allocates segments to all its members, so we can't add any members here
+            newCurrentCH = consistentHashFactory.updateMembers(currentCH, newCurrentMembers, getCapacityFactors());
+            actualMembers = newCurrentMembers;
+            if (pendingCH != null) {
+               List<Address> newPendingMembers = pruneInvalidMembers(pendingCH.getMembers());
+               newPendingCH = consistentHashFactory.updateMembers(pendingCH, newPendingMembers, getCapacityFactors());
+               actualMembers = newPendingMembers;
+            }
          }
          CacheTopology newTopology = new CacheTopology(topologyId + 1, rebalanceId, newCurrentCH, newPendingCH,
                actualMembers);
@@ -565,6 +577,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    protected CacheTopology createInitialCacheTopology() {
+      log.tracef("Initializing status for cache %s", cacheName);
       List<Address> initialMembers = getExpectedMembers();
       ConsistentHash initialCH = joinInfo.getConsistentHashFactory().create(
             joinInfo.getHashFunction(), joinInfo.getNumOwners(), joinInfo.getNumSegments(),

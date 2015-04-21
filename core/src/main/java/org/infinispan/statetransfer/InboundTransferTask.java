@@ -206,6 +206,10 @@ public class InboundTransferTask {
       }
    }
 
+   public boolean isCancelled() {
+      return isCancelled;
+   }
+
    private void sendCancelCommand(Set<Integer> cancelledSegments) {
       StateRequestCommand cmd = commandsFactory.buildStateRequestCommand(
             StateRequestCommand.Type.CANCEL_STATE_TRANSFER, rpcManager.getAddress(), topologyId,
