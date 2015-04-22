@@ -54,6 +54,7 @@ public abstract class MetricsRemappingComponent<T extends MetricsRemappingCompon
       server2plugin.put("cluster-name", "clusterName");
       server2plugin.put("cluster-size", "clusterSize");
       server2plugin.put("coordinator-address", "coordinatorAddress");
+      server2plugin.put("is-coordinator", "isCoordinator");
       server2plugin.put("local-address", "localAddress");
       server2plugin.put("cache-status", "cacheStatus");
       server2plugin.put("cache-name", "cacheName");

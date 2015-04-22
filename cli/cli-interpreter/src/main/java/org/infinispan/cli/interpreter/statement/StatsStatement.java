@@ -68,6 +68,7 @@ public class StatsStatement implements Statement {
       pw.printf("  status: %s\n", cacheManager.getCacheManagerStatus());
       pw.printf("  address: %s\n", cacheManager.getAddress());
       pw.printf("  coordinator: %s\n", cacheManager.getCoordinator());
+      pw.printf("  is coordinator? %s\n", cacheManager.isCoordinator());
       pw.printf("  clusterSize: %d\n", cacheManager.getClusterSize());
       pw.printf("  clusterMembers: %s\n", cacheManager.getClusterMembers());
       pw.printf("  createdCacheCount: %s\n", cacheManager.getCreatedCacheCount());
