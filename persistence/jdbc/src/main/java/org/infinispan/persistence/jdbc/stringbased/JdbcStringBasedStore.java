@@ -434,11 +434,11 @@ public class JdbcStringBasedStore implements AdvancedLoadWriteStore {
    private void enforceTwoWayMapper(String where) throws PersistenceException {
       if (!(key2StringMapper instanceof TwoWayKey2StringMapper)) {
          log.invalidKey2StringMapper(where, key2StringMapper.getClass().getName());
-         throw new PersistenceException(String.format("Invalid key to string mapper", key2StringMapper.getClass().getName()));
+         throw new PersistenceException(String.format("Invalid key to string mapper : %s", key2StringMapper.getClass().getName()));
       }
    }
+
    public boolean isDistributed() {
       return ctx.getCache().getCacheConfiguration() != null && ctx.getCache().getCacheConfiguration().clustering().cacheMode().isDistributed();
    }
-
 }
