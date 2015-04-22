@@ -26,7 +26,7 @@ public class AuthorizationRoleResource extends SimpleResourceDefinition {
         .setXmlName(Attribute.NAME.getLocalName())
         .setAllowExpression(true)
         .setAllowNull(false)
-        .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
         .build()
     ;
 

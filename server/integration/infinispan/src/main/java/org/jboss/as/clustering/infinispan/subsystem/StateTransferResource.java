@@ -46,7 +46,7 @@ public class StateTransferResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.AWAIT_INITIAL_TRANSFER, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.ENABLED.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(true))
                     .build();
 
@@ -54,7 +54,7 @@ public class StateTransferResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.CHUNK_SIZE, ModelType.INT, true)
                     .setXmlName(Attribute.CHUNK_SIZE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(512))
                     .build();
 
@@ -63,7 +63,7 @@ public class StateTransferResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.ENABLED, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.ENABLED.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(true))
                     .build();
 
@@ -73,7 +73,7 @@ public class StateTransferResource extends CacheChildResource {
                     .setXmlName(Attribute.TIMEOUT.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(240000))
                     .build();
 

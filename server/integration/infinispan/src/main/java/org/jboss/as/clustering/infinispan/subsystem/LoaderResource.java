@@ -23,7 +23,7 @@ public class LoaderResource extends BaseLoaderResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.CLASS, ModelType.STRING, false)
                     .setXmlName(Attribute.CLASS.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     static final AttributeDefinition[] LOADER_ATTRIBUTES = {CLASS};

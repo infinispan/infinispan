@@ -46,13 +46,13 @@ public class BaseJDBCStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.DATASOURCE, ModelType.STRING, false)
                     .setXmlName(Attribute.DATASOURCE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
     static final SimpleAttributeDefinition DIALECT = new SimpleAttributeDefinitionBuilder(ModelKeys.DIALECT, ModelType.STRING, true)
                     .setXmlName(Attribute.DIALECT.getLocalName())
                     .setValidator(new EnumValidator<>(DatabaseType.class, true, true))
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     static final AttributeDefinition[] COMMON_JDBC_STORE_ATTRIBUTES = { DATA_SOURCE, DIALECT };
@@ -61,21 +61,21 @@ public class BaseJDBCStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.BATCH_SIZE, ModelType.INT, true)
                     .setXmlName(Attribute.BATCH_SIZE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(100))
                     .build();
     static final SimpleAttributeDefinition FETCH_SIZE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.FETCH_SIZE, ModelType.INT, true)
                     .setXmlName(Attribute.FETCH_SIZE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(100))
                     .build();
     static final SimpleAttributeDefinition PREFIX =
             new SimpleAttributeDefinitionBuilder(ModelKeys.PREFIX, ModelType.STRING, true)
                     .setXmlName(Attribute.PREFIX.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
 //                   .setDefaultValue(new ModelNode().set("ispn_bucket"))
 //                   .setDefaultValue(new ModelNode().set("ispn_entry"))
                     .build();
@@ -83,14 +83,14 @@ public class BaseJDBCStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.CREATE_ON_START, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.CREATE_ON_START.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(true))
                     .build();
     static final SimpleAttributeDefinition DROP_ON_EXIT =
             new SimpleAttributeDefinitionBuilder(ModelKeys.DROP_ON_EXIT, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.DROP_ON_EXIT.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
@@ -98,14 +98,14 @@ public class BaseJDBCStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder("name", ModelType.STRING, true)
                     .setXmlName("name")
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set("name"))
                     .build();
     static final SimpleAttributeDefinition COLUMN_TYPE =
             new SimpleAttributeDefinitionBuilder("type", ModelType.STRING, true)
                     .setXmlName("type")
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set("type"))
                     .build();
 

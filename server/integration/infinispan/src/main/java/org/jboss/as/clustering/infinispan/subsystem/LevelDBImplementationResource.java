@@ -26,7 +26,7 @@ public class LevelDBImplementationResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.IMPLEMENTATION, ModelType.STRING, true)
                     .setXmlName(Attribute.TYPE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new EnumValidator<>(LevelDBStoreConfiguration.ImplementationType.class, true, false))
                     .setDefaultValue(new ModelNode().set(LevelDBStoreConfiguration.ImplementationType.AUTO.name()))
                     .build();

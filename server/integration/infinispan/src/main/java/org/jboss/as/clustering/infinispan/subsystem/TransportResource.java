@@ -50,14 +50,14 @@ public class TransportResource extends SimpleResourceDefinition {
             new SimpleAttributeDefinitionBuilder(ModelKeys.CLUSTER, ModelType.STRING, true)
                     .setXmlName(Attribute.CLUSTER.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     static final SimpleAttributeDefinition EXECUTOR =
             new SimpleAttributeDefinitionBuilder(ModelKeys.EXECUTOR, ModelType.STRING, true)
                     .setXmlName(Attribute.EXECUTOR.getLocalName())
                     .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     static final SimpleAttributeDefinition LOCK_TIMEOUT =
@@ -65,7 +65,7 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setXmlName(Attribute.LOCK_TIMEOUT.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(240000))
                     .build();
 
@@ -73,7 +73,7 @@ public class TransportResource extends SimpleResourceDefinition {
             new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_COMMAND_EXECUTOR, ModelType.STRING, true)
                     .setXmlName(Attribute.REMOTE_COMMAND_EXECUTOR.getLocalName())
                     .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     // if stack is null, use default stack
@@ -81,14 +81,14 @@ public class TransportResource extends SimpleResourceDefinition {
             new SimpleAttributeDefinitionBuilder(ModelKeys.STACK, ModelType.STRING, true)
                     .setXmlName(Attribute.STACK.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     static final SimpleAttributeDefinition STRICT_PEER_TO_PEER =
             new SimpleAttributeDefinitionBuilder(ModelKeys.STRICT_PEER_TO_PEER, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.STRICT_PEER_TO_PEER.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
@@ -96,7 +96,7 @@ public class TransportResource extends SimpleResourceDefinition {
             new SimpleAttributeDefinitionBuilder(ModelKeys.TOTAL_ORDER_EXECUTOR, ModelType.STRING, true)
                     .setXmlName(Attribute.TOTAL_ORDER_EXECUTOR.getLocalName())
                     .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {STACK, CLUSTER, EXECUTOR, LOCK_TIMEOUT,

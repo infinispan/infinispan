@@ -19,7 +19,7 @@ public class LoaderPropertyResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder("value", ModelType.STRING, false)
                     .setXmlName("value")
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     static final AttributeDefinition[] LOADER_PROPERTY_ATTRIBUTES = {VALUE};

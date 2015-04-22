@@ -52,7 +52,7 @@ public class StoreWriteBehindResource extends SimpleResourceDefinition {
             new SimpleAttributeDefinitionBuilder(ModelKeys.FLUSH_LOCK_TIMEOUT, ModelType.LONG, true)
                     .setXmlName(Attribute.FLUSH_LOCK_TIMEOUT.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(1))
                     .build();
 
@@ -60,7 +60,7 @@ public class StoreWriteBehindResource extends SimpleResourceDefinition {
             new SimpleAttributeDefinitionBuilder(ModelKeys.MODIFICATION_QUEUE_SIZE, ModelType.INT, true)
                     .setXmlName(Attribute.MODIFICATION_QUEUE_SIZE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(1024))
                     .build();
 
@@ -68,7 +68,7 @@ public class StoreWriteBehindResource extends SimpleResourceDefinition {
             new SimpleAttributeDefinitionBuilder(ModelKeys.SHUTDOWN_TIMEOUT, ModelType.LONG, true)
                     .setXmlName(Attribute.SHUTDOWN_TIMEOUT.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(25000))
                     .build();
 
@@ -76,7 +76,7 @@ public class StoreWriteBehindResource extends SimpleResourceDefinition {
             new SimpleAttributeDefinitionBuilder(ModelKeys.THREAD_POOL_SIZE, ModelType.INT, true)
                     .setXmlName(Attribute.THREAD_POOL_SIZE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(1))
                     .build();
 

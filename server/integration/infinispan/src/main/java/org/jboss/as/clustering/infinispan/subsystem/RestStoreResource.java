@@ -56,14 +56,14 @@ public class RestStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.PATH, ModelType.STRING, true)
                     .setXmlName(Attribute.PATH.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set("/rest/___defaultcache"))
                     .build();
     static final SimpleAttributeDefinition APPEND_CACHE_NAME_TO_PATH =
             new SimpleAttributeDefinitionBuilder(ModelKeys.APPEND_CACHE_NAME_TO_PATH, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.APPEND_CACHE_NAME_TO_PATH.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
     // connection pool attributes
@@ -72,7 +72,7 @@ public class RestStoreResource extends BaseStoreResource {
                     .setXmlName(Attribute.BUFFER_SIZE.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.BYTES)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(8192))
                     .build();
     static final SimpleAttributeDefinition CONNECTION_TIMEOUT =
@@ -80,21 +80,21 @@ public class RestStoreResource extends BaseStoreResource {
                     .setXmlName(Attribute.CONNECTION_TIMEOUT.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(60000))
                     .build();
     static final SimpleAttributeDefinition MAX_CONNECTIONS_PER_HOST =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_CONNECTIONS_PER_HOST, ModelType.INT, true)
                     .setXmlName(Attribute.MAX_CONNECTIONS_PER_HOST.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(4))
                     .build();
     static final SimpleAttributeDefinition MAX_TOTAL_CONNECTIONS =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_TOTAL_CONNECTIONS, ModelType.INT, true)
                     .setXmlName(Attribute.MAX_TOTAL_CONNECTIONS.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(20))
                     .build();
     static final SimpleAttributeDefinition SOCKET_TIMEOUT =
@@ -102,14 +102,14 @@ public class RestStoreResource extends BaseStoreResource {
                     .setXmlName(Attribute.SOCKET_TIMEOUT.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(60000))
                     .build();
     static final SimpleAttributeDefinition TCP_NO_DELAY =
             new SimpleAttributeDefinitionBuilder(ModelKeys.TCP_NO_DELAY, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.TCP_NO_DELAY.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(true))
                     .build();
     static final ObjectTypeAttributeDefinition CONNECTION_POOL = ObjectTypeAttributeDefinition.

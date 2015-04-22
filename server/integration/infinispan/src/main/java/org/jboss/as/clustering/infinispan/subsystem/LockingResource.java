@@ -49,7 +49,7 @@ public class LockingResource extends CacheChildResource {
                     .setXmlName(Attribute.ACQUIRE_TIMEOUT.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(10000))
                     .build();
 
@@ -57,7 +57,7 @@ public class LockingResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.CONCURRENCY_LEVEL, ModelType.INT, true)
                     .setXmlName(Attribute.CONCURRENCY_LEVEL.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(32))
                     .build();
 
@@ -65,7 +65,7 @@ public class LockingResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.ISOLATION, ModelType.STRING, true)
                     .setXmlName(Attribute.ISOLATION.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new EnumValidator<>(IsolationLevel.class, true, false))
                     .setDefaultValue(new ModelNode().set(IsolationLevel.READ_COMMITTED.name()))
                     .build();
@@ -74,7 +74,7 @@ public class LockingResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.STRIPING, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.STRIPING.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 

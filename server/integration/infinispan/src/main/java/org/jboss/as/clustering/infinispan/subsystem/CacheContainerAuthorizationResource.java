@@ -46,7 +46,7 @@ public class CacheContainerAuthorizationResource extends SimpleResourceDefinitio
     static final SimpleAttributeDefinition MAPPER = new SimpleAttributeDefinitionBuilder(ModelKeys.MAPPER, ModelType.STRING, true)
         .setXmlName(Attribute.MAPPER.getLocalName())
         .setAllowExpression(true)
-        .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+        .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
         .build()
     ;
 

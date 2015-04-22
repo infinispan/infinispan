@@ -58,7 +58,7 @@ public class DistributedCacheResource extends SharedCacheResource {
                     .setXmlName(Attribute.L1_LIFESPAN.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(0))
                     .build();
 
@@ -66,7 +66,7 @@ public class DistributedCacheResource extends SharedCacheResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.OWNERS, ModelType.INT, true)
                     .setXmlName(Attribute.OWNERS.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(2))
                     .build();
 
@@ -75,7 +75,7 @@ public class DistributedCacheResource extends SharedCacheResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.VIRTUAL_NODES, ModelType.INT, true)
                     .setXmlName(Attribute.VIRTUAL_NODES.getLocalName())
                     .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(1))
                     .setDeprecated(ModelVersion.create(1, 4, 0))
                     .build();
@@ -84,7 +84,7 @@ public class DistributedCacheResource extends SharedCacheResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.SEGMENTS, ModelType.INT, true)
                     .setXmlName(Attribute.SEGMENTS.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(80)) // Recommended value is 10 * max_cluster_size.
                     .build();
 
@@ -92,7 +92,7 @@ public class DistributedCacheResource extends SharedCacheResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.CAPACITY_FACTOR, ModelType.DOUBLE, true)
                     .setXmlName(Attribute.CAPACITY_FACTOR.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(1.0))
                     .build();
 

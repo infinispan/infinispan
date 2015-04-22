@@ -24,7 +24,7 @@ public class LevelDBCompressionResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.TYPE, ModelType.STRING, true)
                     .setXmlName(Attribute.TYPE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new EnumValidator<>(CompressionType.class, true, false))
                     .setDefaultValue(new ModelNode().set(CompressionType.NONE.name()))
                     .build();
