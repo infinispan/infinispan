@@ -54,27 +54,27 @@ public class RemoteStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.CACHE, ModelType.STRING, true)
                     .setXmlName(Attribute.CACHE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
     static final SimpleAttributeDefinition HOTROD_WRAPPING =
             new SimpleAttributeDefinitionBuilder(ModelKeys.HOTROD_WRAPPING, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.HOTROD_WRAPPING.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
     static final SimpleAttributeDefinition RAW_VALUES =
             new SimpleAttributeDefinitionBuilder(ModelKeys.RAW_VALUES, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.RAW_VALUES.getLocalName())
                     .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
     static final SimpleAttributeDefinition TCP_NO_DELAY =
             new SimpleAttributeDefinitionBuilder(ModelKeys.TCP_NO_DELAY, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.TCP_NO_DELAY.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(true))
                     .build();
     static final SimpleAttributeDefinition SOCKET_TIMEOUT =
@@ -82,7 +82,7 @@ public class RemoteStoreResource extends BaseStoreResource {
                     .setXmlName(Attribute.SOCKET_TIMEOUT.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(60000))
                     .build();
 

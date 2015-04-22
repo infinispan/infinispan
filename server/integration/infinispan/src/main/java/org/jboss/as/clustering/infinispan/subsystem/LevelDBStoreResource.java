@@ -47,14 +47,14 @@ public class LevelDBStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.PATH, ModelType.STRING, true)
                     .setXmlName(Attribute.PATH.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     static final SimpleAttributeDefinition RELATIVE_TO =
             new SimpleAttributeDefinitionBuilder(ModelKeys.RELATIVE_TO, ModelType.STRING, true)
                     .setXmlName(Attribute.RELATIVE_TO.getLocalName())
                     .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(ServerEnvironment.SERVER_DATA_DIR))
                     .build();
 
@@ -62,7 +62,7 @@ public class LevelDBStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.BLOCK_SIZE, ModelType.INT, true)
                     .setXmlName(Attribute.BLOCK_SIZE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(0))
                     .build();
 
@@ -70,7 +70,7 @@ public class LevelDBStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.CACHE_SIZE, ModelType.LONG, true)
                     .setXmlName(Attribute.CACHE_SIZE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(0))
                     .build();
 
@@ -78,7 +78,7 @@ public class LevelDBStoreResource extends BaseStoreResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.CLEAR_THRESHOLD, ModelType.INT, true)
                     .setXmlName(Attribute.CLEAR_THRESHOLD.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(10000))
                     .build();
 

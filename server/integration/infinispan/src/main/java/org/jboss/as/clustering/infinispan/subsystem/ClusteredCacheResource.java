@@ -48,7 +48,7 @@ public class ClusteredCacheResource extends CacheResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.ASYNC_MARSHALLING, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.ASYNC_MARSHALLING.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
@@ -57,7 +57,7 @@ public class ClusteredCacheResource extends CacheResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.MODE, ModelType.STRING, false)
                     .setXmlName(Attribute.MODE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new EnumValidator<>(Mode.class, false, true))
                     .build();
 
@@ -66,7 +66,7 @@ public class ClusteredCacheResource extends CacheResource {
                     .setXmlName(Attribute.QUEUE_FLUSH_INTERVAL.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(10))
                     .build();
 
@@ -74,7 +74,7 @@ public class ClusteredCacheResource extends CacheResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.QUEUE_SIZE, ModelType.INT, true)
                     .setXmlName(Attribute.QUEUE_SIZE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(0))
                     .build();
 
@@ -83,7 +83,7 @@ public class ClusteredCacheResource extends CacheResource {
                     .setXmlName(Attribute.REMOTE_TIMEOUT.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(15000))
                     .build();
 

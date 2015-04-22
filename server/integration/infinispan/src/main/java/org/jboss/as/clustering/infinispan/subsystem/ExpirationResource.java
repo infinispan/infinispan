@@ -47,7 +47,7 @@ public class ExpirationResource extends CacheChildResource {
                     .setXmlName(Attribute.INTERVAL.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(60000))
                     .build();
 
@@ -56,7 +56,7 @@ public class ExpirationResource extends CacheChildResource {
                     .setXmlName(Attribute.LIFESPAN.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(-1))
                     .build();
 
@@ -65,7 +65,7 @@ public class ExpirationResource extends CacheChildResource {
                     .setXmlName(Attribute.MAX_IDLE.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(-1))
                     .build();
 

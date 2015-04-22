@@ -52,14 +52,14 @@ public class TransactionResource extends CacheChildResource {
                     .setXmlName(Attribute.LOCKING.getLocalName())
                     .setAllowExpression(true)
                     .setValidator(new EnumValidator<LockingMode>(LockingMode.class, true, false))
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(LockingMode.OPTIMISTIC.name()))
                     .build();
     static final SimpleAttributeDefinition MODE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MODE, ModelType.STRING, true)
                     .setXmlName(Attribute.MODE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new EnumValidator<TransactionMode>(TransactionMode.class, true, true))
                     .setDefaultValue(new ModelNode().set(TransactionMode.NONE.name()))
                     .build();
@@ -68,7 +68,7 @@ public class TransactionResource extends CacheChildResource {
                     .setXmlName(Attribute.STOP_TIMEOUT.getLocalName())
                     .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(30000))
                     .build();
 
@@ -79,7 +79,7 @@ public class TransactionResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.TX_INTERNAL_ID, ModelType.LONG, true)
                 .setXmlName(ModelKeys.TX_INTERNAL_ID)
                 .setAllowExpression(false)
-                .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                 .build();
 
     // operations

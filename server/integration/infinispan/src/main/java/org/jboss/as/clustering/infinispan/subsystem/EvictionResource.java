@@ -47,7 +47,7 @@ public class EvictionResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.STRATEGY, ModelType.STRING, true)
                     .setXmlName(Attribute.STRATEGY.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new EnumValidator<>(EvictionStrategy.class, true, false))
                     .setDefaultValue(new ModelNode().set(EvictionStrategy.NONE.name()))
                     .build();
@@ -56,7 +56,7 @@ public class EvictionResource extends CacheChildResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_ENTRIES, ModelType.LONG, true)
                     .setXmlName(Attribute.MAX_ENTRIES.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(-1))
                     .build();
 

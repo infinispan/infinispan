@@ -42,7 +42,7 @@ public class CacheAuthorizationResource extends CacheChildResource {
     static final SimpleAttributeDefinition ENABLED = new SimpleAttributeDefinitionBuilder(ModelKeys.ENABLED, ModelType.BOOLEAN, true)
             .setXmlName(Attribute.ENABLED.getLocalName())
             .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
             .setDefaultValue(new ModelNode().set(true))
             .build()
     ;
@@ -50,7 +50,7 @@ public class CacheAuthorizationResource extends CacheChildResource {
     static final StringListAttributeDefinition ROLES = new StringListAttributeDefinition.Builder(ModelKeys.ROLES)
             .setXmlName(Attribute.ROLES.getLocalName())
             .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
             .setAllowNull(true)
             .build()
     ;

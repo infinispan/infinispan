@@ -41,7 +41,7 @@ public class CompatibilityResource extends CacheChildResource {
     static final SimpleAttributeDefinition ENABLED = new SimpleAttributeDefinitionBuilder(ModelKeys.ENABLED, ModelType.BOOLEAN, true)
             .setXmlName(Attribute.ENABLED.getLocalName())
             .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
             .setDefaultValue(new ModelNode().set(false))
             .build()
     ;
@@ -49,7 +49,7 @@ public class CompatibilityResource extends CacheChildResource {
     static final SimpleAttributeDefinition MARSHALLER = new SimpleAttributeDefinitionBuilder(ModelKeys.MARSHALLER, ModelType.STRING, true)
             .setXmlName(Attribute.MARSHALLER.getLocalName())
             .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
             .build()
     ;
 

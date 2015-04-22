@@ -29,7 +29,7 @@ public class ClusterLoaderResource extends BaseLoaderResource {
             new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_TIMEOUT, ModelType.LONG, true)
                     .setXmlName(Attribute.REMOTE_TIMEOUT.getLocalName())
                     .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(15000L))
                     .build();
 
