@@ -345,7 +345,7 @@ public class StateConsumerImpl implements StateConsumer {
 
                if (trace) {
                   log.tracef("On cache %s we have: new segments: %s; old segments: %s", cacheName, newSegments, previousSegments);
-                  log.tracef("On cache %s we have: added segments: %s; removed segments: %s", addedSegments, removedSegments);
+                  log.tracef("On cache %s we have: added segments: %s; removed segments: %s", cacheName, addedSegments, removedSegments);
                }
 
                // remove inbound transfers for segments we no longer own
