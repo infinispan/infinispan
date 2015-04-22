@@ -532,10 +532,17 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return t == null ? null : t.getCoordinator();
    }
 
+   @ManagedAttribute(description = "The logical address of the cluster's coordinator", displayName = "Coordinator address", displayType = DisplayType.SUMMARY)
+   public String getCoordinatorAddress() {
+      Transport t = getTransport();
+      return t == null ? "N/A" : t.getCoordinator().toString();
+   }
+
    /**
     * {@inheritDoc}
     */
    @Override
+   @ManagedAttribute(description = "Indicates whether this node is coordinator", displayName = "Is coordinator?", displayType = DisplayType.SUMMARY)
    public boolean isCoordinator() {
       Transport t = getTransport();
       return t != null && t.isCoordinator();

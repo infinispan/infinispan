@@ -291,6 +291,8 @@
                     dataType="trait" description="The names of the members of the cluster"/>
             <metric property="coordinatorAddress" displayName="Coordinator Address" displayType="summary" units="none"
                     dataType="trait" description="The coordinator node's address"/>
+            <metric property="isCoordinator" displayName="Is coordinator?" displayType="summary" units="none"
+                    dataType="trait" description="Indicates whether this node is coordinator"/>
             <metric property="localAddress" displayName="Local Address" displayType="summary" units="none"
                     dataType="trait" description="The local node's address"/>
             <metric property="version" displayName="Version" displayType="summary" units="none"
