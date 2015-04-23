@@ -1,10 +1,12 @@
 package org.infinispan.query.dsl.embedded.testdomain;
 
+import java.io.Serializable;
+
 /**
  * @author anistor@redhat.com
  * @since 7.2
  */
-public class NotIndexed {
+public class NotIndexed implements Serializable {
 
    public String notIndexedField;
 
