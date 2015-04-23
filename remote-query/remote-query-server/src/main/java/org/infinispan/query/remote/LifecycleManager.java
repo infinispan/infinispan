@@ -22,6 +22,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.query.remote.filter.JPAProtobufCacheEventFilterConverter;
+import org.infinispan.query.remote.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.indexing.RemoteValueWrapperInterceptor;
 import org.infinispan.query.remote.logging.Log;
@@ -46,6 +47,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
       Map<Integer, AdvancedExternalizer<?>> externalizerMap = globalCfg.serialization().advancedExternalizers();
       externalizerMap.put(ExternalizerIds.PROTOBUF_VALUE_WRAPPER, new ProtobufValueWrapper.Externalizer());
       externalizerMap.put(ExternalizerIds.JPA_PROTOBUF_CACHE_EVENT_FILTER_CONVERTER, new JPAProtobufCacheEventFilterConverter.Externalizer());
+      externalizerMap.put(ExternalizerIds.JPA_PROTOBUF_FILTER_AND_CONVERTER, new JPAProtobufFilterAndConverter.Externalizer());
    }
 
    @Override
@@ -113,12 +115,12 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
 
          if (cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled()) {
             log.infof("Registering RemoteValueWrapperInterceptor for cache %s", cacheName);
-            createRemoteIndexingInterceptor(cr, cfg);
+            createRemoteValueWrapperInterceptor(cr, cfg);
          }
       }
    }
 
-   private void createRemoteIndexingInterceptor(ComponentRegistry cr, Configuration cfg) {
+   private void createRemoteValueWrapperInterceptor(ComponentRegistry cr, Configuration cfg) {
       RemoteValueWrapperInterceptor wrapperInterceptor = cr.getComponent(RemoteValueWrapperInterceptor.class);
       if (wrapperInterceptor == null) {
          wrapperInterceptor = new RemoteValueWrapperInterceptor();

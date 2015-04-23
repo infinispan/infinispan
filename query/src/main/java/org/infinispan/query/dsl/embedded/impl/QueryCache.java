@@ -36,12 +36,12 @@ public class QueryCache {
    /**
     * Max number of cached entries.
     */
-   private static final int MAX_ENTRIES = 200;
+   private static final long MAX_ENTRIES = 200;
 
    /**
     * Cache entry lifespan in seconds.
     */
-   private static final int ENTRY_LIFESPAN = 300;
+   private static final long ENTRY_LIFESPAN = 300;
 
    private EmbeddedCacheManager cacheManager;
 
