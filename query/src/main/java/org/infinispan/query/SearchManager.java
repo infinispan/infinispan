@@ -20,7 +20,7 @@ public interface SearchManager {
     * Experimental! Obtains the factory for DSL-based queries backed by Lucene indexes.
     *
     * @return a factory capable of building queries for the cache this SearchManager belongs to
-    * @deprecated see {@link Search#getQueryFactory}
+    * @deprecated see alternative {@link Search#getQueryFactory}. This method will be removed in Infinispan 8.0.
     */
    QueryFactory<LuceneQuery> getQueryFactory();
 

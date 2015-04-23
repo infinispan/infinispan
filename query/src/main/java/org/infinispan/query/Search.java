@@ -2,7 +2,6 @@ package org.infinispan.query;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.dsl.Query;
@@ -10,9 +9,9 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.JPACacheEventFilterConverter;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
+import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.impl.SearchManagerImpl;
-import org.infinispan.query.spi.SearchManagerImplementor;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 
@@ -35,20 +34,22 @@ public final class Search {
       AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
       ensureAccessPermissions(advancedCache);
 
-      Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(advancedCache);
-      if (cacheConfiguration.indexing().index().isEnabled()) {
-         return getSearchManager(advancedCache).unwrap(SearchManagerImplementor.class).getQueryFactory();
+      QueryEngine queryEngine;
+      if (SecurityActions.getCacheConfiguration(advancedCache).indexing().index().isEnabled()) {
+         queryEngine = getSearchManager(advancedCache).unwrap(QueryEngine.class);
+      } else {
+         queryEngine = new QueryEngine(advancedCache, null);
       }
-
-      return new EmbeddedQueryFactory(advancedCache);
+      return new EmbeddedQueryFactory(queryEngine);
    }
 
    public static SearchManager getSearchManager(Cache<?, ?> cache) {
       if (cache == null || cache.getAdvancedCache() == null) {
          throw new IllegalArgumentException("cache parameter shall not be null");
       }
-      ensureAccessPermissions(cache.getAdvancedCache());
-      return new SearchManagerImpl(cache.getAdvancedCache());
+      AdvancedCache<?, ?> advancedCache = cache.getAdvancedCache();
+      ensureAccessPermissions(advancedCache);
+      return new SearchManagerImpl(advancedCache);
    }
 
    private static void ensureAccessPermissions(final AdvancedCache<?, ?> cache) {

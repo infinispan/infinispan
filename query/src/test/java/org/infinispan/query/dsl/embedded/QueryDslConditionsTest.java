@@ -19,9 +19,10 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
-import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQueryFactory;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
+import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.testng.annotations.BeforeClass;
@@ -166,6 +167,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       // this value should be ignored gracefully
       getCacheForWrite().put("dummy", "a primitive value cannot be queried");
+
+      getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
+      getCacheForWrite().put("notIndexed2", new NotIndexed("xyz"));
    }
 
    public void testIndexPresence() {
@@ -185,7 +189,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
    }
 
    public void testQueryFactoryType() {
-      assertEquals(EmbeddedLuceneQueryFactory.class, getQueryFactory().getClass());
+      assertEquals(EmbeddedQueryFactory.class, getQueryFactory().getClass());
    }
 
    public void testEq1() throws Exception {
@@ -212,13 +216,28 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(0, list.size());
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL100002: The type org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS has no indexed property named notes.")
-   public void testEqNonIndexed() throws Exception {
+   public void testEqNonIndexedType() throws Exception {
       QueryFactory qf = getQueryFactory();
 
-      qf.from(getModelFactory().getUserImplClass())
+      Query q = qf.from(NotIndexed.class)
+            .having("notIndexedField").eq("testing 123")
+            .toBuilder().build();
+
+      List<NotIndexed> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("testing 123", list.get(0).notIndexedField);
+   }
+
+   public void testEqNonIndexedField() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
             .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
    }
 
    public void testEqInNested1() throws Exception {

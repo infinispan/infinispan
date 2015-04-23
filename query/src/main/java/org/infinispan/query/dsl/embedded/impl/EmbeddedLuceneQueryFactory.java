@@ -1,36 +1,31 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.hibernate.hql.ast.spi.EntityNamesResolver;
-import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.embedded.LuceneQuery;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
 
+//TODO remove this class until 8.0.Final
+
 /**
  * @author anistor@redhat.com
  * @since 6.0
+ * @deprecated replaced by {@link EmbeddedQueryFactory}
  */
 public final class EmbeddedLuceneQueryFactory extends BaseQueryFactory<LuceneQuery> {
 
-   private final SearchManager searchManager;
+   private final QueryEngine queryEngine;
 
-   private final QueryCache queryCache;
-
-   private final EntityNamesResolver entityNamesResolver;
-
-   public EmbeddedLuceneQueryFactory(SearchManager searchManager, QueryCache queryCache, EntityNamesResolver entityNamesResolver) {
-      this.searchManager = searchManager;
-      this.queryCache = queryCache;
-      this.entityNamesResolver = entityNamesResolver;
+   public EmbeddedLuceneQueryFactory(QueryEngine queryEngine) {
+      this.queryEngine = queryEngine;
    }
 
    @Override
    public QueryBuilder<LuceneQuery> from(Class type) {
-      return new EmbeddedLuceneQueryBuilder(this, searchManager, queryCache, entityNamesResolver, type.getCanonicalName());
+      return new EmbeddedLuceneQueryBuilder(this, queryEngine, type.getCanonicalName());
    }
 
    @Override
    public QueryBuilder<LuceneQuery> from(String type) {
-      return new EmbeddedLuceneQueryBuilder(this, searchManager, queryCache, entityNamesResolver, type);
+      return new EmbeddedLuceneQueryBuilder(this, queryEngine, type);
    }
 }
