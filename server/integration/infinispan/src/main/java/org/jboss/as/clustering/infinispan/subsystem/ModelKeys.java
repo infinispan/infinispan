@@ -81,7 +81,9 @@ public class ModelKeys {
     static final String ENTRY_TABLE = "entry-table";
     static final String EVICTION = "eviction";
     static final String EVICTION_NAME = "EVICTION";
+    @Deprecated
     static final String EVICTION_EXECUTOR = "eviction-executor";
+    static final String EXPIRATION_EXECUTOR = "expiration-executor";
     static final String EXECUTOR = "executor";
     static final String EXPIRATION = "expiration";
     static final String EXPIRATION_NAME = "EXPIRATION";

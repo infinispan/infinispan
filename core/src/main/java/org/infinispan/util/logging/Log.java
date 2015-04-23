@@ -1314,4 +1314,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Keys '%s' are not available. Not all owners are in this partition", id = 359)
    AvailabilityException degradedModeKeysUnavailable(Collection<?> keys);
+
+   @LogMessage(level = WARN)
+   @Message(value = "The xml element eviction-executor has been deprecated and replaced by expiration-executor, please update your configuration file.", id = 360)
+   void evictionExecutorDeprecated();
 }

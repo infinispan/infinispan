@@ -47,6 +47,7 @@ import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -90,6 +91,7 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -139,6 +141,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    protected Metadata defaultMetadata;
    private final String name;
    private EvictionManager evictionManager;
+   private ExpirationManager<K, V> expirationManager;
    private DataContainer dataContainer;
    private static final Log log = LogFactory.getLog(CacheImpl.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -161,6 +164,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Inject
    public void injectDependencies(EvictionManager evictionManager,
+                                  ExpirationManager expirationManager,
                                   InvocationContextFactory invocationContextFactory,
                                   InvocationContextContainer icc,
                                   CommandsFactory commandsFactory,
@@ -190,6 +194,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.batchContainer = batchContainer;
       this.rpcManager = rpcManager;
       this.evictionManager = evictionManager;
+      this.expirationManager = expirationManager;
       this.dataContainer = dataContainer;
       this.marshaller = marshaller;
       this.cacheManager = cacheManager;
@@ -883,6 +888,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public EvictionManager getEvictionManager() {
       return evictionManager;
+   }
+
+   @Override
+   public ExpirationManager getExpirationManager() {
+      return expirationManager;
    }
 
    @Override

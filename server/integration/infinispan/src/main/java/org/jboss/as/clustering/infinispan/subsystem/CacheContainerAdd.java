@@ -99,6 +99,7 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         CacheContainerResource.START.validateAndSet(source, target);
         CacheContainerResource.LISTENER_EXECUTOR.validateAndSet(source, target);
         CacheContainerResource.EVICTION_EXECUTOR.validateAndSet(source, target);
+        CacheContainerResource.EXPIRATION_EXECUTOR.validateAndSet(source, target);
         CacheContainerResource.STATE_TRANSFER_EXECUTOR.validateAndSet(source, target);
         CacheContainerResource.REPLICATION_QUEUE_EXECUTOR.validateAndSet(source, target);
         CacheContainerResource.CACHE_CONTAINER_MODULE.validateAndSet(source, target);
@@ -129,7 +130,10 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         final String defaultCache = (resolvedValue = CacheContainerResource.DEFAULT_CACHE.resolveModelAttribute(context, containerModel)).isDefined() ? resolvedValue.asString() : null ;
         final String jndiName = (resolvedValue = CacheContainerResource.JNDI_NAME.resolveModelAttribute(context, containerModel)).isDefined() ? resolvedValue.asString() : null ;
         final String listenerExecutor = (resolvedValue = CacheContainerResource.LISTENER_EXECUTOR.resolveModelAttribute(context, containerModel)).isDefined() ? resolvedValue.asString() : null ;
-        final String evictionExecutor = (resolvedValue = CacheContainerResource.EVICTION_EXECUTOR.resolveModelAttribute(context, containerModel)).isDefined() ? resolvedValue.asString() : null ;
+        String expirationExecutor = (resolvedValue = CacheContainerResource.EXPIRATION_EXECUTOR.resolveModelAttribute(context, containerModel)).isDefined() ? resolvedValue.asString() : null ;
+        if (expirationExecutor == null) {
+           expirationExecutor = (resolvedValue = CacheContainerResource.EVICTION_EXECUTOR.resolveModelAttribute(context, containerModel)).isDefined() ? resolvedValue.asString() : null ;
+        }
         final String replicationQueueExecutor = (resolvedValue = CacheContainerResource.REPLICATION_QUEUE_EXECUTOR.resolveModelAttribute(context, containerModel)).isDefined() ? resolvedValue.asString() : null ;
         final String stateTransferExecutor = (resolvedValue = CacheContainerResource.STATE_TRANSFER_EXECUTOR.resolveModelAttribute(context, containerModel)).isDefined() ? resolvedValue.asString() : null ;
         final ServiceController.Mode initialMode = StartMode.valueOf(CacheContainerResource.START.resolveModelAttribute(context, containerModel).asString()).getMode();
@@ -205,7 +209,7 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         // install the cache container configuration service
         controllers.add(this.installContainerConfigurationService(target, name, defaultCache, statistics, moduleId,
                 stack, transportConfig, authorizationConfig, transportExecutor, totalOrderExecutor,
-                remoteCommandExecutor, listenerExecutor, evictionExecutor, replicationQueueExecutor, stateTransferExecutor, verificationHandler));
+                remoteCommandExecutor, listenerExecutor, expirationExecutor, replicationQueueExecutor, stateTransferExecutor, verificationHandler));
 
         // install a cache container service
         controllers.add(this.installContainerService(target, name, aliases, transportConfig, initialMode, verificationHandler));
@@ -272,7 +276,7 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
     ServiceController<?> installContainerConfigurationService(ServiceTarget target,
             String containerName, String defaultCache, boolean statistics, ModuleIdentifier moduleId, String stack, Transport transportConfig, Authorization authorizationConfig,
             String transportExecutor, String totalOrderExecutor, String remoteCommandExecutor, String listenerExecutor,
-            String evictionExecutor, String replicationQueueExecutor, String stateTransferExecutor, ServiceVerificationHandler verificationHandler) {
+            String expirationExecutor, String replicationQueueExecutor, String stateTransferExecutor, ServiceVerificationHandler verificationHandler) {
 
         final ServiceName configServiceName = EmbeddedCacheManagerConfigurationService.getServiceName(containerName);
         final EmbeddedCacheManagerDependencies dependencies = new EmbeddedCacheManagerDependencies(transportConfig, authorizationConfig);
@@ -295,7 +299,7 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
 
         addExecutorDependency(configBuilder, listenerExecutor, dependencies.getListenerExecutorInjector());
         addExecutorDependency(configBuilder, stateTransferExecutor, dependencies.getStateTransferExecutorInjector());
-        addScheduledExecutorDependency(configBuilder, evictionExecutor, dependencies.getEvictionExecutorInjector());
+        addScheduledExecutorDependency(configBuilder, expirationExecutor, dependencies.getExpirationExecutorInjector());
         addScheduledExecutorDependency(configBuilder, replicationQueueExecutor, dependencies.getReplicationQueueExecutorInjector());
 
         return configBuilder.install();
@@ -348,7 +352,7 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
     static class EmbeddedCacheManagerDependencies implements EmbeddedCacheManagerConfigurationService.Dependencies {
         private final InjectedValue<MBeanServer> mbeanServer = new InjectedValue<MBeanServer>();
         private final InjectedValue<Executor> listenerExecutor = new InjectedValue<Executor>();
-        private final InjectedValue<ScheduledExecutorService> evictionExecutor = new InjectedValue<ScheduledExecutorService>();
+        private final InjectedValue<ScheduledExecutorService> expirationExecutor = new InjectedValue<ScheduledExecutorService>();
         private final InjectedValue<ScheduledExecutorService> replicationQueueExecutor = new InjectedValue<ScheduledExecutorService>();
         private final InjectedValue<Executor> stateTransferExecutor = new InjectedValue<>();
         private final EmbeddedCacheManagerConfigurationService.TransportConfiguration transport;
@@ -372,8 +376,8 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
             return this.stateTransferExecutor;
         }
 
-        Injector<ScheduledExecutorService> getEvictionExecutorInjector() {
-            return this.evictionExecutor;
+        Injector<ScheduledExecutorService> getExpirationExecutorInjector() {
+            return this.expirationExecutor;
         }
 
         Injector<ScheduledExecutorService> getReplicationQueueExecutorInjector() {
@@ -410,8 +414,8 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         }
        
         @Override
-        public ScheduledExecutorService getEvictionExecutor() {
-            return this.evictionExecutor.getOptionalValue();
+        public ScheduledExecutorService getExpirationExecutor() {
+            return this.expirationExecutor.getOptionalValue();
         }
 
         @Override

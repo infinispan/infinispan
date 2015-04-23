@@ -19,7 +19,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final GlobalJmxStatisticsConfigurationBuilder globalJmxStatistics;
    private final SerializationConfigurationBuilder serialization;
    private final GlobalSecurityConfigurationBuilder security;
-   private final ThreadPoolConfigurationBuilder evictionThreadPool;
+   private final ThreadPoolConfigurationBuilder expirationThreadPool;
    private final ThreadPoolConfigurationBuilder listenerThreadPool;
    private final ThreadPoolConfigurationBuilder replicationQueueThreadPool;
    private final ThreadPoolConfigurationBuilder persistenceThreadPool;
@@ -38,7 +38,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.security = new GlobalSecurityConfigurationBuilder(this);
       this.shutdown = new ShutdownConfigurationBuilder(this);
       this.site = new SiteConfigurationBuilder(this);
-      this.evictionThreadPool = new ThreadPoolConfigurationBuilder(this);
+      this.expirationThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.listenerThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.replicationQueueThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.persistenceThreadPool = new ThreadPoolConfigurationBuilder(this);
@@ -158,8 +158,17 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return null;
    }
 
+   /**
+    * @deprecated this returns the thread pool returned from {@link GlobalConfigurationBuilder#expirationThreadPool}
+    */
+   @Deprecated
+   @Override
    public ThreadPoolConfigurationBuilder evictionThreadPool() {
-      return evictionThreadPool;
+      return expirationThreadPool;
+   }
+
+   public ThreadPoolConfigurationBuilder expirationThreadPool() {
+      return expirationThreadPool;
    }
 
    public ThreadPoolConfigurationBuilder listenerThreadPool() {
@@ -224,7 +233,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @SuppressWarnings("unchecked")
    public void validate() {
-      for (Builder<?> validatable : asList(evictionThreadPool, listenerThreadPool,
+      for (Builder<?> validatable : asList(expirationThreadPool, listenerThreadPool,
             replicationQueueThreadPool, persistenceThreadPool, stateTransferThreadPool,
             globalJmxStatistics, transport, security, serialization, shutdown, site)) {
          validatable.validate();
@@ -241,7 +250,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
       return new GlobalConfiguration(
-            evictionThreadPool.create(),
+            expirationThreadPool.create(),
             listenerThreadPool.create(),
             replicationQueueThreadPool.create(),
             persistenceThreadPool.create(),
@@ -265,7 +274,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          builder.read(c);
       }
 
-      evictionThreadPool.read(template.evictionThreadPool());
+      expirationThreadPool.read(template.evictionThreadPool());
       listenerThreadPool.read(template.listenerThreadPool());
       replicationQueueThreadPool.read(template.replicationQueueThreadPool());
       persistenceThreadPool.read(template.persistenceThreadPool());
@@ -288,7 +297,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    @Override
    public String toString() {
       return "GlobalConfigurationBuilder{" +
-            "evictionExecutorThreadPool=" + evictionThreadPool +
+            "evictionExecutorThreadPool=" + expirationThreadPool +
             ", listenerExecutorThreadPool=" + listenerThreadPool +
             ", cl=" + cl +
             ", transport=" + transport +
@@ -310,7 +319,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
       GlobalConfigurationBuilder that = (GlobalConfigurationBuilder) o;
 
-      if (!evictionThreadPool.equals(that.evictionThreadPool))
+      if (!expirationThreadPool.equals(that.expirationThreadPool))
          return false;
       if (!listenerThreadPool.equals(that.listenerThreadPool))
          return false;
@@ -341,7 +350,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       result = 31 * result + (transport.hashCode());
       result = 31 * result + (globalJmxStatistics.hashCode());
       result = 31 * result + (serialization.hashCode());
-      result = 31 * result + (evictionThreadPool.hashCode());
+      result = 31 * result + (expirationThreadPool.hashCode());
       result = 31 * result + (listenerThreadPool.hashCode());
       result = 31 * result + (replicationQueueThreadPool.hashCode());
       result = 31 * result + (persistenceThreadPool.hashCode());

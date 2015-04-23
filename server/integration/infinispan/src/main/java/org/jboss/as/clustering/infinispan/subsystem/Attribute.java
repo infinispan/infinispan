@@ -66,7 +66,9 @@ public enum Attribute {
     DROP_ON_EXIT(ModelKeys.DROP_ON_EXIT),
     @Deprecated EAGER_LOCKING("eager-locking"),
     ENABLED(ModelKeys.ENABLED),
+    @Deprecated
     EVICTION_EXECUTOR(ModelKeys.EVICTION_EXECUTOR),
+    EXPIRATION_EXECUTOR(ModelKeys.EXPIRATION_EXECUTOR),
     EXECUTOR(ModelKeys.EXECUTOR),
     FETCH_SIZE(ModelKeys.FETCH_SIZE),
     FETCH_STATE(ModelKeys.FETCH_STATE),

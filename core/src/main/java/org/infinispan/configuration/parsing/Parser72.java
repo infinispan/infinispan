@@ -477,9 +477,11 @@ public class Parser72 implements ConfigurationParser {
                      createThreadPoolConfiguration(value, ASYNC_NOTIFICATION_EXECUTOR));
                break;
             }
-            case EVICTION_EXECUTOR: {
-               builder.evictionThreadPool().read(
-                     createThreadPoolConfiguration(value, EVICTION_SCHEDULED_EXECUTOR));
+            case EVICTION_EXECUTOR:
+               log.evictionExecutorDeprecated();
+            case EXPIRATION_EXECUTOR: {
+               builder.expirationThreadPool().read(
+                     createThreadPoolConfiguration(value, EXPIRATION_SCHEDULED_EXECUTOR));
                break;
             }
             case REPLICATION_QUEUE_EXECUTOR: {

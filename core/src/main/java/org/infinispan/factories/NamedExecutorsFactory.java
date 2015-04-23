@@ -33,7 +33,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ExecutorService asyncTransportExecutor;
    private ExecutorService persistenceExecutor;
    private BlockingTaskAwareExecutorService remoteCommandsExecutor;
-   private ScheduledExecutorService evictionExecutor;
+   private ScheduledExecutorService expirationExecutor;
    private ScheduledExecutorService asyncReplicationExecutor;
    private BlockingTaskAwareExecutorService totalOrderExecutor;
    private ExecutorService stateTransferExecutor;
@@ -74,16 +74,16 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                }
             }
             return (T) asyncTransportExecutor;
-         } else if (componentName.equals(EVICTION_SCHEDULED_EXECUTOR)) {
+         } else if (componentName.equals(EXPIRATION_SCHEDULED_EXECUTOR)) {
             synchronized (this) {
-               if (evictionExecutor == null) {
-                  evictionExecutor = createExecutorService(
+               if (expirationExecutor == null) {
+                  expirationExecutor = createExecutorService(
                         globalConfiguration.evictionThreadPool(),
-                        globalConfiguration, EVICTION_SCHEDULED_EXECUTOR,
+                        globalConfiguration, EXPIRATION_SCHEDULED_EXECUTOR,
                         ExecutorServiceType.SCHEDULED);
                }
             }
-            return (T) evictionExecutor;
+            return (T) expirationExecutor;
          } else if (componentName.equals(ASYNC_REPLICATION_QUEUE_EXECUTOR)) {
             synchronized (this) {
                if (asyncReplicationExecutor == null) {
@@ -141,7 +141,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (persistenceExecutor != null) persistenceExecutor.shutdownNow();
       if (asyncTransportExecutor != null) asyncTransportExecutor.shutdownNow();
       if (asyncReplicationExecutor != null) asyncReplicationExecutor.shutdownNow();
-      if (evictionExecutor != null) evictionExecutor.shutdownNow();
+      if (expirationExecutor != null) expirationExecutor.shutdownNow();
       if (totalOrderExecutor != null) totalOrderExecutor.shutdownNow();
       if (stateTransferExecutor != null) stateTransferExecutor.shutdownNow();
    }

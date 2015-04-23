@@ -5,19 +5,14 @@ import java.util.Map;
 import net.jcip.annotations.ThreadSafe;
 
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
 /**
  * Central component that deals with eviction of cache entries.
  * <p />
- * Typically, {@link #processEviction()} is called periodically by the eviction thread (which can be configured using
- * {@link org.infinispan.config.FluentConfiguration.ExpirationConfig#wakeUpInterval(Long)} and {@link org.infinispan.config.GlobalConfiguration#setEvictionScheduledExecutorFactoryClass(String)}).
- * <p />
- * If the eviction thread is disabled - by setting {@link org.infinispan.config.FluentConfiguration.ExpirationConfig#wakeUpInterval(Long)} to <tt>0</tt> -
- * then this method could be called directly, perhaps by any other maintenance thread that runs periodically in the application.
- * <p />
- * Note that this method is a no-op if the eviction strategy configured is {@link org.infinispan.eviction.EvictionStrategy#NONE}.
+ * This manager only controls notifications of when entries are evicted.
  * <p />
  * @author Manik Surtani
  * @since 4.0
@@ -27,14 +22,21 @@ import org.infinispan.factories.scopes.Scopes;
 public interface EvictionManager<K, V> {
 
    /**
-    * Processes the eviction event queue.
+    * @deprecated This falls back to calling {@link ExpirationManager#processExpiration()}
+    * @see ExpirationManager
     */
    void processEviction();
 
    /**
-    * @return true if eviction is enabled, false otherwise
+    * @deprecated This falls back to calling {@link ExpirationManager#isEnabled()}
+    * @see ExpirationManager
+    * @return whether expiration is enabled or not
     */
    boolean isEnabled();
 
+   /**
+    * Handles notifications of evicted entries
+    * @param evicted The entries that were just evicted
+    */
    void onEntryEviction(Map<? extends K, InternalCacheEntry<? extends K, ? extends V>> evicted);
 }

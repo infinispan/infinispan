@@ -98,9 +98,15 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
       return globalConfig.replicationQueueThreadPool();
    }
 
+   @Deprecated
    @Override
    public ThreadPoolConfigurationBuilder evictionThreadPool() {
-      return globalConfig.evictionThreadPool();
+      return globalConfig.expirationThreadPool();
+   }
+
+   @Override
+   public ThreadPoolConfigurationBuilder expirationThreadPool() {
+      return globalConfig.expirationThreadPool();
    }
 
    @Override

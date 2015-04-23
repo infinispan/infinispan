@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
@@ -18,6 +19,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -122,6 +124,11 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the eviction manager - if one is configured - for this cache instance
     */
    EvictionManager getEvictionManager();
+
+   /**
+    * @return the expiration manager - if one is configured - for this cache instance
+    */
+   ExpirationManager<K, V> getExpirationManager();
 
    /**
     * @return the component registry for this cache instance
