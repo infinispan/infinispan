@@ -84,7 +84,7 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         MBeanServer getMBeanServer();
         Executor getListenerExecutor();
         Executor getStateTransferExecutor();
-        ScheduledExecutorService getEvictionExecutor();
+        ScheduledExecutorService getExpirationExecutor();
         ScheduledExecutorService getReplicationQueueExecutor();
     }
 
@@ -218,10 +218,10 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
             builder.listenerThreadPool().threadPoolFactory(
                   ThreadPoolExecutorFactories.mkManagedExecutorFactory(listenerExecutor));
         }
-        ScheduledExecutorService evictionExecutor = this.dependencies.getEvictionExecutor();
-        if (evictionExecutor != null) {
-            builder.evictionThreadPool().threadPoolFactory(
-                  ThreadPoolExecutorFactories.mkManagedScheduledExecutorFactory(evictionExecutor));
+        ScheduledExecutorService expirationExecutor = this.dependencies.getExpirationExecutor();
+        if (expirationExecutor != null) {
+            builder.expirationThreadPool().threadPoolFactory(
+                  ThreadPoolExecutorFactories.mkManagedScheduledExecutorFactory(expirationExecutor));
         }
         ScheduledExecutorService replicationQueueExecutor = this.dependencies.getReplicationQueueExecutor();
         if (replicationQueueExecutor != null) {

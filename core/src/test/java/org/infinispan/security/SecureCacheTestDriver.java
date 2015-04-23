@@ -606,6 +606,11 @@ public class SecureCacheTestDriver {
    }
 
    @TestCachePermission(AuthorizationPermission.ADMIN)
+   public void testGetExpirationManager(SecureCache<String, String> cache) {
+      cache.getExpirationManager();
+   }
+
+   @TestCachePermission(AuthorizationPermission.ADMIN)
    public void testAddInterceptorBefore_CommandInterceptor_Class(SecureCache<String, String> cache) {
       cache.addInterceptorBefore(interceptor, InvocationContextInterceptor.class);
       cache.removeInterceptor(interceptor.getClass());

@@ -100,9 +100,14 @@ public final class InfinispanSubsystemXMLReader_7_2 implements XMLElementReader<
                     break;
                 }
                 case EVICTION_EXECUTOR: {
+                    log.warn("The xml element eviction-executor has been deprecated and replaced by expiration-executor, please update your configuration file.");
                     CacheContainerResource.EVICTION_EXECUTOR.parseAndSetParameter(value, container, reader);
                     break;
                 }
+                case EXPIRATION_EXECUTOR: {
+                   CacheContainerResource.EXPIRATION_EXECUTOR.parseAndSetParameter(value, container, reader);
+                   break;
+               }
                 case REPLICATION_QUEUE_EXECUTOR: {
                     CacheContainerResource.REPLICATION_QUEUE_EXECUTOR.parseAndSetParameter(value, container, reader);
                     break;

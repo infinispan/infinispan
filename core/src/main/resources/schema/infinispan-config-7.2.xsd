@@ -236,7 +236,12 @@
     </xs:attribute>
     <xs:attribute name="eviction-executor" type="xs:string">
       <xs:annotation>
-        <xs:documentation>Defines the scheduled executor used for evictions.</xs:documentation>
+        <xs:documentation>DEPRECATED Defines the scheduled executor used for evictions.  The expiration-executor type should be used instead.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="expiration-executor" type="xs:string">
+      <xs:annotation>
+        <xs:documentation>Defines the scheduled executor used for expirations.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="replication-queue-executor" type="xs:string">

@@ -348,7 +348,7 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
 
       DefaultThreadFactory evictionThreadFactory =
             cm.getCacheManagerConfiguration().evictionThreadPool().threadFactory();
-      assertEquals("EvictionThread", evictionThreadFactory.threadNamePattern());
+      assertEquals("ExpirationThread", evictionThreadFactory.threadNamePattern());
 
       DefaultThreadFactory replicationQueueThreadFactory =
             cm.getCacheManagerConfiguration().replicationQueueThreadPool().threadFactory();

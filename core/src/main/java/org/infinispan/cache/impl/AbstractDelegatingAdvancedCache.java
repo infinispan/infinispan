@@ -10,6 +10,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -98,6 +99,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public EvictionManager getEvictionManager() {
       return cache.getEvictionManager();
+   }
+
+   @Override
+   public ExpirationManager<K, V> getExpirationManager() {
+      return cache.getExpirationManager();
    }
 
    @Override

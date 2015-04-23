@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
@@ -21,6 +22,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.EvictionManager;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
@@ -282,6 +284,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    public EvictionManager getEvictionManager() {
       authzManager.checkPermission(AuthorizationPermission.ADMIN);
       return delegate.getEvictionManager();
+   }
+
+   @Override
+   public ExpirationManager<K, V> getExpirationManager() {
+      authzManager.checkPermission(AuthorizationPermission.ADMIN);
+      return delegate.getExpirationManager();
    }
 
    @Override

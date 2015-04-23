@@ -67,7 +67,7 @@ public class L1ManagerImpl implements L1Manager, RemoteValueRetrievedListener {
    @Inject
    public void init(Configuration configuration, RpcManager rpcManager, CommandsFactory commandsFactory,
                     @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
-                    @ComponentName(KnownComponentNames.EVICTION_SCHEDULED_EXECUTOR) ScheduledExecutorService scheduledExecutor,
+                    @ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR) ScheduledExecutorService scheduledExecutor,
                     TimeService timeService) {
       this.rpcManager = rpcManager;
       this.commandsFactory = commandsFactory;

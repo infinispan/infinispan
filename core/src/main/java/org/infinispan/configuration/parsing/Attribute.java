@@ -37,7 +37,9 @@ public enum Attribute {
     DEFAULT_CACHE("default-cache"),
     ENABLED("enabled"),
     EXECUTOR("executor"),
+    @Deprecated
     EVICTION_EXECUTOR("eviction-executor"),
+    EXPIRATION_EXECUTOR("expiration-executor"),
     FAILURE_POLICY_CLASS("failure-policy-class"),
     FETCH_STATE("fetch-state"),
     FLUSH_LOCK_TIMEOUT("flush-lock-timeout"),
