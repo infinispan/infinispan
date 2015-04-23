@@ -304,7 +304,11 @@ public abstract class AbstractClusteredWriteSkewTest extends MultipleCacheManage
       int i = 0;
       DataContainer dataContainer = TestingUtil.extractComponent(primaryOwner, DataContainer.class);
       while (i < MAX_ENTRIES * 2) {
-         primaryOwner.put(new MagicKey("other-key-" + i, primaryOwner), "value");
+         MagicKey tempKey = new MagicKey("other-key-" + i, primaryOwner);
+         primaryOwner.put(tempKey, "value");
+         // LIRS requires the key to be read again to force it to be hot, or else each write
+         // will evict the most previous
+         primaryOwner.get(tempKey);
          if (dataContainer.peek(key) == null) {
             //the key was evicted and it is only in persistence.
             evicted = true;

@@ -110,7 +110,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       }
 
       entries = new BoundedEquivalentConcurrentHashMapV8<K, InternalCacheEntry<K, V>>(
-            (long) maxEntries, Eviction.LRU, evictionListener, keyEquivalence, AnyEquivalence.getInstance());
+            maxEntries, eviction, evictionListener, keyEquivalence, AnyEquivalence.getInstance());
       extendedMap = new BoundedEquivalentConcurrentExtendedMap();
    }
 
