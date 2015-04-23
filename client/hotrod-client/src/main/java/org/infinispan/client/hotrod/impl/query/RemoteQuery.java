@@ -30,7 +30,7 @@ public final class RemoteQuery extends BaseQuery {
    private List results = null;
    private int totalResults;
 
-   public RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl cache, SerializationContext serializationContext,
+   RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl cache, SerializationContext serializationContext,
                       String jpaQuery, long startOffset, int maxResults) {
       super(queryFactory, jpaQuery);
       this.cache = cache;
@@ -101,5 +101,14 @@ public final class RemoteQuery extends BaseQuery {
 
    public SerializationContext getSerializationContext() {
       return serializationContext;
+   }
+
+   @Override
+   public String toString() {
+      return "RemoteQuery{" +
+            "jpaQuery=" + jpaQuery +
+            ", startOffset=" + startOffset +
+            ", maxResults=" + maxResults +
+            '}';
    }
 }

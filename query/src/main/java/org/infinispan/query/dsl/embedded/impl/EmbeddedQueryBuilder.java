@@ -1,7 +1,5 @@
 package org.infinispan.query.dsl.embedded.impl;
 
-import org.infinispan.AdvancedCache;
-import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQueryBuilder;
 import org.infinispan.query.dsl.impl.JPAQueryGenerator;
@@ -14,13 +12,13 @@ import org.infinispan.util.logging.LogFactory;
  */
 final class EmbeddedQueryBuilder extends BaseQueryBuilder<Query> {
 
-   private static final Log log = LogFactory.getLog(EmbeddedLuceneQueryBuilder.class, Log.class);
+   private static final Log log = LogFactory.getLog(EmbeddedQueryBuilder.class, Log.class);
 
-   private final AdvancedCache<?, ?> cache;
+   private final QueryEngine queryEngine;
 
-   public EmbeddedQueryBuilder(EmbeddedQueryFactory queryFactory, AdvancedCache<?, ?> cache, String rootType) {
+   public EmbeddedQueryBuilder(EmbeddedQueryFactory queryFactory, QueryEngine queryEngine, String rootType) {
       super(queryFactory, rootType);
-      this.cache = cache;
+      this.queryEngine = queryEngine;
    }
 
    @Override
@@ -29,7 +27,6 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder<Query> {
       if (log.isTraceEnabled()) {
          log.tracef("JPQL string : %s", jpqlString);
       }
-
-      return new EmbeddedQuery(queryFactory, cache, jpqlString, startOffset, maxResults, ReflectionMatcher.class);
+      return queryEngine.buildQuery(queryFactory, jpqlString, startOffset, maxResults);
    }
 }

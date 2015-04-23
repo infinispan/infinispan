@@ -6,6 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.Account;
 import org.infinispan.all.embeddedquery.testdomain.Address;
 import org.infinispan.all.embeddedquery.testdomain.ModelFactory;
+import org.infinispan.all.embeddedquery.testdomain.NotIndexed;
 import org.infinispan.all.embeddedquery.testdomain.Transaction;
 import org.infinispan.all.embeddedquery.testdomain.User;
 import org.infinispan.all.embeddedquery.testdomain.hsearch.ModelFactoryHS;
@@ -15,7 +16,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
-import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQueryFactory;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -177,6 +178,12 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
          transaction.setDebit(true);
          getCacheForWrite().put("transaction_" + transaction.getId(), transaction);
       }
+
+      // this value should be ignored gracefully
+      getCacheForWrite().put("dummy", "a primitive value cannot be queried");
+
+      getCacheForWrite().put("notIndexed1", new NotIndexed("testing 123"));
+      getCacheForWrite().put("notIndexed2", new NotIndexed("xyz"));
    }
 
    @Test
@@ -198,7 +205,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
    @Test
    public void testQueryFactoryType() {
-      assertEquals(EmbeddedLuceneQueryFactory.class, getQueryFactory().getClass());
+      assertEquals(EmbeddedQueryFactory.class, getQueryFactory().getClass());
    }
 
    @Test
@@ -227,13 +234,30 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(0, list.size());
    }
 
-   @Test(expected = ParsingException.class)
-   public void testEqNonIndexed() throws Exception {
+   @Test
+   public void testEqNonIndexedType() throws Exception {
       QueryFactory qf = getQueryFactory();
 
-      qf.from(getModelFactory().getUserImplClass())
+      Query q = qf.from(NotIndexed.class)
+            .having("notIndexedField").eq("testing 123")
+            .toBuilder().build();
+
+      List<NotIndexed> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("testing 123", list.get(0).notIndexedField);
+   }
+
+   @Test
+   public void testEqNonIndexedField() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
             .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
    }
 
    @Test
