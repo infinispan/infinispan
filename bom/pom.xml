@@ -392,6 +392,12 @@
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
             <version>${version.protostream}</version>
+            <exclusions>
+               <exclusion>
+                  <groupId>org.javassist</groupId>
+                  <artifactId>javassist</artifactId>
+               </exclusion>
+            </exclusions>
          </dependency>
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
