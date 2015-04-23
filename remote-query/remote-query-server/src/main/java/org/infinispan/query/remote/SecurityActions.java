@@ -17,7 +17,7 @@ import java.security.PrivilegedAction;
  */
 final class SecurityActions {
 
-   private static <T> T doPrivileged(PrivilegedAction<T> action) {
+   static <T> T doPrivileged(PrivilegedAction<T> action) {
       return System.getSecurityManager() != null ?
             AccessController.doPrivileged(action) : Security.doPrivileged(action);
    }

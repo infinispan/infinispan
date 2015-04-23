@@ -2,14 +2,12 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CloseableIterable;
-import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 
-import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +23,7 @@ import java.util.PriorityQueue;
  * @author anistor@redhat,com
  * @since 7.0
  */
-public final class EmbeddedQuery extends BaseQuery {
+public class EmbeddedQuery extends BaseQuery {
 
    private static final int INITIAL_CAPACITY = 1000;
 
@@ -37,33 +35,23 @@ public final class EmbeddedQuery extends BaseQuery {
 
    private int resultSize;
 
-   private String[] projection;
+   private final String[] projection;
 
    private final int startOffset;
 
    private final int maxResults;
 
-   public EmbeddedQuery(final QueryFactory queryFactory, final AdvancedCache<?, ?> cache, final String jpaQuery,
-                        final long startOffset, final int maxResults, final Class<? extends Matcher> matcherImplClass) {
-      super(queryFactory, jpaQuery);
+   public EmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, JPAFilterAndConverter filter,
+                        long startOffset, int maxResults) {
+      super(queryFactory, filter.getJPAQuery());
 
       ensureAccessPermissions(cache);
 
       this.cache = cache;
       this.startOffset = startOffset < 0 ? 0 : (int) startOffset;
       this.maxResults = maxResults;
-
-      this.filter = SecurityActions.doPrivileged(new PrivilegedAction<JPAFilterAndConverter>() {
-         @Override
-         public JPAFilterAndConverter run() {
-            JPAFilterAndConverter filter = new JPAFilterAndConverter(jpaQuery, matcherImplClass);
-            filter.injectDependencies(cache);
-
-            // this also triggers early validation
-            projection = filter.getObjectFilter().getProjection();
-            return filter;
-         }
-      });
+      this.filter = filter;
+      this.projection = filter.getObjectFilter().getProjection();
    }
 
    private void ensureAccessPermissions(AdvancedCache<?, ?> cache) {
@@ -80,12 +68,7 @@ public final class EmbeddedQuery extends BaseQuery {
    @Override
    public <T> List<T> list() {
       if (results == null) {
-         results = SecurityActions.doPrivileged(new PrivilegedAction<List>() {
-            @Override
-            public List run() {
-               return listInternal();
-            }
-         });
+         results = listInternal();
       }
       return results;
    }
@@ -154,6 +137,16 @@ public final class EmbeddedQuery extends BaseQuery {
    public int getResultSize() {
       list();
       return resultSize;
+   }
+
+   @Override
+   public String toString() {
+      return "EmbeddedQuery{" +
+            "jpaQuery=" + jpaQuery +
+            ", projection=" + Arrays.toString(projection) +
+            ", startOffset=" + startOffset +
+            ", maxResults=" + maxResults +
+            '}';
    }
 
    private static class ReverseFilterResultComparator implements Comparator<ObjectFilter.FilterResult> {

@@ -5,8 +5,7 @@ import org.infinispan.query.ResultIterator;
 import org.infinispan.query.dsl.Query;
 
 /**
- * A Query kind that offers iteration and lazy/eager loading options.
- * This is currently only available in embedded mode.
+ * A Query kind that offers iteration and lazy/eager loading options. This is only available in embedded mode.
  *
  * @author anistor@redhat.com
  * @since 6.0
@@ -25,7 +24,7 @@ public interface LuceneQuery extends Query, Iterable {
    ResultIterator iterator(FetchOptions fetchOptions);
 
    /**
-    * Returns the results of a search as a {@link ResultIterator}. This calls {@link Query#iterator(FetchOptions fetchOptions)}
+    * Returns the results of a search as a {@link ResultIterator}. This calls {@link #iterator(FetchOptions fetchOptions)}
     * with default FetchOptions; this implies eager loading of all results.
     *
     * @return a ResultIterator which can be used to iterate through the results that were found.

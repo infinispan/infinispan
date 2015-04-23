@@ -25,13 +25,16 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> {
+public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, ObjectFilter.FilterResult> {
 
    /**
     * Optional cache for query objects.
     */
    private QueryCache queryCache;
 
+   /**
+    * The JPA query to execute.
+    */
    private final String jpaQuery;
 
    /**
@@ -61,7 +64,7 @@ public final class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterCon
     * Acquires a Matcher instance from the ComponentRegistry of the given Cache object.
     */
    @Inject
-   void injectDependencies(Cache cache) {
+   public void injectDependencies(Cache cache) {
       this.queryCache = cache.getCacheManager().getGlobalComponentRegistry().getComponent(QueryCache.class);
       matcher = cache.getAdvancedCache().getComponentRegistry().getComponent(matcherImplClass);
       if (matcher == null) {
@@ -105,12 +108,10 @@ public final class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterCon
 
    @Override
    public String toString() {
-      return "FilterAndConverter{" +
-            "jpaQuery='" + jpaQuery + '\'' +
-            '}';
+      return "JPAFilterAndConverter{jpaQuery='" + jpaQuery + "'}";
    }
 
-   public static final class FilterAndConverterExternalizer extends AbstractExternalizer<JPAFilterAndConverter> {
+   public static final class JPAFilterAndConverterExternalizer extends AbstractExternalizer<JPAFilterAndConverter> {
 
       @Override
       public void writeObject(ObjectOutput output, JPAFilterAndConverter filterAndConverter) throws IOException {

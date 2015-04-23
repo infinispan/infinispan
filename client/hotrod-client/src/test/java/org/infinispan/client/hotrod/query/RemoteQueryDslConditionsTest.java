@@ -10,10 +10,13 @@ import org.infinispan.client.hotrod.impl.query.RemoteQueryFactory;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.ModelFactoryPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
@@ -27,6 +30,7 @@ import org.infinispan.server.hotrod.HotRodServer;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
@@ -43,6 +47,11 @@ import static org.junit.Assert.*;
 @Test(groups = "functional", testName = "client.hotrod.query.RemoteQueryDslConditionsTest")
 public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
+   private static final String NOT_INDEXED_PROTO_SCHEMA = "package sample_bank_account;\n" +
+         "/* @Indexed(false) */\n" +
+         "message NotIndexed {\n" +
+         "\toptional string notIndexedField = 1;\n" +
+         "}\n";
    protected HotRodServer hotRodServer;
    protected RemoteCacheManager remoteCacheManager;
    protected RemoteCache<Object, Object> remoteCache;
@@ -81,14 +90,21 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       clientBuilder.marshaller(new ProtoStreamMarshaller());
       remoteCacheManager = new RemoteCacheManager(clientBuilder.build());
       remoteCache = remoteCacheManager.getCache();
+      initProtoSchema(remoteCacheManager);
+   }
 
+   protected void initProtoSchema(RemoteCacheManager remoteCacheManager) throws IOException {
       //initialize server-side serialization context
       RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
       metadataCache.put("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
       assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
+      metadataCache.put("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
 
       //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+      MarshallerRegistration.registerMarshallers(serCtx);
+      serCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
+      serCtx.registerMarshaller(new NotIndexedMarshaller());
    }
 
    protected ConfigurationBuilder getConfigurationBuilder() {
@@ -116,18 +132,6 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    @Override
    public void testQueryFactoryType() {
       assertEquals(RemoteQueryFactory.class, getQueryFactory().getClass());
-   }
-
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalArgumentException: ISPN018002: Field notes from type sample_bank_account.User is not indexed")
-   @Override
-   public void testEqNonIndexed() throws Exception {
-      QueryFactory qf = getQueryFactory();
-
-      Query q = qf.from(getModelFactory().getUserImplClass())
-            .having("notes").eq("Lorem ipsum dolor sit amet")
-            .toBuilder().build();
-
-      q.list();
    }
 
    @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQL100005:.*", description = "see https://issues.jboss.org/browse/ISPN-4423")
