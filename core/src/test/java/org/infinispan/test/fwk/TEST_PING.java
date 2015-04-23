@@ -39,6 +39,8 @@ public class TEST_PING extends Discovery {
    // volatile in case resurrection happens from a different thread
    private volatile boolean stopped;
 
+   private volatile boolean forceCoordSingleMember = true;
+
    // Note: Thread locals could work but if two nodes of the same cluster are
    // started from different threads, a thread local based solution would not
    // work, so we're sticking to an static solution
@@ -52,7 +54,7 @@ public class TEST_PING extends Discovery {
    }
 
    @Override
-   protected void findMembers(List<Address> addresses, boolean b, Responses pingDatas) {
+   protected void findMembers(List<Address> addresses, boolean initialDiscovery, Responses pingDatas) {
       if (!stopped) {
          Map<Address, TEST_PING> discoveries = registerInDiscoveries();
 
@@ -63,10 +65,10 @@ public class TEST_PING extends Discovery {
             if (!discoveries.isEmpty()) {
                // Make sure that concurrent startups within a test won't mess up discovery
                synchronized (discoveries) {
+                  boolean traceEnabled = log.isTraceEnabled();
                   for (TEST_PING discovery : discoveries.values()) {
                      // Avoid sending to self! Since there are single instances of
                      // discovery protocol in each node, just compare them by ref.
-                     boolean traceEnabled = log.isTraceEnabled();
                      if (discovery != this) {
                         boolean remoteDiscardEnabled = isDiscardEnabled(discovery);
                         if (!remoteDiscardEnabled && !discovery.stopped) {
@@ -78,7 +80,7 @@ public class TEST_PING extends Discovery {
                         } else {
                            if (traceEnabled)
                               log.trace("Skipping sending response cos DISCARD is on");
-                           // If discard is, add an empty response
+                           // If discard is enabled, add an empty response
                            addPingRsp(null, discovery);
                         }
                      } else {
@@ -96,6 +98,16 @@ public class TEST_PING extends Discovery {
       } else {
          log.debug("Discovery protocol already stopped, so don't look for members");
       }
+
+      if (forceCoordSingleMember && pingDatas.size() == 1) {
+         // The other node might have replied just before it installed its first view
+         // If that happened and there is no coordinator, force isCoord on
+         PingData singlePingData = pingDatas.iterator().next();
+         if (!singlePingData.isCoord()) singlePingData.coord(true);
+         // Only do this the first time
+         forceCoordSingleMember = false;
+      }
+
       pingDatas.done();
    }
 
@@ -126,7 +138,8 @@ public class TEST_PING extends Discovery {
       Address localAddr = discovery.getLocalAddr();
       PhysicalAddress physicalAddr = (PhysicalAddress) discovery.down(new Event(Event.GET_PHYSICAL_ADDRESS, localAddr));
       String logicalName = UUID.get(localAddr);
-      PingData pingRsp = new PingData(localAddr, discovery.isServer(), logicalName, physicalAddr).coord(discovery.is_coord);
+      PingData pingRsp = new PingData(localAddr, discovery.isServer(), logicalName, physicalAddr).coord(discovery
+            .is_coord);
 
       if (log.isTraceEnabled())
          log.trace(String.format("Returning ping rsp: %s", pingRsp));
@@ -144,7 +157,7 @@ public class TEST_PING extends Discovery {
 
       if (log.isTraceEnabled())
          log.trace(String.format("Map %s with physical address %s in %s",
-                                 remote.getLocalAddr(), physical_addr, local));
+               remote.getLocalAddr(), physical_addr, local));
    }
 
    private Map<Address, TEST_PING> registerInDiscoveries() {
@@ -181,6 +194,16 @@ public class TEST_PING extends Discovery {
             "Test (%s) started but not registered discovery", key));
       }
       stopped = true;
+   }
+
+   @Override
+   public Object down(Event evt) {
+      switch (evt.getType()) {
+         case Event.TMP_VIEW:
+            return super.down(new Event(Event.VIEW_CHANGE, evt.getArg()));
+         default:
+            return super.down(evt);
+      }
    }
 
    @Override

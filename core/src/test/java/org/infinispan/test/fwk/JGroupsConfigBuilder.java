@@ -161,7 +161,10 @@ public class JGroupsConfigBuilder {
    }
 
    private static String replaceMCastAddressAndPort(JGroupsProtocolCfg jgroupsCfg) {
-      Map<String, String> props = jgroupsCfg.getProtocol(UDP).getProperties();
+      ProtocolConfiguration udp = jgroupsCfg.getProtocol(UDP);
+      if (udp == null) return jgroupsCfg.toString();
+
+      Map<String, String> props = udp.getProperties();
       props.put("mcast_addr", threadMcastIP.get());
       props.put("mcast_port", threadMcastPort.get().toString());
       return replaceProperties(jgroupsCfg, props, UDP);
@@ -287,8 +290,8 @@ public class JGroupsConfigBuilder {
    }
 
    enum ProtocolType {
-      TCP, UDP,
-      MPING, PING, TCPPING, TEST_PING,
+      TCP, UDP, SHARED_LOOPBACK,
+      MPING, PING, TCPPING, TEST_PING, SHARED_LOOPBACK_PING,
       MERGE2, MERGE3,
       FD_SOCK, FD, VERIFY_SUSPECT, FD_ALL, FD_ALL2,
       BARRIER,
