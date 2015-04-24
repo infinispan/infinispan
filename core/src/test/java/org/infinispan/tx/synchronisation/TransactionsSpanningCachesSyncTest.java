@@ -20,7 +20,7 @@ public class TransactionsSpanningCachesSyncTest extends TransactionsSpanningCach
    }
 
    public void testSyncIsUsed() {
-      assert cache.getCacheConfiguration().transaction().useSynchronization();;
+      assert cache.getCacheConfiguration().transaction().useSynchronization();
       TransactionTable transactionTable = TestingUtil.extractComponent(cache, TransactionTable.class);
       assert !(transactionTable instanceof XaTransactionTable);
    }

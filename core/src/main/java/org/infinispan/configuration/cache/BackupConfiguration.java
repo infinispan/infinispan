@@ -33,7 +33,7 @@ public class BackupConfiguration {
    private final XSiteStateTransferConfiguration xSiteStateTransferConfiguration ;
 
    public BackupConfiguration(AttributeSet attributes, TakeOfflineConfiguration takeOfflineConfiguration, XSiteStateTransferConfiguration xSiteStateTransferConfiguration) {
-      this.attributes = attributes.checkProtection();;
+      this.attributes = attributes.checkProtection();
       this.takeOfflineConfiguration = takeOfflineConfiguration;
       this.xSiteStateTransferConfiguration = xSiteStateTransferConfiguration;
       this.site = attributes.attribute(SITE);
