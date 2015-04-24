@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static org.infinispan.configuration.cache.EvictionConfiguration.MAX_ENTRIES;
+import static org.infinispan.configuration.cache.EvictionConfiguration.MEMORY_BASED_APPROXIMATION;
 import static org.infinispan.configuration.cache.EvictionConfiguration.STRATEGY;
 import static org.infinispan.configuration.cache.EvictionConfiguration.THREAD_POLICY;
 
@@ -69,6 +70,11 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       return maxEntries((long)maxEntries);
    }
 
+   public EvictionConfigurationBuilder memoryBasedApproximation(boolean enable) {
+      attributes.attribute(MEMORY_BASED_APPROXIMATION).set(enable);
+      return this;
+   }
+
    @Override
    public void validate() {
       EvictionStrategy strategy = attributes.attribute(STRATEGY).get();
@@ -82,6 +88,9 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
       if (maxEntries > 0 && !strategy.isEnabled()) {
          strategy(EvictionStrategy.LIRS);
          log.debugf("Max entries configured (%d) without eviction strategy. Eviction strategy overriden to %s", maxEntries, strategy);
+      }
+      if (strategy == EvictionStrategy.LIRS && attributes.attribute(MEMORY_BASED_APPROXIMATION).get()) {
+         throw new CacheConfigurationException("Eviction cannot use memory based approximation with LIRS");
       }
       if (maxEntries > EVICTION_MAX_SIZE) {
          throw log.evictionSizeTooLarge(maxEntries);

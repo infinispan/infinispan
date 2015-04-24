@@ -66,6 +66,7 @@ public enum Attribute {
     MAX_IDLE("max-idle"),
     MAX_RETRIES("max-retries"),
     MAX_THREADS("max-threads"),
+    MEMORY_BASED_APPROXIMATION("memory-based"),
     MBEAN_SERVER_LOOKUP("mbean-server-lookup"),
     MODE("mode"),
     NODE_NAME("node-name"),

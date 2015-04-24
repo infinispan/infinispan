@@ -1373,6 +1373,10 @@ public class Parser80 implements ConfigurationParser {
                builder.eviction().threadPolicy(EvictionThreadPolicy.valueOf(value));
                break;
             }
+            case MEMORY_BASED_APPROXIMATION: {
+               builder.eviction().memoryBasedApproximation(Boolean.parseBoolean(value));
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }

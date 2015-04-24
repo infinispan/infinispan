@@ -48,7 +48,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                EvictionThreadPolicy policy = configuration.eviction().threadPolicy();
 
                return (T) DefaultDataContainer.boundedDataContainer(
-                  level, maxEntries, st, policy, keyEquivalence);
+                  level, maxEntries, st, policy, keyEquivalence,
+                  configuration.eviction().isMemoryBasedApproximation());
             default:
                throw new CacheConfigurationException("Unknown eviction strategy "
                         + configuration.eviction().strategy());

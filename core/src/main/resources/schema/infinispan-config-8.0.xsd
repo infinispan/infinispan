@@ -776,6 +776,11 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="memory-based" type="xs:boolean" default="false">
+      <xs:annotation>
+        <xs:documentation>Specifies whether a memory based approimxation should be used instead of a count of entries.  When enabled max-entries will be the amount in bytes approximately that the data container will use in memory.  The approximation is tailored for the oracle or open JDK.  This can only be used when both key and values are stored as byte arrays.  To guarantee only byte arrays are stored it is recommended to run with store as binary for both keys and values.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="expiration">
