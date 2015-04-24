@@ -23,6 +23,8 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.eviction.EvictionType;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -60,7 +62,24 @@ public class EvictionResource extends CacheChildResource {
                     .setDefaultValue(new ModelNode().set(-1))
                     .build();
 
-    static final AttributeDefinition[] EVICTION_ATTRIBUTES = {EVICTION_STRATEGY, MAX_ENTRIES};
+    static final SimpleAttributeDefinition SIZE =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.SIZE, ModelType.LONG, true)
+                    .setXmlName(Attribute.SIZE.getLocalName())
+                    .setAllowExpression(true)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                    .setDefaultValue(new ModelNode().set(-1))
+                    .build();
+
+    static final SimpleAttributeDefinition TYPE =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.TYPE, ModelType.STRING, true)
+                   .setXmlName(Attribute.TYPE.getLocalName())
+                   .setAllowExpression(true)
+                   .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                   .setValidator(new EnumValidator<>(EvictionType.class, true, false))
+                   .setDefaultValue(new ModelNode().set(EvictionType.COUNT.name()))
+                   .build();
+
+    static final AttributeDefinition[] EVICTION_ATTRIBUTES = {EVICTION_STRATEGY, MAX_ENTRIES, SIZE, TYPE};
 
     public EvictionResource(CacheResource cacheResource) {
         super(EVICTION_PATH, ModelKeys.EVICTION, cacheResource, EVICTION_ATTRIBUTES);

@@ -102,6 +102,7 @@ public enum Attribute {
     SHUTDOWN_TIMEOUT("shutdown-timeout"),
     SINGLETON("singleton"),
     SITE("site"),
+    SIZE("size"),
     SPIN_DURATION("deadlock-detection-spin"),
     STATISTICS("statistics"),
     START("start"),
@@ -123,6 +124,7 @@ public enum Attribute {
     TRANSACTION_MANAGER_LOOKUP_CLASS("transaction-manager-lookup"),
     TRANSACTION_PROTOCOL("protocol"),
     TRANSPORT("transport"),
+    TYPE("type"),
     UNRELIABLE_RETURN_VALUES("unreliable-return-values"),
     USE_TWO_PHASE_COMMIT("two-phase-commit"),
     VALUE("value"),
@@ -131,7 +133,7 @@ public enum Attribute {
     VERSIONING_SCHEME("scheme"),
     WAIT_TIME("wait-time"),
     WRITE_SKEW_CHECK("write-skew"),
-    FRAGMENTATION_FACTOR("fragmentation-factor");
+    FRAGMENTATION_FACTOR("fragmentation-factor"),
 
     ;
 

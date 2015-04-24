@@ -5,26 +5,31 @@ import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.eviction.EvictionType;
 
 /**
  * Controls the eviction settings for the cache.
  */
 public class EvictionConfiguration {
-   public static final AttributeDefinition<Long> MAX_ENTRIES  = AttributeDefinition.builder("maxEntries", -1l).build();
+   public static final AttributeDefinition<Long> SIZE  = AttributeDefinition.builder("size", -1l).build();
+   public static final AttributeDefinition<EvictionType> TYPE  = AttributeDefinition.builder("type", EvictionType.COUNT).build();
    public static final AttributeDefinition<EvictionStrategy> STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).immutable().build();
    public static final AttributeDefinition<EvictionThreadPolicy> THREAD_POLICY = AttributeDefinition.builder("threadPolicy", EvictionThreadPolicy.DEFAULT).immutable().build();
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(EvictionConfiguration.class, MAX_ENTRIES, STRATEGY, THREAD_POLICY);
+      return new AttributeSet(EvictionConfiguration.class, SIZE,
+            TYPE, STRATEGY, THREAD_POLICY);
    }
 
-   private final Attribute<Long> maxEntries;
+   private final Attribute<Long> size;
+   private final Attribute<EvictionType> type;
    private final Attribute<EvictionStrategy> strategy;
    private final Attribute<EvictionThreadPolicy> threadPolicy;
    private final AttributeSet attributes;
 
    EvictionConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-      maxEntries = attributes.attribute(MAX_ENTRIES);
+      size = attributes.attribute(SIZE);
+      type = attributes.attribute(TYPE);
       strategy = attributes.attribute(STRATEGY);
       threadPolicy = attributes.attribute(THREAD_POLICY);
    }
@@ -47,10 +52,22 @@ public class EvictionConfiguration {
    /**
     * Maximum number of entries in a cache instance. Cache size is guaranteed not to exceed upper
     * limit specified by max entries. However, due to the nature of eviction it is unlikely to ever
-    * be exactly maximum number of entries specified here.
+    * be exactly maximum number of entries specified here. Only makes sense when using the
+    * COUNT type.
     */
    public long maxEntries() {
-      return maxEntries.get();
+      if (type.get() != EvictionType.COUNT) {
+         throw new IllegalStateException();
+      }
+      return size();
+   }
+
+   public long size() {
+      return size.get();
+   }
+
+   public EvictionType type() {
+      return type.get();
    }
 
    public AttributeSet attributes() {

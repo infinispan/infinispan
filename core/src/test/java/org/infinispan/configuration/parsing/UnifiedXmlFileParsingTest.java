@@ -32,6 +32,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -60,13 +61,36 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    @Test(dataProvider="configurationFiles")
    public void testParseAndConstructUnifiedXmlFile(String config) throws IOException {
+      String[] parts = config.split("\\.");
+      int major = Integer.parseInt(parts[0]);
+      int minor = Integer.parseInt(parts[1]);
+      final int version = major * 10 + minor;
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.fromXml("configs/unified/" + config, true, false)) {
          @Override
          public void call() {
-            configurationCheck70(cm);
+            switch (version) {
+               case 80:
+                  configurationCheck80(cm);
+                  break;
+               case 70:
+               case 71:
+               case 72:
+                  configurationCheck70(cm);
+                  break;
+               default:
+                  throw new IllegalArgumentException("Unknown configuration version "+version);
+            }
          }
       });
+   }
+
+   private static void configurationCheck80(EmbeddedCacheManager cm) {
+      configurationCheck70(cm);
+      Configuration c = cm.getCache().getCacheConfiguration();
+      assertFalse(c.eviction().type() == EvictionType.MEMORY);
+      c = cm.getCache("invalid").getCacheConfiguration();
+      assertTrue(c.eviction().type() == EvictionType.MEMORY);
    }
 
    private static void configurationCheck70(EmbeddedCacheManager cm) {
@@ -200,7 +224,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(LockingMode.OPTIMISTIC, c.transaction().lockingMode());
       assertEquals(60500, c.transaction().cacheStopTimeout());
-      assertEquals(20500, c.eviction().maxEntries());
+      assertEquals(20500, c.eviction().size());
       assertEquals(EvictionStrategy.LRU, c.eviction().strategy());
       assertEquals(10500, c.expiration().wakeUpInterval());
       assertEquals(11, c.expiration().lifespan());
