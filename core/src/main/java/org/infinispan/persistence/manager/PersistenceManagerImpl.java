@@ -13,6 +13,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -645,7 +646,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
 
    private long getMaxEntries() {
       long ne = EvictionConfigurationBuilder.EVICTION_MAX_SIZE;
-      if (configuration.eviction().strategy().isEnabled()) ne = configuration.eviction().maxEntries();
+      if (configuration.eviction().strategy().isEnabled() && configuration.eviction().type() == EvictionType.COUNT)
+         ne = configuration.eviction().maxEntries();
       return ne;
    }
 

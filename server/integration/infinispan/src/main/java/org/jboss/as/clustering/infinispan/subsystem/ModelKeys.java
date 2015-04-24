@@ -179,6 +179,7 @@ public class ModelKeys {
     static final String SHUTDOWN_TIMEOUT = "shutdown-timeout";
     static final String SINGLETON = "singleton";
     static final String SITE = "site";
+    static final String SIZE = "size";
     static final String SOCKET_TIMEOUT = "socket-timeout";
     static final String STACK = "stack";
     static final String START = "start";

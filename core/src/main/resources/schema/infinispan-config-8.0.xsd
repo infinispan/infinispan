@@ -776,6 +776,16 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="type" type="tns:eviction-type" default="COUNT">
+      <xs:annotation>
+        <xs:documentation>Specifies whether to use entry count or memory-based approximation to decide when to evict entries.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="size" type="xs:long" default="-1">
+      <xs:annotation>
+        <xs:documentation>Maximum size to use for eviction. When using the COUNT type, this is the maximum number of entries in a cache instance. When using the MEMORY threshold policy, this is the maximum number of allocated bytes used by a cache's datacontainer. A value of -1 means no limit.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="expiration">
@@ -1664,6 +1674,21 @@
       <xs:enumeration value="DEFAULT">
         <xs:annotation>
           <xs:documentation>Use the default eviction listener thread policy (PIGGYBACK)</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:simpleType name="eviction-type">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="COUNT">
+        <xs:annotation>
+          <xs:documentation>Evicts entries from the cache when a specified count has been set</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="MEMORY">
+        <xs:annotation>
+          <xs:documentation>Evicts entries from the cache when a specified memory usage has been reached. Memory usage is computed using an approximation which is tailored for the HotSpot VM. This can only be used when both key and values are stored as byte arrays. To guarantee only byte arrays are stored it is recommended to run with store as binary for both keys and values</xs:documentation>
         </xs:annotation>
       </xs:enumeration>
     </xs:restriction>

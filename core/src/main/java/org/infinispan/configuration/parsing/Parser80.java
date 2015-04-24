@@ -23,6 +23,7 @@ import org.infinispan.distribution.ch.ConsistentHashFactory;
 import org.infinispan.distribution.group.Grouper;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.jmx.MBeanServerLookup;
@@ -1371,6 +1372,14 @@ public class Parser80 implements ConfigurationParser {
             }
             case THREAD_POLICY: {
                builder.eviction().threadPolicy(EvictionThreadPolicy.valueOf(value));
+               break;
+            }
+            case TYPE: {
+               builder.eviction().type(EvictionType.valueOf(value));
+               break;
+            }
+            case SIZE: {
+               builder.eviction().size(Long.parseLong(value));
                break;
             }
             default: {

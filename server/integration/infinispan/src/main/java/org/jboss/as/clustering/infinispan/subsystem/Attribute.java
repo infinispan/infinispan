@@ -123,6 +123,7 @@ public enum Attribute {
     SHUTDOWN_TIMEOUT(ModelKeys.SHUTDOWN_TIMEOUT),
     SINGLETON(ModelKeys.SINGLETON),
     SITE(ModelKeys.SITE),
+    SIZE(ModelKeys.SIZE),
     SOCKET_TIMEOUT(ModelKeys.SOCKET_TIMEOUT),
     STACK(ModelKeys.STACK),
     START(ModelKeys.START),

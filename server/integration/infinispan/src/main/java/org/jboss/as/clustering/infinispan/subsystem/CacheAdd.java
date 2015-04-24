@@ -45,6 +45,7 @@ import org.infinispan.configuration.cache.StoreConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.factory.CacheStoreFactory;
 import org.infinispan.persistence.jdbc.DatabaseType;
@@ -101,6 +102,7 @@ import org.jboss.tm.XAResourceRecoveryRegistry;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -493,8 +495,15 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             builder.eviction().strategy(strategy);
 
             if (strategy.isEnabled()) {
-                final long maxEntries = EvictionResource.MAX_ENTRIES.resolveModelAttribute(context, eviction).asLong();
-                builder.eviction().maxEntries(maxEntries);
+                if (eviction.hasDefined(ModelKeys.MAX_ENTRIES)) {
+                    final long maxEntries = EvictionResource.MAX_ENTRIES.resolveModelAttribute(context, eviction).asLong();
+                    builder.eviction().maxEntries(maxEntries);
+                } else {
+                    final long size = EvictionResource.SIZE.resolveModelAttribute(context, eviction).asLong();
+                    builder.eviction().size(size);
+                }
+                final EvictionType type = EvictionType.valueOf(EvictionResource.TYPE.resolveModelAttribute(context, eviction).asString());
+                builder.eviction().type(type);
             }
         }
         // expiration is a child resource

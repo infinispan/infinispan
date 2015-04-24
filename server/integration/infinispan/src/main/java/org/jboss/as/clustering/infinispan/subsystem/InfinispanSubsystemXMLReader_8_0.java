@@ -798,6 +798,14 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
                     EvictionResource.MAX_ENTRIES.parseAndSetParameter(value, eviction, reader);
                     break;
                 }
+                case TYPE: {
+                    EvictionResource.TYPE.parseAndSetParameter(value, eviction, reader);
+                    break;
+                }
+                case SIZE: {
+                    EvictionResource.SIZE.parseAndSetParameter(value, eviction, reader);
+                    break;
+                }
                 default: {
                     throw ParseUtils.unexpectedAttribute(reader, i);
                 }

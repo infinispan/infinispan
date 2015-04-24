@@ -265,6 +265,89 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       void onEntryRemoved(Entry<K, V> entry);
    }
 
+   @FunctionalInterface
+   public interface EntrySizeCalculator<K, V> {
+      long calculateSize(K key, V value);
+   }
+
+   private static long roundUpToNearest8(long size) {
+      return (size + 7) & ~0x7;
+   }
+
+   public static abstract class AbstractSizeCalculatorHelper<K, V> implements EntrySizeCalculator<K, V> {
+      // This is how large the object header info is
+      public final static int OBJECT_SIZE = sun.misc.Unsafe.ADDRESS_SIZE;
+      // This is how larege an object pointer is - note that each object
+      // has to reference its class
+      public final static int POINTER_SIZE = sun.misc.Unsafe.ARRAY_OBJECT_INDEX_SCALE;
+
+      public long roundUpToNearest8(long size) {
+         return BoundedEquivalentConcurrentHashMapV8.roundUpToNearest8(size);
+      }
+   }
+
+   public static final class NodeSizeCalculatorWrapper<K, V> extends AbstractSizeCalculatorHelper<K, V> {
+      private final EntrySizeCalculator<? super K, ? super V> calculator;
+      private final long nodeAverageSize;
+
+      public NodeSizeCalculatorWrapper(EntrySizeCalculator<? super K, ? super V> calculator) {
+         this.calculator = calculator;
+         // The node itself is an object and has a reference to its class
+         long calculateNodeAverageSize = OBJECT_SIZE + POINTER_SIZE;
+         // 6 variables in Node, 5 object references
+         calculateNodeAverageSize += 5 * POINTER_SIZE;
+         // 1: the int for the hash
+         calculateNodeAverageSize += 4;
+         // 2: Key actual size is ignored - defined by user
+         // 3: NodeEquivalence is ignored as it is shared between all of the nodes
+         // 4: Value actual size is ignored - defined by user
+         // 5: We have a reference to another node so it is ignored
+         // 6: EvictionEntry currently we only support LRU, so assume that node
+         long lruNodeSize = calculateLRUNodeSize();
+         nodeAverageSize = roundUpToNearest8(calculateNodeAverageSize) + lruNodeSize;
+      }
+
+      private long calculateLRUNodeSize() {
+         // The lru node itself is an object and has a reference to its class
+         long size = OBJECT_SIZE + POINTER_SIZE;
+         // LRUNode has 2 object references in it and 1 boolean
+         size += 2 * POINTER_SIZE;
+         // 1: LRUNode has a pointer back to an internal node, so nothing is added
+         // 2: LRUNode has a DequeNode
+         long dequeNodeSize = calculateDequeNodeSize();
+         // 3: LRUNode has a boolean
+         size += 1;
+         return roundUpToNearest8(size) + dequeNodeSize;
+      }
+
+      private long calculateDequeNodeSize() {
+         // Deque node itself is object and has a reference to its class
+         long size = OBJECT_SIZE + POINTER_SIZE;
+         // Deque node has 3 references in it
+         size += 3 * POINTER_SIZE;
+         // 2 of the references are other deque nodes (ignored) and the other is pointing
+         // back to the node itself (ignored)
+         return roundUpToNearest8(size);
+      }
+
+      @Override
+      public long calculateSize(K key, V value) {
+         long result = calculator.calculateSize(key, value) + nodeAverageSize;
+         if (result < 0) {
+            throw new ArithmeticException("Size overflow!");
+         }
+         return result;
+      }
+   }
+
+   private static final class SingleEntrySizeCalculator implements EntrySizeCalculator<Object, Object> {
+      private final static SingleEntrySizeCalculator SINGLETON = new SingleEntrySizeCalculator();
+      @Override
+      public long calculateSize(Object key, Object value) {
+         return 1;
+      }
+   }
+
    // We need the suppress warnings because Java doesn't do wildcard types well in another
    // type so we can't pass our map with types properly
    @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -372,6 +455,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * @return the nodes that were evicted
        */
       Collection<Node<K, V>> findIfEntriesNeedEvicting();
+
+      void onResize(long oldSize, long newSize);
    }
 
    static class NullEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
@@ -418,6 +503,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       public void onEntryHitWrite(Node<K, V> e, V value) {
          // Do nothing.
       }
+
+      @Override
+      public void onResize(long oldSize, long newSize) {
+         // Do nothing.
+      }
    }
 
    static class LRUNode<K, V> implements EvictionEntry<K, V> {
@@ -443,10 +533,41 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       final long maxSize;
       final AtomicReference<SizeAndEvicting> currentSize = new AtomicReference<>(
             new SizeAndEvicting(0, 0));
-      
-      public LRUEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize) {
+      final EntrySizeCalculator<? super K, ? super V> sizeCalculator;
+      final boolean countingMemory;
+
+      static final long NODE_ARRAY_BASE_OFFSET = getUnsafe().arrayBaseOffset(Node[].class);
+      static final long NODE_ARRAY_OFFSET = getUnsafe().arrayIndexScale(Node[].class);
+
+      public LRUEvictionPolicy(BoundedEquivalentConcurrentHashMapV8<K, V> map, long maxSize,
+            EntrySizeCalculator<? super K, ? super V> sizeCalculator, boolean countingMemory) {
          this.map = map;
          this.maxSize = maxSize;
+         this.sizeCalculator = sizeCalculator;
+         this.countingMemory = countingMemory;
+         if (countingMemory) {
+            sun.misc.Unsafe unsafe = getUnsafe();
+            // We add the memory usage this eviction policy
+            long evictionPolicySize = unsafe.ADDRESS_SIZE + unsafe.ARRAY_OBJECT_INDEX_SCALE;
+            // we have 4 object references
+            evictionPolicySize += unsafe.ARRAY_OBJECT_INDEX_SCALE * 4;
+            // and a long and a boolean
+            evictionPolicySize += 8 + 1;
+
+            // We do a very slim approximation of how much the map itself takes up in
+            // space irrespective of the elements
+            long mapSize = unsafe.ADDRESS_SIZE + unsafe.ARRAY_OBJECT_INDEX_SCALE;
+            // There are 2 array references to nodes
+            mapSize += NODE_ARRAY_BASE_OFFSET * 2;
+            // There is are 2 longs and 3 ints
+            mapSize += 8 * 2 + 4 * 3;
+            // Counter cell array
+            mapSize += unsafe.arrayBaseOffset(CounterCell[].class);
+            // there are 8 references to other objects in the map
+            mapSize += unsafe.ADDRESS_SIZE * 8;
+            incrementSizeEviction(currentSize, roundUpToNearest8(evictionPolicySize) +
+                  roundUpToNearest8(mapSize), 0);
+         }
       }
 
       @Override
@@ -487,7 +608,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                DequeNode<Node<K, V>> queueNode = new DequeNode<>(e);
                eviction.queueNode = queueNode;
                deque.linkLast(queueNode);
-               incrementSizeEviction(currentSize, 1, 0);
+               incrementSizeEviction(currentSize, sizeCalculator.calculateSize(e.key, value), 0);
             }
          }
       }
@@ -506,7 +627,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             // This is just in case if there are concurrent removes for the same key
             if (!eviction.removed) {
                eviction.removed = true;
-               incrementSizeEviction(currentSize, -1, 0);
+               incrementSizeEviction(currentSize, -sizeCalculator.calculateSize(e.key, e.val), 0);
             }
          }
       }
@@ -559,8 +680,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          if (extra > 0) {
             evictedEntries = new ArrayList<>((int)extra & 0x7fffffff);
             long decCreate = 0;
-            long decEvict = 0;
-            for (long j = 0; j < extra; ++j) {
+            while (decCreate < extra) {
                Node<K, V> node = deque.pollFirst();
                boolean removed = false;
                if (node != null) {
@@ -574,23 +694,34 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                }
 
                if (removed) {
-                  map.replaceNode(node.key, null, null, true);
-                  evictedEntries.add(node);
-                  decCreate--;
-                  decEvict--;
+                  V value = map.replaceNode(node.key, null, null, true);
+                  if (value != null) {
+                     evictedEntries.add(node);
+                     decCreate += sizeCalculator.calculateSize(node.key, value);
+                  }
                } else {
-                  // This shouldn't really ever happen - only possible if a remove
-                  // occurs concurrently and removes all the rest of the values
-                  decEvict--;
+                  // This basically means there was a concurrent remove, in which case
+                  // we can't know how large it was so our eviction can't be correct.
+                  // In this case break out and let the next person fix the eviction
+                  break;
                }
             }
-            if (decEvict != 0)
-               incrementSizeEviction(currentSize, decCreate, decEvict);
+            // It is possible that decCreate is higher than extra and if the size calculation
+            // can return a number greater than 1 most likely to occur very often
+            incrementSizeEviction(currentSize, -decCreate, -extra);
          } else {
             evictedEntries = InfinispanCollections.emptyList();
          }
 
          return evictedEntries;
+      }
+
+      @Override
+      public void onResize(long oldSize, long newSize) {
+         if (countingMemory && newSize > oldSize) {
+            // Need to increment the overall size
+            incrementSizeEviction(currentSize, (newSize - oldSize) * NODE_ARRAY_OFFSET, 0);
+         }
       }
    }
 
@@ -1417,33 +1548,50 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return InfinispanCollections.emptySet();
       }
 
+      @Override
+      public void onResize(long oldSize, long newSize) {
+         // Do nothing
+      }
+
    }
 
    public enum Eviction {
       NONE {
          @Override
          public <K, V> EvictionPolicy<K, V> make(
-               BoundedEquivalentConcurrentHashMapV8<K, V> map, long capacity) {
+               BoundedEquivalentConcurrentHashMapV8<K, V> map, 
+               EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity) {
             return new NullEvictionPolicy<K, V>(map.nodeEq);
          }
       },
       LRU {
          @Override
          public <K, V> EvictionPolicy<K, V> make(
-               BoundedEquivalentConcurrentHashMapV8<K, V> map, long capacity) {
-            return new LRUEvictionPolicy<K, V>(map, capacity);
+               BoundedEquivalentConcurrentHashMapV8<K, V> map, 
+               EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity) {
+            if (sizeCalculator == null) {
+               return new LRUEvictionPolicy<K, V>(map, capacity,
+                     SingleEntrySizeCalculator.SINGLETON, false);
+            } else {
+               return new LRUEvictionPolicy<K, V>(map, capacity,
+                     new NodeSizeCalculatorWrapper<K, V>(sizeCalculator), true);
+            }
+            
          }
       },
       LIRS {
          @Override
          public <K, V> EvictionPolicy<K, V> make(BoundedEquivalentConcurrentHashMapV8<K, V> map, 
-               long capacity) {
+               EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity) {
+            if (sizeCalculator != null) {
+               throw new IllegalArgumentException("LIRS does not support a size calculator!");
+            }
             return new LIRSEvictionPolicy<K, V>(map, capacity);
          }
       };
 
       abstract <K, V> EvictionPolicy<K, V> make(
-            BoundedEquivalentConcurrentHashMapV8<K, V> map, long capacity);
+            BoundedEquivalentConcurrentHashMapV8<K, V> map, EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity);
    }
    // END EVICTION STUFF
 
@@ -2072,7 +2220,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       this.keyEq = keyEquivalence; // EQUIVALENCE_MOD
       this.valueEq = valueEquivalence; // EQUIVALENCE_MOD
       this.nodeEq = new NodeEquivalence<K, V>(this.keyEq, this.valueEq); // EQUIVALENCE_MOD
-      this.evictionPolicy = Eviction.LRU.make(this, maxSize);
+      this.evictionPolicy = Eviction.LRU.make(this, null, maxSize);
       this.evictionListener = new NullEvictionListener<K, V>();
    }
 
@@ -2082,6 +2230,17 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    public BoundedEquivalentConcurrentHashMapV8(long maxSize,
          Eviction evictionStrategy, EvictionListener<? super K, ? super V> evictionListener,
          Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
+      this(maxSize, evictionStrategy, evictionListener, keyEquivalence, valueEquivalence,
+            null);
+   }
+
+   /**
+    * Creates a new, empty map with the default initial table size (16).
+    */
+   public BoundedEquivalentConcurrentHashMapV8(long maxSize,
+         Eviction evictionStrategy, EvictionListener<? super K, ? super V> evictionListener,
+         Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence,
+         EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
       if (maxSize <= 0) {
          throw new IllegalArgumentException();
       }
@@ -2092,7 +2251,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       this.keyEq = keyEquivalence; // EQUIVALENCE_MOD
       this.valueEq = valueEquivalence; // EQUIVALENCE_MOD
       this.nodeEq = new NodeEquivalence<K, V>(this.keyEq, this.valueEq); // EQUIVALENCE_MOD
-      this.evictionPolicy = evictionStrategy.make(this, maxSize);
+      this.evictionPolicy = evictionStrategy.make(this, sizeCalculator, maxSize);
       this.evictionListener = evictionListener;
    }
 
@@ -3773,6 +3932,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                   Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
                   table = tab = nt;
                   sc = n - (n >>> 2);
+                  evictionPolicy.onResize(0, n);
                }
             } finally {
                sizeCtl = sc;
@@ -3878,6 +4038,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      Node<K,V>[] nt = (Node<K,V>[])new Node<?,?>[n];
                      table = nt;
                      sc = n - (n >>> 2);
+                     evictionPolicy.onResize(tab.length, n);
                   }
                } finally {
                   sizeCtl = sc;
@@ -3951,8 +4112,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             int sc;
             if (finishing) {
                nextTable = null;
+               long oldSize = table.length;
                table = nextTab;
                sizeCtl = (n << 1) - (n >>> 1);
+               evictionPolicy.onResize(oldSize, table.length);
                return;
             }
             if (U.compareAndSwapInt(this, SIZECTL, sc = sizeCtl, sc - 1)) {

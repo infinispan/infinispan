@@ -1,6 +1,5 @@
 package org.infinispan.factories;
 
-import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.container.DataContainer;
@@ -11,7 +10,7 @@ import org.infinispan.factories.annotations.DefaultFactoryFor;
 
 /**
  * Constructs the data container
- * 
+ *
  * @author Manik Surtani (<a href="mailto:manik@jboss.org">manik@jboss.org</a>)
  * @author Vladimir Blagojevic
  * @since 4.0
@@ -38,9 +37,9 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
             case LRU:
             case FIFO:
             case LIRS:
-               long maxEntries = configuration.eviction().maxEntries();
-               //handle case when < 0 value signifies unbounded container 
-               if(maxEntries < 0) {
+               long thresholdSize = configuration.eviction().size();
+               //handle case when < 0 value signifies unbounded container
+               if(thresholdSize < 0) {
                    return (T) DefaultDataContainer.unBoundedDataContainer(
                          level, keyEquivalence);
                }
@@ -48,7 +47,8 @@ public class DataContainerFactory extends AbstractNamedCacheComponentFactory imp
                EvictionThreadPolicy policy = configuration.eviction().threadPolicy();
 
                return (T) DefaultDataContainer.boundedDataContainer(
-                  level, maxEntries, st, policy, keyEquivalence);
+                  level, thresholdSize, st, policy, keyEquivalence,
+                  configuration.eviction().type());
             default:
                throw new CacheConfigurationException("Unknown eviction strategy "
                         + configuration.eviction().strategy());

@@ -239,6 +239,8 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             ModelNode eviction = cache.get(ModelKeys.EVICTION, ModelKeys.EVICTION_NAME);
             this.writeOptional(writer, Attribute.STRATEGY, eviction, ModelKeys.STRATEGY);
             this.writeOptional(writer, Attribute.MAX_ENTRIES, eviction, ModelKeys.MAX_ENTRIES);
+            this.writeOptional(writer, Attribute.TYPE, eviction, ModelKeys.TYPE);
+            this.writeOptional(writer, Attribute.SIZE, eviction, ModelKeys.SIZE);
             writer.writeEndElement();
         }
 
