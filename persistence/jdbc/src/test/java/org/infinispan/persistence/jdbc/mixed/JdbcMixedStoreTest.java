@@ -161,7 +161,7 @@ public class JdbcMixedStoreTest {
       MarshalledEntryImpl first = new MarshalledEntryImpl("String", "someValue", internalMetadata(1000l, null), getMarshaller());
       MarshalledEntryImpl second = marshalledEntry("String2", "someValue");
       MarshalledEntryImpl third = new MarshalledEntryImpl(MIRCEA, "value1", internalMetadata(1000l, null), getMarshaller());
-      MarshalledEntryImpl forth = marshalledEntry(MANIK, "value1");;
+      MarshalledEntryImpl forth = marshalledEntry(MANIK, "value1");
 
       cacheStore.write(first);
       cacheStore.write(second);

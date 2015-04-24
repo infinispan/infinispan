@@ -244,7 +244,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
 
                      @Override
                      public void handleException(CacheException e) {
-                        status.ongoingIterator.close(e);;
+                        status.ongoingIterator.close(e);
                      }
                   });
                }
