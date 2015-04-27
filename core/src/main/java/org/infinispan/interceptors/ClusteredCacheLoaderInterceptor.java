@@ -85,7 +85,7 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
       }
       boolean skip = hasSkipLoadFlag(cmd) || hasIgnoreReturnValueFlag(cmd);
       if (trace) {
-         log.tracef("Skip load for command %s? %s", skip);
+         log.tracef("Skip load for command %s? %s", cmd, skip);
       }
       return skip || (!ctx.isOriginLocal() && !cdl.localNodeIsPrimaryOwner(key));
    }
