@@ -35,11 +35,14 @@
         <module-def name="org.antlr.antlr-runtime" slot="${infinispan.slot}">
             <maven-resource group="org.antlr" artifact="antlr-runtime" />
         </module-def>
-        
+
         <module-def name="org.infinispan" slot="${infinispan.slot}">
+        </module-def>
+
+        <module-def name="org.infinispan.core" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-core" />
         </module-def>
-        
+
         <module-def name="org.infinispan.persistence.jdbc" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-cachestore-jdbc" />
         </module-def>
