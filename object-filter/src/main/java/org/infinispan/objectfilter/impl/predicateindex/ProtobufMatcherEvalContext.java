@@ -79,6 +79,25 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, F
                payload = (byte[]) tagValue;
                break;
 
+            case WrappedMessage.WRAPPED_DOUBLE:
+            case WrappedMessage.WRAPPED_FLOAT:
+            case WrappedMessage.WRAPPED_INT64:
+            case WrappedMessage.WRAPPED_UINT64:
+            case WrappedMessage.WRAPPED_INT32:
+            case WrappedMessage.WRAPPED_FIXED64:
+            case WrappedMessage.WRAPPED_FIXED32:
+            case WrappedMessage.WRAPPED_BOOL:
+            case WrappedMessage.WRAPPED_STRING:
+            case WrappedMessage.WRAPPED_BYTES:
+            case WrappedMessage.WRAPPED_UINT32:
+            case WrappedMessage.WRAPPED_SFIXED32:
+            case WrappedMessage.WRAPPED_SFIXED64:
+            case WrappedMessage.WRAPPED_SINT32:
+            case WrappedMessage.WRAPPED_SINT64:
+            case WrappedMessage.WRAPPED_ENUM:
+               break;
+            // this is a primitive value, which we ignore for now due to lack of support for querying primitives
+
             default:
                throw new IllegalStateException("Unexpected field : " + fieldNumber);
          }

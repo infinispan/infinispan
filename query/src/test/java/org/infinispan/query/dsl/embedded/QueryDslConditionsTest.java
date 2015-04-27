@@ -163,6 +163,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
          transaction.setDebit(true);
          getCacheForWrite().put("transaction_" + transaction.getId(), transaction);
       }
+
+      // this value should be ignored gracefully
+      getCacheForWrite().put("dummy", "a primitive value cannot be queried");
    }
 
    public void testIndexPresence() {
