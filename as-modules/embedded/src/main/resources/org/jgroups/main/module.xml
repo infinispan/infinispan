@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="urn:jboss:module:1.1" name="org.jgroups" slot="${slot}">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
     <resources>
         <!-- Insert resources here -->
     </resources>
