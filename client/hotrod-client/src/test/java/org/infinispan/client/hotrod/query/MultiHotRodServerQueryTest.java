@@ -102,6 +102,9 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
 
       assertNotNull(remoteCache0.get(2));
       assertNotNull(remoteCache1.get(2));
+
+      // this value should be ignored gracefully
+      client(0).getCache().put("dummy", "a primitive value cannot be queried");
    }
 
    private String read(String classPathResource) throws IOException {
