@@ -14,7 +14,8 @@
         <module name="javax.persistence.api"/>
         <module name="javax.transaction.api"/>
         <module name="org.hibernate"/>
-        <module name="org.infinispan" slot="${slot}"/>
+        <module name="org.infinispan.core" slot="${slot}"/>
+        <module name="org.infinispan.commons" slot="${slot}"/>
         <module name="org.jboss.logging"/>
     </dependencies>
 </module>

@@ -32,7 +32,8 @@
     <dependencies>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
-        <module name="org.infinispan" slot="${slot}"/>
+        <module name="org.infinispan.core" slot="${slot}"/>
+        <module name="org.infinispan.commons" slot="${slot}"/>
         <module name="org.jboss.logging"/>
         <!-- LevelDB store specific dependencies -->
         <module name="org.iq80.leveldb" optional="true" slot="${slot}"/>

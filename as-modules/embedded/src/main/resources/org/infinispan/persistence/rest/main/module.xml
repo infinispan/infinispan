@@ -32,7 +32,8 @@
     <dependencies>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
-        <module name="org.infinispan" slot="${slot}"/>
+        <module name="org.infinispan.core" slot="${slot}"/>
+        <module name="org.infinispan.commons" slot="${slot}"/>
         <module name="org.apache.httpcomponents" />
         <module name="org.jboss.logging"/>
         <module name="org.apache.commons.codec"/>

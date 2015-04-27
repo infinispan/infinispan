@@ -12,7 +12,8 @@
         <module name="org.hibernate.hql.parser" slot="${slot}"/>
         <module name="org.hibernate.hql.lucene" slot="${slot}"/>
         <module name="org.hibernate.search.engine" slot="${hibernate.search.slot}" export="true"/>
-        <module name="org.infinispan" slot="${slot}"/>
+        <module name="org.infinispan.core" slot="${slot}"/>
+        <module name="org.infinispan.commons" slot="${slot}"/>
         <module name="org.infinispan.objectfilter" slot="${slot}"/>
         <module name="org.infinispan.lucene-directory" slot="${slot}" services="export" />
         <module name="org.infinispan.hibernate-search.directory-provider" slot="${slot}" export="true" services="export"/>
