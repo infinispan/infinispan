@@ -11,12 +11,15 @@ import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
  */
 class FilterIsNullPredicate extends IsNullPredicate<BooleanExpr> {
 
-   public FilterIsNullPredicate(String propertyName) {
+   private final boolean isRepeatedProperty;
+
+   public FilterIsNullPredicate(String propertyName, boolean isRepeatedProperty) {
       super(propertyName);
+      this.isRepeatedProperty = isRepeatedProperty;
    }
 
    @Override
    public BooleanExpr getQuery() {
-      return new IsNullExpr(new PropertyValueExpr(propertyName));
+      return new IsNullExpr(new PropertyValueExpr(propertyName, isRepeatedProperty));
    }
 }

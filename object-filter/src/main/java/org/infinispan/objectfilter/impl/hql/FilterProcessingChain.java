@@ -41,7 +41,7 @@ public final class FilterProcessingChain<TypeMetadata> implements AstProcessingC
    public static <TypeMetadata> FilterProcessingChain<TypeMetadata> build(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper, Map<String, Object> namedParameters) {
       QueryResolverProcessor resolverProcessor = new QueryResolverProcessor(new FilterQueryResolverDelegate(entityNamesResolver, propertyHelper));
 
-      SingleEntityQueryBuilder<BooleanExpr> queryBuilder = SingleEntityQueryBuilder.getInstance(new FilterPredicateFactory(entityNamesResolver), propertyHelper);
+      SingleEntityQueryBuilder<BooleanExpr> queryBuilder = SingleEntityQueryBuilder.getInstance(new FilterPredicateFactory(entityNamesResolver, propertyHelper), propertyHelper);
 
       FilterRendererDelegate<TypeMetadata> rendererDelegate = new FilterRendererDelegate<TypeMetadata>(entityNamesResolver, propertyHelper, queryBuilder, namedParameters);
 

@@ -21,11 +21,6 @@ public interface MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId ex
     */
    List<AttributeId> translatePropertyPath(List<String> path);
 
-   /**
-    * Tests if the attribute path contains repeated (collection/array) attributes.
-    */
-   boolean isRepeatedProperty(List<String> propertyPath);
-
    AttributeMetadata makeChildAttributeMetadata(AttributeMetadata parentAttributeMetadata, AttributeId attribute);
 
    boolean isComparableProperty(AttributeMetadata attributeMetadata);

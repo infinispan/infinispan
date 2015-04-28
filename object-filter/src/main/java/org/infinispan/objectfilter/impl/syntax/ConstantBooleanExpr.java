@@ -55,6 +55,6 @@ public final class ConstantBooleanExpr implements PrimaryPredicateExpr {
 
    @Override
    public String toString() {
-      return "ConstantBooleanExpr(" + constantValue + ')';
+      return constantValue ? "CONST_TRUE" : "CONST_FALSE";
    }
 }
