@@ -258,7 +258,14 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    private void acquireLocksVisitingCommands(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       for (WriteCommand wc : command.getModifications()) {
-         wc.acceptVisitor(ctx, lockAcquisitionVisitor);
+         try {
+            wc.acceptVisitor(ctx, lockAcquisitionVisitor);
+         } catch (Throwable t) {
+            if (hasFailSilently(wc))
+               log.tracef(t, "Ignoring failure for %s because FAIL_SILENTLY was passed in", wc);
+            else
+               throw t;
+         }
       }
    }
 }

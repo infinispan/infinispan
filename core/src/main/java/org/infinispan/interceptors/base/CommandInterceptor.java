@@ -123,4 +123,8 @@ public abstract class CommandInterceptor extends AbstractVisitor {
       return command.hasFlag(Flag.SKIP_LOCKING);
    }
 
+   protected final boolean hasFailSilently(LocalFlagAffectedCommand command) {
+      return command.hasFlag(Flag.FAIL_SILENTLY);
+   }
+
 }
