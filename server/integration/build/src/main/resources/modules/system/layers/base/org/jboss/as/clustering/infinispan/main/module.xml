@@ -34,7 +34,6 @@
    <dependencies>
       <module name="javax.api"/>
       <module name="javax.transaction.api"/>
-      <module name="net.jcip"/>
       <module name="org.infinispan" services="import"/>
       <module name="org.infinispan.persistence.jdbc"/>
       <module name="org.infinispan.persistence.leveldb"/>
