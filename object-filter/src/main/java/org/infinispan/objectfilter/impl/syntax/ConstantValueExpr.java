@@ -38,6 +38,6 @@ public final class ConstantValueExpr implements ValueExpr {
 
    @Override
    public String toString() {
-      return "ConstantValueExpr(" + constantValue + ')';
+      return "CONST(" + constantValue + ')';
    }
 }

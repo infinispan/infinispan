@@ -51,13 +51,15 @@ public final class PredicateNode<AttributeId extends Comparable<AttributeId>> ex
 
    @Override
    public void handleChildValue(BENode child, boolean childValue, FilterEvalContext evalContext) {
-      assert child == null;
+      if (child != null) {
+         throw new IllegalArgumentException("Predicates have value but do not have children");
+      }
 
       final int value = childValue ? BETree.EXPR_TRUE : BETree.EXPR_FALSE;
 
       if (isEvaluationComplete(evalContext)) {
          if (predicate.isRepeated() && evalContext.treeCounters[startIndex] == value) {
-            // receiving the same value multiple times if fine if this is a repeated condition
+            // receiving the same value multiple times is fine if this is a repeated condition
             return;
          }
          throw new IllegalStateException("This should never be called again if the state of this node was previously decided.");

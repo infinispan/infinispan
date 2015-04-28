@@ -111,23 +111,6 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
       }
 
       @Override
-      public boolean isRepeatedProperty(List<String> propertyPath) {
-         Descriptor md = messageDescriptor;
-         for (String prop : propertyPath) {
-            FieldDescriptor fd = md.findFieldByName(prop);
-            if (fd.isRepeated()) {
-               return true;
-            }
-            if (fd.getJavaType() == JavaType.MESSAGE) {
-               md = fd.getMessageType();
-            } else {
-               md = null; // iteration is expected to stop here
-            }
-         }
-         return false;
-      }
-
-      @Override
       public FieldDescriptor makeChildAttributeMetadata(FieldDescriptor parentAttributeMetadata, Integer attribute) {
          return parentAttributeMetadata == null ?
                messageDescriptor.findFieldByNumber(attribute) : parentAttributeMetadata.getMessageType().findFieldByNumber(attribute);

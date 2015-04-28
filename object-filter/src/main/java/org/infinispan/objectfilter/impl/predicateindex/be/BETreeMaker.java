@@ -63,9 +63,9 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
    }
 
    private void makePredicateNode(BENode parent, List<BENode> nodes, List<Integer> treeCounters, PrimaryPredicateExpr condition, boolean isNegated) {
-      List<String> propertyPath = ((PropertyValueExpr) condition.getChild()).getPropertyPath();
-      List<AttributeId> path = metadataAdapter.translatePropertyPath(propertyPath);
-      boolean isRepeated = metadataAdapter.isRepeatedProperty(propertyPath);
+      final PropertyValueExpr pve = (PropertyValueExpr) condition.getChild();
+      final List<AttributeId> path = metadataAdapter.translatePropertyPath(pve.getPropertyPath());
+      final boolean isRepeated = pve.isRepeated();
 
       if (condition instanceof ComparisonExpr) {
          ComparisonExpr expr = (ComparisonExpr) condition;

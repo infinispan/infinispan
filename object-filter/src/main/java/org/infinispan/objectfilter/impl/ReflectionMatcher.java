@@ -96,21 +96,6 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
       }
 
       @Override
-      public boolean isRepeatedProperty(List<String> propertyPath) {
-         ReflectionHelper.PropertyAccessor a = ReflectionHelper.getAccessor(clazz, propertyPath.get(0));
-         if (a.isMultiple()) {
-            return true;
-         }
-         for (int i = 1; i < propertyPath.size(); i++) {
-            a = a.getAccessor(propertyPath.get(i));
-            if (a.isMultiple()) {
-               return true;
-            }
-         }
-         return false;
-      }
-
-      @Override
       public ReflectionHelper.PropertyAccessor makeChildAttributeMetadata(ReflectionHelper.PropertyAccessor parentAttributeMetadata, String attribute) {
          return parentAttributeMetadata == null ?
                ReflectionHelper.getAccessor(clazz, attribute) : parentAttributeMetadata.getAccessor(attribute);

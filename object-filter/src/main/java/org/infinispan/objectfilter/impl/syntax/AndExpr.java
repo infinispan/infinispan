@@ -23,6 +23,18 @@ public final class AndExpr extends BooleanOperatorExpr {
 
    @Override
    public String toString() {
-      return "AndExpr{children=" + children + '}';
+      StringBuilder sb = new StringBuilder();
+      sb.append("AND(");
+      boolean isFirst = true;
+      for (BooleanExpr c : children) {
+         if (isFirst) {
+            isFirst = false;
+         } else {
+            sb.append(", ");
+         }
+         sb.append(c);
+      }
+      sb.append(")");
+      return sb.toString();
    }
 }
