@@ -127,5 +127,10 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
 
    public abstract boolean hasEmbeddedProperty(String entityType, List<String> propertyPath);
 
+   /**
+    * Tests if the attribute path contains repeated (collection/array) attributes.
+    */
+   public abstract boolean isRepeatedProperty(String entityType, List<String> propertyPath);
+
    public abstract TypeMetadata getEntityMetadata(String targetTypeName);
 }

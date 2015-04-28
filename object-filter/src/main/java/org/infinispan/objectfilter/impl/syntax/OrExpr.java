@@ -23,6 +23,18 @@ public final class OrExpr extends BooleanOperatorExpr {
 
    @Override
    public String toString() {
-      return "OrExpr{children=" + children + '}';
+      StringBuilder sb = new StringBuilder();
+      sb.append("OR(");
+      boolean isFirst = true;
+      for (BooleanExpr c : children) {
+         if (isFirst) {
+            isFirst = false;
+         } else {
+            sb.append(", ");
+         }
+         sb.append(c);
+      }
+      sb.append(")");
+      return sb.toString();
    }
 }

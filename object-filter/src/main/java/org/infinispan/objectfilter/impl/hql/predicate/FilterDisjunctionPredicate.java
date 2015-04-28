@@ -16,6 +16,9 @@ class FilterDisjunctionPredicate extends DisjunctionPredicate<BooleanExpr> {
    @Override
    public BooleanExpr getQuery() {
       // we always expect children.size() >= 1
+      if (children.isEmpty()) {
+         throw new IllegalStateException("A disjunction must have at least one child");
+      }
       BooleanExpr firstChild = children.get(0).getQuery();
       if (children.size() == 1) {
          return firstChild;

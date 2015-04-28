@@ -1,6 +1,8 @@
 package org.infinispan.objectfilter.impl.syntax;
 
 /**
+ * An expression that represents a comparison of Comparable values.
+ *
  * @author anistor@redhat.com
  * @since 7.0
  */
@@ -8,7 +10,7 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
 
    private final ValueExpr leftChild;
    private final ValueExpr rightChild;
-   private final Type comparisonType;
+   private final Type type;
 
    public enum Type {
       LESS,
@@ -53,10 +55,10 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
       }
    }
 
-   public ComparisonExpr(ValueExpr leftChild, ValueExpr rightChild, Type comparisonType) {
+   public ComparisonExpr(ValueExpr leftChild, ValueExpr rightChild, Type type) {
       this.leftChild = leftChild;
       this.rightChild = rightChild;
-      this.comparisonType = comparisonType;
+      this.type = type;
    }
 
    public ValueExpr getLeftChild() {
@@ -68,7 +70,7 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
    }
 
    public Type getComparisonType() {
-      return comparisonType;
+      return type;
    }
 
    @Override
@@ -86,22 +88,17 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       ComparisonExpr other = (ComparisonExpr) o;
-      return comparisonType == other.comparisonType && leftChild.equals(other.leftChild) && rightChild.equals(other.rightChild);
+      return type == other.type && leftChild.equals(other.leftChild) && rightChild.equals(other.rightChild);
    }
 
    @Override
    public int hashCode() {
       int result = 31 * leftChild.hashCode() + rightChild.hashCode();
-      result = 31 * result + comparisonType.hashCode();
-      return result;
+      return 31 * result + type.hashCode();
    }
 
    @Override
    public String toString() {
-      return "ComparisonExpr{" +
-            " comparisonType=" + comparisonType +
-            ", leftChild=" + leftChild +
-            ", rightChild=" + rightChild +
-            '}';
+      return type + "(" + leftChild + ", " + rightChild + ')';
    }
 }

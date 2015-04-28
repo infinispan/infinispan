@@ -16,6 +16,9 @@ class FilterConjunctionPredicate extends ConjunctionPredicate<BooleanExpr> {
    @Override
    public BooleanExpr getQuery() {
       // we always expect children.size() >= 1
+      if (children.isEmpty()) {
+         throw new IllegalStateException("A conjunction must have at least one child");
+      }
       BooleanExpr firstChild = children.get(0).getQuery();
       if (children.size() == 1) {
          return firstChild;

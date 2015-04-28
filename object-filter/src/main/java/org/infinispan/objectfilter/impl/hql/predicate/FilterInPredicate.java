@@ -12,8 +12,11 @@ import java.util.List;
  */
 class FilterInPredicate extends InPredicate<BooleanExpr> {
 
-   public FilterInPredicate(String propertyName, List<Object> values) {
+   private final boolean isRepeatedProperty;
+
+   public FilterInPredicate(String propertyName, boolean isRepeatedProperty, List<Object> values) {
       super(propertyName, values);
+      this.isRepeatedProperty = isRepeatedProperty;
    }
 
    @Override
@@ -22,7 +25,7 @@ class FilterInPredicate extends InPredicate<BooleanExpr> {
 
       for (Object element : values) {
          //todo need efficient implementation
-         FilterComparisonPredicate eq = new FilterComparisonPredicate(propertyName, ComparisonPredicate.Type.EQUALS, element);
+         FilterComparisonPredicate eq = new FilterComparisonPredicate(propertyName, isRepeatedProperty, ComparisonPredicate.Type.EQUALS, element);
          predicate.add(eq);
       }
 
