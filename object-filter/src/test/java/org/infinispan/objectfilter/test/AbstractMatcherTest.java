@@ -108,69 +108,21 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
-   public void testPredicateDuplication1() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John' or name = 'John'";
+   public void testIntervalOverlap1() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where age <= 50 and age <= 40";
       assertTrue(match(queryString, createPerson1()));
    }
 
    @Test
-   public void testPredicateDuplication2() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John' and name = 'John'";
+   public void testIntervalOverlap2() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where age <= 50 and age = 40";
       assertTrue(match(queryString, createPerson1()));
    }
 
    @Test
-   public void testPredicateDuplication3() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person where name != 'Johnny' or name != 'Johnny'";
-      assertTrue(match(queryString, createPerson1()));
-   }
-
-   @Test
-   public void testPredicateDuplication4() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person where name != 'Johnny' and name != 'Johnny'";
-      assertTrue(match(queryString, createPerson1()));
-   }
-
-   @Test
-   public void testSimpleTautology1() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name = 'Noone' or not(name = 'Noone')";  // this should match anything
-      assertTrue(match(queryString, createPerson1()));
-   }
-
-   @Test
-   public void testSimpleTautology2() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name = 'Noone' or name != 'Noone'";  // this should match anything
-      assertTrue(match(queryString, createPerson1()));
-   }
-
-   @Test
-   public void testSimpleTautology3() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.name > 'Noone' or name <= 'Noone'";  // this should match anything
-      assertTrue(match(queryString, createPerson1()));
-   }
-
-   @Test
-   public void testSimpleContradiction1() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John' and not(name = 'John')";  // this should not match anything
+   public void testIntervalOverlap3() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person where age > 50 and age = 40";
       assertFalse(match(queryString, createPerson1()));
-   }
-
-   @Test
-   public void testSimpleContradiction2() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person where name = 'John' and name != 'John'";  // this should not match anything
-      assertFalse(match(queryString, createPerson1()));
-   }
-
-   @Test
-   public void testSimpleContradiction3() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person where name > 'John' and name <= 'John'";  // this should not match anything
-      assertFalse(match(queryString, createPerson1()));
-   }
-
-   @Test
-   public void testTautology() throws Exception {
-      String queryString = "from org.infinispan.objectfilter.test.model.Person where (name = 'Noone' and name = 'Noone') or (name != 'Noone' and name != 'Noone')";
-      assertTrue(match(queryString, createPerson1()));
    }
 
    @Test

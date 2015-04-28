@@ -43,9 +43,6 @@ public final class LikeExpr implements PrimaryPredicateExpr {
 
    @Override
    public String toString() {
-      return "RegexExpr{" +
-            "child=" + child +
-            ", pattern=" + pattern +
-            '}';
+      return "LIKE(" + child + ", " + pattern + ')';
    }
 }

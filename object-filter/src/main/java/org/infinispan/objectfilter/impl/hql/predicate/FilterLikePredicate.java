@@ -11,12 +11,15 @@ import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
  */
 class FilterLikePredicate extends LikePredicate<BooleanExpr> {
 
-   public FilterLikePredicate(String propertyName, String patternValue) {
+   private final boolean isRepeatedProperty;
+
+   public FilterLikePredicate(String propertyName, boolean isRepeatedProperty, String patternValue) {
       super(propertyName, patternValue, null);
+      this.isRepeatedProperty = isRepeatedProperty;
    }
 
    @Override
    public BooleanExpr getQuery() {
-      return new LikeExpr(new PropertyValueExpr(propertyName), patternValue);
+      return new LikeExpr(new PropertyValueExpr(propertyName, isRepeatedProperty), patternValue);
    }
 }

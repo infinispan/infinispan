@@ -56,6 +56,12 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
       return null;
    }
 
+   /**
+    * @param entityType
+    * @param propertyPath
+    * @return the field descriptor or null if not found
+    * @throws IllegalStateException if the entity type is unknown
+    */
    private FieldDescriptor getField(String entityType, List<String> propertyPath) {
       Descriptor messageDescriptor;
       try {
@@ -72,6 +78,8 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
          }
          if (field.getJavaType() == JavaType.MESSAGE) {
             messageDescriptor = field.getMessageType();
+         } else {
+            break;
          }
       }
       return null;
@@ -123,6 +131,31 @@ public final class ProtobufPropertyHelper extends ObjectPropertyHelper<Descripto
          }
       }
       return true;
+   }
+
+   @Override
+   public boolean isRepeatedProperty(String entityType, List<String> propertyPath) {
+      Descriptor messageDescriptor;
+      try {
+         messageDescriptor = serializationContext.getMessageDescriptor(entityType);
+      } catch (Exception e) {
+         throw new IllegalStateException("Unknown entity name " + entityType);
+      }
+
+      for (String p : propertyPath) {
+         FieldDescriptor field = messageDescriptor.findFieldByName(p);
+         if (field == null) {
+            break;
+         }
+         if (field.isRepeated()) {
+            return true;
+         }
+         if (field.getJavaType() != JavaType.MESSAGE) {
+            break;
+         }
+         messageDescriptor = field.getMessageType();
+      }
+      return false;
    }
 
    @Override
