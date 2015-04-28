@@ -1327,6 +1327,9 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Could not find the specified JGroups configuration file '%s'", id = 365)
    CacheConfigurationException jgroupsConfigurationNotFound(String cfg);
+   
+   @Message(value = "Unable to add a 'null' Custom Cache Store", id = 366)
+   IllegalArgumentException unableToAddNullCustomStore();
 
    @LogMessage(level = ERROR)
    @Message(value = "There was an issue with topology update for topology: %s", id = 367)
