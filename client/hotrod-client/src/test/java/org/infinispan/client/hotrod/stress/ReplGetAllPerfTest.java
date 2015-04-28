@@ -17,6 +17,6 @@ public class ReplGetAllPerfTest extends AbstractGetAllPerfTest {
    @Override
    protected ConfigurationBuilder clusterConfig() {
       return hotRodCacheConfiguration(getDefaultClusteredCacheConfig(
-            CacheMode.DIST_SYNC, false));
+            CacheMode.REPL_SYNC, false));
    }
 }
