@@ -7,6 +7,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,7 +21,7 @@ public class CacheStoreFactoryRegistry {
 
    private static final Log log = LogFactory.getLog(CacheStoreFactoryRegistry.class);
 
-   private List<CacheStoreFactory> factories = new ArrayList<>();
+   private List<CacheStoreFactory> factories = Collections.synchronizedList(new ArrayList<CacheStoreFactory>());
 
    public CacheStoreFactoryRegistry() {
       factories.add(new LocalClassLoaderCacheStoreFactory());
@@ -59,6 +60,9 @@ public class CacheStoreFactoryRegistry {
     * @param cacheStoreFactory Factory to be added.
     */
    public void addCacheStoreFactory(CacheStoreFactory cacheStoreFactory) {
+      if(cacheStoreFactory == null) {
+         throw log.unableToAddNullCustomStore();
+      }
       factories.add(0, cacheStoreFactory);
    }
 
