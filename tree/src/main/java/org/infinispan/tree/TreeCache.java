@@ -2,9 +2,9 @@ package org.infinispan.tree;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.context.Flag;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.lifecycle.Lifecycle;
 
 import java.util.Map;
 import java.util.Set;

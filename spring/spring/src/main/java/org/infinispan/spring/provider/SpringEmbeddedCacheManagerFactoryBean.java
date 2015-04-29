@@ -32,7 +32,7 @@ import org.springframework.beans.factory.InitializingBean;
  * <p>
  * In addition to creating an <code>SpringEmbeddedCacheManager</code> this <code>FactoryBean</code>
  * does also control that <code>SpringEmbeddedCacheManager</code>'s
- * {@link org.infinispan.lifecycle.Lifecycle lifecycle} by shutting it down when the enclosing
+ * {@link org.infinispan.commons.api.Lifecycle lifecycle} by shutting it down when the enclosing
  * Spring application context is closed. It is therefore advisable to <em>always</em> use this
  * <code>FactoryBean</code> when creating an <code>SpringEmbeddedCacheManager</code>.
  * </p>

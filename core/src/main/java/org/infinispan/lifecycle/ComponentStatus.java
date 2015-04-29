@@ -7,7 +7,7 @@ import org.infinispan.util.logging.LogFactory;
  * Different states a component may be in.
  *
  * @author Manik Surtani
- * @see org.infinispan.lifecycle.Lifecycle
+ * @see org.infinispan.commons.api.Lifecycle
  * @since 4.0
  */
 public enum ComponentStatus {

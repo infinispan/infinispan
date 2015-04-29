@@ -8,8 +8,14 @@ package org.infinispan.commons.api;
  */
 public interface Lifecycle {
 
+   /**
+    * Invoked on component start
+    */
    void start();
 
+   /**
+    * Invoked on component stop
+    */
    void stop();
 
 }
