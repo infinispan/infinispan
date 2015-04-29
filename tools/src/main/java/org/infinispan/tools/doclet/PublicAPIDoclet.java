@@ -65,18 +65,23 @@ public class PublicAPIDoclet {
          if (componentType == null) {
             return obj;
          }
+         String componentName = componentType.getName();
+         if (!componentName.startsWith("com.sun.javadoc"))
+            return obj;
+
          Object[] array = (Object[]) obj;
          List<Object> list = new ArrayList<>(array.length);
          for (int i = 0; i < array.length; i++) {
             Object entry = array[i];
             if ((entry instanceof Doc) && !isPublicAPI((Doc) entry))
                continue;
-            list.add(filter(entry, componentType));
+            list.add(entry);
          }
          return list.toArray((Object[]) Array.newInstance(componentType, list.size()));
       } else {
          return obj;
       }
+
    }
 
    private static class FilterHandler implements InvocationHandler {
