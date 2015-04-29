@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.ResponseFilter;
@@ -98,9 +98,9 @@ public interface Transport extends Lifecycle {
    Address getAddress();
 
    /**
-    * Retrieves the current cache instance's physical network addresses. Some implementations might differentiate 
-    * between logical and physical addresses in which case, this method allows clients to query the physical ones 
-    * associated with the logical address. Implementations where logical and physical address are the same will simply 
+    * Retrieves the current cache instance's physical network addresses. Some implementations might differentiate
+    * between logical and physical addresses in which case, this method allows clients to query the physical ones
+    * associated with the logical address. Implementations where logical and physical address are the same will simply
     * return a single entry List that contains the same Address as {@link #getAddress()}.
     *
     * @return an List of Address
@@ -116,7 +116,7 @@ public interface Transport extends Lifecycle {
 
    /**
     * Tests whether the transport supports true multicast
-    * 
+    *
     * @return true if the transport supports true multicast
     */
    boolean isMulticastCapable();

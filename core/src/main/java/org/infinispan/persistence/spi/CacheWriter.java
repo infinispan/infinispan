@@ -1,7 +1,8 @@
 package org.infinispan.persistence.spi;
 
 import net.jcip.annotations.ThreadSafe;
-import org.infinispan.lifecycle.Lifecycle;
+
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.marshall.core.MarshalledEntry;
 
 /**

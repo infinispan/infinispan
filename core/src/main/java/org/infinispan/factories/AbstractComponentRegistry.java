@@ -1,6 +1,7 @@
 package org.infinispan.factories;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.CacheConfigurationException;
@@ -13,7 +14,6 @@ import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 

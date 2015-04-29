@@ -1,6 +1,6 @@
 package org.infinispan.affinity;
 
-import org.infinispan.lifecycle.Lifecycle;
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.remoting.transport.Address;
 
 /**

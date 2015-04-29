@@ -4,10 +4,10 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import org.infinispan.commons.api.Lifecycle;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.KeyFilter;
-import org.infinispan.lifecycle.Lifecycle;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.marshall.core.MarshalledEntry;
 

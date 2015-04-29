@@ -1,6 +1,6 @@
 package org.infinispan.util.concurrent;
 
-import org.infinispan.lifecycle.Lifecycle;
+import org.infinispan.commons.api.Lifecycle;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
