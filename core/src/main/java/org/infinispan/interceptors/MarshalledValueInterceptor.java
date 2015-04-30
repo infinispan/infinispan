@@ -6,6 +6,7 @@ import static org.infinispan.marshall.core.MarshalledValue.isTypeExcluded;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -171,7 +172,7 @@ public class MarshalledValueInterceptor extends CommandInterceptor {
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (wrapKeys) {
-         Set<Object> marshalledKeys = new HashSet<>();
+         Set<Object> marshalledKeys = new LinkedHashSet<>();
          for (Object key : command.getKeys()) {
             if (!isTypeExcluded(key.getClass())) {
                MarshalledValue mv = createMarshalledValue(key, ctx);

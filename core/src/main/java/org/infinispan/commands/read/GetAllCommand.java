@@ -14,8 +14,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -153,7 +153,7 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
    }
 
    public <V> Map<Object, V> createMap() {
-      return new HashMap<>();
+      return new LinkedHashMap<>();
    }
 
    private Set<Object> createSet(Object[] elements) {
