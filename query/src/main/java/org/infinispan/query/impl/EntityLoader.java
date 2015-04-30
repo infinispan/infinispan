@@ -1,5 +1,6 @@
 package org.infinispan.query.impl;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,7 +41,7 @@ public class EntityLoader implements QueryResultLoader {
          keys.add(decodeKey(e));
       }
       Map<?, ?> entries = cache.getAll(keys);
-      List<Object> results = new LinkedList<>();
+      List<Object> results = new ArrayList<>(entitiesSize);
       for (Object key : keys) {
          Object value = entries.get(key);
          if (value != null) {
