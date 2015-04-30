@@ -1,8 +1,10 @@
 package org.infinispan.query.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.hibernate.search.query.engine.spi.EntityInfo;
 import org.infinispan.AdvancedCache;
@@ -23,20 +25,29 @@ public class EntityLoader implements QueryResultLoader {
       this.cache = cache;
    }
 
-   public Object load(EntityInfo entityInfo) {
-      Object cacheKey = keyTransformationHandler.stringToKey(entityInfo.getId().toString(), cache.getClassLoader());
-      return cache.get(cacheKey);
+   private Object decodeKey(EntityInfo entityInfo) {
+      return keyTransformationHandler.stringToKey(entityInfo.getId().toString(), cache.getClassLoader());
    }
 
-   public List<Object> load(Collection<EntityInfo> entityInfos) {
-      ArrayList<Object> list = new ArrayList<Object>(entityInfos.size());
+   public Object load(EntityInfo entityInfo) {
+      return cache.get(decodeKey(entityInfo));
+   }
+
+   public List<Object> load(List<EntityInfo> entityInfos) {
+      int entitiesSize = entityInfos.size();
+      Set<Object> keys = new LinkedHashSet<>(entitiesSize);
       for (EntityInfo e : entityInfos) {
-         Object entity = load(e);
-         if (entity != null) {
-            list.add(entity);
+         keys.add(decodeKey(e));
+      }
+      Map<?, ?> entries = cache.getAll(keys);
+      List<Object> results = new LinkedList<>();
+      for (Object key : keys) {
+         Object value = entries.get(key);
+         if (value != null) {
+            results.add(value);
          }
       }
-      return list;
+      return results;
    }
 
 }
