@@ -82,9 +82,6 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
             cancellationService.register(Thread.currentThread(), ((CancellableCommand) cmd).getUUID());
          }
          Response response = responseGenerator.getResponse(cmd, cmd.perform(null));
-         if (isTraceEnabled()) {
-            getLog().tracef("About to send back response %s for command %s", response, cmd);
-         }
          return response;
       } finally {
          if (cmd instanceof CancellableCommand) {
