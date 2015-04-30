@@ -300,7 +300,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
          found = cacheQuery.list();
 
          assert found.size() == 2;
-         assert found.get( 0 ).equals( person2 ); // person2 is 30 and named Goat
+         assert found.get( 0 ).equals( person2 ); // person2 is 10 and named Goat
          assert found.get( 1 ).equals( person3 ); // person3 is 25 and named Goat
       }
       StaticTestingErrorHandler.assertAllGood(cache);

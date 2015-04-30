@@ -25,7 +25,7 @@ import org.infinispan.metadata.Metadata;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -135,7 +135,7 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       TypeConverter<Object, Object, Object, Object> converter =
             determineTypeConverter(command.getFlags());
       if (ctx.isOriginLocal()) {
-         Set<Object> boxedKeys = new HashSet<>(keys.size());
+         Set<Object> boxedKeys = new LinkedHashSet<>(keys.size());
          for (Object key : keys) {
             boxedKeys.add(converter.boxKey(key));
          }
