@@ -1318,4 +1318,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "The xml element eviction-executor has been deprecated and replaced by expiration-executor, please update your configuration file.", id = 360)
    void evictionExecutorDeprecated();
+
+   @Message(value = "Cannot commit remote transaction %s as it was already rolled back", id = 361)
+   CacheException remoteTransactionAlreadyRolledBack(GlobalTransaction gtx);
+
+   @Message(value = "Could not find status for remote transaction %s, please increase transaction.completedTxTimeout", id = 362)
+   TimeoutException remoteTransactionStatusMissing(GlobalTransaction gtx);
 }

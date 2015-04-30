@@ -75,7 +75,7 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
     * Returning a null usually means the transactional command succeeded.
     * @return return value to respond to a remote caller with if the transaction context is invalid.
     */
-   protected Object invalidRemoteTxReturnValue(boolean completedSuccessfully) {
+   protected Object invalidRemoteTxReturnValue() {
       return null;
    }
 
@@ -85,9 +85,8 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       markGtxAsRemote();
       RemoteTransaction transaction = getRemoteTransaction();
       if (transaction == null) {
-         boolean alreadyCommitted = txTable.isTransactionCompletedSuccessfully(globalTx);
-         if (trace) log.tracef("Did not find a RemoteTransaction for %s, completed successfully? %s", globalTx, alreadyCommitted);
-         return invalidRemoteTxReturnValue(alreadyCommitted);
+         if (trace) log.tracef("Did not find a RemoteTransaction for %s", globalTx);
+         return invalidRemoteTxReturnValue();
       }
       visitRemoteTransaction(transaction);
       RemoteTxInvocationContext ctxt = icf.createRemoteTxInvocationContext(
