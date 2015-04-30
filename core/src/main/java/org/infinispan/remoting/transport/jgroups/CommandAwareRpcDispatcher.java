@@ -376,6 +376,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    private void reply(org.jgroups.blocks.Response response, Object retVal) {
       if (response != null) {
+         if (trace) log.tracef("About to send back response %s", retVal);
          //exceptionThrown is always false because the exceptions are wrapped in an ExceptionResponse
          response.send(retVal, false);
       }
