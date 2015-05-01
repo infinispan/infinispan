@@ -4,6 +4,8 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterConverterFactory;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterCustomEventLogListener;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
 import org.infinispan.client.hotrod.event.EventLogListener.StaticFilteredEventLogListener;
@@ -25,13 +27,15 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 @Test(groups = "functional", testName = "client.hotrod.event.ClientClusterEventsTest")
 public class ClientClusterEventsTest extends MultiHotRodServersTest {
 
+   static final int NUM_SERVERS = 3;
+
    @Override
    protected void createCacheManagers() throws Throwable {
-      createHotRodServers(3, getCacheConfiguration());
+      createHotRodServers(NUM_SERVERS, getCacheConfiguration());
    }
 
    private ConfigurationBuilder getCacheConfiguration() {
-      return hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));
+      return hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
    }
 
    protected HotRodServer addHotRodServer(ConfigurationBuilder builder) {
@@ -40,6 +44,7 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cm, serverBuilder);
       server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory());
       server.addCacheEventConverterFactory("static-converter-factory", new StaticConverterFactory());
+      server.addCacheEventFilterConverterFactory("filter-converter-factory", new FilterConverterFactory());
       servers.add(server);
       return server;
    }
@@ -100,13 +105,35 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
             RemoteCache<Integer, String> c3 = client(2).getCache();
             eventListener.expectNoEvents();
             c3.put(1, "one");
-            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
+            eventListener.expectCreatedEvent(new CustomEvent(1, "one", 0));
             c3.put(2, "two");
-            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(2, "two"));
+            eventListener.expectCreatedEvent(new CustomEvent(2, "two", 0));
             c3.remove(1);
-            eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(1, null));
+            eventListener.expectRemovedEvent(new CustomEvent(1, null, 0));
             c3.remove(2);
-            eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(2, null));
+            eventListener.expectRemovedEvent(new CustomEvent(2, null, 0));
+         }
+      });
+   }
+
+   public void testFilterCustomEventsInCluster() {
+      final FilterCustomEventLogListener eventListener = new FilterCustomEventLogListener();
+      withClientListener(eventListener, new Object[]{1}, null, new RemoteCacheManagerCallable(client(0)) {
+         @Override
+         public void call() {
+            RemoteCache<Integer, String> c3 = client(2).getCache();
+            c3.put(1, "one");
+            eventListener.expectCreatedEvent(new CustomEvent(1, null, 1));
+            c3.put(1, "newone");
+            eventListener.expectModifiedEvent(new CustomEvent(1, null, 2));
+            c3.put(2, "two");
+            eventListener.expectCreatedEvent(new CustomEvent(2, "two", 3));
+            c3.put(2, "dos");
+            eventListener.expectModifiedEvent(new CustomEvent(2, "dos", 4));
+            c3.remove(1);
+            eventListener.expectRemovedEvent(new CustomEvent(1, null, 5));
+            c3.remove(2);
+            eventListener.expectRemovedEvent(new CustomEvent(2, null, 6));
          }
       });
    }
