@@ -1,9 +1,6 @@
 package org.infinispan.test.integration.as.wildfly.model;
 
-import org.hibernate.search.annotations.Field;
-import org.hibernate.search.annotations.Index;
-import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.annotations.Store;
+import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,10 +8,18 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import java.io.Serializable;
+
+import org.hibernate.search.annotations.Field;
+import org.hibernate.search.annotations.Index;
+import org.hibernate.search.annotations.Indexed;
+import org.hibernate.search.annotations.Latitude;
+import org.hibernate.search.annotations.Longitude;
+import org.hibernate.search.annotations.Spatial;
+import org.hibernate.search.annotations.Store;
 
 @Entity
 @Indexed
+@Spatial
 @Table(uniqueConstraints = @UniqueConstraint(columnNames = "email"))
 public class Member implements Serializable {
 
@@ -27,7 +32,13 @@ public class Member implements Serializable {
    @GeneratedValue
    private Long id;
 
-   @Field(index = Index.YES, store = Store.NO)
+   @Latitude
+   private Double latitude;
+
+   @Longitude
+   private Double longitude;
+
+   @Field(index = Index.YES, store = Store.YES)
    private String name;
 
    @Field(index = Index.YES, store = Store.NO)
@@ -66,5 +77,21 @@ public class Member implements Serializable {
 
    public void setPhoneNumber(String phoneNumber) {
       this.phoneNumber = phoneNumber;
+   }
+
+   public Double getLatitude() {
+      return latitude;
+   }
+
+   public void setLatitude(Double latitude) {
+      this.latitude = latitude;
+   }
+
+   public Double getLongitude() {
+      return longitude;
+   }
+
+   public void setLongitude(Double longitude) {
+      this.longitude = longitude;
    }
 }
