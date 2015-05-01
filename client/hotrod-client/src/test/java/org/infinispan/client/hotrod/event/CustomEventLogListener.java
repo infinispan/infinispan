@@ -64,19 +64,19 @@ public abstract class CustomEventLogListener<E> {
       assertAnyEquals(expected, event);
    }
    
-   public void expectOnlyCreatedCustomEvent(E expected) {
+   public void expectCreatedEvent(E expected) {
       expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, expected);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
    }
 
-   public void expectOnlyModifiedCustomEvent(E expected) {
+   public void expectModifiedEvent(E expected) {
       expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED, expected);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
    }
 
-   public void expectOnlyRemovedCustomEvent(E expected) {
+   public void expectRemovedEvent(E expected) {
       expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, expected);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
@@ -107,10 +107,13 @@ public abstract class CustomEventLogListener<E> {
       final Integer key;
       final String value;
       final long timestamp;
-      public CustomEvent(Integer key, String value) {
+      final int counter;
+
+      public CustomEvent(Integer key, String value, int counter) {
          this.key = key;
          this.value = value;
          this.timestamp = System.nanoTime();
+         this.counter = counter;
       }
 
       @Override
@@ -120,24 +123,33 @@ public abstract class CustomEventLogListener<E> {
 
          CustomEvent that = (CustomEvent) o;
 
+         if (counter != that.counter) return false;
          if (!key.equals(that.key)) return false;
-         if (value != null ? !value.equals(that.value) : that.value != null)
-            return false;
-
-         return true;
+         return !(value != null ? !value.equals(that.value) : that.value != null);
       }
 
       @Override
       public int hashCode() {
          int result = key.hashCode();
          result = 31 * result + (value != null ? value.hashCode() : 0);
+         result = 31 * result + counter;
          return result;
+      }
+
+      @Override
+      public String toString() {
+         return "CustomEvent{" +
+               "key=" + key +
+               ", value='" + value + '\'' +
+               ", timestamp=" + timestamp +
+               ", counter=" + counter +
+               '}';
       }
    }
 
    @ClientListener(converterFactoryName = "static-converter-factory")
    public static class StaticCustomEventLogListener extends CustomEventLogListener<CustomEvent> {
-      
+
       @Override
       public void expectSingleCustomEvent(ClientEvent.Type type, CustomEvent expected) {
          CustomEvent event = pollEvent(type);
@@ -193,7 +205,7 @@ public abstract class CustomEventLogListener<E> {
          @Override
          public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
-            return new CustomEvent(key, value);
+            return new CustomEvent(key, value, 0);
          }
       }
    }
@@ -216,9 +228,9 @@ public abstract class CustomEventLogListener<E> {
          public CustomEvent convert(Integer key, String previousValue, Metadata previousMetadata, String value,
                                     Metadata metadata, EventType eventType) {
             if (params[0].equals(key))
-               return new CustomEvent(key, null);
+               return new CustomEvent(key, null, 0);
 
-            return new CustomEvent(key, value);
+            return new CustomEvent(key, value, 0);
          }
       }
    }
@@ -239,6 +251,31 @@ public abstract class CustomEventLogListener<E> {
       }
    }
 
+   public interface CallbackCounter extends Serializable {
+      void incr();
+      int get();
+      void reset();
+   }
+
+   public static final class NumericCallbackCounter implements CallbackCounter {
+      int count = 0;
+
+      @Override
+      public void incr() {
+         count++;
+      }
+
+      @Override
+      public int get() {
+         return count;
+      }
+
+      @Override
+      public void reset() {
+         count = 0;
+      }
+   }
+
    @NamedFactory(name = "filter-converter-factory")
    public static class FilterConverterFactory implements CacheEventFilterConverterFactory {
 
@@ -250,6 +287,7 @@ public abstract class CustomEventLogListener<E> {
       static class FilterConverter extends AbstractCacheEventFilterConverter<Integer, String, CustomEvent>
          implements Serializable {
          private final Object[] params;
+         private final CallbackCounter counter = new NumericCallbackCounter();
 
          public FilterConverter(Object[] params) {
             this.params = params;
@@ -258,10 +296,11 @@ public abstract class CustomEventLogListener<E> {
          @Override
          public CustomEvent filterAndConvert(Integer key, String oldValue, Metadata oldMetadata,
             String newValue, Metadata newMetadata, EventType eventType) {
+            counter.incr();
             if (params[0].equals(key))
-               return new CustomEvent(key, null);
+               return new CustomEvent(key, null, counter.get());
 
-            return new CustomEvent(key, newValue);
+            return new CustomEvent(key, newValue, counter.get());
          }
       }
    }

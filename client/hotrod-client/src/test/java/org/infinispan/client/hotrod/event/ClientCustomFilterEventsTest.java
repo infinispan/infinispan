@@ -44,19 +44,18 @@ public class ClientCustomFilterEventsTest extends SingleHotRodServerTest {
          @Override
          public void call() {
             RemoteCache<Integer, String> cache = rcm.getCache();
-            eventListener.expectNoEvents();
             cache.put(1, "one");
-            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, null));
+            eventListener.expectCreatedEvent(new CustomEvent(1, null, 1));
             cache.put(1, "newone");
-            eventListener.expectOnlyModifiedCustomEvent(new CustomEvent(1, null));
+            eventListener.expectModifiedEvent(new CustomEvent(1, null, 2));
             cache.put(2, "two");
-            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(2, "two"));
+            eventListener.expectCreatedEvent(new CustomEvent(2, "two", 3));
             cache.put(2, "dos");
-            eventListener.expectOnlyModifiedCustomEvent(new CustomEvent(2, "dos"));
+            eventListener.expectModifiedEvent(new CustomEvent(2, "dos", 4));
             cache.remove(1);
-            eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(1, null));
+            eventListener.expectRemovedEvent(new CustomEvent(1, null, 5));
             cache.remove(2);
-            eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(2, null));
+            eventListener.expectRemovedEvent(new CustomEvent(2, null, 6));
          }
       });
    }
