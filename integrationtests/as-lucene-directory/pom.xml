@@ -152,7 +152,7 @@
                   <configuration>
                      <redirectTestOutputToFile>true</redirectTestOutputToFile>
                       <systemPropertyVariables>
-                          <hibernate.search.module.slot.version>${version.hibernate.search}</hibernate.search.module.slot.version>
+                          <version.hibernate.search>${version.hibernate.search}</version.hibernate.search>
                       </systemPropertyVariables>
                   </configuration>
                </execution>
