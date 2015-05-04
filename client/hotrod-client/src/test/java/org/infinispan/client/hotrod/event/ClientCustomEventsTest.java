@@ -4,15 +4,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withClie
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientListener;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicConverterFactory;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventLogListener;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.DynamicCustomEventWithStateLogListener;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.RawStaticConverterFactory;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.RawStaticCustomEventLogListener;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticConverterFactory;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogListener;
-import org.infinispan.client.hotrod.event.CustomEventLogListener.StaticCustomEventLogWithStateListener;
+import org.infinispan.client.hotrod.event.CustomEventLogListener.*;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
@@ -42,11 +34,11 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             RemoteCache<Integer, String> cache = rcm.getCache();
             eventListener.expectNoEvents();
             cache.put(1, "one");
-            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
+            eventListener.expectCreatedEvent(new CustomEvent(1, "one", 0));
             cache.put(1, "newone");
-            eventListener.expectOnlyModifiedCustomEvent(new CustomEvent(1, "newone"));
+            eventListener.expectModifiedEvent(new CustomEvent(1, "newone", 0));
             cache.remove(1);
-            eventListener.expectOnlyRemovedCustomEvent(new CustomEvent(1, null));
+            eventListener.expectRemovedEvent(new CustomEvent(1, null, 0));
          }
       });
    }
@@ -87,9 +79,9 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             RemoteCache<Integer, String> cache = rcm.getCache();
             eventListener.expectNoEvents();
             cache.put(1, "one");
-            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
+            eventListener.expectCreatedEvent(new CustomEvent(1, "one", 0));
             cache.put(2, "two");
-            eventListener.expectOnlyCreatedCustomEvent(new CustomEvent(2, null));
+            eventListener.expectCreatedEvent(new CustomEvent(2, null, 0));
          }
       });
    }
@@ -101,7 +93,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       withClientListener(staticEventListener, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            staticEventListener.expectOnlyCreatedCustomEvent(new CustomEvent(1, "one"));
+            staticEventListener.expectCreatedEvent(new CustomEvent(1, "one", 0));
          }
       });
       final DynamicCustomEventWithStateLogListener dynamicEventListener = new DynamicCustomEventWithStateLogListener();
@@ -109,7 +101,7 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
       withClientListener(dynamicEventListener, null, new Object[]{2}, new RemoteCacheManagerCallable(remoteCacheManager) {
          @Override
          public void call() {
-            dynamicEventListener.expectOnlyCreatedCustomEvent(new CustomEvent(2, null));
+            dynamicEventListener.expectCreatedEvent(new CustomEvent(2, null, 0));
          }
       });
    }
@@ -143,12 +135,12 @@ public class ClientCustomEventsTest extends SingleHotRodServerTest {
             eventListener.expectNoEvents();
             cache.put(1, "one");
             // 1 = [3,75,0,0,0,1], "one" = [3,62,3,111,110,101]
-            eventListener.expectOnlyCreatedCustomEvent(new byte[]{3, 75, 0, 0, 0, 1, 3, 62, 3, 111, 110, 101});
+            eventListener.expectCreatedEvent(new byte[]{3, 75, 0, 0, 0, 1, 3, 62, 3, 111, 110, 101});
             cache.put(1, "newone");
             // "newone" = [3,62,6,110,101,119,111,110,101]
-            eventListener.expectOnlyModifiedCustomEvent(new byte[]{3, 75, 0, 0, 0, 1, 3, 62, 6, 110, 101, 119, 111, 110, 101});
+            eventListener.expectModifiedEvent(new byte[]{3, 75, 0, 0, 0, 1, 3, 62, 6, 110, 101, 119, 111, 110, 101});
             cache.remove(1);
-            eventListener.expectOnlyRemovedCustomEvent(new byte[]{3, 75, 0, 0, 0, 1});
+            eventListener.expectRemovedEvent(new byte[]{3, 75, 0, 0, 0, 1});
          }
       });
    }

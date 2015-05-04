@@ -1089,7 +1089,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          this.invocation = invocation;
          this.filter = filter;
          this.converter = converter;
-         this.filterAndConvert = filter instanceof CacheEventFilterConverter && (filter == converter || converter == null);
+         this.filterAndConvert = filter instanceof CacheEventFilterConverter && (filter.equals(converter) || converter == null);
          this.onlyPrimary = onlyPrimary;
          this.clustered = clustered;
          this.identifier = identifier;
