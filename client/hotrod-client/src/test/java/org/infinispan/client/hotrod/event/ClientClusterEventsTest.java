@@ -116,6 +116,7 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       });
    }
 
+   @Test(enabled = false)
    public void testFilterCustomEventsInCluster() {
       final FilterCustomEventLogListener eventListener = new FilterCustomEventLogListener();
       withClientListener(eventListener, new Object[]{1}, null, new RemoteCacheManagerCallable(client(0)) {
