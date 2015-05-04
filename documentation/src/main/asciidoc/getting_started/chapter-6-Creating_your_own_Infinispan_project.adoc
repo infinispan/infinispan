@@ -13,7 +13,7 @@ Use the newproject-archetype project.  The simple command below will get you sta
 $ mvn archetype:generate \
     -DarchetypeGroupId=org.infinispan.archetypes \
     -DarchetypeArtifactId=newproject-archetype \
-    -DarchetypeVersion=1.0.14 \
+    -DarchetypeVersion=1.0.17 \
     -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
 
 ----
@@ -40,7 +40,7 @@ Use
 $ mvn archetype:generate \
     -DarchetypeGroupId=org.infinispan.archetypes \
     -DarchetypeArtifactId=testcase-archetype \
-    -DarchetypeVersion=1.0.14 \
+    -DarchetypeVersion=1.0.17 \
     -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public
 ----
 
