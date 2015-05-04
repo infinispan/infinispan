@@ -35,7 +35,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 7.0
  */
 @ThreadSafe
-@Listener(primaryOnly = true)
+@Listener(primaryOnly = true, observation = Listener.Observation.POST)
 public class RemoteClusterListener {
    private static final Log log = LogFactory.getLog(RemoteClusterListener.class);
 
@@ -88,27 +88,24 @@ public class RemoteClusterListener {
    @CacheEntryModified
    @CacheEntryRemoved
    public void handleClusterEvents(CacheEntryEvent event) throws Exception {
-      // We only submit the final event
-      if (!event.isPre()) {
-         GlobalTransaction transaction = event.getGlobalTransaction();
-         if (transaction != null) {
-            // If we are in a transaction, queue up those events so we can send them as 1 batch.
-            Queue<CacheEntryEvent> events = transactionChanges.get(transaction);
-            if (events == null) {
-               events = new ConcurrentLinkedQueue<>();
-               Queue<CacheEntryEvent> otherQueue = transactionChanges.putIfAbsent(transaction, events);
-               if (otherQueue != null) {
-                  events = otherQueue;
-               }
+      GlobalTransaction transaction = event.getGlobalTransaction();
+      if (transaction != null) {
+         // If we are in a transaction, queue up those events so we can send them as 1 batch.
+         Queue<CacheEntryEvent> events = transactionChanges.get(transaction);
+         if (events == null) {
+            events = new ConcurrentLinkedQueue<>();
+            Queue<CacheEntryEvent> otherQueue = transactionChanges.putIfAbsent(transaction, events);
+            if (otherQueue != null) {
+               events = otherQueue;
             }
-            events.add(event);
-         }  else {
-            // Send event back to origin who has the cluster listener
-            if (log.isTraceEnabled()) {
-               log.tracef("Submitting Event %s to cluster listener to %s", event, origin);
-            }
-            eventManager.addEvents(origin, id, Collections.singleton(ClusterEvent.fromEvent(event)), sync);
          }
+         events.add(event);
+      }  else {
+         // Send event back to origin who has the cluster listener
+         if (log.isTraceEnabled()) {
+            log.tracef("Submitting Event %s to cluster listener to %s", event, origin);
+         }
+         eventManager.addEvents(origin, id, Collections.singleton(ClusterEvent.fromEvent(event)), sync);
       }
    }
 

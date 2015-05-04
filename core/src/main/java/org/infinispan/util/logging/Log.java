@@ -1328,4 +1328,7 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "No indexing service provider found for indexed filter of type %s", id = 363)
    void noFilterIndexingServiceProviderFound(String filterClassName);
+
+   @Message(value = "Attempted to register cluster listener of class %s, but listener is annotated as only observing pre events!", id = 364)
+   CacheException clusterListenerRegisteredWithOnlyPreEvents(Class<?> listenerClass);
 }

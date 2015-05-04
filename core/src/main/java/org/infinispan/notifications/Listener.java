@@ -240,4 +240,30 @@ public @interface Listener {
     * @since 7.0
     **/
    boolean includeCurrentState() default false;
+
+   Observation observation() default Observation.BOTH;
+
+
+   enum Observation {
+      PRE() {
+         @Override
+         public boolean shouldInvoke(boolean pre) {
+            return pre;
+         }
+      },
+      POST() {
+         @Override
+         public boolean shouldInvoke(boolean pre) {
+            return !pre;
+         }
+      },
+      BOTH() {
+         @Override
+         public boolean shouldInvoke(boolean pre) {
+            return true;
+         }
+      };
+
+      public abstract boolean shouldInvoke(boolean pre);
+   }
 }
