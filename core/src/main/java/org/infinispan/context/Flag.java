@@ -92,6 +92,9 @@ public enum Flag {
     * <p>Swallows any exceptions, logging them instead at a low log level.  Will prevent a failing operation from
     * affecting any ongoing JTA transactions as well.</p>
     * <p>This Flag will not be replicated to remote nodes, but it will still protect the invoker from remote exceptions.</p>
+    * <p>When using this flag with Optimistic caches, lock acquisition happen in the prepare phase at which
+    * point this flag will be ignored in order to ensure that Infinispan reports the correct exception
+    * back to the transaction manager. This is done for safety reasons to avoid inconsistent cache contents.</p>
     */
    FAIL_SILENTLY,
    /**
