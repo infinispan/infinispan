@@ -13,13 +13,17 @@ import org.infinispan.client.hotrod.event.EventLogListener.StaticCacheEventFilte
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.testng.annotations.Test;
 
+import java.util.Random;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.*;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -116,25 +120,72 @@ public class ClientClusterEventsTest extends MultiHotRodServersTest {
       });
    }
 
-   @Test(enabled = false)
+   /**
+    * TODO I suspect there is a another utility method somewhere that does exactly this.
+    *
+    * @param nodeIdx
+    * @param exceptThese don't give me these
+    * @return a scooby snack
+    */
+   private Integer newMagickKey(int nodeIdx, Integer... exceptThese) {
+      Address nodeAddress = cache(nodeIdx).getAdvancedCache().getRpcManager().getAddress();
+      ConsistentHash ch = cache(nodeIdx).getAdvancedCache().getDistributionManager().getReadConsistentHash();
+      Random r = new Random();
+      Marshaller m = client(nodeIdx).getMarshaller();
+      for (int i = 0 ; i < 10000; i++) {
+         Integer key = r.nextInt();
+         boolean badKey = false;
+         if (exceptThese != null) {
+            for (Integer e : exceptThese) {
+               if (e.equals(key)) {
+                  badKey = true;
+                  break;
+               }
+            }
+         }
+         if (!badKey) {
+            try {
+               byte[] keyBytes = m.objectToByteBuffer(key, 100);
+               if (nodeAddress.equals(ch.locatePrimaryOwner(keyBytes))) {
+                  return key;
+               }
+            } catch (Exception e) {
+               break;
+            }
+         }
+      }
+      throw new RuntimeException("I tried hard but failed to find a key local to node " + nodeIdx + " :(");
+   }
+
    public void testFilterCustomEventsInCluster() {
+      // test with two keys primary-owned by same node and a third key primary-owned by a different node
+      final Integer key1 = newMagickKey(1);
+      final Integer key2 = newMagickKey(1, key1);
+      final Integer key3 = newMagickKey(2, key1, key2);
+
       final FilterCustomEventLogListener eventListener = new FilterCustomEventLogListener();
-      withClientListener(eventListener, new Object[]{1}, null, new RemoteCacheManagerCallable(client(0)) {
+      withClientListener(eventListener, new Object[]{key1}, null, new RemoteCacheManagerCallable(client(0)) {
          @Override
          public void call() {
             RemoteCache<Integer, String> c3 = client(2).getCache();
-            c3.put(1, "one");
-            eventListener.expectCreatedEvent(new CustomEvent(1, null, 1));
-            c3.put(1, "newone");
-            eventListener.expectModifiedEvent(new CustomEvent(1, null, 2));
-            c3.put(2, "two");
-            eventListener.expectCreatedEvent(new CustomEvent(2, "two", 3));
-            c3.put(2, "dos");
-            eventListener.expectModifiedEvent(new CustomEvent(2, "dos", 4));
-            c3.remove(1);
-            eventListener.expectRemovedEvent(new CustomEvent(1, null, 5));
-            c3.remove(2);
-            eventListener.expectRemovedEvent(new CustomEvent(2, null, 6));
+            c3.put(key1, "one");
+            eventListener.expectCreatedEvent(new CustomEvent(key1, null, 1));
+            c3.put(key1, "newone");
+            eventListener.expectModifiedEvent(new CustomEvent(key1, null, 2));
+            c3.put(key2, "two");
+            eventListener.expectCreatedEvent(new CustomEvent(key2, "two", 3));
+            c3.put(key2, "dos");
+            eventListener.expectModifiedEvent(new CustomEvent(key2, "dos", 4));
+            c3.put(key3, "three");
+            eventListener.expectCreatedEvent(new CustomEvent(key3, "three", 1));
+            c3.put(key3, "tres");
+            eventListener.expectModifiedEvent(new CustomEvent(key3, "tres", 2));
+            c3.remove(key1);
+            eventListener.expectRemovedEvent(new CustomEvent(key1, null, 5));
+            c3.remove(key2);
+            eventListener.expectRemovedEvent(new CustomEvent(key2, null, 6));
+            c3.remove(key3);
+            eventListener.expectRemovedEvent(new CustomEvent(key3, null, 3));
          }
       });
    }
