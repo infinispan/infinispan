@@ -186,6 +186,16 @@
                            </excludes>
                         </filter>
                         <filter>
+                           <artifact>org.jgroups:jgroups</artifact>
+                           <includes>
+                              <include>org/jgroups/**</include>
+                              <include>jg-magic-map.xml</include>
+                              <include>jg-protocol-ids.xml</include>
+                              <include>*.properties</include>
+                              <include>*.xsd</include>
+                           </includes>
+                        </filter>
+                        <filter>
                            <artifact>*:*</artifact>
                            <excludes>
                               <exclude>INSTALL.html</exclude>
