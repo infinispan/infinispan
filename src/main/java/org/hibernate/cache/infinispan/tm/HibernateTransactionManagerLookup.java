@@ -33,6 +33,7 @@ import javax.transaction.TransactionManager;
 import java.util.Properties;
 import javax.transaction.TransactionManager;
 
+<<<<<<< HEAD
 import org.hibernate.cfg.Settings;
 <<<<<<< HEAD
 import org.hibernate.transaction.TransactionManagerLookup;
@@ -41,6 +42,9 @@ import org.hibernate.transaction.TransactionManagerLookup;
 import org.hibernate.cfg.Settings;
 import org.hibernate.service.jta.platform.spi.JtaPlatform;
 =======
+=======
+import org.hibernate.boot.spi.SessionFactoryOptions;
+>>>>>>> HHH-9762 - Complete deprecation of Settings contract
 import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 >>>>>>> HHH-7556 - Clean up packages
 
@@ -64,8 +68,8 @@ public class HibernateTransactionManagerLookup implements org.infinispan.transac
     * @param settings for the Hibernate application
     * @param properties for the Hibernate application
     */
-	public HibernateTransactionManagerLookup(Settings settings, Properties properties) {
-		this.jtaPlatform = settings != null ? settings.getJtaPlatform() : null;
+	public HibernateTransactionManagerLookup(SessionFactoryOptions settings, Properties properties) {
+		this.jtaPlatform = settings != null ? settings.getServiceRegistry().getService( JtaPlatform.class ) : null;
 	}
 
 	@Override
