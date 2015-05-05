@@ -1,17 +1,17 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.metadata.EmbeddedMetadata;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
+import static org.infinispan.commons.util.Util.toStr;
 
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import static org.infinispan.commons.util.Util.toStr;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
 
 /**
  * A cache entry that is immortal/cannot expire
@@ -105,7 +105,7 @@ public class ImmortalCacheEntry extends AbstractInternalCacheEntry {
 
    @Override
    public Metadata getMetadata() {
-      return new EmbeddedMetadata.Builder().build();
+      return EmbeddedMetadata.DEFAULT;
    }
 
    @Override

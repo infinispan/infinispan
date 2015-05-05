@@ -9,8 +9,8 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
-import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
@@ -1695,6 +1695,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private Metadata applyDefaultMetadata(Metadata metadata) {
+      if (defaultMetadata.equals(metadata)) return metadata;
       Metadata.Builder builder = metadata.builder();
       return builder != null ? builder.merge(defaultMetadata).build() : metadata;
    }
