@@ -77,6 +77,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
     */
    @Override
    public L1ConfigurationBuilder l1() {
+      l1ConfigurationBuilder.enable();
       return l1ConfigurationBuilder;
    }
 
