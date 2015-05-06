@@ -47,6 +47,7 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.ConcurrentHashSet;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -301,7 +302,12 @@ public class StateConsumerImpl implements StateConsumer {
       }
       stateTransferLock.releaseExclusiveTopologyLock();
       stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
-      remoteCommandsExecutor.checkForReadyTasks();
+      remoteCommandsExecutor.submit(new Runnable() {
+         @Override
+         public void run() {
+            remoteCommandsExecutor.checkForReadyTasks();
+         }
+      });
 
       try {
          // fetch transactions and data segments from other owners if this is enabled
@@ -387,7 +393,12 @@ public class StateConsumerImpl implements StateConsumer {
          }
       } finally {
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
-         remoteCommandsExecutor.checkForReadyTasks();
+         remoteCommandsExecutor.submit(new Runnable() {
+            @Override
+            public void run() {
+               remoteCommandsExecutor.checkForReadyTasks();
+            }
+         });
 
          // Only set the flag here, after all the transfers have been added to the transfersBySource map
          if (stateTransferTopologyId.get() != NO_REBALANCE_IN_PROGRESS && isMember) {
@@ -508,7 +519,10 @@ public class StateConsumerImpl implements StateConsumer {
          });
       }
       try {
-         countDownLatch.await(timeout, TimeUnit.MILLISECONDS);
+         boolean await = countDownLatch.await(timeout, TimeUnit.MILLISECONDS);
+         if (!await) {
+            throw new TimeoutException("Timed out applying state");
+         }
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);
