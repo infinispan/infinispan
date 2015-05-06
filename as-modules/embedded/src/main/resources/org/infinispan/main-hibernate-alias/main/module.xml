@@ -1,3 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- this is an alias to satisfy Hibernate Search dependency which can be be one version after current ISPN version -->
-<module-alias xmlns="urn:jboss:module:1.1" name="org.infinispan" slot="${hibernate_dep.infinispan.slot}" target-name="org.infinispan" target-slot="${infinispan.slot}"/>

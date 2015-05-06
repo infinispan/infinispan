@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module-alias xmlns="urn:jboss:module:1.1" name="org.infinispan.hibernate-search.directory-provider" slot="${hibernate-search-directory-provider-ref}" target-name="org.infinispan.hibernate-search.directory-provider" target-slot="${infinispan.slot}"/>

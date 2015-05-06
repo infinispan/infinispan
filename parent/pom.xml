@@ -119,13 +119,12 @@
       <version.hibernate.annotations>3.5.6-Final</version.hibernate.annotations>
       <version.hibernate.core>4.3.6.Final</version.hibernate.core>
       <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
-      <version.hibernate.hql.parser>1.1.0.Final</version.hibernate.hql.parser>
+      <version.hibernate.hql.parser>1.2.0.Final</version.hibernate.hql.parser>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.classmate>0.5.4</version.hibernate_dep.classmate>
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
       <version.hibernate_dep.hibernate-commons-annotations>4.0.5.Final</version.hibernate_dep.hibernate-commons-annotations>
-      <version.hibernate_dep.infinispan>7.2.0.Final</version.hibernate_dep.infinispan>
       <version.hibernate_dep.jandex>1.1.0.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javaassist>3.18.1-GA</version.hibernate_dep.javaassist>
       <version.httpclient>4.2.4</version.httpclient>

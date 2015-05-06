@@ -34,8 +34,7 @@ public class InfinispanLockFactoryOptionsTest {
          .withProperty("hibernate.search.infinispan.configuration_resourcename", "localonly-infinispan.xml")
          .withProperty("hibernate.search.INDEX1.locking_strategy", "none")
          .withProperty("hibernate.search.INDEX2.locking_strategy", CustomLockFactoryProvider.class.getName())
-         .withProperty("hibernate.search.INDEX3.locking_strategy", "single")
-         .withService(DirectoryProviderService.class, new DirectoryServiceForTest());
+         .withProperty("hibernate.search.INDEX3.locking_strategy", "single");
 
    @Test
    public void verifyDefaulInfinispanLock() {
