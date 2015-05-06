@@ -301,6 +301,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
       stateTransferLock.releaseExclusiveTopologyLock();
       stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
+      remoteCommandsExecutor.checkForReadyTasks();
 
       try {
          // fetch transactions and data segments from other owners if this is enabled
@@ -389,7 +390,7 @@ public class StateConsumerImpl implements StateConsumer {
          remoteCommandsExecutor.checkForReadyTasks();
 
          // Only set the flag here, after all the transfers have been added to the transfersBySource map
-         if (stateTransferTopologyId.get() != NO_REBALANCE_IN_PROGRESS) {
+         if (stateTransferTopologyId.get() != NO_REBALANCE_IN_PROGRESS && isMember) {
             waitingForState.set(true);
          }
 
@@ -977,38 +978,45 @@ public class StateConsumerImpl implements StateConsumer {
    }
 
    private InboundTransferTask addTransfer(Address source, Set<Integer> segmentsFromSource) {
+      final InboundTransferTask inboundTransfer;
+
       synchronized (transferMapsLock) {
-         if (trace) log.tracef("Adding transfer from %s for segments %s", source, segmentsFromSource);
+         if (trace) {
+            log.tracef("Adding transfer from %s for segments %s", source, segmentsFromSource);
+         }
          segmentsFromSource.removeAll(transfersBySegment.keySet());  // already in progress segments are excluded
          if (segmentsFromSource.isEmpty()) {
-            if (trace) log.tracef("All segments are already in progress, skipping");
+            if (trace) {
+               log.tracef("All segments are already in progress, skipping");
+            }
             return null;
-         } else {
-            final InboundTransferTask inboundTransfer = new InboundTransferTask(segmentsFromSource, source,
-                  cacheTopology.getTopologyId(), this, rpcManager, commandsFactory, timeout, cacheName);
-            for (int segmentId : segmentsFromSource) {
-               transfersBySegment.put(segmentId, inboundTransfer);
-            }
-            List<InboundTransferTask> inboundTransfers = transfersBySource.get(inboundTransfer.getSource());
-            if (inboundTransfers == null) {
-               inboundTransfers = new ArrayList<InboundTransferTask>();
-               transfersBySource.put(inboundTransfer.getSource(), inboundTransfers);
-            }
-            inboundTransfers.add(inboundTransfer);
-
-            stateRequestCompletionService.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  inboundTransfer.requestSegments();
-
-                  if (trace) log.tracef("Waiting for inbound transfer to finish: %s", inboundTransfer);
-                  stateRequestCompletionService.continueTaskInBackground();
-                  return null;
-               }
-            });
-            return inboundTransfer;
          }
+
+         inboundTransfer = new InboundTransferTask(segmentsFromSource, source,
+               cacheTopology.getTopologyId(), this, rpcManager, commandsFactory, timeout, cacheName);
+         for (int segmentId : segmentsFromSource) {
+            transfersBySegment.put(segmentId, inboundTransfer);
+         }
+         List<InboundTransferTask> inboundTransfers = transfersBySource.get(inboundTransfer.getSource());
+         if (inboundTransfers == null) {
+            inboundTransfers = new ArrayList<InboundTransferTask>();
+            transfersBySource.put(inboundTransfer.getSource(), inboundTransfers);
+         }
+         inboundTransfers.add(inboundTransfer);
       }
+
+      stateRequestCompletionService.submit(new Callable<Void>() {
+         @Override
+         public Void call() throws Exception {
+            inboundTransfer.requestSegments();
+
+            if (trace)
+               log.tracef("Waiting for inbound transfer to finish: %s", inboundTransfer);
+            stateRequestCompletionService.continueTaskInBackground();
+            return null;
+         }
+      });
+      return inboundTransfer;
    }
 
    private boolean removeTransfer(InboundTransferTask inboundTransfer) {

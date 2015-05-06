@@ -36,6 +36,7 @@ public class EntryRetrieverDistPartitionHandlingTest extends BasePartitionHandli
    @Test( expectedExceptions = AvailabilityException.class)
    public void testRetrievalWhenPartitionIsDegrated() {
       splitCluster(new int[]{0, 1}, new int[]{2, 3});
+      partition(0).assertDegradedMode();
 
       try (EntryIterable iterable = cache(0).getAdvancedCache().filterEntries(AcceptAllKeyValueFilter.getInstance())) {
          iterable.iterator();
@@ -44,6 +45,7 @@ public class EntryRetrieverDistPartitionHandlingTest extends BasePartitionHandli
 
    public void testRetrievalWhenPartitionIsDegratedButLocal() {
       splitCluster(new int[]{0, 1}, new int[]{2, 3});
+      partition(0).assertDegradedMode();
 
       try (EntryIterable iterable = cache(0).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).filterEntries(
             AcceptAllKeyValueFilter.getInstance())) {

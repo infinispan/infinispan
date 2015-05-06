@@ -49,6 +49,7 @@ import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -296,7 +297,7 @@ public class TestingUtil {
          }
       }
 
-      throw new RuntimeException(String.format(
+      throw new TimeoutException(String.format(
          "Timed out before caches had complete views.  Expected %d members in each view.  Views are as follows: %s",
          cacheContainers.length, incompleteViews));
    }

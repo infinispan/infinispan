@@ -3,6 +3,8 @@ package org.infinispan.distribution.rehash;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.concurrent.InvocationMatcher;
@@ -20,6 +22,7 @@ import org.testng.annotations.Test;
 
 import java.util.Collections;
 
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnComponentMethod;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
 import static org.testng.AssertJUnit.assertEquals;
@@ -158,8 +161,8 @@ public class PessimisticStateTransferLocksTest extends MultipleCacheManagersTest
       advanceOnGlobalComponentMethod(sequencer, manager(0), ClusterTopologyManager.class,
             rebalanceCompletedMatcher).before("rebalance:before_confirm");
 
-      InvocationMatcher localRebalanceMatcher = matchMethodCall("handleRebalance").build();
-      advanceOnGlobalComponentMethod(sequencer, manager(2), LocalTopologyManager.class,
+      InvocationMatcher localRebalanceMatcher = matchMethodCall("onTopologyUpdate").withParam(1, true).build();
+      advanceOnComponentMethod(sequencer, cache(2), StateConsumer.class,
             localRebalanceMatcher).before("rebalance:before_get_tx").after("rebalance:after_get_tx");
       consistentHashFactory.setOwnerIndexes(2, 1);
       consistentHashFactory.triggerRebalance(cache(0));
