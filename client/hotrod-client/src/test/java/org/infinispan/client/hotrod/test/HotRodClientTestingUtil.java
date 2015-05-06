@@ -213,6 +213,7 @@ public class HotRodClientTestingUtil {
       try {
          do {
             r.nextBytes(dummy);
+            attemptsLeft--;
          } while (!isFirstOwner(cache, marshaller.objectToByteBuffer(dummy)) && attemptsLeft >= 0);
       } catch (IOException e) {
          throw new AssertionError(e);
@@ -246,6 +247,7 @@ public class HotRodClientTestingUtil {
       do {
          dummyInt = r.nextInt();
          dummy = toBytes(dummyInt);
+         attemptsLeft--;
       } while (!isFirstOwner(cache, dummy) && attemptsLeft >= 0);
 
       if (attemptsLeft < 0)
