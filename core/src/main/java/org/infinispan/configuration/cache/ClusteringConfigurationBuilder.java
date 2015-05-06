@@ -71,9 +71,7 @@ public class ClusteringConfigurationBuilder extends AbstractConfigurationChildBu
 
    /**
     * This method allows configuration of the L1 cache for distributed
-    * caches. When this method is called, it automatically enables L1. So,
-    * if you want it to be disabled, make sure you call
-    * {@link org.infinispan.configuration.cache.L1ConfigurationBuilder#disable()}
+    * caches. L1 should be explicitly enabled by calling {@link L1ConfigurationBuilder#enable()}
     */
    @Override
    public L1ConfigurationBuilder l1() {
