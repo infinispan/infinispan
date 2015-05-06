@@ -2,12 +2,21 @@ package org.infinispan.partitionhandling;
 
 import org.infinispan.Cache;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
+import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
+import org.infinispan.statetransfer.StateConsumer;
 import org.infinispan.test.concurrent.StateSequencer;
+import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.mockito.ArgumentMatcher;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.TimeoutException;
+
+import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnComponentMethod;
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnGlobalComponentMethod;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchMethodCall;
 import static org.testng.Assert.assertEquals;
@@ -63,12 +72,10 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
             "main:check_availability", "main:resume_availability_update_p0n0");
 
       log.debugf("Delaying the availability mode update on node %s", address(p0.node(0)));
-      advanceOnGlobalComponentMethod(ss, manager(p0.node(0)), LocalTopologyManager.class,
-            matchMethodCall("handleTopologyUpdate").withParam(2, AvailabilityMode.DEGRADED_MODE).build())
-            .before("main:block_availability_update_p0n0", "main:resume_availability_update_p0n0");
-      advanceOnGlobalComponentMethod(ss, manager(p0.node(1)), LocalTopologyManager.class,
-            matchMethodCall("handleTopologyUpdate").withParam(2, AvailabilityMode.DEGRADED_MODE).build())
-            .after("main:after_availability_update_p0n1");
+      cache(p0.node(0)).addListener(new BlockAvailabilityChangeListener(true, ss,
+            "main:block_availability_update_p0n0", "main:resume_availability_update_p0n0"));
+      cache(p0.node(1)).addListener(new BlockAvailabilityChangeListener(false, ss,
+            "main:after_availability_update_p0n1"));
 
       splitCluster(p0.getNodes(), p1.getNodes());
 
@@ -100,6 +107,28 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
          fail("Should have failed, cache " + cache(p0.node(1)) + " is in degraded mode");
       } catch (AvailabilityException e) {
          // Expected
+      }
+   }
+
+   @Listener
+   public static class BlockAvailabilityChangeListener {
+      private boolean blockPre;
+      private StateSequencer ss;
+      private String[] states;
+
+      public BlockAvailabilityChangeListener(boolean blockPre, StateSequencer ss, String... states) {
+         this.blockPre = blockPre;
+         this.ss = ss;
+         this.states = states;
+      }
+
+      @PartitionStatusChanged
+      public void onPartitionStatusChange(PartitionStatusChangedEvent e) throws Exception {
+         if (blockPre == e.isPre()) {
+            for (String state : states) {
+               ss.advance(state);
+            }
+         }
       }
    }
 }

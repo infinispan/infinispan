@@ -77,6 +77,7 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
       } else {
          semaphore.release();
          if (trace) log.tracef("Background task finished, available permits %d", semaphore.availablePermits());
+         executeFront();
       }
       return futureTask;
    }
@@ -85,6 +86,7 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
    public Future<T> submit(final Callable<T> task) {
       QueueingTask futureTask = new QueueingTask(task);
       queue.add(futureTask);
+      if (trace) log.tracef("New task submitted, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
       executeFront();
       return futureTask;
    }
@@ -93,6 +95,7 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
    public Future<T> submit(final Runnable task, T result) {
       QueueingTask futureTask = new QueueingTask(task, result);
       queue.add(futureTask);
+      if (trace) log.tracef("New task submitted, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
       executeFront();
       return futureTask;
    }
@@ -159,11 +162,11 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
 
       private void runInternal() {
          try {
-            if (trace) log.tracef("Task started, available permits %d", semaphore.availablePermits());
+            if (trace) log.tracef("Task started, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
             super.run();
          } finally {
             completionQueue.offer(this);
-            if (trace) log.tracef("Task finished, available permits %d", semaphore.availablePermits());
+            if (trace) log.tracef("Task finished, tasks in queue %d, available permits %d", queue.size(), semaphore.availablePermits());
          }
       }
    }

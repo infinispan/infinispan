@@ -32,6 +32,7 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -74,7 +75,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private volatile boolean isShuttingDown;
    private boolean mustRecoverClusterStatus;
    private final Object viewHandlingLock = new Object();
-   private SemaphoreCompletionService<Void> viewHandlingCompletionService;
 
    private volatile int viewId = -1;
    private final Object viewUpdateLock = new Object();
@@ -102,18 +102,16 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Start(priority = 100)
    public void start() {
-      viewHandlingCompletionService = new SemaphoreCompletionService<>(asyncTransportExecutor, 1);
       isShuttingDown = false;
       isCoordinator = transport.isCoordinator();
 
       viewListener = new ClusterViewListener();
       cacheManagerNotifier.addListener(viewListener);
       // The listener already missed the initial view
-      viewHandlingCompletionService.submit(new Callable<Void>() {
+      asyncTransportExecutor.submit(new Runnable() {
          @Override
-         public Void call() throws Exception {
+         public void run() {
             handleClusterView(false, transport.getViewId());
-            return null;
          }
       });
 
@@ -304,13 +302,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
             viewId = newViewId;
             viewUpdateLock.notifyAll();
          }
+      }
 
-         if (!mustRecoverClusterStatus) {
-            try {
-               updateCacheMembers(transport.getMembers());
-            } catch (Exception e) {
-               log.errorUpdatingMembersList(e);
-            }
+      if (!mustRecoverClusterStatus) {
+         try {
+            updateCacheMembers(transport.getMembers());
+         } catch (Exception e) {
+            log.errorUpdatingMembersList(e);
          }
       }
    }
@@ -413,6 +411,9 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          while (this.viewId < viewId && !timeService.isTimeExpired(endTime)) {
             viewUpdateLock.wait(1000);
          }
+      }
+      if (this.viewId < viewId) {
+         throw new TimeoutException("Timed out waiting for view " + viewId);
       }
    }
 
@@ -583,11 +584,10 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       public void handleViewChange(final ViewChangedEvent e) {
          // Need to recover existing caches asynchronously (in case we just became the coordinator).
          // Cannot use the async notification thread pool, by default it only has 1 thread.
-         viewHandlingCompletionService.submit(new Callable<Void>() {
+         asyncTransportExecutor.submit(new Runnable() {
             @Override
-            public Void call() {
+            public void run() {
                handleClusterView(e.isMergeView(), e.getViewId());
-               return null;
             }
          });
       }

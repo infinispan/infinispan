@@ -93,7 +93,8 @@ public class StateRequestCommand extends BaseRpcCommand implements TopologyAffec
 
    @Override
    public boolean canBlock() {
-      return type == Type.GET_TRANSACTIONS || type == Type.START_STATE_TRANSFER;
+      // All state request commands need to wait for the proper topology
+      return true;
    }
 
    public Type getType() {

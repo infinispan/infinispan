@@ -28,9 +28,6 @@ import org.infinispan.remoting.inboundhandler.Reply;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.responses.SuccessfulResponse;
-import org.infinispan.topology.CacheTopologyControlCommand;
-import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
@@ -306,16 +303,16 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
             }
          } catch (InterruptedException e) {
             log.shutdownHandlingCommand(cmd);
-            reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")));
+            reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")), cmd);
          } catch (Throwable x) {
             if (cmd == null)
                log.errorUnMarshallingCommand(x);
             else
                log.exceptionHandlingCommand(cmd, x);
-            reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", x)));
+            reply(response, new ExceptionResponse(new CacheException("Problems invoking command.", x)), cmd);
          }
       } else {
-         reply(response, null);
+         reply(response, null, null);
       }
    }
 
@@ -325,7 +322,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       handler.handleFromRemoteSite(siteAddress.getSite(), (XSiteReplicateCommand) cmd, new Reply() {
          @Override
          public void reply(Object returnValue) {
-            CommandAwareRpcDispatcher.this.reply(response, returnValue);
+            CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd);
          }
       }, decodeDeliverMode(req));
    }
@@ -334,7 +331,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       handler.handleFromCluster(fromJGroupsAddress(req.getSrc()), cmd, new Reply() {
          @Override
          public void reply(Object returnValue) {
-            CommandAwareRpcDispatcher.this.reply(response, returnValue);
+            CommandAwareRpcDispatcher.this.reply(response, returnValue, cmd);
          }
       }, decodeDeliverMode(req));
    }
@@ -374,9 +371,9 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       return getClass().getSimpleName() + "[Outgoing marshaller: " + req_marshaller + "; incoming marshaller: " + rsp_marshaller + "]";
    }
 
-   private void reply(org.jgroups.blocks.Response response, Object retVal) {
+   private void reply(org.jgroups.blocks.Response response, Object retVal, ReplicableCommand command) {
       if (response != null) {
-         if (trace) log.tracef("About to send back response %s", retVal);
+         if (trace) log.tracef("About to send back response %s for command %s", retVal, command);
          //exceptionThrown is always false because the exceptions are wrapped in an ExceptionResponse
          response.send(retVal, false);
       }
