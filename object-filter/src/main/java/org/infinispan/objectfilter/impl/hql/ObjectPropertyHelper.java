@@ -133,4 +133,9 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
    public abstract boolean isRepeatedProperty(String entityType, List<String> propertyPath);
 
    public abstract TypeMetadata getEntityMetadata(String targetTypeName);
+
+   @Override
+   public Object convertToBackendType(String entityType, List<String> propertyPath, Object value) {
+     return value;
+   }
 }

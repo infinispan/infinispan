@@ -52,7 +52,7 @@ public final class ClusterTestHelper {
                                                           boolean setInfinispanDirectory, boolean setInfinispanIndexManager) {
       FullTextSessionBuilder node = new FullTextSessionBuilder();
       if (setInfinispanDirectory) {
-         node.setProperty("hibernate.search.default.directory_provider", "org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider");
+         node.setProperty("hibernate.search.default.directory_provider", "infinispan");
       }
       if (setInfinispanIndexManager) {
          node.setProperty("hibernate.search.default.indexmanager", "infinispan");

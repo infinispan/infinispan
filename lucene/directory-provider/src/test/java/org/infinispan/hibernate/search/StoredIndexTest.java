@@ -98,7 +98,7 @@ public class StoredIndexTest {
     */
    private void startNode(boolean createSchema) {
       node = new FullTextSessionBuilder()
-            .setProperty("hibernate.search.default.directory_provider", "org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider")
+            .setProperty("hibernate.search.default.directory_provider", "infinispan")
             .setProperty(DefaultCacheManagerService.INFINISPAN_CONFIGURATION_RESOURCENAME, "filesystem-loading-infinispan.xml")
                   // avoid killing the schema when you still have to run the second node:
             .setProperty(Environment.HBM2DDL_AUTO, createSchema ? "create" : "validate")

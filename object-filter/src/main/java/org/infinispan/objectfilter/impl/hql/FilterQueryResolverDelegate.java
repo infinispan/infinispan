@@ -58,6 +58,11 @@ public final class FilterQueryResolverDelegate implements QueryResolverDelegate 
    }
 
    @Override
+   public void registerJoinAlias(Tree alias, PropertyPath path) {
+      throw new UnsupportedOperationException("Not implemented");
+   }
+
+   @Override
    public boolean isUnqualifiedPropertyReference() {
       return true;
    }

@@ -5,6 +5,8 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Store;
+import org.hibernate.search.annotations.Facet;
+import org.hibernate.search.annotations.FacetEncodingType;
 import org.hibernate.search.bridge.builtin.IntegerBridge;
 
 import java.io.Serializable;
@@ -22,6 +24,7 @@ public class Car implements Serializable {
    private String make;
 
    @Field(analyze = Analyze.NO, bridge = @FieldBridge(impl = IntegerBridge.class))
+   @Facet(encoding = FacetEncodingType.STRING)
    private int cubicCapacity;
 
    public Car(String make, String color, int cubicCapacity) {
