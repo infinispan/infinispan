@@ -27,7 +27,7 @@ public class ClientFilterEventsTest extends SingleHotRodServerTest {
    protected HotRodServer createHotRodServer() {
       HotRodServerConfigurationBuilder builder = new HotRodServerConfigurationBuilder();
       HotRodServer server = HotRodClientTestingUtil.startHotRodServer(cacheManager, builder);
-      server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory());
+      server.addCacheEventFilterFactory("static-filter-factory", new StaticCacheEventFilterFactory(2));
       server.addCacheEventFilterFactory("dynamic-filter-factory", new DynamicCacheEventFilterFactory());
       server.addCacheEventFilterFactory("raw-static-filter-factory", new RawStaticCacheEventFilterFactory());
       return server;

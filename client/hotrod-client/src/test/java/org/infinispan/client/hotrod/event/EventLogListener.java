@@ -219,13 +219,24 @@ public class EventLogListener<K> {
 
    @NamedFactory(name = "static-filter-factory")
    public static class StaticCacheEventFilterFactory implements CacheEventFilterFactory {
+      private final int staticKey;
+
+      public StaticCacheEventFilterFactory(int staticKey) {
+         this.staticKey = staticKey;
+      }
+
       @Override
       public CacheEventFilter<Integer, String> getFilter(final Object[] params) {
-         return new StaticCacheEventFilter();
+         return new StaticCacheEventFilter(staticKey);
       }
 
       static class StaticCacheEventFilter implements CacheEventFilter<Integer, String>, Serializable {
-         final Integer staticKey = 2;
+         final Integer staticKey;
+
+         StaticCacheEventFilter(Integer staticKey) {
+            this.staticKey = staticKey;
+         }
+
          @Override
          public boolean accept(Integer key, String previousValue, Metadata previousMetadata, String value,
                                Metadata metadata, EventType eventType) {
