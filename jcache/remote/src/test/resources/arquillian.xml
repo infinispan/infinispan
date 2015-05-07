@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<arquillian xmlns="http://jboss.org/schema/arquillian"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://jboss.org/schema/arquillian
+        http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+    <group qualifier="Grid" default="true">
+        <container qualifier="container-1" default="true" mode="manual">
+            <configuration>
+                <property name="jbossHome">${project.build.directory}/node1/infinispan-server-${project.version}
+                </property>
+                <property name="serverConfig">clustered.xml</property>
+                <property name="javaVmArguments">-Xmx512m -XX:MaxPermSize=128m -Djava.net.preferIPv4Stack=true
+                    -Djgroups.bind_addr=127.0.0.1 -Djboss.server.default.config=clustered.xml -Djboss.node.name=node1
+                </property>
+            </configuration>
+        </container>
+        <container qualifier="container-2" mode="manual">
+            <configuration>
+                <property name="jbossHome">${project.build.directory}/node2/infinispan-server-${project.version}
+                </property>
+                <property name="serverConfig">clustered.xml</property>
+                <property name="javaVmArguments">-Xmx512m -XX:MaxPermSize=128m -Djava.net.preferIPv4Stack=true
+                    -Djgroups.bind_addr=127.0.0.1 -Djboss.server.default.config=clustered.xml -Djboss.node.name=node2
+                    -Djboss.socket.binding.port-offset=10000
+                </property>
+                <property name="managementPort">19990</property>
+            </configuration>
+        </container>
+    </group>
+
+</arquillian>
