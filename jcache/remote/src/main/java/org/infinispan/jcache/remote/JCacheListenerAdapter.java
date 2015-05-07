@@ -5,12 +5,12 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
-import org.infinispan.commons.event.KVPEvent;
+import org.infinispan.commons.KeyValueWithPrevious;
 import org.infinispan.jcache.AbstractJCache;
 import org.infinispan.jcache.AbstractJCacheListenerAdapter;
 import org.infinispan.jcache.AbstractJCacheNotifier;
 
-@ClientListener(converterFactoryName = "kvp-converter-factory")
+@ClientListener(converterFactoryName = "key-value-with-previous-converter-factory")
 public class JCacheListenerAdapter<K, V> extends AbstractJCacheListenerAdapter<K, V> {
    public JCacheListenerAdapter(AbstractJCache<K, V> jcache, AbstractJCacheNotifier<K, V> notifier) {
       super(jcache, notifier);
@@ -19,8 +19,8 @@ public class JCacheListenerAdapter<K, V> extends AbstractJCacheListenerAdapter<K
    @ClientCacheEntryCreated
    @ClientCacheEntryModified
    @ClientCacheEntryRemoved
-   public void handleCacheEntryEvent(ClientCacheEntryCustomEvent<KVPEvent<K, V>> e) {
-      KVPEvent<K, V> event = e.getEventData();
+   public void handleCacheEntryEvent(ClientCacheEntryCustomEvent<KeyValueWithPrevious<K, V>> e) {
+      KeyValueWithPrevious<K, V> event = e.getEventData();
       switch (e.getType()) {
       case CLIENT_CACHE_ENTRY_CREATED: {
          notifier.notifyEntryCreated(jcache, event.getKey(), event.getValue());

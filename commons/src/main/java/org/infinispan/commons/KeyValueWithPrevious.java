@@ -1,8 +1,8 @@
-package org.infinispan.commons.event;
+package org.infinispan.commons;
 
 import java.io.Serializable;
 
-public class KVPEvent<K, V> implements Serializable {
+public class KeyValueWithPrevious<K, V> implements Serializable {
    /** The serialVersionUID */
    private static final long serialVersionUID = -7875910676423622104L;
 
@@ -10,7 +10,7 @@ public class KVPEvent<K, V> implements Serializable {
    private final V value;
    private final V prev;
 
-   public KVPEvent(K key, V value, V prev) {
+   public KeyValueWithPrevious(K key, V value, V prev) {
       this.key = key;
       this.value = value;
       this.prev = prev;
@@ -26,5 +26,11 @@ public class KVPEvent<K, V> implements Serializable {
 
    public V getPrev() {
       return prev;
+   }
+
+   @Override
+   public String toString() {
+      return String.format("%s{key=%s, value=%s, prev=%s}",
+            getClass().getSimpleName(), key, value, prev);
    }
 }

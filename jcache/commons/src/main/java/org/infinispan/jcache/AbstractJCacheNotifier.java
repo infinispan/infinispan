@@ -1,6 +1,5 @@
 package org.infinispan.jcache;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -69,7 +68,7 @@ public abstract class AbstractJCacheNotifier<K, V> {
 
    private AbstractJCacheListenerAdapter<K,V> listenerAdapter;
 
-   private ConcurrentMap<List<Object>, Queue<CountDownLatch>> latchesByEventSource = new ConcurrentHashMap<>();
+   private ConcurrentMap<EventSource<K, V>, Queue<CountDownLatch>> latchesByEventSource = new ConcurrentHashMap<>();
 
    public void addListener(CacheEntryListenerConfiguration<K, V> reg,
          AbstractJCache<K, V> jcache, AbstractJCacheNotifier<K, V> notifier) {
@@ -91,7 +90,7 @@ public abstract class AbstractJCacheNotifier<K, V> {
    }
 
    public void addSyncNotificationLatch(Cache<K, V> cache, K key, V value, CountDownLatch latch) {
-      List<Object> eventSourceKey = Arrays.<Object>asList(cache, key, value);
+      EventSource<K, V> eventSourceKey = new EventSource<K, V>(cache, key, value);
 
       Queue<CountDownLatch> latches = new ConcurrentLinkedQueue<>();
       Queue<CountDownLatch> prev = latchesByEventSource.putIfAbsent(eventSourceKey, latches);
@@ -102,7 +101,8 @@ public abstract class AbstractJCacheNotifier<K, V> {
    }
 
    public void removeSyncNotificationLatch(Cache<K, V> cache, K key, V value, CountDownLatch latch) {
-      List<Object> eventSourceKey = Arrays.<Object>asList(cache, key, value);
+      EventSource<K, V> eventSourceKey = new EventSource<K, V>(cache, key, value);
+
       Queue<CountDownLatch> latches = latchesByEventSource.get(eventSourceKey);
 
       if (latches == null) {
@@ -115,7 +115,8 @@ public abstract class AbstractJCacheNotifier<K, V> {
    }
 
    private void notifySync(Cache<K, V> cache, K key, V value) {
-      List<Object> eventSourceKey = Arrays.<Object>asList(cache, key, value);
+      EventSource<K, V> eventSourceKey = new EventSource<K, V>(cache, key, value);
+
       notifySync(latchesByEventSource.get(eventSourceKey));
    }
 
@@ -295,4 +296,40 @@ public abstract class AbstractJCacheNotifier<K, V> {
    }
 
    protected abstract AbstractJCacheListenerAdapter<K, V> createListenerAdapter(AbstractJCache<K, V> jcache, AbstractJCacheNotifier<K, V> notifier);
+
+   private static class EventSource<K, V> {
+      private final Cache<K, V> cache;
+      private final K key;
+      private final V value;
+
+      public EventSource(final Cache<K, V> cache, final K key, final V value) {
+         this.cache = cache;
+         this.key = key;
+         this.value = value;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+         if (!(obj instanceof EventSource)) {
+            return false;
+         }
+         EventSource<?, ?> otherEventSource = (EventSource<?, ?>) obj;
+         return equalOrNull(cache, otherEventSource.cache)
+               && equalOrNull(key, otherEventSource.key)
+               && equalOrNull(value, otherEventSource.value);
+      }
+
+      private static boolean equalOrNull(Object obj1, Object obj2) {
+         return ((obj1 == null) && (obj2 == null)) || ((obj1 != null) && obj1.equals(obj2));
+      }
+
+      @Override
+      public int hashCode() {
+         int result = 1;
+         result = 31 * result + (cache == null ? 0 : cache.hashCode());
+         result = 31 * result + (key == null ? 0 : key.hashCode());
+         result = 31 * result + (value == null ? 0 : value.hashCode());
+         return result;
+      }
+   }
 }
