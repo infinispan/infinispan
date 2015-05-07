@@ -8,19 +8,24 @@ import javax.cache.Cache;
 import javax.cache.event.CacheEntryListenerException;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.jcache.AbstractJCacheNotifier;
+import org.infinispan.jcache.remote.logging.Log;
 
 public class RemoteCacheWithSyncListeners<K, V> extends RemoteCacheWrapper<K, V> {
    private static final boolean DONT_EXPECT_EVENT_ON_NULL_RESULT = false;
-   private static final long TIMEOUT = 5000;
+
+   private static final Log log = LogFactory.getLog(RemoteCacheWithSyncListeners.class, Log.class);
 
    private final AbstractJCacheNotifier<K, V> notifier;
    private final Cache<K, V> cache;
+   private final int timeout;
 
    public RemoteCacheWithSyncListeners(RemoteCache<K, V> delegate, AbstractJCacheNotifier<K, V> notifier, Cache<K, V> cache) {
       super(delegate);
       this.notifier = notifier;
       this.cache = cache;
+      this.timeout = delegate.getRemoteCacheManager().getConfiguration().socketTimeout();
    }
 
    @Override
@@ -88,17 +93,18 @@ public class RemoteCacheWithSyncListeners<K, V> extends RemoteCacheWrapper<K, V>
             if ((ret == null) && !expectEventOnNull) {
                return ret;
             }
-            latch.await(TIMEOUT, TimeUnit.MILLISECONDS);
+            boolean wasClosed = latch.await(timeout, TimeUnit.MILLISECONDS);
+            if (!wasClosed) {
+               log.timeoutWaitingEvent();
+            }
             return ret;
          } finally {
             notifier.removeSyncNotificationLatch(cache, key, value, latch);
          }
-      } catch (Exception ex) {
-         if (!(ex instanceof CacheEntryListenerException)) {
-            throw new CacheEntryListenerException(ex);
-         } else {
-            throw (CacheEntryListenerException) ex;
-         }
+      } catch (CacheEntryListenerException ex) {
+         throw ex;
+      } catch (Exception e) {
+         throw new CacheEntryListenerException(e);
       }
    }
 

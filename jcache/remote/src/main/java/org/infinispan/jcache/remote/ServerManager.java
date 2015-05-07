@@ -1,5 +1,15 @@
 package org.infinispan.jcache.remote;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.client.ModelControllerClient;
 import static org.jboss.as.controller.client.helpers.ClientConstants.ADD;
 import static org.jboss.as.controller.client.helpers.ClientConstants.CHILD_TYPE;
 import static org.jboss.as.controller.client.helpers.ClientConstants.NAME;
@@ -12,17 +22,6 @@ import static org.jboss.as.controller.client.helpers.ClientConstants.REMOVE_OPER
 import static org.jboss.as.controller.client.helpers.ClientConstants.RESULT;
 import static org.jboss.as.controller.client.helpers.ClientConstants.SUBSYSTEM;
 import static org.jboss.as.controller.client.helpers.ClientConstants.SUCCESS;
-
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.jboss.as.controller.PathAddress;
-import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
 
 public class ServerManager {
@@ -71,29 +70,38 @@ public class ServerManager {
       return result;
    }
 
+   private void checkExistence(final String cacheType, final String cacheName, final AtomicBoolean result) throws ManagementClientException {
+      if (!result.get()) {
+         withManagementClient(host, port, new ManagementRunnable() {
+            @Override
+            public void run(ModelControllerClient client) throws Exception {
+               PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, "infinispan")
+                     .append("cache-container", getHotRodCacheContainer(client))
+                     .append(cacheType, cacheName);
+
+               ModelNode op = new ModelNode();
+               op.get(OP).set(READ_ATTRIBUTE_OPERATION);
+               op.get(OP_ADDR).set(pathAddress.toModelNode());
+               op.get(NAME).set("start");
+
+               ModelNode resp = client.execute(op);
+               if (SUCCESS.equals(resp.get(OUTCOME).asString())) {
+                  result.set(true);
+               }
+            }
+         });
+      }
+   }
+
    public boolean containsCache(final String cacheName) throws NotAvailableException, ManagementClientException {
       checkServerManagementAvailable();
 
       final AtomicBoolean result = new AtomicBoolean(false);
 
-      withManagementClient(host, port, new ManagementRunnable() {
-         @Override
-         public void run(ModelControllerClient client) throws Exception {
-            PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, "infinispan")
-                  .append("cache-container", getHotRodCacheContainer(client))
-                  .append("local-cache", cacheName);
-
-            ModelNode op = new ModelNode();
-            op.get(OP).set(READ_ATTRIBUTE_OPERATION);
-            op.get(OP_ADDR).set(pathAddress.toModelNode());
-            op.get(NAME).set("start");
-
-            ModelNode resp = client.execute(op);
-            if (SUCCESS.equals(resp.get(OUTCOME).asString())) {
-               result.set(true);
-            }
-         }
-      });
+      checkExistence("local-cache", cacheName, result);
+      checkExistence("distributed-cache", cacheName, result);
+      checkExistence("replicated-cache", cacheName, result);
+      checkExistence("invalidation-cache", cacheName, result);
 
       return result.get();
    }

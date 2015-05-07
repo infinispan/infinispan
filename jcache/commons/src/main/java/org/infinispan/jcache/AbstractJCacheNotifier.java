@@ -24,7 +24,7 @@ import javax.cache.event.EventType;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.EmptyQueue;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -41,8 +41,6 @@ public abstract class AbstractJCacheNotifier<K, V> {
          LogFactory.getLog(AbstractJCacheNotifier.class, Log.class);
 
    private static final boolean isTrace = log.isTraceEnabled();
-
-   private static final Queue<CountDownLatch> EMPTY_QUEUE = new EmptyQueue<>();
 
    // Traversals are a not more common than mutations when it comes to
    // keeping track of registered listeners, so use copy-on-write lists.
@@ -88,12 +86,7 @@ public abstract class AbstractJCacheNotifier<K, V> {
    public void addSyncNotificationLatch(Cache<K, V> cache, K key, V value, CountDownLatch latch) {
       EventSource<K, V> eventSourceKey = new EventSource<K, V>(cache, key, value);
 
-      Queue<CountDownLatch> latches = new ConcurrentLinkedQueue<>();
-      Queue<CountDownLatch> prev = latchesByEventSource.putIfAbsent(eventSourceKey, latches);
-      if (prev != null) {
-         latches = prev;
-      }
-      latches.add(latch);
+      latchesByEventSource.computeIfAbsent(eventSourceKey, kvEventSource -> new ConcurrentLinkedQueue<>()).add(latch);
    }
 
    public void removeSyncNotificationLatch(Cache<K, V> cache, K key, V value, CountDownLatch latch) {
@@ -104,10 +97,11 @@ public abstract class AbstractJCacheNotifier<K, V> {
       if (latches == null) {
          return;
       }
-      latches.remove(latch);
-      if (latches.isEmpty()) {
-         latchesByEventSource.remove(eventSourceKey, EMPTY_QUEUE);
-      }
+
+      latchesByEventSource.compute(eventSourceKey, (kvEventSource, countDownLatches) -> {
+         countDownLatches.remove(latch);
+         return countDownLatches.isEmpty() ? null : countDownLatches;
+      });
    }
 
    private void notifySync(Cache<K, V> cache, K key, V value) {
@@ -120,11 +114,8 @@ public abstract class AbstractJCacheNotifier<K, V> {
       if (latches == null) {
          return;
       }
-      while (true) {
-         CountDownLatch latch = latches.poll();
-         if (latch == null) {
-            break;
-         }
+      CountDownLatch latch = latches.poll();
+      if (latch != null) {
          latch.countDown();
       }
    }
@@ -170,16 +161,12 @@ public abstract class AbstractJCacheNotifier<K, V> {
    }
 
    public void notifyEntryExpired(Cache<K, V> cache, K key, V value) {
-      try {
-         if (!expiredListeners.isEmpty()) {
-            List<CacheEntryEvent<? extends K, ? extends V>> events =
-                  createEvent(cache, key, value, EventType.EXPIRED);
-            for (CacheEntryExpiredListener<K, V> listener : expiredListeners) {
-               listener.onExpired(getEntryIterable(events, listenerCfgs.get(listener)));
-            }
+      if (!expiredListeners.isEmpty()) {
+         List<CacheEntryEvent<? extends K, ? extends V>> events =
+               createEvent(cache, key, value, EventType.EXPIRED);
+         for (CacheEntryExpiredListener<K, V> listener : expiredListeners) {
+            listener.onExpired(getEntryIterable(events, listenerCfgs.get(listener)));
          }
-      } finally {
-         notifySync(cache, key, value);
       }
    }
 
