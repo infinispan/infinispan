@@ -107,8 +107,6 @@
             <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
         </module-def>
 
-        <module-def name="org.hibernate.search.infinispan-storage" slot="${infinispan.slot}" />
-
         <module-def name="org.infinispan.objectfilter" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-objectfilter" />
         </module-def>
@@ -151,16 +149,6 @@
             <maven-resource group="org.hibernate.hql" artifact="hibernate-hql-lucene" />
         </module-def>
     </target>
-    
-    <!-- Modelus aliases to satisfy dependencies -->
-    <condition property="build.module.aliases">
-        <not>
-            <equals arg1="${infinispan.slot}" arg2="${hibernate_dep.infinispan.slot}"/>
-        </not>
-    </condition>
-    <target name="module-aliases" if="build.module.aliases">
-        <module-def name="org.infinispan" slot="${hibernate_dep.infinispan.slot}" module.src="org.infinispan.main-hibernate-alias" />  		
-    </target>
 
-    <target name="all" depends="clean, copy-files, modules, module-aliases" />
+    <target name="all" depends="clean, copy-files, modules" />
 </project>
