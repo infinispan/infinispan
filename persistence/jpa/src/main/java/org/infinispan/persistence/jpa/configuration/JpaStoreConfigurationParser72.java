@@ -19,8 +19,9 @@ import javax.xml.stream.XMLStreamException;
  */
 @MetaInfServices
 @Namespaces({
-      @Namespace(uri = "urn:infinispan:config:store:jpa:7.2", root = "jpa-store"),
-      @Namespace(root = "jpa-store")
+   @Namespace(uri = "urn:infinispan:config:store:jpa:7.0", root = "jpa-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jpa:7.1", root = "jpa-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jpa:7.2", root = "jpa-store"),
 })
 public class JpaStoreConfigurationParser72 implements ConfigurationParser {
    @Override

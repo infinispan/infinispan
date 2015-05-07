@@ -7,7 +7,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser70;
+import org.infinispan.configuration.parsing.Parser80;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
@@ -16,12 +16,14 @@ import javax.xml.stream.XMLStreamException;
 
 /**
  * @author Galder Zamarreño
+ * @since 8.0
  */
 @MetaInfServices
 @Namespaces({
-      @Namespace(uri = "urn:infinispan:config:store:jpa:7.0", root = "jpa-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jpa:8.0", root = "jpa-store"),
+   @Namespace(root = "jpa-store")
 })
-public class JpaStoreConfigurationParser70 implements ConfigurationParser {
+public class JpaStoreConfigurationParser80 implements ConfigurationParser {
    @Override
    public void readElement(XMLExtendedStreamReader reader,
          ConfigurationBuilderHolder holder) throws XMLStreamException {
@@ -70,7 +72,7 @@ public class JpaStoreConfigurationParser70 implements ConfigurationParser {
                break;
             }
             default: {
-               Parser70.parseStoreAttribute(reader, i, builder);
+               Parser80.parseStoreAttribute(reader, i, builder);
             }
          }
       }

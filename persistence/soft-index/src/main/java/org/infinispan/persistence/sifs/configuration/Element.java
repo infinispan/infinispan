@@ -8,7 +8,7 @@ import java.util.Map;
  */
 public enum Element {
    UNKNOWN(null),
-   SOFT_INDEX_FILE_STORE(SoftIndexFileStoreConfigurationParser70.ROOT_ELEMENT),
+   SOFT_INDEX_FILE_STORE(SoftIndexFileStoreConfigurationParser72.ROOT_ELEMENT),
    INDEX("index"),
    DATA("data")
    ;

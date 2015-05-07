@@ -28,8 +28,9 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  */
 @MetaInfServices
 @Namespaces({
+   @Namespace(uri = "urn:infinispan:config:store:remote:7.0", root = "remote-store"),
+   @Namespace(uri = "urn:infinispan:config:store:remote:7.1", root = "remote-store"),
    @Namespace(uri = "urn:infinispan:config:store:remote:7.2", root = "remote-store"),
-   @Namespace(root = "remote-store")
 })
 public class RemoteStoreConfigurationParser72 implements ConfigurationParser {
 

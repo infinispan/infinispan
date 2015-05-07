@@ -23,8 +23,9 @@ import javax.xml.stream.XMLStreamException;
  */
 @MetaInfServices
 @Namespaces({
-      @Namespace(uri = "urn:infinispan:config:store:leveldb:7.2", root = "leveldb-store"),
-      @Namespace(root = "leveldb-store")
+   @Namespace(uri = "urn:infinispan:config:store:leveldb:7.0", root = "leveldb-store"),
+   @Namespace(uri = "urn:infinispan:config:store:leveldb:7.1", root = "leveldb-store"),
+   @Namespace(uri = "urn:infinispan:config:store:leveldb:7.2", root = "leveldb-store"),
 })
 public class LevelDBStoreConfigurationParser72 implements ConfigurationParser {
 

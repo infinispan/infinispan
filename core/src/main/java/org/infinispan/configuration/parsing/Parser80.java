@@ -56,25 +56,26 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
 import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
- * This class implements the parser for AS7/EAP/JDG schema files
+ * This class implements the parser for Infinispan/AS7/EAP/JDG schema files
  *
  * @author Tristan Tarrant
  * @author Galder Zamarreño
- * @since 7.1
+ * @since 8.0
  */
 @MetaInfServices
 @Namespaces({
-      @Namespace(uri = "urn:infinispan:config:7.1", root = "infinispan"),
+   @Namespace(uri = "urn:infinispan:config:8.0", root = "infinispan"),
+   @Namespace(root = "infinispan")
 })
-public class Parser71 implements ConfigurationParser {
+public class Parser80 implements ConfigurationParser {
 
-   private static final Log log = LogFactory.getLog(Parser71.class);
+   private static final Log log = LogFactory.getLog(Parser80.class);
 
    private final Map<String, DefaultThreadFactory> threadFactories = new HashMap<String, DefaultThreadFactory>();
    private final Map<String, ThreadPoolConfigurationBuilder> threadPools = new HashMap<String, ThreadPoolConfigurationBuilder>();
    private final Map<String, String> threadPoolToThreadFactory = new HashMap<String, String>();
 
-   public Parser71() {
+   public Parser80() {
    }
 
    @Override
@@ -476,7 +477,9 @@ public class Parser71 implements ConfigurationParser {
                      createThreadPoolConfiguration(value, ASYNC_NOTIFICATION_EXECUTOR));
                break;
             }
-            case EVICTION_EXECUTOR: {
+            case EVICTION_EXECUTOR:
+               log.evictionExecutorDeprecated();
+            case EXPIRATION_EXECUTOR: {
                builder.expirationThreadPool().read(
                      createThreadPoolConfiguration(value, EXPIRATION_SCHEDULED_EXECUTOR));
                break;
@@ -489,6 +492,11 @@ public class Parser71 implements ConfigurationParser {
             case PERSISTENCE_EXECUTOR: {
                builder.persistenceThreadPool().read(
                      createThreadPoolConfiguration(value, PERSISTENCE_EXECUTOR));
+               break;
+            }
+            case STATE_TRANSFER_EXECUTOR: {
+               builder.stateTransferThreadPool().read(
+                     createThreadPoolConfiguration(value, STATE_TRANSFER_EXECUTOR));
                break;
             }
             case MODULE: {
@@ -1358,7 +1366,7 @@ public class Parser71 implements ConfigurationParser {
                break;
             }
             case MAX_ENTRIES: {
-               builder.eviction().maxEntries(Integer.parseInt(value));
+               builder.eviction().maxEntries(Long.parseLong(value));
                break;
             }
             case THREAD_POLICY: {

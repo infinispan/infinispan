@@ -121,9 +121,10 @@ public class TestingUtil {
       START_60(6, 0),
       START_70(7, 0),
       START_71(7, 1),
-      START_72(7, 2);
+      START_72(7, 2),
+      START_80(8, 0);
 
-      public static final InfinispanStartTag LATEST = START_72;
+      public static final InfinispanStartTag LATEST = START_80;
       private final String tag;
       private final String majorMinor;
 
@@ -1468,7 +1469,7 @@ public class TestingUtil {
       }
       return new Subject(true, set, InfinispanCollections.emptySet(), InfinispanCollections.emptySet());
    }
-   
+
 	public static String loadFileAsString(InputStream is) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		BufferedReader r = new BufferedReader(new InputStreamReader(is));

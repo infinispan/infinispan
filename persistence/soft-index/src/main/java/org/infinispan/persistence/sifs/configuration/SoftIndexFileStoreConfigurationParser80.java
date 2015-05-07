@@ -11,7 +11,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser71;
+import org.infinispan.configuration.parsing.Parser80;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
@@ -22,14 +22,14 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespaces({
-      @Namespace(uri = "urn:infinispan:config:store:soft-index:7.1",
-                 root = SoftIndexFileStoreConfigurationParser71.ROOT_ELEMENT),
-      @Namespace(root = SoftIndexFileStoreConfigurationParser71.ROOT_ELEMENT)
+      @Namespace(uri = "urn:infinispan:config:store:soft-index:8.0",
+                 root = SoftIndexFileStoreConfigurationParser80.ROOT_ELEMENT),
+      @Namespace(root = SoftIndexFileStoreConfigurationParser80.ROOT_ELEMENT)
 })
-public class SoftIndexFileStoreConfigurationParser71 implements ConfigurationParser {
+public class SoftIndexFileStoreConfigurationParser80 implements ConfigurationParser {
    public static final String ROOT_ELEMENT = "soft-index-file-store";
 
-   public SoftIndexFileStoreConfigurationParser71() {
+   public SoftIndexFileStoreConfigurationParser80() {
    }
 
    @Override
@@ -66,7 +66,7 @@ public class SoftIndexFileStoreConfigurationParser71 implements ConfigurationPar
                builder.compactionThreshold(Double.parseDouble(value));
                break;
             default:
-               Parser71.parseStoreAttribute(reader, i, builder);
+               Parser80.parseStoreAttribute(reader, i, builder);
                break;
          }
       }
@@ -83,7 +83,7 @@ public class SoftIndexFileStoreConfigurationParser71 implements ConfigurationPar
                break;
             }
             default: {
-               Parser71.parseStoreElement(reader, builder);
+               Parser80.parseStoreElement(reader, builder);
             }
          }
       }

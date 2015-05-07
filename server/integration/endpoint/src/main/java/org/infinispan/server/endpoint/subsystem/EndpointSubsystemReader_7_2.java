@@ -44,6 +44,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
  *
  */
 class EndpointSubsystemReader_7_2 implements XMLStreamConstants, XMLElementReader<List<ModelNode>> {
+   public static final XMLElementReader<List<ModelNode>> INSTANCE = new EndpointSubsystemReader_7_2();
 
    @Override
    public void readElement(final XMLExtendedStreamReader reader, final List<ModelNode> operations)

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema attributeFormDefault="unqualified"
-   elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:store:soft-index:7.2"
-   xmlns:tns="urn:infinispan:config:store:soft-index:7.2" xmlns:config="urn:infinispan:config:7.2"
+   elementFormDefault="qualified" version="1.0" targetNamespace="urn:infinispan:config:store:soft-index:8.0"
+   xmlns:tns="urn:infinispan:config:store:soft-index:8.0" xmlns:config="urn:infinispan:config:8.0"
    xmlns:xs="http://www.w3.org/2001/XMLSchema">
-   <xs:import namespace="urn:infinispan:config:7.2" schemaLocation="http://www.infinispan.org/schemas/infinispan-config-7.2.xsd" />
+   <xs:import namespace="urn:infinispan:config:8.0" schemaLocation="http://www.infinispan.org/schemas/infinispan-config-8.0.xsd" />
 
    <xs:element name="soft-index-file-store" type="tns:soft-index-file-store-type"/>
    
@@ -46,7 +46,7 @@
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
-      <xs:attribute name="max-file-size" type="xs:int" default="16777216">
+      <xs:attribute name="max-file-size" type="xs:int" default="1678.016">
          <xs:annotation>
             <xs:documentation>
                Max size of single file with entries, in bytes.

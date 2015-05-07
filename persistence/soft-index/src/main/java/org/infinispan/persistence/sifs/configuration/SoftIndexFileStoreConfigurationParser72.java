@@ -11,7 +11,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser70;
+import org.infinispan.configuration.parsing.Parser72;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.kohsuke.MetaInfServices;
 
@@ -22,13 +22,17 @@ import org.kohsuke.MetaInfServices;
  */
 @MetaInfServices
 @Namespaces({
-      @Namespace(uri = "urn:infinispan:config:soft-index:7.0",
-                 root = SoftIndexFileStoreConfigurationParser70.ROOT_ELEMENT),
+   @Namespace(uri = "urn:infinispan:config:store:soft-index:7.0",
+         root = SoftIndexFileStoreConfigurationParser72.ROOT_ELEMENT),
+   @Namespace(uri = "urn:infinispan:config:store:soft-index:7.1",
+         root = SoftIndexFileStoreConfigurationParser72.ROOT_ELEMENT),
+   @Namespace(uri = "urn:infinispan:config:store:soft-index:7.2",
+         root = SoftIndexFileStoreConfigurationParser72.ROOT_ELEMENT),
 })
-public class SoftIndexFileStoreConfigurationParser70 implements ConfigurationParser {
+public class SoftIndexFileStoreConfigurationParser72 implements ConfigurationParser {
    public static final String ROOT_ELEMENT = "soft-index-file-store";
 
-   public SoftIndexFileStoreConfigurationParser70() {
+   public SoftIndexFileStoreConfigurationParser72() {
    }
 
    @Override
@@ -65,7 +69,7 @@ public class SoftIndexFileStoreConfigurationParser70 implements ConfigurationPar
                builder.compactionThreshold(Double.parseDouble(value));
                break;
             default:
-               Parser70.parseStoreAttribute(reader, i, builder);
+               Parser72.parseStoreAttribute(reader, i, builder);
                break;
          }
       }
@@ -82,7 +86,7 @@ public class SoftIndexFileStoreConfigurationParser70 implements ConfigurationPar
                break;
             }
             default: {
-               Parser70.parseStoreElement(reader, builder);
+               Parser72.parseStoreElement(reader, builder);
             }
          }
       }
