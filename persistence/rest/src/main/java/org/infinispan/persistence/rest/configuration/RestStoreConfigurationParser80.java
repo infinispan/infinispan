@@ -1,5 +1,10 @@
 package org.infinispan.persistence.rest.configuration;
 
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
@@ -7,32 +12,28 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser70;
+import org.infinispan.configuration.parsing.Parser80;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.persistence.rest.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
 
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-
 /**
- * Rest store configuration parser for Infinispan 7.0.
+ * Rest store configuration parser
  *
  * @author Galder Zamarreño
- * @since 7.0
+ * @since 8.0
  */
 @MetaInfServices
 @Namespaces({
-   @Namespace(uri = "urn:infinispan:config:store:rest:7.0", root = "rest-store"),
+   @Namespace(uri = "urn:infinispan:config:store:rest:8.0", root = "rest-store"),
+   @Namespace(root = "rest-store")
 })
-public class RestStoreConfigurationParser70 implements ConfigurationParser {
+public class RestStoreConfigurationParser80 implements ConfigurationParser {
 
-   private static final Log log = LogFactory.getLog(RestStoreConfigurationParser70.class, Log.class);
+   private static final Log log = LogFactory.getLog(RestStoreConfigurationParser80.class, Log.class);
 
-   public RestStoreConfigurationParser70() {
+   public RestStoreConfigurationParser80() {
    }
 
    @Override
@@ -68,7 +69,7 @@ public class RestStoreConfigurationParser70 implements ConfigurationParser {
                break;
             }
             default: {
-               Parser70.parseStoreElement(reader, builder);
+               Parser80.parseStoreElement(reader, builder);
                break;
             }
          }
@@ -157,8 +158,12 @@ public class RestStoreConfigurationParser70 implements ConfigurationParser {
                builder.key2StringMapper(value);
                break;
             }
+            case RAW_VALUES: {
+               builder.rawValues(Boolean.parseBoolean(value));
+               break;
+            }
             default: {
-               Parser70.parseStoreAttribute(reader, i, builder);
+               Parser80.parseStoreAttribute(reader, i, builder);
                break;
             }
          }

@@ -35,20 +35,20 @@ public enum Namespace {
     // must be first
     UNKNOWN("jboss:domain:infinispan", 0, 0, null),
 
-    INFINISPAN_1_4("jboss:domain:infinispan", 1, 4, new InfinispanSubsystemXMLReader_1_4()),
-    INFINISPAN_SERVER_5_2("infinispan:server:core", 5, 2, new InfinispanSubsystemXMLReader_5_2()),
-    INFINISPAN_SERVER_5_3("infinispan:server:core", 5, 3, new InfinispanSubsystemXMLReader_5_3()),
-    INFINISPAN_SERVER_6_0("infinispan:server:core", 6, 0, new InfinispanSubsystemXMLReader_6_0()),
-    INFINISPAN_SERVER_7_0("infinispan:server:core", 7, 0, new InfinispanSubsystemXMLReader_7_0()),
-    INFINISPAN_SERVER_7_1("infinispan:server:core", 7, 1, new InfinispanSubsystemXMLReader_7_1()),
-    INFINISPAN_SERVER_7_2("infinispan:server:core", 7, 2, new InfinispanSubsystemXMLReader_7_2()),
+    INFINISPAN_SERVER_5_2("infinispan:server:core", 5, 2, InfinispanSubsystemXMLReader_5_3.INSTANCE),
+    INFINISPAN_SERVER_5_3("infinispan:server:core", 5, 3, InfinispanSubsystemXMLReader_5_3.INSTANCE),
+    INFINISPAN_SERVER_6_0("infinispan:server:core", 6, 0, InfinispanSubsystemXMLReader_6_0.INSTANCE),
+    INFINISPAN_SERVER_7_0("infinispan:server:core", 7, 0, InfinispanSubsystemXMLReader_7_2.INSTANCE),
+    INFINISPAN_SERVER_7_1("infinispan:server:core", 7, 1, InfinispanSubsystemXMLReader_7_2.INSTANCE),
+    INFINISPAN_SERVER_7_2("infinispan:server:core", 7, 2, InfinispanSubsystemXMLReader_7_2.INSTANCE),
+    INFINISPAN_SERVER_8_0("infinispan:server:core", 8, 0, InfinispanSubsystemXMLReader_8_0.INSTANCE),
     ;
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
     /**
      * The current namespace version.
      */
-    public static final Namespace CURRENT = INFINISPAN_SERVER_7_2;
+    public static final Namespace CURRENT = INFINISPAN_SERVER_8_0;
 
     private final int major;
     private final int minor;

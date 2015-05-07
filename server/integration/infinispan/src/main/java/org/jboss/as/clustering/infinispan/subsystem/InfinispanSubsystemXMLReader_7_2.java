@@ -33,6 +33,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
  */
 public final class InfinispanSubsystemXMLReader_7_2 implements XMLElementReader<List<ModelNode>> {
    private static final Logger log = Logger.getLogger(InfinispanSubsystemXMLReader_7_2.class);
+   public static final XMLElementReader<List<ModelNode>> INSTANCE = new InfinispanSubsystemXMLReader_7_2();
 
     /**
      * {@inheritDoc}

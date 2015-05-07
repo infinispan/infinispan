@@ -51,6 +51,7 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
  * @author Radoslav Husar
  */
 public final class InfinispanSubsystemXMLReader_5_3 implements XMLElementReader<List<ModelNode>> {
+    public static final XMLElementReader<List<ModelNode>> INSTANCE = new InfinispanSubsystemXMLReader_5_3();
 
     /**
      * {@inheritDoc}

@@ -7,7 +7,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser70;
+import org.infinispan.configuration.parsing.Parser80;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.persistence.jdbc.DatabaseType;
 import org.kohsuke.MetaInfServices;
@@ -21,17 +21,20 @@ import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperti
  * JDBC cache store configuration parser.
  *
  * @author Galder Zamarreño
- * @since 7.0
+ * @since 8.0
  */
 @MetaInfServices
 @Namespaces({
-    @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "string-keyed-jdbc-store"),
-    @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "binary-keyed-jdbc-store"),
-    @Namespace(uri = "urn:infinispan:config:store:jdbc:7.0", root = "mixed-keyed-jdbc-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jdbc:8.0", root = "string-keyed-jdbc-store"),
+   @Namespace(root = "string-keyed-jdbc-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jdbc:8.0", root = "binary-keyed-jdbc-store"),
+   @Namespace(root = "binary-keyed-jdbc-store"),
+   @Namespace(uri = "urn:infinispan:config:store:jdbc:8.0", root = "mixed-keyed-jdbc-store"),
+   @Namespace(root = "mixed-keyed-jdbc-store")
 })
-public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
+public class JdbcStoreConfigurationParser80 implements ConfigurationParser {
 
-   public JdbcStoreConfigurationParser70() {
+   public JdbcStoreConfigurationParser80() {
    }
 
    @Override
@@ -74,7 +77,7 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
                builder.dialect(DatabaseType.valueOf(value));
                break;
             default:
-               Parser70.parseStoreAttribute(reader, i, builder);
+               Parser80.parseStoreAttribute(reader, i, builder);
                break;
          }
       }
@@ -106,7 +109,7 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
                builder.dialect(DatabaseType.valueOf(value));
                break;
             default:
-               Parser70.parseStoreAttribute(reader, i, builder);
+               Parser80.parseStoreAttribute(reader, i, builder);
                break;
          }
       }
@@ -141,7 +144,7 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
             break;
          }
          default: {
-            Parser70.parseStoreElement(reader, builder);
+            Parser80.parseStoreElement(reader, builder);
             break;
          }
       }
@@ -230,7 +233,7 @@ public class JdbcStoreConfigurationParser70 implements ConfigurationParser {
                builder.dialect(DatabaseType.valueOf(value));
                break;
             default:
-               Parser70.parseStoreAttribute(reader, i, builder);
+               Parser80.parseStoreAttribute(reader, i, builder);
                break;
          }
       }

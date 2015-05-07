@@ -10,6 +10,7 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
 
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
+
 import java.util.*;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
@@ -26,6 +27,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
  * @author Martin Gencur
  */
 public final class InfinispanSubsystemXMLReader_6_0 implements XMLElementReader<List<ModelNode>> {
+    public static final XMLElementReader<List<ModelNode>> INSTANCE = new InfinispanSubsystemXMLReader_6_0();
 
     /**
      * {@inheritDoc}

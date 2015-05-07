@@ -1,0 +1,24 @@
+<subsystem xmlns="urn:infinispan:server:endpoint:8.0">
+   <hotrod-connector name="hotrod1" socket-binding="hotrod" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000">
+      <topology-state-transfer external-host="localhost" external-port="1234" lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+   </hotrod-connector>
+   <hotrod-connector name="hotrod2" socket-binding="hotrod" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000">
+      <topology-state-transfer external-host="localhost" external-port="1234" lazy-retrieval="false" await-initial-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+      <encryption security-realm="other" />
+   </hotrod-connector>
+   <hotrod-connector name="hotrod3" socket-binding="hotrod" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000">
+      <topology-state-transfer external-host="localhost" external-port="1234" lazy-retrieval="false" await-initial-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+      <authentication security-realm="other">
+        <sasl server-context-name="host" server-name="localhost" mechanisms="GSSAPI DIGEST-MD5 PLAIN" qop="auth" strength="high medium low">
+            <policy>
+                <no-anonymous value="true" />
+            </policy>
+            <property name="com.sun.security.sasl.digest.realm">ServerRealm</property>
+            <property name="com.sun.security.sasl.digest.utf8">true</property>
+        </sasl>
+      </authentication>
+   </hotrod-connector>
+   <memcached-connector cache="memcachedCache" socket-binding="memcached" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000" />
+   <rest-connector socket-binding="rest" cache-container="default" context-path="/" security-domain="other" auth-method="BASIC" security-mode="READ_WRITE" extended-headers="ON_DEMAND"/>
+   <websocket-connector socket-binding="websocket" cache-container="default" idle-timeout="100" tcp-nodelay="true" worker-threads="5" receive-buffer-size="10000" send-buffer-size="10000" />
+</subsystem>

@@ -7,7 +7,7 @@ import org.infinispan.configuration.parsing.ConfigurationParser;
 import org.infinispan.configuration.parsing.Namespace;
 import org.infinispan.configuration.parsing.Namespaces;
 import org.infinispan.configuration.parsing.ParseUtils;
-import org.infinispan.configuration.parsing.Parser71;
+import org.infinispan.configuration.parsing.Parser80;
 import org.infinispan.configuration.parsing.XMLExtendedStreamReader;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -19,17 +19,18 @@ import javax.xml.stream.XMLStreamException;
 /**
  *
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
- *
+ * @since 8.0
  */
 @MetaInfServices
 @Namespaces({
-      @Namespace(uri = "urn:infinispan:config:store:leveldb:7.1", root = "leveldb-store"),
+   @Namespace(uri = "urn:infinispan:config:store:leveldb:8.0", root = "leveldb-store"),
+   @Namespace(root = "leveldb-store")
 })
-public class LevelDBStoreConfigurationParser71 implements ConfigurationParser {
+public class LevelDBStoreConfigurationParser80 implements ConfigurationParser {
 
-   private static final Log log = LogFactory.getLog(LevelDBStoreConfigurationParser71.class);
+   private static final Log log = LogFactory.getLog(LevelDBStoreConfigurationParser80.class);
 
-   public LevelDBStoreConfigurationParser71() {
+   public LevelDBStoreConfigurationParser80() {
    }
 
    @Override
@@ -77,7 +78,7 @@ public class LevelDBStoreConfigurationParser71 implements ConfigurationParser {
                break;
             }
             default: {
-               Parser71.parseStoreAttribute(reader, i, builder);
+               Parser80.parseStoreAttribute(reader, i, builder);
             }
          }
       }
@@ -98,7 +99,7 @@ public class LevelDBStoreConfigurationParser71 implements ConfigurationParser {
                break;
             }
             default: {
-               Parser71.parseStoreElement(reader, builder);
+               Parser80.parseStoreElement(reader, builder);
             }
          }
       }
