@@ -107,6 +107,17 @@
          <artifactId>infinispan-lucene-directory</artifactId>
          <scope>test</scope>
       </dependency>
+      <dependency>
+         <groupId>com.h2database</groupId>
+         <artifactId>h2</artifactId>
+         <scope>test</scope>
+         <!--
+           This H2 version has to match the version bundled within WildFly
+           as we start the server and then connect to it from within WildFly:
+           it can not connect between different versions.
+           -->
+         <version>${version.h2.driver-within-wildfly}</version>
+      </dependency>
    </dependencies>
 
    <build>
@@ -141,7 +152,7 @@
                   <configuration>
                      <redirectTestOutputToFile>true</redirectTestOutputToFile>
                       <systemPropertyVariables>
-                          <hibernate.search.module.slot.version>${version.hibernate.search}</hibernate.search.module.slot.version>
+                          <version.hibernate.search>${version.hibernate.search}</version.hibernate.search>
                       </systemPropertyVariables>
                   </configuration>
                </execution>

@@ -1,6 +1,5 @@
 package org.infinispan.test.integration.as.wildfly;
 
-import org.infinispan.test.integration.as.VersionTestHelper;
 import org.infinispan.test.integration.as.wildfly.controller.MemberRegistration;
 import org.infinispan.test.integration.as.wildfly.model.Member;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -26,6 +25,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.infinispan.test.integration.as.VersionTestHelper.addHibernateSearchManifestDependencies;
 
 /**
  * Test the Hibernate Search module in Wildfly combined with an Infinispan Directory usage.
@@ -48,15 +48,16 @@ public class InfinispanModuleMemberRegistrationIT {
    }
 
    private static Archive<?> createTestArchive() {
-      return ShrinkWrap
-            .create(WebArchive.class, InfinispanModuleMemberRegistrationIT.class.getSimpleName() + ".war")
-            .addClasses(Member.class, MemberRegistration.class)
-            .addAsResource(persistenceXml(), "META-INF/persistence.xml")
-            .add(VersionTestHelper.moduleDependencyManifest(), "META-INF/MANIFEST.MF")
-                  //This test is simply reusing the default configuration file, but we copy
-                  //this configuration into the Archive to verify that resources can be loaded from it:
-            .addAsResource("user-provided-infinispan.xml", "user-provided-infinispan.xml")
-            .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
+      WebArchive webArchive = ShrinkWrap
+         .create(WebArchive.class, InfinispanModuleMemberRegistrationIT.class.getSimpleName() + ".war")
+         .addClasses(Member.class, MemberRegistration.class)
+         .addAsResource(persistenceXml(), "META-INF/persistence.xml")
+         //This test is simply reusing the default configuration file, but we copy
+         //this configuration into the Archive to verify that resources can be loaded from it:
+         .addAsResource("user-provided-infinispan.xml", "user-provided-infinispan.xml")
+         .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml");
+      addHibernateSearchManifestDependencies(webArchive);
+      return webArchive;
    }
 
    private static Asset persistenceXml() {
