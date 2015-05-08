@@ -70,6 +70,8 @@ public class SslTest extends SingleCacheManagerTest {
          .connectionPool()
             .maxActive(1)
          .security()
+            .authentication()
+               .disable()
             .ssl()
                .enabled(sslClient)
                .keyStoreFileName(keyStoreFileName)

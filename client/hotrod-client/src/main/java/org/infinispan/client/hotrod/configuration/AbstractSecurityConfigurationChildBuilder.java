@@ -7,10 +7,11 @@ package org.infinispan.client.hotrod.configuration;
  * @since 7.0
  */
 public class AbstractSecurityConfigurationChildBuilder extends AbstractConfigurationChildBuilder {
-   private SecurityConfigurationBuilder builder;
+   private final SecurityConfigurationBuilder builder;
 
    AbstractSecurityConfigurationChildBuilder(SecurityConfigurationBuilder builder) {
       super(builder.getBuilder());
+      this.builder = builder;
    }
 
    public AuthenticationConfigurationBuilder authentication() {
