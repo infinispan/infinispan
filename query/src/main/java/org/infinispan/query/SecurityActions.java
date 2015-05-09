@@ -1,12 +1,14 @@
 package org.infinispan.query;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
 import org.infinispan.AdvancedCache;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.Security;
 import org.infinispan.security.actions.GetCacheAuthorizationManagerAction;
+import org.infinispan.security.actions.GetCacheConfigurationAction;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 /**
  * SecurityActions for the org.infinispan.query package.
@@ -26,8 +28,11 @@ final class SecurityActions {
       }
    }
 
-   static AuthorizationManager getCacheAuthorizationManager(final AdvancedCache<?, ?> cache) {
-      GetCacheAuthorizationManagerAction action = new GetCacheAuthorizationManagerAction(cache);
-      return doPrivileged(action);
+   static AuthorizationManager getCacheAuthorizationManager(AdvancedCache<?, ?> cache) {
+      return doPrivileged(new GetCacheAuthorizationManagerAction(cache));
+   }
+
+   static Configuration getCacheConfiguration(AdvancedCache<?, ?> cache) {
+      return doPrivileged(new GetCacheConfigurationAction(cache));
    }
 }
