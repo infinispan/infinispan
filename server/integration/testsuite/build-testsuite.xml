@@ -199,6 +199,7 @@
         <transform in="clustered.xml" out="testsuite/clustered-default-dist.xml" modifyInfinispan="${infinispan.parts}/default-dist.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-default-repl.xml" modifyInfinispan="${infinispan.parts}/default-repl.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-indexing.xml" modifyInfinispan="${infinispan.parts}/indexing.xml" filtering="true"/>
+        <transform in="clustered.xml" out="testsuite/clustered-indexing-secured.xml" modifyInfinispan="${infinispan.parts}/indexing-secured.xml" hotrodAuth="${infinispan.parts}/hotrod-auth-clustered.xml" filtering="true"/>
         <transform in="standalone.xml" out="testsuite/standalone-leveldb-local.xml" modifyInfinispan="${infinispan.parts}/leveldb-local.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-leveldb-dist.xml" modifyInfinispan="${infinispan.parts}/leveldb-dist.xml" filtering="true"/>
         <transform in="clustered.xml" out="testsuite/clustered-leveldb-repl.xml" modifyInfinispan="${infinispan.parts}/leveldb-repl.xml" filtering="true"/>
