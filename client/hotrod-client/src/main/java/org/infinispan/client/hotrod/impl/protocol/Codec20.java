@@ -58,9 +58,17 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
-   public void writeExpirationParams(Transport transport, long lifespanNanos, long maxIdleNanos, InternalFlag[] internalFlags) {
-      transport.writeVInt((int) TimeUnit.SECONDS.convert(lifespanNanos, TimeUnit.NANOSECONDS));
-      transport.writeVInt((int) TimeUnit.SECONDS.convert(maxIdleNanos, TimeUnit.NANOSECONDS));
+   public void writeExpirationParams(Transport transport, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      if (!CodecUtils.isIntCompatible(lifespan)) {
+         log.warn("Lifespan value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+      }
+      if (!CodecUtils.isIntCompatible(maxIdle)) {
+         log.warn("MaxIdle value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+      }
+      int lifespanSeconds = CodecUtils.toSeconds(lifespan, lifespanTimeUnit);
+      int maxIdleSeconds = CodecUtils.toSeconds(maxIdle, maxIdleTimeUnit);
+      transport.writeVInt(lifespanSeconds);
+      transport.writeVInt(maxIdleSeconds);
    }
 
    private void writeNamedFactory(Transport transport, String factoryName, byte[][] params) {
@@ -84,7 +92,7 @@ public class Codec20 implements Codec, HotRodConstants {
       transport.writeByte(version);
       transport.writeByte(params.opCode);
       transport.writeArray(params.cacheName);
-      int joinedFlags = HeaderParams.joinFlags(params.flags, params.internalFlags);
+      int joinedFlags = HeaderParams.joinFlags(params.flags);
       transport.writeVInt(joinedFlags);
       transport.writeByte(params.clientIntel);
       transport.writeVInt(params.topologyId.get());

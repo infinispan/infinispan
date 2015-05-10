@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.protocol;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.infinispan.client.hotrod.impl.TimeUnitParam.encodeTimeUnits;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 
 public class Codec22 extends Codec21 {
@@ -11,24 +12,15 @@ public class Codec22 extends Codec21 {
    }
 
    @Override
-   public void writeExpirationParams(Transport transport, long lifespanNanos, long maxIdleNanos, InternalFlag[] internalFlags) {
-      if (!hasFlag(internalFlags, InternalFlag.NANO_DURATIONS)) {
-         lifespanNanos = TimeUnit.SECONDS.convert(lifespanNanos, TimeUnit.NANOSECONDS);
-         maxIdleNanos = TimeUnit.SECONDS.convert(maxIdleNanos, TimeUnit.NANOSECONDS);
+   public void writeExpirationParams(Transport transport, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      byte timeUnits = encodeTimeUnits(lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
+      transport.writeByte(timeUnits);
+      if (lifespan > 0) {
+         transport.writeVLong(lifespan);
       }
-      transport.writeVLong(lifespanNanos);
-      transport.writeVLong(maxIdleNanos);
+      if (maxIdle > 0) {
+         transport.writeVLong(maxIdle);
+      }
    }
 
-   private boolean hasFlag(InternalFlag[] internalFlags, InternalFlag flag) {
-      if (internalFlags == null) {
-         return false;
-      }
-      for (InternalFlag internalFlag : internalFlags) {
-         if (internalFlag == flag) {
-            return true;
-         }
-      }
-      return false;
-   }
 }

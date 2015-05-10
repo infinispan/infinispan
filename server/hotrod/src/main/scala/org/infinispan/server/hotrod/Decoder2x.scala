@@ -39,14 +39,7 @@ import org.infinispan.server.core.transport.SaslQopHandler
 import org.infinispan.scripting.ScriptingManager
 import javax.script.SimpleBindings
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
-import java.util.concurrent.TimeUnit
-import org.infinispan.metadata.Metadata
-import org.infinispan.metadata.EmbeddedMetadata
-import org.infinispan.factories.ComponentRegistry
-import org.infinispan.container.versioning.EntryVersion
-import org.infinispan.container.versioning.VersionGenerator
-import org.infinispan.container.versioning.NumericVersionGenerator
-import org.infinispan.remoting.rpc.RpcManager
+
 import java.util.HashSet
 import java.util.HashMap
 
@@ -124,34 +117,25 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
    override def readParameters(header: HotRodHeader, buffer: ByteBuf): (RequestParameters, Boolean) = {
       header.op match {
          case RemoveRequest => (null, true)
-         case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, -1, -1, buffer.readLong), true)
+         case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, new ExpirationParam(-1, TimeUnitValue.SECONDS), new ExpirationParam(-1, TimeUnitValue.SECONDS), buffer.readLong), true)
          case ReplaceIfUnmodifiedRequest =>
-            val hasNanoExpirationFlag = hasFlag(header, ProtocolFlag.NanoExpiration)
-
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasNanoExpirationFlag)
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasNanoExpirationFlag)
+            val expirationParams = readLifespanMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasFlag(header, ProtocolFlag.DefaultMaxIdle), header.version)
             val version = buffer.readLong
             val valueLength = readUnsignedInt(buffer)
-            (new RequestParameters(valueLength, lifespan, maxIdle, version), false)
+            (new RequestParameters(valueLength, expirationParams._1, expirationParams._2, version), false)
          case PutAllRequest =>
-            val hasNanoExpirationFlag = hasFlag(header, ProtocolFlag.NanoExpiration)
-
-           // Since we have custom code handling for valueLength to allocate an array
+            // Since we have custom code handling for valueLength to allocate an array
             // always we have to pass back false and set the checkpoint manually...
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasNanoExpirationFlag)
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasNanoExpirationFlag)
+            val expirationParams = readLifespanMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasFlag(header, ProtocolFlag.DefaultMaxIdle), header.version)
             val valueLength = readUnsignedInt(buffer)
-            (new RequestParameters(valueLength, lifespan, maxIdle, -1), true)
+            (new RequestParameters(valueLength, expirationParams._1, expirationParams._2, -1), true)
          case GetAllRequest =>
-           val count = readUnsignedInt(buffer)
-           (new RequestParameters(count, -1, -1, -1), true)
+            val count = readUnsignedInt(buffer)
+            (new RequestParameters(count, new ExpirationParam(-1, TimeUnitValue.SECONDS), new ExpirationParam(-1, TimeUnitValue.SECONDS), -1), true)
          case _ =>
-            val hasNanoExpirationFlag = hasFlag(header, ProtocolFlag.NanoExpiration)
-
-            val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasNanoExpirationFlag)
-            val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle), hasNanoExpirationFlag)
+            val expirationParams = readLifespanMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan), hasFlag(header, ProtocolFlag.DefaultMaxIdle), header.version)
             val valueLength = readUnsignedInt(buffer)
-            (new RequestParameters(valueLength, lifespan, maxIdle, -1), false)
+            (new RequestParameters(valueLength, expirationParams._1, expirationParams._2, -1), false)
       }
    }
 
@@ -159,14 +143,30 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       (h.flag & f.id) == f.id
    }
 
-   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean, hasNanos: Boolean): Long = {
-      val stream = readUnsignedLong(buffer)
-      if (stream <= 0) {
-         if (useDefault)
-            EXPIRATION_DEFAULT
-         else
-            EXPIRATION_NONE
-      } else if (!hasNanos) TimeUnit.SECONDS.toNanos(stream) else stream
+   private def readLifespanMaxIdle(buffer: ByteBuf, usingDefaultLifespan: Boolean, usingDefaultMaxIdle: Boolean, version: Byte): (ExpirationParam, ExpirationParam) = {
+      def readDuration(useDefault: Boolean) = {
+         val duration = readUnsignedInt(buffer)
+         if (duration <= 0) {
+            if (useDefault) EXPIRATION_DEFAULT else EXPIRATION_NONE
+         } else duration
+      }
+      def readDurationIfNeeded(timeUnitValue: TimeUnitValue) = {
+         if (timeUnitValue.isDefault) EXPIRATION_DEFAULT.toLong
+         else {
+            if (timeUnitValue.isInfinite) EXPIRATION_NONE.toLong else readUnsignedLong(buffer)
+         }
+      }
+      version match {
+         case VERSION_22 =>
+            val timeUnits = TimeUnitValue.decodePair(buffer.readByte())
+            val lifespanDuration = readDurationIfNeeded(timeUnits._1)
+            val maxIdleDuration = readDurationIfNeeded(timeUnits._2)
+            (new ExpirationParam(lifespanDuration, timeUnits._1), new ExpirationParam(maxIdleDuration, timeUnits._2))
+         case _ =>
+            val lifespan = readDuration(usingDefaultLifespan)
+            val maxIdle = readDuration(usingDefaultMaxIdle)
+            (new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS))
+      }
    }
 
    override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): Response =
@@ -581,4 +581,18 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       if (realm >= 0) id.substring(0, realm) else id
    }
 
+   /**
+    * Convert an expiration value into milliseconds
+    */
+   override def toMillis(param: ExpirationParam, h: SuitableHeader): Long = {
+      if (h.version == VERSION_22) {
+         if (param.duration > 0) {
+            val javaTimeUnit = param.unit.toJavaTimeUnit(h)
+            javaTimeUnit.toMillis(param.duration)
+         } else {
+            param.duration
+         }
+      }
+      else super.toMillis(param, h)
+   }
 }

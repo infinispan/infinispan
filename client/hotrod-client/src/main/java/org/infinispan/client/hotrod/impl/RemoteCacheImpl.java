@@ -111,11 +111,13 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 
    @Override
    public boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds) {
-      assertRemoteCacheManagerIsStarted();
-      long maxIdleNanos = toNanoseconds(maxIdleTimeSeconds, TimeUnit.SECONDS);
-      long lifespanNanos = toNanoseconds(lifespanSeconds, TimeUnit.SECONDS);
+      return replaceWithVersion(key, newValue, version, lifespanSeconds, TimeUnit.SECONDS, maxIdleTimeSeconds, TimeUnit.SECONDS);
+   }
 
-      ReplaceIfUnmodifiedOperation op = operationsFactory.newReplaceIfUnmodifiedOperation(obj2bytes(key, true), obj2bytes(newValue, false), lifespanNanos, maxIdleNanos, version);
+   @Override
+   public boolean replaceWithVersion(K key, V newValue, long version, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      assertRemoteCacheManagerIsStarted();
+      ReplaceIfUnmodifiedOperation op = operationsFactory.newReplaceIfUnmodifiedOperation(obj2bytes(key, true), obj2bytes(newValue, false), lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version);
       VersionedOperationResponse response = op.execute();
       return response.getCode().isUpdated();
    }
@@ -168,17 +170,15 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      int lifespanSecs = toSeconds(lifespan, lifespanUnit);
-      int maxIdleSecs = toSeconds(maxIdleTime, maxIdleTimeUnit);
       applyDefaultExpirationFlags(lifespan, maxIdleTime);
       if (log.isTraceEnabled()) {
-         log.tracef("About to putAll entries (%s) lifespanSecs:%d, maxIdleSecs:%d", map, lifespanSecs, maxIdleSecs);
+         log.tracef("About to putAll entries (%s) lifespan:%d (%s), maxIdle:%d (%s)", map, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       }
       Map<byte[], byte[]> byteMap = new HashMap<>();
       for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
          byteMap.put(obj2bytes(entry.getKey(),  true), obj2bytes(entry.getValue(), false));
       }
-      PutAllOperation op = operationsFactory.newPutAllOperation(byteMap, lifespanSecs, maxIdleSecs);
+      PutAllOperation op = operationsFactory.newPutAllOperation(byteMap, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       op.execute();
    }
 
@@ -239,14 +239,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      long lifespanNanos = toNanoseconds(lifespan, lifespanUnit);
-      long maxIdleNanos = toNanoseconds(maxIdleTime, maxIdleTimeUnit);
-
       applyDefaultExpirationFlags(lifespan, maxIdleTime);
       if (log.isTraceEnabled()) {
-         log.tracef("About to add (K,V): (%s, %s) lifespanSecs:%d, maxIdleSecs:%d", key, value, toSeconds(lifespan, lifespanUnit), toSeconds(maxIdleTime, maxIdleTimeUnit));
+         log.tracef("About to add (K,V): (%s, %s) lifespan:%d, maxIdle:%d", key, value, lifespan, maxIdleTime);
       }
-      PutOperation op = operationsFactory.newPutKeyValueOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanNanos, maxIdleNanos);
+      PutOperation op = operationsFactory.newPutKeyValueOperation(obj2bytes(key, true), obj2bytes(value, false), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       byte[] result = op.execute();
       return MarshallerUtil.bytes2obj(marshaller, result);
    }
@@ -255,10 +252,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      long lifespanNanos = toNanoseconds(lifespan, lifespanUnit);
-      long maxIdleNanos = toNanoseconds(maxIdleTime, maxIdleTimeUnit);
       applyDefaultExpirationFlags(lifespan, maxIdleTime);
-      PutIfAbsentOperation op = operationsFactory.newPutIfAbsentOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanNanos, maxIdleNanos);
+      PutIfAbsentOperation op = operationsFactory.newPutIfAbsentOperation(obj2bytes(key, true), obj2bytes(value, false), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       byte[] bytes = op.execute();
       return MarshallerUtil.bytes2obj(marshaller, bytes);
    }
@@ -266,10 +261,8 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       assertRemoteCacheManagerIsStarted();
-      long lifespanNanos = toNanoseconds(lifespan, lifespanUnit);
-      long maxIdleNanos = toNanoseconds(maxIdleTime, maxIdleTimeUnit);
       applyDefaultExpirationFlags(lifespan, maxIdleTime);
-      ReplaceOperation op = operationsFactory.newReplaceOperation(obj2bytes(key, true), obj2bytes(value, false), lifespanNanos, maxIdleNanos);
+      ReplaceOperation op = operationsFactory.newReplaceOperation(obj2bytes(key, true), obj2bytes(value, false), lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
       byte[] bytes = op.execute();
       return MarshallerUtil.bytes2obj(marshaller, bytes);
    }
@@ -631,21 +624,6 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
          return null;
       V valueObj = MarshallerUtil.bytes2obj(marshaller, value.getValue());
       return new MetadataValueImpl<V>(value.getCreated(), value.getLifespan(), value.getLastUsed(), value.getMaxIdle(), value.getVersion(), valueObj);
-   }
-
-   protected static int toSeconds(long duration, TimeUnit timeUnit) {
-      int seconds = (int) timeUnit.toSeconds(duration);
-      long inverseDuration = timeUnit.convert(seconds, TimeUnit.SECONDS);
-
-      if (duration > inverseDuration) {
-         //Round up.
-         seconds++;
-      }
-      return seconds;
-   }
-    
-   private static long toNanoseconds(long duration, TimeUnit timeUnit) {
-      return (int) timeUnit.toNanos(duration);
    }
 
    private void assertRemoteCacheManagerIsStarted() {

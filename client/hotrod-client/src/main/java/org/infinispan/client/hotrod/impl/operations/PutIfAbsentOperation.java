@@ -1,12 +1,12 @@
 package org.infinispan.client.hotrod.impl.operations;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
-import org.infinispan.client.hotrod.impl.protocol.InternalFlag;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.logging.BasicLogFactory;
@@ -27,8 +27,8 @@ public class PutIfAbsentOperation extends AbstractKeyValueOperation<byte[]> {
 
    public PutIfAbsentOperation(Codec codec, TransportFactory transportFactory,
                                byte[] key, byte[] cacheName, AtomicInteger topologyId,
-                               Flag[] flags, byte[] value, long lifespan, long maxIdle) {
-      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, maxIdle);
+                               Flag[] flags, byte[] value, long lifespan,TimeUnit lifespanTimeUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      super(codec, transportFactory, key, cacheName, topologyId, flags, value, lifespan, lifespanTimeUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    @Override

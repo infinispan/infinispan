@@ -4,6 +4,7 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.jcip.annotations.Immutable;
@@ -26,22 +27,25 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
 
    public PutAllOperation(Codec codec, TransportFactory transportFactory,
                        Map<byte[], byte[]> map, byte[] cacheName, AtomicInteger topologyId,
-                       Flag[] flags, int lifespan, int maxIdle) {
+                       Flag[] flags, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       super(codec, transportFactory, cacheName, topologyId, flags);
       this.map = map;
       this.lifespan = lifespan;
+      this.lifespanTimeUnit = lifespanTimeUnit;
       this.maxIdle = maxIdle;
+      this.maxIdleTimeUnit = maxIdleTimeUnit;
    }
 
    protected final Map<byte[], byte[]> map;
-   protected final int lifespan;
-   protected final int maxIdle;
+   protected final long lifespan;
+   private final TimeUnit lifespanTimeUnit;
+   protected final long maxIdle;
+   private final TimeUnit maxIdleTimeUnit;
 
    @Override
    protected Void executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, PUT_ALL_REQUEST);
-      transport.writeVInt(lifespan);
-      transport.writeVInt(maxIdle);
+      codec.writeExpirationParams(transport, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
       transport.writeVInt(map.size());
       for (Entry<byte[], byte[]> entry : map.entrySet()) {
          transport.writeArray(entry.getKey());
