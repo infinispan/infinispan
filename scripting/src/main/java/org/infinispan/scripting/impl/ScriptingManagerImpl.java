@@ -173,7 +173,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
             return new NoOpFuture<T>(result);
          } else {
             ScriptEngine engine = getEngineForScript(metadata);
-            T result = (T) engine.eval(scriptCache.get(metadata.name()), bindings);
+            T result = (T) engine.eval(getScriptCache().get(metadata.name()), bindings);
             return new NoOpFuture<T>(result);
          }
       } catch (ScriptException e) {
