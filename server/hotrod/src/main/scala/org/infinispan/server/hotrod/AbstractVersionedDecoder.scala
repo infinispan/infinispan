@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod
 
+import java.util.concurrent.TimeUnit
+
 import org.infinispan.stats.Stats
 import org.infinispan.server.core.QueryFacade
 import org.infinispan.server.core.transport.NettyTransport
@@ -16,6 +18,8 @@ import io.netty.channel.Channel
  * @since 4.1
  */
 abstract class AbstractVersionedDecoder {
+
+   val SecondsIn30days = 60 * 60 * 24 * 30
 
    /**
     * Having read the message's Id, read the rest of Hot Rod header from the given buffer and return it.
@@ -82,5 +86,30 @@ abstract class AbstractVersionedDecoder {
     * Get an optimized cache instance depending on the operation parameters.
     */
    def getOptimizedCache(h: HotRodHeader, c: Cache): Cache
+
+   /**
+    * Transforms lifespan pass as seconds into milliseconds
+    * following this rule (inspired by Memcached):
+    *
+    * If lifespan is bigger than number of seconds in 30 days,
+    * then it is considered unix time. After converting it to
+    * milliseconds, we subtract the current time in and the
+    * result is returned.
+    *
+    * Otherwise it's just considered number of seconds from
+    * now and it's returned in milliseconds unit.
+    */
+   def toMillis(param: ExpirationParam, h: HotRodHeader): Long = {
+      if (param.duration > 0) {
+         if (param.duration > SecondsIn30days) {
+            val unixTimeExpiry = TimeUnit.SECONDS.toMillis(param.duration) - System.currentTimeMillis
+            if (unixTimeExpiry < 0) 0 else unixTimeExpiry
+         } else {
+            TimeUnit.SECONDS.toMillis(param.duration)
+         }
+      } else {
+         param.duration
+      }
+   }
 
 }

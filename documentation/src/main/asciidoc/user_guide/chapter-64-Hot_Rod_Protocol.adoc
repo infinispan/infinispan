@@ -9,6 +9,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.4]
 * link:$$#_hot_rod_protocol_2_0$$[Hot Rod Protocol 2.0]
 * link:$$#_hot_rod_protocol_2_1$$[Hot Rod Protocol 2.1]
+* link:$$#_hot_rod_protocol_2_2$$[Hot Rod Protocol 2.2]
 
 ===== Hot Rod Protocol 1.0
 
@@ -1532,6 +1533,40 @@ the bytes represent the marshalled version of the instance returned by the
 converter. If custom marker is `2`, it represents the byte array, as returned
 by the converter.
 |==============================================================================
+
+===== Hot Rod Protocol 2.2
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 8.0
+
+
+Added support for different time units.
+
+====== Operations
+
+.Put/PutAll/PutIfAbsent/Replace/ReplaceIfUnmodified
+
+Common request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+
+| TimeUnits           | Byte        | Time units of lifespan (first 4 bits) and maxIdle (last 4 bits). Special units
+DEFAULT and INFINITE can be used for default server expiration and no expiration respectively. Possible values: +
++0x00+ = SECONDS +
++0x01+ = MILLISECONDS +
++0x02+ = NANOSECONDS +
++0x03+ = MICROSECONDS +
++0x04+ = MINUTES +
++0x05+ = HOURS +
++0x06+ = DAYS +
++0x07+ = DEFAULT +
++0x08+ = INFINITE +
+| Lifespan            | vLong       | Duration which the entry is allowed to life. Only sent when time unit is not DEFAULT or INFINITE
+| Max Idle            | vLong       | Duration that each entry can be idle before it's evicted from the cache. Only sent when time unit is not DEFAULT or INFINITE
+|==============================================================================
+
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash

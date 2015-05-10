@@ -124,6 +124,23 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
    boolean replaceWithVersion(K key, V newValue, long version, int lifespanSeconds, int maxIdleTimeSeconds);
 
    /**
+    * A overloaded form of {@link #replaceWithVersion(Object, Object, long)}
+    * which takes in lifespan and maximum idle time parameters.
+    *
+    * @param key key to use
+    * @param newValue new value to be associated with the key
+    * @param version numeric version that should match the one in the server
+    *                for the operation to succeed
+    * @param lifespan lifespan of the entry
+    * @param lifespanTimeUnit {@link java.util.concurrent.TimeUnit} for lifespan
+    * @param maxIdle the maximum amount of time this key is allowed
+    *                           to be idle for before it is considered as expired
+    * @param maxIdleTimeUnit {@link java.util.concurrent.TimeUnit} for maxIdle
+    * @return true if the value was replaced
+    */
+   boolean replaceWithVersion(K key, V newValue, long version, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit);
+
+   /**
     * @see #replaceWithVersion(Object, Object, long)
     */
    NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version);

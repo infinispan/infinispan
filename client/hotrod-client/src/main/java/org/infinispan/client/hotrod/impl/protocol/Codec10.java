@@ -49,9 +49,17 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public void writeExpirationParams(Transport transport, long lifespanNanos, long maxIdleNanos, InternalFlag[] internalFlags) {
-      transport.writeVInt((int) TimeUnit.SECONDS.convert(lifespanNanos, TimeUnit.NANOSECONDS));
-      transport.writeVInt((int) TimeUnit.SECONDS.convert(maxIdleNanos, TimeUnit.NANOSECONDS));
+   public void writeExpirationParams(Transport transport, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
+      if (!CodecUtils.isIntCompatible(lifespan)) {
+         log.warn("Lifespan value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+      }
+      if (!CodecUtils.isIntCompatible(maxIdle)) {
+         log.warn("MaxIdle value greater than the max supported size (Integer.MAX_VALUE), this can cause precision loss");
+      }
+      int lifespanSeconds = CodecUtils.toSeconds(lifespan, lifespanTimeUnit);
+      int maxIdleSeconds = CodecUtils.toSeconds(maxIdle, maxIdleTimeUnit);
+      transport.writeVInt(lifespanSeconds);
+      transport.writeVInt(maxIdleSeconds);
    }
 
    protected HeaderParams writeHeader(

@@ -18,7 +18,6 @@ import org.infinispan.container.versioning.NumericVersion
 import io.netty.buffer.ByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.Channel
-import java.util.concurrent.TimeUnit
 
 /**
  * HotRod protocol decoder specific for specification version 1.0.
@@ -87,18 +86,18 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
    override def readParameters(header: HotRodHeader, buffer: ByteBuf): (RequestParameters, Boolean) = {
       header.op match {
          case RemoveRequest => (null, true)
-         case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, -1, -1, buffer.readLong), true)
+         case RemoveIfUnmodifiedRequest => (new RequestParameters(-1, new ExpirationParam(-1, TimeUnitValue.SECONDS), new ExpirationParam(-1, TimeUnitValue.SECONDS), buffer.readLong), true)
          case ReplaceIfUnmodifiedRequest =>
             val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
             val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
             val version = buffer.readLong
             val valueLength = readUnsignedInt(buffer)
-            (new RequestParameters(valueLength, lifespan, maxIdle, version), false)
+            (new RequestParameters(valueLength, new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS), version), false)
          case _ =>
             val lifespan = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultLifespan))
             val maxIdle = readLifespanOrMaxIdle(buffer, hasFlag(header, ProtocolFlag.DefaultMaxIdle))
             val valueLength = readUnsignedInt(buffer)
-            (new RequestParameters(valueLength, lifespan, maxIdle, -1), false)
+            (new RequestParameters(valueLength, new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS), -1), false)
       }
    }
 
@@ -106,14 +105,14 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       (h.flag & f.id) == f.id
    }
 
-   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Long = {
+   private def readLifespanOrMaxIdle(buffer: ByteBuf, useDefault: Boolean): Int = {
       val stream = readUnsignedInt(buffer)
       if (stream <= 0) {
          if (useDefault)
             EXPIRATION_DEFAULT
          else
             EXPIRATION_NONE
-      } else TimeUnit.SECONDS.toNanos(stream)
+      } else stream
    }
 
    override def createSuccessResponse(header: HotRodHeader, prev: Array[Byte]): Response =

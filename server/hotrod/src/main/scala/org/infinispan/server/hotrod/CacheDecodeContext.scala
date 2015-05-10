@@ -2,7 +2,6 @@ package org.infinispan.server.hotrod
 
 import java.io.IOException
 import java.nio.channels.ClosedChannelException
-import java.util.concurrent.TimeUnit
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.DecoderException
@@ -32,7 +31,6 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
    type BytesResponse = Bytes => Response
 
    val isTrace = isTraceEnabled
-   val MillisInAMonth = 60 * 60 * 24 * 30 * 1000
 
    var isError = false
    var decoder: AbstractVersionedDecoder = _
@@ -164,15 +162,18 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
       val metadata = new EmbeddedMetadata.Builder
       metadata.version(generateVersion(server.getCacheRegistry(header.cacheName), cache))
       (params.lifespan, params.maxIdle) match {
-         case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) =>
+         case (ExpirationParam(EXPIRATION_DEFAULT,_), ExpirationParam(EXPIRATION_DEFAULT,_)) =>
             metadata.lifespan(defaultLifespanTime)
             .maxIdle(defaultMaxIdleTime)
-         case (_, EXPIRATION_DEFAULT) =>
-            metadata.lifespan(toMillis(params.lifespan))
+         case (_, ExpirationParam(EXPIRATION_DEFAULT,_)) =>
+            metadata.lifespan(decoder.toMillis(params.lifespan, header))
             .maxIdle(defaultMaxIdleTime)
+         case (ExpirationParam(EXPIRATION_DEFAULT, _), _) =>
+            metadata.lifespan(defaultMaxIdleTime)
+            .maxIdle(decoder.toMillis(params.maxIdle, header))
          case (_, _) =>
-            metadata.lifespan(toMillis(params.lifespan))
-            .maxIdle(toMillis(params.maxIdle))
+            metadata.lifespan(decoder.toMillis(params.lifespan, header))
+            .maxIdle(decoder.toMillis(params.maxIdle, header))
       }
       metadata.build()
    }
@@ -249,31 +250,18 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
 
    def createMultiGetResponse(pairs: Map[Bytes, CacheEntry[Bytes, Bytes]]): AnyRef = null
 
-   /**
-    * Transforms lifespan pass as seconds into milliseconds
-    * following this rule:
-    *
-    * If lifespan is bigger than number of seconds in 30 days,
-    * then it is considered unix time. After converting it to
-    * milliseconds, we subtract the current time in and the
-    * result is returned.
-    *
-    * Otherwise it's just considered number of seconds from
-    * now and it's returned in milliseconds unit.
-    */
-   protected def toMillis(nanosDuration: Long): Long = {
-      val millis = TimeUnit.NANOSECONDS.toMillis(nanosDuration)
-      if (millis > MillisInAMonth) {
-         val unixTimeExpiry = millis - System.currentTimeMillis
-         if (unixTimeExpiry < 0) 0 else unixTimeExpiry
-      } else {
-         millis
-      }
-   }
-
 }
 
-class RequestParameters(val valueLength: Int, val lifespan: Long, val maxIdle: Long, val streamVersion: Long) {
+case class ExpirationParam(duration: Long, unit: TimeUnitValue) {
+   override def toString = {
+      new StringBuilder().append("ExpirationParam").append("{")
+      .append("value=").append(duration)
+      .append(", unit=").append(unit)
+      .append("}").toString()
+   }
+}
+
+class RequestParameters(val valueLength: Int, val lifespan: ExpirationParam, val maxIdle: ExpirationParam, val streamVersion: Long) {
    override def toString = {
       new StringBuilder().append("RequestParameters").append("{")
       .append("valueLength=").append(valueLength)

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -87,10 +88,10 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public ReplaceIfUnmodifiedOperation newReplaceIfUnmodifiedOperation(byte[] key,
-            byte[] value, long lifespan, long maxIdle, long version) {
+            byte[] value, long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit, long version) {
       return new ReplaceIfUnmodifiedOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespan, maxIdle, version);
+            value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version);
    }
 
    public GetWithVersionOperation newGetWithVersionOperation(byte[] key) {
@@ -109,31 +110,31 @@ public class OperationsFactory implements HotRodConstants {
    }
 
    public PutOperation newPutKeyValueOperation(byte[] key, byte[] value,
-            long lifespan, long maxIdle) {
+          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new PutOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespan, maxIdle);
+            value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    public PutAllOperation newPutAllOperation(Map<byte[], byte[]> map,
-         int lifespan, int maxIdle) {
+          long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new PutAllOperation(
             codec, transportFactory, map, cacheNameBytes, topologyId, flags(),
-            lifespan, maxIdle);
+            lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    public PutIfAbsentOperation newPutIfAbsentOperation(byte[] key, byte[] value,
-            long lifespan, long maxIdle) {
+             long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       return new PutIfAbsentOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            value, lifespan, maxIdle);
+            value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
    public ReplaceOperation newReplaceOperation(byte[] key, byte[] values,
-            long lifespan, long maxIdle) {
+           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
       return new ReplaceOperation(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
-            values, lifespan, maxIdle);
+            values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
    public ContainsKeyOperation newContainsKeyOperation(byte[] key) {
@@ -204,7 +205,7 @@ public class OperationsFactory implements HotRodConstants {
    public SizeOperation newSizeOperation() {
       return new SizeOperation(codec, transportFactory, cacheNameBytes, topologyId, flags());
    }
-   
+
    public ExecuteOperation newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams) {
 		return new ExecuteOperation(codec, transportFactory, cacheNameBytes, topologyId, flags(), taskName, marshalledParams);
 	}
