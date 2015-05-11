@@ -5,6 +5,7 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -70,6 +71,7 @@ import javax.management.ObjectName;
 import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -97,6 +99,7 @@ import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+import java.util.regex.Pattern;
 
 import static java.io.File.separator;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
@@ -1468,7 +1471,7 @@ public class TestingUtil {
       }
       return new Subject(true, set, InfinispanCollections.emptySet(), InfinispanCollections.emptySet());
    }
-   
+
 	public static String loadFileAsString(InputStream is) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		BufferedReader r = new BufferedReader(new InputStreamReader(is));
@@ -1556,6 +1559,23 @@ public class TestingUtil {
 
    public static interface WrapFactory<T, W, C> {
       W wrap(C wrapOn, T current);
+   }
+
+   public static void expectCause(Throwable t, Class<? extends Throwable> c, String messageRegex) throws Exception {
+      for (;;) {
+         if (c.isAssignableFrom(t.getClass())) {
+            if (messageRegex != null && !Pattern.matches(messageRegex, t.getMessage())) {
+               throw new RuntimeException(String.format("Exception message '%s' does not match regex '%s'", t.getMessage(), messageRegex));
+            }
+            return;
+         }
+         Throwable cause = t.getCause();
+         if (cause == null || cause == t) {
+            throw new RuntimeException("Cannot find a cause of type " + c.getName(), cause);
+         } else {
+            t = cause;
+         }
+      }
    }
 
 }

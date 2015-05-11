@@ -55,7 +55,6 @@ import org.jgroups.util.TopologyUUID;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -397,17 +396,14 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                //ignore, we check confs later for various states
             }
             if (confs.isEmpty()) {
-               throw new CacheConfigurationException(CONFIGURATION_FILE
-                        + " property specifies value " + cfg + " that could not be read!",
-                        new FileNotFoundException(cfg));
+               throw log.jgroupsConfigurationNotFound(cfg);
             } else if (confs.size() > 1) {
                log.ambiguousConfigurationFiles(Util.toStr(confs));
             }
             try {
                channel = new JChannel(confs.iterator().next());
             } catch (Exception e) {
-               log.errorCreatingChannelFromConfigFile(cfg);
-               throw new CacheException(e);
+               throw log.errorCreatingChannelFromConfigFile(cfg, e);
             }
          }
 
@@ -416,8 +412,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             try {
                channel = new JChannel(XmlConfigHelper.stringToElement(cfg));
             } catch (Exception e) {
-               log.errorCreatingChannelFromXML(cfg);
-               throw new CacheException(e);
+               throw log.errorCreatingChannelFromXML(cfg, e);
             }
          }
 
@@ -426,8 +421,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             try {
                channel = new JChannel(cfg);
             } catch (Exception e) {
-               log.errorCreatingChannelFromConfigString(cfg);
-               throw new CacheException(e);
+               throw log.errorCreatingChannelFromConfigString(cfg, e);
+
             }
          }
       }
@@ -437,7 +432,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          try {
             channel = new JChannel(fileLookup.lookupFileLocation(DEFAULT_JGROUPS_CONFIGURATION_FILE, configuration.classLoader()));
          } catch (Exception e) {
-            throw new CacheException("Unable to start JGroups channel", e);
+            throw log.errorCreatingChannelFromConfigFile(DEFAULT_JGROUPS_CONFIGURATION_FILE, e);
          }
       }
    }
@@ -654,7 +649,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       if (noValidResponses) {
          boolean throwException;
-         // It is possible for their to be no valid response if we ignored leavers and 
+         // It is possible for their to be no valid response if we ignored leavers and
          // all of our targets left
          if (ignoreLeavers) {
             // If all the targets were suspected we didn't have a timeout

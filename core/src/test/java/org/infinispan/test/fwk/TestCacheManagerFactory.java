@@ -12,7 +12,6 @@ import javax.xml.stream.XMLStreamException;
 
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.FileLookup;
 import org.infinispan.commons.util.FileLookupFactory;
 import org.infinispan.commons.util.LegacyKeySupportSystemProperties;
 import org.infinispan.commons.util.Util;
@@ -104,6 +103,10 @@ public class TestCacheManagerFactory {
       ParserRegistry parserRegistry = new ParserRegistry(Thread.currentThread().getContextClassLoader(), defaultParsersOnly);
       ConfigurationBuilderHolder holder = parserRegistry.parse(is);
       return createClusteredCacheManager(holder, keepJmxDomainName);
+   }
+
+   public static EmbeddedCacheManager fromString(String config) throws IOException {
+      return fromStream(new ByteArrayInputStream(config.getBytes()));
    }
 
    private static void markAsTransactional(boolean transactional, ConfigurationBuilder builder) {
@@ -380,4 +383,5 @@ public class TestCacheManagerFactory {
 
       return holder;
    }
+
 }
