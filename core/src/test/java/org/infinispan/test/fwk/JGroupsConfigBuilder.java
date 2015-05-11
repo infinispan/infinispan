@@ -93,7 +93,7 @@ public class JGroupsConfigBuilder {
          removeFailureDetection(jgroupsCfg);
 
       if (!flags.isSiteIndexSpecified()) {
-         removeRela2(jgroupsCfg);
+         removeRelay2(jgroupsCfg);
       } else {
          ProtocolConfiguration protocol = jgroupsCfg.getProtocol(RELAY2);
          protocol.getProperties().put("site", flags.siteName());
@@ -129,7 +129,7 @@ public class JGroupsConfigBuilder {
          removeMerge(jgroupsCfg);
 
       if (!flags.isSiteIndexSpecified()) {
-         removeRela2(jgroupsCfg);
+         removeRelay2(jgroupsCfg);
       }
 
       if (jgroupsCfg.containsProtocol(TEST_PING)) {
@@ -149,7 +149,7 @@ public class JGroupsConfigBuilder {
             .removeProtocol(VERIFY_SUSPECT);
    }
 
-   private static void removeRela2(JGroupsProtocolCfg jgroupsCfg) {
+   private static void removeRelay2(JGroupsProtocolCfg jgroupsCfg) {
       jgroupsCfg.removeProtocol(RELAY2);
    }
 

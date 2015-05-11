@@ -1,42 +1,66 @@
 package org.infinispan.remoting.jgroups;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.testng.AssertJUnit.*;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 
+import org.infinispan.commons.CacheConfigurationException;
+import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.TestingUtil.InfinispanStartTag;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
 @Test(testName = "remoting.jgroups.NonExistingJGroupsConfigTest", groups = "functional")
 public class NonExistingJGroupsConfigTest extends AbstractInfinispanTest {
 
-   public void channelLookupTest() throws Exception {
+   public void channelLookupTest() throws Throwable {
       String config = InfinispanStartTag.LATEST +
-      "<jgroups>\n" +
-      "   <stack-file name=\"dummy\" path=\"nosuchfile.xml\"/>\n" +
-      "</jgroups>\n" +
-      "<cache-container default-cache=\"default\">" +
-      "   <transport stack=\"dummy\" cluster=\"demoCluster\" />\n" +
-      "   <replicated-cache name=\"default\" />\n" +
-      "</cache-container>" +
-      TestingUtil.INFINISPAN_END_TAG;
+         "<jgroups>\n" +
+         "   <stack-file name=\"dummy\" path=\"nosuchfile.xml\"/>\n" +
+         "</jgroups>\n" +
+         "<cache-container default-cache=\"default\">" +
+         "   <jmx domain=\"NonExistingJGroupsConfigTest_channelLookupTest\" />\n" +
+         "   <transport stack=\"dummy\" cluster=\"demoCluster\" />\n" +
+         "   <replicated-cache name=\"default\" />\n" +
+         "</cache-container>" +
+         TestingUtil.INFINISPAN_END_TAG;
+      EmbeddedCacheManager cm = null;
+      try {
+         cm = new DefaultCacheManager(new ByteArrayInputStream(config.getBytes()));
+         cm.getCache();
+         fail("CacheManager construction should have failed");
+      } catch (Exception e) {
+         TestingUtil.expectCause(e, CacheConfigurationException.class, "ISPN000365:.*");
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
+   }
 
-      InputStream is = new ByteArrayInputStream(config.getBytes());
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.fromStream(is)) {
-         @Override
-         public void call() {
-            try {
-               cm.getCache();
-            } catch (Exception e) {
-               assert e.getCause().getCause().getCause() instanceof FileNotFoundException;
-            }
-         }
-      });
+
+   public void brokenJGroupsConfigTest() throws Throwable {
+      String config = InfinispanStartTag.LATEST +
+         "<jgroups>\n" +
+         "   <stack-file name=\"dummy\" path=\"stacks/broken-tcp.xml\"/>\n" +
+         "</jgroups>\n" +
+         "<cache-container default-cache=\"default\">" +
+         "   <jmx domain=\"NonExistingJGroupsConfigTest_brokenJGroupsConfigTest\" />\n" +
+         "   <transport stack=\"dummy\" cluster=\"demoCluster\" />\n" +
+         "   <replicated-cache name=\"default\" />\n" +
+         "</cache-container>" +
+         TestingUtil.INFINISPAN_END_TAG;
+      EmbeddedCacheManager cm = null;
+      try {
+         cm = new DefaultCacheManager(new ByteArrayInputStream(config.getBytes()));
+         cm.getCache();
+         fail("CacheManager construction should have failed");
+      } catch (Exception e) {
+         TestingUtil.expectCause(e, CacheConfigurationException.class, "ISPN000085:.*");
+      } finally {
+         TestingUtil.killCacheManagers(cm);
+      }
    }
 }

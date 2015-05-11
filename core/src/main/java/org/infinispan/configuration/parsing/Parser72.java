@@ -30,6 +30,7 @@ import org.infinispan.persistence.cluster.ClusterLoader;
 import org.infinispan.persistence.file.SingleFileStore;
 import org.infinispan.persistence.spi.CacheLoader;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.security.AuditLogger;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.ClusterRoleMapper;
@@ -721,7 +722,7 @@ public class Parser72 implements ConfigurationParser {
                if (stackFound) {
                   String filePath = transport.getProperty("stackFilePath-" + value);
                   transport.addProperty("stack", value);
-                  transport.addProperty("configurationFile", filePath);
+                  transport.addProperty(JGroupsTransport.CONFIGURATION_FILE, filePath);
                }
                break;
             }
