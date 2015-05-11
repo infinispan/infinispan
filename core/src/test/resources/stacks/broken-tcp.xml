@@ -1,0 +1,37 @@
+<config xmlns="urn:org:jgroups"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="urn:org:jgroups http://www.jgroups.org/schema/JGroups-3.4.xsd">
+   <TCP
+         bind_addr="${jgroups.tcp.address:127.0.0.1}"
+         bind_port="${jgroups.tcp.port:7800}"
+         port_range="30"
+         recv_buf_size="20m"
+         send_buf_size="640k"
+         max_bundle_size="31k"
+         use_send_queues="true"
+         enable_diagnostics="false"
+         tcp_nodelay="true"
+         bundler_type="sender-sends-with-timer"
+
+         thread_naming_pattern="pl"
+
+         thread_pool.enabled="true"
+         thread_pool.min_threads="1"
+         thread_pool.max_threads="5"
+         thread_pool.keep_alive_time="60000"
+         thread_pool.queue_enabled="true"
+         thread_pool.queue_max_size="100"
+         thread_pool.rejection_policy="Discard"
+
+         oob_thread_pool.enabled="true"
+         oob_thread_pool.min_threads="1"
+         oob_thread_pool.max_threads="5"
+         oob_thread_pool.keep_alive_time="60000"
+         oob_thread_pool.queue_enabled="false"
+         oob_thread_pool.queue_max_size="100"
+         oob_thread_pool.rejection_policy="Discard"
+         />
+
+   <NONEXISTENTPROTOCOL />
+
+</config>

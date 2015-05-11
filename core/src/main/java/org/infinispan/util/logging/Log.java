@@ -352,17 +352,14 @@ public interface Log extends BasicLogger {
    @Message(value = "Errors instantiating [%s]! Not using a channel lookup.", id = 84)
    void errorInstantiatingJGroupsChannelLookup(String channelLookupClassName, @Cause Exception e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Error while trying to create a channel using config files: %s", id = 85)
-   void errorCreatingChannelFromConfigFile(String cfg);
+   @Message(value = "Error while trying to create a channel using the specified configuration file: %s", id = 85)
+   CacheConfigurationException errorCreatingChannelFromConfigFile(String cfg, @Cause Exception e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Error while trying to create a channel using config XML: %s", id = 86)
-   void errorCreatingChannelFromXML(String cfg);
+   @Message(value = "Error while trying to create a channel using the specified configuration XML: %s", id = 86)
+   CacheConfigurationException errorCreatingChannelFromXML(String cfg, @Cause Exception e);
 
-   @LogMessage(level = ERROR)
-   @Message(value = "Error while trying to create a channel using config string: %s", id = 87)
-   void errorCreatingChannelFromConfigString(String cfg);
+   @Message(value = "Error while trying to create a channel using the specified configuration string: %s", id = 87)
+   CacheConfigurationException errorCreatingChannelFromConfigString(String cfg, @Cause Exception e);
 
    @LogMessage(level = INFO)
    @Message(value = "Unable to use any JGroups configuration mechanisms provided in properties %s. " +
@@ -1331,4 +1328,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Attempted to register cluster listener of class %s, but listener is annotated as only observing pre events!", id = 364)
    CacheException clusterListenerRegisteredWithOnlyPreEvents(Class<?> listenerClass);
+
+   @Message(value = "Could not find the specified JGroups configuration file '%s'", id = 365)
+   CacheConfigurationException jgroupsConfigurationNotFound(String cfg);
 }
