@@ -1,9 +1,9 @@
 package org.infinispan.transaction.tm;
 
 
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.RollbackException;
@@ -20,6 +20,10 @@ import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
+
+import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * @author bela
@@ -57,8 +61,8 @@ public class DummyTransaction implements Transaction {
       if (trace) {
          log.tracef("Created new transaction with Xid=%s", xid);
       }
-      syncs = new ArrayList<>(2);
-      resources = new ArrayList<>(2);
+      syncs = CollectionFactory.makeList(2);
+      resources = CollectionFactory.makeList(2);
    }
 
    private static boolean isRollbackCode(XAException ex) {

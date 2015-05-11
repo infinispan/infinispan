@@ -1,5 +1,11 @@
 package org.infinispan.commands.tx;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.DataWriteCommand;
@@ -20,12 +26,6 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Command corresponding to the 1st phase of 2PC.

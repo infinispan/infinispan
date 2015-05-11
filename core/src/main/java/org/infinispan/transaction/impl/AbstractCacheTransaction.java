@@ -1,10 +1,11 @@
 package org.infinispan.transaction.impl;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,8 +23,6 @@ import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Base class for local and remote transaction. Impl note: The aggregated modification list and lookedUpEntries are not
@@ -223,13 +222,13 @@ public abstract class AbstractCacheTransaction implements CacheTransaction {
    @Override
    public void addBackupLockForKey(Object key) {
       // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
-      if (backupKeyLocks == null) backupKeyLocks = Collections.synchronizedSet(new HashSet<Object>(INITIAL_LOCK_CAPACITY));
+      if (backupKeyLocks == null) backupKeyLocks = CollectionFactory.makeSynchronizedSet(INITIAL_LOCK_CAPACITY);
       backupKeyLocks.add(key);
    }
 
    public void registerLockedKey(Object key) {
       // we need to synchronize this collection to be able to get a valid snapshot from another thread during state transfer
-      if (lockedKeys == null) lockedKeys = Collections.synchronizedSet(CollectionFactory.makeSet(INITIAL_LOCK_CAPACITY, keyEquivalence));
+      if (lockedKeys == null) lockedKeys = CollectionFactory.makeSynchronizedSet(INITIAL_LOCK_CAPACITY, keyEquivalence);
       if (trace) log.tracef("Registering locked key: %s", toStr(key));
       lockedKeys.add(key);
    }

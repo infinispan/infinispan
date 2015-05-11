@@ -1,6 +1,5 @@
 package org.infinispan.util.concurrent.locks;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -10,10 +9,15 @@ import java.util.concurrent.locks.Lock;
  * @since 5.2
  */
 public interface RefCountingLock extends Lock {
+   /**
+    * Increments reference counter for this lock
+    * @return Updated value of the counter
+    */
+   int incrementRefCountAndGet();
 
    /**
-    * Accesses the reference counter for this lock
-    * @return a reference counter
+    * Decrementes reference counter for this lock
+    * @return Updated value of the counter
     */
-   AtomicInteger getReferenceCounter();
+   int decrementRefCountAndGet();
 }

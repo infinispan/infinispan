@@ -1,16 +1,16 @@
 package org.infinispan.metadata;
 
-import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.marshall.core.Ids;
-import org.jboss.marshalling.util.IdentityIntMap;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.container.versioning.EntryVersion;
+import org.infinispan.marshall.core.Ids;
+import org.jboss.marshalling.util.IdentityIntMap;
 
 /**
  * Metadata class for embedded caches.
@@ -19,6 +19,9 @@ import java.util.concurrent.TimeUnit;
  * @since 5.3
  */
 public class EmbeddedMetadata implements Metadata {
+
+   // modification of this builder is not allowed
+   public final static Metadata DEFAULT = new Builder().build();
 
    final EntryVersion version;
 

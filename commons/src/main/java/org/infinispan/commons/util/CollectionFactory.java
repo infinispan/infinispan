@@ -1,5 +1,9 @@
 package org.infinispan.commons.util;
 
+import org.infinispan.commons.collections.MiniList;
+import org.infinispan.commons.collections.MiniSet;
+import org.infinispan.commons.collections.SynchronizedMiniList;
+import org.infinispan.commons.collections.SynchronizedMiniSet;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.equivalence.EquivalentHashMap;
@@ -9,10 +13,12 @@ import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentCo
 import org.infinispan.commons.util.concurrent.jdk8backported.ConcurrentParallelHashMapV8;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -229,17 +235,47 @@ public class CollectionFactory {
    }
 
    public static <T> Set<T> makeSet(Equivalence<? super T> entryEq) {
-      if (requiresEquivalent(entryEq))
+      if (requiresEquivalent(entryEq)) {
          return new EquivalentHashSet<T>(entryEq);
-      else
-         return new HashSet<T>();
+      } else {
+         return new MiniSet<>();
+      }
    }
 
    public static <T> Set<T> makeSet(int initialCapacity, Equivalence<? super T> entryEq) {
-      if (requiresEquivalent(entryEq))
+      if (requiresEquivalent(entryEq)) {
          return new EquivalentHashSet<T>(initialCapacity, entryEq);
-      else
-         return new HashSet<T>(initialCapacity);
+      } else {
+         return makeSet(initialCapacity);
+      }
+   }
+
+   public static <T> Set<T> makeSet(int initialCapacity) {
+      if (initialCapacity > MiniSet.MAX_OPTIMIZED_CAPACITY) {
+         return new HashSet<>();
+      } else {
+         return new MiniSet<T>();
+      }
+   }
+
+   public static <T> Set<T> makeSynchronizedSet(Equivalence<? super T> entryEq) {
+      if (requiresEquivalent(entryEq)) {
+         return Collections.synchronizedSet(new EquivalentHashSet<T>(entryEq));
+      } else {
+         return new SynchronizedMiniSet<>();
+      }
+   }
+
+   public static <T> Set<T> makeSynchronizedSet(int initialCapacity, Equivalence<? super T> entryEq) {
+      if (requiresEquivalent(entryEq)) {
+         return Collections.synchronizedSet(new EquivalentHashSet<T>(initialCapacity, entryEq));
+      } else {
+         return new SynchronizedMiniSet<>();
+      }
+   }
+
+   public static <T> Set<T> makeSynchronizedSet(int initialCapacity) {
+      return new SynchronizedMiniSet<>();
    }
 
    /**
@@ -250,7 +286,19 @@ public class CollectionFactory {
     * @return a set view of the specified array
     */
    public static <T> Set<T> makeSet(T... entries) {
-      return new HashSet<T>(Arrays.asList(entries));
+      return new MiniSet<>(entries);
+   }
+
+   public static <T> Set<T> makeSet(Collection<T> entries) {
+      return new MiniSet<>(entries);
+   }
+
+   public static <T> List<T> makeList(int initialCapacity) {
+      return new MiniList();
+   }
+
+   public static <T> List<T> makeSynchronizedList() {
+      return new SynchronizedMiniList();
    }
 
    private static <K, V> boolean requiresEquivalent(
