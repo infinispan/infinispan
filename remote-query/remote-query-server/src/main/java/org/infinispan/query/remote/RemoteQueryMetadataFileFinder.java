@@ -8,7 +8,7 @@ import org.kohsuke.MetaInfServices;
  * @since 6.0
  */
 @MetaInfServices
-public class RemoteQueryMetadataFileFinder implements ModuleMetadataFileFinder {
+public final class RemoteQueryMetadataFileFinder implements ModuleMetadataFileFinder {
 
    @Override
    public String getMetadataFilename() {
