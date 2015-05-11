@@ -20,7 +20,7 @@ import java.io.IOException;
  */
 @NamedFactory(name = JPACacheEventFilterConverterFactory.FACTORY_NAME)
 @MetaInfServices
-public class JPACacheEventFilterConverterFactory implements CacheEventFilterConverterFactory {
+public final class JPACacheEventFilterConverterFactory implements CacheEventFilterConverterFactory {
 
    public static final String FACTORY_NAME = "query-dsl-filter-converter-factory";
 

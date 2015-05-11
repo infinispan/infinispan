@@ -37,7 +37,7 @@ import java.util.Map;
  * @since 6.0
  */
 @MetaInfServices(org.infinispan.lifecycle.ModuleLifecycle.class)
-public class LifecycleManager extends AbstractModuleLifecycle {
+public final class LifecycleManager extends AbstractModuleLifecycle {
 
    private static final Log log = LogFactory.getLog(LifecycleManager.class, Log.class);
 

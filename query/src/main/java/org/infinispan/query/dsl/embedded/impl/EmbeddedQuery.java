@@ -37,7 +37,7 @@ public final class EmbeddedQuery extends BaseQuery {
 
    private int resultSize;
 
-   private final String[] projection;
+   private String[] projection;
 
    private final int startOffset;
 
@@ -58,12 +58,12 @@ public final class EmbeddedQuery extends BaseQuery {
          public JPAFilterAndConverter run() {
             JPAFilterAndConverter filter = new JPAFilterAndConverter(jpaQuery, matcherImplClass);
             filter.injectDependencies(cache);
+
+            // this also triggers early validation
+            projection = filter.getObjectFilter().getProjection();
             return filter;
          }
       });
-
-      // this also triggers early validation
-      projection = filter.getObjectFilter().getProjection();
    }
 
    private void ensureAccessPermissions(AdvancedCache<?, ?> cache) {
