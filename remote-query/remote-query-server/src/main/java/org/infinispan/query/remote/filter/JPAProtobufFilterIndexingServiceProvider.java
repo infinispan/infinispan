@@ -17,7 +17,7 @@ import java.io.IOException;
  * @since 7.2
  */
 @MetaInfServices
-public class JPAProtobufFilterIndexingServiceProvider extends JPAFilterIndexingServiceProvider {
+public final class JPAProtobufFilterIndexingServiceProvider extends JPAFilterIndexingServiceProvider {
 
    private SerializationContext serCtx;
 

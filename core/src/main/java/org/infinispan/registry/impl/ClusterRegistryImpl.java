@@ -27,7 +27,6 @@ import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;

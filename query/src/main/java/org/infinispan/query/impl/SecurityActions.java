@@ -38,13 +38,4 @@ final class SecurityActions {
          return Security.doPrivileged(action);
       }
    }
-
-   static Configuration getCacheConfiguration(final AdvancedCache<?, ?> cache) {
-      GetCacheConfigurationAction action = new GetCacheConfigurationAction(cache);
-      if (System.getSecurityManager() != null) {
-         return AccessController.doPrivileged(action);
-      } else {
-         return Security.doPrivileged(action);
-      }
-   }
 }
