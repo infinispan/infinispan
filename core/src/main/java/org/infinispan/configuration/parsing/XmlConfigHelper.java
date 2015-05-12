@@ -466,6 +466,11 @@ public class XmlConfigHelper {
                }
 
                Class<?> parameterType = paramTypes[0];
+               
+               if (parameterType.equals(Class.class)) {
+            	   log.tracef("Rejecting setter %s on class %s due to class parameter is type class", m, objectClass);
+                   continue; // try another param with the same name. 
+               }
                PropertyEditor editor = PropertyEditorManager.findEditor(parameterType);
                if (editor == null) {
                   throw new CacheConfigurationException("Couldn't find a property editor for parameter type " + parameterType);
