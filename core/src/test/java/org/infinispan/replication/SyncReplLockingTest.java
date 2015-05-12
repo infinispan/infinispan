@@ -81,8 +81,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
       cache1.get(k);
       mgr.commit();
 
-      assertNotLocked(cache1, "testcache");
-      assertNotLocked(cache2, "testcache");
+      assertEventuallyNotLocked(cache1, "testcache");
+      assertEventuallyNotLocked(cache2, "testcache");
 
       assert cache1.isEmpty();
       assert cache2.isEmpty();
@@ -111,8 +111,8 @@ public class SyncReplLockingTest extends MultipleCacheManagersTest {
 		assertNull("Should be null", cache1.get(k));
 		mgr.commit();
 
-		assertNotLocked(cache1, "testcache");
-		assertNotLocked(cache2, "testcache");
+		assertEventuallyNotLocked(cache1, "testcache");
+		assertEventuallyNotLocked(cache2, "testcache");
 
 		assert cache1.isEmpty();
 		assert cache2.isEmpty();

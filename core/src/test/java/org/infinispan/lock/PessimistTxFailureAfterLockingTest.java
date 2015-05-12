@@ -66,7 +66,7 @@ public class PessimistTxFailureAfterLockingTest extends MultipleCacheManagersTes
 
       assertTrue("Expected an exception", failed);
       assertNoTransactions();
-      assertNotLocked(cache(1), key);
+      assertEventuallyNotLocked(cache(1), key);
    }
 
    @Override

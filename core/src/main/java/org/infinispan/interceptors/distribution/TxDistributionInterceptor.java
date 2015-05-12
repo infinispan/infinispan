@@ -1,30 +1,32 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.TransactionBoundaryCommand;
+import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.Response;
@@ -36,20 +38,16 @@ import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-import org.jgroups.demos.Topology;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.TimeoutException;
 
-import static org.infinispan.commons.util.Util.toStr;
+import static java.lang.String.format;
 import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKey;
 import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
 import static org.infinispan.util.DeltaCompositeKeyUtil.getAffectedKeysFromContext;
@@ -65,13 +63,26 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    private static Log log = LogFactory.getLog(TxDistributionInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
 
+   private PartitionHandlingManager partitionHandlingManager;
+
    private boolean isPessimisticCache;
    private boolean useClusteredWriteSkewCheck;
+
+   @Inject
+   public void inject(PartitionHandlingManager partitionHandlingManager) {
+      this.partitionHandlingManager = partitionHandlingManager;
+   }
+
+   @Start
+   public void start() {
+      isPessimisticCache = cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
+      useClusteredWriteSkewCheck = Configurations.isVersioningEnabled(cacheConfiguration);
+   }
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         return handleTxWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
+         return handleTxWriteCommand(ctx, command, command.getKey(), false);
       } finally {
          if (ctx.isOriginLocal()) {
             // If the state transfer interceptor has to retry the command, it should ignore the previous value.
@@ -83,7 +94,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         return handleTxWriteCommand(ctx, command, new SingleKeyRecipientGenerator(command.getKey()), false);
+         return handleTxWriteCommand(ctx, command, command.getKey(), false);
       } finally {
          if (ctx.isOriginLocal()) {
             // If the state transfer interceptor has to retry the command, it should ignore the previous value.
@@ -92,21 +103,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   @Start
-   public void start() {
-      isPessimisticCache = cacheConfiguration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
-      useClusteredWriteSkewCheck = !isPessimisticCache &&
-            cacheConfiguration.versioning().enabled() && cacheConfiguration.locking().writeSkewCheck();
-   }
-
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       if (command.hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
          return handleNonTxWriteCommand(ctx, command);
       }
 
-      SingleKeyRecipientGenerator skrg = new SingleKeyRecipientGenerator(command.getKey());
-      Object returnValue = handleTxWriteCommand(ctx, command, skrg, command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER));
+      Object returnValue = handleTxWriteCommand(ctx, command, command.getKey(), command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER));
       if (ctx.isOriginLocal()) {
          // If the state transfer interceptor has to retry the command, it should ignore the previous value.
          command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
@@ -117,7 +120,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // don't bother with a remote get for the PutMapCommand!
-      return handleTxWriteCommand(ctx, command, new MultipleKeysRecipientGenerator(command.getMap().keySet()), true);
+      return handleTxWriteCommand(ctx, command, null, true);
    }
 
    @Override
@@ -166,13 +169,6 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return returnValue;
    }
 
-   protected void lockAndWrap(InvocationContext ctx, Object key, InternalCacheEntry ice, FlagAffectedCommand command) throws InterruptedException {
-      boolean skipLocking = hasSkipLocking(command);
-      long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-      lockManager.acquireLock(ctx, key, lockTimeout, skipLocking);
-      entryFactory.wrapEntryForPut(ctx, key, ice, false, command, false);
-   }
-
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
@@ -183,7 +179,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          log.tracef("Registered remote locks acquired %s", affectedNodes);
          RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
          Map<Address, Response> responseMap = rpcManager.invokeRemotely(affectedNodes, command, rpcOptions);
-         checkTxCommandResponses(responseMap, command);
+         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired());
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -192,7 +188,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         sendCommitCommand(ctx, command);
+         Collection<Address> recipients = getCommitNodes(ctx);
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, createCommitRpcOptions());
+         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -203,24 +201,18 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(ctx));
-         prepareOnAffectedNodes(ctx, command, recipients, defaultSynchronous);
+         prepareOnAffectedNodes(ctx, command, recipients);
          ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients == null ? dm.getWriteConsistentHash()
                .getMembers() : recipients);
       }
       return retVal;
    }
 
-   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients, boolean sync) {
+   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
       try {
          // this method will return immediately if we're the only member (because exclude_self=true)
-         RpcOptions rpcOptions;
-         if (sync) {
-            rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
-         } else {
-            rpcOptions = rpcManager.getDefaultRpcOptions(false);
-         }
-         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, rpcOptions);
-         checkTxCommandResponses(responseMap, command);
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, createPrepareRpcOptions());
+         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
       } finally {
          transactionRemotelyPrepared(ctx);
       }
@@ -229,12 +221,9 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitRollbackCommand(TxInvocationContext ctx, RollbackCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
-         boolean syncRollback = cacheConfiguration.transaction().syncRollbackPhase();
-         ResponseMode responseMode = syncRollback ? ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS : ResponseMode.ASYNCHRONOUS;
-         RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(responseMode, DeliverOrder.NONE).build();
          Collection<Address> recipients = getCommitNodes(ctx);
-         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, rpcOptions);
-         checkTxCommandResponses(responseMap, command);
+         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, createRollbackRpcOptions());
+         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
       }
 
       return invokeNextInterceptor(ctx, command);
@@ -247,47 +236,68 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return localTx.getCommitNodes(affectedNodes, rpcManager.getTopologyId(), members);
    }
 
-   private void sendCommitCommand(TxInvocationContext ctx, CommitCommand command) throws TimeoutException, InterruptedException {
-      Collection<Address> recipients = getCommitNodes(ctx);
-      boolean syncCommitPhase = cacheConfiguration.transaction().syncCommitPhase();
-      RpcOptions rpcOptions;
-      if (syncCommitPhase) {
-         rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
-      } else {
-         rpcOptions = rpcManager.getDefaultRpcOptions(false, DeliverOrder.NONE);
-      }
-      Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, rpcOptions);
-      checkTxCommandResponses(responseMap, command);
-   }
-
-   protected void checkTxCommandResponses(Map<Address, Response> responseMap, TransactionBoundaryCommand command) {
+   protected void checkTxCommandResponses(Map<Address, Response> responseMap, TransactionBoundaryCommand command,
+                                          LocalTxInvocationContext context, Collection<Address> recipients) {
+      OutdatedTopologyException outdatedTopologyException = null;
       for (Map.Entry<Address, Response> e : responseMap.entrySet()) {
          Address recipient = e.getKey();
          Response response = e.getValue();
-         if (response instanceof CacheNotFoundResponse) {
+         if (response == CacheNotFoundResponse.INSTANCE) {
             // No need to retry if the missing node wasn't a member when the command started.
             if (command.getTopologyId() == stateTransferManager.getCacheTopology().getTopologyId()
                   && !rpcManager.getMembers().contains(recipient)) {
-               log.tracef("Ignoring response from node not targeted %s", recipient);
+               if (trace) log.tracef("Ignoring response from node not targeted %s", recipient);
             } else {
-               log.tracef("Cache not running on node %s, or the node is missing", recipient);
-               throw new OutdatedTopologyException("Cache not running on node " + recipient);
+               if (checkCacheNotFoundResponseInPartitionHandling(command, context, recipients)) {
+                  if (trace) log.tracef("Cache not running on node %s, or the node is missing. It will be handled by the PartitionHandlingManager", recipient);
+                  return;
+               } else {
+                  if (trace) log.tracef("Cache not running on node %s, or the node is missing", recipient);
+                  //noinspection ThrowableInstanceNeverThrown
+                  outdatedTopologyException = new OutdatedTopologyException(format("Cache not running on node %s, or the node is missing", recipient));
+               }
             }
-         } else if (response instanceof UnsureResponse) {
-            log.tracef("Node %s has a newer topology id", recipient);
-            throw new OutdatedTopologyException("Cache not running on node " + recipient);
+         } else if (response == UnsureResponse.INSTANCE) {
+            if (trace) log.tracef("Node %s has a newer topology id", recipient);
+            //noinspection ThrowableInstanceNeverThrown
+            outdatedTopologyException = new OutdatedTopologyException(format("Node %s has a newer topology id", recipient));
          }
       }
+      if (outdatedTopologyException != null) {
+         throw outdatedTopologyException;
+      }
+   }
+
+   private boolean checkCacheNotFoundResponseInPartitionHandling(TransactionBoundaryCommand command,
+                                                                 LocalTxInvocationContext context,
+                                                                 Collection<Address> recipients) {
+      final GlobalTransaction globalTransaction = command.getGlobalTransaction();
+      final Collection<Object> lockedKeys = context.getLockedKeys();
+      if (command instanceof RollbackCommand) {
+         return partitionHandlingManager.addPartialRollbackTransaction(globalTransaction, recipients, lockedKeys);
+      } else if (command instanceof PrepareCommand) {
+         if (((PrepareCommand) command).isOnePhaseCommit()) {
+            return partitionHandlingManager.addPartialCommit1PCTransaction(globalTransaction, recipients, lockedKeys,
+                                                                           Arrays.asList(((PrepareCommand) command).getModifications()));
+         }
+      } else if (command instanceof CommitCommand) {
+         EntryVersionsMap newVersion = null;
+         if (command instanceof VersionedCommitCommand) {
+            newVersion = ((VersionedCommitCommand) command).getUpdatedVersions();
+         }
+         return partitionHandlingManager.addPartialCommit2PCTransaction(globalTransaction, recipients, lockedKeys, newVersion);
+      }
+      return false;
    }
 
    private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {
       // Note: the primary owner always already has the data, so this method is always going to return false
       if (useClusteredWriteSkewCheck && ctx.isInTxScope() && dm.isRehashInProgress()) {
          for (Object key : cmd.getAffectedKeys()) {
-            // TODO Dan: Do we need a special check for total order?
             boolean shouldPerformWriteSkewCheck = cdl.localNodeIsPrimaryOwner(key);
             // TODO Dan: remoteGet() already checks if the key is available locally or not
-            if (shouldPerformWriteSkewCheck && dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) return true;
+            if (shouldPerformWriteSkewCheck && dm.isAffectedByRehash(key) && !dataContainer.containsKey(key))
+               return true;
          }
       }
       return false;
@@ -297,10 +307,10 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
-   private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command, RecipientGenerator recipientGenerator, boolean skipRemoteGet) throws Throwable {
+   private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command, Object key, boolean skipRemoteGet) throws Throwable {
       // see if we need to load values from remote sources first
       if (!skipRemoteGet && needValuesFromPreviousOwners(ctx, command))
-         remoteGetBeforeWrite(ctx, command, recipientGenerator);
+         remoteGetBeforeWrite(ctx, command, key);
 
       // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to distribute.
       return invokeNextInterceptor(ctx, command);
@@ -318,7 +328,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private Object localGet(InvocationContext ctx, Object key, boolean isWrite,
-         FlagAffectedCommand command, boolean isGetCacheEntry) throws Throwable {
+                           FlagAffectedCommand command, boolean isGetCacheEntry) throws Throwable {
       InternalCacheEntry ice = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
       if (ice != null) {
          if (isWrite && isPessimisticCache && ctx.isInTxScope()) {
@@ -326,7 +336,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          }
          if (!ctx.replaceValue(key, ice)) {
             if (isWrite)
-               lockAndWrap(ctx, key, ice, command);
+               entryFactory.wrapEntryForPut(ctx, key, ice, false, command, false);
             else
                ctx.putLookedUpEntry(key, ice);
          }
@@ -335,17 +345,15 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return null;
    }
 
-   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable {
-      for (Object k : keygen.getKeys()) {
-         CacheEntry entry = ctx.lookupEntry(k);
-         boolean skipRemoteGet =  entry != null && entry.skipLookup();
-         if (skipRemoteGet) {
-            continue;
-         }
-         InternalCacheEntry ice = remoteGet(ctx, k, true, command);
-         if (ice == null) {
-            localGet(ctx, k, true, command, false);
-         }
+   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
+      CacheEntry entry = ctx.lookupEntry(key);
+      boolean skipRemoteGet =  entry != null && entry.skipLookup();
+      if (skipRemoteGet) {
+         return;
+      }
+      InternalCacheEntry ice = remoteGet(ctx, key, true, command);
+      if (ice == null) {
+         localGet(ctx, key, true, command, false);
       }
    }
 
@@ -367,12 +375,12 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
 
          if (ice != null) {
             if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
-               ((TxInvocationContext)ctx).getCacheTransaction().putLookedUpRemoteVersion(key, ice.getMetadata().version());
+               ((TxInvocationContext) ctx).getCacheTransaction().putLookedUpRemoteVersion(key, ice.getMetadata().version());
             }
 
             if (!ctx.replaceValue(key, ice)) {
                if (isWrite)
-                  lockAndWrap(ctx, key, ice, command);
+                  entryFactory.wrapEntryForPut(ctx, key, ice, false, command, false);
                else {
                   ctx.putLookedUpEntry(key, ice);
                   if (ctx.isInTxScope()) {
@@ -383,8 +391,32 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             return ice;
          }
       } else {
-         if (trace) log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1.  Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
+         if (trace) {
+            log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1. Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
+         }
       }
       return null;
+   }
+
+   private RpcOptions createCommitRpcOptions() {
+      return createRpcOptionsFor2ndPhase(cacheConfiguration.transaction().syncCommitPhase());
+   }
+
+   private RpcOptions createRollbackRpcOptions() {
+      return createRpcOptionsFor2ndPhase(cacheConfiguration.transaction().syncRollbackPhase());
+   }
+
+   private RpcOptions createRpcOptionsFor2ndPhase(boolean sync) {
+      if (sync) {
+         return rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
+      } else {
+         return rpcManager.getRpcOptionsBuilder(ResponseMode.ASYNCHRONOUS, DeliverOrder.NONE).build();
+      }
+   }
+
+   protected RpcOptions createPrepareRpcOptions() {
+      return cacheConfiguration.clustering().cacheMode().isSynchronous() ?
+              rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build() :
+              rpcManager.getDefaultRpcOptions(false);
    }
 }

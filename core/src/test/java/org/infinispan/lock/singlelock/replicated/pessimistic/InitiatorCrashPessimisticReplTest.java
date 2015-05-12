@@ -31,8 +31,8 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       txControlInterceptor.preparedReceived.await();
 
       assertLocked(cache(0), key);
-      assertNotLocked(cache(1), key);
-      assertNotLocked(cache(2), key);
+      assertEventuallyNotLocked(cache(1), key);
+      assertEventuallyNotLocked(cache(2), key);
 
       checkTxCount(0, 0, 1);
       checkTxCount(1, 1, 0);
@@ -63,8 +63,8 @@ public class InitiatorCrashPessimisticReplTest extends InitiatorCrashOptimisticR
       assert checkTxCount(2, 0, 1);
 
       assertLocked(cache(0), key);
-      assertNotLocked(cache(1), key);
-      assertNotLocked(cache(2), key);
+      assertEventuallyNotLocked(cache(1), key);
+      assertEventuallyNotLocked(cache(2), key);
 
       killMember(1);
 

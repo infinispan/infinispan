@@ -74,7 +74,7 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
    private final boolean sync2ndPhase;
    private final boolean totalOrder;
    private final CacheMode cacheMode;
-   private final List<Object> keys = new ArrayList<Object>(128);
+   private final List<Object> keys = new ArrayList<>(128);
 
    protected BaseTxClusterExtendedStatisticLogicTest(CacheMode cacheMode, boolean sync2ndPhase, boolean totalOrder) {
       this.sync = cacheMode.isSynchronous();
@@ -201,9 +201,9 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
       for (int i = 0; i < NUM_NODES; ++i) {
          lockManagers[i] = extractLockManager(cache(i));
          ExtendedStatisticInterceptor interceptor = extendedStatisticInterceptors[i];
-         CacheStatisticManager manager = (CacheStatisticManager) extractField(interceptor, "cacheStatisticManager");
-         CacheStatisticCollector collector = (CacheStatisticCollector) extractField(manager, "cacheStatisticCollector");
-         ConcurrentGlobalContainer globalContainer = (ConcurrentGlobalContainer) extractField(collector, "globalContainer");
+         CacheStatisticManager manager = extractField(interceptor, "cacheStatisticManager");
+         CacheStatisticCollector collector = extractField(manager, "cacheStatisticCollector");
+         ConcurrentGlobalContainer globalContainer = extractField(collector, "globalContainer");
          replaceField(TEST_TIME_SERVICE, "timeService", manager, CacheStatisticManager.class);
          replaceField(TEST_TIME_SERVICE, "timeService", collector, CacheStatisticCollector.class);
          replaceField(TEST_TIME_SERVICE, "timeService", globalContainer, ConcurrentGlobalContainer.class);
@@ -287,10 +287,6 @@ public abstract class BaseTxClusterExtendedStatisticLogicTest extends MultipleCa
             if (isRemote(key, cache(txExecutor))) {
                remotePuts++;
                involvesRemoteNode = true;
-               //remote puts always acquires local locks
-               if (operation == WriteOperation.REPLACE) {
-                  localLocks++;
-               }
             } else {
                localPuts++;
             }

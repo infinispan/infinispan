@@ -92,7 +92,7 @@ public class RecoveryAdminOperations {
          @Parameter(name = "formatId", description = "The formatId of the transaction") int formatId,
          @Parameter(name = "globalTxId", description = "The globalTxId of the transaction") byte[] globalTxId,
          @Parameter(name = "branchQualifier", description = "The branchQualifier of the transaction") byte[] branchQualifier) {
-      recoveryManager.removeRecoveryInformationFromCluster(null, new SerializableXid(branchQualifier, globalTxId, formatId), true, null);
+      recoveryManager.removeRecoveryInformation(null, new SerializableXid(branchQualifier, globalTxId, formatId), true, null, false);
       return "Recovery info removed.";
    }
 

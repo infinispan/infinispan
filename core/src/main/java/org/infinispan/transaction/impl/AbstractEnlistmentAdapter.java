@@ -5,6 +5,7 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
@@ -37,15 +38,18 @@ public abstract class AbstractEnlistmentAdapter {
    private final boolean isPessimisticLocking;
    private final boolean isTotalOrder;
    protected final TransactionCoordinator txCoordinator;
+   protected final PartitionHandlingManager partitionHandlingManager;
 
    public AbstractEnlistmentAdapter(CacheTransaction cacheTransaction,
-            CommandsFactory commandsFactory, RpcManager rpcManager,
-            TransactionTable txTable, ClusteringDependentLogic clusteringLogic,
-            Configuration configuration, TransactionCoordinator txCoordinator) {
+                                    CommandsFactory commandsFactory, RpcManager rpcManager,
+                                    TransactionTable txTable, ClusteringDependentLogic clusteringLogic,
+                                    Configuration configuration, TransactionCoordinator txCoordinator,
+                                    PartitionHandlingManager partitionHandlingManager) {
       this.commandsFactory = commandsFactory;
       this.rpcManager = rpcManager;
       this.txTable = txTable;
       this.clusteringLogic = clusteringLogic;
+      this.partitionHandlingManager = partitionHandlingManager;
       this.isSecondPhaseAsync = Configurations.isSecondPhaseAsync(configuration);
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
@@ -54,12 +58,14 @@ public abstract class AbstractEnlistmentAdapter {
    }
 
    public AbstractEnlistmentAdapter(CommandsFactory commandsFactory,
-            RpcManager rpcManager, TransactionTable txTable,
-            ClusteringDependentLogic clusteringLogic, Configuration configuration, TransactionCoordinator txCoordinator) {
+                                    RpcManager rpcManager, TransactionTable txTable,
+                                    ClusteringDependentLogic clusteringLogic, Configuration configuration, TransactionCoordinator txCoordinator,
+                                    PartitionHandlingManager partitionHandlingManager) {
       this.commandsFactory = commandsFactory;
       this.rpcManager = rpcManager;
       this.txTable = txTable;
       this.clusteringLogic = clusteringLogic;
+      this.partitionHandlingManager = partitionHandlingManager;
       this.isSecondPhaseAsync = Configurations.isSecondPhaseAsync(configuration);
       this.isPessimisticLocking = configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC;
       this.isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
@@ -79,7 +85,7 @@ public abstract class AbstractEnlistmentAdapter {
    }
 
    private void removeTransactionInfoRemotely(LocalTransaction localTransaction, GlobalTransaction gtx) {
-      if (mayHaveRemoteLocks(localTransaction) && !isSecondPhaseAsync) {
+      if (mayHaveRemoteLocks(localTransaction) && !isSecondPhaseAsync && !partitionHandlingManager.isTransactionPartiallyCommitted(gtx)) {
          final TxCompletionNotificationCommand command = commandsFactory.buildTxCompletionNotificationCommand(null, gtx);
          final Collection<Address> owners = clusteringLogic.getOwners(filterDeltaCompositeKeys(localTransaction.getAffectedKeys()));
          Collection<Address> commitNodes = localTransaction.getCommitNodes(owners, rpcManager.getTopologyId(), rpcManager.getMembers());

@@ -55,7 +55,7 @@ public class StaleLocksTransactionTest extends MultipleCacheManagersTest {
       else
          tm(c1).rollback();
 
-      assertNotLocked(c1, "k");
-      assertNotLocked(c2, "k");
+      assertEventuallyNotLocked(c1, "k");
+      assertEventuallyNotLocked(c2, "k");
    }
 }

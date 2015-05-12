@@ -78,18 +78,30 @@ public class AbstractInfinispanTest {
     */
    @Deprecated
    protected void eventually(Condition ec, long timeoutMillis, int loops) {
+      eventually(null, ec, timeoutMillis, loops);
+   }
+
+   /**
+    * @deprecated Use {@link #eventually(String, Condition, long, long, TimeUnit)} instead.
+    */
+   @Deprecated
+   protected void eventually(String message, Condition ec, long timeoutMillis, int loops) {
       if (loops <= 0) {
          throw new IllegalArgumentException("Number of loops must be positive");
       }
       long sleepDuration = timeoutMillis / loops + 1;
-      eventually(ec, timeoutMillis, sleepDuration, TimeUnit.MILLISECONDS);
+      eventually(message, ec, timeoutMillis, sleepDuration, TimeUnit.MILLISECONDS);
    }
 
    protected void eventually(Condition ec, long timeout, TimeUnit unit) {
-      eventually(ec, timeout, 500, unit);
+      eventually(null, ec, timeout, 500, unit);
    }
 
    protected void eventually(Condition ec, long timeout, long pollInterval, TimeUnit unit) {
+      eventually(null, ec, timeout, pollInterval, unit);
+   }
+
+   protected void eventually(String message, Condition ec, long timeout, long pollInterval, TimeUnit unit) {
       if (pollInterval <= 0) {
          throw new IllegalArgumentException("Check interval must be positive");
       }
@@ -100,7 +112,7 @@ public class AbstractInfinispanTest {
             if (ec.isSatisfied()) return;
             Thread.sleep(sleepMillis);
          }
-         assertTrue(ec.isSatisfied());
+         assertTrue(message, ec.isSatisfied());
       } catch (Exception e) {
          throw new RuntimeException("Unexpected!", e);
       }
@@ -225,8 +237,8 @@ public class AbstractInfinispanTest {
       }
       CompletionService<V> completionService = completionService();
       CyclicBarrier barrier = new CyclicBarrier(tasks.length);
-      for (int i = 0; i < tasks.length; i++) {
-         completionService.submit(new ConcurrentCallable<V>(new LoggingCallable<V>(tasks[i]), barrier));
+      for (Callable task : tasks) {
+         completionService.submit(new ConcurrentCallable<>(new LoggingCallable<V>(task), barrier));
       }
 
       return completionService;
@@ -417,8 +429,12 @@ public class AbstractInfinispanTest {
       eventually(ec, 10000);
    }
 
+   protected void eventually(String message, Condition ec) {
+      eventually(message, ec, 10000, 500, TimeUnit.MILLISECONDS);
+   }
+
    protected interface Condition {
-      public boolean isSatisfied() throws Exception;
+      boolean isSatisfied() throws Exception;
    }
 
    private class LoggingCallable<T> implements Callable<T> {

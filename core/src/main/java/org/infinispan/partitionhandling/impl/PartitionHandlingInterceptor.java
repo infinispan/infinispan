@@ -161,7 +161,7 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    protected void postTxCommandCheck(TxInvocationContext ctx) {
-      if (ctx.hasModifications() && partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE) {
+      if (ctx.hasModifications() && partitionHandlingManager.getAvailabilityMode() != AvailabilityMode.AVAILABLE && !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction())) {
          for (Object key : ctx.getAffectedKeys()) {
             partitionHandlingManager.checkWrite(key);
          }

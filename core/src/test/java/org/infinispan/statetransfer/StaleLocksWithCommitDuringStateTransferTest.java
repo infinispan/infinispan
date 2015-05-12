@@ -124,10 +124,10 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       }
 
       // test that we don't leak locks
-      assertNotLocked(c1, k1);
-      assertNotLocked(c2, k1);
-      assertNotLocked(c1, k2);
-      assertNotLocked(c2, k2);
+      assertEventuallyNotLocked(c1, k1);
+      assertEventuallyNotLocked(c2, k1);
+      assertEventuallyNotLocked(c1, k2);
+      assertEventuallyNotLocked(c2, k2);
    }
 
    public void testRollbackSuspectFailure() throws Exception {
@@ -201,7 +201,7 @@ public class StaleLocksWithCommitDuringStateTransferTest extends MultipleCacheMa
       }
 
       // test that we don't leak locks
-      assertNotLocked(c1, k1);
-      assertNotLocked(c1, k2);
+      assertEventuallyNotLocked(c1, k1);
+      assertEventuallyNotLocked(c1, k2);
    }
 }

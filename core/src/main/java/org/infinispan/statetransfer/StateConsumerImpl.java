@@ -289,7 +289,6 @@ public class StateConsumerImpl implements StateConsumer {
       // even if some of the tasks are removed and re-added
       waitingForState.set(false);
 
-      final ConsistentHash newReadCh = cacheTopology.getReadConsistentHash();
       final ConsistentHash newWriteCh = cacheTopology.getWriteConsistentHash();
       final ConsistentHash previousReadCh = this.cacheTopology != null ? this.cacheTopology.getReadConsistentHash() : null;
       final ConsistentHash previousWriteCh = this.cacheTopology != null ? this.cacheTopology.getWriteConsistentHash() : null;
@@ -521,17 +520,16 @@ public class StateConsumerImpl implements StateConsumer {
 
       if (trace) {
          log.tracef("Before applying the received state the data container of cache %s has %d keys", cacheName,
-               dataContainer.size());
+                    dataContainer.size());
       }
       final Set<Integer> mySegments = wCh.getSegmentsForOwner(rpcManager.getAddress());
       final CountDownLatch countDownLatch = new CountDownLatch(stateChunks.size());
       for (final StateChunk stateChunk : stateChunks) {
-         stateTransferExecutor.submit(new Callable<Void>() {
+         stateTransferExecutor.submit(new Runnable() {
             @Override
-            public Void call() throws Exception {
+            public void run() {
                applyChunk(sender, mySegments, stateChunk);
                countDownLatch.countDown();
-               return null;
             }
          });
       }
@@ -547,7 +545,7 @@ public class StateConsumerImpl implements StateConsumer {
 
       if (trace) {
          log.tracef("After applying the received state the data container of cache %s has %d keys", cacheName,
-               dataContainer.size());
+                    dataContainer.size());
          synchronized (transferMapsLock) {
             log.tracef("Segments not received yet for cache %s: %s", cacheName, transfersBySource);
          }
@@ -630,6 +628,9 @@ public class StateConsumerImpl implements StateConsumer {
       if (isTransactional) {
          for (TransactionInfo transactionInfo : transactions) {
             GlobalTransaction gtx = transactionInfo.getGlobalTransaction();
+            if (rpcManager.getAddress().equals(gtx.getAddress())) {
+               continue; // it is a transaction originated in this node. can happen with partition handling
+            }
             // Mark the global transaction as remote. Only used for logging, hashCode/equals ignore it.
             gtx.setRemote(true);
 
@@ -917,8 +918,6 @@ public class StateConsumerImpl implements StateConsumer {
       if (removedSegments.isEmpty())
          return;
 
-      // Keys that might have been in L1, and need to be removed from the data container
-      final ConcurrentHashSet<Object> keysToInvalidate = new ConcurrentHashSet<Object>();
       // Keys that we used to own, and need to be removed from the data container AND the cache stores
       final ConcurrentHashSet<Object> keysToRemove = new ConcurrentHashSet<Object>();
 
@@ -973,15 +972,16 @@ public class StateConsumerImpl implements StateConsumer {
     * @param addedSegments
     */
    private void restartBrokenTransfers(CacheTopology cacheTopology, Set<Integer> addedSegments) {
-      Set<Address> members = new HashSet<Address>(cacheTopology.getReadConsistentHash().getMembers());
+      Set<Address> members = new HashSet<>(cacheTopology.getReadConsistentHash().getMembers());
       synchronized (transferMapsLock) {
-         for (Iterator<Address> it = transfersBySource.keySet().iterator(); it.hasNext(); ) {
-            Address source = it.next();
+         for (Iterator<Map.Entry<Address, List<InboundTransferTask>>> it = transfersBySource.entrySet().iterator(); it.hasNext(); ) {
+            Map.Entry<Address, List<InboundTransferTask>> entry = it.next();
+            Address source = entry.getKey();
             if (!members.contains(source)) {
                if (trace) {
                   log.tracef("Removing inbound transfers from source %s for cache %s", source, cacheName);
                }
-               List<InboundTransferTask> inboundTransfers = transfersBySource.get(source);
+               List<InboundTransferTask> inboundTransfers = entry.getValue();
                it.remove();
                for (InboundTransferTask inboundTransfer : inboundTransfers) {
                   // these segments will be restarted if they are still in new write CH
