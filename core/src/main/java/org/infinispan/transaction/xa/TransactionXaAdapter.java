@@ -3,6 +3,7 @@ package org.infinispan.transaction.xa;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.transaction.impl.AbstractEnlistmentAdapter;
 import org.infinispan.transaction.impl.TransactionCoordinator;
@@ -55,8 +56,8 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
                                RecoveryManager rm, TransactionCoordinator txCoordinator,
                                CommandsFactory commandsFactory, RpcManager rpcManager,
                                ClusteringDependentLogic clusteringDependentLogic,
-                               Configuration configuration, String cacheName) {
-      super(localTransaction, commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration, txCoordinator);
+                               Configuration configuration, String cacheName, PartitionHandlingManager partitionHandlingManager) {
+      super(localTransaction, commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration, txCoordinator, partitionHandlingManager);
       this.localTransaction = localTransaction;
       this.txTable = (XaTransactionTable) txTable;
       this.recoveryManager = rm;
@@ -66,12 +67,13 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       this.onePhaseTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder() &&
             !(configuration.clustering().cacheMode().isDistributed() && configuration.locking().writeSkewCheck());
    }
+
    public TransactionXaAdapter(TransactionTable txTable,
                                RecoveryManager rm, TransactionCoordinator txCoordinator,
                                CommandsFactory commandsFactory, RpcManager rpcManager,
                                ClusteringDependentLogic clusteringDependentLogic,
-                               Configuration configuration, String cacheName) {
-      super(commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration, txCoordinator);
+                               Configuration configuration, String cacheName, PartitionHandlingManager partitionHandlingManager) {
+      super(commandsFactory, rpcManager, txTable, clusteringDependentLogic, configuration, txCoordinator, partitionHandlingManager);
       localTransaction = null;
       this.txTable = (XaTransactionTable) txTable;
       this.recoveryManager = rm;
@@ -145,7 +147,7 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
       if (trace) log.tracef("forget called for xid %s", xid);
       try {
          if (recoveryEnabled) {
-            recoveryManager.removeRecoveryInformationFromCluster(null, xid, true, null);
+            recoveryManager.removeRecoveryInformation(null, xid, true, null, false);
          } else {
             if (trace) log.trace("Recovery not enabled");
          }
@@ -221,7 +223,8 @@ public class TransactionXaAdapter extends AbstractEnlistmentAdapter implements X
    private void forgetSuccessfullyCompletedTransaction(RecoveryManager recoveryManager, Xid xid, LocalXaTransaction localTransaction, boolean committedInOnePhase) {
       final GlobalTransaction gtx = localTransaction.getGlobalTransaction();
       if (recoveryEnabled) {
-         recoveryManager.removeRecoveryInformationFromCluster(localTransaction.getRemoteLocksAcquired(), xid, false, gtx);
+         recoveryManager.removeRecoveryInformation(localTransaction.getRemoteLocksAcquired(), xid, false, gtx,
+                                                   partitionHandlingManager.isTransactionPartiallyCommitted(gtx));
          txTable.removeLocalTransaction(localTransaction);
       } else {
          releaseLocksForCompletedTransaction(localTransaction, committedInOnePhase);

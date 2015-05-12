@@ -612,6 +612,15 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                   throw new TimeoutException("Timed out waiting for valid responses!");
                }
             }
+
+            if (recipients != null) {
+               for (Address dest : recipients) {
+                  if (!dest.equals(getAddress()) && !retval.containsKey(dest)) {
+                     retval.put(dest, CacheNotFoundResponse.INSTANCE);
+                  }
+               }
+            }
+
             return retval;
          });
       } else {

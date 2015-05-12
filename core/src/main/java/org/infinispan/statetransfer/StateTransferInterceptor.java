@@ -24,7 +24,6 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.BaseStateTransferInterceptor;
 import org.infinispan.remoting.RemoteException;
@@ -66,7 +65,6 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    private StateTransferManager stateTransferManager;
    private Transport transport;
-   private ComponentRegistry componentRegistry;
 
    private final AffectedKeysVisitor affectedKeysVisitor = new AffectedKeysVisitor();
 
@@ -76,11 +74,9 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    }
 
    @Inject
-   public void init(StateTransferManager stateTransferManager, Transport transport,
-         ComponentRegistry componentRegistry) {
+   public void init(StateTransferManager stateTransferManager, Transport transport) {
       this.stateTransferManager = stateTransferManager;
       this.transport = transport;
-      this.componentRegistry = componentRegistry;
    }
 
    @Override
@@ -152,7 +148,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
-      if (isLocalOnly(ctx, command)) {
+      if (isLocalOnly(command)) {
          return invokeNextInterceptor(ctx, command);
       }
       CacheTopology beginTopology = stateTransferManager.getCacheTopology();
@@ -189,7 +185,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       Address origin = ctx.isOriginLocal() ? ctx.getOrigin() : ctx.getGlobalTransaction().getAddress();
       if (trace) log.tracef("handleTxCommand for command %s, origin %s", command, origin);
 
-      if (isLocalOnly(ctx, command)) {
+      if (isLocalOnly(command)) {
          return invokeNextInterceptor(ctx, command);
       }
       updateTopologyId(command);
@@ -206,7 +202,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       // We need to forward the command to the new owners, if the command was asynchronous
       boolean async = isTxCommandAsync(command);
       if (async) {
-         stateTransferManager.forwardCommandIfNeeded(command, getAffectedKeys(ctx, command), origin, false);
+         stateTransferManager.forwardCommandIfNeeded(command, getAffectedKeys(ctx, command), origin);
          return null;
       }
 
@@ -254,7 +250,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       Address origin = ctx.getOrigin();
       if (trace) log.tracef("handleTxWriteCommand for command %s, origin %s", command, origin);
 
-      if (isLocalOnly(ctx, command)) {
+      if (isLocalOnly(command)) {
          return invokeNextInterceptor(ctx, command);
       }
       updateTopologyId(command);
@@ -300,7 +296,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
    private Object handleNonTxWriteCommand(InvocationContext ctx, WriteCommand command) throws Throwable {
       if (trace) log.tracef("handleNonTxWriteCommand for command %s, topology id %d", command, command.getTopologyId());
 
-      if (isLocalOnly(ctx, command)) {
+      if (isLocalOnly(command)) {
          return invokeNextInterceptor(ctx, command);
       }
 
@@ -356,7 +352,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
                                                 Address origin) throws Throwable {
       if (trace) log.tracef("handleTopologyAffectedCommand for command %s, origin %s", command, origin);
 
-      if (isLocalOnly(ctx, command)) {
+      if (isLocalOnly(command)) {
          return invokeNextInterceptor(ctx, command);
       }
       updateTopologyId((TopologyAffectedCommand) command);
@@ -364,7 +360,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
-   private boolean isLocalOnly(InvocationContext ctx, VisitableCommand command) {
+   private boolean isLocalOnly(VisitableCommand command) {
       boolean cacheModeLocal = false;
       if (command instanceof FlagAffectedCommand) {
          cacheModeLocal = ((FlagAffectedCommand)command).hasFlag(Flag.CACHE_MODE_LOCAL);

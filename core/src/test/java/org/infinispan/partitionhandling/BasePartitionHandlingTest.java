@@ -7,6 +7,8 @@ import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachemanagerlistener.annotation.ViewChanged;
 import org.infinispan.notifications.cachemanagerlistener.event.ViewChangedEvent;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
+import org.infinispan.remoting.transport.AbstractDelegatingTransport;
+import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
@@ -167,7 +169,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       private void discardOtherMembers() {
-         List<Address> outsideMembers = new ArrayList<Address>();
+         List<Address> outsideMembers = new ArrayList<>();
          for (Address a : allMembers) {
             boolean inThisPartition = false;
             for (Channel c : channels) {
@@ -270,7 +272,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       public void assertKeyAvailableForWrite(Object k, Object newValue) {
-         for (Cache c : cachesInThisPartition()) {
+         for (Cache<Object, Object> c : cachesInThisPartition()) {
             c.put(k, newValue);
             assertEquals(c.get(k), newValue, "Cache " + c.getAdvancedCache().getRpcManager().getAddress() + " doesn't see the right value");
          }
@@ -282,18 +284,20 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       protected void assertKeyNotAvailableForRead(Object key) {
-         for (Cache c : cachesInThisPartition()) {
+         for (Cache<Object, ?> c : cachesInThisPartition()) {
             try {
                c.get(key);
                fail("Key " + key + " available in cache " + address(c));
-            } catch (AvailabilityException ae) {}
+            } catch (AvailabilityException ae) {
+               //expected!
+            }
          }
       }
 
 
-      private List<Cache> cachesInThisPartition() {
-         List<Cache> caches = new ArrayList<Cache>();
-         for (final Cache c : caches()) {
+      private <K,V> List<Cache<K,V>> cachesInThisPartition() {
+         List<Cache<K,V>> caches = new ArrayList<>();
+         for (final Cache<K,V> c : BasePartitionHandlingTest.this.<K,V>caches()) {
             if (channels.contains(channel(c))) {
                caches.add(c);
             }
@@ -302,11 +306,13 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       }
 
       public void assertKeyNotAvailableForWrite(Object key) {
-         for (Cache c : cachesInThisPartition()) {
+         for (Cache<Object, Object> c : cachesInThisPartition()) {
             try {
                c.put(key, key);
                fail();
-            } catch (AvailabilityException ae) {}
+            } catch (AvailabilityException ae) {
+               //expected!
+            }
          }
       }
 
@@ -342,13 +348,11 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
    }
 
    private Channel channel(int i) {
-      Cache<Object, Object> cache = cache(i);
-      return channel(cache);
+      return channel(cache(i));
    }
 
-   private Channel channel(Cache<Object, Object> cache) {
-      JGroupsTransport t = (JGroupsTransport) cache.getAdvancedCache().getRpcManager().getTransport();
-      return t.getChannel();
+   private Channel channel(Cache<?, ?> cache) {
+      return extractJGroupsTransport(cache.getAdvancedCache().getRpcManager().getTransport()).getChannel();
    }
 
    protected Partition partition(int i) {
@@ -369,6 +373,15 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
       for (int i = 0; i < numMembersInCluster; i++) {
          assertEquals(cache(i).get(key), expectedVal);
       }
+   }
+
+   private static JGroupsTransport extractJGroupsTransport(Transport transport) {
+      if (transport instanceof AbstractDelegatingTransport) {
+         return extractJGroupsTransport(((AbstractDelegatingTransport) transport).getDelegate());
+      } else if (transport instanceof JGroupsTransport) {
+         return (JGroupsTransport) transport;
+      }
+      throw new IllegalArgumentException("Transport is not a JGroupsTransport! It is " + transport.getClass());
    }
 
 }

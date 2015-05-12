@@ -209,7 +209,7 @@ public class OriginatorBecomesOwnerLockTest extends MultipleCacheManagersTest {
 
 
    private void assertNoLocksOrTxs(Object key, Cache<Object, String> cache) {
-      assertNotLocked(originatorCache, key);
+      assertEventuallyNotLocked(originatorCache, key);
 
       final TransactionTable transactionTable = TestingUtil.extractComponent(cache, TransactionTable.class);
 

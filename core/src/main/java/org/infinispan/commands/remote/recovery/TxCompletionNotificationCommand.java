@@ -114,7 +114,7 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
    private void forwardCommandRemotely(RemoteTransaction remoteTx) {
       Set<Object> affectedKeys = remoteTx.getAffectedKeys();
       log.tracef("Invoking forward of TxCompletionNotification for transaction %s. Affected keys: %s", gtx, affectedKeys);
-      stateTransferManager.forwardCommandIfNeeded(this, affectedKeys, remoteTx.getGlobalTransaction().getAddress(), false);
+      stateTransferManager.forwardCommandIfNeeded(this, affectedKeys, remoteTx.getGlobalTransaction().getAddress());
    }
 
    @Override

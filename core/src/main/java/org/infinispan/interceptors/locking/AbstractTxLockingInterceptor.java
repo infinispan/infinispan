@@ -1,14 +1,8 @@
 package org.infinispan.interceptors.locking;
 
-import static org.infinispan.commons.util.Util.toStr;
-
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.atomic.DeltaCompositeKey;
-import org.infinispan.commands.read.GetCacheEntryCommand;
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.read.GetAllCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
@@ -18,6 +12,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -27,6 +22,11 @@ import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
+
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Base class for transaction based locking interceptors.
@@ -40,14 +40,16 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
    protected RpcManager rpcManager;
    private boolean clustered;
    private TimeService timeService;
+   private PartitionHandlingManager partitionHandlingManager;
 
    @Inject
-   @SuppressWarnings("unused")
-   public void setDependencies(TransactionTable txTable, RpcManager rpcManager, TimeService timeService) {
+   public void setDependencies(TransactionTable txTable, RpcManager rpcManager, TimeService timeService,
+                               PartitionHandlingManager partitionHandlingManager, CommandsFactory commandsFactory) {
       this.txTable = txTable;
       this.rpcManager = rpcManager;
       clustered = rpcManager != null;
       this.timeService = timeService;
+      this.partitionHandlingManager = partitionHandlingManager;
    }
 
    @Override
@@ -210,17 +212,13 @@ public abstract class AbstractTxLockingInterceptor extends AbstractLockingInterc
       }
    }
 
-   private TimeoutException newTimeoutException(Object key, TxInvocationContext txContext) {
-      return new TimeoutException("Could not acquire lock on " + key + " on behalf of transaction " +
-                                       txContext.getGlobalTransaction() + "." + "Lock is being held by " + lockManager.getOwner(key));
-   }
-   
-   private TimeoutException newTimeoutException(Object key, CacheTransaction tx, TxInvocationContext txContext) {                  
+   private TimeoutException newTimeoutException(Object key, CacheTransaction tx, TxInvocationContext txContext) {
       return new TimeoutException("Could not acquire lock on " + key + " on behalf of transaction " +
                                        txContext.getGlobalTransaction() + ". Waiting to complete tx: " + tx + ".");
    }
 
    private boolean releaseLockOnTxCompletion(TxInvocationContext ctx) {
-      return ctx.isOriginLocal() || Configurations.isSecondPhaseAsync(cacheConfiguration);
+      return (ctx.isOriginLocal() && !partitionHandlingManager.isTransactionPartiallyCommitted(ctx.getGlobalTransaction()) ||
+                    (!ctx.isOriginLocal() && Configurations.isSecondPhaseAsync(cacheConfiguration)));
    }
 }

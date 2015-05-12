@@ -174,11 +174,9 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          for (Map.Entry<String, LocalCacheStatus> e : runningCaches.entrySet()) {
             String cacheName = e.getKey();
             LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-            AvailabilityMode availabilityMode = cacheStatus.getPartitionHandlingManager() != null ?
-                    cacheStatus.getPartitionHandlingManager().getAvailabilityMode() : null;
             caches.put(e.getKey(), new CacheStatusResponse(cacheStatus.getJoinInfo(),
                     cacheStatus.getCurrentTopology(), cacheStatus.getStableTopology(),
-                    availabilityMode));
+                    cacheStatus.getPartitionHandlingManager().getAvailabilityMode()));
          }
       }
 
@@ -272,10 +270,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          unionTopology.logRoutingTableInformation();
 
          boolean updateAvailabilityModeFirst = availabilityMode != AvailabilityMode.AVAILABLE;
-         if (updateAvailabilityModeFirst) {
-            if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
-               cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
-            }
+         if (updateAvailabilityModeFirst && availabilityMode != null) {
+            cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
          }
          if ((existingTopology == null || existingTopology.getRebalanceId() != cacheTopology.getRebalanceId()) && unionCH != null) {
             // This CH_UPDATE command was sent after a REBALANCE_START command, but arrived first.
@@ -287,9 +283,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          }
 
          if (!updateAvailabilityModeFirst) {
-            if (cacheStatus.getPartitionHandlingManager() != null && availabilityMode != null) {
-               cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
-            }
+            cacheStatus.getPartitionHandlingManager().setAvailabilityMode(availabilityMode);
          }
       }
    }
@@ -425,13 +419,13 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Override
    public CacheTopology getCacheTopology(String cacheName) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-      return cacheStatus.getCurrentTopology();
+      return cacheStatus != null ? cacheStatus.getCurrentTopology() : null;
    }
 
    @Override
    public CacheTopology getStableCacheTopology(String cacheName) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-      return cacheStatus.getCurrentTopology();
+      return cacheStatus != null ? cacheStatus.getStableTopology() : null;
    }
 
    @Override
@@ -487,10 +481,8 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       AvailabilityMode clusterAvailability = AvailabilityMode.AVAILABLE;
       synchronized (runningCaches) {
          for (LocalCacheStatus cacheStatus : runningCaches.values()) {
-            AvailabilityMode availabilityMode = cacheStatus.getPartitionHandlingManager() != null ?
-                  cacheStatus.getPartitionHandlingManager().getAvailabilityMode() : null;
-            clusterAvailability = availabilityMode != null ? clusterAvailability.min(availabilityMode) : clusterAvailability;
-
+            AvailabilityMode availabilityMode = cacheStatus.getPartitionHandlingManager().getAvailabilityMode();
+            clusterAvailability = clusterAvailability.min(availabilityMode);
          }
       }
       return clusterAvailability.toString();
@@ -499,9 +491,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    @Override
    public AvailabilityMode getCacheAvailability(String cacheName) {
       LocalCacheStatus cacheStatus = runningCaches.get(cacheName);
-      AvailabilityMode availabilityMode = cacheStatus.getPartitionHandlingManager() != null ?
-            cacheStatus.getPartitionHandlingManager().getAvailabilityMode() : AvailabilityMode.AVAILABLE;
-      return availabilityMode;
+      return cacheStatus.getPartitionHandlingManager().getAvailabilityMode();
    }
 
    @Override
@@ -540,16 +530,15 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    private void executeOnCoordinatorAsync(final ReplicableCommand command) throws Exception {
       // if we are the coordinator, the execution is actually synchronous
       if (transport.isCoordinator()) {
-         asyncTransportExecutor.submit(new Callable<Object>() {
+         asyncTransportExecutor.execute(new Runnable() {
             @Override
-            public Object call() throws Exception {
+            public void run() {
                if (log.isTraceEnabled()) log.tracef("Attempting to execute command on self: %s", command);
                gcr.wireDependencies(command);
                try {
-                  return command.perform(null);
+                  command.perform(null);
                } catch (Throwable t) {
                   log.errorf(t, "Failed to execute ReplicableCommand %s on coordinator async: %s", command, t.getMessage());
-                  throw new Exception(t);
                }
             }
          });
@@ -673,6 +662,7 @@ class LocalCacheStatus {
 
    public void setStableTopology(CacheTopology stableTopology) {
       this.stableTopology = stableTopology;
+      partitionHandlingManager.onTopologyUpdate(currentTopology);
    }
 
    public SemaphoreCompletionService<Void> getTopologyUpdatesCompletionService() {

@@ -1,11 +1,9 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.tx.PrepareCommand;
+import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseMode;
-import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.xa.CacheTransaction;
 import org.infinispan.util.logging.Log;
@@ -32,12 +30,11 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
    }
 
    @Override
-   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients, boolean ignored) {
+   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
       // Perform the RPC
       try {
-         RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
-         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, rpcOptions);
-         checkTxCommandResponses(resps, command);
+         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, createPrepareRpcOptions());
+         checkTxCommandResponses(resps, command, (LocalTxInvocationContext) ctx, recipients);
 
          // Now store newly generated versions from lock owners for use during the commit phase.
          CacheTransaction ct = ctx.getCacheTransaction();

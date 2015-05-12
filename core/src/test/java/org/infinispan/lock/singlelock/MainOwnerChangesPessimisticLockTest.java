@@ -62,7 +62,7 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
    }
 
    private void testLockMigration(int nodeThatPuts, boolean commit) throws Exception {
-      Map<Object, Transaction> key2Tx = new HashMap<Object, Transaction>();
+      Map<Object, Transaction> key2Tx = new HashMap<>();
       for (int i = 0; i < NUM_KEYS; i++) {
          Object key = getKeyForCache(0);
          if (key2Tx.containsKey(key)) continue;
@@ -123,9 +123,9 @@ public class MainOwnerChangesPessimisticLockTest extends MultipleCacheManagersTe
          }
 
          // there should not be any locks
-         assertNotLocked(cache(0), migratedKey);
-         assertNotLocked(cache(1), migratedKey);
-         assertNotLocked(cache(2), migratedKey);
+         assertEventuallyNotLocked(cache(0), migratedKey);
+         assertEventuallyNotLocked(cache(1), migratedKey);
+         assertEventuallyNotLocked(cache(2), migratedKey);
 
          // if a new TX tries to write to the migrated key this should not fail, the key should not be locked
          tm(nodeThatPuts).begin();

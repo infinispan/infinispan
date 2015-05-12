@@ -58,7 +58,7 @@ public class StaleLocksOnPrepareFailureTest extends MultipleCacheManagersTest {
       }
 
       for (int i = 0; i < NUM_CACHES; i++) {
-        assertNotLocked(cache(i), k1);
+        assertEventuallyNotLocked(cache(i), k1);
       }
    }
 }

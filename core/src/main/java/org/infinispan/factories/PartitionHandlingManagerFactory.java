@@ -2,6 +2,7 @@ package org.infinispan.factories;
 
 
 import org.infinispan.factories.annotations.DefaultFactoryFor;
+import org.infinispan.partitionhandling.impl.AvailablePartitionHandlingManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManagerImpl;
 
@@ -10,8 +11,8 @@ import org.infinispan.partitionhandling.impl.PartitionHandlingManagerImpl;
  * @since 7.0
  */
 @DefaultFactoryFor(classes = PartitionHandlingManager.class)
-public class PartitionHandlingManagerFactory extends AbstractNamedCacheComponentFactory implements
-      AutoInstantiableFactory {
+public class PartitionHandlingManagerFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
+
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
@@ -21,6 +22,6 @@ public class PartitionHandlingManagerFactory extends AbstractNamedCacheComponent
             return (T) new PartitionHandlingManagerImpl();
          }
       }
-      return null;
+      return (T) AvailablePartitionHandlingManager.getInstance();
    }
 }

@@ -102,9 +102,7 @@ public class DummyTransaction implements Transaction {
       checkDone("Cannot commit transaction.");
       runPrepare();
       runCommit(false);
-      if (firstRollbackException != null) {
-         throw firstRollbackException;
-      }
+      throwRollbackExceptionIfAny();
    }
 
    /**
@@ -339,6 +337,12 @@ public class DummyTransaction implements Transaction {
    @Override
    public final boolean equals(Object obj) {
       return this == obj;
+   }
+
+   public final void throwRollbackExceptionIfAny() throws RollbackException {
+      if (firstRollbackException != null) {
+         throw firstRollbackException;
+      }
    }
 
    private void markRollbackOnly(RollbackException e) {

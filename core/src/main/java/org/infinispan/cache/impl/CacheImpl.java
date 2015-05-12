@@ -948,11 +948,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public AvailabilityMode getAvailability() {
-      if (partitionHandlingManager != null) {
-         return partitionHandlingManager.getAvailabilityMode();
-      } else {
-         return AvailabilityMode.AVAILABLE;
-      }
+      return partitionHandlingManager.getAvailabilityMode();
    }
 
    @Override
@@ -1071,7 +1067,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public XAResource getXAResource() {
-      return new TransactionXaAdapter(txTable, recoveryManager, txCoordinator, commandsFactory, rpcManager, null, config, name);
+      return new TransactionXaAdapter(txTable, recoveryManager, txCoordinator, commandsFactory, rpcManager, null, config, name, partitionHandlingManager);
    }
 
    @Override

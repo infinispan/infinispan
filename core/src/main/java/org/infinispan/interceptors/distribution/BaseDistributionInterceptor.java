@@ -1,7 +1,6 @@
 package org.infinispan.interceptors.distribution;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -267,11 +266,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
          throw new CacheException("Attempted execution of non-transactional write command in a transactional invocation context");
       }
 
-      RecipientGenerator recipientGenerator = new SingleKeyRecipientGenerator(command.getKey());
-
       // see if we need to load values from remote sources first
       if (needValuesFromPreviousOwners(ctx, command)) {
-         remoteGetBeforeWrite(ctx, command, recipientGenerator);
+         remoteGetBeforeWrite(ctx, command, command.getKey());
       }
 
       // invoke the command locally, we need to know if it's successful or not
@@ -309,7 +306,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                log.tracef("Skipping the replication of the conditional command as it did not succeed on primary owner (%s).", command);
                return localResult;
             }
-            List<Address> recipients = recipientGenerator.generateRecipients();
+            List<Address> recipients = cdl.getOwners(command.getKey());
             // Ignore the previous value on the backup owners
             command.setValueMatcher(ValueMatcher.MATCH_ALWAYS);
             try {
@@ -327,7 +324,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                log.tracef("Skipping the replication of the command as it did not succeed on primary owner (%s).", command);
                return localResult;
             }
-            List<Address> recipients = recipientGenerator.generateRecipients();
+            List<Address> recipients = cdl.getOwners(command.getKey());
             log.tracef("I'm the primary owner, sending the command to all the backups (%s) in order to be applied.",
                   recipients);
             // check if a single owner has been configured and the target for the key is the local address
@@ -517,59 +514,5 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
     */
    protected abstract boolean needValuesFromPreviousOwners(InvocationContext ctx, WriteCommand command);
 
-   protected abstract void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, RecipientGenerator keygen) throws Throwable;
-
-   interface RecipientGenerator {
-
-      Collection<Object> getKeys();
-
-      List<Address> generateRecipients();
-   }
-
-   class SingleKeyRecipientGenerator implements RecipientGenerator {
-      private final Object key;
-      private final Set<Object> keys;
-      private List<Address> recipients = null;
-
-      SingleKeyRecipientGenerator(Object key) {
-         this.key = key;
-         keys = Collections.singleton(key);
-      }
-
-      @Override
-      public List<Address> generateRecipients() {
-         if (recipients == null) {
-            recipients = cdl.getOwners(key);
-         }
-         return recipients;
-      }
-
-      @Override
-      public Collection<Object> getKeys() {
-         return keys;
-      }
-   }
-
-   class MultipleKeysRecipientGenerator implements RecipientGenerator {
-
-      private final Collection<Object> keys;
-      private List<Address> recipients = null;
-
-      MultipleKeysRecipientGenerator(Collection<Object> keys) {
-         this.keys = keys;
-      }
-
-      @Override
-      public List<Address> generateRecipients() {
-         if (recipients == null) {
-            recipients = cdl.getOwners(keys);
-         }
-         return recipients;
-      }
-
-      @Override
-      public Collection<Object> getKeys() {
-         return keys;
-      }
-   }
+   protected abstract void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key) throws Throwable;
 }
