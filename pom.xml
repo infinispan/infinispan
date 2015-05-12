@@ -67,8 +67,8 @@
       <module>demos/nearcache</module>
       <module>demos/nearcache-client</module>
       <module>cdi</module>
-      <module>jcache</module>
       <module>server/integration</module>
+      <module>jcache</module>
       <module>as-modules/embedded</module>
       <module>as-modules/client</module>
       <module>integrationtests</module>
