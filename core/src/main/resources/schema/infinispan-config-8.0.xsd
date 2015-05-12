@@ -763,6 +763,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="notifications" type="xs:boolean" default="true">
+      <xs:annotation>
+        <xs:documentation>
+          Enables or disables triggering transactional notifications on cache listeners. By default is enabled.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="eviction">

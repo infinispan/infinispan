@@ -1354,6 +1354,10 @@ public class Parser72 implements ConfigurationParser {
                builder.transaction().recovery().recoveryInfoCacheName(value);
                break;
             }
+            case NOTIFICATIONS: {
+               builder.transaction().notifications(Boolean.parseBoolean(value));
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedAttribute(reader, i);
             }

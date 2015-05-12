@@ -259,6 +259,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   public TransactionConfigurationBuilder notifications(boolean enabled) {
+      attributes.attribute(NOTIFICATIONS).set(enabled);
+      return this;
+   }
+
    @Override
    public void validate() {
       Attribute<Long> reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
