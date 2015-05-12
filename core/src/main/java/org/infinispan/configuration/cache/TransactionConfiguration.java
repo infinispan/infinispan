@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -12,6 +10,8 @@ import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
@@ -36,10 +36,11 @@ public class TransactionConfiguration {
    public static final AttributeDefinition<Long> REAPER_WAKE_UP_INTERVAL = AttributeDefinition.builder("reaperWakeUpInterval", 30000l).immutable().build();
    public static final AttributeDefinition<Long> COMPLETED_TX_TIMEOUT = AttributeDefinition.builder("completedTxTimeout", 60000l).immutable().build();
    public static final AttributeDefinition<TransactionProtocol> TRANSACTION_PROTOCOL = AttributeDefinition.builder("transactionProtocol", TransactionProtocol.DEFAULT).immutable().build();
+   public static final AttributeDefinition<Boolean> NOTIFICATIONS = AttributeDefinition.builder("notifications", true).immutable().build();
    static AttributeSet attributeDefinitionSet() {
       return new AttributeSet(TransactionConfiguration.class, AUTO_COMMIT, CACHE_STOP_TIMEOUT, EAGER_LOCKING_SINGLE_NODE, LOCKING_MODE, SYNC_COMMIT_PHASE, SYNC_ROLLBACK_PHASE,
             TRANSACTION_MANAGER_LOOKUP, TRANSACTION_SYNCHRONIZATION_REGISTRY_LOOKUP, TRANSACTION_MODE, USE_EAGER_LOCKING, USE_SYNCHRONIZATION, USE_1_PC_FOR_AUTO_COMMIT_TRANSACTIONS,
-            REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, TRANSACTION_PROTOCOL);
+            REAPER_WAKE_UP_INTERVAL, COMPLETED_TX_TIMEOUT, TRANSACTION_PROTOCOL, NOTIFICATIONS);
    }
 
    private final Attribute<Boolean> autoCommit;
@@ -57,6 +58,7 @@ public class TransactionConfiguration {
    private final Attribute<Long> reaperWakeUpInterval;
    private final Attribute<Long> completedTxTimeout;
    private final Attribute<TransactionProtocol> transactionProtocol;
+   private final Attribute<Boolean> notifications;
    private final AttributeSet attributes;
    private final RecoveryConfiguration recovery;
 
@@ -77,6 +79,7 @@ public class TransactionConfiguration {
       reaperWakeUpInterval = attributes.attribute(REAPER_WAKE_UP_INTERVAL);
       completedTxTimeout = attributes.attribute(COMPLETED_TX_TIMEOUT);
       transactionProtocol = attributes.attribute(TRANSACTION_PROTOCOL);
+      notifications = attributes.attribute(NOTIFICATIONS);
       this.recovery = recovery;
    }
 
@@ -298,6 +301,15 @@ public class TransactionConfiguration {
     */
    public TransactionProtocol transactionProtocol() {
       return transactionProtocol.get();
+   }
+
+   /**
+    * @return are transactional notifications (
+    *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered} and
+    *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}) triggered?
+    */
+   public boolean notifications() {
+      return notifications.get();
    }
 
    public AttributeSet attributes() {

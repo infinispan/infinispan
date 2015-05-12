@@ -177,8 +177,10 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(interceptor, false);
       }
 
-
-      interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(), NotificationInterceptor.class), false);
+      // NotificationInterceptor is used only for Prepare/Commit/Rollback notifications
+      if (configuration.transaction().transactionMode().isTransactional() && configuration.transaction().notifications()) {
+         interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(), NotificationInterceptor.class), false);
+      }
 
       if (configuration.transaction().useEagerLocking()) {
          configuration.transaction().lockingMode(LockingMode.PESSIMISTIC);

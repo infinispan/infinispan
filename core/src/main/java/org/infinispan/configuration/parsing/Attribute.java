@@ -73,6 +73,7 @@ public enum Attribute {
     MODIFICATION_QUEUE_SIZE("modification-queue-size"),
     MODULE("module"),
     NAME("name"),
+    NOTIFICATIONS("notifications"),
     ON_REHASH("onRehash"),
     OWNERS("owners"),
     PATH("path"),
