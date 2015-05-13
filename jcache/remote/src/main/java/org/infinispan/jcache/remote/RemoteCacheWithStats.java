@@ -52,10 +52,10 @@ public class RemoteCacheWithStats<K, V> extends RemoteCacheWrapper<K, V> {
       V v = delegate.replace(key, value);
       if (v != null) {
          stats.incrementCacheHits();
+         stats.incrementCachePuts();
       } else {
          stats.incrementCacheMisses();
       }
-      stats.incrementCachePuts();
       return v;
    }
 
