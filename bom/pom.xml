@@ -59,7 +59,7 @@
       
       <version.maven-compiler-plugin>3.1</version.maven-compiler-plugin>
       
-      <version.protostream>3.0.1.Final</version.protostream>
+      <version.protostream>3.0.2.Final</version.protostream>
       <version.aesh>0.33.14</version.aesh>
       <version.antlr>3.5.2</version.antlr>
       <version.c3p0>0.9.5</version.c3p0>
@@ -392,12 +392,6 @@
             <groupId>org.infinispan.protostream</groupId>
             <artifactId>protostream</artifactId>
             <version>${version.protostream}</version>
-            <exclusions>
-               <exclusion>
-                  <groupId>org.javassist</groupId>
-                  <artifactId>javassist</artifactId>
-               </exclusion>
-            </exclusions>
          </dependency>
          <dependency>
             <groupId>org.infinispan.protostream</groupId>
