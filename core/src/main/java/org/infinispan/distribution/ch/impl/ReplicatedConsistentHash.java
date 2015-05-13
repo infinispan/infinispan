@@ -279,6 +279,11 @@ public class ReplicatedConsistentHash implements ConsistentHash {
          throw new UnsupportedOperationException("RangeSet is immutable");
       }
 
+      @Override
+      public String toString() {
+         return "RangeSet(" + size + ")";
+      }
+
       private static class RangeSetIterator implements Iterator<Integer> {
          private int size;
          private int next;

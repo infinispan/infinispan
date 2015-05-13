@@ -218,7 +218,7 @@ public class StateProviderImpl implements StateProvider {
          // Skip transactions whose originators left. The topology id check is needed for joiners.
          // Also skip transactions that originates after state transfer starts.
          if (tx.getTopologyId() == topologyId || !members.contains(tx.getGlobalTransaction().getAddress())) {
-            log.tracef("Skipping transaction %s as it was started in the current topology or by a leaver", tx);
+            if (trace) log.tracef("Skipping transaction %s as it was started in the current topology or by a leaver", tx);
             continue;
          }
 
@@ -241,7 +241,8 @@ public class StateProviderImpl implements StateProvider {
             }
          }
          if (filteredLockedKeys.isEmpty()) {
-            log.tracef("Skipping transaction %s because the state requestor doesn't own any key", destination);
+            if (trace) log.tracef("Skipping transaction %s because the state requestor %s doesn't own any key",
+                    tx, destination);
             continue;
          }
          if (trace) log.tracef("Sending transaction %s to new owner %s", tx, destination);
