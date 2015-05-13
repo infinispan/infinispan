@@ -24,7 +24,6 @@ import javax.cache.event.EventType;
 
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.jcache.logging.Log;
 
 /**
@@ -180,10 +179,6 @@ public abstract class AbstractJCacheNotifier<K, V> {
 
    public boolean hasSyncUpdatedListener() {
       return hasSyncListener(CacheEntryUpdatedListener.class);
-   }
-
-   public boolean hasSyncExpiredListener() {
-      return hasSyncListener(CacheEntryExpiredListener.class);
    }
 
    private boolean hasSyncListener(Class<?> listenerClass) {
