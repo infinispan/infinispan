@@ -15,6 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.testng.Assert.assertEquals;
@@ -94,7 +96,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
       final CountDownLatch l = new CountDownLatch(1);
       final AtomicBoolean rollback = new AtomicBoolean(false);
 
-      Thread th = new Thread("Updater") {
+      Future<Void>future = fork(new Runnable() {
          @Override
          public void run() {
             try {
@@ -107,6 +109,7 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
                   public int prepare(Xid id) {
                      // this would be called *after* the cache prepares.
                      try {
+                        log.debug("Unblocking commit");
                         l.await();
                      } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
@@ -121,14 +124,12 @@ public abstract class RehashTestBase extends BaseDistFunctionalTest<Object, Stri
                throw new RuntimeException(e);
             }
          }
-      };
-
-      th.start();
+      }, null);
 
       log.info("Invoking rehash event");
       performRehashEvent(true);
       l.countDown();
-      th.join();
+      future.get(30, TimeUnit.SECONDS);
 
       //ownership can only be verified after the rehashing has completed
       waitForRehashCompletion();

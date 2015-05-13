@@ -27,7 +27,8 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
    @Override
    public void run() {
       try {
-         if (beforeInvoke()) {
+         response = beforeInvoke();
+         if (response == null) {
             response = handler.invokePerform(command);
          }
          afterInvoke();
@@ -61,7 +62,7 @@ public abstract class BaseBlockingRunnable implements BlockingRunnable {
       //no-op by default
    }
 
-   protected boolean beforeInvoke() throws Exception {
-      return true; //no-op by default
+   protected Response beforeInvoke() throws Exception {
+      return null; //no-op by default
    }
 }
