@@ -4,5 +4,3 @@
 
 # This is a dummy test that fails if not in the exclude list.
 org.jsr107.tck.CachingTest#dummyTest
-
-org.jsr107.tck.expiry.CacheExpiryTest#testCacheStatisticsRemoveAll
