@@ -10,6 +10,7 @@ import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.responses.ResponseGenerator;
@@ -152,7 +153,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
                }
 
                @Override
-               protected boolean beforeInvoke() throws Exception {
+               protected Response beforeInvoke() throws Exception {
                   // We still have to wait for the topology to be installed
                   stateTransferLock.waitForTransactionData(waitTopologyId, 1, TimeUnit.DAYS);
                   return super.beforeInvoke();
@@ -166,7 +167,7 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
                }
 
                @Override
-               protected boolean beforeInvoke() throws Exception {
+               protected Response beforeInvoke() throws Exception {
                   stateTransferLock.waitForTopology(waitTopologyId, 1, TimeUnit.DAYS);
                   return super.beforeInvoke();
                }
@@ -189,15 +190,16 @@ public abstract class BasePerCacheInboundInvocationHandler implements PerCacheIn
       }
 
       @Override
-      protected boolean beforeInvoke() throws Exception {
+      protected Response beforeInvoke() throws Exception {
          if (0 <= commandTopologyId && commandTopologyId < handler.stateTransferManager.getFirstTopologyAsMember()) {
             if (handler.isTraceEnabled()) {
                handler.getLog().tracef("Ignoring command sent before the local node was a member " +
                                              "(command topology id is %d)", commandTopologyId);
             }
-            return false; //skip invocation
+            // Skip invocation
+            return CacheNotFoundResponse.INSTANCE;
          }
-         return true;
+         return null;
       }
    }
 }
