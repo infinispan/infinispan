@@ -508,9 +508,10 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    public void onTopologyChange(TopologyChangedEvent<?, ?> tce) {
       // don't do anything if this cache is not clustered
       if (clustered) {
-         if (tce.isPre()) {
+         if (!tce.isPre()) {
+            // The topology id must be updated after the topology was updated in StateConsumerImpl,
+            // as state transfer requires transactions not sent to the new owners to have a smaller topology id.
             currentTopologyId = tce.getNewTopologyId();
-         } else {
             log.debugf("Topology changed, recalculating minTopologyId");
             calculateMinTopologyId(-1);
          }
