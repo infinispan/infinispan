@@ -7,8 +7,6 @@ import org.infinispan.atomic.FineGrainedAtomicMap;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -158,7 +156,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
                   throw e;
                }
             } catch (Exception ex) {
-               ex.printStackTrace();
+               log.errorf(ex, "Failure in thread %s", Thread.currentThread().getName());
             }
          }
       }, "Thread-1, WriteSkewTest");
@@ -195,7 +193,7 @@ public class WriteSkewTest extends AbstractInfinispanTest {
                   throw e;
                }
             } catch (Exception ex) {
-               ex.printStackTrace();
+               log.errorf(ex, "Failure in thread %s", Thread.currentThread().getName());
             }
          }
       }, "Thread-2, WriteSkewTest");
