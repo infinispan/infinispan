@@ -61,9 +61,8 @@ public class DistProgrammaticMassIndexTest extends DistributedMassIndexingTest {
          CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery, Car.class);
 
          assertEquals(count, cacheQuery.getResultSize());
-
       } catch(ParseException ex) {
-         ex.printStackTrace();
+         log.error("Query failed", ex);
          fail("Failed due to: " + ex.getMessage());
       }
       StaticTestingErrorHandler.assertAllGood(cache);
