@@ -16,10 +16,10 @@ import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.concurrent.IsolationLevel;
+import org.infinispan.util.concurrent.ReclosableLatch;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -83,8 +83,8 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
             cache(0).put(key, "v1");
          }
 
-         controller.awaitCommit = new CountDownLatch(1);
-         controller.blockCommit = new CountDownLatch(1);
+         controller.awaitCommit.close();
+         controller.blockCommit.close();
 
          final Future<Boolean> tx1 = fork(new Callable<Boolean>() {
             @Override
@@ -100,7 +100,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
          //tx1 has already committed in cache(0) but not in cache(1)
          //we block the remote get in order to force the tx2 to read the most recent value from cache(0)
          controller.awaitCommit.await();
-         controller.blockRemoteGet = new CountDownLatch(1);
+         controller.blockRemoteGet.close();
 
          final Future<Boolean> tx2 = fork(new Callable<Boolean>() {
             @Override
@@ -159,10 +159,10 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
 
    private class CommandInterceptorController extends BaseCustomInterceptor {
 
-      private volatile CountDownLatch blockRemoteGet = null;
-      private volatile CountDownLatch blockCommit = null;
-      private volatile CountDownLatch awaitPrepare = null;
-      private volatile CountDownLatch awaitCommit = null;
+      private final ReclosableLatch blockRemoteGet = new ReclosableLatch(true);
+      private final ReclosableLatch blockCommit = new ReclosableLatch(true);
+      private final ReclosableLatch awaitPrepare = new ReclosableLatch(true);
+      private final ReclosableLatch awaitCommit = new ReclosableLatch(true);
 
       @Override
       public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
@@ -198,7 +198,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
             getLog().debug("visit Prepare");
             if (awaitPrepare != null) {
                getLog().debug("Prepare Received... unblocking");
-               awaitPrepare.countDown();
+               awaitPrepare.open();
             }
          }
       }
@@ -212,7 +212,7 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
                getLog().debug("visit Commit");
                if (awaitCommit != null) {
                   getLog().debug("Commit Received... unblocking...");
-                  awaitCommit.countDown();
+                  awaitCommit.open();
                }
                if (blockCommit != null) {
                   getLog().debug("Commit Received... blocking...");
@@ -224,20 +224,16 @@ public class ConditionalOperationsConcurrentWriteSkewTest extends MultipleCacheM
 
       public void reset() {
          if (blockCommit != null) {
-            blockCommit.countDown();
-            blockCommit = null;
+            blockCommit.open();
          }
          if (blockRemoteGet != null) {
-            blockRemoteGet.countDown();
-            blockRemoteGet = null;
+            blockRemoteGet.open();
          }
          if (awaitPrepare != null) {
-            awaitPrepare.countDown();
-            awaitPrepare = null;
+            awaitPrepare.open();
          }
          if (awaitCommit != null) {
-            awaitCommit.countDown();
-            awaitCommit = null;
+            awaitCommit.open();
          }
       }
    }
