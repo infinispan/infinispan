@@ -293,7 +293,11 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                // We will retry when we receive the new view and then we'll reset the mustRecoverClusterStatus flag
                return;
             } catch (Exception e) {
-               log.failedToRecoverClusterState(e);
+               if (!isShuttingDown) {
+                  log.failedToRecoverClusterState(e);
+               } else {
+                  log.tracef("Cluster state recovery failed because the coordinator is shutting down");
+               }
             }
          }
 
@@ -389,8 +393,13 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    public void updateCacheMembers(List<Address> newClusterMembers) throws Exception {
       log.tracef("Updating cluster members for all the caches. New list is %s", newClusterMembers);
-      // If we get a SuspectException here, it means we will have a new view soon and we can ignore this one.
-      confirmMembersAvailable();
+      try {
+         // If we get a SuspectException here, it means we will have a new view soon and we can ignore this one.
+         confirmMembersAvailable();
+      } catch (SuspectException e) {
+         log.tracef("Node %s left while updating cache members", e.getSuspect());
+         return;
+      }
 
       for (ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
          cacheStatus.doHandleClusterView();
