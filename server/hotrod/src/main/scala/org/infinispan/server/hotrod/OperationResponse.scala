@@ -46,6 +46,11 @@ object OperationResponse extends Enumeration {
    val PutAllResponse = Value(0x2E)
    val GetAllResponse = Value(0x30)
 
+   // 2.3
+   val IterationStartResponse = Value(0x32)
+   val IterationNextResponse = Value(0x34)
+   val IterationEndResponse = Value(0x36)
+
    def toResponse(request: Enumeration#Value): OperationResponse = {
       request match {
          case PutRequest => PutResponse

@@ -22,7 +22,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFact
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.notifications.cachelistener.filter.NamedFactory;
+import org.infinispan.filter.NamedFactory;
 
 @ClientListener(converterFactoryName = "test-converter-factory")
 public abstract class CustomEventLogListener<E> {

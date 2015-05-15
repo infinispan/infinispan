@@ -14,6 +14,7 @@ object OperationStatus extends Enumeration {
    val KeyDoesNotExist = Value(0x02)
    val SuccessWithPrevious = Value(0x03)
    val NotExecutedWithPrevious = Value(0x04)
+   val InvalidIteration = Value(0x05)
 
    val InvalidMagicOrMsgId = Value(0x81)
    val UnknownOperation = Value(0x82)

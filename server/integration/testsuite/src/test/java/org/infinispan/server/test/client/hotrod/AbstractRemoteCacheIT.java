@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -23,13 +24,16 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.infinispan.server.test.util.ITestUtils.sleepForSecs;
 import static org.junit.Assert.*;
@@ -906,6 +910,29 @@ public abstract class AbstractRemoteCacheIT {
         } finally {
             remoteCache.removeClientListener(eventListener);
         }
+    }
+
+   @Test
+    public void testIterationWithCustomClasses() {
+       remoteCache.put("1", new SampleEntity("value1,value2"));
+       remoteCache.put("2", new SampleEntity("value3,value2"));
+       remoteCache.put("ignore", new SampleEntity("whatever"));
+       remoteCache.put("3", new SampleEntity("value7,value8"));
+
+       final Map<Object, Object> entryMap = new HashMap<>();
+       try(CloseableIterator<Entry<Object, Object>> closeableIterator = remoteCache.retrieveEntries("csv-key-value-filter-converter-factory", null, 10)) {
+          closeableIterator.forEachRemaining(new Consumer<Entry<Object, Object>>() {
+             @Override
+             public void accept(Entry<Object, Object> e) {
+                entryMap.put(e.getKey(), e.getValue());
+             }
+          });
+       }
+
+      assertEquals(3, entryMap.size());
+      assertEquals(Arrays.asList("value1","value2"), ((Summary) entryMap.get("1")).getAttributes());
+      assertEquals(Arrays.asList("value3","value2"), ((Summary) entryMap.get("2")).getAttributes());
+      assertEquals(Arrays.asList("value7","value8"), ((Summary) entryMap.get("3")).getAttributes());
     }
 
     @Test

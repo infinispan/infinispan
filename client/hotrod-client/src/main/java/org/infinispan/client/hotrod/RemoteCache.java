@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.api.BasicCache;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
@@ -155,6 +156,20 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
     */
    NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds, int maxIdleSeconds);
 
+   /**
+    * Retrieve entries from the server
+    *
+    * @param filterConverterFactory Factory name for the KeyValueFilterConverter or null
+    * @param segments               The segments to iterate. If empty or null all segments will be iterated
+    * @param batchSize              The number of entries transferred from the server at a time
+    * @return Iterator for the entries
+    */
+   CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize);
+
+   /**
+    * @see #retrieveEntries(String, java.util.Set, int)
+    */
+   CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, int batchSize);
 
    /**
     * Returns the {@link VersionedValue} associated to the supplied key param, or null if it doesn't exist.

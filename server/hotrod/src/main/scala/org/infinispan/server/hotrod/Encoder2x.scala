@@ -312,6 +312,15 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          case s: SizeResponse => writeUnsignedLong(s.size, buf)
          case e: ExecResponse =>
             writeRangedBytes(e.result, buf)
+         case r: IterationStartResponse => writeString(r.iterationId, buf)
+         case r: IterationNextResponse =>
+            writeRangedBytes(r.iterationResult.segmentsToBytes, buf)
+            val entries = r.iterationResult.entrySeq
+            writeUnsignedInt(entries.size, buf)
+            entries.foreach { e =>
+               writeRangedBytes(e._1.asInstanceOf[Bytes],buf)
+               writeRangedBytes(e._2.asInstanceOf[Bytes],buf)
+            }
          case e: ErrorResponse => writeString(e.msg, buf)
          case _ => if (buf == null)
             throw new IllegalArgumentException("Response received is unknown: " + r)

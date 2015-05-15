@@ -1,0 +1,88 @@
+package org.infinispan.client.hotrod.impl.operations;
+
+import java.net.SocketAddress;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.infinispan.client.hotrod.Flag;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
+import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
+import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
+import org.infinispan.client.hotrod.impl.transport.Transport;
+import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
+
+/**
+ * @author gustavonalle
+ * @since 8.0
+ */
+public class IterationStartOperation extends RetryOnFailureOperation<IterationStartResponse> {
+
+   private static final Log log = LogFactory.getLog(IterationStartOperation.class);
+
+
+   private final String filterConverterFactory;
+   private final Set<Integer> segments;
+   private final int batchSize;
+   private final TransportFactory transportFactory;
+
+   protected IterationStartOperation(Codec codec, Flag[] flags, byte[] cacheName, AtomicInteger topologyId,
+                                     String filterConverterFactory, Set<Integer> segments, int batchSize, TransportFactory transportFactory) {
+      super(codec, transportFactory, cacheName, topologyId, flags);
+      this.filterConverterFactory = filterConverterFactory;
+      this.segments = segments;
+      this.batchSize = batchSize;
+      this.transportFactory = transportFactory;
+   }
+
+   @Override
+   protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
+      ConsistentHash consistentHash = transportFactory.getConsistentHash(cacheName);
+      if(log.isDebugEnabled() && consistentHash == null) {
+         log.noConsistentHashAvailable();
+      }
+      if (segments == null || segments.isEmpty() || consistentHash == null) {
+         return transportFactory.getTransport(failedServers, cacheName);
+      }
+      SegmentConsistentHash segmentConsistentHash = (SegmentConsistentHash) consistentHash;
+      SocketAddress[][] owners = segmentConsistentHash.getSegmentOwners();
+      Set<SocketAddress> bestServers = new HashSet<>();
+
+      segments.forEach(s -> Collections.addAll(bestServers, owners[s][0]));
+      if (failedServers != null) {
+         failedServers.forEach(bestServers::remove);
+      }
+      if (bestServers.isEmpty()) {
+         return transportFactory.getTransport(failedServers, cacheName);
+      }
+      return transportFactory.getAddressTransport(bestServers.iterator().next());
+   }
+
+   @Override
+   protected IterationStartResponse executeOperation(Transport transport) {
+      HeaderParams params = writeHeader(transport, ITERATION_START_REQUEST);
+      // TODO use a more compact BitSet implementation, like http://roaringbitmap.org/
+      BitSet bitSet = new BitSet();
+      if (segments != null && !segments.isEmpty()) {
+         segments.stream().forEach(bitSet::set);
+      }
+      transport.writeArray(bitSet.toByteArray());
+
+      transport.writeString(filterConverterFactory);
+      transport.writeVInt(batchSize);
+      transport.flush();
+
+      readHeaderAndValidate(transport, params);
+
+      return new IterationStartResponse(transport.readString(), (SegmentConsistentHash) transportFactory.getConsistentHash(cacheName), topologyId.get(), transport);
+   }
+
+   @Override
+   protected void releaseTransport(Transport transport) {
+   }
+}

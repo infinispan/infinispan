@@ -1,10 +1,10 @@
 package org.infinispan.server.test.client.hotrod;
 
+import org.infinispan.filter.NamedFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.notifications.cachelistener.filter.NamedFactory;
 import org.infinispan.server.test.client.hotrod.AbstractRemoteCacheIT.Person;
 
 import java.io.Serializable;

@@ -80,7 +80,7 @@ public abstract class AbstractTransport implements Transport {
 
    @Override
    public void writeString(String string) {
-      if (!string.isEmpty()) {
+      if (string != null && !string.isEmpty()) {
          writeArray(string.getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
       } else {
          writeVInt(0);

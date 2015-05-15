@@ -1,14 +1,14 @@
 package org.infinispan.client.hotrod.impl.consistenthash;
 
+import java.net.SocketAddress;
+import java.util.Map;
+import java.util.Set;
+
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.Util;
-
-import java.net.SocketAddress;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Galder Zamarreño
@@ -19,6 +19,7 @@ public final class SegmentConsistentHash implements ConsistentHash {
 
    private final Hash hash = MurmurHash3.getInstance();
    private SocketAddress[][] segmentOwners;
+   private int numSegments;
    private int segmentSize;
 
    @Override
@@ -28,6 +29,7 @@ public final class SegmentConsistentHash implements ConsistentHash {
 
    public void init(SocketAddress[][] segmentOwners, int numSegments) {
       this.segmentOwners = segmentOwners;
+      this.numSegments = numSegments;
       this.segmentSize = Util.getSegmentSize(numSegments);
    }
 
@@ -40,7 +42,7 @@ public final class SegmentConsistentHash implements ConsistentHash {
       return segmentOwners[segmentId][0];
    }
 
-   private int getSegment(Object key) {
+   public int getSegment(Object key) {
       // The result must always be positive, so we make sure the dividend is positive first
       return getNormalizedHash(key) / segmentSize;
    }
@@ -50,4 +52,11 @@ public final class SegmentConsistentHash implements ConsistentHash {
       return Util.getNormalizedHash(object, hash);
    }
 
+   public int getNumSegments() {
+      return numSegments;
+   }
+
+   public SocketAddress[][] getSegmentOwners() {
+      return segmentOwners;
+   }
 }

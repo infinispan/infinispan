@@ -3,7 +3,7 @@ package org.infinispan.query.remote.filter;
 import org.infinispan.commons.CacheException;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
-import org.infinispan.notifications.cachelistener.filter.NamedFactory;
+import org.infinispan.filter.NamedFactory;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;

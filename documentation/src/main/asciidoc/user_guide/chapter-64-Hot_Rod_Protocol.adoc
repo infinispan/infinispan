@@ -10,6 +10,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:$$#_hot_rod_protocol_2_0$$[Hot Rod Protocol 2.0]
 * link:$$#_hot_rod_protocol_2_1$$[Hot Rod Protocol 2.1]
 * link:$$#_hot_rod_protocol_2_2$$[Hot Rod Protocol 2.2]
+* link:$$#_hot_rod_protocol_2_3$$[Hot Rod Protocol 2.3]
 
 ===== Hot Rod Protocol 1.0
 
@@ -1567,6 +1568,89 @@ DEFAULT and INFINITE can be used for default server expiration and no expiration
 | Max Idle            | vLong       | Duration that each entry can be idle before it's evicted from the cache. Only sent when time unit is not DEFAULT or INFINITE
 |==============================================================================
 
+===== Hot Rod Protocol 2.3
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 8.0
+
+====== Operations
+
+.Iteration Start
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| Segments size       | vInt       |  Size of the bitset encoding of the segments ids to iterate on. The size is the maximum segment id rounded to nearest multiple of 8.
+| Segments            | byte array | (Optional) the segments ids bitset encoded, where each bit with value 1 represents a segment in the set. Byte order is little-endian. +
+Example: segments [1,3,12,13] would result in the following encoding: +
+00001010 00110000 +
+size: 16 bits +
+first byte: represents segments from 0 to 7, from which 1 and 3 are set +
+second byte: represents segments from 8 to 15, from which 12 and 13 are set +
+More details in the java.util.BitSet implementation
+| FilterConverter     | String      | (Optional) KeyValueFilterConverter factory name deployed on the server
+| BatchSize           | vInt        | number of entries to transfers from the server at one go
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| IterationId         | String     | The unique id of the iteration
+|==============================================================================
+
+
+.Iteration Next
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| IterationId         | String     | The unique id of the iteration
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name               | Size       | Value
+| Finished segments size   | vInt       | size of the bitset representing segments that were finished iterating
+| Finished segments        | byte array | bitset encoding of the segments that were finished iterating
+| Entry count              | vInt       | How many entries are being returned
+| Key 1 Length             | vInt       | Length of key
+| Key 1                    | byte array | Retrieved key
+| Value 1 Length           | vInt       | Length of value
+| Value 1                  | byte array | Retrieved value
+| Key 2 Length             | vInt       |
+| Key 2                    | byte array |
+| Value 2 Length           | vInt       |
+| Value 2                  | byte array |
+|... continues until entry count is reached ||
+|==============================================================================
+
+.Iteration End
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size       | Value
+| IterationId         | String     | The unique id of the iteration
+|==============================================================================
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Header              | variable   | Response header
+| Response status     | 1 byte     |
++0x00+ = success, if execution completed successfully +
++0x05+ = for non existent IterationId  +
+|==============================================================================
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash

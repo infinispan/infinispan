@@ -10,11 +10,17 @@ import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.Marsha
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.filter.AbstractKeyValueFilterConverter;
+import org.infinispan.filter.KeyValueFilterConverterFactory;
+import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
@@ -34,6 +40,8 @@ import org.testng.annotations.Test;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
@@ -115,7 +123,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    }
 
    public void testPutAndGet() throws Exception {
-      Account account = createAccount();
+      Account account = createAccountPB();
       remoteCache.put(1, account);
 
       // try to get the object through the local cache interface and check it's the same object we put
@@ -148,7 +156,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    }
 
    public void testRemoteQuery() throws Exception {
-      Account account = createAccount();
+      Account account = createAccountPB();
       remoteCache.put(1, account);
 
       // get account back from remote cache via query and check its attributes
@@ -243,7 +251,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    }
 
    public void testEmbeddedQuery() throws Exception {
-      Account account = createAccount();
+      Account account = createAccountPB();
       remoteCache.put(1, account);
 
       // get account back from local cache via query and check its attributes
@@ -259,9 +267,66 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertAccount((Account) list.get(0), AccountHS.class);
    }
 
-   private AccountPB createAccount() {
+   public void testIterationForRemote() throws Exception {
+      IntStream.range(0, 10).forEach(id -> remoteCache.put(id, createAccount(id)));
+
+      // Remote unfiltered iteration
+      CloseableIterator<Map.Entry<Object, Object>> remoteUnfilteredIterator = remoteCache.retrieveEntries(null, null, 10);
+      remoteUnfilteredIterator.forEachRemaining(e -> {
+         Integer key = (Integer) e.getKey();
+         AccountPB value = (AccountPB) e.getValue();
+         assertTrue(key < 10);
+         assertTrue(value.getId() == key);
+      });
+
+      // Remote filtered iteration
+      KeyValueFilterConverterFactory<Integer, Account,String> filterConverterFactory = () ->
+            new AbstractKeyValueFilterConverter<Integer, Account, String>() {
+               @Override
+               public String filterAndConvert(Integer key, Account value, Metadata metadata) {
+                  if (key % 2 == 0) {
+                     return value.toString();
+                  }
+                  return null;
+               }
+            };
+
+      hotRodServer.addKeyValueFilterConverterFactory("filterConverterFactory", filterConverterFactory);
+
+      CloseableIterator<Map.Entry<Object, Object>> remoteFilteredIterator = remoteCache.retrieveEntries("filterConverterFactory", null, 10);
+      remoteFilteredIterator.forEachRemaining(e -> {
+         Integer key = (Integer) e.getKey();
+         String value = (String) e.getValue();
+         assertTrue(key < 10);
+         assertTrue(value.equals(createAccountHS(key).toString()));
+      });
+
+      // Embedded  iteration
+      EntryRetriever<Integer, Account> localRetriever = cache.getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
+      CloseableIterator<CacheEntry<Integer, AccountHS>> localUnfilteredIterator = localRetriever.retrieveEntries(null, null, null, null);
+      localUnfilteredIterator.forEachRemaining(e -> {
+         Integer key = e.getKey();
+         AccountHS value = e.getValue();
+         assertTrue(key < 10);
+         assertTrue(value.getId() == key);
+      });
+   }
+
+   private AccountPB createAccountPB() {
+      return createAccount(1);
+   }
+
+   private AccountPB createAccount(int id) {
       AccountPB account = new AccountPB();
-      account.setId(1);
+      account.setId(id);
+      account.setDescription("test description");
+      account.setCreationDate(new Date(42));
+      return account;
+   }
+
+   private AccountHS createAccountHS(int id) {
+      AccountHS account = new AccountHS();
+      account.setId(id);
       account.setDescription("test description");
       account.setCreationDate(new Date(42));
       return account;

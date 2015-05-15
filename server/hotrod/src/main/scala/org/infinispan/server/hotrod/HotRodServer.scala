@@ -2,8 +2,9 @@ package org.infinispan.server.hotrod
 
 import logging.Log
 import org.infinispan.commons.marshall.Marshaller
+import org.infinispan.filter.KeyValueFilterConverterFactory
 import org.infinispan.notifications.cachelistener.filter.{CacheEventFilterConverterFactory, CacheEventConverterFactory, CacheEventFilterFactory}
-import scala.collection.JavaConversions._
+import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, IterationManager}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.{QueryFacade, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
@@ -22,6 +23,8 @@ import org.infinispan.factories.ComponentRegistry
 import org.infinispan.registry.InternalCacheRegistry
 import java.util.EnumSet
 import org.infinispan.server.hotrod.event.KeyValueWithPreviousEventConverterFactory
+
+import scala.collection.JavaConversions._
 
 /**
  * Hot Rod server, in charge of defining its encoder/decoder and, if clustered, update the topology information
@@ -47,6 +50,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var queryFacades: Seq[QueryFacade] = _
    private val saslMechFactories = CollectionFactory.makeConcurrentMap[String, SaslServerFactory](4, 0.9f, 16)
    private var clientListenerRegistry: ClientListenerRegistry = _
+
+   lazy val iterationManager: IterationManager = new DefaultIterationManager(getCacheManager)
 
    def getAddress: ServerAddress = address
 
@@ -134,7 +139,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    private def defineTopologyCacheConfig(cacheManager: EmbeddedCacheManager) {
       val internalCacheRegistry = cacheManager.getGlobalComponentRegistry.getComponent(classOf[InternalCacheRegistry])
-      internalCacheRegistry.registerInternalCache(configuration.topologyCacheName, 
+      internalCacheRegistry.registerInternalCache(configuration.topologyCacheName,
           createTopologyCacheConfig(cacheManager.getCacheManagerConfiguration.transport().distributedSyncTimeout()).build(),
           EnumSet.of(InternalCacheRegistry.Flag.EXCLUSIVE))
    }
@@ -254,8 +259,17 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       clientListenerRegistry.removeCacheEventFilterConverterFactory(name)
    }
 
-   def setEventMarshaller(marshaller: Marshaller): Unit = {
+   def setMarshaller(marshaller: Marshaller): Unit = {
       clientListenerRegistry.setEventMarshaller(Option(marshaller))
+      iterationManager.setMarshaller(Option(marshaller))
+   }
+
+   def addKeyValueFilterConverterFactory[K, V, C](name: String, factory: KeyValueFilterConverterFactory[K, V, C]): Unit = {
+      iterationManager.addKeyValueFilterConverterFactory(name, factory)
+   }
+
+   def removeKeyValueFilterConverterFactory[K, V, C](name: String): Unit = {
+      iterationManager.removeKeyValueFilterConverterFactory(name)
    }
 
    override def stop: Unit = {

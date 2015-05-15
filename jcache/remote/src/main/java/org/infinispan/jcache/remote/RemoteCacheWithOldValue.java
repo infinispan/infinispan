@@ -1,7 +1,10 @@
 package org.infinispan.jcache.remote;
 
+import java.util.Set;
+
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.commons.util.CloseableIterator;
 
 /**
  * Wrapper which emulates replace and remove with oldValue.
@@ -36,5 +39,10 @@ class RemoteCacheWithOldValue<K, V> extends RemoteCacheWrapper<K, V> {
          return false;
       }
       return delegate.replaceWithVersion(key, newValue, versioned.getVersion());
+   }
+
+   @Override
+   public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize) {
+      return delegate.retrieveEntries(filterConverterFactory, segments, batchSize);
    }
 }

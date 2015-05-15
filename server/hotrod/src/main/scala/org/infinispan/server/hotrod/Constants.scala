@@ -17,6 +17,7 @@ trait Constants {
    val VERSION_20: Byte = 20
    val VERSION_21: Byte = 21
    val VERSION_22: Byte = 22
+   val VERSION_23: Byte = 23
    val DEFAULT_CONSISTENT_HASH_VERSION_1x: Byte = 2
    val DEFAULT_CONSISTENT_HASH_VERSION: Byte = 3
 
