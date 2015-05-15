@@ -9,6 +9,7 @@ import javax.net.ssl.SSLContext;
 
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 
@@ -39,6 +40,8 @@ public interface TransportFactory {
    void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace, byte[] cacheName);
 
    void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion, byte[] cacheName);
+
+   ConsistentHash getConsistentHash(byte[] cacheName);
 
    ConsistentHashFactory getConsistentHashFactory();
 

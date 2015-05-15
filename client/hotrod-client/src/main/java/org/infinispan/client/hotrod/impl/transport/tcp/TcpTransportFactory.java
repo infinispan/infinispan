@@ -369,6 +369,7 @@ public class TcpTransportFactory implements TransportFactory {
    /**
     * Note that the returned <code>ConsistentHash</code> may not be thread-safe.
     */
+   @Override
    public ConsistentHash getConsistentHash(byte[] cacheName) {
       synchronized (lock) {
          return consistentHashes.get(cacheName);

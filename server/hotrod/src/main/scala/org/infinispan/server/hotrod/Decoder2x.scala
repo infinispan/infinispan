@@ -84,6 +84,9 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case 0x2B => (ExecRequest, true)
          case 0x2D => (PutAllRequest, false)
          case 0x2F => (GetAllRequest, false)
+         case 0x31 => (IterationStartRequest, false)
+         case 0x33 => (IterationNextRequest, false)
+         case 0x35 => (IterationEndRequest, false)
          case _ => throw new HotRodUnknownOperationException(
             "Unknown operation: " + streamOp, version, messageId)
       }
@@ -157,7 +160,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          }
       }
       version match {
-         case VERSION_22 =>
+         case VERSION_22 | VERSION_23 =>
             val timeUnits = TimeUnitValue.decodePair(buffer.readByte())
             val lifespanDuration = readDurationIfNeeded(timeUnits._1)
             val maxIdleDuration = readDurationIfNeeded(timeUnits._2)
@@ -371,7 +374,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val filterFactoryInfo = readNamedFactory(buffer)
             val converterFactoryInfo = readNamedFactory(buffer)
             val useRawData = h.version match {
-               case VERSION_21 | VERSION_22 => buffer.readByte() == 1
+               case VERSION_21 | VERSION_22 | VERSION_23 => buffer.readByte() == 1
                case _ => false
             }
             val reg = server.getClientListenerRegistry
@@ -388,6 +391,20 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                createNotExecutedResponse(h, null)
          case PutAllRequest | GetAllRequest =>
             decoder.checkpointTo(HotRodDecoderState.DECODE_PARAMETERS)
+         case IterationStartRequest =>
+            val segments = readRangedBytes(buffer)
+            val filterConverterFactory = readString(buffer)
+            val batchSize = readUnsignedInt(buffer)
+            val iterationId = server.iterationManager.start(cache.getName, segments, filterConverterFactory, batchSize)
+            new IterationStartResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, iterationId)
+         case IterationNextRequest =>
+            val iterationId = readString(buffer)
+            val iterationResult = server.iterationManager.next(cache.getName, iterationId)
+            new IterationNextResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, iterationResult)
+         case IterationEndRequest =>
+            val iterationId = readString(buffer)
+            val removed = server.iterationManager.close(cache.getName, iterationId)
+            new Response(h.version, h.messageId, h.cacheName, h.clientIntel, IterationEndResponse, if (removed) Success else InvalidIteration, h.topologyId)
          case _ => null
       }
    }
@@ -585,7 +602,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
     * Convert an expiration value into milliseconds
     */
    override def toMillis(param: ExpirationParam, h: SuitableHeader): Long = {
-      if (h.version == VERSION_22) {
+      if (h.version == VERSION_22 | h.version == VERSION_23) {
          if (param.duration > 0) {
             val javaTimeUnit = param.unit.toJavaTimeUnit(h)
             javaTimeUnit.toMillis(param.duration)

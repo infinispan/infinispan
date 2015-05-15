@@ -11,7 +11,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.notifications.cachelistener.filter.NamedFactory;
+import org.infinispan.filter.NamedFactory;
 import org.junit.Assert;
 
 import java.io.Serializable;

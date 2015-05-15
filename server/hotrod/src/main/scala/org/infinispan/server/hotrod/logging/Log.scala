@@ -48,4 +48,6 @@ trait Log extends org.infinispan.server.core.logging.Log {
    def illegalFilterConverterEventFactory(name: String) =
       log.illegalFilterConverterEventFactory(name)
 
+   def illegalIterationId(iterationId: String) = log.illegalIterationId(iterationId)
+
 }

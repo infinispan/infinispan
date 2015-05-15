@@ -21,7 +21,7 @@ import static org.infinispan.server.endpoint.EndpointLogger.ROOT_LOGGER;
 
 public abstract class AbstractNamedFactoryExtensionProcessor<T> extends AbstractServerExtensionProcessor<T> {
 
-    private static final DotName NAMED_FACTORY = DotName.createSimple("org.infinispan.notifications.cachelistener.filter.NamedFactory");
+    private static final DotName NAMED_FACTORY = DotName.createSimple("org.infinispan.filter.NamedFactory");
 
     private final ServiceName extensionManagerServiceName;
 

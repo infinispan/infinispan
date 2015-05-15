@@ -11,6 +11,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
@@ -392,5 +393,13 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
       return delegate.execute(scriptName, params);
    }
 
+   @Override
+   public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize) {
+      return delegate.retrieveEntries(filterConverterFactory, segments, batchSize);
+   }
 
+   @Override
+   public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, int batchSize) {
+      return delegate.retrieveEntries(filterConverterFactory, batchSize);
+   }
 }

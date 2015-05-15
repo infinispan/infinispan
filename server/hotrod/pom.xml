@@ -13,6 +13,10 @@
    <name>Infinispan Hot Rod Server</name>
    <description>Infinispan Hot Rod Server</description>
 
+   <properties>
+         <module.skipComponentMetaDataProcessing>false</module.skipComponentMetaDataProcessing>
+   </properties>
+
    <dependencies>
        <dependency>
          <groupId>${project.groupId}</groupId>

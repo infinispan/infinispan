@@ -26,4 +26,7 @@ object HotRodOperation extends Enumeration(20) {
    val ExecRequest = Value
    val PutAllRequest = Value
    val GetAllRequest = Value
+   val IterationStartRequest = Value
+   val IterationNextRequest = Value
+   val IterationEndRequest = Value
 }

@@ -240,4 +240,16 @@ public class OperationsFactory implements HotRodConstants {
          list.add(flag);
 
    }
+
+   public IterationStartOperation newIterationStartOperation(String filterConverterFactory, Set<Integer> segments, int batchSize) {
+      return new IterationStartOperation(codec, flags(), cacheNameBytes, topologyId, filterConverterFactory, segments, batchSize, transportFactory);
+   }
+
+   public IterationEndOperation newIterationEndOperation(String iterationId, Transport transport) {
+      return new IterationEndOperation(codec, flags(), cacheNameBytes, topologyId, iterationId, transportFactory, transport);
+   }
+
+   public IterationNextOperation newIterationNextOperation(String iterationId, Transport transport) {
+      return new IterationNextOperation(codec, flags(), cacheNameBytes, topologyId, iterationId, transport);
+   }
 }

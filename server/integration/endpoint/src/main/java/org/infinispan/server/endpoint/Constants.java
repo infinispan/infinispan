@@ -43,6 +43,7 @@ public class Constants {
    public static final int INSTALL_CONVERTER_FACTORY = 0x1802;
    public static final int INSTALL_MARSHALLER = 0x1803;
    public static final int INSTALL_FILTER_CONVERTER_FACTORY = 0x1804;
+   public static final int INSTALL_KEY_VALUE_FILTER_CONVERTER_FACTORY = 0x1805;
    public static final int DEPENDENCIES = 0x1C01;
 
    public static String VERSION = Constants.class.getPackage().getImplementationVersion();

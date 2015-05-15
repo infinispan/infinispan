@@ -20,6 +20,7 @@ public interface HotRodConstants {
    static final byte VERSION_20 = 20;
    static final byte VERSION_21 = 21;
    static final byte VERSION_22 = 22;
+   static final byte VERSION_23 = 23;
 
    //requests
    static final byte PUT_REQUEST = 0x01;
@@ -46,7 +47,10 @@ public interface HotRodConstants {
    static final byte EXEC_REQUEST = 0x2B;
    static final byte PUT_ALL_REQUEST = 0x2D;
    static final byte GET_ALL_REQUEST = 0x2F;
-   
+   static final byte ITERATION_START_REQUEST = 0x31;
+   static final byte ITERATION_NEXT_REQUEST = 0x33;
+   static final byte ITERATION_END_REQUEST = 0x35;
+
    //responses
    static final byte PUT_RESPONSE = 0x02;
    static final byte GET_RESPONSE = 0x04;
@@ -72,6 +76,9 @@ public interface HotRodConstants {
    static final byte EXEC_RESPONSE = 0x2C;
    static final byte PUT_ALL_RESPONSE = 0x2E;
    static final byte GET_ALL_RESPONSE = 0x30;
+   static final byte ITERATION_START_RESPONSE = 0x32;
+   static final byte ITERATION_NEXT_RESPONSE = 0x34;
+   static final byte ITERATION_END_RESPONSE = 0x36;
    static final byte ERROR_RESPONSE = 0x50;
    static final byte CACHE_ENTRY_CREATED_EVENT_RESPONSE = 0x60;
    static final byte CACHE_ENTRY_MODIFIED_EVENT_RESPONSE = 0x61;
@@ -91,6 +98,7 @@ public interface HotRodConstants {
    static final int ILLEGAL_LIFECYCLE_STATE = 0x88;
    static final int SUCCESS_WITH_PREVIOUS = 0x03;
    static final int NOT_EXECUTED_WITH_PREVIOUS = 0x04;
+   static final int INVALID_ITERATION = 0x05;
 
 
    static final byte CLIENT_INTELLIGENCE_BASIC = 0x01;

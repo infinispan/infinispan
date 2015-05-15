@@ -6,6 +6,8 @@ import org.infinispan.commons.util.Util
 import org.infinispan.remoting.transport.Address
 import java.lang.StringBuilder
 
+import org.infinispan.server.hotrod.iteration.IterableIterationResult
+
 /**
  * A basic responses. The rest of this file contains other response types.
  *
@@ -101,6 +103,61 @@ class GetAllResponse(override val version: Byte, override val messageId: Long, o
          .append(", keys=")
          .append(entries.map {case(k, v) => (Util.printArray(k, true), Util.printArray(v, true))}.mkString("[", ",", "]"))
          .append("}").toString
+   }
+}
+
+class IterationStartResponse(override val version: Byte,
+                             override val messageId: Long,
+                             override val cacheName: String,
+                             override val clientIntel: Short,
+                             override val topologyId: Int,
+                             val iterationId: String)
+extends Response(version, messageId, cacheName, clientIntel, IterationStartResponse, Success, topologyId) {
+   override def toString = {
+      new StringBuilder().append("IterationStartResponse").append("{")
+      .append("version=").append(version)
+      .append(", messageId=").append(messageId)
+      .append(", cacheName=").append(cacheName)
+      .append(", operation=").append(operation)
+      .append(", status=").append(status)
+      .append(", iterationId=").append(iterationId)
+      .append("}").toString
+   }
+}
+
+class IterationNextResponse(override val version: Byte,
+                             override val messageId: Long,
+                             override val cacheName: String,
+                             override val clientIntel: Short,
+                             override val topologyId: Int,
+                             val iterationResult: IterableIterationResult)
+extends Response(version, messageId, cacheName, clientIntel, IterationNextResponse, iterationResult.statusCode, topologyId) {
+   override def toString = {
+      new StringBuilder().append("IterationNextResponse").append("{")
+      .append("version=").append(version)
+      .append(", messageId=").append(messageId)
+      .append(", cacheName=").append(cacheName)
+      .append(", operation=").append(operation)
+      .append(", status=").append(status)
+      .append("}").toString
+   }
+}
+
+class IterationEndResponse(override val version: Byte,
+                           override val messageId: Long,
+                           override val cacheName: String,
+                           override val clientIntel: Short,
+                           override val topologyId: Int,
+                           val removed: Boolean)
+      extends Response(version, messageId, cacheName, clientIntel, IterationEndResponse, if (removed) Success else InvalidIteration, topologyId) {
+   override def toString = {
+      new StringBuilder().append("IterationEndResponse").append("{")
+            .append("version=").append(version)
+            .append(", messageId=").append(messageId)
+            .append(", cacheName=").append(cacheName)
+            .append(", operation=").append(operation)
+            .append(", status=").append(status)
+            .append("}").toString
    }
 }
 

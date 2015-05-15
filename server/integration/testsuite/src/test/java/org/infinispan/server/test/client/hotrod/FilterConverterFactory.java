@@ -5,7 +5,7 @@ import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilte
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.EventType;
-import org.infinispan.notifications.cachelistener.filter.NamedFactory;
+import org.infinispan.filter.NamedFactory;
 
 import java.io.Serializable;
 

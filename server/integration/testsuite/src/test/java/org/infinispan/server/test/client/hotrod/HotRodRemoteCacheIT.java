@@ -2,6 +2,7 @@ package org.infinispan.server.test.client.hotrod;
 
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory;
@@ -79,6 +80,20 @@ public class HotRodRemoteCacheIT extends AbstractRemoteCacheIT {
         return createFilterConverterArchive();
     }
 
+    @Deployment(testable = false, name = "key-value-filter-converter-1")
+    @TargetsContainer("container1")
+    @OverProtocol("jmx-as7")
+    public static Archive<?> deployKeyValueFilterConverter1() {
+      return createKeyValueFilterConverterArchive();
+   }
+
+    @Deployment(testable = false, name = "key-value-filter-converter-2")
+    @TargetsContainer("container2")
+    @OverProtocol("jmx-as7")
+    public static Archive<?> deployKeyValueFilterConverter2() {
+      return createKeyValueFilterConverterArchive();
+   }
+
     private static Archive<?> createFilterArchive() {
         return ShrinkWrap.create(JavaArchive.class, "filter.jar")
                 .addClasses(StaticCacheEventFilterFactory.class, DynamicCacheEventFilterFactory.class,
@@ -103,6 +118,12 @@ public class HotRodRemoteCacheIT extends AbstractRemoteCacheIT {
                CustomPojoFilterConverterFactory.class, Person.class, Id.class)
          .addAsServiceProvider(CacheEventFilterConverterFactory.class, FilterConverterFactory.class,
                CustomPojoFilterConverterFactory.class);
+   }
+
+   private static Archive<?> createKeyValueFilterConverterArchive() {
+      return ShrinkWrap.create(JavaArchive.class, "key-value-filter-converter.jar")
+         .addClasses(TestKeyValueFilterConverterFactory.class, SampleEntity.class, Summary.class, SampleEntity.SampleEntityExternalizer.class, Summary.SummaryExternalizer.class)
+         .addAsServiceProvider(KeyValueFilterConverterFactory.class, TestKeyValueFilterConverterFactory.class);
    }
 
    @Override
