@@ -10,8 +10,7 @@ import org.testng.annotations.Test;
 
 import java.util.List;
 
-@Test(groups = "unstable", testName =  "distribution.rehash.RehashAfterPartitionMergeTest",
-      description = "https://issues.jboss.org/browse/ISPN-3142 -- original group: functional")
+@Test(groups = "functional", testName =  "distribution.rehash.RehashAfterPartitionMergeTest")
 public class RehashAfterPartitionMergeTest extends MultipleCacheManagersTest {
 
    Cache<Object, Object> c1, c2;
