@@ -427,7 +427,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
          File file = new File(location, CACHE_NAME + ".dat");
          assertTrue(file.exists());
 
-         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS);
+         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process-"));
          final AtomicInteger count = new AtomicInteger(0);
          store.process(new KeyFilter() {
             @Override
