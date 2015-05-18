@@ -27,7 +27,8 @@ import org.jboss.dmr.ModelNode;
 
 public class OperationTestCaseBase extends AbstractSubsystemTest {
 
-    static final String SUBSYSTEM_XML_FILE = "subsystem-infinispan-test.xml" ;
+    static final String SUBSYSTEM_XML_FILE = "subsystem-infinispan_8_0.xml" ;
+    static final String JDBC_STORE_NAME = "jdbc-store" ;
 
     public OperationTestCaseBase() {
         super(InfinispanExtension.SUBSYSTEM_NAME, new InfinispanExtension());
@@ -186,7 +187,7 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
     }
 
     protected static PathAddress getMixedKeyedJDBCCacheStoreAddress(String containerName, String cacheType, String cacheName) {
-        return getCacheAddress(containerName, cacheType, cacheName).append(ModelKeys.MIXED_KEYED_JDBC_STORE, ModelKeys.MIXED_KEYED_JDBC_STORE_NAME);
+        return getCacheAddress(containerName, cacheType, cacheName).append(ModelKeys.MIXED_KEYED_JDBC_STORE, JDBC_STORE_NAME);
     }
 
     protected static PathAddress getBinaryKeyedJDBCCacheStoreAddress(String containerName, String cacheType, String cacheName) {
