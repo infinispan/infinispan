@@ -19,10 +19,10 @@ public class ByteArrayValueDistEmbeddedHotRodTest extends ByteArrayValueReplEmbe
    @Override
    @BeforeClass
    protected void setup() throws Exception {
-      cacheFactory1 = new CompatibilityCacheFactory<Object, Object>(CacheMode.DIST_SYNC, 1)
+      cacheFactory1 = new CompatibilityCacheFactory<Object, Object>(CacheMode.DIST_SYNC, 1, false)
             .valueEquivalence(ByteArrayEquivalence.INSTANCE)
             .setup();
-      cacheFactory2 = new CompatibilityCacheFactory<Object, Object>(CacheMode.DIST_SYNC, 1)
+      cacheFactory2 = new CompatibilityCacheFactory<Object, Object>(CacheMode.DIST_SYNC, 1, false)
             .valueEquivalence(ByteArrayEquivalence.INSTANCE)
             .setup(cacheFactory1.getHotRodPort(), 100);
    }

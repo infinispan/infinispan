@@ -14,6 +14,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -97,7 +98,7 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       }
       Object ret = invokeNextInterceptor(ctx, command);
       if (ret != null) {
-         if (command.getRemotelyFetchedValue() == null) {
+         if (needsUnboxing(ctx, command.getRemotelyFetchedValue())) {
             return converter.unboxValue(ret);
          }
          return ret;
@@ -117,7 +118,7 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       if (ret != null) {
          CacheEntry entry = (CacheEntry) ret;
          Object returnValue = entry.getValue();
-         if (command.getRemotelyFetchedValue() == null) {
+         if (needsUnboxing(ctx, command.getRemotelyFetchedValue())) {
             returnValue = converter.unboxValue(entry.getValue());
          }
          // Create a copy of the entry to avoid modifying the internal entry
@@ -128,6 +129,9 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       return null;
    }
 
+   private boolean needsUnboxing(InvocationContext ctx, InternalCacheEntry remotelyFetchedValue) {
+      return remotelyFetchedValue == null && !ctx.isOriginLocal();
+   }
 
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
