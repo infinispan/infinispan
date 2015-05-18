@@ -68,9 +68,14 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
          return false;
       }
 
+      // Skip the remote invocation if this is a state transfer transaction
+      LocalTxInvocationContext localCtx = (LocalTxInvocationContext) ctx;
+      if (localCtx.getCacheTransaction().getStateTransferFlag() == Flag.PUT_FOR_STATE_TRANSFER) {
+         return false;
+      }
+
       // just testing for empty modifications isn't enough - the Lock API may acquire locks on keys but won't
       // register a Modification.  See ISPN-711.
-      LocalTxInvocationContext localCtx = (LocalTxInvocationContext) ctx;
       boolean shouldInvokeRemotely = ctx.hasModifications() || !localCtx.getRemoteLocksAcquired().isEmpty() ||
          localCtx.getCacheTransaction().getTopologyId() != rpcManager.getTopologyId();
 
