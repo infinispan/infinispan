@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.infinispan.distribution.DistributionTestHelper.getFirstOwner;
 import static org.infinispan.distribution.DistributionTestHelper.isFirstOwner;
 
 /**
@@ -173,7 +174,7 @@ public class HotRodClientTestingUtil {
       return ((NumericVersion) meta.version()).getVersion();
    }
 
-   private static byte[] toBytes(Object key) {
+   public static byte[] toBytes(Object key) {
       try {
          return new GenericJBossMarshaller().objectToByteBuffer(key);
       } catch (Exception e) {
@@ -256,6 +257,44 @@ public class HotRodClientTestingUtil {
       log.infof("Integer key %s hashes to [cluster=%s,hotrod=%s]",
             dummyInt, primaryOwner.getCacheManager().getAddress(),
             primaryOwner.getAddress());
+
+      return dummyInt;
+   }
+
+   /**
+    * Get a split-personality key, whose POJO version hashes to the primary
+    * owner passed in, but it's binary version does not.
+    */
+   public static Integer getSplitIntKeyForServer(HotRodServer primaryOwner, HotRodServer binaryOwner, String cacheName) {
+      Cache<?, ?> cache = cacheName != null
+            ? primaryOwner.getCacheManager().getCache(cacheName)
+            : primaryOwner.getCacheManager().getCache();
+
+      Cache<?, ?> binaryOwnerCache = cacheName != null
+            ? binaryOwner.getCacheManager().getCache(cacheName)
+            : binaryOwner.getCacheManager().getCache();
+
+      Random r = new Random();
+      byte[] dummy;
+      Integer dummyInt;
+      int attemptsLeft = 1000;
+      boolean primaryOwnerFound = false;
+      boolean binaryOwnerFound = false;
+      do {
+         dummyInt = r.nextInt();
+         dummy = toBytes(dummyInt);
+         attemptsLeft--;
+         primaryOwnerFound = isFirstOwner(cache, dummyInt);
+         binaryOwnerFound = isFirstOwner(binaryOwnerCache, dummy);
+      } while (!(primaryOwnerFound && binaryOwnerFound) && attemptsLeft >= 0);
+
+      if (attemptsLeft < 0)
+         throw new IllegalStateException("Could not find any key owned by " + primaryOwner);
+
+      log.infof("Integer key [pojo=%s,bytes=%s] hashes to [cluster=%s,hotrod=%s], but the binary version's owner is [cluster=%s,hotrod=%s]",
+            Util.toHexString(dummy), dummyInt,
+            primaryOwner.getCacheManager().getAddress(), primaryOwner.getAddress(),
+            binaryOwner.getCacheManager().getAddress(), binaryOwner.getAddress());
 
       return dummyInt;
    }

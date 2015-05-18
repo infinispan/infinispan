@@ -58,6 +58,10 @@ public class CompatibilityModeConfigurationBuilder
       return this;
    }
 
+   public Marshaller marshaller() {
+      return attributes.attribute(MARSHALLER).get();
+   }
+
    @Override
    public void validate() {
       // No-op
