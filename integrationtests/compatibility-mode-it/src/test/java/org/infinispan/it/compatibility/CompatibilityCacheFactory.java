@@ -54,6 +54,7 @@ public class CompatibilityCacheFactory<K, V> {
    private int restPort;
    private final int defaultNumOwners = 2;
    private int numOwners = defaultNumOwners;
+   private boolean l1Enable = false;
    private Equivalence keyEquivalence = null;
    private Equivalence valueEquivalence = null;
 
@@ -63,9 +64,10 @@ public class CompatibilityCacheFactory<K, V> {
       this.cacheMode = cacheMode;
    }
 
-   CompatibilityCacheFactory(CacheMode cacheMode, int numOwners) {
+   CompatibilityCacheFactory(CacheMode cacheMode, int numOwners, boolean l1Enable) {
       this(cacheMode);
       this.numOwners = numOwners;
+      this.l1Enable = l1Enable;
    }
 
    CompatibilityCacheFactory(String cacheName, Marshaller marshaller, CacheMode cacheMode) {
@@ -125,6 +127,10 @@ public class CompatibilityCacheFactory<K, V> {
 
       if (cacheMode.isDistributed() && numOwners != defaultNumOwners) {
          builder.clustering().hash().numOwners(numOwners);
+      }
+
+      if (cacheMode.isDistributed() && l1Enable) {
+         builder.clustering().l1().enable();
       }
 
       if (keyEquivalence != null) {
