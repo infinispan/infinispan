@@ -165,10 +165,8 @@ public class L1WriteSynchronizer {
     * was given.
     */
    public void runL1UpdateIfPossible(InternalCacheEntry ice) {
-      Object value = null;
       try {
          if (ice != null) {
-            value = ice.getValue();
             Object key;
             if (sync.attemptUpdateToRunning() && !dc.containsKey((key = ice.getKey()))) {
                // Acquire the transfer lock to ensure that we don't have a rehash and change to become an owner,
@@ -196,7 +194,7 @@ public class L1WriteSynchronizer {
          }
       }
       finally {
-         sync.innerSet(value);
+         sync.innerSet(ice);
       }
    }
 }

@@ -67,7 +67,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       InternalCacheEntry ice = new ImmortalCacheEntry(value, value);
       sync.runL1UpdateIfPossible(ice);
 
-      assertEquals(value, sync.get());
+      assertEquals(ice, sync.get());
    }
 
    @Test
@@ -76,7 +76,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       InternalCacheEntry ice = new ImmortalCacheEntry(value, value);
       sync.runL1UpdateIfPossible(ice);
 
-      assertEquals(value, sync.get(1, TimeUnit.SECONDS));
+      assertEquals(ice, sync.get(1, TimeUnit.SECONDS));
    }
 
    @Test
@@ -107,13 +107,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    @Test
    public void testSpawnedThreadBlockingValue() throws InterruptedException, ExecutionException, TimeoutException {
       Object value = new Object();
-      Future future = fork(new Callable<Object>() {
-
-         @Override
-         public Object call() throws Exception {
-            return sync.get();
-         }
-      });
+      Future future = fork(() -> sync.get());
 
       try {
          future.get(50, TimeUnit.MILLISECONDS);
@@ -125,19 +119,13 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       InternalCacheEntry ice = new ImmortalCacheEntry(value, value);
       sync.runL1UpdateIfPossible(ice);
 
-      assertEquals(value, future.get(1, TimeUnit.SECONDS));
+      assertEquals(ice, future.get(1, TimeUnit.SECONDS));
    }
 
    @Test
    public void testSpawnedThreadBlockingValueTimeWait() throws InterruptedException, ExecutionException, TimeoutException {
       Object value = new Object();
-      Future future = fork(new Callable<Object>() {
-
-         @Override
-         public Object call() throws Exception {
-            return sync.get(5, TimeUnit.SECONDS);
-         }
-      });
+      Future future = fork(() -> sync.get(5, TimeUnit.SECONDS));
 
       // This should not return since we haven't signaled the sync yet
       try {
@@ -150,18 +138,12 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
       InternalCacheEntry ice = new ImmortalCacheEntry(value, value);
       sync.runL1UpdateIfPossible(ice);
 
-      assertEquals(value, future.get(1, TimeUnit.SECONDS));
+      assertEquals(ice, future.get(1, TimeUnit.SECONDS));
    }
 
    @Test
    public void testSpawnedThreadBlockingNullValue() throws InterruptedException, ExecutionException, TimeoutException {
-      Future future = fork(new Callable<Object>() {
-
-         @Override
-         public Object call() throws Exception {
-            return sync.get();
-         }
-      });
+      Future future = fork(() -> sync.get());
 
       try {
          future.get(50, TimeUnit.MILLISECONDS);
@@ -177,13 +159,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
    @Test
    public void testSpawnedThreadBlockingNullValueTimeWait() throws InterruptedException, ExecutionException, TimeoutException {
-      Future future = fork(new Callable<Object>() {
-
-         @Override
-         public Object call() throws Exception {
-            return sync.get(5, TimeUnit.SECONDS);
-         }
-      });
+      Future future = fork(() -> sync.get(5, TimeUnit.SECONDS));
 
       // This should not return since we haven't signaled the sync yet
       try {
@@ -202,13 +178,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    public void testSpawnedThreadBlockingException() throws InterruptedException, ExecutionException, TimeoutException {
       Throwable t = mock(Throwable.class);
 
-      Future future = fork(new Callable<Object>() {
-
-         @Override
-         public Object call() throws Exception {
-            return sync.get();
-         }
-      });
+      Future future = fork(() -> sync.get());
 
       // This should not return since we haven't signaled the sync yet
       try {
@@ -232,13 +202,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
    public void testSpawnedThreadBlockingExceptionTimeWait() throws InterruptedException, ExecutionException, TimeoutException {
       Throwable t = mock(Throwable.class);
 
-      Future future = fork(new Callable<Object>() {
-
-         @Override
-         public Object call() throws Exception {
-            return sync.get(5, TimeUnit.SECONDS);
-         }
-      });
+      Future future = fork(() -> sync.get(5, TimeUnit.SECONDS));
 
       try {
          future.get(50, TimeUnit.MILLISECONDS);
@@ -275,14 +239,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
       // We use the topology lock as a sync point to know when the write is being attempted - note this is after
       // the synchronizer has been marked as a write occurring
-      doAnswer(new Answer<Void>() {
-
-         @Override
-         public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-            barrier.await();
-            return null;
-         }
-      }).when(stl).acquireSharedTopologyLock();
+      doAnswer(i -> { barrier.await(); return null; }).when(stl).acquireSharedTopologyLock();
 
       Future<Void> future = fork(new Runnable() {
          @Override

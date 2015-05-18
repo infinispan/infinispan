@@ -6,6 +6,7 @@ import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.distribution.L1WriteSynchronizer;
 import org.infinispan.statetransfer.StateTransferLock;
@@ -492,6 +493,66 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          assertIsInL1(nonOwnerCache, key);
       } else {
          assertIsNotInL1(nonOwnerCache, key);
+      }
+   }
+
+   public void testL1GetAndCacheEntryGet() {
+      final Cache<Object, String>[] owners = getOwners(key, 2);
+
+      final Cache<Object, String> ownerCache = owners[0];
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      Assert.assertEquals(firstValue, nonOwnerCache.get(key));
+
+      assertIsInL1(nonOwnerCache, key);
+
+      CacheEntry<Object, String> entry = nonOwnerCache.getAdvancedCache().getCacheEntry(key);
+      Assert.assertEquals(key, entry.getKey());
+      Assert.assertEquals(firstValue, entry.getValue());
+   }
+
+   @Test
+   public void testGetBlockingAnotherGetCacheEntry() throws Throwable {
+      final Cache<Object, String> nonOwnerCache = getFirstNonOwner(key);
+      final Cache<Object, String> ownerCache = getFirstOwner(key);
+
+      ownerCache.put(key, firstValue);
+
+      assertIsNotInL1(nonOwnerCache, key);
+
+      CheckPoint checkPoint = new CheckPoint();
+      StateTransferLock lock = waitUntilAboutToAcquireLock(nonOwnerCache, checkPoint);
+
+      try {
+         log.warn("Doing get here - ignore all previous");
+
+         Future<String> getFuture = nonOwnerCache.getAsync(key);
+
+         // Wait until we are about to write value into data container on non owner
+         checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
+
+         Future<CacheEntry<Object, String>> getFuture2 = fork(() -> nonOwnerCache.getAdvancedCache().getCacheEntry(key));
+
+         try {
+            getFuture2.get(1, TimeUnit.SECONDS);
+            fail("Should have thrown a TimeoutException");
+         } catch (TimeoutException e) {
+         }
+
+         // Let the get complete finally
+         checkPoint.triggerForever("pre_acquire_shared_topology_lock_released");
+
+         Assert.assertEquals(firstValue, getFuture.get(10, TimeUnit.SECONDS));
+
+         CacheEntry<Object, String> entry = getFuture2.get(10, TimeUnit.SECONDS);
+         Assert.assertEquals(key, entry.getKey());
+         Assert.assertEquals(firstValue, entry.getValue());
+
+         assertIsInL1(nonOwnerCache, key);
+      } finally {
+         TestingUtil.replaceComponent(nonOwnerCache, StateTransferLock.class, lock, true);
       }
    }
 

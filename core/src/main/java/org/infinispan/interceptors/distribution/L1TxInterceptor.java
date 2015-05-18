@@ -25,7 +25,7 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      return performCommandWithL1WriteIfAble(ctx, command, true, true);
+      return performCommandWithL1WriteIfAble(ctx, command, false, true, true);
    }
 
    @Override
@@ -36,12 +36,12 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      return performCommandWithL1WriteIfAble(ctx, command, true, true);
+      return performCommandWithL1WriteIfAble(ctx, command, false, true, true);
    }
 
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
-      return performCommandWithL1WriteIfAble(ctx, command, true, false);
+      return performCommandWithL1WriteIfAble(ctx, command, false, true, false);
    }
 
    @Override
