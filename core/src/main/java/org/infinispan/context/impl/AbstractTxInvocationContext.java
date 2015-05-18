@@ -54,7 +54,8 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
 
    @Override
    public final boolean hasModifications() {
-      return getModifications() != null && !getModifications().isEmpty();
+      List<WriteCommand> replicableModifications = getModifications();
+      return replicableModifications != null && !replicableModifications.isEmpty();
    }
 
    @Override
