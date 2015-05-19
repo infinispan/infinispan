@@ -121,13 +121,7 @@ public class EquivalentConcurrentHashMapV8Test extends EquivalentHashMapTest {
       map.put(key, value);
 
       byte[] computeKey = {1, 2, 3}; // on purpose, different instance required
-      byte[] newValue = map.computeIfAbsent(
-            computeKey, new EquivalentConcurrentHashMapV8.Fun<byte[], byte[]>() {
-         @Override
-         public byte[] apply(byte[] bytes) {
-            return new byte[]{7, 8, 9};
-         }
-      });
+      byte[] newValue = map.computeIfAbsent(computeKey, b -> new byte[]{7, 8, 9});
 
       // Old value should be present
       assertTrue(String.format(
@@ -143,14 +137,7 @@ public class EquivalentConcurrentHashMapV8Test extends EquivalentHashMapTest {
       map.put(key, value);
 
       byte[] computeKey = {1, 2, 3}; // on purpose, different instance required
-      byte[] newValue = map.computeIfPresent(computeKey,
-            new EquivalentConcurrentHashMapV8.BiFun<byte[], byte[], byte[]>() {
-               @Override
-               public byte[] apply(byte[] bytes, byte[] bytes2) {
-                  return new byte[]{7, 8, 9};
-               }
-            }
-      );
+      byte[] newValue = map.computeIfPresent(computeKey, (b1, b2) -> new byte[]{7, 8, 9});
 
       byte[] expectedValue = {7, 8, 9};
       assertTrue(String.format(
@@ -166,14 +153,7 @@ public class EquivalentConcurrentHashMapV8Test extends EquivalentHashMapTest {
       map.put(key, value);
 
       byte[] computeKey = {1, 2, 3}; // on purpose, different instance required
-      byte[] newValue = map.merge(computeKey, new byte[]{},
-         new EquivalentConcurrentHashMapV8.BiFun<byte[], byte[], byte[]>() {
-            @Override
-            public byte[] apply(byte[] bytes, byte[] bytes2) {
-               return new byte[]{7, 8, 9};
-            }
-         }
-      );
+      byte[] newValue = map.merge(computeKey, new byte[]{}, (b1, b2) -> new byte[]{7, 8, 9});
 
       // Old value should be present
       byte[] expectedValue = {7, 8, 9};

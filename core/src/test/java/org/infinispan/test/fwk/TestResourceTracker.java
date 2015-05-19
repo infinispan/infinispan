@@ -137,12 +137,7 @@ public class TestResourceTracker {
    }
 
    private static TestResources getTestResources(final String testName) {
-      return testResources.computeIfAbsent(testName, new EquivalentConcurrentHashMapV8.Fun<String, TestResources>() {
-         @Override
-         public TestResources apply(String key) {
-            return new TestResources(getSimpleName(testName));
-         }
-      });
+      return testResources.computeIfAbsent(testName, k -> new TestResources(getSimpleName(k)));
    }
 
    private static String getSimpleName(String fullTestName) {

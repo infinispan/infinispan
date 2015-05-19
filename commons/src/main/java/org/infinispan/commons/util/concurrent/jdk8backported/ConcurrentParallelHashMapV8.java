@@ -1,11 +1,10 @@
 package org.infinispan.commons.util.concurrent.jdk8backported;
 
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap.KeyValueAction;
-import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8.BiAction;
 
 public class ConcurrentParallelHashMapV8<K, V> extends EquivalentConcurrentHashMapV8<K, V> implements
       ParallelIterableMap<K, V> {
@@ -39,14 +38,7 @@ public class ConcurrentParallelHashMapV8<K, V> extends EquivalentConcurrentHashM
       super(m, keyEquivalence, valueEquivalence);
    }
 
-   public void forEach(long parallelismThreshold, final KeyValueAction<? super K, ? super V> action)
-         throws InterruptedException {
-      forEach(parallelismThreshold, new BiAction<K, V>() {
-
-         @Override
-         public void apply(K a, V b) {
-            action.apply(a, b);
-         }
-      });
+   public void forEach(long parallelismThreshold, final BiConsumer<? super K, ? super V> action) {
+      super.forEach(parallelismThreshold, action);
    }
 }

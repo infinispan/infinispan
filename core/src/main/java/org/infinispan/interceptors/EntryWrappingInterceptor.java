@@ -306,14 +306,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
       final KeyFilter<Object> keyFilter = new CompositeKeyFilter<>(new GroupFilter<>(groupName, groupManager),
                                                                    new CollectionKeyFilter<>(ctx.getLookedUpEntries().keySet()));
-      dataContainer.executeTask(keyFilter,
-                                new ParallelIterableMap.KeyValueAction<Object, InternalCacheEntry<Object, Object>>() {
-         @Override
-         public void apply(Object o, InternalCacheEntry<Object, Object> internalCacheEntry) {
-            synchronized (ctx) {
-               //the process can be made in multiple threads, so we need to synchronize in the context.
-               entryFactory.wrapEntryForReading(ctx, o, internalCacheEntry).setSkipLookup(true);
-            }
+      dataContainer.executeTask(keyFilter, (o, internalCacheEntry) -> {
+         synchronized (ctx) {
+            //the process can be made in multiple threads, so we need to synchronize in the context.
+            entryFactory.wrapEntryForReading(ctx, o, internalCacheEntry).setSkipLookup(true);
          }
       });
       return invokeNextInterceptor(ctx, command);

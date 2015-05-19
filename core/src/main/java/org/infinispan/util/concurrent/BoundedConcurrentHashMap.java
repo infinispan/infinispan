@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-
+import java.util.function.BiConsumer;
 
 
 import static java.util.Collections.singletonMap;
@@ -2524,7 +2524,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
       }
    }
    
-   public void forEach(long parallelismThreshold,  final org.infinispan.commons.util.concurrent.ParallelIterableMap.KeyValueAction<? super K,? super V> action) throws InterruptedException{
+   public void forEach(long parallelismThreshold,  BiConsumer<? super K,? super V> action) throws InterruptedException{
       if (size() > parallelismThreshold){
          execute(executor, action);
       } else {
@@ -2543,8 +2543,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
     *           the KeyValueAction interface to be invoked on each key/value pair
     * @throws InterruptedException
     */
-   private void execute(ExecutorService executorService,
-         final org.infinispan.commons.util.concurrent.ParallelIterableMap.KeyValueAction<? super K,? super V> action)
+   private void execute(ExecutorService executorService, final BiConsumer<? super K,? super V> action)
          throws InterruptedException {
       List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>(entrySet());
       int numCores = Runtime.getRuntime().availableProcessors();
@@ -2561,7 +2560,7 @@ public class BoundedConcurrentHashMap<K, V> extends AbstractMap<K, V>
                   if (checkInterrupt(interruptCounter++) && Thread.currentThread().isInterrupted()) {
                      break;
                   }
-                  action.apply(e.getKey(), e.getValue());
+                  action.accept(e.getKey(), e.getValue());
                }
             }
          }, null);

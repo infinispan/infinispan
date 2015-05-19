@@ -2,7 +2,6 @@ package org.infinispan.eviction.impl;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap.KeyValueAction;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
@@ -39,6 +38,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -499,13 +499,13 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
-      public void executeTask(KeyFilter<? super K> filter, KeyValueAction<? super K, InternalCacheEntry< K, V>> action)
+      public void executeTask(KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry< K, V>> action)
             throws InterruptedException {
          throw new NotImplementedException();
       }
 
       @Override
-      public void executeTask(KeyValueFilter<? super K, ? super V> filter, KeyValueAction<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException {
+      public void executeTask(KeyValueFilter<? super K, ? super V> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException {
          throw new NotImplementedException();
       }
 

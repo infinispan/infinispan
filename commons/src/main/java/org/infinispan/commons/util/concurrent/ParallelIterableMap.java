@@ -1,5 +1,7 @@
 package org.infinispan.commons.util.concurrent;
 
+import java.util.function.BiConsumer;
+
 /**
  * Map implementing this interface provide a mechanism for parallel key/value iteration.
  *
@@ -17,11 +19,5 @@ public interface ParallelIterableMap<K,V>{
     * @param action the action
     * @since 7.0
     */
-   public void forEach(long parallelismThreshold, KeyValueAction<? super K,? super V> action) throws InterruptedException;
-
-   /**
-    * Interface describing an action where input is map's key/value pair
-    *
-    */
-   public interface KeyValueAction<A,B> { void apply(A a, B b); }
+   public void forEach(long parallelismThreshold, BiConsumer<? super K,? super V> action) throws InterruptedException;
 }

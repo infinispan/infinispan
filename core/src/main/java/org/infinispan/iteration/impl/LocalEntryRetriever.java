@@ -62,6 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
@@ -185,9 +186,9 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
 
    protected class KeyValueActionForCacheLoaderTask implements AdvancedCacheLoader.CacheLoaderTask<K, V> {
 
-      private final ParallelIterableMap.KeyValueAction<? super K, ? super InternalCacheEntry<K, V>> action;
+      private final BiConsumer<? super K, ? super InternalCacheEntry<K, V>> action;
 
-      public KeyValueActionForCacheLoaderTask(ParallelIterableMap.KeyValueAction<? super K, ? super InternalCacheEntry<K, V>> action) {
+      public KeyValueActionForCacheLoaderTask(BiConsumer<? super K, ? super InternalCacheEntry<K, V>> action) {
          this.action = action;
       }
 
@@ -199,7 +200,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
             InternalMetadata metadata = marshalledEntry.getMetadata();
             if (metadata == null || !metadata.isExpired(timeService.wallClockTime())) {
                InternalCacheEntry<K, V> ice = PersistenceUtil.convert(marshalledEntry, entryFactory);
-               action.apply(marshalledEntry.getKey(), ice);
+               action.accept(marshalledEntry.getKey(), ice);
             }
             if (Thread.interrupted()) {
                throw new InterruptedException();
@@ -299,7 +300,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                            }
                         }
 
-                        action.apply(key, clone);
+                        action.accept(key, clone);
                         if (interruptCheck++ % batchSize == 0) {
                            if (Thread.interrupted()) {
                               throw new CacheException("Entry Iterator was interrupted!");
@@ -352,7 +353,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
                                     continue;
                                  }
                               }
-                              action.apply(clone.getKey(), clone);
+                              action.accept(clone.getKey(), clone);
                            }
                         }
                      }
@@ -373,7 +374,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       return iterator;
    }
 
-   private class MapAction<C> implements ParallelIterableMap.KeyValueAction<K, CacheEntry<K, V>> {
+   private class MapAction<C> implements BiConsumer<K, CacheEntry<K, V>> {
       final Converter<? super K, ? super V, ? extends C> converter;
       final Queue<CacheEntry<K, C>> queue;
       final int batchSize;
@@ -390,7 +391,7 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
       }
 
       @Override
-      public void apply(K k, CacheEntry<K, V> kvInternalCacheEntry) {
+      public void accept(K k, CacheEntry<K, V> kvInternalCacheEntry) {
          CacheEntry<K, C> clone = (CacheEntry<K, C>)kvInternalCacheEntry.clone();
          if (converter != null) {
             C value = converter.convert(k, kvInternalCacheEntry.getValue(), kvInternalCacheEntry.getMetadata());
