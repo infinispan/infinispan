@@ -757,14 +757,11 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
          if (txId > globalMaxPrunedTxId) {
             globalMaxPrunedTxId = txId;
          }
-         nodeMaxPrunedTxIds.compute(address, new EquivalentConcurrentHashMapV8.BiFun<Address, Long, Long>() {
-            @Override
-            public Long apply(Address address, Long nodeMaxPrunedTxId) {
-               if (nodeMaxPrunedTxId != null && txId <= nodeMaxPrunedTxId) {
-                  return nodeMaxPrunedTxId;
-               }
-               return txId;
+         nodeMaxPrunedTxIds.compute(address, (a, nodeMaxPrunedTxId) -> {
+            if (nodeMaxPrunedTxId != null && txId <= nodeMaxPrunedTxId) {
+               return nodeMaxPrunedTxId;
             }
+            return txId;
          });
       }
    }

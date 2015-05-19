@@ -3,7 +3,6 @@ package org.infinispan.configuration;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap.KeyValueAction;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.jboss.util.NotImplementedException;
@@ -12,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import static java.util.Collections.synchronizedCollection;
 
@@ -123,13 +123,13 @@ public class QueryableDataContainer implements DataContainer<Object, Object> {
    }
 
    @Override
-   public void executeTask(final KeyFilter<? super Object> filter, KeyValueAction <? super Object, InternalCacheEntry<Object, Object>> action)
+   public void executeTask(final KeyFilter<? super Object> filter, BiConsumer<? super Object, InternalCacheEntry<Object, Object>> action)
          throws InterruptedException {
       throw new NotImplementedException();
    }
 
    @Override
-   public void executeTask(final KeyValueFilter<? super Object, ? super Object> filter, KeyValueAction<? super Object, InternalCacheEntry<Object, Object>> action) throws InterruptedException {
+   public void executeTask(final KeyValueFilter<? super Object, ? super Object> filter, BiConsumer<? super Object, InternalCacheEntry<Object, Object>> action) throws InterruptedException {
       throw new NotImplementedException();
    }
 }

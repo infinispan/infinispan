@@ -9,7 +9,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap.KeyValueAction;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -46,6 +45,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 
@@ -143,7 +143,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             DataContainer<IntermediateKey<KOut>, List<VOut>> dc = cache.getAdvancedCache().getDataContainer();
             dc.executeTask(filter, new DataContainerTask<IntermediateKey<KOut>, List<VOut>>() {
                @Override
-               public void apply(IntermediateKey<KOut> k, InternalCacheEntry<IntermediateKey<KOut>, List<VOut>> v) {
+               public void accept(IntermediateKey<KOut> k, InternalCacheEntry<IntermediateKey<KOut>, List<VOut>> v) {
                   KOut key = k.getKey();
                   //resolve Iterable<VOut> for iterated key stored in tmp cache
                   Iterable<VOut> value = getValue(v);
@@ -199,7 +199,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
             // here we have to iterate all entries in memory, do it in parallel
             dc.executeTask(new PrimaryOwnerFilter<KIn>(cdl), new DataContainerTask<KIn, VIn>() {
                @Override
-               public void apply(KIn key , InternalCacheEntry<KIn, VIn> v) {
+               public void accept(KIn key , InternalCacheEntry<KIn, VIn> v) {
                   VIn value = getValue(v);
                   if (value != null) {
                      mapper.map(key, value, collector);
@@ -382,7 +382,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       return selectedKeys;
    }
 
-   private abstract class DataContainerTask<K,V> implements KeyValueAction<K, InternalCacheEntry<K,V>> {
+   private abstract class DataContainerTask<K,V> implements BiConsumer<K, InternalCacheEntry<K,V>> {
 
       @SuppressWarnings("unchecked")
       protected V getValue(InternalCacheEntry<K,V> entry){
@@ -432,7 +432,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       }
 
       @Override
-      public void apply(K key, InternalCacheEntry<K, V> v) {
+      public void accept(K key, InternalCacheEntry<K, V> v) {
          V value = getValue(v);
          if (value != null) {
             try {

@@ -24,8 +24,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.BiAction;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.BiFun;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.EvictionListener;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.NullEvictionListener;
@@ -115,11 +113,11 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
    }
 
    protected ConcurrentMap<byte[], byte[]> createStandardConcurrentMap() {
-      return new ConcurrentHashMap<byte[], byte[]>();
+      return new ConcurrentHashMap<>();
    }
 
    protected ConcurrentMap<byte[], byte[]> createComparingConcurrentMap() {
-      return new BoundedEquivalentConcurrentHashMapV8<byte[], byte[]>(64, 
+      return new BoundedEquivalentConcurrentHashMapV8<>(64,
             evictionPolicy(), BoundedEquivalentConcurrentHashMapV8.getNullEvictionListener(), 
             EQUIVALENCE, EQUIVALENCE);
    }
@@ -151,7 +149,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
             public void run() {
                for (int i = start; i < end; i++)
                   assertNotNull(bchm.get(i));
-            };
+            }
          };
       }
       for (int i = 0; i < THREADS; i++)
@@ -199,19 +197,16 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
          // We use this so we have some threads going forward with keys on hits and
          // some going backwards.
          final int offset = i / 2;
-         futures[i] = service.submit(new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-               for (int i = 0; i < COUNT; i++ ) {
-                  // Each thread will be hitting different values
-                  int keyValue = offset * (COUNT / THREADS) + i;
-                  if (keyValue >= COUNT) {
-                     keyValue = keyValue - COUNT;
-                  }
-                  bchm.put(keyValue, keyValue);
+         futures[i] = service.submit(() -> {
+            for (int j = 0; j < COUNT; j++ ) {
+               // Each thread will be hitting different values
+               int keyValue = offset * (COUNT / THREADS) + j;
+               if (keyValue >= COUNT) {
+                  keyValue = keyValue - COUNT;
                }
-               return null;
+               bchm.put(keyValue, keyValue);
             }
+            return null;
          });
       }
       service.shutdown();
@@ -243,7 +238,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
       // This has to be even
       final int THREADS = 4;
       ExecutorService service = Executors.newFixedThreadPool(THREADS);
-      ExecutorCompletionService<Void> completion = new ExecutorCompletionService<Void>(service);
+      ExecutorCompletionService<Void> completion = new ExecutorCompletionService<>(service);
       try {
          final int COUNT = 5;
          final Map<String, String> bchm = createMap(COUNT, evictionPolicy());
@@ -252,23 +247,17 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
          final int WRITE_OFFSET = 6;
          
          for (int i = 0; i < THREADS / 2; ++i) {
-            completion.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < COUNT * WRITE_OFFSET; i++ ) {
-                     bchm.put("a" + i, "a" + i);
-                  }
-                  return null;
+            completion.submit(() -> {
+               for (int j = 0; j < COUNT * WRITE_OFFSET; j++ ) {
+                  bchm.put("a" + j, "a" + j);
                }
+               return null;
             });
-            completion.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < COUNT * WRITE_OFFSET; i++ ) {
-                     bchm.put("b" + i, "b" + i);
+            completion.submit(() -> {
+                  for (int j = 0; j < COUNT * WRITE_OFFSET; j++ ) {
+                     bchm.put("b" + j, "b" + j);
                   }
                   return null;
-               }
             });
          }
    
@@ -378,7 +367,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
 
       ExecutorService execService = Executors.newFixedThreadPool(READ_THREADS +
             WRITE_THREADS);
-      ExecutorCompletionService<Void> service = new ExecutorCompletionService<Void>(
+      ExecutorCompletionService<Void> service = new ExecutorCompletionService<>(
             execService);
 
       try {
@@ -387,43 +376,33 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
          final Map<HashCodeControlled, HashCodeControlled> bchm = createMap(COUNT, evictionPolicy());
    
          for (int i = 0; i < WRITE_THREADS; ++i) {
-            service.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < INSERTIONCOUNT; ++i) {
-                     HashCodeControlled hcc = new HashCodeControlled(hash);
-                     bchm.put(hcc, hcc);
-                  }
-                  return null;
+            service.submit(() -> {
+               for (int j = 0; j < INSERTIONCOUNT; ++j) {
+                  HashCodeControlled hcc = new HashCodeControlled(hash);
+                  bchm.put(hcc, hcc);
                }
+               return null;
             });
          }
    
          for (int i = 0; i < READ_THREADS; ++i) {
-            service.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < READCOUNT; ++i) {
-                     for (Entry<HashCodeControlled, HashCodeControlled> entry : bchm.entrySet()) {
-                        HashCodeControlled key = entry.getKey();
-                        bchm.get(key);
-                     }
+            service.submit(() -> {
+               for (int j = 0; j < READCOUNT; ++j) {
+                  for (Entry<HashCodeControlled, HashCodeControlled> entry : bchm.entrySet()) {
+                     HashCodeControlled key = entry.getKey();
+                     bchm.get(key);
                   }
-                  return null;
                }
+               return null;
             });
          }
    
          for (int i = 0; i < WRITE_THREADS + READ_THREADS; ++i) {
-            try {
-               Future<Void> future = service.poll(1000, TimeUnit.SECONDS);
-               if (future == null) {
-                  throw new TimeoutException();
-               }
-               future.get();
-            } catch (Exception e) {
-               throw e;
+            Future<Void> future = service.poll(1000, TimeUnit.SECONDS);
+            if (future == null) {
+               throw new TimeoutException();
             }
+            future.get();
          }
 
          int manualCount = 0;
@@ -448,7 +427,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
       final int REMOVECOUNT = 200;
 
       ExecutorService execService = Executors.newFixedThreadPool(WRITE_THREADS + REMOVE_THREADS);
-      ExecutorCompletionService<Void> service = new ExecutorCompletionService<Void>(
+      ExecutorCompletionService<Void> service = new ExecutorCompletionService<>(
             execService);
 
       try {
@@ -456,43 +435,33 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
          final Map<HashCodeControlled, HashCodeControlled> bchm = createMap(COUNT, evictionPolicy());
    
          for (int i = 0; i < WRITE_THREADS; ++i) {
-            service.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < INSERTIONCOUNT; ++i) {
-                     HashCodeControlled hcc = new HashCodeControlled(i);
-                     bchm.put(hcc, hcc);
-                  }
-                  return null;
+            service.submit(() -> {
+               for (int j = 0; j < INSERTIONCOUNT; ++j) {
+                  HashCodeControlled hcc = new HashCodeControlled(j);
+                  bchm.put(hcc, hcc);
                }
+               return null;
             });
          }
    
          for (int i = 0; i < REMOVE_THREADS; ++i) {
-            service.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < REMOVECOUNT; ++i) {
-                     for (Entry<HashCodeControlled, HashCodeControlled> entry : bchm.entrySet()) {
-                        HashCodeControlled key = entry.getKey();
-                        bchm.remove(key);
-                     }
+            service.submit(() -> {
+               for (int j = 0; j < REMOVECOUNT; ++j) {
+                  for (Entry<HashCodeControlled, HashCodeControlled> entry : bchm.entrySet()) {
+                     HashCodeControlled key = entry.getKey();
+                     bchm.remove(key);
                   }
-                  return null;
                }
+               return null;
             });
          }
    
          for (int i = 0; i < WRITE_THREADS + REMOVE_THREADS; ++i) {
-            try {
-               Future<Void> future = service.poll(10, TimeUnit.SECONDS);
-               if (future == null) {
-                  throw new TimeoutException();
-               }
-               future.get();
-            } catch (Exception e) {
-               throw e;
+            Future<Void> future = service.poll(10, TimeUnit.SECONDS);
+            if (future == null) {
+               throw new TimeoutException();
             }
+            future.get();
          }
 
          int manualCount = 0;
@@ -525,7 +494,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
 
       ExecutorService execService = Executors.newFixedThreadPool(READ_THREADS +
             WRITE_THREADS + REMOVE_THREADS);
-      ExecutorCompletionService<Void> service = new ExecutorCompletionService<Void>(
+      ExecutorCompletionService<Void> service = new ExecutorCompletionService<>(
             execService);
 
       try {
@@ -534,58 +503,45 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
          final Map<HashCodeControlled, HashCodeControlled> bchm = createMap(COUNT, evictionPolicy());
    
          for (int i = 0; i < WRITE_THREADS; ++i) {
-            service.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < INSERTIONCOUNT; ++i) {
-                     HashCodeControlled hcc = new HashCodeControlled(hash);
-                     bchm.put(hcc, hcc);
-                  }
-                  return null;
+            service.submit(() -> {
+               for (int j = 0; j < INSERTIONCOUNT; ++j) {
+                  HashCodeControlled hcc = new HashCodeControlled(hash);
+                  bchm.put(hcc, hcc);
                }
+               return null;
             });
          }
    
          for (int i = 0; i < READ_THREADS; ++i) {
-            service.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < READCOUNT; ++i) {
-                     for (Entry<HashCodeControlled, HashCodeControlled> entry : bchm.entrySet()) {
-                        HashCodeControlled key = entry.getKey();
-                        bchm.get(key);
-                     }
+            service.submit(() -> {
+               for (int j = 0; j < READCOUNT; ++j) {
+                  for (Entry<HashCodeControlled, HashCodeControlled> entry : bchm.entrySet()) {
+                     HashCodeControlled key = entry.getKey();
+                     bchm.get(key);
                   }
-                  return null;
                }
+               return null;
             });
          }
 
          for (int i = 0; i < REMOVE_THREADS; ++i) {
-            service.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < REMOVECOUNT; ++i) {
-                     for (Entry<HashCodeControlled, HashCodeControlled> entry : bchm.entrySet()) {
-                        HashCodeControlled key = entry.getKey();
-                        bchm.remove(key);
-                     }
+            service.submit(() -> {
+               for (int j = 0; j < REMOVECOUNT; ++j) {
+                  for (Entry<HashCodeControlled, HashCodeControlled> entry : bchm.entrySet()) {
+                     HashCodeControlled key = entry.getKey();
+                     bchm.remove(key);
                   }
-                  return null;
                }
+               return null;
             });
          }
    
          for (int i = 0; i < WRITE_THREADS + READ_THREADS + REMOVE_THREADS; ++i) {
-            try {
-               Future<Void> future = service.poll(10, TimeUnit.SECONDS);
-               if (future == null) {
-                  throw new TimeoutException();
-               }
-               future.get();
-            } catch (Exception e) {
-               throw e;
+            Future<Void> future = service.poll(10, TimeUnit.SECONDS);
+            if (future == null) {
+               throw new TimeoutException();
             }
+            future.get();
          }
 
          int manualCount = 0;
@@ -649,7 +605,7 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
 
       ExecutorService execService = Executors.newFixedThreadPool(READ_THREADS +
             WRITE_THREADS);
-      ExecutorCompletionService<Void> service = new ExecutorCompletionService<Void>(
+      ExecutorCompletionService<Void> service = new ExecutorCompletionService<>(
             execService);
 
       try {
@@ -660,54 +616,36 @@ public abstract class BoundedEquivalentConcurrentHashMapV8BaseTest extends Equiv
                createMap(COUNT, evictionPolicy());
    
          for (int i = 0; i < WRITE_THREADS; ++i) {
-            service.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  for (int i = 0; i < INSERTIONCOUNT; ++i) {
-                     final HashCodeControlled hcc = new HashCodeControlled(i % 2 == 0 ? hash : hash2);
-                     bchm.compute(hcc, new BiFun<HashCodeControlled, HashCodeControlled, HashCodeControlled>() {
-                        @Override
-                        public HashCodeControlled apply(HashCodeControlled key, HashCodeControlled prev) {
-                           return hcc;
-                        }
-                     });
-                  }
-                  return null;
+            service.submit(() -> {
+               for (int j = 0; j < INSERTIONCOUNT; ++j) {
+                  final HashCodeControlled hcc = new HashCodeControlled(j % 2 == 0 ? hash : hash2);
+                  bchm.compute(hcc, (k, v) -> hcc);
                }
+               return null;
             });
          }
    
          for (int i = 0; i < READ_THREADS; ++i) {
-            service.submit(new Callable<Void>() {
-               @Override
-               public Void call() throws Exception {
-                  final long currentTime = System.currentTimeMillis();
-                  for (int i = 0; i < READCOUNT; ++i) {
-                     bchm.forEach(new BiAction<HashCodeControlled, HashCodeControlled>() {
-                        @Override
-                        public void apply(HashCodeControlled a, HashCodeControlled b) {
-                           // This is just so JVM doesn't optimize away
-                           if (a.hashCode == (int)currentTime) {
-                              System.out.println("They Matched");
-                           }
-                        }
-                     });
-                  }
-                  return null;
+            service.submit(() -> {
+               final long currentTime = System.currentTimeMillis();
+               for (int j = 0; j < READCOUNT; ++j) {
+                  bchm.forEach((a, b) -> {
+                     // This is just so JVM doesn't optimize away
+                     if (a.hashCode == (int)currentTime) {
+                        System.out.println("They Matched");
+                     }
+                  });
                }
+               return null;
             });
          }
    
          for (int i = 0; i < WRITE_THREADS + READ_THREADS; ++i) {
-            try {
-               Future<Void> future = service.poll(1000, TimeUnit.SECONDS);
-               if (future == null) {
-                  throw new TimeoutException();
-               }
-               future.get();
-            } catch (Exception e) {
-               throw e;
+            Future<Void> future = service.poll(1000, TimeUnit.SECONDS);
+            if (future == null) {
+               throw new TimeoutException();
             }
+            future.get();
          }
 
          int manualCount = 0;

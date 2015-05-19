@@ -20,25 +20,19 @@ public class JGroupsAddressCache {
    // Otherwise, instantiating the JGroupsAddress externalizer will try to load the org.jgroups.Address class.
    static org.infinispan.remoting.transport.Address fromJGroupsAddress(Object address) {
       final Address addr1 = (Address) address;
-      return addressCache.computeIfAbsent(addr1, new EquivalentConcurrentHashMapV8.Fun<Address, JGroupsAddress>() {
-         @Override
-         public JGroupsAddress apply(Address uuid) {
-            if (addr1 instanceof ExtendedUUID)
-               return new JGroupsTopologyAwareAddress((ExtendedUUID) addr1);
-            else
-               return new JGroupsAddress(addr1);
-         }
+      return addressCache.computeIfAbsent(addr1, uuid -> {
+         if (addr1 instanceof ExtendedUUID)
+            return new JGroupsTopologyAwareAddress((ExtendedUUID) addr1);
+         else
+            return new JGroupsAddress(addr1);
       });
    }
 
    static void pruneAddressCache() {
       // Prune the JGroups addresses no longer in the UUID cache from the our address cache
-      addressCache.forEachKey(Integer.MAX_VALUE, new EquivalentConcurrentHashMapV8.Action<org.jgroups.Address>() {
-         @Override
-         public void apply(org.jgroups.Address address) {
-            if (UUID.get(address) == null) {
-               addressCache.remove(address);
-            }
+      addressCache.forEachKey(Integer.MAX_VALUE, address -> {
+         if (UUID.get(address) == null) {
+            addressCache.remove(address);
          }
       });
    }

@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.BiConsumer;
 
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 
@@ -372,7 +373,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                            return super.add(kcEntry);
                         }
                      };
-                     ParallelIterableMap.KeyValueAction<? super K, CacheEntry<? super K, ? super V>> action =
+                     BiConsumer<? super K, CacheEntry<? super K, ? super V>> action =
                            new MapAction(identifier, segmentsToUse, inDoubtSegmentsToUse, batchSize, usedConverter, handler,
                                          queue);
 
@@ -401,7 +402,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                                     continue;
                                  }
                               }
-                              action.apply(key, clone);
+                              action.accept(key, clone);
                            }
                         }
                         if (shouldUseLoader(flags) && persistenceManager.getStoresAsString().size() > 0) {
@@ -451,7 +452,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
                                           continue;
                                        }
                                     }
-                                    action.apply(clone.getKey(), clone);
+                                    action.accept(clone.getKey(), clone);
                                  }
                               }
                            }
@@ -1138,7 +1139,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       }
    }
 
-   private class MapAction<K, V, C> implements ParallelIterableMap.KeyValueAction<K, CacheEntry<K, V>> {
+   private class MapAction<K, V, C> implements BiConsumer<K, CacheEntry<K, V>> {
       final UUID identifier;
       final Set<Integer> segments;
       final int batchSize;
@@ -1160,7 +1161,7 @@ public class DistributedEntryRetriever<K, V> extends LocalEntryRetriever<K, V> {
       }
 
       @Override
-      public void apply(K k, CacheEntry<K, V> kvInternalCacheEntry) {
+      public void accept(K k, CacheEntry<K, V> kvInternalCacheEntry) {
          ConsistentHash hash = getCurrentHash();
          if (segments.contains(hash.getSegment(k))) {
             CacheEntry<K, C> clone = (CacheEntry<K, C>)kvInternalCacheEntry.clone();

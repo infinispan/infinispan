@@ -106,24 +106,21 @@ public class CommitManager {
          }
          return;
       }
-      tracker.compute(entry.getKey(), new EquivalentConcurrentHashMapV8.BiFun<Object, DiscardPolicy, DiscardPolicy>() {
-         @Override
-         public DiscardPolicy apply(Object o, DiscardPolicy discardPolicy) {
-            if (discardPolicy != null && discardPolicy.ignore(operation)) {
-               if (trace) {
-                  log.tracef("Not committing key=%s. It was already overwritten! Discard policy=%s", entry.getKey(),
-                             discardPolicy);
-               }
-               return discardPolicy;
-            }
-            entry.commit(dataContainer, metadata);
-            DiscardPolicy newDiscardPolicy = calculateDiscardPolicy();
+      tracker.compute(entry.getKey(), (o, discardPolicy) -> {
+         if (discardPolicy != null && discardPolicy.ignore(operation)) {
             if (trace) {
-               log.tracef("Committed key=%s. Old discard policy=%s. New discard policy=%s", entry.getKey(),
-                          discardPolicy, newDiscardPolicy);
+               log.tracef("Not committing key=%s. It was already overwritten! Discard policy=%s", entry.getKey(),
+                          discardPolicy);
             }
-            return newDiscardPolicy;
+            return discardPolicy;
          }
+         entry.commit(dataContainer, metadata);
+         DiscardPolicy newDiscardPolicy = calculateDiscardPolicy();
+         if (trace) {
+            log.tracef("Committed key=%s. Old discard policy=%s. New discard policy=%s", entry.getKey(),
+                       discardPolicy, newDiscardPolicy);
+         }
+         return newDiscardPolicy;
       });
    }
 
