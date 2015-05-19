@@ -1,44 +1,24 @@
 /*
  * Hibernate, Relational Persistence for Idiomatic Java
  *
- * Copyright (c) 2011, Red Hat Inc. or third-party contributors as
- * indicated by the @author tags or express copyright attribution
- * statements applied by the authors.  All third-party contributions are
- * distributed under license by Red Hat Inc.
- *
- * This copyrighted material is made available to anyone wishing to use, modify,
- * copy, or redistribute it subject to the terms and conditions of the GNU
- * Lesser General Public License, as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License
- * for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this distribution; if not, write to:
- * Free Software Foundation, Inc.
- * 51 Franklin Street, Fifth Floor
- * Boston, MA  02110-1301  USA
+ * License: GNU Lesser General Public License (LGPL), version 2.1 or later.
+ * See the lgpl.txt file in the root directory or <http://www.gnu.org/licenses/lgpl-2.1.html>.
  */
 package org.hibernate.test.cache.infinispan.functional;
 <<<<<<< HEAD
 =======
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import java.util.Map;
 >>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 =======
 >>>>>>> HHH-9747 - Import initial reworking of transaction handling (based on JdbcSession work)
+=======
+import java.util.Map;
+>>>>>>> HHH-9803 - Checkstyle fix ups - headers
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
-import java.util.Map;
-
-import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
 import org.hibernate.cache.spi.RegionFactory;
@@ -53,6 +33,7 @@ import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.resource.transaction.TransactionCoordinatorBuilder;
 import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoordinatorBuilderImpl;
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.tm.JtaPlatformImpl;
@@ -92,6 +73,17 @@ import org.junit.Before;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.tm.JtaPlatformImpl;
 >>>>>>> HHH-9747 - Import initial reworking of transaction handling (based on JdbcSession work)
+=======
+import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
+import org.hibernate.test.cache.infinispan.tm.JtaPlatformImpl;
+import org.junit.Before;
+
+import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+>>>>>>> HHH-9803 - Checkstyle fix ups - headers
 
 /**
  * @author Galder Zamarreño
