@@ -28,8 +28,10 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -217,7 +219,22 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          }
       }, null);
       // Clear any finished tasks from the completion service's queue to avoid leaks
-      cacheStatus.getTopologyUpdatesCompletionService().drainCompletionQueue();
+      List<? extends Future<Void>> futures = cacheStatus.getTopologyUpdatesCompletionService().drainCompletionQueue();
+      boolean interrupted = false;
+      for (Future<Void> future : futures) {
+         // These will not block since they are already completed
+         try {
+            future.get();
+         } catch (InterruptedException e) {
+            // This shouldn't happen as each task is complete
+            interrupted = true;
+         } catch (ExecutionException e) {
+            log.topologyUpdateError(cacheTopology.getTopologyId(), e.getCause());
+         }
+      }
+      if (interrupted) {
+         Thread.currentThread().interrupt();
+      }
    }
 
    protected void doHandleTopologyUpdate(String cacheName, CacheTopology cacheTopology,
