@@ -119,23 +119,22 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    protected void fetchRebalancingStatusFromCoordinator() {
-      Address coordinator = transport.getCoordinator();
-      if (!coordinator.equals(transport.getAddress())) {
+      if (!transport.isCoordinator()) {
          ReplicableCommand command = new CacheTopologyControlCommand(null,
                CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(),
                transport.getViewId());
-         Map<Address, Response> responseMap = null;
+         Address coordinator = transport.getCoordinator();
          try {
-            responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
+            Map<Address, Response> responseMap = transport.invokeRemotely(Collections.singleton(coordinator),
                   command, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
             Response response = responseMap.get(coordinator);
             if (response instanceof SuccessfulResponse) {
                isRebalancingEnabled = ((Boolean) ((SuccessfulResponse) response).getResponseValue());
             } else {
-               log.errorReadingRebalancingStatus(transport.getCoordinator(), null);
+               log.errorReadingRebalancingStatus(coordinator, null);
             }
          } catch (Exception e) {
-            log.errorReadingRebalancingStatus(transport.getCoordinator(), e);
+            log.errorReadingRebalancingStatus(coordinator, e);
          }
       }
    }
