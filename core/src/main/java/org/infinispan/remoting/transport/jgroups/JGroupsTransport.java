@@ -123,7 +123,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    // these members are not valid until we have received the first view on a second thread
    // and channelConnectedLatch is signaled
-   protected volatile int viewId;
+   protected volatile int viewId = -1;
    protected volatile List<Address> members = null;
    protected volatile Address coordinator = null;
    protected volatile boolean isCoordinator = false;
@@ -239,7 +239,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       viewUpdateLock.lock();
       try {
          while (channel != null && getViewId() < viewId) {
-               viewUpdateCondition.await();
+            viewUpdateCondition.await();
          }
       } finally {
          viewUpdateLock.unlock();
