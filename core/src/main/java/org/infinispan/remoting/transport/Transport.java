@@ -3,6 +3,7 @@ package org.infinispan.remoting.transport;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.api.Lifecycle;
@@ -28,33 +29,6 @@ import org.infinispan.xsite.XSiteReplicateCommand;
  */
 @Scope(Scopes.GLOBAL)
 public interface Transport extends Lifecycle {
-   // TODO discovery should be abstracted away into a separate set of interfaces such that it is not tightly coupled to the transport
-
-   /**
-    * Invokes an RPC call on other caches in the cluster.
-    *
-    *
-    * @param recipients       a list of Addresses to invoke the call on.  If this is null, the call is broadcast to the
-    *                         entire cluster.
-    * @param rpcCommand       the cache command to invoke
-    * @param mode             the response mode to use
-    * @param timeout          a timeout after which to throw a replication exception.
-    * @param usePriorityQueue if true, a priority queue is used to deliver messages.  May not be supported by all
-    *                         implementations.
-    * @param responseFilter   a response filter with which to filter out failed/unwanted/invalid responses.
-    * @param totalOrder       the command will be send with total order properties
-    * @param anycast          used when {@param totalOrder} is {@code true}, it means that it must use TOA instead of TOB.
-    * @return a map of responses from each member contacted.
-    * @throws Exception in the event of problems.
-    * @deprecated use instead {@link #invokeRemotely(java.util.Collection, org.infinispan.commands.ReplicableCommand,
-    * org.infinispan.remoting.rpc.ResponseMode, long, org.infinispan.remoting.rpc.ResponseFilter,
-    * org.infinispan.remoting.inboundhandler.DeliverOrder, boolean)}
-    */
-   @Deprecated
-   Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
-                                 boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder,
-                                 boolean anycast) throws Exception;
-
    /**
     * Invokes an RPC call on other caches in the cluster.
     *
@@ -73,9 +47,24 @@ public interface Transport extends Lifecycle {
    Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
                                          ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception;
 
+   CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
+                                                                 ReplicableCommand rpcCommand,
+                                                                 ResponseMode mode, long timeout,
+                                                                 ResponseFilter responseFilter,
+                                                                 DeliverOrder deliverOrder,
+                                                                 boolean anycast) throws Exception;
+
+   /**
+    * @deprecated Use {@link #invokeRemotely(Map, ResponseMode, long, ResponseFilter, DeliverOrder, boolean)} instead
+    */
+   @Deprecated
    Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode, long timeout,
                                          boolean usePriorityQueue, ResponseFilter responseFilter, boolean totalOrder,
                                          boolean anycast) throws Exception;
+
+   Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcCommands, ResponseMode mode,
+                                         long timeout, ResponseFilter responseFilter,
+                                         DeliverOrder deliverOrder, boolean anycast) throws Exception;
 
 
    BackupResponse backupRemotely(Collection<XSiteBackup> backups, XSiteReplicateCommand rpcCommand) throws Exception;
