@@ -140,7 +140,8 @@
             <configuration>
                <instructions>
                   <Export-Package>
-                     ${project.groupId}.query.*;version=${project.version};-split-package:=merge-last
+                     !${project.groupId}.query.dsl.*,
+                     ${project.groupId}.query.*;version=${project.version};-split-package:=error
                   </Export-Package>
                   <Include-Resource>
                      {maven-resources},
