@@ -186,8 +186,8 @@ public class StateTransferManagerImpl implements StateTransferManager {
 
       // No need for extra synchronization here, since LocalTopologyManager already serializes topology updates.
       if (firstTopologyAsMember == Integer.MAX_VALUE && newCacheTopology.getMembers().contains(rpcManager.getAddress())) {
-         if (trace) log.trace("This is the first topology in which the local node is a member");
          firstTopologyAsMember = newCacheTopology.getTopologyId();
+         if (trace) log.tracef("This is the first topology %d in which the local node is a member", firstTopologyAsMember);
       }
 
       // handle grouping

@@ -1334,4 +1334,8 @@ public interface Log extends BasicLogger {
    
    @Message(value = "Unable to add a 'null' Custom Cache Store", id = 366)
    IllegalArgumentException unableToAddNullCustomStore();
+
+   @LogMessage(level = ERROR)
+   @Message(value = "There was an issue with topology update for topology: %s", id = 367)
+   void topologyUpdateError(int topologyId, @Cause Throwable t);
 }
