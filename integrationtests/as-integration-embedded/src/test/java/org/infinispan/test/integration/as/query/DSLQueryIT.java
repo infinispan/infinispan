@@ -19,7 +19,6 @@ import javax.inject.Inject;
 import java.util.List;
 
 /**
- *
  * Test for DSL queries when using the wildfly modules
  *
  * @author gustavonalle
@@ -43,14 +42,16 @@ public class DSLQueryIT {
 
    private static Asset manifest() {
       String manifest = Descriptors.create(ManifestDescriptor.class)
-            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services, org.infinispan.query:" + Version.getModuleSlot() + " services")
+            .attribute("Dependencies", "org.infinispan:" + Version.getModuleSlot() + " services, "
+                  + "org.infinispan.query:" + Version.getModuleSlot() + " services, "
+                  + "org.infinispan.query.dsl:" + Version.getModuleSlot())
             .exportAsString();
       return new StringAsset(manifest);
    }
 
    @Test
    public void testDSLQuery() throws Exception {
-      service.store("00123", new Book("Functional Programming in Scala","manning"), true);
+      service.store("00123", new Book("Functional Programming in Scala", "manning"), true);
       List<Object> results = service.findByPublisher("manning");
       Assert.assertEquals(1, results.size());
    }
