@@ -64,7 +64,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -466,7 +468,22 @@ public class StateConsumerImpl implements StateConsumer {
             log.debugf("Finished receiving of segments for cache %s for topology %d.", cacheName, topologyId);
             stopApplyingState();
             stateTransferManager.notifyEndOfRebalance(topologyId, rebalanceId);
-            stateRequestCompletionService.drainCompletionQueue();
+            List<? extends Future<Void>> futures = stateRequestCompletionService.drainCompletionQueue();
+            boolean interrupted = false;
+            for (Future<Void> future : futures) {
+               // These will not block since they are already completed
+               try {
+                  future.get();
+               } catch (InterruptedException e) {
+                  // This shouldn't happen as each task is complete
+                  interrupted = true;
+               } catch (ExecutionException e) {
+                  log.topologyUpdateError(topologyId, e.getCause());
+               }
+            }
+            if (interrupted) {
+               Thread.currentThread().interrupt();
+            }
          }
       }
    }
