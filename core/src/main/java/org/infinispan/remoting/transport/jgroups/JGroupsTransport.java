@@ -17,6 +17,7 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
+import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
 import org.infinispan.remoting.responses.ExceptionResponse;
@@ -586,8 +587,24 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                                                                   responseFilter != null, ignoreLeavers);
          }
 
-         if (noValidResponses)
-            throw new TimeoutException("Timed out waiting for valid responses!");
+         if (noValidResponses) {
+            // PartitionHandlingInterceptor relies on receiving a RpcException if there are only invalid responses
+            // But we still need to throw a TimeoutException if there are no responses at all.
+            boolean throwRpcException = false;
+            if (responseFilter != null) {
+               for (Rsp<Object> rsp : rsps.values()) {
+                  if (rsp.wasReceived()) {
+                     throwRpcException = true;
+                     break;
+                  }
+               }
+            }
+            if (throwRpcException) {
+               throw new RpcException(String.format("Received invalid responses from all of %s", recipients));
+            } else {
+               throw new TimeoutException("Timed out waiting for valid responses!");
+            }
+         }
          responses = retval;
       }
       return responses;
@@ -685,9 +702,8 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             return org.jgroups.blocks.ResponseMode.GET_NONE;
          case SYNCHRONOUS:
          case SYNCHRONOUS_IGNORE_LEAVERS:
-            return org.jgroups.blocks.ResponseMode.GET_ALL;
          case WAIT_FOR_VALID_RESPONSE:
-            return org.jgroups.blocks.ResponseMode.GET_FIRST;
+            return org.jgroups.blocks.ResponseMode.GET_ALL;
       }
       throw new CacheException("Unknown response mode " + mode);
    }

@@ -6,6 +6,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.marshall.NotSerializableException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
@@ -68,7 +69,7 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
       ownerCache.clear();
    }
 
-   public void testRetrieveNonSerializableKeyFromNonOwner() {
+   public void testRetrieveNonSerializableValueFromNonOwner() {
       Cache[] owners = getOwners("yourkey", 1);
       Cache[] nonOwners = getNonOwners("yourkey", 1);
       assert owners.length == 1;
@@ -79,7 +80,8 @@ public class SingleOwnerTest extends BaseDistFunctionalTest<Object, String> {
       try {
          nonOwnerCache.get("yourkey");
          fail("Should have failed with a org.infinispan.marshall.NotSerializableException");
-      } catch (NotSerializableException e) {
+      } catch (RemoteException e) {
+         assertTrue(e.getCause() instanceof NotSerializableException);
       }
    }
 

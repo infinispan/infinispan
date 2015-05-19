@@ -4,6 +4,7 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.partitionhandling.AvailabilityException;
+import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.remoting.responses.Response;
@@ -65,7 +66,7 @@ public abstract class AbstractTransport implements Transport {
          invalidResponse = false;
          if (exception != null) {
             log.tracef(exception, "Unexpected exception from %s", sender);
-            throw new CacheException("Remote (" + sender + ") failed unexpectedly", exception);
+            throw log.remoteException(sender, exception);
          }
          
          if (checkResponse(responseObject, sender)) {

@@ -39,6 +39,7 @@ import org.jgroups.Channel;
 import org.jgroups.Message;
 import org.jgroups.SuspectedException;
 import org.jgroups.UpHandler;
+import org.jgroups.blocks.GroupRequest;
 import org.jgroups.blocks.RequestCorrelator;
 import org.jgroups.blocks.RequestHandler;
 import org.jgroups.blocks.RequestOptions;
@@ -62,6 +63,7 @@ import org.jgroups.util.RspList;
  * @since 4.0
  */
 public class CommandAwareRpcDispatcher extends RpcDispatcher {
+   public static final RspList<Object> EMPTY_RESPONSES_LIST = new RspList<>();
 
    private final ExecutorService asyncExecutor;
    private static final Log log = LogFactory.getLog(CommandAwareRpcDispatcher.class);
@@ -130,7 +132,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    }
 
    /**
-    * @param recipients Guaranteed not to be null.  Must <b>not</b> contain self.
+    * @param recipients Must <b>not</b> contain self.
     */
    public RspList<Object> invokeRemoteCommands(final List<Address> recipients, final ReplicableCommand command,
                                                final ResponseMode mode, final long timeout, final RspFilter filter,
@@ -244,7 +246,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
    private boolean containsOnlyNulls(RspList<Object> l) {
       for (Rsp<Object> r : l.values()) {
-         if (r.getValue() != null || !r.wasReceived() || r.wasSuspected()) return false;
+         if (r.getValue() != null || r.hasException() || !r.wasReceived() || r.wasSuspected()) return false;
       }
       return true;
    }
@@ -430,58 +432,31 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
          //Only the commands in total order must be received...
          //For correctness, ispn doesn't need their own message, so add own address to exclusion list
-         opts.setExclusionList(card.getChannel().getAddress());
+         opts.setExclusionList(card.local_addr);
 
-         retval = card.castMessage(dests, constructMessage(buf, null, mode, rsvp, deliverOrder),opts);
+         Message message = constructMessage(buf, null, mode, rsvp, deliverOrder);
+         retval = card.castMessage(dests, message,opts);
       } else {
-         RequestOptions opts = new RequestOptions(mode, timeout);
+         RequestOptions opts = new RequestOptions(mode, timeout, true, filter);
 
          //Only the commands in total order must be received...
-         opts.setExclusionList(card.getChannel().getAddress());
+         //For correctness, ispn doesn't need their own message, so remove it from the dests collection
+         if (dests.contains(card.local_addr)) {
+            throw new IllegalArgumentException("Local address is not allowed in the recipients list at this point");
+         }
 
-         if (dests.isEmpty()) return new RspList<>();
+         if (dests.isEmpty()) return EMPTY_RESPONSES_LIST;
          buf = marshallCall(marshaller, command);
+         Message msg = constructMessage(buf, null, mode, rsvp, deliverOrder);
 
-         // if at all possible, try not to use JGroups' ANYCAST for now.  Multiple (parallel) UNICASTs are much faster.
-         if (filter != null) {
-            // This is possibly a remote GET.
-            // These UNICASTs happen in parallel using sendMessageWithFuture.  Each future has a listener attached
-            // (see FutureCollator) and the first successful response is used.
-            FutureCollator futureCollator = new FutureCollator(filter, dests.size(), timeout, card.timeService);
-            for (Address a : dests) {
-               NotifyingFuture<Object> f = card.sendMessageWithFuture(constructMessage(buf, a, mode, rsvp, deliverOrder), opts);
-               futureCollator.watchFuture(f, a);
-            }
-            retval = futureCollator.getResponseList();
-         } else if (mode == ResponseMode.GET_ALL) {
-            // A SYNC call that needs to go everywhere
-            Map<Address, Future<Object>> futures = new HashMap<>(dests.size());
-
-            for (Address dest : dests)
-               futures.put(dest, card.sendMessageWithFuture(constructMessage(buf, dest, mode, rsvp, deliverOrder), opts));
-
-            retval = new RspList<>();
-
-            // a get() on each future will block till that call completes.
-            for (Map.Entry<Address, Future<Object>> entry : futures.entrySet()) {
-               Address target = entry.getKey();
-               try {
-                  retval.addRsp(target, entry.getValue().get(timeout, MILLISECONDS));
-               } catch (java.util.concurrent.TimeoutException te) {
-                  throw new TimeoutException(formatString("Timed out after %s waiting for a response from %s",
-                                                          prettyPrintTime(timeout), target));
-               } catch (ExecutionException e) {
-                  if (ignoreLeavers && e.getCause() instanceof SuspectedException) {
-                     log.tracef(formatString("Ignoring node %s that left during the remote call", target));
-                     retval.addRsp(target, CacheNotFoundResponse.INSTANCE);
-                  } else {
-                     throw wrapThrowableInException(e.getCause());
-                  }
-               }
-            }
-         } else if (mode == ResponseMode.GET_NONE) {
+         if (mode != ResponseMode.GET_NONE) {
+            // A SYNC call that needs to go everywhere (with or without a filter)
+            GroupRequest<Object> request = card.cast(dests, msg, opts, true);
+            retval = request != null ? request.get() : EMPTY_RESPONSES_LIST;
+         } else {
             // An ASYNC call.  We don't care about responses.
-            for (Address dest : dests) card.sendMessage(constructMessage(buf, dest, mode, rsvp, deliverOrder), opts);
+            card.cast(dests, msg, opts, false);
+            retval = EMPTY_RESPONSES_LIST;
          }
       }
 
@@ -506,7 +481,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
                                                boolean oob, boolean ignoreLeavers) throws Exception {
       if (trace) log.tracef("Replication task sending %s with response mode %s", commands, mode);
 
-      if (commands.isEmpty()) return new RspList<>();
+      if (commands.isEmpty()) return EMPTY_RESPONSES_LIST;
 
       RequestOptions opts = new RequestOptions(mode, timeout);
       //opts.setExclusionList(card.getChannel().getAddress());
@@ -553,123 +528,6 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    private static boolean isRsvpCommand(ReplicableCommand command) {
       return command instanceof FlagAffectedCommand
             && ((FlagAffectedCommand) command).hasFlag(Flag.GUARANTEED_DELIVERY);
-   }
-
-   static class SenderContainer {
-      final Address address;
-      volatile boolean processed = false;
-
-      SenderContainer(Address address) {
-         this.address = address;
-      }
-
-      @Override
-      public String toString() {
-         return "Sender{" +
-               "address=" + address +
-               ", responded=" + processed +
-               '}';
-      }
-   }
-
-   final static class FutureCollator implements FutureListener<Object> {
-      final RspFilter filter;
-      final Map<Future<Object>, SenderContainer> futures = new HashMap<>(4);
-      final long timeout;
-      @GuardedBy("this")
-      private RspList<Object> retval;
-      @GuardedBy("this")
-      private Exception exception;
-      @GuardedBy("this")
-      private int expectedResponses;
-      private final TimeService timeService;
-
-      FutureCollator(RspFilter filter, int expectedResponses, long timeout, TimeService timeService) {
-         this.filter = filter;
-         this.expectedResponses = expectedResponses;
-         this.timeout = timeout;
-         this.timeService = timeService;
-      }
-
-      public void watchFuture(NotifyingFuture<Object> f, Address address) {
-         futures.put(f, new SenderContainer(address));
-         f.setListener(this);
-      }
-
-      public synchronized RspList<Object> getResponseList() throws Exception {
-         long expectedEndTime = timeService.expectedEndTime(timeout, MILLISECONDS);
-         long waitingTime;
-         while (expectedResponses > 0 && retval == null &&
-               (waitingTime = timeService.remainingTime(expectedEndTime, MILLISECONDS)) > 0) {
-            try {
-               this.wait(waitingTime);
-            } catch (InterruptedException e) {
-               // reset interruption flag
-               Thread.currentThread().interrupt();
-               expectedResponses = -1;
-            }
-         }
-         // Now we either have the response we need or aren't expecting any more responses - or have run out of time.
-         if (retval != null)
-            return retval;
-         else if (exception != null)
-            throw exception;
-         else if (expectedResponses == 0)
-            throw new RpcException(format("No more valid responses.  Received invalid responses from all of %s", futures.values()));
-         else
-            throw new TimeoutException(format("Timed out waiting for %s for valid responses from any of %s.", Util.prettyPrintTime(timeout), futures.values()));
-      }
-
-      @Override
-      @SuppressWarnings("unchecked")
-      public synchronized void futureDone(Future<Object> objectFuture) {
-         SenderContainer sc = futures.get(objectFuture);
-         if (sc.processed) {
-            // This can happen - it is a race condition in JGroups' NotifyingFuture.setListener() where a listener
-            // could be notified twice.
-            if (trace) log.tracef("Not processing callback; already processed callback for sender %s", sc.address);
-         } else {
-            sc.processed = true;
-            Address sender = sc.address;
-            boolean done = false;
-            try {
-               if (retval == null) {
-                  Object response = objectFuture.get();
-                  if (trace) log.tracef("Received response: %s from %s", response, sender);
-                  filter.isAcceptable(response, sender);
-                  if (!filter.needMoreResponses()) {
-                     retval = new RspList(Collections.singleton(new Rsp(sender, response)));
-                     done = true;
-                     //TODO cancel other tasks?
-                  }
-               } else {
-                  if (trace) log.tracef("Skipping response from %s since a valid response for this request has already been received", sender);
-               }
-            } catch (InterruptedException e) {
-               Thread.currentThread().interrupt();
-            } catch (ExecutionException e) {
-               Throwable cause = e.getCause();
-               if (cause instanceof org.jgroups.SuspectedException) {
-                  // Do not set the exception field, RpcException should be thrown if there is no other valid response
-                  return;
-               } else if (cause instanceof org.jgroups.TimeoutException) {
-                  exception = new TimeoutException("Timeout!", e);
-               } else if (cause instanceof Exception) {
-                  exception = (Exception) cause;
-               } else {
-                  exception = new CacheException("Caught a throwable", cause);
-               }
-
-               if (log.isDebugEnabled())
-                  log.debugf("Caught exception from sender %s: %s", sender, exception);
-            } finally {
-               expectedResponses--;
-               if (expectedResponses == 0 || done) {
-                  this.notify(); //make sure to awake waiting thread, but avoid unnecessary wakeups!
-               }
-            }
-         }
-      }
    }
 }
 
