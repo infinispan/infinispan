@@ -647,9 +647,12 @@ public class TestingUtil {
             log.warn("Problems stopping cache manager " + cm, e);
          }
       }
-      for (EmbeddedCacheManager cm : cacheManagers) {
+      // Stop the managers in reverse order to prevent each of them from becoming coordinator in turn
+      for (int i = cacheManagers.length - 1; i >= 0; i--) {
+         EmbeddedCacheManager cm = cacheManagers[i];
          try {
-            if (cm != null) cm.stop();
+            if (cm != null)
+               cm.stop();
          } catch (Throwable e) {
             log.warn("Problems killing cache manager " + cm, e);
          }

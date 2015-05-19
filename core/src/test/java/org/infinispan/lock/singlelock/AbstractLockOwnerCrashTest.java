@@ -88,7 +88,7 @@ public abstract class AbstractLockOwnerCrashTest extends AbstractCrashTest {
          public boolean isSatisfied() throws Exception {
             return cache(0).get(k).equals("v2") && cache(1).get(k).equals("v2");
          }
-      }, 15000, 15);
+      }, 15000);
       assertNotLocked(k);
 
       eventually(new Condition() {
