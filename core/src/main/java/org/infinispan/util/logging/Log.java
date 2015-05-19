@@ -1115,10 +1115,6 @@ public interface Log extends BasicLogger {
    void unsuccessfulResponseRetrievingTransactionsForSegments(Address address, Response response);
 
    @LogMessage(level = WARN)
-   @Message(value = "Partition handling doesn't work for replicated caches, it will be ignored.", id = 303)
-   void warnPartitionHandlingForReplicatedCaches();
-
-   @LogMessage(level = WARN)
    @Message(value = "More than one configuration file with specified name on classpath. The first one will be used:\n %s", id = 304)
    void ambiguousConfigurationFiles(String files);
 
