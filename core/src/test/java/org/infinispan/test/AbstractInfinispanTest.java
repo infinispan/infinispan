@@ -69,23 +69,36 @@ public class AbstractInfinispanTest {
       }
    }
 
-   protected void eventually(Condition ec, long timeout) {
-      eventually(ec, timeout, 10);
+   protected void eventually(Condition ec, long timeoutMillis) {
+      eventually(ec, timeoutMillis, TimeUnit.MILLISECONDS);
    }
 
-   protected void eventually(Condition ec, long timeout, int loops) {
+   /**
+    * @deprecated Use {@link #eventually(Condition, long, long, TimeUnit)} instead.
+    */
+   @Deprecated
+   protected void eventually(Condition ec, long timeoutMillis, int loops) {
       if (loops <= 0) {
          throw new IllegalArgumentException("Number of loops must be positive");
       }
-      long sleepDuration = timeout / loops;
-      if (sleepDuration == 0) {
-         sleepDuration = 1;
+      long sleepDuration = timeoutMillis / loops + 1;
+      eventually(ec, timeoutMillis, sleepDuration, TimeUnit.MILLISECONDS);
+   }
+
+   protected void eventually(Condition ec, long timeout, TimeUnit unit) {
+      eventually(ec, timeout, 500, unit);
+   }
+
+   protected void eventually(Condition ec, long timeout, long pollInterval, TimeUnit unit) {
+      if (pollInterval <= 0) {
+         throw new IllegalArgumentException("Check interval must be positive");
       }
       try {
-         for (int i = 0; i < loops; i++) {
-
+         long expectedEndTime = System.nanoTime() + TimeUnit.NANOSECONDS.convert(timeout, unit);
+         long sleepMillis = TimeUnit.MILLISECONDS.convert(pollInterval, unit);
+         while (expectedEndTime - System.nanoTime() > 0) {
             if (ec.isSatisfied()) return;
-            Thread.sleep(sleepDuration);
+            Thread.sleep(sleepMillis);
          }
          assertTrue(ec.isSatisfied());
       } catch (Exception e) {

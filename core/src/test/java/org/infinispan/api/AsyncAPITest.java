@@ -353,7 +353,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
                   return entry == null || entry.isExpired(System.currentTimeMillis());
                }
             }
-         }, 3 * expectedLifetime, (int) (3 * expectedLifetime / pollInterval) + 1);
+         }, 3 * expectedLifetime, pollInterval, TimeUnit.MILLISECONDS);
          long waitTime = Util.currentMillisFromNanotime() - startTime;
          Object value = c.get(key);
          assertNull(value);
