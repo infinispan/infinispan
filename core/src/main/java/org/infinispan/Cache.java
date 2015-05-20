@@ -237,7 +237,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @return a set view of the keys contained in this cache and cache loader across the entire cluster.
     */
    @Override
-   CloseableIteratorSet<K> keySet();
+   CacheSet<K> keySet();
 
    /**
     * Returns a collection view of the values contained in this cache across the entire cluster. Modifications and
@@ -280,7 +280,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @return a collection view of the values contained in this cache and cache loader across the entire cluster.
     */
    @Override
-   CloseableIteratorCollection<V> values();
+   CacheCollection<V> values();
 
    /**
     * Returns a set view of the mappings contained in this cache and cache loader across the entire cluster.
@@ -321,7 +321,7 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * @return a set view of the mappings contained in this cache and cache loader across the entire cluster.
     */
    @Override
-   CloseableIteratorSet<Entry<K, V>> entrySet();
+   CacheSet<Entry<K, V>> entrySet();
 
    /**
     * Removes all mappings from the cache.

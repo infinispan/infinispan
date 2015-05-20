@@ -1,16 +1,22 @@
 package org.infinispan.interceptors.compat;
 
+import org.infinispan.Cache;
+import org.infinispan.CacheSet;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.read.EntryRetrievalCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorMapper;
+import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
@@ -22,6 +28,9 @@ import org.infinispan.filter.Converter;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
+import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
+import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -29,6 +38,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Spliterator;
 
 /**
  * Base implementation for an interceptor that applies type conversion to the data stored in the cache. Subclasses need
@@ -37,16 +47,18 @@ import java.util.Set;
  * @author Galder Zamarreño
  * @since 6.0
  */
-public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
+public abstract class BaseTypeConverterInterceptor<K, V> extends CommandInterceptor {
 
    private InternalEntryFactory entryFactory;
    private VersionGenerator versionGenerator;
+   private Cache cache;
 
 
    @Inject
-   protected void init(InternalEntryFactory entryFactory, VersionGenerator versionGenerator) {
+   protected void init(InternalEntryFactory entryFactory, VersionGenerator versionGenerator, Cache cache) {
       this.entryFactory = entryFactory;
       this.versionGenerator = versionGenerator;
+      this.cache = cache;
    }
 
    /**
@@ -268,6 +280,51 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       }
    }
 
+   @Override
+   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      CacheSet<K> set = (CacheSet<K>) super.visitKeySetCommand(ctx, command);
+
+      return new AbstractDelegatingKeyCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
+
+         @Override
+         public CloseableIterator<K> iterator() {
+            return new CloseableIteratorMapper<>(super.iterator(), k -> {
+               return (K) converter.unboxKey(k);
+            });
+         }
+
+         @Override
+         public CloseableSpliterator<K> spliterator() {
+            return new IteratorAsSpliterator.Builder<>(iterator())
+                    .setEstimateRemaining(super.spliterator().estimateSize())
+                    .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                    .get();
+         }
+      };
+   }
+
+   @Override
+   public CacheSet<CacheEntry<K, V>> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
+      CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>)super.visitEntrySetCommand(ctx, command);
+
+      return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
+         @Override
+         public CloseableIterator<CacheEntry<K, V>> iterator() {
+            return new TypeConverterIterator<>(super.iterator(), converter, entryFactory);
+         }
+
+         @Override
+         public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+            return new IteratorAsSpliterator.Builder<>(iterator())
+                    .setEstimateRemaining(super.spliterator().estimateSize())
+                    .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                    .get();
+         }
+      };
+   }
+
    private static class TypeConverterEntryIterable<K, V> extends TypeConverterCloseableIterable<K, V> implements EntryIterable<K, V> {
       private final EntryIterable entryIterable;
 
@@ -285,11 +342,11 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
    }
 
    private static class TypeConverterIterator<K, V> implements CloseableIterator<CacheEntry<K, V>> {
-      private final CloseableIterator<CacheEntry> iterator;
+      private final CloseableIterator<CacheEntry<K, V>> iterator;
       private final TypeConverter<Object, Object, Object, Object> converter;
       private final InternalEntryFactory entryFactory;
 
-      private TypeConverterIterator(CloseableIterator<CacheEntry> iterator,
+      private TypeConverterIterator(CloseableIterator<CacheEntry<K, V>> iterator,
                                     TypeConverter<Object, Object, Object, Object> converter,
                                     InternalEntryFactory entryFactory) {
          this.iterator = iterator;

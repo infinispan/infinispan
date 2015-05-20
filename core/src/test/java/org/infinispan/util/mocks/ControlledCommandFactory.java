@@ -23,7 +23,6 @@ import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -50,6 +49,8 @@ import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.stream.impl.StreamRequestCommand;
+import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.concurrent.ReclosableLatch;
@@ -184,11 +185,6 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public KeySetCommand buildKeySetCommand(Set<Flag> flags) {
       return actual.buildKeySetCommand(flags);
-   }
-
-   @Override
-   public ValuesCommand buildValuesCommand(Set<Flag> flags) {
-      return actual.buildValuesCommand(flags);
    }
 
    @Override
@@ -388,6 +384,20 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName) {
       return actual.buildGetKeysInGroupCommand(flags, groupName);
+   }
+
+   @Override
+   public <K> StreamRequestCommand<K> buildStreamRequestCommand(UUID id, boolean parallelStream,
+           StreamRequestCommand.Type type, Set<Integer> segments, Set<K> keys, Set<K> excludedKeys,
+           boolean includeLoader, Object terminalOperation) {
+      return actual.buildStreamRequestCommand(id, parallelStream, type, segments, keys, excludedKeys, includeLoader,
+              terminalOperation);
+   }
+
+   @Override
+   public <R> StreamResponseCommand<R> buildStreamResponseCommand(UUID identifier, boolean complete,
+                                                                  Set<Integer> lostSegments, R response) {
+      return actual.buildStreamResponseCommand(identifier, complete, lostSegments, response);
    }
 
    @Override

@@ -22,7 +22,6 @@ import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -76,6 +75,11 @@ import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.stream.impl.ClusterStreamManager;
+import org.infinispan.stream.impl.LocalStreamManager;
+import org.infinispan.stream.impl.StreamRequestCommand;
+import org.infinispan.stream.impl.StreamResponseCommand;
+import org.infinispan.stream.impl.StreamSegmentResponseCommand;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
@@ -144,6 +148,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private XSiteStateTransferManager xSiteStateTransferManager;
    private EntryRetriever entryRetriever;
    private GroupManager groupManager;
+   private LocalStreamManager localStreamManager;
+   private ClusterStreamManager clusterStreamManager;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -156,7 +162,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  LockManager lockManager, InternalEntryFactory entryFactory, MapReduceManager mapReduceManager, 
                                  StateTransferManager stm, BackupSender backupSender, CancellationService cancellationService,
                                  TimeService timeService, XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
-                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever, GroupManager groupManager, PartitionHandlingManager partitionHandlingManager) {
+                                 XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever,
+                                 GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
+                                 LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -180,6 +188,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.xSiteStateTransferManager = xSiteStateTransferManager;
       this.entryRetriever = entryRetriever;
       this.groupManager = groupManager;
+      this.localStreamManager = localStreamManager;
+      this.clusterStreamManager = clusterStreamManager;
    }
 
    @Start(priority = 1)
@@ -228,11 +238,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public KeySetCommand buildKeySetCommand(Set<Flag> flags) {
       return new KeySetCommand(cache, flags);
-   }
-
-   @Override
-   public ValuesCommand buildValuesCommand(Set<Flag> flags) {
-      return new ValuesCommand(cache, flags);
    }
 
    @Override
@@ -492,6 +497,18 @@ public class CommandsFactoryImpl implements CommandsFactory {
             clusteredGetAllCommand.init(icf, this, entryFactory, interceptorChain, txTable,
                   configuration.dataContainer().keyEquivalence());
             break;
+         case StreamRequestCommand.COMMAND_ID:
+            StreamRequestCommand streamRequestCommand = (StreamRequestCommand) c;
+            streamRequestCommand.inject(localStreamManager);
+            break;
+         case StreamResponseCommand.COMMAND_ID:
+            StreamResponseCommand streamResponseCommand = (StreamResponseCommand) c;
+            streamResponseCommand.inject(clusterStreamManager);
+            break;
+         case StreamSegmentResponseCommand.COMMAND_ID:
+            StreamSegmentResponseCommand streamSegmentResponseCommand = (StreamSegmentResponseCommand) c;
+            streamSegmentResponseCommand.inject(clusterStreamManager);
+            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -641,6 +658,26 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
+   public <K> StreamRequestCommand<K> buildStreamRequestCommand(UUID id, boolean parallelStream,
+           StreamRequestCommand.Type type, Set<Integer> segments, Set<K> keys, Set<K> excludedKeys,
+           boolean includeLoader, Object terminalOperation) {
+      return new StreamRequestCommand<>(cacheName, cache.getCacheManager().getAddress(), id, parallelStream, type,
+              segments, keys, excludedKeys, includeLoader, terminalOperation);
+   }
+
+   @Override
+   public <R> StreamResponseCommand<R> buildStreamResponseCommand(UUID identifier, boolean complete,
+           Set<Integer> lostSegments, R response) {
+      if (lostSegments.isEmpty()) {
+         return new StreamResponseCommand<>(cacheName, cache.getCacheManager().getAddress(), identifier, complete,
+                 response);
+      } else {
+         return new StreamSegmentResponseCommand<>(cacheName, cache.getCacheManager().getAddress(), identifier,
+                 complete, response, lostSegments);
+      }
+   }
+
+   @Override
    public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags) {
       return new GetCacheEntryCommand(key, explicitFlags, entryFactory);
    }
@@ -649,5 +686,4 @@ public class CommandsFactoryImpl implements CommandsFactory {
    public ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
       return new ClusteredGetAllCommand(cacheName, keys, flags, gtx, configuration.dataContainer().keyEquivalence());
    }
-
 }

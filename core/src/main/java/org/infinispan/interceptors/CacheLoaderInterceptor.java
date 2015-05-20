@@ -1,17 +1,32 @@
 package org.infinispan.interceptors;
 
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.persistence.PersistenceUtil.convert;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.StreamSupport;
 
+import org.infinispan.Cache;
+import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.InvalidateCommand;
@@ -19,6 +34,9 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -27,8 +45,10 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
@@ -47,12 +67,20 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.util.PersistenceManagerCloseableSupplier;
+import org.infinispan.stream.impl.local.LocalEntryCacheStream;
+import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
+import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
+import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
+import org.infinispan.util.CloseableSuppliedIterator;
+import org.infinispan.util.CloseableSupplier;
+import org.infinispan.util.DistinctKeyDoubleEntryCloseableIterator;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
-public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
+public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheLoads = new AtomicLong(0);
    private final AtomicLong cacheMisses = new AtomicLong(0);
 
@@ -62,8 +90,10 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    protected EntryFactory entryFactory;
    private TimeService timeService;
    private InternalEntryFactory iceFactory;
-   private DataContainer dataContainer;
+   private DataContainer<K, V> dataContainer;
    private GroupManager groupManager;
+   private ExecutorService executorService;
+   private Cache<K, V> cache;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -75,8 +105,9 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
    @Inject
    protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier notifier,
-                                     TimeService timeService, InternalEntryFactory iceFactory, DataContainer dataContainer,
-                                     GroupManager groupManager) {
+                                     TimeService timeService, InternalEntryFactory iceFactory, DataContainer<K, V> dataContainer,
+                                     GroupManager groupManager, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
+                                     Cache<K, V> cache) {
       this.persistenceManager = clm;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
@@ -84,6 +115,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       this.iceFactory = iceFactory;
       this.dataContainer = dataContainer;
       this.groupManager = groupManager;
+      this.executorService = persistenceExecutor;
+      this.cache = cache;
    }
 
    @Override
@@ -171,6 +204,139 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   @Override
+   public CacheSet<CacheEntry<K, V>> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      CacheSet<CacheEntry<K, V>> entrySet = (CacheSet<CacheEntry<K, V>>) invokeNextInterceptor(ctx, command);
+      if (!enabled || hasSkipLoadFlag(command)) {
+         return entrySet;
+      }
+      return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), entrySet) {
+
+         @Override
+         public CloseableIterator<CacheEntry<K, V>> iterator() {
+            CloseableIterator<CacheEntry<K, V>> iterator = super.iterator();
+            Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().size());
+            // TODO: how to handle concurrent activation....
+            return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
+                    // TODO: how to pass in key filter...
+                    new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory,
+                            new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048)), e -> e.getKey(),
+                    seenKeys);
+         }
+
+         @Override
+         public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+            return spliteratorFromIterator(iterator());
+         }
+
+         private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
+            return new IteratorAsSpliterator.Builder<>(iterator)
+                    .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                    .get();
+         }
+
+         @Override
+         public CacheStream<CacheEntry<K, V>> stream() {
+            CloseableIterator<CacheEntry<K, V>> iterator = iterator();
+            DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+
+            CacheStream<CacheEntry<K, V>> cacheStream = new LocalEntryCacheStream<>(cache, false,
+                    dm != null ? dm.getConsistentHash() : null,
+                    () -> StreamSupport.stream(spliteratorFromIterator(iterator), false));
+
+            // Since our iterator will require closing if we short circuit we need to make sure to do that
+            cacheStream.onClose(() -> iterator.close());
+            return cacheStream;
+         }
+
+         @Override
+         public CacheStream<CacheEntry<K, V>> parallelStream() {
+            CloseableIterator<CacheEntry<K, V>> iterator = iterator();
+            Spliterator<CacheEntry<K, V>> spliterator = spliteratorFromIterator(iterator);
+            DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+
+            CacheStream<CacheEntry<K, V>> cacheStream = new LocalEntryCacheStream<>(cache, true,
+                    dm != null ? dm.getConsistentHash() : null, () -> StreamSupport.stream(spliterator, true));
+
+            cacheStream.onClose(() -> iterator.close());
+            return cacheStream;
+         }
+
+         @Override
+         public int size() {
+            long size = stream().count();
+            if (size > Integer.MAX_VALUE) {
+               return Integer.MAX_VALUE;
+            }
+            return (int) size;
+         }
+      };
+   }
+
+   class SupplierFunction<K, V> implements CloseableSupplier<K> {
+      private final CloseableSupplier<CacheEntry<K, V>> supplier;
+
+      SupplierFunction(CloseableSupplier<CacheEntry<K, V>> supplier) {
+         this.supplier = supplier;
+      }
+
+      @Override
+      public K get() {
+         CacheEntry<K, V> entry = supplier.get();
+         if (entry != null) {
+            return entry.getKey();
+         }
+         return null;
+      }
+
+      @Override
+      public void close() {
+         supplier.close();
+      }
+   }
+
+   @Override
+   public CacheSet<K> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      CacheSet<K> keySet = (CacheSet<K>) invokeNextInterceptor(ctx, command);
+      if (!enabled || hasSkipLoadFlag(command)) {
+         return keySet;
+      }
+      return new AbstractDelegatingKeyCacheSet<K, V>(getCacheWithFlags(cache, command), keySet) {
+
+         @Override
+         public CloseableIterator<K> iterator() {
+            CloseableIterator<K> iterator = super.iterator();
+            Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().size());
+            // TODO: how to handle concurrent activation....
+            return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
+                    new SupplierFunction<>(new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager,
+                            // TODO: how to pass in key filter...
+                            iceFactory, new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048))), Function.identity(),
+                    seenKeys);
+         }
+
+         @Override
+         public CloseableSpliterator<K> spliterator() {
+            return spliteratorFromIterator(iterator());
+         }
+
+         private <E> CloseableSpliterator<E> spliteratorFromIterator(CloseableIterator<E> iterator) {
+            return new IteratorAsSpliterator.Builder<>(iterator)
+                    .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                    .get();
+         }
+
+         @Override
+         public int size() {
+            long size = stream().count();
+            if (size > Integer.MAX_VALUE) {
+               return Integer.MAX_VALUE;
+            }
+            return (int) size;
+         }
+      };
+   }
+
    /**
     * Indicates whether the operation is a delta write. If it is, the
     * previous value needs to be loaded from the cache store so that
@@ -213,7 +379,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       final boolean isDelta = cmd instanceof ApplyDeltaCommand;
       final AtomicReference<Boolean> isLoaded = new AtomicReference<>();
-      InternalCacheEntry entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, persistenceManager, key,
+      InternalCacheEntry<K, V> entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, persistenceManager, (K) key,
                                                                              ctx, timeService, isLoaded);
       Boolean isLoadedValue = isLoaded.get();
       if (trace) {

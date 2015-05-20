@@ -31,13 +31,7 @@ import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.TimeService;
 
-import java.util.AbstractCollection;
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
@@ -345,7 +339,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       }
    }
 
-   private static class ImmutableEntryIterator<K, V> extends EntryIterator<K, V> {
+   private class ImmutableEntryIterator extends EntryIterator {
       ImmutableEntryIterator(Iterator<InternalCacheEntry<K, V>> it){
          super(it);
       }
@@ -356,20 +350,55 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       }
    }
 
-   public static class EntryIterator<K, V> implements Iterator<InternalCacheEntry<K, V>> {
+   public class EntryIterator implements Iterator<InternalCacheEntry<K, V>> {
 
       private final Iterator<InternalCacheEntry<K, V>> it;
 
+      private InternalCacheEntry<K, V> next;
+
       EntryIterator(Iterator<InternalCacheEntry<K, V>> it){this.it=it;}
+
+      private InternalCacheEntry<K, V> getNext() {
+         while (it.hasNext()) {
+            InternalCacheEntry<K, V> entry = it.next();
+            long now;
+            if (entry.canExpire() && entry.isExpired((now = timeService.wallClockTime()))) {
+               InternalCacheEntry<K, V> computed = entries.compute(entry.getKey(), (k, oldEntry) -> {
+                  if (oldEntry.isExpired(now)) {
+                     return null;
+                  }
+                  return oldEntry;
+               });
+               if (computed != null) {
+                  return computed;
+               }
+            } else {
+               // Iterator doesn't count as a regular read, so don't touch entry
+               return entry;
+            }
+         }
+         return null;
+      }
 
       @Override
       public InternalCacheEntry<K, V> next() {
-         return it.next();
+         if (next == null) {
+            next = getNext();
+         }
+         if (next == null) {
+            throw new NoSuchElementException();
+         }
+         InternalCacheEntry<K, V> toReturn = next;
+         next = null;
+         return toReturn;
       }
 
       @Override
       public boolean hasNext() {
-         return it.hasNext();
+         if (next == null) {
+            next = getNext();
+         }
+         return next != null;
       }
 
       @Override

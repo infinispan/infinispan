@@ -9,7 +9,6 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -60,8 +59,6 @@ public interface Visitor {
    Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable;
 
    Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable;
-
-   Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable;
 
    Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable;
 

@@ -10,10 +10,10 @@ import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.CacheCollection;
+import org.infinispan.CacheSet;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.commons.util.CloseableIteratorCollection;
-import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -490,6 +490,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
+      authzManager.checkPermission(AuthorizationPermission.BULK_READ);
+      return delegate.cacheEntrySet();
+   }
+
+   @Override
    public int size() {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
       return delegate.size();
@@ -521,7 +527,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public CloseableIteratorSet<K> keySet() {
+   public CacheSet<K> keySet() {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
       return delegate.keySet();
    }
@@ -574,7 +580,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public CloseableIteratorCollection<V> values() {
+   public CacheCollection<V> values() {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
       return delegate.values();
    }
@@ -592,7 +598,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public CloseableIteratorSet<Entry<K, V>> entrySet() {
+   public CacheSet<Entry<K, V>> entrySet() {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
       return delegate.entrySet();
    }
@@ -652,7 +658,7 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
-   public CacheEntry getCacheEntry(K key) {
+   public CacheEntry getCacheEntry(Object key) {
       authzManager.checkPermission(AuthorizationPermission.READ);
       return delegate.getCacheEntry(key);
    }

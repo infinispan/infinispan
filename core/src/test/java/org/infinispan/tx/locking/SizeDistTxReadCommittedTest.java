@@ -1,6 +1,5 @@
 package org.infinispan.tx.locking;
 
-import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.testng.annotations.Test;
 
@@ -55,5 +54,15 @@ public class SizeDistTxReadCommittedTest extends SizeDistTxRepeatableReadTest {
       tm(0).commit();
 
       assertNull(cache(1).get(k1));
+   }
+
+   @Override
+   public void testSizeWithReadFromRemoteNode() throws Exception {
+      preloadCacheAndCheckSize();
+
+      tm(0).begin();
+      assertEquals("v1", cache(0).get(k1));
+      assertEquals(2, cache(0).size());
+      tm(0).rollback();
    }
 }

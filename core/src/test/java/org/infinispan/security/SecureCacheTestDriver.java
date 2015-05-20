@@ -649,7 +649,7 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.WRITE)
    public void testPutAll_Map_Metadata(SecureCache<String, String> cache) {
       cache.putAll(Collections.singletonMap("a", "a"), new EmbeddedMetadata.Builder().
-            lifespan(10, TimeUnit.SECONDS).maxIdle(5, TimeUnit.SECONDS).build());
+              lifespan(10, TimeUnit.SECONDS).maxIdle(5, TimeUnit.SECONDS).build());
    }
 
    @TestCachePermission(AuthorizationPermission.BULK_READ)
@@ -660,5 +660,10 @@ public class SecureCacheTestDriver {
    @TestCachePermission(AuthorizationPermission.BULK_READ)
    public void testGetAllCacheEntries_Set(SecureCache<String, String> cache) {
       cache.getAllCacheEntries(InfinispanCollections.emptySet());
+   }
+
+   @TestCachePermission(AuthorizationPermission.BULK_READ)
+   public void testCacheEntrySet(SecureCache<String, String> cache) {
+      cache.getAdvancedCache().getAllCacheEntries(Collections.emptySet());
    }
 }

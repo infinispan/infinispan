@@ -53,6 +53,9 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.stream.impl.StreamRequestCommand;
+import org.infinispan.stream.impl.StreamResponseCommand;
+import org.infinispan.stream.impl.StreamSegmentResponseCommand;
 import org.infinispan.topology.CacheTopologyControlCommand;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.XSiteAdminCommand;
@@ -267,6 +270,15 @@ public class RemoteCommandsFactory {
                break;
             case ClusteredGetAllCommand.COMMAND_ID:
                command = new ClusteredGetAllCommand(cacheName);
+               break;
+            case StreamRequestCommand.COMMAND_ID:
+               command = new StreamRequestCommand(cacheName);
+               break;
+            case StreamSegmentResponseCommand.COMMAND_ID:
+               command = new StreamSegmentResponseCommand<>(cacheName);
+               break;
+            case StreamResponseCommand.COMMAND_ID:
+               command = new StreamResponseCommand(cacheName);
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");
