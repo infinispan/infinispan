@@ -2,7 +2,7 @@ package org.infinispan.jcache.remote;
 
 import javax.cache.management.CacheStatisticsMXBean;
 
-import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * Statistics which reflect only cache interactions done though the

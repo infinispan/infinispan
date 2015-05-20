@@ -1,10 +1,10 @@
 package org.infinispan.query.impl;
 
 import org.hibernate.search.spi.SearchIntegrator;
-import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * This MBean accumulates query statistics from the Hibernate Search statistics object. The only difference is this
