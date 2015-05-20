@@ -184,6 +184,10 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
       return state;
    }
 
+   protected void clearStore() {
+      // No-op, not supported for async
+   }
+
    private class AsyncStoreCoordinator implements Runnable {
 
       @Override
@@ -214,6 +218,8 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                      // clear() must be called synchronously, wait until background threads are done
                      if (tail != null)
                         workerThreadsAwait(tail.workerThreads);
+
+                     clearStore();
                   }
 
                   List<Modification> mods;
