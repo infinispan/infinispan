@@ -1,5 +1,6 @@
 package org.infinispan.interceptors;
 
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.persistence.PersistenceUtil.convert;
 
 import java.util.Collection;
@@ -7,6 +8,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -37,6 +41,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
@@ -55,6 +60,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.persistence.util.PersistenceManagerCloseableSupplier;
 import org.infinispan.util.AbstractDelegatingCloseableIteratorCollection;
 import org.infinispan.util.AbstractDelegatingCollection;
 import org.infinispan.util.CloseableSuppliedIterator;
@@ -70,13 +76,14 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheMisses = new AtomicLong(0);
 
    protected PersistenceManager persistenceManager;
-   protected CacheNotifier<K, V> notifier;
+   protected CacheNotifier notifier;
    protected volatile boolean enabled = true;
    protected EntryFactory entryFactory;
    private TimeService timeService;
    private InternalEntryFactory iceFactory;
    private DataContainer<K, V> dataContainer;
    private GroupManager groupManager;
+   private ExecutorService executorService;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -87,9 +94,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier<K, V> notifier,
+   protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier notifier,
                                      TimeService timeService, InternalEntryFactory iceFactory, DataContainer<K, V> dataContainer,
-                                     GroupManager groupManager) {
+                                     GroupManager groupManager, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor) {
       this.persistenceManager = clm;
       this.notifier = notifier;
       this.entryFactory = entryFactory;
@@ -97,6 +104,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       this.iceFactory = iceFactory;
       this.dataContainer = dataContainer;
       this.groupManager = groupManager;
+      this.executorService = persistenceExecutor;
    }
 
    @Override
@@ -201,23 +209,15 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          @Override
          public CloseableIterator<CacheEntry<K, V>> iterator() {
             CloseableIterator<CacheEntry<K, V>> iterator = super.iterator();
-            CloseableSupplier<CacheEntry<K, V>> supplier = new CloseableSupplier<CacheEntry<K, V>>() {
-               @Override
-               public CacheEntry<K, V> get() {
-                  return null;
-               }
-
-               @Override
-               public void close() {
-
-               }
-            };
-            return new DistinctKeyDoubleEntryCloseableIterator<K, V>(iterator, new CloseableSuppliedIterator<>());
+            return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
+                    new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager, iceFactory, null, 10,
+                            TimeUnit.SECONDS, 128)));
          }
 
          @Override
          public Spliterator<CacheEntry<K, V>> spliterator() {
-            return super.spliterator();
+            return Spliterators.spliteratorUnknownSize(iterator(),
+                    Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
          }
       };
    }

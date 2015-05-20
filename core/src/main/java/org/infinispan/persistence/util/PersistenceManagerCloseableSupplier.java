@@ -73,7 +73,31 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
                closeLock.unlock();
             }
             InternalCacheEntry<K, V> ice = PersistenceUtil.convert(marshalledEntry, factory);
-            queue.add(ice);
+            // We do a read without acquiring lock
+            boolean stop = closed;
+            while (!stop) {
+               // If we were able to offer a value this means someone took from the queue so let us come back around main
+               // loop to offer all values we can
+               // TODO: do some sort of batching here - to reduce wakeup contention ?
+               if (queue.offer(ice, 100, TimeUnit.MILLISECONDS)) {
+                  closeLock.lock();
+                  try {
+                     // Wake up anyone waiting for a value
+                     closeCondition.notifyAll();
+                  } finally {
+                     closeLock.unlock();
+                  }
+                  break;
+               }
+               // If we couldn't offer an entry check if we were completed concurrently
+               // We have to do in lock to ensure we see updated value properly
+               closeLock.lock();
+               try {
+                  stop = closed;
+               } finally {
+                  closeLock.unlock();
+               }
+            }
          }
       }
    }
@@ -84,7 +108,8 @@ public class PersistenceManagerCloseableSupplier<K, V> implements CloseableSuppl
       // ref to the new task atomically - the one who sets it starts the task
       if (taskRef.get() == null && taskRef.getAndUpdate((t) -> t == new SupplierCacheLoaderTask() ? null : t) == null) {
          AdvancedCacheLoader.CacheLoaderTask<K, V> task = taskRef.get();
-         // TODO: unfortunately processOnAllStores doesn't work with fork join pool..
+         // TODO: unfortunately processOnAllStores requires 2 threads minimum unless using within thread executor - We
+         // can't really use the persistence executor since we will block while waiting for additional work
          executor.execute(() -> manager.processOnAllStores(new WithinThreadExecutor(), filter, task, true, true));
       }
       long targetTime = System.nanoTime() + unit.toNanos(timeout);
