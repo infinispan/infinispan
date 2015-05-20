@@ -60,7 +60,15 @@ public class EvictionResource extends CacheChildResource {
                     .setDefaultValue(new ModelNode().set(-1))
                     .build();
 
-    static final AttributeDefinition[] EVICTION_ATTRIBUTES = {EVICTION_STRATEGY, MAX_ENTRIES};
+    static final SimpleAttributeDefinition MEMORY_BASED_APPROXIMATION =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.MEMORY_BASED_APPROXIMATION, ModelType.BOOLEAN, true)
+                   .setXmlName(Attribute.MEMORY_BASED_APPROXIMATION.getLocalName())
+                   .setAllowExpression(true)
+                   .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                   .setDefaultValue(new ModelNode().set(Boolean.FALSE))
+                   .build();
+
+    static final AttributeDefinition[] EVICTION_ATTRIBUTES = {EVICTION_STRATEGY, MAX_ENTRIES, MEMORY_BASED_APPROXIMATION};
 
     public EvictionResource(CacheResource cacheResource) {
         super(EVICTION_PATH, ModelKeys.EVICTION, cacheResource, EVICTION_ATTRIBUTES);

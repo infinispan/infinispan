@@ -133,6 +133,7 @@ public class ModelKeys {
     static final String MAX_IDLE = "max-idle";
     static final String MAX_RETRIES = "max-retries";
     static final String MAX_TOTAL_CONNECTIONS = "max-total-connections";
+    static final String MEMORY_BASED_APPROXIMATION = "memory-based";
     static final String MIGRATOR_NAME = "migrator-name";
     static final String MODE = "mode";
     static final String MODIFICATION_QUEUE_SIZE = "modification-queue-size";

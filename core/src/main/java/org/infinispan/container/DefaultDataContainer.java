@@ -12,6 +12,8 @@ import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.EvictionListener;
+import org.infinispan.container.entries.ByteArrayCacheEntrySizeCalculator;
+import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
@@ -78,7 +80,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    protected DefaultDataContainer(int concurrencyLevel, long maxEntries,
          EvictionStrategy strategy, EvictionThreadPolicy policy,
-         Equivalence<? super K> keyEquivalence) {
+         Equivalence<? super K> keyEquivalence, boolean memoryBasedApproximation) {
       DefaultEvictionListener evictionListener;
       // translate eviction policy and strategy
       switch (policy) {
@@ -99,13 +101,19 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
             break;
          case LIRS:
             eviction = Eviction.LIRS;
+            if (memoryBasedApproximation) {
+               throw new IllegalArgumentException("Memory based approximation eviction cannot be used with LIRS!");
+            }
             break;
          default:
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
+      BoundedEquivalentConcurrentHashMapV8.EntrySizeCalculator<K, InternalCacheEntry<K, V>> sizeCalculator =
+            memoryBasedApproximation ? new CacheEntrySizeCalculator<>(
+                  (BoundedEquivalentConcurrentHashMapV8.EntrySizeCalculator<K, V>) new ByteArrayCacheEntrySizeCalculator()) : null;
 
       entries = new BoundedEquivalentConcurrentHashMapV8<>(maxEntries, eviction, evictionListener, keyEquivalence,
-              AnyEquivalence.getInstance());
+              AnyEquivalence.getInstance(), sizeCalculator);
    }
 
    @Inject
@@ -119,20 +127,20 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       this.timeService = timeService;
    }
 
-   public static <K, V> DataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
+   public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
             EvictionStrategy strategy, EvictionThreadPolicy policy,
-            Equivalence<? super K> keyEquivalence) {
-      return new DefaultDataContainer(concurrencyLevel, maxEntries, strategy,
-            policy, keyEquivalence);
+            Equivalence<? super K> keyEquivalence, boolean memoryBasedApproximation) {
+      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, strategy,
+            policy, keyEquivalence, memoryBasedApproximation);
    }
 
-   public static <K, V> DataContainer<K, V> unBoundedDataContainer(int concurrencyLevel,
+   public static <K, V> DefaultDataContainer<K, V> unBoundedDataContainer(int concurrencyLevel,
          Equivalence<? super K> keyEquivalence) {
-      return new DefaultDataContainer(concurrencyLevel, keyEquivalence);
+      return new DefaultDataContainer<>(concurrencyLevel, keyEquivalence);
    }
 
-   public static DataContainer unBoundedDataContainer(int concurrencyLevel) {
-      return new DefaultDataContainer(concurrencyLevel);
+   public static <K, V> DefaultDataContainer<K, V> unBoundedDataContainer(int concurrencyLevel) {
+      return new DefaultDataContainer<>(concurrencyLevel);
    }
 
    @Override

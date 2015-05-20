@@ -60,13 +60,36 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    @Test(dataProvider="configurationFiles")
    public void testParseAndConstructUnifiedXmlFile(String config) throws IOException {
+      String[] parts = config.split("\\.");
+      int major = Integer.parseInt(parts[0]);
+      int minor = Integer.parseInt(parts[1]);
+      final int version = major * 10 + minor;
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.fromXml("configs/unified/" + config, true, false)) {
          @Override
          public void call() {
-            configurationCheck70(cm);
+            switch (version) {
+               case 80:
+                  configurationCheck80(cm);
+                  break;
+               case 70:
+               case 71:
+               case 72:
+                  configurationCheck70(cm);
+                  break;
+               default:
+                  throw new IllegalArgumentException("Unknown configuration version "+version);
+            }
          }
       });
+   }
+
+   private static void configurationCheck80(EmbeddedCacheManager cm) {
+      configurationCheck70(cm);
+      Configuration c = cm.getCache().getCacheConfiguration();
+      assertFalse(c.eviction().isMemoryBasedApproximation());
+      c = cm.getCache("invalid").getCacheConfiguration();
+      assertTrue(c.eviction().isMemoryBasedApproximation());
    }
 
    private static void configurationCheck70(EmbeddedCacheManager cm) {

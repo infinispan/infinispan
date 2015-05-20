@@ -11,13 +11,16 @@ import org.infinispan.eviction.EvictionThreadPolicy;
  */
 public class EvictionConfiguration {
    public static final AttributeDefinition<Long> MAX_ENTRIES  = AttributeDefinition.builder("maxEntries", -1l).build();
+   public static final AttributeDefinition<Boolean> MEMORY_BASED_APPROXIMATION  = AttributeDefinition.builder("memoryBasedApproximation", Boolean.FALSE).build();
    public static final AttributeDefinition<EvictionStrategy> STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).immutable().build();
    public static final AttributeDefinition<EvictionThreadPolicy> THREAD_POLICY = AttributeDefinition.builder("threadPolicy", EvictionThreadPolicy.DEFAULT).immutable().build();
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(EvictionConfiguration.class, MAX_ENTRIES, STRATEGY, THREAD_POLICY);
+      return new AttributeSet(EvictionConfiguration.class, MAX_ENTRIES,
+            MEMORY_BASED_APPROXIMATION, STRATEGY, THREAD_POLICY);
    }
 
    private final Attribute<Long> maxEntries;
+   private final Attribute<Boolean> memoryBasedApproximation;
    private final Attribute<EvictionStrategy> strategy;
    private final Attribute<EvictionThreadPolicy> threadPolicy;
    private final AttributeSet attributes;
@@ -25,6 +28,7 @@ public class EvictionConfiguration {
    EvictionConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       maxEntries = attributes.attribute(MAX_ENTRIES);
+      memoryBasedApproximation = attributes.attribute(MEMORY_BASED_APPROXIMATION);
       strategy = attributes.attribute(STRATEGY);
       threadPolicy = attributes.attribute(THREAD_POLICY);
    }
@@ -51,6 +55,10 @@ public class EvictionConfiguration {
     */
    public long maxEntries() {
       return maxEntries.get();
+   }
+
+   public boolean isMemoryBasedApproximation() {
+      return memoryBasedApproximation.get();
    }
 
    public AttributeSet attributes() {

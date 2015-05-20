@@ -495,6 +495,8 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             if (strategy.isEnabled()) {
                 final long maxEntries = EvictionResource.MAX_ENTRIES.resolveModelAttribute(context, eviction).asLong();
                 builder.eviction().maxEntries(maxEntries);
+                boolean memoryBased = EvictionResource.MEMORY_BASED_APPROXIMATION.resolveModelAttribute(context, eviction).asBoolean();
+                builder.eviction().memoryBasedApproximation(memoryBased);
             }
         }
         // expiration is a child resource
