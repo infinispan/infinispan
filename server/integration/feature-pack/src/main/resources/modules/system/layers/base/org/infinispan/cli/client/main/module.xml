@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.3" name="org.infinispan.cli.client">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
+
+    <main-class name="org.infinispan.cli.Main"/>
+
+    <resources>
+        <artifact name="${org.infinispan.server:infinispan-server-cli}"/>
+    </resources>
+
+    <dependencies>
+        <module name="gnu.getopt"/>
+        <module name="org.fusesource.jansi"/>
+        <module name="org.jboss.aesh"/>
+        <module name="org.jboss.logging"/>
+        <module name="org.infinispan.commons"/>
+        <module name="org.jboss.remoting-jmx" services="import"/>
+        <module name="javax.api"/>
+    </dependencies>
+
+</module>

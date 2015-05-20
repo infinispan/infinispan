@@ -1,8 +1,33 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-   <modelVersion>4.0.0</modelVersion>
+<?xml version="1.0" encoding="UTF-8"?>
 
-   <parent>
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2010, Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags. See the copyright.txt file in the
+  ~ distribution for a full listing of individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
       <groupId>org.infinispan.server</groupId>
       <artifactId>infinispan-server-versions</artifactId>
       <version>8.0.0-SNAPSHOT</version>
@@ -16,280 +41,84 @@
    <description>Infinispan Server - Build</description>
 
 
-   <properties>
-      
-      <generated.configs>${basedir}/target/generated-configs</generated.configs>
-      <generated.configs.standalone>${generated.configs}/standalone/configuration</generated.configs.standalone>
-      <generated.configs.domain>${generated.configs}/domain/configuration</generated.configs.domain>
-      <generated.configs.examples>${generated.configs}/docs/examples/configs</generated.configs.examples>
-      <generated.configs.src.dir>${basedir}/src/main/resources</generated.configs.src.dir>
-   </properties>
-
    <dependencies>
-      <dependency>
-         <groupId>com.thoughtworks.paranamer</groupId>
-         <artifactId>paranamer</artifactId>
-      </dependency>
+        <dependency>
+            <groupId>org.infinispan.server</groupId>
+            <artifactId>infinispan-server-feature-pack</artifactId>
+            <type>zip</type>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
 
-      <dependency>
-         <groupId>org.antlr</groupId>
-         <artifactId>antlr-runtime</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.fusesource.jansi</groupId>
-         <artifactId>jansi</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-cli</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-infinispan</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-jgroups</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jboss.aesh</groupId>
-         <artifactId>aesh</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jgroups</groupId>
-         <artifactId>jgroups</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-server-endpoints</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-core</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-lucene-directory</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-client</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-remote-query-server</artifactId>
-      </dependency>
-      
-      <dependency>
-      	 <groupId>org.infinispan</groupId>
-      	 <artifactId>infinispan-scripting</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-core</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-hotrod</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-memcached</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-rest</artifactId>
-         <classifier>classes</classifier>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jboss.resteasy</groupId>
-         <artifactId>resteasy-jaxrs</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.jboss.resteasy</groupId>
-         <artifactId>jaxrs-api</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-server-websocket</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>com.thoughtworks.xstream</groupId>
-         <artifactId>xstream</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.scala-lang</groupId>
-         <artifactId>scala-library</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-jdbc</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-remote</artifactId>
-      </dependency>
-      
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cachestore-rest</artifactId>
-      </dependency>
-      
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-objectfilter</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan.protostream</groupId>
-         <artifactId>protostream</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-client-hotrod</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cli-client</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.infinispan</groupId>
-         <artifactId>infinispan-cli-interpreter</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.wildfly</groupId>
-         <artifactId>wildfly-config-assembly</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.xerial.snappy</groupId>
-         <artifactId>snappy-java</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>xpp3</groupId>
-         <artifactId>xpp3</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-core</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-queryparser</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-highlighter</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-grouping</artifactId>
-      </dependency>
-
-      <dependency>
-         <groupId>org.apache.lucene</groupId>
-         <artifactId>lucene-facet</artifactId>
-      </dependency>
-      
-   </dependencies>
-
-   <build>
-      <plugins>
-          <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>unpack</id>
-                  <phase>package</phase>
-                  <goals>
-                     <goal>unpack</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>org.wildfly</groupId>
-                           <artifactId>wildfly-dist</artifactId>
-                           <version>${version.wildfly}</version>
-                           <type>zip</type>
-                           <overWrite>true</overWrite>
-                           <outputDirectory>${project.build.directory}</outputDirectory>
-                        </artifactItem>
-                     </artifactItems>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-         <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>generate-configs</id>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <phase>generate-resources</phase>
-                  <configuration>
-                     <target>
-                        <ant antfile="build-configs.xml" inheritRefs="true">
-                           <target name="all" />
-                        </ant>
-                     </target>
-                  </configuration>
-               </execution>
-               <execution>
-                  <id>build-dist-dir</id>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-                  <phase>package</phase>
-                  <configuration>
-                     <target>
-                        <ant antfile="build.xml" inheritRefs="true">
-                           <target name="all" />
-                        </ant>
-                     </target>
-                  </configuration>
-               </execution>
-            </executions>
-            <dependencies>
-               <dependency>
-                  <groupId>org.jboss</groupId>
-                  <artifactId>jandex</artifactId>
-                  <version>${version.org.jboss.jandex}</version>
-               </dependency>
-            </dependencies>
-         </plugin>
-      </plugins>
-   </build>
+    <build>
+        <finalName>${server.output.dir.prefix}-${project.version}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.wildfly.build</groupId>
+                <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>server-provisioning</id>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <phase>compile</phase>
+                        <configuration>
+                            <config-file>server-provisioning.xml</config-file>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>trim-server</id>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <target>
+                                <ant antfile="build.xml" inheritRefs="true">
+                                    <target name="trim-server" />
+                                    <target name="server-version" />
+                                </ant>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>assembly.xml</descriptor>
+                            </descriptors>
+                            <recompressZippedFiles>true</recompressZippedFiles>
+                            <finalName>${server.output.dir.prefix}-${project.version}</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <workDirectory>${project.build.directory}/assembly/work</workDirectory>
+                            <tarLongFileMode>gnu</tarLongFileMode>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
+

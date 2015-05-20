@@ -7,7 +7,6 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.RestartParentWriteAttributeHandler;
 import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.operations.common.Util;
-import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
@@ -22,13 +21,18 @@ public class RestartCacheWriteAttributeHandler extends RestartParentWriteAttribu
     }
 
     @Override
+    protected void recreateParentService(OperationContext context, PathAddress cacheAddress, ModelNode cacheModel) throws OperationFailedException {
+        recreateParentService(context, cacheAddress, cacheModel, null);
+    }
+
+    @Override
     protected void recreateParentService(OperationContext context, PathAddress cacheAddress, ModelNode cacheModel,
             ServiceVerificationHandler verificationHandler) throws OperationFailedException {
         PathAddress containerAddress = cacheAddress.subAddress(0, cacheAddress.size()-1) ;
         ModelNode containerModel = context.readResourceFromRoot(containerAddress).getModel();
         ModelNode operation = Util.createAddOperation(cacheAddress);
 
-        cacheAddHandler.installRuntimeServices(context, operation, containerModel, cacheModel, verificationHandler);
+        cacheAddHandler.installRuntimeServices(context, operation, containerModel, cacheModel);
     }
 
     @Override

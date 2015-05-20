@@ -25,7 +25,6 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.PathManagerService;
@@ -43,7 +42,7 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
    static final RestSubsystemAdd INSTANCE = new RestSubsystemAdd();
 
    @Override
-   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers)
+   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model)
             throws OperationFailedException {
       // Read the full model
       ModelNode config = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
@@ -60,7 +59,6 @@ class RestSubsystemAdd extends AbstractAddStepHandler {
       if (service.getSecurityDomain()!=null) {
          EndpointUtils.addSecurityDomainDependency(builder, service.getSecurityDomain(), service.getSecurityDomainContextInjector());
       }
-      builder.addListener(verificationHandler);
       builder.setInitialMode(ServiceController.Mode.ACTIVE);
       builder.install();
    }

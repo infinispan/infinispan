@@ -26,7 +26,6 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
@@ -54,8 +53,7 @@ class WebSocketSubsystemAdd extends ProtocolServiceSubsystemAdd {
    }
 
    @Override
-   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler,
-         List<ServiceController<?>> newControllers) throws OperationFailedException {
+   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
       // Read the full model
       ModelNode config = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
       // Create the builder

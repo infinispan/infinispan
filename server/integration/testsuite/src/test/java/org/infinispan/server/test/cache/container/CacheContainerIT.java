@@ -18,6 +18,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -85,6 +86,7 @@ public class CacheContainerIT {
      * 'default' cache container has default start mode (=LAZY)  (mode of service - ACTIVE)
      * 'special-cache-container' has EAGER start mode  (mode of service - ON_DEMAND)
      */
+    @Ignore
     @Test
     public void testExecutorAttributesAndStartMode() throws Exception {
         String services = provider.getConnection().invoke(new ObjectName(dumpServicesBean), dumpServicesOp, null, null)

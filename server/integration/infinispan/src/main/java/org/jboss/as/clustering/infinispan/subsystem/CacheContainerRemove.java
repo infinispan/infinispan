@@ -35,7 +35,6 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -51,6 +50,7 @@ public class CacheContainerRemove extends AbstractRemoveStepHandler {
 
     public static final CacheContainerRemove INSTANCE = new CacheContainerRemove();
 
+    @Override
     protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
 
         final PathAddress address = PathAddress.pathAddress(operation.get(ModelDescriptionConstants.OP_ADDR));
@@ -71,18 +71,17 @@ public class CacheContainerRemove extends AbstractRemoveStepHandler {
      * @param model
      * @throws OperationFailedException
      */
+    @Override
     protected void recoverServices(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
 
         final PathAddress address = PathAddress.pathAddress(operation.get(ModelDescriptionConstants.OP_ADDR));
         final String containerName = address.getLastElement().getValue();
-        // used by service installation
-        final ServiceVerificationHandler verificationHandler = new ServiceVerificationHandler() ;
 
         // re-install the cache container services
-        CacheContainerAdd.INSTANCE.installRuntimeServices(context, operation, model, verificationHandler);
+        CacheContainerAdd.INSTANCE.installRuntimeServices(context, operation, model);
 
         // re-install any existing cache services
-        reinstallExistingCacheServices(context, model, containerName, verificationHandler);
+        reinstallExistingCacheServices(context, model, containerName);
     }
 
 
@@ -94,7 +93,7 @@ public class CacheContainerRemove extends AbstractRemoveStepHandler {
      * @param containerName
      * @throws OperationFailedException
      */
-    private void reinstallExistingCacheServices(OperationContext context, ModelNode containerModel, String containerName, ServiceVerificationHandler verificationHandler) throws OperationFailedException {
+    private void reinstallExistingCacheServices(OperationContext context, ModelNode containerModel, String containerName) throws OperationFailedException {
 
         // re-install the services of any local caches
         List<Property> localCacheList = getCachesFromParentModel(ModelKeys.LOCAL_CACHE, containerModel);
@@ -104,7 +103,7 @@ public class CacheContainerRemove extends AbstractRemoveStepHandler {
                 String localCacheName = localCache.getName();
                 ModelNode localCacheModel = localCache.getValue();
                 ModelNode localCacheAddOp = createCacheAddOperation(ModelKeys.LOCAL_CACHE, containerName, localCacheName);
-                LocalCacheAdd.INSTANCE.installRuntimeServices(context, localCacheAddOp, containerModel, localCacheModel, verificationHandler);
+                LocalCacheAdd.INSTANCE.installRuntimeServices(context, localCacheAddOp, containerModel, localCacheModel);
             }
         }
         // re-install the services of any invalidation caches
@@ -114,7 +113,7 @@ public class CacheContainerRemove extends AbstractRemoveStepHandler {
                 String invCacheName = invCache.getName();
                 ModelNode invCacheModel = invCache.getValue();
                 ModelNode invCacheAddOp = createCacheAddOperation(ModelKeys.INVALIDATION_CACHE, containerName, invCacheName);
-                InvalidationCacheAdd.INSTANCE.installRuntimeServices(context, invCacheAddOp, containerModel, invCacheModel, verificationHandler);
+                InvalidationCacheAdd.INSTANCE.installRuntimeServices(context, invCacheAddOp, containerModel, invCacheModel);
             }
         }
         // re-install the services of any replicated caches
@@ -124,7 +123,7 @@ public class CacheContainerRemove extends AbstractRemoveStepHandler {
                 String replCacheName = replCache.getName();
                 ModelNode replCacheModel = replCache.getValue();
                 ModelNode replCacheAddOp = createCacheAddOperation(ModelKeys.REPLICATED_CACHE, containerName, replCacheName);
-                ReplicatedCacheAdd.INSTANCE.installRuntimeServices(context, replCacheAddOp, containerModel, replCacheModel, verificationHandler);
+                ReplicatedCacheAdd.INSTANCE.installRuntimeServices(context, replCacheAddOp, containerModel, replCacheModel);
             }
         }
         // re-install the services of any distributed caches
@@ -134,7 +133,7 @@ public class CacheContainerRemove extends AbstractRemoveStepHandler {
                 String distCacheName = distCache.getName();
                 ModelNode distCacheModel = distCache.getValue();
                 ModelNode distCacheAddOp = createCacheAddOperation(ModelKeys.DISTRIBUTED_CACHE, containerName, distCacheName);
-                DistributedCacheAdd.INSTANCE.installRuntimeServices(context, distCacheAddOp, containerModel, distCacheModel, verificationHandler);
+                DistributedCacheAdd.INSTANCE.installRuntimeServices(context, distCacheAddOp, containerModel, distCacheModel);
             }
         }
     }

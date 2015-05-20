@@ -33,16 +33,12 @@ import org.jboss.as.clustering.infinispan.cs.factory.DeployedCacheStoreFactorySe
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.server.AbstractDeploymentChainStep;
 import org.jboss.as.server.DeploymentProcessorTarget;
 import org.jboss.as.server.deployment.Phase;
 import org.jboss.dmr.ModelNode;
-import org.jboss.msc.service.ServiceController;
-
-import java.util.List;
 
 import static org.jboss.as.clustering.infinispan.InfinispanLogger.ROOT_LOGGER;
 
@@ -67,18 +63,21 @@ public class InfinispanSubsystemAdd extends AbstractAddStepHandler {
       target.get(ModelKeys.CACHE_CONTAINER).setEmptyObject();
    }
 
+   @Override
    protected void populateModel(ModelNode operation, ModelNode model) throws OperationFailedException {
       populate(operation, model);
    }
 
-   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers) throws OperationFailedException {
+   @Override
+   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
       ROOT_LOGGER.activatingSubsystem();
       addDeployableCacheStoresProcessors(context);
    }
 
    private void addDeployableCacheStoresProcessors(OperationContext context) {
       context.addStep(new AbstractDeploymentChainStep() {
-         protected void execute(DeploymentProcessorTarget processorTarget) {
+         @Override
+        protected void execute(DeploymentProcessorTarget processorTarget) {
             int basePriority = POST_MODULE_PRIORITY;
             processorTarget.addDeploymentProcessor(INFINISPAN_SUBSYSTEM_NAME, Phase.POST_MODULE, ++basePriority, new AdvancedCacheLoaderExtensionProcessor());
             processorTarget.addDeploymentProcessor(INFINISPAN_SUBSYSTEM_NAME, Phase.POST_MODULE, ++basePriority, new AdvancedCacheWriterExtensionProcessor());
@@ -93,6 +92,7 @@ public class InfinispanSubsystemAdd extends AbstractAddStepHandler {
       context.getServiceTarget().addService(DeployedCacheStoreFactoryService.SERVICE_NAME, new DeployedCacheStoreFactoryService()).install();
    }
 
+   @Override
    protected boolean requiresRuntimeVerification() {
       return false;
    }

@@ -1,0 +1,119 @@
+<build xmlns="urn:wildfly:feature-pack-build:1.0">
+    <dependencies>
+        <artifact name="org.wildfly:wildfly-feature-pack" />
+    </dependencies>
+    <config>
+        <!-- Core configs -->
+        <standalone
+          template="configuration/standalone/template.xml" 
+          subsystems="configuration/standalone/subsystems.xml" 
+          output-file="standalone/configuration/standalone.xml" />
+        <standalone
+          template="configuration/standalone/template.xml" 
+          subsystems="configuration/standalone/subsystems-clustered.xml" 
+          output-file="standalone/configuration/clustered.xml" />
+        <domain 
+          template="configuration/domain/template.xml" 
+          subsystems="configuration/domain/subsystems.xml" 
+          output-file="domain/configuration/domain.xml" />
+          
+        <!-- Example configs -->
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-ccl-clustered.xml"
+           output-file="docs/examples/configs/clustered-ccl.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-fcs-local.xml"
+           output-file="docs/examples/configs/standalone-fcs-local.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-leveldb-cs-local.xml"
+           output-file="docs/examples/configs/standalone-leveldb-cs-local.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-indexing.xml"
+           output-file="docs/examples/configs/clustered-indexing.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-jdbc-clustered.xml"
+           output-file="docs/examples/configs/clustered-jdbc.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-rcs-local.xml"
+           output-file="docs/examples/configs/standalone-rcs-local.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-hotrod-multiple.xml"
+           output-file="docs/examples/configs/standalone-hotrod-multiple.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-hotrod-rolling-upgrade.xml"
+           output-file="docs/examples/configs/standalone-hotrod-rolling-upgrade.xml"/>
+        <standalone
+           template="configuration/examples/template-ssl.xml"
+           subsystems="configuration/examples/subsystems-hotrod-ssl.xml"
+           output-file="docs/examples/configs/standalone-hotrod-ssl.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-storage-only.xml"
+           output-file="docs/examples/configs/clustered-storage-only.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-topology.xml"
+           output-file="docs/examples/configs/clustered-topology.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-xsite.xml"
+           output-file="docs/examples/configs/clustered-xsite.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-compatibility-mode.xml"
+           output-file="docs/examples/configs/standalone-compatibility-mode.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-rest-rolling-upgrade.xml"
+           output-file="docs/examples/configs/standalone-rest-rolling-upgrade.xml"/>
+        <standalone
+           template="configuration/standalone/template.xml"
+           subsystems="configuration/examples/subsystems-auth.xml"
+           output-file="docs/examples/configs/standalone-auth.xml"/>
+        <standalone
+           template="configuration/examples/template-vault.xml"
+           subsystems="configuration/examples/subsystems-node-auth.xml"
+           output-file="docs/examples/configs/standalone-node-auth.xml"/>
+        
+    </config>
+    <mkdirs>
+        <dir name="domain/data/content"/>
+        <dir name="standalone/lib/ext"/>
+        <dir name="domain/tmp/auth"/>
+        <dir name="standalone/tmp/auth"/>
+        <dir name=".installation"/>
+    </mkdirs>
+    <file-permissions>
+        <permission value="755">
+            <filter pattern="*.sh" include="true"/>
+            <filter pattern="*" include="false"/>
+        </permission>
+        <permission value="700">
+            <filter pattern="*/tmp/auth" include="true"/>
+            <filter pattern="*" include="false"/>
+        </permission>
+        <permission value="600">
+            <filter pattern="*-users.properties" include="true" />
+            <filter pattern="*/.installation" include="true"/>
+            <filter pattern="*" include="false"/>
+        </permission>
+    </file-permissions>
+    <line-endings>
+        <windows>
+            <filter pattern="*.bat" include="true"/>
+        </windows>
+        <unix>
+            <filter pattern="*.sh" include="true"/>
+            <filter pattern="*.conf" include="true"/>
+        </unix>
+    </line-endings>
+
+</build>

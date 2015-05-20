@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.jboss</groupId>
       <artifactId>jboss-parent</artifactId>
-      <version>14</version>
+      <version>17</version>
       <relativePath />
    </parent>
 
@@ -18,9 +18,11 @@
    <description>Infinispan Server - BOM</description>
 
    <properties>
-      
       <product.version>${project.version}</product.version>
       <product.name>infinispan-server</product.name>
+      <maven.compiler.target>1.8</maven.compiler.target>
+      <maven.compiler.source>1.8</maven.compiler.source>
+      <server.output.dir.prefix>infinispan-server</server.output.dir.prefix>
 
       <version.ant-contrib>1.0b3</version.ant-contrib>
       <version.apache.ds>2.0.0-M16</version.apache.ds>
@@ -30,12 +32,21 @@
       <version.net.jcip.annotations>1.0</version.net.jcip.annotations>
       <version.org.jboss.jandex>1.2.1.Final</version.org.jboss.jandex>
       <version.org.jboss.jbossts.jbossjts>4.16.2.Final</version.org.jboss.jbossts.jbossjts>
-      <version.org.jboss.modules>1.3.3.Final</version.org.jboss.modules>
+      <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
       <version.junit>4.11</version.junit>
       <version.org.infinispan>${project.version}</version.org.infinispan>
       <version.org.infinispan.arquillian.container>1.2.0.Alpha2</version.org.infinispan.arquillian.container>
       <version.org.slf4j>1.7.2</version.org.slf4j>
-      <version.org.wildfly>8.2.0.Final</version.org.wildfly>
+
+      <!-- WildFly dependencies -->
+      <version.org.wildfly>9.0.0.CR2</version.org.wildfly>
+      <version.org.wildfly.arquillian>1.0.0.CR1</version.org.wildfly.arquillian>
+      <version.org.wildfly.build-tools>1.0.0.Final</version.org.wildfly.build-tools>
+
+      <!-- JavaEE Spec dependencies -->
+      <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.0.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
+
+      <!-- Infinispan Server dependencies -->
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
       <version.antrun.maven.plugin>1.8</version.antrun.maven.plugin>
       <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
@@ -46,12 +57,9 @@
       <version.pax.url>1.3.7</version.pax.url>
       <version.karaf>2.3.3</version.karaf>
       <version.pax.exam>4.1.0</version.pax.exam>
-      <version.javax.inject>1</version.javax.inject>
       <version.h2.database>1.3.173</version.h2.database>
       <version.resteasy>3.0.11.Final</version.resteasy>
       <version.lucene>4.10.4</version.lucene>
-      <relocations />
-
    </properties>
 
    <dependencyManagement>
@@ -64,18 +72,54 @@
             <scope>import</scope>
          </dependency>
 
+         <!-- Core Modules -->
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-parent</artifactId>
-            <version>${version.org.wildfly}</version>
             <type>pom</type>
+            <version>${version.org.wildfly}</version>
             <scope>import</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-feature-pack</artifactId>
+            <type>pom</type>
+            <version>${version.org.wildfly}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-feature-pack</artifactId>
+            <type>zip</type>
+            <version>${version.org.wildfly}</version>
          </dependency>
          
          <dependency>
             <groupId>org.wildfly</groupId>
-            <artifactId>wildfly-controller</artifactId>
+            <artifactId>wildfly-security</artifactId>
             <version>${version.org.wildfly}</version>
+         </dependency>
+         
+         <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-transactions</artifactId>
+            <version>${version.org.wildfly}</version>
+         </dependency>
+         
+         <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-dist</artifactId>
+            <type>zip</type>
+            <version>${version.org.wildfly}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-clustering-common</artifactId>
+            <version>${version.org.wildfly}</version>
+            <scope>test</scope>
+            <classifier>tests</classifier>
          </dependency>
 
          <dependency>
@@ -132,6 +176,13 @@
             <artifactId>infinispan-server-endpoints</artifactId>
             <version>${project.version}</version>
          </dependency>
+         
+         <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-feature-pack</artifactId>
+            <version>${project.version}</version>
+            <type>zip</type>
+         </dependency>
 
          <dependency>
             <groupId>commons-logging</groupId>
@@ -143,21 +194,6 @@
             <groupId>net.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
             <version>${version.net.jcip.annotations}</version>
-         </dependency>
-         
-         <dependency>
-            <groupId>org.wildfly</groupId>
-            <artifactId>wildfly-dist</artifactId>
-            <type>zip</type>
-            <version>${version.org.wildfly}</version>
-         </dependency>
-
-         <dependency>
-            <groupId>org.wildfly</groupId>
-            <artifactId>wildfly-clustering-common</artifactId>
-            <version>${version.org.wildfly}</version>
-            <scope>test</scope>
-            <classifier>tests</classifier>
          </dependency>
 
          <dependency>
@@ -299,9 +335,16 @@
          </dependency>
 
          <dependency>
-            <groupId>org.wildfly</groupId>
+            <groupId>org.wildfly.arquillian</groupId>
+            <artifactId>wildfly-arquillian-common</artifactId>
+            <version>${version.org.wildfly.arquillian}</version>
+            <scope>test</scope>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-container-managed</artifactId>
-            <version>${version.org.wildfly}</version>
+            <version>${version.org.wildfly.arquillian}</version>
             <scope>test</scope>
          </dependency>
 
@@ -328,13 +371,6 @@
 
          <dependency>
             <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>${version.org.slf4j}</version>
-            <scope>test</scope>
-         </dependency>
-
-         <dependency>
-            <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>${version.org.slf4j}</version>
             <scope>test</scope>
@@ -350,14 +386,12 @@
              <groupId>org.infinispan.protostream</groupId>
              <artifactId>sample-domain-implementation</artifactId>
              <version>${version.org.infinispan.protostream}</version>
-             <scope>test</scope>
          </dependency>
 
          <dependency>
              <groupId>org.infinispan</groupId>
              <artifactId>infinispan-query-dsl</artifactId>
              <version>${version.org.infinispan}</version>
-             <scope>test</scope>
          </dependency>
 
          <dependency>
@@ -377,14 +411,12 @@
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
             <version>${version.http.client}</version>
-            <scope>test</scope>
          </dependency>
 
          <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
             <version>${version.http.client}</version>
-            <scope>test</scope>
          </dependency>
 
          <dependency>
@@ -433,13 +465,6 @@
             <groupId>org.ops4j.pax.exam</groupId>
             <artifactId>pax-exam-inject</artifactId>
             <version>${version.pax.exam}</version>
-            <scope>test</scope>
-         </dependency>
-
-         <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-            <version>${version.javax.inject}</version>
             <scope>test</scope>
          </dependency>
 
@@ -518,6 +543,16 @@
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>xml-maven-plugin</artifactId>
                <version>${version.xml.maven.plugin}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.wildfly.build</groupId>
+               <artifactId>wildfly-feature-pack-build-maven-plugin</artifactId>
+               <version>${version.org.wildfly.build-tools}</version>
+            </plugin>
+            <plugin>
+               <groupId>org.wildfly.build</groupId>
+               <artifactId>wildfly-server-provisioning-maven-plugin</artifactId>
+               <version>${version.org.wildfly.build-tools}</version>
             </plugin>
          </plugins>
       </pluginManagement>

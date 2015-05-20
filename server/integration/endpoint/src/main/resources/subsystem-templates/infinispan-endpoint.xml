@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
+<config default-supplement="default">
+   <extension-module>org.infinispan.server.endpoint</extension-module>
+   <subsystem xmlns="urn:infinispan:server:endpoint:8.0">
+      <?CONNECTORS?>
+   </subsystem>
+   <supplement name="default">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector socket-binding="hotrod" cache-container="local">
+            <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+         <memcached-connector socket-binding="memcached" cache-container="local" />
+         <rest-connector socket-binding="rest" cache-container="local" security-domain="other" auth-method="BASIC" />
+         <websocket-connector socket-binding="websocket" cache-container="local" />
+      </replacement>
+   </supplement>
+   <supplement name="clustered">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector socket-binding="hotrod" cache-container="clustered">
+            <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+         <memcached-connector socket-binding="memcached" cache-container="clustered" />
+         <rest-connector socket-binding="rest" cache-container="clustered" security-domain="other" auth-method="BASIC" />
+         <websocket-connector socket-binding="websocket" cache-container="clustered" />
+      </replacement>
+   </supplement>
+   <supplement name="hotrod-rolling-upgrade">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector socket-binding="hotrod" cache-container="local">
+            <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+      </replacement>
+   </supplement>
+   <supplement name="rest-auth">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <rest-connector socket-binding="rest" cache-container="local" security-domain="other" auth-method="BASIC" />
+      </replacement>
+   </supplement>
+   <supplement name="rest-rolling-upgrade">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local"/>
+      <replacement placeholder="CONNECTORS">
+         <rest-connector socket-binding="rest" cache-container="local"/>
+         <hotrod-connector socket-binding="hotrod" cache-container="local">
+            <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+      </replacement>
+   </supplement>
+   <supplement name="hotrod-ssl">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector socket-binding="hotrod" cache-container="local">
+            <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
+            <encryption security-realm="ApplicationRealm" require-ssl-client-auth="true"/>
+         </hotrod-connector>
+      </replacement>
+   </supplement>
+   <supplement name="hotrod-multiple">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector name="external" socket-binding="hotrod" cache-container="local">
+            <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+         <hotrod-connector name="internal" socket-binding="hotrod-internal" cache-container="local">
+            <topology-state-transfer cache-suffix="int" lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+      </replacement>
+   </supplement>
+   <supplement name="compatibility-mode">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector socket-binding="hotrod" cache-container="local">
+            <topology-state-transfer lazy-retrieval="false" lock-timeout="1000" replication-timeout="5000" />
+         </hotrod-connector>
+         <memcached-connector socket-binding="memcached" cache-container="local" cache="default" />
+         <rest-connector socket-binding="rest" cache-container="local" />
+      </replacement>
+   </supplement>
+   <supplement name="auth">
+      <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
+      <replacement placeholder="CONNECTORS">
+         <hotrod-connector socket-binding="hotrod" cache-container="local">
+            <topology-state-transfer lock-timeout="1000" replication-timeout="5000" />
+            <authentication security-realm="ApplicationRealm">
+                <sasl server-name="localhost" mechanisms="PLAIN" />
+              </authentication>
+         </hotrod-connector>
+      </replacement>
+   </supplement>
+   <socket-binding name="hotrod" port="11222" />
+   <socket-binding name="hotrod-internal" port="11223" />
+   <socket-binding name="memcached" port="11211" />
+   <socket-binding name="websocket" port="8181" />
+   <socket-binding name="rest" port="8080" />
+</config>

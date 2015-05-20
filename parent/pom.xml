@@ -171,9 +171,9 @@
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.13.Final</version.weld>
       <!-- When updating WildFly version, keep the property version.h2.driver-within-wildfly in synch -->
-      <version.wildfly>9.0.0.CR1</version.wildfly>
-      <version.wildfly.arquillian>1.0.0.Alpha5</version.wildfly.arquillian>
-      <version.wildfly.core>1.0.0.Beta4</version.wildfly.core>
+      <version.wildfly>9.0.0.CR2</version.wildfly>
+      <version.wildfly.arquillian>1.0.0.CR1</version.wildfly.arquillian>
+      <version.wildfly.core>1.0.0.CR6</version.wildfly.core>
       <version.wildfly.maven.plugin>1.1.0.Alpha2</version.wildfly.maven.plugin>
       <version.javassist>3.18.1-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>

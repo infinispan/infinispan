@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <arquillian xmlns="http://www.jboss.org/arquillian-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://www.jboss.org/arquillian-1.0 http://jboss.org/schema/arquillian/arquillian-1.0.xsd">
+            
+    <defaultProtocol type="jmx-as7"/>
 
     <group qualifier="suite-manual">
         <container qualifier="clustered-ccl-1" mode="manual">
@@ -156,23 +158,23 @@
                 <property name="waitForPorts">11411 11422 8280</property>
             </configuration>
         </container>
-        <container qualifier="clustered-two-nodes-1" mode="manual">
+        <container qualifier="clustered-1" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
                 <property name="managementAddress">${node0.ip}</property>
-                <property name="serverConfig">examples/clustered-two-nodes.xml</property>
+                <property name="serverConfig">testsuite/clustered-1.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node0 -Djboss.bind.address.management=${node0.ip} -Djboss.bind.address=${node0.ip}</property>
                 <property name="managementPort">9990</property>
                 <property name="waitForPorts">11211 11222 8080</property>
             </configuration>
         </container>
-        <container qualifier="clustered-two-nodes-2" mode="manual">
+        <container qualifier="clustered-2" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server2.dist}</property>
                 <property name="managementAddress">${node1.ip}</property>
-                <property name="serverConfig">examples/clustered-two-nodes2.xml</property>
+                <property name="serverConfig">testsuite/clustered-2.xml</property>
                 <property name="javaVmArguments">${server.jvm.args} -Djboss.node.name=node1 -Djboss.bind.address.management=${node1.ip} -Djboss.bind.address=${node1.ip}
                     -Djboss.socket.binding.port-offset=100
                 </property>

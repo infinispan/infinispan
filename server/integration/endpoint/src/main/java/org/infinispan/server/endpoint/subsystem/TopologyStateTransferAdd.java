@@ -24,7 +24,6 @@ import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
@@ -51,9 +50,8 @@ public class TopologyStateTransferAdd extends AbstractAddStepHandler {
    }
 
    @Override
-   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler,
-         List<ServiceController<?>> newControllers) throws OperationFailedException {
-      super.performRuntime(context, operation, model, verificationHandler, newControllers);
+   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
+      super.performRuntime(context, operation, model);
       // once we add a cache configuration, we need to restart all the services for the changes to take effect
       context.reloadRequired();
    }

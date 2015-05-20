@@ -166,8 +166,6 @@
     </target>
 
     <target name="transform-distro1-configs" depends="create-distro1">
-        <!-- copy second node configs -->
-        <copy file="${server1.configs}/examples/clustered-two-nodes.xml" tofile="${server1.configs}/examples/clustered-two-nodes2.xml"/>
         <!-- transform -->
         <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite2.xml" modifyInfinispan="${infinispan.parts}/xsite-server2.xml"/>
         <transform in="examples/clustered-xsite.xml" out="examples/clustered-xsite3.xml"
@@ -192,8 +190,8 @@
         <transform in="examples/standalone-rest-rolling-upgrade.xml" out="examples/standalone-rest-rolling-upgrade.xml"
                    modifyRemoteDestination="${other.parts}/rest-remote-destination.xml" removeRestSecurity="true"/>
         <transform in="examples/standalone-compatibility-mode.xml" out="examples/standalone-compatibility-mode.xml" removeRestSecurity="true"/>
-        <transform in="examples/clustered-two-nodes.xml" out="examples/clustered-two-nodes.xml"/>
-        <transform in="examples/clustered-two-nodes2.xml" out="examples/clustered-two-nodes2.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-1.xml"/>
+        <transform in="clustered.xml" out="testsuite/clustered-2.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-jmx.xml" modifyInfinispan="${infinispan.parts}/jmx.xml"/>
         <transform in="standalone.xml" out="testsuite/standalone-default-local.xml" modifyInfinispan="${infinispan.parts}/default-local.xml"/>
         <transform in="clustered.xml" out="testsuite/clustered-default-dist.xml" modifyInfinispan="${infinispan.parts}/default-dist.xml"/>

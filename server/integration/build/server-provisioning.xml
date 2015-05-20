@@ -1,0 +1,5 @@
+<server-provisioning xmlns="urn:wildfly:server-provisioning:1.0" extract-schemas="true" copy-module-artifacts="true">
+    <feature-packs>
+        <feature-pack groupId="org.infinispan.server" artifactId="infinispan-server-feature-pack" version="${project.version}"/>
+    </feature-packs>
+</server-provisioning>

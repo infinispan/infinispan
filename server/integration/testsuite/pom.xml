@@ -23,7 +23,7 @@
             <artifactId>arquillian-junit-container</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.wildfly</groupId>
+            <groupId>org.wildfly.arquillian</groupId>
             <artifactId>wildfly-arquillian-container-managed</artifactId>
             <exclusions>
                 <exclusion>
@@ -140,12 +140,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.wildfly</groupId>
+            <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.wildfly</groupId>
+            <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-controller-client</artifactId>
             <scope>test</scope>
         </dependency>
@@ -251,7 +251,7 @@
         <server.jvm>${env.JAVA_HOME}</server.jvm>
         <resources.dir>${basedir}/src/test/resources</resources.dir>
 
-        <jvm.memory.args>-Xmx512m -XX:MaxPermSize=128m</jvm.memory.args>
+        <jvm.memory.args>-Xmx512m</jvm.memory.args>
         <jvm.x64.args />
         <default.transport.stack>udp</default.transport.stack>
         <transport.stack>-Djboss.default.jgroups.stack=${default.transport.stack}</transport.stack>
@@ -304,18 +304,20 @@
                 <directory>${project.basedir}/src/test/resources</directory>
                 <filtering>true</filtering>
                 <excludes>
-                    <exclude>*.jks</exclude>
-                    <exclude>*.keystore</exclude>
-                    <exclude>*.keytab</exclude>
+                    <exclude>**/*.jks</exclude>
+                    <exclude>**/*.keystore</exclude>
+                    <exclude>**/*.keytab</exclude>
+                    <exclude>**/*.dat</exclude>
                 </excludes>
             </testResource>
             <testResource>
                 <directory>${project.basedir}/src/test/resources</directory>
                 <filtering>false</filtering>
                 <includes>
-                    <include>*.jks</include>
-                    <include>*.keystore</include>
-                    <include>*.keytab</include>
+                    <include>**/*.jks</include>
+                    <include>**/*.keystore</include>
+                    <include>**/*.keytab</include>
+                    <include>**/*.dat</include>
                 </includes>
             </testResource>
         </testResources>

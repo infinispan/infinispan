@@ -5,7 +5,6 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.RestartParentResourceAddHandler;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.naming.deployment.ContextNames;
@@ -37,13 +36,12 @@ public class RestartCacheResourceAdd extends RestartParentResourceAddHandler {
     }
 
     @Override
-    protected void recreateParentService(OperationContext context, PathAddress cacheAddress, ModelNode cacheModel,
-            ServiceVerificationHandler verificationHandler) throws OperationFailedException {
+    protected void recreateParentService(OperationContext context, PathAddress cacheAddress, ModelNode cacheModel) throws OperationFailedException {
         PathAddress containerAddress = cacheAddress.subAddress(0, cacheAddress.size() - 1);
         ModelNode containerModel = context.readResourceFromRoot(containerAddress).getModel();
         ModelNode operation = Util.createAddOperation(cacheAddress);
 
-        cacheAddHandler.installRuntimeServices(context, operation, containerModel, cacheModel, verificationHandler);
+        cacheAddHandler.installRuntimeServices(context, operation, containerModel, cacheModel);
     }
 
     @Override

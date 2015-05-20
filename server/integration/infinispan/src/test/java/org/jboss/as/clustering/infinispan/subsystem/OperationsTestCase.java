@@ -54,7 +54,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
 
         // Parse and install the XML into the controller
         String subsystemXml = getSubsystemXml() ;
-        KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(subsystemXml).build();
+        KernelServices servicesA = createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
 
         // read the cache container default cache attribute
         ModelNode result = servicesA.executeOperation(readCacheContainerDefaultCacheOp);
@@ -69,7 +69,6 @@ public class OperationsTestCase extends OperationTestCaseBase {
         result = servicesA.executeOperation(readCacheContainerDefaultCacheOp);
         Assert.assertEquals(SUCCESS, result.get(OUTCOME).asString());
         Assert.assertEquals("new-default-cache", result.get(RESULT).asString());
-        assertServerState(servicesA, "reload-required");
     }
 
     /*
@@ -80,7 +79,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
 
         // Parse and install the XML into the controller
         String subsystemXml = getSubsystemXml() ;
-        KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(subsystemXml).build();
+        KernelServices servicesA = createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
 
         // read the cache container batching attribute
         ModelNode result = servicesA.executeOperation(readLocalCacheBatchingOp);
@@ -107,7 +106,7 @@ public class OperationsTestCase extends OperationTestCaseBase {
 
         // Parse and install the XML into the controller
         String subsystemXml = getSubsystemXml() ;
-        KernelServices servicesA = createKernelServicesBuilder(null).setSubsystemXml(subsystemXml).build();
+        KernelServices servicesA = createKernelServicesBuilder().setSubsystemXml(subsystemXml).build();
 
         // read the distributed cache mixed-keyed-jdbc-store datasource attribute
         ModelNode result = servicesA.executeOperation(readDistCacheMixedJDBCStoreDatastoreOp);

@@ -514,10 +514,10 @@ public class ExampleConfigsIT {
     }
 
     @Test
-    @WithRunningServer({@RunningServer(name = "clustered-two-nodes-1"),@RunningServer(name = "clustered-two-nodes-2")})
+    @WithRunningServer({@RunningServer(name = "clustered-1"),@RunningServer(name = "clustered-2")})
     public void testTwoNodesConfig() throws Exception {
-        final RemoteInfinispanMBeans s1 = createRemotes("clustered-two-nodes-1", "clustered", DEFAULT_CACHE_NAME);
-        RemoteInfinispanMBeans s2 = createRemotes("clustered-two-nodes-2", "clustered", DEFAULT_CACHE_NAME);
+        final RemoteInfinispanMBeans s1 = createRemotes("clustered-1", "clustered", DEFAULT_CACHE_NAME);
+        RemoteInfinispanMBeans s2 = createRemotes("clustered-2", "clustered", DEFAULT_CACHE_NAME);
         RemoteCache<Object, Object> s1Cache = createCache(s1);
         RemoteCache<Object, Object> s2Cache = createCache(s2);
         addServer(s1.server);
