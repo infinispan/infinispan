@@ -3,7 +3,6 @@ package org.infinispan.query.backend;
 import org.apache.lucene.index.SegmentInfos;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -26,6 +25,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.concurrent.atomic.LongAdder;
 
 import static org.infinispan.test.TestingUtil.recursiveFileRemove;
 import static org.infinispan.test.TestingUtil.withCacheManager;
