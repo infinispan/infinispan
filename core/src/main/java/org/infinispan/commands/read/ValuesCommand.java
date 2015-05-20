@@ -12,6 +12,7 @@ import org.infinispan.filter.AcceptAllKeyValueFilter;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Spliterator;
 
 /**
  * Command implementation for {@link java.util.Map#values()} functionality.
@@ -59,7 +60,14 @@ public class ValuesCommand<K, V> extends AbstractLocalCommand implements Visitab
 
       @Override
       public CloseableIterator<V> iterator() {
+         // TODO: need to update this
          return new EntryToValueIterator(cache.getAdvancedCache().filterEntries(AcceptAllKeyValueFilter.getInstance()).iterator());
+      }
+
+      @Override
+      public Spliterator<V> spliterator() {
+         // TODO: need to update this
+         return null;
       }
 
       @Override

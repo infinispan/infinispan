@@ -35,6 +35,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 
@@ -277,6 +279,11 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    @Override
    public Iterator<InternalCacheEntry<K, V>> iterator() {
       return new EntryIterator(entries.values().iterator());
+   }
+
+   @Override
+   public Spliterator<InternalCacheEntry<K, V>> spliterator() {
+      return Spliterators.spliterator(entries.values(), Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
    }
 
    private final class DefaultEvictionListener implements EvictionListener<K, InternalCacheEntry<K, V>> {

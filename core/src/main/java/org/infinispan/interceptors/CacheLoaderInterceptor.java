@@ -3,12 +3,18 @@ package org.infinispan.interceptors;
 import static org.infinispan.persistence.PersistenceUtil.convert;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.Spliterator;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -19,6 +25,8 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -47,22 +55,27 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
+import org.infinispan.util.AbstractDelegatingCloseableIteratorCollection;
+import org.infinispan.util.AbstractDelegatingCollection;
+import org.infinispan.util.CloseableSuppliedIterator;
+import org.infinispan.util.CloseableSupplier;
+import org.infinispan.util.DistinctKeyDoubleEntryCloseableIterator;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 @MBean(objectName = "CacheLoader", description = "Component that handles loading entries from a CacheStore into memory.")
-public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
+public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    private final AtomicLong cacheLoads = new AtomicLong(0);
    private final AtomicLong cacheMisses = new AtomicLong(0);
 
    protected PersistenceManager persistenceManager;
-   protected CacheNotifier notifier;
+   protected CacheNotifier<K, V> notifier;
    protected volatile boolean enabled = true;
    protected EntryFactory entryFactory;
    private TimeService timeService;
    private InternalEntryFactory iceFactory;
-   private DataContainer dataContainer;
+   private DataContainer<K, V> dataContainer;
    private GroupManager groupManager;
 
    private static final Log log = LogFactory.getLog(CacheLoaderInterceptor.class);
@@ -74,8 +87,8 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @Inject
-   protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier notifier,
-                                     TimeService timeService, InternalEntryFactory iceFactory, DataContainer dataContainer,
+   protected void injectDependencies(PersistenceManager clm, EntryFactory entryFactory, CacheNotifier<K, V> notifier,
+                                     TimeService timeService, InternalEntryFactory iceFactory, DataContainer<K, V> dataContainer,
                                      GroupManager groupManager) {
       this.persistenceManager = clm;
       this.notifier = notifier;
@@ -171,6 +184,44 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   @Override
+   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      if (!enabled || hasSkipLoadFlag(command)) {
+         return super.visitEntrySetCommand(ctx, command);
+      }
+      CloseableIteratorCollection<CacheEntry<K, V>> entrySet =
+              (CloseableIteratorCollection<CacheEntry<K, V>>) invokeNextInterceptor(ctx, command);
+      return new AbstractDelegatingCloseableIteratorCollection<CacheEntry<K, V>>() {
+         // The returned Collection already falls back to cache for other important methods
+         @Override
+         protected CloseableIteratorCollection<CacheEntry<K, V>> delegate() {
+            return entrySet;
+         }
+
+         @Override
+         public CloseableIterator<CacheEntry<K, V>> iterator() {
+            CloseableIterator<CacheEntry<K, V>> iterator = super.iterator();
+            CloseableSupplier<CacheEntry<K, V>> supplier = new CloseableSupplier<CacheEntry<K, V>>() {
+               @Override
+               public CacheEntry<K, V> get() {
+                  return null;
+               }
+
+               @Override
+               public void close() {
+
+               }
+            };
+            return new DistinctKeyDoubleEntryCloseableIterator<K, V>(iterator, new CloseableSuppliedIterator<>());
+         }
+
+         @Override
+         public Spliterator<CacheEntry<K, V>> spliterator() {
+            return super.spliterator();
+         }
+      };
+   }
+
    /**
     * Indicates whether the operation is a delta write. If it is, the
     * previous value needs to be loaded from the cache store so that
@@ -213,7 +264,7 @@ public class CacheLoaderInterceptor extends JmxStatsCommandInterceptor {
 
       final boolean isDelta = cmd instanceof ApplyDeltaCommand;
       final AtomicReference<Boolean> isLoaded = new AtomicReference<>();
-      InternalCacheEntry entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, persistenceManager, key,
+      InternalCacheEntry<K, V> entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, persistenceManager, (K) key,
                                                                              ctx, timeService, isLoaded);
       Boolean isLoadedValue = isLoaded.get();
       if (trace) {

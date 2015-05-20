@@ -87,27 +87,23 @@ public class PersistenceUtil {
    public static <K, V> InternalCacheEntry<K,V> loadAndStoreInDataContainer(DataContainer<K, V> dataContainer, final PersistenceManager persistenceManager,
                                                          K key, final InvocationContext ctx, final TimeService timeService,
                                                          final AtomicReference<Boolean> isLoaded) {
-      return dataContainer.compute(key, new DataContainer.ComputeAction<K, V>() {
-         @Override
-         public InternalCacheEntry<K, V> compute(K key, InternalCacheEntry<K, V> oldEntry,
-                                                 InternalEntryFactory factory) {
-            //under the lock, check if the entry exists in the DataContainer
-            if (oldEntry != null) {
-               isLoaded.set(null); //not loaded
-               return oldEntry; //no changes in container
-            }
-
-            MarshalledEntry loaded = loadAndCheckExpiration(persistenceManager, key, ctx, timeService);
-            if (loaded == null) {
-               isLoaded.set(Boolean.FALSE); //not loaded
-               return null; //no changed in container
-            }
-
-            InternalCacheEntry<K, V> newEntry = convert(loaded, factory);
-
-            isLoaded.set(Boolean.TRUE); //loaded!
-            return newEntry;
+      return dataContainer.compute(key, (k, oldEntry, factory) -> {
+         //under the lock, check if the entry exists in the DataContainer
+         if (oldEntry != null) {
+            isLoaded.set(null); //not loaded
+            return oldEntry; //no changes in container
          }
+
+         MarshalledEntry loaded = loadAndCheckExpiration(persistenceManager, k, ctx, timeService);
+         if (loaded == null) {
+            isLoaded.set(Boolean.FALSE); //not loaded
+            return null; //no changed in container
+         }
+
+         InternalCacheEntry<K, V> newEntry = convert(loaded, factory);
+
+         isLoaded.set(Boolean.TRUE); //loaded!
+         return newEntry;
       });
    }
 

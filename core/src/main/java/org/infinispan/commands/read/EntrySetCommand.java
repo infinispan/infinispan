@@ -5,14 +5,19 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.commons.util.IteratorAsCloseableIterator;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 
 /**
  * Command implementation for {@link java.util.Map#entrySet()} functionality.
@@ -60,8 +65,18 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
 
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return new EntryWrapperIterator(cache, cache.getAdvancedCache().filterEntries(
-               AcceptAllKeyValueFilter.getInstance()).iterator());
+         CloseableIterator<CacheEntry<K, V>> iterator = new IteratorAsCloseableIterator<>(
+                 cache.getAdvancedCache().getDataContainer().iterator());
+         return new EntryWrapperIterator<>(cache, iterator);
+      }
+
+      @Override
+      public Spliterator<CacheEntry<K, V>> spliterator() {
+         // This is a lame hack because Spliterator<InternalCacheEntry<K, V>> cannot be case to Spliterator<CacheEntry<K, V>>
+         Spliterator<CacheEntry<K, V>> spliterator = Spliterators.spliterator(
+                 cache.getAdvancedCache().getDataContainer().iterator(), Long.MAX_VALUE, Spliterator.CONCURRENT |
+                         Spliterator.NONNULL | Spliterator.DISTINCT);
+         return spliterator;
       }
 
       @Override
@@ -77,20 +92,14 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       @Override
       public boolean remove(Object o) {
          Map.Entry entry = toEntry(o);
-         if (entry != null) {
-            return cache.remove(entry.getKey(), entry.getValue());
-         }
-         return false;
+         return entry != null && cache.remove(entry.getKey(), entry.getValue());
       }
 
       @Override
       public boolean add(CacheEntry<K, V> internalCacheEntry) {
          V value = cache.put(internalCacheEntry.getKey(), internalCacheEntry.getValue());
          // If the value was already there we can treat as if it wasn't added
-         if (value != null && value.equals(internalCacheEntry.getValue())) {
-            return false;
-         }
-         return true;
+         return value != null && value.equals(internalCacheEntry.getValue());
       }
 
       private Map.Entry<K, V> toEntry(Object obj) {

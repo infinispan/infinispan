@@ -10,9 +10,9 @@ import java.util.Iterator;
  * @since 7.0
  */
 public class IteratorAsCloseableIterator<E> implements CloseableIterator<E> {
-   private final Iterator<E> iterator;
+   private final Iterator<? extends E> iterator;
 
-   public IteratorAsCloseableIterator(Iterator<E> iterator) {
+   public IteratorAsCloseableIterator(Iterator<? extends E> iterator) {
       this.iterator = iterator;
    }
 
