@@ -12,6 +12,7 @@ import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.NullValueConverter;
 
 import java.util.Set;
+import java.util.Spliterator;
 
 /**
  * Command implementation for {@link java.util.Map#keySet()} functionality.
@@ -59,8 +60,15 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
 
       @Override
       public CloseableIterator<K> iterator() {
+         // TODO: need to update this
          return new EntryToKeyIterator(cache.getAdvancedCache().filterEntries(AcceptAllKeyValueFilter.getInstance())
                                              .converter(NullValueConverter.getInstance()).iterator());
+      }
+
+      @Override
+      public Spliterator<K> spliterator() {
+         // TODO: need to update this
+         return null;
       }
 
       @Override
