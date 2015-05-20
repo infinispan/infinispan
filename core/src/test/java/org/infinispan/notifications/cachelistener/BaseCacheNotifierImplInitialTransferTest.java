@@ -3,7 +3,7 @@ package org.infinispan.notifications.cachelistener;
 import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.IteratorAsCloseableIterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
@@ -157,7 +157,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
                                      any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
          @Override
          public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
-            return new IteratorAsCloseableIterator<>(initialValues.iterator());
+            return Closeables.iterator(initialValues.iterator());
          }
       });
 
@@ -183,7 +183,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
                                      any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
          @Override
          public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
-            return new IteratorAsCloseableIterator<>(initialValues.iterator());
+            return Closeables.iterator(initialValues.iterator());
          }
       });
 
@@ -212,7 +212,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
                                      any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
          @Override
          public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
-            return new IteratorAsCloseableIterator<>(initialValues.iterator());
+            return Closeables.iterator(initialValues.iterator());
          }
       });
 
@@ -314,7 +314,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
             barrier.await(10, TimeUnit.SECONDS);
             barrier.await(10, TimeUnit.SECONDS);
-            return new IteratorAsCloseableIterator<>(initialValues.iterator());
+            return Closeables.iterator(initialValues.iterator());
          }
       });
 

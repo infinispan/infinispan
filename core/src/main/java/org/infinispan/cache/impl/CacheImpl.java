@@ -1,6 +1,8 @@
 package org.infinispan.cache.impl;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.CacheCollection;
+import org.infinispan.CacheSet;
 import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
@@ -14,7 +16,6 @@ import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
 import org.infinispan.commands.write.ClearCommand;
@@ -29,8 +30,6 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.CloseableIterable;
-import org.infinispan.commons.util.CloseableIteratorCollection;
-import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
@@ -77,6 +76,8 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
 import org.infinispan.stats.impl.StatsImpl;
+import org.infinispan.stream.StreamMarshalling;
+import org.infinispan.stream.impl.local.ValueCacheCollection;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.transaction.impl.TransactionCoordinator;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -401,20 +402,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public final boolean containsValue(Object value) {
-      return containsValue(value, null, null);
-   }
-
-   final boolean containsValue(Object value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       assertValueNotNull(value);
-      try (CloseableIterable<CacheEntry<K, V>> iterable = filterEntries(AcceptAllKeyValueFilter.getInstance(),
-                                                                           explicitFlags, explicitClassLoader)) {
-         for (CacheEntry<K, V> entry : iterable) {
-            if (value.equals(entry.getValue())) {
-               return true;
-            }
-         }
-      }
-      return false;
+      return values().stream().anyMatch(StreamMarshalling.equalityPredicate(value));
    }
 
    @Override
@@ -439,7 +428,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public final CacheEntry getCacheEntry(K key) {
+   public final CacheEntry getCacheEntry(Object key) {
       return getCacheEntry(key, null, null);
    }
 
@@ -606,39 +595,44 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    @Override
-   public CloseableIteratorSet<K> keySet() {
+   public CacheSet<K> keySet() {
       return keySet(null, null);
    }
 
    @SuppressWarnings("unchecked")
-   CloseableIteratorSet<K> keySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   CacheSet<K> keySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
       KeySetCommand command = commandsFactory.buildKeySetCommand(explicitFlags);
-      return (CloseableIteratorSet<K>) invoker.invoke(ctx, command);
+      return (CacheSet<K>) invoker.invoke(ctx, command);
    }
 
    @Override
-   public CloseableIteratorCollection<V> values() {
-      return values(null, null);
+   public CacheCollection<V> values() {
+      return new ValueCacheCollection<>(this, cacheEntrySet());
+   }
+
+   @Override
+   public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
+      return cacheEntrySet(null, null);
    }
 
    @SuppressWarnings("unchecked")
-   CloseableIteratorCollection<V> values(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   CacheSet<CacheEntry<K, V>> cacheEntrySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
-      ValuesCommand command = commandsFactory.buildValuesCommand(explicitFlags);
-      return (CloseableIteratorCollection<V>) invoker.invoke(ctx, command);
+      EntrySetCommand command = commandsFactory.buildEntrySetCommand(explicitFlags);
+      return (CacheSet<CacheEntry<K, V>>) invoker.invoke(ctx, command);
    }
 
    @Override
-   public CloseableIteratorSet<Map.Entry<K, V>> entrySet() {
+   public CacheSet<Entry<K, V>> entrySet() {
       return entrySet(null, null);
    }
 
    @SuppressWarnings("unchecked")
-   CloseableIteratorSet<Map.Entry<K, V>> entrySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+   CacheSet<Map.Entry<K, V>> entrySet(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
       EntrySetCommand command = commandsFactory.buildEntrySetCommand(explicitFlags);
-      return (CloseableIteratorSet<Map.Entry<K, V>>) invoker.invoke(ctx, command);
+      return (CacheSet<Map.Entry<K, V>>) invoker.invoke(ctx, command);
    }
 
    @Override

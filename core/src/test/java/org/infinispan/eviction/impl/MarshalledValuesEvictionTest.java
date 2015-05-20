@@ -94,7 +94,7 @@ public class MarshalledValuesEvictionTest extends SingleCacheManagerTest {
       boolean marshalledValueCreated;
 
       MockMarshalledValueInterceptor(StreamingMarshaller marshaller) {
-         injectMarshaller(marshaller, new InternalEntryFactoryImpl());
+         inject(marshaller, new InternalEntryFactoryImpl(), null);
       }
 
       @Override

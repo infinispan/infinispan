@@ -445,7 +445,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @since 5.3
     */
-   CacheEntry<K, V> getCacheEntry(K key);
+   CacheEntry<K, V> getCacheEntry(Object key);
 
    /**
     * Gets a collection of entries from the {@link AdvancedCache}, returning them as
@@ -538,4 +538,14 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * ({@link PartitionHandlingConfiguration#enabled()}.
     */
    void setAvailability(AvailabilityMode availabilityMode);
+
+   /**
+    * Identical to {@link Cache#entrySet()} but is typed to return CacheEntries instead of Entries.  Please see
+    * the other method for a description of its behaviors.
+    * <p>
+    * This method is needed since nested generics do not support covariance
+    * @see Cache#entrySet()
+    * @return the entry set containing all of the CacheEntries
+    */
+   CacheSet<CacheEntry<K, V>> cacheEntrySet();
 }

@@ -35,36 +35,23 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
       return visitor.visitSizeCommand(ctx, this);
    }
 
+   Cache<Object, ?> getFlagRespectingCache() {
+      Set<Flag> flags = getFlags();
+      if (flags != null  && !flags.isEmpty()) {
+         return cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+      } else {
+         return cache;
+      }
+   }
+
    @Override
    public Integer perform(InvocationContext ctx) throws Throwable {
-      int size = 0;
-      Map<Object, CacheEntry> contextEntries = ctx.getLookedUpEntries();
-      // Keeps track of keys that were found in the context, which means to not count them later
-      Set<Object> keys = new HashSet<>();
-      try (CloseableIterable<CacheEntry<Object, Void>> iterator = cache.getAdvancedCache().withFlags(
-            flags != null ? flags.toArray(new Flag[flags.size()]) : null).filterEntries(AcceptAllKeyValueFilter.getInstance()).converter(
-            NullValueConverter.getInstance())) {
-         for (CacheEntry<Object, Void> entry : iterator) {
-            CacheEntry value = contextEntries.get(entry.getKey());
-            if (value != null) {
-               keys.add(entry.getKey());
-               if (!value.isRemoved() && !value.isNull()) {
-                  if (size++ == Integer.MAX_VALUE) {return Integer.MAX_VALUE;}
-               }
-            } else {
-               if (size++ == Integer.MAX_VALUE) {return Integer.MAX_VALUE;}
-            }
-         }
+      long size = getFlagRespectingCache().keySet().stream().count();
+      if (size > Integer.MAX_VALUE) {
+         return Integer.MAX_VALUE;
+      } else {
+         return (int) size;
       }
-
-      // We can only add context entries if we didn't see it in iterator and it isn't removed
-      for (Map.Entry<Object, CacheEntry> entry : contextEntries.entrySet()) {
-         if (!keys.contains(entry.getKey()) && !entry.getValue().isRemoved() && !entry.getValue().isNull()) {
-            if (size++ == Integer.MAX_VALUE) { return Integer.MAX_VALUE; }
-         }
-      }
-
-      return size;
    }
 
    @Override

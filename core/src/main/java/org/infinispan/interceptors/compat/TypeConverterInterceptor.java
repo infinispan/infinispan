@@ -20,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
  * @author Galder Zamarreño
  * @since 5.3
  */
-public class TypeConverterInterceptor extends BaseTypeConverterInterceptor {
+public class TypeConverterInterceptor<K, V> extends BaseTypeConverterInterceptor<K, V> {
 
    // No need for a REST type converter since the REST server itself does
    // the hard work of converting from one content type to the other

@@ -3,12 +3,14 @@ package org.infinispan.commands.read;
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIteratorCollection;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.container.entries.CacheEntry;
 
 import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Spliterator;
 
 /**
  * Abstract collection that uses an underlying Cache instance to do various operations.  This is useful for a backing
@@ -27,12 +29,11 @@ public abstract class AbstractCloseableIteratorCollection<O, K, V> extends Abstr
       this.cache = cache;
    }
 
-   public static interface IteratorConverter {
-      Object forEntry(CacheEntry entry);
-   }
-
    @Override
    public abstract CloseableIterator<O> iterator();
+
+   @Override
+   public abstract CloseableSpliterator<O> spliterator();
 
    @Override
    public abstract boolean contains(Object o);

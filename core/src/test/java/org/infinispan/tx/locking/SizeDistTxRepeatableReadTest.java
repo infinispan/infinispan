@@ -72,6 +72,15 @@ public class SizeDistTxRepeatableReadTest extends MultipleCacheManagersTest {
       assertNull(cache(1).get(k1));
    }
 
+   public void testSizeWithReadFromRemoteNode() throws Exception {
+      preloadCacheAndCheckSize();
+
+      tm(0).begin();
+      assertEquals("v1", cache(0).get(k1));
+      assertEquals(2, cache(0).size());
+      tm(0).rollback();
+   }
+
    public void testSizeWithoutPreviousRead() throws Exception {
       preloadCacheAndCheckSize();
 

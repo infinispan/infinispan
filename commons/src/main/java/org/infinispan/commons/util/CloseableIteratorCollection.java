@@ -13,4 +13,7 @@ import java.util.Collection;
 public interface CloseableIteratorCollection<E> extends Collection<E> {
    @Override
    CloseableIterator<E> iterator();
+
+   @Override
+   CloseableSpliterator<E> spliterator();
 }

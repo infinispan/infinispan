@@ -1,17 +1,26 @@
 package org.infinispan.commands.read;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.filter.AcceptAllKeyValueFilter;
-import org.infinispan.filter.NullValueConverter;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.stream.impl.local.LocalKeyCacheStream;
+import org.infinispan.util.DataContainerRemoveIterator;
 
+import java.util.Iterator;
 import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.stream.StreamSupport;
 
 /**
  * Command implementation for {@link java.util.Map#keySet()} functionality.
@@ -51,7 +60,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
             '}';
    }
 
-   private static class BackingKeySet<K, V> extends AbstractCloseableIteratorCollection<K, K, V> implements CloseableIteratorSet<K> {
+   private static class BackingKeySet<K, V> extends AbstractCloseableIteratorCollection<K, K, V> implements CacheSet<K> {
 
       public BackingKeySet(Cache<K, V> cache) {
          super(cache);
@@ -59,8 +68,18 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
 
       @Override
       public CloseableIterator<K> iterator() {
-         return new EntryToKeyIterator(cache.getAdvancedCache().filterEntries(AcceptAllKeyValueFilter.getInstance())
-                                             .converter(NullValueConverter.getInstance()).iterator());
+         return new EntryToKeyIterator(new DataContainerRemoveIterator<>(cache));
+      }
+
+      @Override
+      public CloseableSpliterator<K> spliterator() {
+         return Closeables.spliterator(iterator(), cache.getAdvancedCache().getDataContainer().size(),
+                 Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
+      }
+
+      @Override
+      public int size() {
+         return cache.getAdvancedCache().getDataContainer().size();
       }
 
       @Override
@@ -72,13 +91,41 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
       public boolean remove(Object o) {
          return cache.remove(o) != null;
       }
+
+      @Override
+      public CacheStream<K> stream() {
+         DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+         return new LocalKeyCacheStream<>(cache, false,
+                 dm != null ? dm.getConsistentHash() : null,
+                 () -> {
+                    DataContainer<K, V> dataContainer = cache.getAdvancedCache().getDataContainer();
+                    Spliterator<CacheEntry<K, V>> spliterator = Spliterators.spliterator(
+                            new DataContainerRemoveIterator<>(cache, dataContainer), dataContainer.size(),
+                            Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
+                    return StreamSupport.stream(spliterator, false);
+                 });
+      }
+
+      @Override
+      public CacheStream<K> parallelStream() {
+         DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+         return new LocalKeyCacheStream<>(cache, true,
+                 dm != null ? dm.getConsistentHash() : null,
+                 () -> {
+                    DataContainer<K, V> dataContainer = cache.getAdvancedCache().getDataContainer();
+                    Spliterator<CacheEntry<K, V>> spliterator = Spliterators.spliterator(
+                            new DataContainerRemoveIterator<>(cache, dataContainer), dataContainer.size(),
+                            Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
+                    return StreamSupport.stream(spliterator, true);
+                 });
+      }
    }
 
-   private static class EntryToKeyIterator<K> implements CloseableIterator<K> {
+   private static class EntryToKeyIterator<K, V> implements CloseableIterator<K> {
 
-      private final CloseableIterator<CacheEntry<K, Void>> iterator;
+      private final Iterator<CacheEntry<K, V>> iterator;
 
-      public EntryToKeyIterator(CloseableIterator<CacheEntry<K, Void>> iterator) {
+      public EntryToKeyIterator(Iterator<CacheEntry<K, V>> iterator) {
          this.iterator = iterator;
       }
 
@@ -99,7 +146,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
 
       @Override
       public void close() {
-         iterator.close();
+         // Do nothing as we can't close regular iterator
       }
    }
 }

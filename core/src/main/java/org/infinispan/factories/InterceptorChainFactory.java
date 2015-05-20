@@ -33,6 +33,7 @@ import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.compat.TypeConverterInterceptor;
+import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
 import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
 import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
@@ -110,6 +111,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       boolean invocationBatching = configuration.invocationBatching().enabled();
       boolean isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
+
+      if (configuration.clustering().cacheMode().isDistributed()) {
+         interceptorChain.appendInterceptor(createInterceptor(new DistributionBulkInterceptor<>(),
+                 DistributionBulkInterceptor.class), false);
+      }
 
       // load the icInterceptor first
       if (invocationBatching) {

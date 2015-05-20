@@ -1,6 +1,7 @@
 package org.infinispan.cache.impl;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.CacheSet;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
@@ -207,7 +208,7 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    }
 
    @Override
-   public CacheEntry<K, V> getCacheEntry(K key) {
+   public CacheEntry<K, V> getCacheEntry(Object key) {
       return cache.getCacheEntry(key);
    }
 
@@ -264,6 +265,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
    @Override
    public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
       cache.putAll(map, metadata);
+   }
+
+   @Override
+   public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
+      return cache.cacheEntrySet();
    }
 
    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {

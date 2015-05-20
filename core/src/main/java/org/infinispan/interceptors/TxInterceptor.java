@@ -1,11 +1,20 @@
 package org.infinispan.interceptors;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
@@ -16,7 +25,6 @@ import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.tx.AbstractTransactionBoundaryCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -29,8 +37,11 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -51,6 +62,9 @@ import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.OutdatedTopologyException;
+import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
+import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
+import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.impl.TransactionTable;
@@ -70,7 +84,7 @@ import org.infinispan.util.logging.LogFactory;
  * @since 4.0
  */
 @MBean(objectName = "Transactions", description = "Component that manages the cache's participation in JTA transactions.")
-public class TxInterceptor extends CommandInterceptor implements JmxStatisticsExposer {
+public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatisticsExposer {
 
    private static final Log log = LogFactory.getLog(TxInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -81,7 +95,7 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
 
    private RpcManager rpcManager;
    private CommandsFactory commandsFactory;
-   private Cache cache;
+   private Cache<K, V> cache;
    private RecoveryManager recoveryManager;
    private TransactionTable txTable;
    private PartitionHandlingManager partitionHandlingManager;
@@ -98,7 +112,7 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
 
    @Inject
    public void init(TransactionTable txTable, Configuration configuration, RpcManager rpcManager,
-                    RecoveryManager recoveryManager, CommandsFactory commandsFactory, Cache cache,
+                    RecoveryManager recoveryManager, CommandsFactory commandsFactory, Cache<K, V> cache,
                     PartitionHandlingManager partitionHandlingManager) {
       this.cacheConfiguration = configuration;
       this.txTable = txTable;
@@ -235,18 +249,73 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
    }
 
    @Override
-   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
+   public CacheSet<K> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      CacheSet<K> set = (CacheSet<K>) enlistReadAndInvokeNext(ctx, command);
+      if (ctx.isInTxScope()) {
+         return new AbstractDelegatingKeyCacheSet(getCacheWithFlags(cache, command), set) {
+            @Override
+            public CloseableIterator<K> iterator() {
+               return new TransactionAwareKeyCloseableIterator<>(super.iterator(),
+                       (TxInvocationContext<LocalTransaction>) ctx, cache);
+            }
+
+            @Override
+            public CloseableSpliterator<K> spliterator() {
+               Spliterator<K> parentSpliterator = super.spliterator();
+               long estimateSize = parentSpliterator.estimateSize() + ctx.getLookedUpEntries().size();
+               // This is an overestimate for size if we have looked up entries that don't map to this node
+               return new IteratorAsSpliterator.Builder<>(iterator())
+                       .setEstimateRemaining(estimateSize < 0L ? Long.MAX_VALUE : estimateSize)
+                       .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                       .get();
+            }
+
+            @Override
+            public int size() {
+               long size = stream().count();
+               if (size > Integer.MAX_VALUE) {
+                  return Integer.MAX_VALUE;
+               }
+               return (int) size;
+            }
+         };
+      }
+      return set;
    }
 
    @Override
-   public Object visitValuesCommand(InvocationContext ctx, ValuesCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
-   }
+   public CacheSet<CacheEntry<K, V>> visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
+      CacheSet<CacheEntry<K, V>> set = (CacheSet<CacheEntry<K, V>>) enlistReadAndInvokeNext(ctx, command);
+      if (ctx.isInTxScope()) {
+         return new AbstractDelegatingEntryCacheSet<K, V>(getCacheWithFlags(cache, command), set) {
+            @Override
+            public CloseableIterator<CacheEntry<K, V>> iterator() {
+               return new TransactionAwareEntryCloseableIterator<>(super.iterator(),
+                       (TxInvocationContext<LocalTransaction>) ctx, cache);
+            }
 
-   @Override
-   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      return enlistReadAndInvokeNext(ctx, command);
+            @Override
+            public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+               Spliterator<CacheEntry<K, V>> parentSpliterator = super.spliterator();
+               long estimateSize = parentSpliterator.estimateSize() + ctx.getLookedUpEntries().size();
+               // This is an overestimate for size if we have looked up entries that don't map to this node
+               return new IteratorAsSpliterator.Builder<>(iterator())
+                       .setEstimateRemaining(estimateSize < 0L ? Long.MAX_VALUE : estimateSize)
+                       .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                       .get();
+            }
+
+            @Override
+            public int size() {
+               long size = stream().count();
+               if (size > Integer.MAX_VALUE) {
+                  return Integer.MAX_VALUE;
+               }
+               return (int) size;
+            }
+         };
+      }
+      return set;
    }
 
    @Override
@@ -477,6 +546,153 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
             log.tracef("Replaying the transactions received as a result of state transfer %s", prepareCommand);
          }
          visitPrepareCommand(ctx, prepareCommand);
+      }
+   }
+
+   static class TransactionAwareKeyCloseableIterator<K, V> extends TransactionAwareCloseableIterator<K, K, V> {
+      private final Cache<K, V> cache;
+
+      public TransactionAwareKeyCloseableIterator(CloseableIterator<K> realIterator,
+                                                  TxInvocationContext<LocalTransaction> ctx, Cache<K, V> cache) {
+         super(realIterator, ctx);
+         this.cache = cache;
+      }
+
+      @Override
+      protected CacheEntry<K, V> lookupEntry(TxInvocationContext<LocalTransaction> ctx, K iteratedValue) {
+         return ctx.lookupEntry(iteratedValue);
+      }
+
+      @Override
+      protected K fromEntry(CacheEntry<K, V> entry) {
+         return entry.getKey();
+      }
+
+      @Override
+      public void remove() {
+         cache.remove(previousValue);
+      }
+   }
+
+   static class TransactionAwareEntryCloseableIterator<K, V> extends TransactionAwareCloseableIterator<CacheEntry<K, V>, K, V> {
+      private final Cache<K, V> cache;
+
+      public TransactionAwareEntryCloseableIterator(CloseableIterator<CacheEntry<K, V>> realIterator,
+                                                    TxInvocationContext<LocalTransaction> ctx, Cache<K, V> cache) {
+         super(realIterator, ctx);
+         this.cache = cache;
+      }
+
+      @Override
+      public void remove() {
+         cache.remove(previousValue.getKey(), previousValue.getValue());
+      }
+
+      @Override
+      protected CacheEntry<K, V> lookupEntry(TxInvocationContext<LocalTransaction> ctx,
+                                             CacheEntry<K, V> iteratedValue) {
+         return ctx.lookupEntry(iteratedValue.getKey());
+      }
+
+      @Override
+      protected CacheEntry<K, V> fromEntry(CacheEntry<K, V> entry) {
+         return entry;
+      }
+   }
+
+   /**
+    * Class that provides transactional support so that the iterator will use the values in the context if they exist.
+    * This will keep track of seen values from the transactional context and if the transactional context is updated while
+    * iterating on this iterator it will see those updates unless the changed value was already seen by the iterator.
+    *
+    * @author wburns
+    * @since 8.0
+    */
+   static abstract class TransactionAwareCloseableIterator<E, K, V> implements CloseableIterator<E> {
+      private final TxInvocationContext<LocalTransaction> ctx;
+      // We store all the not yet seen context entries here.  We rely on the fact that the cache entry reference is updated
+      // if a change occurs in between iterations to see updates.
+      private final List<CacheEntry> contextEntries;
+      private final Set<Object> seenContextKeys = new HashSet<>();
+      private final CloseableIterator<E> realIterator;
+
+      protected E previousValue;
+      protected E currentValue;
+
+      public TransactionAwareCloseableIterator(CloseableIterator<E> realIterator,
+                                               TxInvocationContext<LocalTransaction> ctx) {
+         this.realIterator = realIterator;
+         this.ctx = ctx;
+         contextEntries = new ArrayList<>(ctx.getLookedUpEntries().values());
+      }
+
+      @Override
+      public boolean hasNext() {
+         if (currentValue == null) {
+            currentValue = getNextFromIterator();
+         }
+         return currentValue != null;
+      }
+
+      @Override
+      public E next() {
+         E e = currentValue == null ? getNextFromIterator() : currentValue;
+         if (e == null) {
+            throw new NoSuchElementException();
+         }
+         currentValue = null;
+         return e;
+      }
+
+      @Override
+      public void close() {
+         realIterator.close();
+      }
+
+      protected abstract CacheEntry<K, V> lookupEntry(TxInvocationContext<LocalTransaction> ctx, E iteratedValue);
+
+      protected abstract E fromEntry(CacheEntry<K, V> entry);
+
+      protected E getNextFromIterator() {
+         E returnedValue = null;
+         // We first have to exhaust all of our context entries
+         CacheEntry<K, V> entry;
+         while (returnedValue == null && !contextEntries.isEmpty() &&
+                 (entry = contextEntries.remove(0)) != null) {
+            seenContextKeys.add(entry.getKey());
+            if (!ctx.isEntryRemovedInContext(entry.getKey()) && !entry.isNull()) {
+               returnedValue = fromEntry(entry);
+            }
+         }
+         if (returnedValue == null) {
+            while (realIterator.hasNext()) {
+               E iteratedEntry = realIterator.next();
+               CacheEntry contextEntry;
+               // If the value was in the context then we ignore the stored value since we use the context value
+               if ((contextEntry = lookupEntry(ctx, iteratedEntry)) != null) {
+                  if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved() && !contextEntry.isNull()) {
+                     break;
+                  }
+
+               } else {
+                  return iteratedEntry;
+               }
+            }
+         }
+
+         if (returnedValue == null) {
+            // We do a last check to make sure no additional values were added to our context while iterating
+            for (CacheEntry<K, V> lookedUpEntry : ctx.getLookedUpEntries().values()) {
+               if (seenContextKeys.add(lookedUpEntry.getKey()) && !lookedUpEntry.isRemoved() && !lookedUpEntry.isNull()) {
+                  if (returnedValue == null) {
+                     returnedValue = fromEntry(lookedUpEntry);
+                  } else {
+                     contextEntries.add(lookedUpEntry);
+                  }
+               }
+            }
+         }
+         return returnedValue;
       }
    }
 }

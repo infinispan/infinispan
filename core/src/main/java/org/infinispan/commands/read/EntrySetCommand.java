@@ -1,18 +1,27 @@
 package org.infinispan.commands.read;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
+import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.filter.AcceptAllKeyValueFilter;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.stream.impl.local.LocalEntryCacheStream;
+import org.infinispan.util.DataContainerRemoveIterator;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Spliterator;
 
 /**
  * Command implementation for {@link java.util.Map#entrySet()} functionality.
@@ -51,17 +60,29 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
             '}';
    }
 
-   private static class BackingEntrySet<K, V> extends AbstractCloseableIteratorCollection<CacheEntry<K, V>, K, V>
-         implements CloseableIteratorSet<CacheEntry<K, V>> {
+   static class BackingEntrySet<K, V> extends AbstractCloseableIteratorCollection<CacheEntry<K, V>, K, V>
+         implements CacheSet<CacheEntry<K, V>> {
 
-      private BackingEntrySet(Cache cache) {
+      BackingEntrySet(Cache cache) {
          super(cache);
       }
 
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return new EntryWrapperIterator(cache, cache.getAdvancedCache().filterEntries(
-               AcceptAllKeyValueFilter.getInstance()).iterator());
+         Iterator<CacheEntry<K, V>> iterator = new DataContainerRemoveIterator<>(cache);
+         return new EntryWrapperIterator<>(cache, iterator);
+      }
+
+      @Override
+      public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+         DataContainer<K, V> dc = cache.getAdvancedCache().getDataContainer();
+         return Closeables.spliterator(Closeables.iterator(new DataContainerRemoveIterator<>(cache, dc)), dc.size(),
+                 Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+      }
+
+      @Override
+      public int size() {
+         return cache.getAdvancedCache().getDataContainer().size();
       }
 
       @Override
@@ -77,20 +98,14 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
       @Override
       public boolean remove(Object o) {
          Map.Entry entry = toEntry(o);
-         if (entry != null) {
-            return cache.remove(entry.getKey(), entry.getValue());
-         }
-         return false;
+         return entry != null && cache.remove(entry.getKey(), entry.getValue());
       }
 
       @Override
       public boolean add(CacheEntry<K, V> internalCacheEntry) {
          V value = cache.put(internalCacheEntry.getKey(), internalCacheEntry.getValue());
          // If the value was already there we can treat as if it wasn't added
-         if (value != null && value.equals(internalCacheEntry.getValue())) {
-            return false;
-         }
-         return true;
+         return value != null && value.equals(internalCacheEntry.getValue());
       }
 
       private Map.Entry<K, V> toEntry(Object obj) {
@@ -99,6 +114,24 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
          } else {
             return null;
          }
+      }
+
+      private ConsistentHash getConsistentHash(Cache<K, V> cache) {
+         DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+         if (dm != null) {
+            return dm.getReadConsistentHash();
+         }
+         return null;
+      }
+
+      @Override
+      public CacheStream<CacheEntry<K, V>> stream() {
+         return new LocalEntryCacheStream<>(cache, false, getConsistentHash(cache), () -> super.stream());
+      }
+
+      @Override
+      public CacheStream<CacheEntry<K, V>> parallelStream() {
+         return new LocalEntryCacheStream<>(cache, true, getConsistentHash(cache), () -> super.parallelStream());
       }
    }
 
@@ -110,16 +143,16 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
     */
    private static class EntryWrapperIterator<K, V> implements CloseableIterator<CacheEntry<K, V>> {
       private final Cache<K, V> cache;
-      private final CloseableIterator<CacheEntry<K, V>> iterator;
+      private final Iterator<CacheEntry<K, V>> iterator;
 
-      public EntryWrapperIterator(Cache<K, V> cache, CloseableIterator<CacheEntry<K, V>> iterator) {
+      public EntryWrapperIterator(Cache<K, V> cache, Iterator<CacheEntry<K, V>> iterator) {
          this.cache = cache;
          this.iterator = iterator;
       }
 
       @Override
       public void close() {
-         iterator.close();
+         // Does nothing because data container iterator doesn't need to be closed
       }
 
       @Override

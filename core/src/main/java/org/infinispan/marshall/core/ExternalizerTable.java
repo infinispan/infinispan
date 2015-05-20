@@ -91,6 +91,9 @@ import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
 import org.infinispan.remoting.transport.jgroups.JGroupsTopologyAwareAddress;
 import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.TransactionInfo;
+import org.infinispan.stream.StreamMarshalling;
+import org.infinispan.stream.impl.intops.IntermediateOperationExternalizer;
+import org.infinispan.stream.impl.termop.TerminalOperationExternalizer;
 import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
@@ -347,6 +350,9 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer());
       addInternalExternalizer(new ManagerStatusResponse.Externalizer());
       addInternalExternalizer(new MultiClusterEventCallable.Externalizer());
+      addInternalExternalizer(new IntermediateOperationExternalizer());
+      addInternalExternalizer(new TerminalOperationExternalizer());
+      addInternalExternalizer(new StreamMarshalling.StreamMarshallingExternalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

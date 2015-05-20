@@ -17,7 +17,6 @@ import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
-import org.infinispan.commands.read.ValuesCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
@@ -44,6 +43,8 @@ import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.stream.impl.StreamRequestCommand;
+import org.infinispan.stream.impl.StreamResponseCommand;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.XSiteAdminCommand;
@@ -144,7 +145,7 @@ public interface CommandsFactory {
    /**
     * Builds a GetCacheEntryCommand
     * @param key key to get
-    * @param flags Command flags provided by cache
+    * @param explicitFlags Command flags provided by cache
     * @return a GetCacheEntryCommand
     */
    GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags);
@@ -165,13 +166,6 @@ public interface CommandsFactory {
     * @return a KeySetCommand
     */
    KeySetCommand buildKeySetCommand(Set<Flag> flags);
-
-   /**
-    * Builds a ValuesCommand
-    * @param flags Command flags provided by cache
-    * @return a ValuesCommand
-    */
-   ValuesCommand buildValuesCommand(Set<Flag> flags);
 
    /**
     * Builds a EntrySetCommand
@@ -492,4 +486,19 @@ public interface CommandsFactory {
     */
    GetKeysInGroupCommand buildGetKeysInGroupCommand(Set<Flag> flags, String groupName);
 
+   <K> StreamRequestCommand<K> buildStreamRequestCommand(UUID id, boolean parallelStream, StreamRequestCommand.Type type,
+           Set<Integer> segments, Set<K> keys, Set<K> excludedKeys, boolean includeLoader, Object terminalOperation);
+
+   /**
+    * Builds {@link StreamResponseCommand} used to send back a response either intermediate or complete to the
+    * originating node with the information for the stream request.
+    * @param identifier the unique identifier for the stream request
+    * @param complete whether or not this is an intermediate or final response from this node for the given id
+    * @param lostSegments what segments that were lost during processing
+    * @param response the actual response
+    * @param <R> type of response
+    * @return the command to send back the response
+    */
+   <R> StreamResponseCommand<R> buildStreamResponseCommand(UUID identifier, boolean complete, Set<Integer> lostSegments,
+           R response);
 }

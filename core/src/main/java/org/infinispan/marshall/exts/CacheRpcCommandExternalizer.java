@@ -49,6 +49,9 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
+import org.infinispan.stream.impl.StreamRequestCommand;
+import org.infinispan.stream.impl.StreamResponseCommand;
+import org.infinispan.stream.impl.StreamSegmentResponseCommand;
 import org.infinispan.xsite.SingleXSiteRpcCommand;
 import org.infinispan.xsite.XSiteAdminCommand;
 import org.infinispan.xsite.statetransfer.XSiteStatePushCommand;
@@ -88,7 +91,8 @@ public final class CacheRpcCommandExternalizer extends AbstractExternalizer<Cach
                TotalOrderVersionedPrepareCommand.class, TotalOrderCommitCommand.class,
                TotalOrderVersionedCommitCommand.class, TotalOrderRollbackCommand.class,
                XSiteStateTransferControlCommand.class, XSiteStatePushCommand.class, SingleXSiteRpcCommand.class,
-               EntryRequestCommand.class, EntryResponseCommand.class, ClusteredGetAllCommand.class);
+               EntryRequestCommand.class, EntryResponseCommand.class, ClusteredGetAllCommand.class,
+               StreamRequestCommand.class, StreamSegmentResponseCommand.class, StreamResponseCommand.class);
       // Only interested in cache specific replicable commands
       coreCommands.addAll(gcr.getModuleProperties().moduleCacheRpcCommands());
       return coreCommands;

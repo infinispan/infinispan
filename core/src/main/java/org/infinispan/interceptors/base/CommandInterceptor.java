@@ -17,6 +17,8 @@ import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Set;
+
 /**
  * This is the base class for all interceptors to extend, and implements the {@link Visitor} interface allowing it to
  * intercept invocations on {@link VisitableCommand}s.
@@ -123,4 +125,12 @@ public abstract class CommandInterceptor extends AbstractVisitor {
       return command.hasFlag(Flag.SKIP_LOCKING);
    }
 
+   protected <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, LocalFlagAffectedCommand command) {
+      Set<Flag> flags = command.getFlags();
+      if (flags != null && !flags.isEmpty()) {
+         return cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+      } else {
+         return cache;
+      }
+   }
 }

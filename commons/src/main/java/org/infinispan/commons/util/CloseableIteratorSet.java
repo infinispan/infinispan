@@ -11,4 +11,7 @@ import java.util.Set;
  * @since 7.0
  */
 public interface CloseableIteratorSet<E> extends Set<E>, CloseableIteratorCollection<E> {
+
+   @Override
+   CloseableSpliterator<E> spliterator();
 }
