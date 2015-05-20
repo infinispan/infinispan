@@ -1,6 +1,6 @@
 package org.infinispan.persistence.jpa.impl;
 
-import org.infinispan.commons.util.concurrent.jdk8backported.LongAdder;
+import java.util.concurrent.atomic.LongAdder;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
