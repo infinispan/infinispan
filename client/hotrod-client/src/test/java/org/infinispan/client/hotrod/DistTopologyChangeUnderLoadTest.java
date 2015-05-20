@@ -53,6 +53,8 @@ public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
       TestingUtil.killCacheManagers(cm);
       TestingUtil.waitForRehashToComplete(cache(0));
 
+      // Execute one more operation to guarantee topology update on the client
+      remote.put(-1, "minus one");
       RoundRobinBalancingStrategy strategy = getLoadBalancer(client(0));
       SocketAddress[] servers = strategy.getServers();
 
