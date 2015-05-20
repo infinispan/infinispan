@@ -7,6 +7,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
+import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.async.AsyncCacheWriter;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
@@ -18,6 +19,7 @@ import org.infinispan.persistence.modifications.Remove;
 import org.infinispan.persistence.modifications.Store;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -43,7 +45,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @since 5.2
  */
 @Test(groups = "functional", testName = "persistence.decorators.AsyncStoreFunctionalTest")
-public class AsyncStoreFunctionalTest {
+public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
 
    private static final Log log = LogFactory.getLog(AsyncStoreFunctionalTest.class);
 
@@ -199,10 +201,43 @@ public class AsyncStoreFunctionalTest {
       });
    }
 
+   public void testClear() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.persistence()
+            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+            .async().enabled(true);
+
+      withCacheManager(new CacheManagerCallable(
+            TestCacheManagerFactory.createCacheManager(builder)) {
+         @Override
+         public void call() {
+            Cache<Integer, String> cache = cm.getCache();
+            AdvancedAsyncCacheWriter asyncStore = TestingUtil.getFirstWriter(cache);
+            DummyInMemoryStore dummyStore = TestingUtil.extractField(asyncStore, "actual");
+            cache.put(1, "uno");
+            cache.put(2, "dos");
+            cache.put(3, "tres");
+            eventually(new Condition() {
+               @Override
+               public boolean isSatisfied() throws Exception {
+                  return dummyStore.size() == 3;
+               }
+            });
+            cache.clear();
+            eventually(new Condition() {
+               @Override
+               public boolean isSatisfied() throws Exception {
+                  return dummyStore.size() == 0;
+               }
+            });
+         }
+      });
+   }
+
    private ConfigurationBuilder asyncStoreWithEvictionBuilder() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       // Emulate eviction with direct data container eviction
-      builder.eviction().strategy(EvictionStrategy.LRU).maxEntries(1)
+      builder.eviction().strategy(EvictionStrategy.LRU).maxEntries(1L)
             .persistence()
             .addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .async().enabled(true);

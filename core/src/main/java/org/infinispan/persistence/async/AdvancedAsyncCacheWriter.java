@@ -31,6 +31,11 @@ public class AdvancedAsyncCacheWriter extends AsyncCacheWriter implements Advanc
       }
    }
 
+   @Override
+   protected void clearStore() {
+      advancedWriter().clear();
+   }
+
    private AdvancedCacheWriter advancedWriter() {
       return (AdvancedCacheWriter) actual;
    }
