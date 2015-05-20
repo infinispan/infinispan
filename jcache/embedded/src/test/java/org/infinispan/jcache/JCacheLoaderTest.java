@@ -1,9 +1,7 @@
 package org.infinispan.jcache;
 
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.jcache.util.InMemoryJCacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -17,22 +15,18 @@ import org.testng.annotations.Test;
 import javax.cache.Cache;
 import javax.cache.configuration.FactoryBuilder;
 import javax.cache.configuration.MutableConfiguration;
-import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CompletionListenerFuture;
-
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
-import static org.infinispan.jcache.util.JCacheTestingUtil.*;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
- * Tests JCache behaivour when plugged with cache loaders.
+ * Tests JCache behavior when plugged with cache loaders.
  *
  * @author Galder Zamarreño
  * @since 6.0
@@ -120,6 +114,10 @@ public class JCacheLoaderTest {
    private static int loadInitialData(EmbeddedCacheManager cm) {
       TestingUtil.writeToAllStores(1, "v1", cm.getCache("dummyStore"));
       return 1;
+   }
+
+   private static JCacheManager createJCacheManager(EmbeddedCacheManager cm, Object creator) {
+      return new JCacheManager(URI.create(creator.getClass().getName()), cm, null);
    }
 
 }
