@@ -30,14 +30,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 
 import javax.management.MBeanServer;
 
-import org.jboss.as.clustering.concurrent.ManagedExecutorService;
-import org.jboss.as.clustering.concurrent.ManagedScheduledExecutorService;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.SocketBinding;
 import org.jboss.as.server.ServerEnvironment;
@@ -197,30 +192,6 @@ public class JChannelFactory implements ChannelFactory, ChannelListener, Protoco
             SocketFactory factory = transport.getSocketFactory();
             if (!(factory instanceof ManagedSocketFactory)) {
                 transport.setSocketFactory(new ManagedSocketFactory(factory, binding.getSocketBindings()));
-            }
-        }
-        ThreadFactory threadFactory = transportConfig.getThreadFactory();
-        if (threadFactory != null) {
-            if (!(transport.getThreadFactory() instanceof ThreadFactoryAdapter)) {
-                transport.setThreadFactory(new ThreadFactoryAdapter(threadFactory));
-            }
-        }
-        ExecutorService defaultExecutor = transportConfig.getDefaultExecutor();
-        if (defaultExecutor != null) {
-            if (!(transport.getDefaultThreadPool() instanceof ManagedExecutorService)) {
-                transport.setDefaultThreadPool(new ManagedExecutorService(defaultExecutor));
-            }
-        }
-        ExecutorService oobExecutor = transportConfig.getOOBExecutor();
-        if (oobExecutor != null) {
-            if (!(transport.getOOBThreadPool() instanceof ManagedExecutorService)) {
-                transport.setOOBThreadPool(new ManagedExecutorService(oobExecutor));
-            }
-        }
-        ScheduledExecutorService timerExecutor = transportConfig.getTimerExecutor();
-        if (timerExecutor != null) {
-            if (!(transport.getTimer() instanceof TimerSchedulerAdapter)) {
-                this.setValue(transport, "timer", new TimerSchedulerAdapter(new ManagedScheduledExecutorService(timerExecutor)));
             }
         }
     }

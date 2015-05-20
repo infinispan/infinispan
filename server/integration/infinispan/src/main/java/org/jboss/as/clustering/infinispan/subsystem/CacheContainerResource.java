@@ -21,7 +21,18 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.controller.*;
+import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.ListAttributeDefinition;
+import org.jboss.as.controller.OperationDefinition;
+import org.jboss.as.controller.OperationStepHandler;
+import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
+import org.jboss.as.controller.SimpleAttributeDefinition;
+import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
+import org.jboss.as.controller.SimpleListAttributeDefinition;
+import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
+import org.jboss.as.controller.SimpleResourceDefinition;
+import org.jboss.as.controller.StringListAttributeDefinition;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
@@ -63,7 +74,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setValidator(new ModuleIdentifierValidator(true))
-                    .setDefaultValue(new ModelNode().set("org.jboss.as.clustering.infinispan"))
+                    .setDefaultValue(new ModelNode().set("org.infinispan.extension"))
                     .build();
 
     // make default-cache non required (AS7-3488)
@@ -142,7 +153,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                .build();
    
-    static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, LISTENER_EXECUTOR, ASYNC_EXECUTOR, EVICTION_EXECUTOR, EXPIRATION_EXECUTOR,STATE_TRANSFER_EXECUTOR, REPLICATION_QUEUE_EXECUTOR, CACHE_CONTAINER_MODULE, STATISTICS};
+    static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, LISTENER_EXECUTOR, ASYNC_EXECUTOR, EVICTION_EXECUTOR, EXPIRATION_EXECUTOR, STATE_TRANSFER_EXECUTOR, REPLICATION_QUEUE_EXECUTOR, CACHE_CONTAINER_MODULE, STATISTICS};
 
     // operations
     static final OperationDefinition ALIAS_ADD = new SimpleOperationDefinitionBuilder("add-alias", InfinispanExtension.getResourceDescriptionResolver("cache-container.alias"))
@@ -192,9 +203,9 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         super.registerAttributes(resourceRegistration);
 
         // the handlers need to take account of alias
-        final OperationStepHandler writeHandler = new CacheContainerWriteAttributeHandler(CACHE_CONTAINER_ATTRIBUTES);
+        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(CACHE_CONTAINER_ATTRIBUTES);
         for (AttributeDefinition attr : CACHE_CONTAINER_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, CacheContainerReadAttributeHandler.INSTANCE, writeHandler);
+            resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
         }
 
         if (runtimeRegistration) {

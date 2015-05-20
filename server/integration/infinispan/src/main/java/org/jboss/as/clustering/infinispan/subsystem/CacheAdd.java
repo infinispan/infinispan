@@ -73,7 +73,6 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.PathManagerService;
@@ -199,7 +198,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
     }
 
     @Override
-    protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers) throws OperationFailedException {
+    protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
 
         // Because we use child resources in a read-only manner to configure the cache, replace the local model with the full model
         ModelNode cacheModel = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
@@ -209,10 +208,10 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         ModelNode containerModel = context.readResourceFromRoot(containerAddress).getModel();
 
         // install the services from a reusable method
-        newControllers.addAll(this.installRuntimeServices(context, operation, containerModel, cacheModel, verificationHandler));
+        this.installRuntimeServices(context, operation, containerModel, cacheModel);
     }
 
-    Collection<ServiceController<?>> installRuntimeServices(OperationContext context, ModelNode operation, ModelNode containerModel, ModelNode cacheModel, ServiceVerificationHandler verificationHandler) throws OperationFailedException {
+    Collection<ServiceController<?>> installRuntimeServices(OperationContext context, ModelNode operation, ModelNode containerModel, ModelNode cacheModel) throws OperationFailedException {
 
         // get all required addresses, names and service names
         PathAddress cacheAddress = getCacheAddressFromOperation(operation);
@@ -251,14 +250,14 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
 
         // install the cache configuration service (configures a cache)
         controllers.add(this.installCacheConfigurationService(target, containerName, cacheName, defaultCache, moduleId,
-                        builder, config, dependencies, verificationHandler));
+                        builder, config, dependencies));
         log.debugf("Cache configuration service for %s installed for container %s", cacheName, containerName);
 
         // now install the corresponding cache service (starts a configured cache)
-        controllers.add(this.installCacheService(target, containerName, cacheName, defaultCache, initialMode, config, verificationHandler));
+        controllers.add(this.installCacheService(target, containerName, cacheName, defaultCache, initialMode, config));
 
         // install a name service entry for the cache
-        controllers.add(this.installJndiService(target, containerName, cacheName, InfinispanJndiName.createCacheJndiName(jndiName, containerName, cacheName), verificationHandler));
+        controllers.add(this.installJndiService(target, containerName, cacheName, InfinispanJndiName.createCacheJndiName(jndiName, containerName, cacheName)));
         log.debugf("Cache service for cache %s installed for container %s", cacheName, containerName);
 
         return controllers;
@@ -298,7 +297,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
     }
 
     ServiceController<?> installCacheConfigurationService(ServiceTarget target, String containerName, String cacheName, String defaultCache, ModuleIdentifier moduleId,
-            ConfigurationBuilder builder, Configuration config, List<Dependency<?>> dependencies, ServiceVerificationHandler verificationHandler) {
+            ConfigurationBuilder builder, Configuration config, List<Dependency<?>> dependencies) {
 
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<EmbeddedCacheManager>();
         final CacheConfigurationDependencies cacheConfigurationDependencies = new CacheConfigurationDependencies(container);
@@ -329,7 +328,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
     }
 
     ServiceController<?> installCacheService(ServiceTarget target, String containerName, String cacheName, String defaultCache, ServiceController.Mode initialMode,
-            Configuration config, ServiceVerificationHandler verificationHandler) {
+            Configuration config) {
 
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<EmbeddedCacheManager>();
         final CacheDependencies cacheDependencies = new CacheDependencies(container);
@@ -354,7 +353,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
     }
 
     @SuppressWarnings("rawtypes")
-    ServiceController<?> installJndiService(ServiceTarget target, String containerName, String cacheName, String jndiName, ServiceVerificationHandler verificationHandler) {
+    ServiceController<?> installJndiService(ServiceTarget target, String containerName, String cacheName, String jndiName) {
 
         final ServiceName cacheServiceName = CacheService.getServiceName(containerName, cacheName);
         final ContextNames.BindInfo bindInfo = ContextNames.bindInfoFor(jndiName);

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.3" name="org.jboss.resteasy.resteasy-netty4">
+
+   <resources>
+      <artifact name="${org.jboss.resteasy:resteasy-netty4}"/>
+   </resources>
+
+   <dependencies>
+      <module name="io.netty" />
+      <module name="javax.ws.rs.api"/>
+      <module name="org.jboss.resteasy.resteasy-jaxrs" />
+   </dependencies>
+</module>

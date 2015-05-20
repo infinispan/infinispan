@@ -36,11 +36,10 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
 
     KernelServicesBuilder createKernelServicesBuilder() {
        return this.createKernelServicesBuilder(this.createAdditionalInitialization());
-
     }
 
     AdditionalInitialization createAdditionalInitialization() {
-       return new JGroupsSubsystemInitialization();
+       return new InfinispanSubsystemDependenciesInitialization();
     }
 
     // cache container access

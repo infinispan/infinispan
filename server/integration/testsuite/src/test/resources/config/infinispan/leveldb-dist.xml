@@ -1,10 +1,9 @@
-        <subsystem xmlns="urn:infinispan:server:core:7.0" >
+        <subsystem xmlns="urn:infinispan:server:core:8.0" >
             <cache-container 
                 name="clustered"
                 default-cache="testcache">
                 <transport 
                     stack="${jboss.default.jgroups.stack:udp}"
-                    executor="infinispan-transport"
                     lock-timeout="240000"/>
                 <distributed-cache 
                     name="testcache"

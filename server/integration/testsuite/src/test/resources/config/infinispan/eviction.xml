@@ -1,4 +1,4 @@
-        <subsystem xmlns="urn:infinispan:server:core:7.0">
+        <subsystem xmlns="urn:infinispan:server:core:8.0">
              <cache-container name="local" default-cache="none">
                  <local-cache name="none" start="EAGER">
                      <eviction strategy="NONE" />

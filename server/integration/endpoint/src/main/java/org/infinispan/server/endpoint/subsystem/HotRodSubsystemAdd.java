@@ -18,14 +18,9 @@
  */
 package org.infinispan.server.endpoint.subsystem;
 
-import java.util.List;
-
 import javax.security.sasl.Sasl;
 
 import org.infinispan.server.endpoint.Constants;
-import org.infinispan.server.endpoint.deployments.ConverterFactoryExtensionProcessor;
-import org.infinispan.server.endpoint.deployments.FilterFactoryExtensionProcessor;
-import org.infinispan.server.endpoint.deployments.ServerExtensionDependenciesProcessor;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.AuthenticationConfigurationBuilder;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -33,15 +28,10 @@ import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.registry.Resource;
-import org.jboss.as.server.AbstractDeploymentChainStep;
-import org.jboss.as.server.DeploymentProcessorTarget;
-import org.jboss.as.server.deployment.Phase;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.jboss.msc.service.ServiceBuilder;
-import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 
 /**
@@ -66,8 +56,7 @@ class HotRodSubsystemAdd extends ProtocolServiceSubsystemAdd {
    }
 
    @Override
-   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers)
-            throws OperationFailedException {
+   protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
       // Read the full model
       ModelNode config = Resource.Tools.readModel(context.readResource(PathAddress.EMPTY_ADDRESS));
       // Create the builder

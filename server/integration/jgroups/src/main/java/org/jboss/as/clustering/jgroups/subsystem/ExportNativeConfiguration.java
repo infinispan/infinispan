@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.jboss.as.clustering.jgroups.ChannelFactory;
-import org.jboss.as.clustering.msc.ServiceContainerHelper;
+import org.jboss.as.clustering.jgroups.ServiceContainerHelper;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;

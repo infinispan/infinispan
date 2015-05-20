@@ -44,7 +44,6 @@ import org.jboss.msc.value.InjectedValue;
  * @since 6.0
  */
 public class RestService implements Service<Lifecycle> {
-   private static final String HOME_DIR = "jboss.home.dir";
    private static final String DEFAULT_CONTEXT_PATH = "";
    private final InjectedValue<PathManager> pathManagerInjector = new InjectedValue<PathManager>();
    private final InjectedValue<EmbeddedCacheManager> cacheManagerInjector = new InjectedValue<EmbeddedCacheManager>();

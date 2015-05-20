@@ -12,6 +12,8 @@ dependency-reduced-pom.xml
 .scala_dependencies
 .externalToolBuilders
 .factorypath
+.cache-main
+.cache-tests
 # ignore IDEA files
 *.iml
 *.ipr

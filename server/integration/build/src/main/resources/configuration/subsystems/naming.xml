@@ -1,8 +1,0 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<!--  See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
-<config>
-   <extension-module>org.jboss.as.naming</extension-module>
-   <subsystem xmlns="urn:jboss:domain:naming:2.0">
-       <remote-naming/>
-   </subsystem>
-</config>

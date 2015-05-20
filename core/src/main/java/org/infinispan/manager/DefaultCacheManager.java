@@ -392,7 +392,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       Configuration existing = configurationOverrides.get(configurationName);
       if (existing != null) {
          for(CacheWrapper cache : caches.values()) {
-            if (cache.getCache().getCacheConfiguration() == existing) {
+            if (cache.getCache().getCacheConfiguration() == existing && cache.getCache().getStatus() != ComponentStatus.TERMINATED) {
                throw log.configurationInUse(configurationName);
             }
          }

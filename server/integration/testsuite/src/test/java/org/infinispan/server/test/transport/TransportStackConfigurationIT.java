@@ -9,6 +9,7 @@ import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -44,7 +45,7 @@ public class TransportStackConfigurationIT {
     String tcpProtocolMBean = "jgroups:type=protocol,cluster=\"clustered\",protocol=TCP";
 
     /*
-     * When setting a stack attribute on <transport> config. element, there has to be a UDP protocol 
+     * When setting a stack attribute on <transport> config. element, there has to be a UDP protocol
      * MBean available via JMX. Its attributes must match those in standalone.xml config file (in fact,
      * these are default values taken from jgroups-defaults.xml configuration file in clustering/jgroups
      * subsystem)
@@ -83,6 +84,7 @@ public class TransportStackConfigurationIT {
     /*
      * Dump service via JMX and find out whether test-infinispan-transport executor was picked up.
      */
+    @Ignore
     @Test
     public void testExecutorAttribute() throws Exception {
         provider = new MBeanServerConnectionProvider(server1.getHotrodEndpoint().getInetAddress().getHostName(), SERVER1_MGMT_PORT);

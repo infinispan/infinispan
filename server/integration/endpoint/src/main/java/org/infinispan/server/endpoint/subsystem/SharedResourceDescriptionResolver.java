@@ -56,27 +56,4 @@ public class SharedResourceDescriptionResolver extends StandardResourceDescripti
       return super.getChildTypeDescription(childType, locale, bundle);
    }
 
-   private String getBundleKey(String... args) {
-      return getVariableBundleKey(args);
-   }
-
-   private String getVariableBundleKey(String[] fixed, String... variable) {
-      StringBuilder sb = new StringBuilder(getKeyPrefix());
-      for (String arg : fixed) {
-         if (sb.length() > 0) {
-            sb.append('.');
-         }
-         sb.append(arg);
-      }
-      if (variable != null) {
-         for (String arg : variable) {
-            if (sb.length() > 0) {
-               sb.append('.');
-            }
-            sb.append(arg);
-         }
-      }
-      return sb.toString();
-   }
-
 }

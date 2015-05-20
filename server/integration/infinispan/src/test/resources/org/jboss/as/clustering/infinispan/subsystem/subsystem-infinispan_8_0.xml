@@ -2,11 +2,11 @@
     <cache-container name="minimal" default-cache="local">
         <local-cache name="local"/>
     </cache-container>
-    <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" eviction-executor="infinispan-eviction" jndi-name="java:global/infinispan/maximal" listener-executor="infinispan-listener" async-executor="infinispan-async" replication-queue-executor="infinispan-repl-queue" module="org.infinispan" statistics="false">
-        <transport cluster="maximal-cluster" executor="transport-executor" total-order-executor="total-order-executor" remote-command-executor="remote-command-executor" lock-timeout="120000" stack="tcp" strict-peer-to-peer="false"/>
+    <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" jndi-name="java:global/infinispan/maximal" module="org.infinispan" statistics="false">
+        <transport cluster="maximal-cluster" lock-timeout="120000" stack="tcp" strict-peer-to-peer="false"/>
         <local-cache name="local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
-            <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
+            <transaction mode="NON_DURABLE_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="LIRS"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
@@ -26,7 +26,7 @@
         </local-cache>
         <local-cache name="reststore-local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
-            <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
+            <transaction mode="NON_DURABLE_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="LIRS"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <compatibility enabled="true" marshaller="org.infinispan.commons.marshall.jboss.GenericJBossMarshaller" />
@@ -75,7 +75,7 @@
         </replicated-cache>
         <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="20" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED" striping="true"/>
-            <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
+            <transaction mode="NON_DURABLE_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="UNORDERED"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <state-transfer enabled="true" timeout="60000" chunk-size="10000"  await-initial-transfer="false"/>
@@ -119,7 +119,7 @@
                            remote-timeout="35000" start="EAGER" segments="20" capacity-factor="2.0"
                            statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED" striping="true"/>
-            <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
+            <transaction mode="NON_DURABLE_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="UNORDERED"/>
             <expiration interval="10000" lifespan="10" max-idle="10"/>
             <state-transfer enabled="false" timeout="60000" chunk-size="10000" />

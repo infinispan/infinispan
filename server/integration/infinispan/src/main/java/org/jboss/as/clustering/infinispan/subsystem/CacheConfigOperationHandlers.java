@@ -29,7 +29,6 @@ import static org.jboss.as.clustering.infinispan.subsystem.StoreWriteBehindResou
 import static org.jboss.as.clustering.infinispan.subsystem.TransportResource.TRANSPORT_ATTRIBUTES;
 
 import java.util.Arrays;
-import java.util.List;
 
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
 import org.jboss.as.controller.AbstractAddStepHandler;
@@ -39,11 +38,9 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
-import org.jboss.msc.service.ServiceController;
 
 /**
  * Common code for handling the following cache configuration elements
@@ -97,8 +94,8 @@ public class CacheConfigOperationHandlers {
         }
 
         @Override
-        protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers) throws OperationFailedException {
-            super.performRuntime(context, operation, model, verificationHandler, newControllers);
+        protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
+            super.performRuntime(context, operation, model);
             // once we add a cache configuration, we need to restart all the services for the changes to take effect
             context.reloadRequired();
         }

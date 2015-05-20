@@ -28,7 +28,6 @@ import org.jboss.as.controller.AbstractRemoveStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -64,16 +63,15 @@ public class CacheRemove extends AbstractRemoveStepHandler {
 
         // re-add the services if the remove failed
         String cacheType = getCacheType(operation) ;
-        ServiceVerificationHandler verificationHandler = null ;
 
         if (cacheType.equals(ModelKeys.LOCAL_CACHE)) {
-            LocalCacheAdd.INSTANCE.installRuntimeServices(context, operation, containerModel, cacheModel, verificationHandler);
+            LocalCacheAdd.INSTANCE.installRuntimeServices(context, operation, containerModel, cacheModel);
         } else if (cacheType.equals(ModelKeys.INVALIDATION_CACHE)) {
-            InvalidationCacheAdd.INSTANCE.installRuntimeServices(context, operation, containerModel, cacheModel, verificationHandler);
+            InvalidationCacheAdd.INSTANCE.installRuntimeServices(context, operation, containerModel, cacheModel);
         } else if (cacheType.equals(ModelKeys.REPLICATED_CACHE)) {
-            ReplicatedCacheAdd.INSTANCE.installRuntimeServices(context, operation, containerModel, cacheModel, verificationHandler);
+            ReplicatedCacheAdd.INSTANCE.installRuntimeServices(context, operation, containerModel, cacheModel);
         } else if (cacheType.equals(ModelKeys.DISTRIBUTED_CACHE)) {
-            DistributedCacheAdd.INSTANCE.installRuntimeServices(context, operation, containerModel, cacheModel, verificationHandler);
+            DistributedCacheAdd.INSTANCE.installRuntimeServices(context, operation, containerModel, cacheModel);
         }
     }
 

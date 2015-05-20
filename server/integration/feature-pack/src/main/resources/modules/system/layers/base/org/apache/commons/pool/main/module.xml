@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.3" name="org.apache.commons.pool">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
+
+    <resources>
+        <artifact name="${commons-pool:commons-pool}"/>
+    </resources>
+
+    <dependencies>
+    </dependencies>
+</module>
