@@ -68,7 +68,11 @@ public abstract class AbstractTransport implements Transport {
             throw new CacheException("Remote (" + sender + ") failed unexpectedly", exception);
          }
          
-         if (checkResponse(responseObject, sender)) responseListToAddTo.put(sender, (Response) responseObject);
+         if (checkResponse(responseObject, sender)) {
+            responseListToAddTo.put(sender, (Response) responseObject);
+         } else if (!ignoreLeavers && responseObject instanceof CacheNotFoundResponse) {
+            throw new SuspectException("Cache is stopping on node " + sender, sender);
+         }
       } else if (wasSuspected) {
          if (!ignoreLeavers) {
             throw new SuspectException("Suspected member: " + sender, sender);

@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import net.jcip.annotations.GuardedBy;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.CacheException;
@@ -295,7 +296,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          ReplicableCommand cmd = null;
          try {
             cmd = (ReplicableCommand) req_marshaller.objectFromBuffer(req.getRawBuffer(), req.getOffset(), req.getLength());
-            if (cmd == null) throw new NullPointerException("Unable to execute a null command!  Message was " + req);
+            if (cmd == null)
+               throw new NullPointerException("Unable to execute a null command!  Message was " + req);
             if (req.getSrc() instanceof SiteAddress) {
                executeCommandFromRemoteSite(cmd, req, response);
             } else {
@@ -304,6 +306,10 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          } catch (InterruptedException e) {
             log.shutdownHandlingCommand(cmd);
             reply(response, new ExceptionResponse(new CacheException("Cache is shutting down")), cmd);
+         } catch (IllegalLifecycleStateException e) {
+            if (trace) log.trace("Ignoring command unmarshalling error during shutdown");
+            // If this wasn't a CacheRpcCommand, it means the channel is already stopped, and the response won't matter
+            reply(response, CacheNotFoundResponse.INSTANCE, cmd);
          } catch (Throwable x) {
             if (cmd == null)
                log.errorUnMarshallingCommand(x);
