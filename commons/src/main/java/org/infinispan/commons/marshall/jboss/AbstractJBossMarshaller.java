@@ -3,17 +3,16 @@ package org.infinispan.commons.marshall.jboss;
 import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.ExposedByteArrayOutputStream;
-import org.infinispan.commons.logging.BasicLogFactory;
+import org.infinispan.commons.logging.Log;
+import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.commons.marshall.AbstractMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.concurrent.ConcurrentWeakKeyHashMap;
-import org.jboss.logging.BasicLogger;
 import org.jboss.marshalling.ExceptionListener;
 import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.TraceInformation;
 import org.jboss.marshalling.Unmarshaller;
-import org.jboss.marshalling.reflect.SunReflectiveCreator;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -38,7 +37,7 @@ import static org.infinispan.commons.util.Util.EMPTY_OBJECT_ARRAY;
  */
 public abstract class AbstractJBossMarshaller extends AbstractMarshaller implements StreamingMarshaller {
 
-   protected static final BasicLogger log = BasicLogFactory.getLog(AbstractJBossMarshaller.class);
+   protected static final Log log = LogFactory.getLog(AbstractJBossMarshaller.class);
    protected static final boolean trace = log.isTraceEnabled();
    protected static final JBossMarshallerFactory factory = new JBossMarshallerFactory();
    protected static final int DEF_INSTANCE_COUNT = 16;

@@ -2,6 +2,7 @@ package org.infinispan.marshall.core;
 
 import java.io.IOException;
 
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.marshall.jboss.AbstractJBossMarshaller;
@@ -140,7 +141,11 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
       @Override
       public Writer getObjectWriter(Object o) throws IOException {
-         return externalizerTable.getObjectWriter(o);
+         ExternalizerTable table = this.externalizerTable;
+         if (table == null) {
+            throw new IllegalLifecycleStateException("Cache marshaller has been stopped");
+         }
+         return table.getObjectWriter(o);
       }
 
       @Override
