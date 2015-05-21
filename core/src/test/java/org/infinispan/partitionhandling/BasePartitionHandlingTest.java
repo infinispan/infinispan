@@ -41,7 +41,7 @@ public class BasePartitionHandlingTest extends MultipleCacheManagersTest {
 
    private static Log log = LogFactory.getLog(BasePartitionHandlingTest.class);
 
-   final static AtomicInteger viewId = new AtomicInteger(5);
+   private final AtomicInteger viewId = new AtomicInteger(5);
    protected int numMembersInCluster = 4;
    protected CacheMode cacheMode = CacheMode.DIST_SYNC;
    protected volatile Partition[] partitions;

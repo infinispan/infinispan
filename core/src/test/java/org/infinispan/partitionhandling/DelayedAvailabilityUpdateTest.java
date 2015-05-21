@@ -80,6 +80,7 @@ public class DelayedAvailabilityUpdateTest extends BasePartitionHandlingTest {
       splitCluster(p0.getNodes(), p1.getNodes());
 
       ss.enter("main:check_availability");
+      eventually(() -> partitionHandlingManager(p0.node(1)).getAvailabilityMode() == AvailabilityMode.DEGRADED_MODE);
       assertEquals(AvailabilityMode.AVAILABLE, partitionHandlingManager(p0.node(0)).getAvailabilityMode());
 
       // The availability didn't change on p0.node0, check that keys owned by p1 are not accessible
