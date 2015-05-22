@@ -10,12 +10,7 @@ import org.testng.annotations.BeforeClass;
 import java.io.File;
 
 public abstract class LevelDBStoreFunctionalTest extends BaseStoreFunctionalTest {
-   protected String tmpDirectory;
-
-   @BeforeClass(alwaysRun = true)
-   protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
-   }
+   protected String tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {

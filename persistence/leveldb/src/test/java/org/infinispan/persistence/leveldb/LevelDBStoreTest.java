@@ -28,12 +28,7 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "persistence.leveldb.LevelDBStoreTest")
 public class LevelDBStoreTest extends BaseStoreTest {
 
-   private String tmpDirectory;
-
-   @BeforeClass
-   protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
-   }
+   private String tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {

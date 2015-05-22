@@ -14,12 +14,7 @@ import java.io.File;
 @Test(groups = "unit", testName = "persistence.leveldb.LevelDBMultiCacheStoreFunctionalTest")
 public class LevelDBMultiCacheStoreFunctionalTest extends MultiStoresFunctionalTest<LevelDBStoreConfigurationBuilder> {
 
-   private File tmpDir;
-
-   @BeforeClass
-   protected void setPaths() {
-      tmpDir = new File(TestingUtil.tmpDirectory(this.getClass()));
-   }
+   private File tmpDir = new File(TestingUtil.tmpDirectory(this.getClass()));
 
    @BeforeMethod
    protected void cleanDataFiles() {
@@ -27,7 +22,6 @@ public class LevelDBMultiCacheStoreFunctionalTest extends MultiStoresFunctionalT
          TestingUtil.recursiveFileRemove(tmpDir);
       }
    }
-
 
    @Override
    protected LevelDBStoreConfigurationBuilder buildCacheStoreConfig(PersistenceConfigurationBuilder p, String discriminator) throws Exception {

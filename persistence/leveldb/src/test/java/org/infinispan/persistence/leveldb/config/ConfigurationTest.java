@@ -28,16 +28,9 @@ import static org.testng.AssertJUnit.assertTrue;
  */
 @Test(groups = "unit", testName = "persistence.leveldb.configuration.ConfigurationTest")
 public class ConfigurationTest extends AbstractInfinispanTest {
-   private String tmpDirectory;
-   private String tmpDataDirectory;
-   private String tmpExpiredDirectory;
-
-   @BeforeClass
-   protected void setUpTempDir() {
-      tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
-      tmpDataDirectory = tmpDirectory + "/data";
-      tmpExpiredDirectory = tmpDirectory + "/expired";
-   }
+   private String tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
+   private String tmpDataDirectory = tmpDirectory + "/data";
+   private String tmpExpiredDirectory = tmpDirectory + "/expired";
 
    @AfterClass(alwaysRun = true)
    protected void clearTempDir() {
