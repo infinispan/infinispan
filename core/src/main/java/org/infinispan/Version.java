@@ -21,7 +21,6 @@ public class Version {
    private static final int PATCH_MASK = 0x00003f;
 
    public static final String PROJECT_NAME = "Infinispan";
-   public static final String CODENAME = "";
 
    private static final Version INSTANCE = new Version();
 
@@ -115,7 +114,7 @@ public class Version {
       System.out.println(PROJECT_NAME);
       System.out.println();
       System.out.printf("Version: \t%s%n", Injected.getVersion());
-      System.out.printf("Codename: \t%s%n", CODENAME);
+      System.out.printf("Codename: \t%s%n", Injected.getCodename());
       System.out.println("History: \t(see https://jira.jboss.org/jira/browse/ISPN for details)");
       System.out.println();
    }
@@ -124,7 +123,7 @@ public class Version {
     * Returns version information as a string.
     */
    public static String printVersion() {
-      return PROJECT_NAME + " '" + CODENAME + "' " + Injected.getVersion();
+      return PROJECT_NAME + " '" + Injected.getCodename() + "' " + Injected.getVersion();
    }
 
    private static byte[] readVersionBytes(String major, String minor, String micro, String modifier) {
@@ -151,5 +150,10 @@ public class Version {
       static String getVersion() {
          return "0.0.0-SNAPSHOT"; // Will be replaced by the Maven Injection plugin
       }
+      
+      static String getCodename() {
+         return ""; // Will be replaced by the Maven Injection plugin
+      }
    }
 }
+
