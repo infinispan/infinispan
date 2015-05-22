@@ -163,6 +163,15 @@
                         </methodBodyReturn>
                      </targetMembers>
                   </bytecodeInjection>
+                  <bytecodeInjection>
+                     <expression>${infinispan.codename}</expression>
+                     <targetMembers>
+                        <methodBodyReturn>
+                           <className>org.infinispan.Version$Injected</className>
+                           <methodName>getCodename</methodName>
+                        </methodBodyReturn>
+                     </targetMembers>
+                  </bytecodeInjection>
                </bytecodeInjections>
             </configuration>
          </plugin>
