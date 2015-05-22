@@ -213,7 +213,7 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
          public void call() {
             Cache<Integer, String> cache = cm.getCache();
             AdvancedAsyncCacheWriter asyncStore = TestingUtil.getFirstWriter(cache);
-            DummyInMemoryStore dummyStore = TestingUtil.extractField(asyncStore, "actual");
+            final DummyInMemoryStore dummyStore = TestingUtil.extractField(asyncStore, "actual");
             cache.put(1, "uno");
             cache.put(2, "dos");
             cache.put(3, "tres");

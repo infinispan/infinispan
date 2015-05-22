@@ -533,7 +533,12 @@ public abstract class BaseDistSyncL1Test extends BaseDistFunctionalTest<Object, 
          // Wait until we are about to write value into data container on non owner
          checkPoint.awaitStrict("pre_acquire_shared_topology_lock_invoked", 10, TimeUnit.SECONDS);
 
-         Future<CacheEntry<Object, String>> getFuture2 = fork(() -> nonOwnerCache.getAdvancedCache().getCacheEntry(key));
+         Future<CacheEntry<Object, String>> getFuture2 = fork(new Callable<CacheEntry<Object, String>>() {
+            @Override
+            public CacheEntry<Object, String> call() throws Exception {
+               return nonOwnerCache.getAdvancedCache().getCacheEntry(key);
+            }
+         });
 
          try {
             getFuture2.get(1, TimeUnit.SECONDS);
