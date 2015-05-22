@@ -94,7 +94,11 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
     static {
         sharedAttributeResolver = new HashMap<String, String>();
         // shared cache attributes
+        /*for(AttributeDefinition attribute : CacheResource.CACHE_ATTRIBUTES) {
+            sharedAttributeResolver.put(attribute.getName(), "cache");
+        }*/
         sharedAttributeResolver.put(ModelKeys.BATCHING, "cache");
+        sharedAttributeResolver.put(ModelKeys.CONFIGURATION, "cache");
         sharedAttributeResolver.put(ModelKeys.MODULE, "cache");
         sharedAttributeResolver.put(ModelKeys.INDEXING, "cache");
         sharedAttributeResolver.put(ModelKeys.AUTO_CONFIG, "cache");
@@ -112,6 +116,11 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(ModelKeys.QUEUE_FLUSH_INTERVAL, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.QUEUE_SIZE, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.REMOTE_TIMEOUT, "clustered-cache");
+
+        sharedAttributeResolver.put(ModelKeys.CAPACITY_FACTOR, "distributed-cache");
+        sharedAttributeResolver.put(ModelKeys.L1_LIFESPAN, "distributed-cache");
+        sharedAttributeResolver.put(ModelKeys.OWNERS, "distributed-cache");
+        sharedAttributeResolver.put(ModelKeys.SEGMENTS, "distributed-cache");
 
         sharedAttributeResolver.put(ModelKeys.PROPERTIES, "loader");
 
@@ -176,6 +185,7 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
 
        // shared children - this avoids having to describe the children for each parent resource
         sharedAttributeResolver.put(ModelKeys.TRANSPORT, null);
+        sharedAttributeResolver.put(ModelKeys.CONFIGURATIONS, null);
         sharedAttributeResolver.put(ModelKeys.SECURITY, "cache");
         sharedAttributeResolver.put(ModelKeys.LOCKING, null);
         sharedAttributeResolver.put(ModelKeys.TRANSACTION, null);

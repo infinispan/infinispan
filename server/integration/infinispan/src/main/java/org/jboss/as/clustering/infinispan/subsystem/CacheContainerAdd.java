@@ -87,7 +87,7 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
     }
 
     private static void populate(ModelNode source, ModelNode target) throws OperationFailedException {
-        // AS7-3488 make default-cache non required attrinbute
+        // AS7-3488 make default-cache non required attribute
         // target.get(ModelKeys.DEFAULT_CACHE).set(source.get(ModelKeys.DEFAULT_CACHE));
 
         CacheContainerResource.DEFAULT_CACHE.validateAndSet(source, target);
@@ -371,7 +371,7 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         Injector<Executor> getListenerExecutorInjector() {
             return this.listenerExecutor;
         }
-       
+
         Injector<Executor> getStateTransferExecutorInjector() {
             return this.stateTransferExecutor;
         }
@@ -407,12 +407,12 @@ public class CacheContainerAdd extends AbstractAddStepHandler {
         public Executor getListenerExecutor() {
             return this.listenerExecutor.getOptionalValue();
         }
-       
+
         @Override
         public Executor getStateTransferExecutor() {
            return this.stateTransferExecutor.getOptionalValue();
         }
-       
+
         @Override
         public ScheduledExecutorService getExpirationExecutor() {
             return this.expirationExecutor.getOptionalValue();

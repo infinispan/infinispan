@@ -24,4 +24,11 @@ public interface XMLExtendedStreamReader extends XMLStreamReader {
     */
    void handleAny(ConfigurationBuilderHolder holder) throws XMLStreamException;
 
+   /**
+    * Get the value of an attribute as a space-delimited string list.
+    *
+    * @param i the index of the attribute
+    */
+   String[] getListAttributeValue(int i);
+
 }

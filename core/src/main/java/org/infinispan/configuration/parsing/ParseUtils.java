@@ -56,6 +56,17 @@ public final class ParseUtils {
     }
 
     /**
+     * Get an exception reporting an unexpected XML attribute.
+     * @param reader the stream reader
+     * @param name the attribute name
+     * @return the exception
+     */
+    public static XMLStreamException unexpectedAttribute(final XMLStreamReader reader, final String name) {
+        return new XMLStreamException("Unexpected attribute '" + name + "' encountered",
+                reader.getLocation());
+    }
+
+    /**
      * Get an exception reporting an invalid XML attribute value.
      * @param reader the stream reader
      * @param index the attribute index
@@ -264,5 +275,9 @@ public final class ParseUtils {
 
        return null;
     }
+
+   public static String[] getListAttributeValue(String value) {
+      return value.split("\\s+");
+   }
 
 }

@@ -269,4 +269,8 @@ public interface InfinispanMessages {
     */
    @Message(id = 11006, value = "Could not instantiate class %s")
    IllegalStateException unableToInstantiateClass(String className);
+
+   @Message(id = 11007, value = "Configuration '%s' has not been declared")
+   IllegalArgumentException undeclaredConfiguration(String configurationName);
 }
+

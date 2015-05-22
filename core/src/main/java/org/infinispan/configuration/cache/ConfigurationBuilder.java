@@ -34,6 +34,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final SitesConfigurationBuilder sites;
    private final CompatibilityModeConfigurationBuilder compatibility;
 
+   private boolean template = false;
+
    public ConfigurationBuilder() {
       this.clustering = new ClusteringConfigurationBuilder(this);
       this.customInterceptors = new CustomInterceptorsConfigurationBuilder(this);
@@ -165,6 +167,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       }
    }
 
+   @Override
+   public ConfigurationBuilder template(boolean template) {
+      this.template = template;
+      return this;
+   }
+
    @SuppressWarnings("unchecked")
    public void validate() {
       for (Builder<?> validatable:
@@ -206,7 +214,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       List<Object> modulesConfig = new LinkedList<Object>();
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
-      return new Configuration(clustering.create(), customInterceptors.create(),
+      return new Configuration(template, clustering.create(), customInterceptors.create(),
                dataContainer.create(), deadlockDetection.create(), eviction.create(),
                expiration.create(), indexing.create(), invocationBatching.create(),
                jmxStatistics.create(), persistence.create(), locking.create(), security.create(),

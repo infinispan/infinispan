@@ -22,11 +22,16 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+
 /**
  * @author Paul Ferraro
  * @author Tristan Tarrant
  */
 public class ModelKeys {
+    // Model keys common prefixes/suffixes
+    static final String CONFIGURATION_SUFFIX = "-configuration";
+
+    // The model keys
     static final String ACQUIRE_TIMEOUT = "acquire-timeout";
     static final String ALIAS = "alias";
     static final String ALIASES = "aliases";
@@ -67,6 +72,9 @@ public class ModelKeys {
     static final String COMPRESSION = "compression";
     static final String COMPRESSION_NAME = "COMPRESSION";
     static final String CONCURRENCY_LEVEL = "concurrency-level";
+    static final String CONFIGURATION = "configuration";
+    static final String CONFIGURATIONS = "configurations";
+    static final String CONFIGURATIONS_NAME = "CONFIGURATIONS";
     static final String CONNECTION_POOL = "connection-pool";
     static final String CONNECTION_TIMEOUT = "connection-timeout";
     static final String CREATE_ON_START = "create-on-start";
@@ -76,6 +84,7 @@ public class ModelKeys {
     static final String DEFAULT_CACHE = "default-cache";
     static final String DIALECT = "dialect";
     static final String DISTRIBUTED_CACHE = "distributed-cache";
+    static final String DISTRIBUTED_CACHE_CONFIGURATION = "distributed-cache" + CONFIGURATION_SUFFIX;
     static final String DROP_ON_EXIT = "drop-on-exit";
     static final String ENABLED = "enabled";
     static final String ENTRY_TABLE = "entry-table";
@@ -102,6 +111,7 @@ public class ModelKeys {
     static final String INDEXING_PROPERTIES = "indexing-properties";
     static final String INTERVAL = "interval";
     static final String INVALIDATION_CACHE = "invalidation-cache";
+    static final String INVALIDATION_CACHE_CONFIGURATION = "invalidation-cache" + CONFIGURATION_SUFFIX;
     static final String ISOLATION = "isolation";
     static final String JDBC_STORE = "jdbc-store";
     static final String JDBC_STORE_NAME = "JDBC_STORE";
@@ -122,6 +132,7 @@ public class ModelKeys {
     static final String LIFESPAN = "lifespan";
     static final String LISTENER_EXECUTOR = "listener-executor";
     static final String LOCAL_CACHE = "local-cache";
+    static final String LOCAL_CACHE_CONFIGURATION = "local-cache" + CONFIGURATION_SUFFIX;
     static final String LOCK_TIMEOUT = "lock-timeout";
     static final String LOCKING = "locking";
     static final String LOCKING_NAME = "LOCKING";
@@ -138,6 +149,7 @@ public class ModelKeys {
     static final String MODIFICATION_QUEUE_SIZE = "modification-queue-size";
     static final String MODULE = "module";
     static final String NAME = "name";
+    static final String NAMES = "names";
     static final String OUTBOUND_SOCKET_BINDING = "outbound-socket-binding";
     static final String OWNERS = "owners";
     static final String PARTITION_HANDLING = "partition-handling";
@@ -166,6 +178,7 @@ public class ModelKeys {
     static final String REMOTE_STORE = "remote-store";
     static final String REMOTE_TIMEOUT = "remote-timeout";
     static final String REPLICATED_CACHE = "replicated-cache";
+    static final String REPLICATED_CACHE_CONFIGURATION = "replicated-cache" + CONFIGURATION_SUFFIX;
     static final String REPLICATION_QUEUE_EXECUTOR = "replication-queue-executor";
     static final String REST_STORE = "rest-store";
     static final String REST_STORE_NAME = "REST_STORE";
@@ -206,7 +219,6 @@ public class ModelKeys {
     static final String TRANSPORT_NAME = "TRANSPORT";
     static final String TYPE = "type";
     static final String TX_INTERNAL_ID = "internal-id";
-    @Deprecated static final String VIRTUAL_NODES = "virtual-nodes";
     static final String WAIT = "wait";
     static final String WAIT_TIME = "wait-time";
     static final String WRITE_BEHIND = "write-behind";

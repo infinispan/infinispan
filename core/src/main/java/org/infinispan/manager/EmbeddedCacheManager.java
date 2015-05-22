@@ -186,7 +186,9 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     * Retrieves a named cache from the system in the same way that {@link
     * #getCache(String)} does except that if offers the possibility for the
     * named cache not to be retrieved if it has not yet been started, or if
-    * it's been removed after being started.
+    * it's been removed after being started. If a non-template configuration
+    * exists with the same name, it will be used to configure the cache.
+    *
     *
     * @param cacheName name of cache to retrieve
     * @param createIfAbsent if <tt>false</tt>, the named cache will not be
@@ -197,6 +199,38 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
     *         returns a cache instance identified by cacheName
     */
    <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent);
+
+   /**
+    * Retrieves a named cache from the system in the same way that {@link
+    * #getCache(String)} does except that if offers the possibility to specify
+    * a specific configuration template. Multiple caches can be created using
+    * the same configuration.
+    *
+    * @param cacheName name of cache to retrieve
+    * @param configurationTemplate name of the configuration template to use
+    * @return null if no configuration exists as per rules set above, otherwise
+    *         returns a cache instance identified by cacheName
+    */
+   <K, V> Cache<K, V> getCache(String cacheName, String configurationName);
+
+   /**
+    * Retrieves a named cache from the system in the same way that {@link
+    * #getCache(String)} does except that if offers the possibility to specify
+    * a specific configuration template. Multiple caches can be created using
+    * the same configuration. Tihs method also offers the possibility for the
+    * named cache not to be retrieved if it has not yet been started, or if
+    * it's been removed after being started.
+    *
+    * @param cacheName name of cache to retrieve
+    * @param configurationTemplate name of the configuration template to use
+    * @param createIfAbsent if <tt>false</tt>, the named cache will not be
+    *        retrieved if it hasn't been retrieved previously or if it's been
+    *        removed. If <tt>true</tt>, this methods works just like {@link
+    *        #getCache(String, String)}
+    * @return null if no configuration exists as per rules set above, otherwise
+    *         returns a cache instance identified by cacheName
+    */
+   <K, V> Cache<K, V> getCache(String cacheName, String configurationTemplate, boolean createIfAbsent);
 
    /**
     * Starts a set of caches in parallel. Infinispan supports both symmetric

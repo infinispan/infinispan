@@ -11,8 +11,6 @@ import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.xsite.XSiteAdminOperations;
 
-import java.lang.ref.WeakReference;
-
 /**
  * An internal factory for constructing Caches.  Used by the {@link DefaultCacheManager}, this is not intended as public
  * API.

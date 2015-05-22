@@ -1,26 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!--
-  ~ JBoss, Home of Professional Open Source.
-  ~ Copyright 2013, Red Hat, Inc., and individual contributors
-  ~ as indicated by the @author tags. See the copyright.txt file in the
-  ~ distribution for a full listing of individual contributors.
-  ~
-  ~ This is free software; you can redistribute it and/or modify it
-  ~ under the terms of the GNU Lesser General Public License as
-  ~ published by the Free Software Foundation; either version 2.1 of
-  ~ the License, or (at your option) any later version.
-  ~
-  ~ This software is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  ~ Lesser General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU Lesser General Public
-  ~ License along with this software; if not, write to the Free
-  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
-  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
 <xs:schema targetNamespace="urn:infinispan:server:core:8.0"
             xmlns:xs="http://www.w3.org/2001/XMLSchema"
             xmlns:tns="urn:infinispan:server:core:8.0"
@@ -40,6 +19,10 @@
                 <xs:annotation>
                     <xs:documentation>Defines an embedded cache container.</xs:documentation>
                 </xs:annotation>
+                <xs:unique name="cache_id_unique">
+                    <xs:selector xpath="./tns:local-cache|./tns:local-cache-configuration|./tns:invalidation-cache|./tns:invalidation-cache-configuration|./tns:replicated-cache|./tns:replicated-cache-configuration|./tns:distributed-cache|./tns:distributed-cache-configuration" />
+                    <xs:field xpath="@name" />
+                </xs:unique>
             </xs:element>
         </xs:choice>
     </xs:complexType>
@@ -62,9 +45,19 @@
                         <xs:documentation>Defines a LOCAL mode cache.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
+                <xs:element name="local-cache-configuration" type="tns:local-cache">
+                    <xs:annotation>
+                        <xs:documentation>Defines a LOCAL mode cache configuration.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="replicated-cache" type="tns:replicated-cache">
                     <xs:annotation>
                         <xs:documentation>Defines a REPL_* mode cache.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="replicated-cache-configuration" type="tns:replicated-cache">
+                    <xs:annotation>
+                        <xs:documentation>Defines a REPL_* mode cache configuration.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
                 <xs:element name="invalidation-cache" type="tns:invalidation-cache">
@@ -72,9 +65,19 @@
                         <xs:documentation>Defines an INVALIDATION_* mode cache.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
+                <xs:element name="invalidation-cache-configuratoin" type="tns:invalidation-cache">
+                    <xs:annotation>
+                        <xs:documentation>Defines an INVALIDATION_* mode cache configuration.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="distributed-cache" type="tns:distributed-cache">
                     <xs:annotation>
                         <xs:documentation>Defines a DIST_* mode cache.</xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="distributed-cache-configuration" type="tns:distributed-cache">
+                    <xs:annotation>
+                        <xs:documentation>Defines a DIST_* mode cache configuration.</xs:documentation>
                     </xs:annotation>
                 </xs:element>
             </xs:choice>
@@ -266,7 +269,7 @@
             </xs:element>
         </xs:sequence>
     </xs:complexType>
-
+    
     <xs:complexType name="cache" abstract="true">
         <xs:sequence>
             <xs:element name="backups" type="tns:backups" minOccurs="0">
@@ -404,9 +407,14 @@
                 </xs:annotation>
             </xs:element>
         </xs:sequence>
-        <xs:attribute name="name" type="xs:string" use="required">
+        <xs:attribute name="name" type="xs:ID" use="required">
             <xs:annotation>
                 <xs:documentation>Uniquely identifies this cache within its cache container.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="configuration" type="xs:IDREF">
+            <xs:annotation>
+                <xs:documentation>The name of the cache configuration which this configuration inherits from.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="start" type="tns:controller-mode" default="LAZY">

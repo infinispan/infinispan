@@ -22,7 +22,9 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
 
 /**
@@ -43,5 +45,8 @@ public class LocalCacheResource extends CacheResource {
                 CacheRemove.INSTANCE, resolvePathHandler, runtimeRegistration);
     }
 
+    protected LocalCacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd cacheAddHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
+        super(pathElement, descriptionResolver, cacheAddHandler, removeHandler, resolvePathHandler, runtimeRegistration);
+    }
 
 }

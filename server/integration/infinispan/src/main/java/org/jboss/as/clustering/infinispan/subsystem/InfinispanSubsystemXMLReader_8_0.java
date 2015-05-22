@@ -1,9 +1,24 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import static org.jboss.as.clustering.infinispan.InfinispanMessages.MESSAGES;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
 import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.parsing.ParseUtils;
@@ -11,15 +26,6 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
-
-import javax.xml.stream.Location;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import java.util.*;
-
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
 /**
  * Infinispan subsystem parsing code.
@@ -141,6 +147,11 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         // operation to add the container
         operations.add(container);
 
+        ModelNode configurations = Util.getEmptyOperation(ADD, null);
+        PathAddress configurationsAddress = containerAddress.append(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME);
+        configurations.get(OP_ADDR).set(configurationsAddress.toModelNode());
+        operations.add(configurations);
+
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
             switch (element) {
@@ -153,19 +164,35 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
                     break;
                 }
                 case LOCAL_CACHE: {
-                    parseLocalCache(reader, containerAddress, operations);
+                    parseLocalCache(reader, containerAddress, operations, false);
+                    break;
+                }
+                case LOCAL_CACHE_CONFIGURATION: {
+                    parseLocalCache(reader, containerAddress, operations, true);
                     break;
                 }
                 case INVALIDATION_CACHE: {
-                    parseInvalidationCache(reader, containerAddress, operations);
+                    parseInvalidationCache(reader, containerAddress, operations, false);
+                    break;
+                }
+                case INVALIDATION_CACHE_CONFIGURATION: {
+                    parseInvalidationCache(reader, containerAddress, operations, true);
                     break;
                 }
                 case REPLICATED_CACHE: {
-                    parseReplicatedCache(reader, containerAddress, operations);
+                    parseReplicatedCache(reader, containerAddress, operations, false);
+                    break;
+                }
+                case REPLICATED_CACHE_CONFIGURATION: {
+                    parseReplicatedCache(reader, containerAddress, operations, true);
                     break;
                 }
                 case DISTRIBUTED_CACHE: {
-                    parseDistributedCache(reader, containerAddress, operations);
+                    parseDistributedCache(reader, containerAddress, operations, false);
+                    break;
+                }
+                case DISTRIBUTED_CACHE_CONFIGURATION: {
+                    parseDistributedCache(reader, containerAddress, operations, true);
                     break;
                 }
                 default: {
@@ -175,7 +202,7 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         }
     }
 
-   private void parseTransport(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations) throws XMLStreamException {
+    private void parseTransport(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations) throws XMLStreamException {
 
         PathAddress transportAddress = containerAddress.append(ModelKeys.TRANSPORT, ModelKeys.TRANSPORT_NAME);
         ModelNode transport = Util.createAddOperation(transportAddress);
@@ -255,7 +282,6 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         ModelNode authorization = Util.createAddOperation(authorizationAddress);
 
         for (int i = 0; i < reader.getAttributeCount(); i++) {
-            String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case AUDIT_LOGGER: {
@@ -341,6 +367,10 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
                 CacheResource.NAME.parseAndSetParameter(value, cache, reader);
                 break;
             }
+            case CONFIGURATION: {
+                CacheResource.CONFIGURATION.parseAndSetParameter(value, cache, reader);
+                break;
+            }
             case START: {
                 CacheResource.START.parseAndSetParameter(value, cache, reader);
                 if (!value.equalsIgnoreCase("EAGER")) {
@@ -402,7 +432,7 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         }
     }
 
-    private void parseLocalCache(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations) throws XMLStreamException {
+    private void parseLocalCache(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations, boolean configuration) throws XMLStreamException {
 
         // ModelNode for the cache add operation
         ModelNode cache = Util.getEmptyOperation(ADD, null);
@@ -424,7 +454,7 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         }
 
         // update the cache address with the cache name
-        addNameToAddress(cache, containerAddress, ModelKeys.LOCAL_CACHE) ;
+        addNameToAddress(cache, containerAddress, ModelKeys.LOCAL_CACHE, configuration) ;
 
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
@@ -438,7 +468,7 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         }
     }
 
-    private void parseDistributedCache(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations) throws XMLStreamException {
+    private void parseDistributedCache(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations, boolean template) throws XMLStreamException {
 
         // ModelNode for the cache add operation
         ModelNode cache = Util.getEmptyOperation(ModelDescriptionConstants.ADD, null);
@@ -473,12 +503,12 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         if (!cache.hasDefined(ModelKeys.NAME)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.NAME));
         }
-        if (!cache.hasDefined(ModelKeys.MODE)) {
+        if (!cache.hasDefined(ModelKeys.MODE) && !cache.hasDefined(ModelKeys.CONFIGURATION)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.MODE));
         }
 
         // update the cache address with the cache name
-        addNameToAddress(cache, containerAddress, ModelKeys.DISTRIBUTED_CACHE) ;
+        addNameToAddress(cache, containerAddress, ModelKeys.DISTRIBUTED_CACHE, template) ;
 
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
@@ -504,7 +534,7 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         }
     }
 
-    private void parseReplicatedCache(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations) throws XMLStreamException {
+    private void parseReplicatedCache(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations, boolean template) throws XMLStreamException {
 
         // ModelNode for the cache add operation
         ModelNode cache = Util.getEmptyOperation(ModelDescriptionConstants.ADD, null);
@@ -519,12 +549,12 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         if (!cache.hasDefined(ModelKeys.NAME)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.NAME));
         }
-        if (!cache.hasDefined(ModelKeys.MODE)) {
+        if (!cache.hasDefined(ModelKeys.MODE) && !cache.hasDefined(ModelKeys.CONFIGURATION)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.MODE));
         }
 
         // update the cache address with the cache name
-        addNameToAddress(cache, containerAddress, ModelKeys.REPLICATED_CACHE) ;
+        addNameToAddress(cache, containerAddress, ModelKeys.REPLICATED_CACHE, template) ;
 
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
@@ -550,7 +580,7 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         }
     }
 
-    private void parseInvalidationCache(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations) throws XMLStreamException {
+    private void parseInvalidationCache(XMLExtendedStreamReader reader, PathAddress containerAddress, List<ModelNode> operations, boolean template) throws XMLStreamException {
 
         // ModelNode for the cache add operation
         ModelNode cache = Util.getEmptyOperation(ModelDescriptionConstants.ADD, null);
@@ -565,12 +595,12 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
         if (!cache.hasDefined(ModelKeys.NAME)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.NAME));
         }
-        if (!cache.hasDefined(ModelKeys.MODE)) {
+        if (!cache.hasDefined(ModelKeys.MODE) && !cache.hasDefined(ModelKeys.CONFIGURATION)) {
             throw ParseUtils.missingRequired(reader, EnumSet.of(Attribute.MODE));
         }
 
         // update the cache address with the cache name
-        addNameToAddress(cache, containerAddress, ModelKeys.INVALIDATION_CACHE) ;
+        addNameToAddress(cache, containerAddress, ModelKeys.INVALIDATION_CACHE, template) ;
 
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
@@ -589,11 +619,18 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
     }
 
     private void addNameToAddress(ModelNode current, PathAddress pathToOwner, String type) {
+        addNameToAddress(current, pathToOwner, type, false);
+    }
 
+    private void addNameToAddress(ModelNode current, PathAddress pathToOwner, String type, boolean configuration) {
         String name = current.get(ModelKeys.NAME).asString();
-        // setup the cache address
-        PathAddress cacheAddress = pathToOwner.append(type, name);
-        current.get(ModelDescriptionConstants.OP_ADDR).set(cacheAddress.toModelNode());
+
+        // setup the address
+        if (configuration) {
+            pathToOwner = pathToOwner.append(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME);
+        }
+        PathAddress address = pathToOwner.append(type + (configuration ? ModelKeys.CONFIGURATION_SUFFIX : ""), name);
+        current.get(ModelDescriptionConstants.OP_ADDR).set(address.toModelNode());
 
         // get rid of NAME now that we are finished with it
         current.remove(ModelKeys.NAME);

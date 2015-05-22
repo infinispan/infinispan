@@ -1,10 +1,7 @@
 package org.infinispan.configuration.parsing;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.testng.AssertJUnit.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -60,16 +57,32 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    @Test(dataProvider="configurationFiles")
    public void testParseAndConstructUnifiedXmlFile(String config) throws IOException {
+      String[] parts = config.split("\\.");
+      int major = Integer.parseInt(parts[0]);
+      int minor = Integer.parseInt(parts[1]);
+      final int version = major * 10 + minor;
+
       withCacheManager(new CacheManagerCallable(
             TestCacheManagerFactory.fromXml("configs/unified/" + config, true, false)) {
          @Override
          public void call() {
-            configurationCheck70(cm);
+            switch(version) {
+            case 80:
+               configurationCheck80(cm);
+               break;
+            case 70:
+            case 71:
+            case 72:
+               configurationCheck70(cm);
+               break;
+            default:
+               throw new IllegalArgumentException("Unknown configuration version "+version);
+            }
          }
       });
    }
 
-   private static void configurationCheck70(EmbeddedCacheManager cm) {
+   private void configurationCheck70(EmbeddedCacheManager cm) {
       GlobalConfiguration g = cm.getCacheManagerConfiguration();
       assertEquals("maximal", g.globalJmxStatistics().cacheManagerName());
       assertTrue(g.globalJmxStatistics().enabled());
@@ -448,6 +461,36 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.storeAsBinary().enabled());
       assertTrue(c.storeAsBinary().storeKeysAsBinary());
       assertFalse(c.storeAsBinary().storeValuesAsBinary());
+   }
+
+   private void configurationCheck80(EmbeddedCacheManager cm) {
+      configurationCheck70(cm);
+      assertTemplateConfiguration(cm, "local-template");
+      assertTemplateConfiguration(cm, "invalidation-template");
+      assertTemplateConfiguration(cm, "repl-template");
+      assertTemplateConfiguration(cm, "dist-template");
+
+      assertCacheConfiguration(cm, "local-instance");
+      assertCacheConfiguration(cm, "invalidation-instance");
+      assertCacheConfiguration(cm, "repl-instance");
+      assertCacheConfiguration(cm, "dist-instance");
+
+      Configuration replTemplate = cm.getCacheConfiguration("repl-template");
+      Configuration replConfiguration = cm.getCacheConfiguration("repl-instance");
+      assertEquals(31000, replTemplate.locking().lockAcquisitionTimeout());
+      assertEquals(32000, replConfiguration.locking().lockAcquisitionTimeout());
+   }
+
+   private void assertTemplateConfiguration(EmbeddedCacheManager cm, String name) {
+      Configuration configuration = cm.getCacheConfiguration(name);
+      assertNotNull("Configuration " + name + " expected", configuration);
+      assertTrue("Configuration " + name + " should be a template", configuration.isTemplate());
+   }
+
+   private void assertCacheConfiguration(EmbeddedCacheManager cm, String name) {
+      Configuration configuration = cm.getCacheConfiguration(name);
+      assertNotNull("Configuration " + name + " expected", configuration);
+      assertFalse("Configuration " + name + " should not be a template", configuration.isTemplate());
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

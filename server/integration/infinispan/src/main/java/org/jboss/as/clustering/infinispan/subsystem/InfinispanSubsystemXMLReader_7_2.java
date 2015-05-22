@@ -141,6 +141,11 @@ public final class InfinispanSubsystemXMLReader_7_2 implements XMLElementReader<
         // operation to add the container
         operations.add(container);
 
+        ModelNode configurations = Util.getEmptyOperation(ADD, null);
+        PathAddress templatesAddress = containerAddress.append(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME);
+        configurations.get(OP_ADDR).set(templatesAddress.toModelNode());
+        operations.add(configurations);
+
         while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
             Element element = Element.forName(reader.getLocalName());
             switch (element) {

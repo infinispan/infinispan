@@ -134,7 +134,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                .setAllowExpression(false)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                .build();
-   
+
     static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, LISTENER_EXECUTOR, EVICTION_EXECUTOR, EXPIRATION_EXECUTOR,STATE_TRANSFER_EXECUTOR, REPLICATION_QUEUE_EXECUTOR, CACHE_CONTAINER_MODULE, STATISTICS};
 
     // operations
@@ -218,5 +218,6 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         resourceRegistration.registerSubModel(new InvalidationCacheResource(resolvePathHandler, runtimeRegistration));
         resourceRegistration.registerSubModel(new ReplicatedCacheResource(resolvePathHandler, runtimeRegistration));
         resourceRegistration.registerSubModel(new DistributedCacheResource(resolvePathHandler, runtimeRegistration));
+        resourceRegistration.registerSubModel(new CacheConfigurationResource(resolvePathHandler, runtimeRegistration));
     }
 }

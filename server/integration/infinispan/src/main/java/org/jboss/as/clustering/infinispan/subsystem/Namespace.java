@@ -35,8 +35,6 @@ public enum Namespace {
     // must be first
     UNKNOWN("jboss:domain:infinispan", 0, 0, null),
 
-    INFINISPAN_SERVER_5_2("infinispan:server:core", 5, 2, InfinispanSubsystemXMLReader_5_3.INSTANCE),
-    INFINISPAN_SERVER_5_3("infinispan:server:core", 5, 3, InfinispanSubsystemXMLReader_5_3.INSTANCE),
     INFINISPAN_SERVER_6_0("infinispan:server:core", 6, 0, InfinispanSubsystemXMLReader_6_0.INSTANCE),
     INFINISPAN_SERVER_7_0("infinispan:server:core", 7, 0, InfinispanSubsystemXMLReader_7_2.INSTANCE),
     INFINISPAN_SERVER_7_1("infinispan:server:core", 7, 1, InfinispanSubsystemXMLReader_7_2.INSTANCE),
