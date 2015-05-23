@@ -556,9 +556,6 @@
                         <c:simple-property name="remote-timeout" required="false" type="long" readOnly="true"
                                            default="17500"
                                            description="In SYNC mode, the timeout (in ms) used to wait for an acknowledgment when making a remote call, after which the call is aborted and an exception is thrown."/>
-                        <c:simple-property name="async-marshalling" required="false" type="boolean" readOnly="true"
-                                           defaultValue="false"
-                                           description="If enabled, this will cause marshalling of entries to be performed asynchronously. The default value is false."/>
                         <c:simple-property name="cache-availability" required="false" type="string" readOnly="false" default="AVAILABLE" description="The availability status of the cache.">
                             <c:property-options>
                                 <c:option value="AVAILABLE"/>

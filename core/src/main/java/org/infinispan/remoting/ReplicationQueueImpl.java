@@ -150,7 +150,7 @@ public class ReplicationQueueImpl implements ReplicationQueue {
             // send to all live caches in the cluster
             //default rpc options
             rpcManager.invokeRemotely(null, multipleRpcCommand,
-                                      rpcManager.getRpcOptionsBuilder(ResponseMode.getAsyncResponseMode(configuration))
+                                      rpcManager.getRpcOptionsBuilder(ResponseMode.ASYNCHRONOUS)
                                             .skipReplicationQueue(true).build());
          } catch (Throwable t) {
             log.failedReplicatingQueue(toReplicate.size(), t);

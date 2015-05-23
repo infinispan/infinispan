@@ -1440,12 +1440,6 @@ public class Parser80 implements ConfigurationParser {
          int index, Attribute attribute, String value, ConfigurationBuilder builder, CacheMode baseCacheMode)
          throws XMLStreamException {
       switch (attribute) {
-         case ASYNC_MARSHALLING: {
-            ClusteringConfigurationBuilder clustering = builder.clustering();
-            if (!clustering.cacheMode().isSynchronous())
-               clustering.async().asyncMarshalling(Boolean.parseBoolean(value));
-            break;
-         }
          case MODE: {
             Mode mode = Mode.valueOf(value);
             builder.clustering().cacheMode(mode.apply(baseCacheMode));

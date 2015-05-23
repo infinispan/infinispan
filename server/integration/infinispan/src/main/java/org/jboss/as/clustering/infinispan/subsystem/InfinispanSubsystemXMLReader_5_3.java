@@ -39,6 +39,7 @@ import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.parsing.ParseUtils;
 import org.jboss.dmr.ModelNode;
+import org.jboss.logging.Logger;
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
 
@@ -51,6 +52,7 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
  * @author Radoslav Husar
  */
 public final class InfinispanSubsystemXMLReader_5_3 implements XMLElementReader<List<ModelNode>> {
+    private static final Logger log = Logger.getLogger(InfinispanSubsystemXMLReader_5_3.class);
     public static final XMLElementReader<List<ModelNode>> INSTANCE = new InfinispanSubsystemXMLReader_5_3();
 
     /**
@@ -242,7 +244,7 @@ public final class InfinispanSubsystemXMLReader_5_3 implements XMLElementReader<
     private void parseClusteredCacheAttribute(XMLExtendedStreamReader reader, int index, Attribute attribute, String value, ModelNode cache) throws XMLStreamException {
         switch (attribute) {
             case ASYNC_MARSHALLING: {
-                ClusteredCacheResource.ASYNC_MARSHALLING.parseAndSetParameter(value, cache, reader);
+                log.warn("The async-marshalling attribute has been deprecated and has no effect, please update your configuration file.");
                 break;
             }
             case MODE: {

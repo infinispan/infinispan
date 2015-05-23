@@ -1338,4 +1338,8 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Memory approximation calculation for eviction is unsupported for the '%s' Java VM", id = 368)
    void memoryApproximationUnsupportedVM(String javaVM);
+
+   @LogMessage(level = WARN)
+   @Message(value = "Ignoring asyncMarshalling configuration", id = 369)
+   void ignoreAsyncMarshalling();
 }

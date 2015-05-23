@@ -28,29 +28,31 @@ public class AsyncConfigurationBuilder extends AbstractClusteringConfigurationCh
       attributes = AsyncConfiguration.attributeDefinitionSet();
    }
 
+
    /**
-    * Enable asynchronous marshalling. This allows the caller to return even quicker, but it can
-    * suffer from reordering of operations. You can find more information at <a
-    * href="https://docs.jboss.org/author/display/ISPN/Asynchronous+Options"
-    * >https://docs.jboss.org/author/display/ISPN/Asynchronous+Options</a>.
+    * @deprecated since 8.0
     */
+   @Deprecated
    public AsyncConfigurationBuilder asyncMarshalling() {
-      attributes.attribute(MARSHALLING).set(true);
-      return this;
-   }
-
-   public AsyncConfigurationBuilder asyncMarshalling(boolean async) {
-      attributes.attribute(MARSHALLING).set(async);
+      log.ignoreAsyncMarshalling();
       return this;
    }
 
    /**
-    * Enables synchronous marshalling. You can find more information at <a
-    * href="https://docs.jboss.org/author/display/ISPN/Asynchronous+Options"
-    * >https://docs.jboss.org/author/display/ISPN/Asynchronous+Options</a>.
+    * @deprecated since 8.0
     */
+   @Deprecated
+   public AsyncConfigurationBuilder asyncMarshalling(boolean async) {
+      log.ignoreAsyncMarshalling();
+      return this;
+   }
+
+   /**
+    * @deprecated since 8.0
+    */
+   @Deprecated
    public AsyncConfigurationBuilder syncMarshalling() {
-      attributes.attribute(MARSHALLING).set(false);
+      log.ignoreAsyncMarshalling();
       return this;
    }
 

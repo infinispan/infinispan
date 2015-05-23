@@ -270,7 +270,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
          isCoordinator = transport.isCoordinator();
          if (trace) {
-            log.tracef("Received new cluster view: %d, isCoordinator = %s, becameCoordinator = %s", (Object)newViewId,
+            log.tracef("Received new cluster view: %d, isCoordinator = %s, becameCoordinator = %s", newViewId,
                   isCoordinator, becameCoordinator);
          }
          mustRecoverClusterStatus |= mergeView || becameCoordinator;
@@ -523,7 +523,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       // invoke remotely
       try {
          DeliverOrder deliverOrder = totalOrder ? DeliverOrder.TOTAL : DeliverOrder.NONE;
-         transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, timeout, null,
+         transport.invokeRemotely(null, command, ResponseMode.ASYNCHRONOUS, timeout, null,
                                   deliverOrder, distributed);
       } catch (Exception e) {
          throw new CacheException("Failed to broadcast asynchronous command: " + command);

@@ -547,7 +547,7 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          Address coordinator = transport.getCoordinator();
          // ignore the responses
          transport.invokeRemotely(Collections.singleton(coordinator), command,
-                                  ResponseMode.ASYNCHRONOUS_WITH_SYNC_MARSHALLING, 0, null, DeliverOrder.NONE, false);
+                                  ResponseMode.ASYNCHRONOUS, 0, null, DeliverOrder.NONE, false);
       }
    }
 

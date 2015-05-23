@@ -129,8 +129,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       // add marshallable check interceptor for situations where we want to figure out before marshalling
       // Store as binary marshalls keys/values eagerly now, so avoid extra serialization
-      if (configuration.clustering().async().asyncMarshalling()
-            || configuration.clustering().async().useReplQueue() || hasAsyncStore())
+      if (configuration.clustering().async().useReplQueue() || hasAsyncStore())
          interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(), IsMarshallableInterceptor.class), false);
 
       // load the cache management interceptor next

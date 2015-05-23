@@ -56,11 +56,6 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
             .transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
       defineConfigurationOnAllManagers("replQueueCache", replQueue);
 
-      ConfigurationBuilder asyncMarshall = getDefaultClusteredCacheConfig(CacheMode.REPL_ASYNC, true);
-      asyncMarshall.clustering()
-            .async().asyncMarshalling(true)
-            .transaction().transactionManagerLookup(new DummyTransactionManagerLookup());
-      defineConfigurationOnAllManagers("asyncMarshallCache", asyncMarshall);
    }
 
    private TransactionManager beginTransaction() throws SystemException, NotSupportedException {
@@ -81,10 +76,6 @@ public class ReplicationExceptionTest extends MultipleCacheManagersTest {
 
    public void testNonSerializableReplQueue() throws Exception {
       doNonSerializableReplTest("replQueueCache");
-   }
-
-   public void testNonSerializableAsyncMarshalling() throws Exception {
-      doNonSerializableReplTest("asyncMarshallCache");
    }
 
    private void doNonSerializableReplTest(String cacheName) {

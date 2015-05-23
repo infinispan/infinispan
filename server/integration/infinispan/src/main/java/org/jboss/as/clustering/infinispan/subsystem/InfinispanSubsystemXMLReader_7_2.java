@@ -376,7 +376,7 @@ public final class InfinispanSubsystemXMLReader_7_2 implements XMLElementReader<
     private void parseClusteredCacheAttribute(XMLExtendedStreamReader reader, int index, Attribute attribute, String value, ModelNode cache) throws XMLStreamException {
         switch (attribute) {
             case ASYNC_MARSHALLING: {
-                ClusteredCacheResource.ASYNC_MARSHALLING.parseAndSetParameter(value, cache, reader);
+                log.warn("The async-marshalling attribute has been deprecated and has no effect, please update your configuration file.");
                 break;
             }
             case MODE: {

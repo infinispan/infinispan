@@ -419,11 +419,12 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    }
 
    private ResponseMode getResponseMode(boolean sync) {
-      return sync ? ResponseMode.SYNCHRONOUS : ResponseMode.getAsyncResponseMode(configuration);
+      return sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS;
    }
 
    // -------------------------------------------- JMX information -----------------------------------------------
 
+   @Override
    @ManagedOperation(description = "Resets statistics gathered by this component", displayName = "Reset statistics")
    public void resetStatistics() {
       replicationCount.set(0);
@@ -460,6 +461,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    /**
     * @deprecated We already have an attribute, we shouldn't have an operation for the same thing.
     */
+   @Override
    @Deprecated
    @ManagedOperation(displayName = "Enable/disable statistics. Deprecated, use the statisticsEnabled attribute instead.")
    public void setStatisticsEnabled(@Parameter(name = "enabled", description = "Whether statistics should be enabled or disabled (true/false)") boolean statisticsEnabled) {
@@ -537,7 +539,7 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
 
    @Override
    public RpcOptions getDefaultRpcOptions(boolean sync, DeliverOrder deliverOrder) {
-      return getRpcOptionsBuilder(sync ? ResponseMode.SYNCHRONOUS : ResponseMode.getAsyncResponseMode(configuration),
+      return getRpcOptionsBuilder(sync ? ResponseMode.SYNCHRONOUS : ResponseMode.ASYNCHRONOUS,
                                   deliverOrder).build();
    }
 

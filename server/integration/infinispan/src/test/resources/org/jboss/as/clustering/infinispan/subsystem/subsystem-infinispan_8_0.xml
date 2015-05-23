@@ -37,7 +37,7 @@
             </rest-store>
             <indexing index="LOCAL" />
         </local-cache>
-        <invalidation-cache name="invalid" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER" async-marshalling="true"  statistics="true">
+        <invalidation-cache name="invalid" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER" statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_UNCOMMITTED" striping="true"/>
             <transaction mode="NON_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction size="20000" strategy="LRU" type="MEMORY"/>
@@ -49,7 +49,7 @@
             </remote-store>
             <indexing index="NONE" />
         </invalidation-cache>
-        <replicated-cache name="repl" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER"  async-marshalling="false" statistics="false">
+        <replicated-cache name="repl" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="SERIALIZABLE" striping="true"/>
             <transaction mode="NON_DURABLE_XA" stop-timeout="60000" locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="FIFO"/>
@@ -63,7 +63,7 @@
             </store>
             <indexing index="LOCAL" auto-config="true"/>
         </replicated-cache>
-        <replicated-cache name="repl2" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER"  async-marshalling="false" statistics="true">
+        <replicated-cache name="repl2" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER" statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="SERIALIZABLE" striping="true"/>
             <transaction mode="NON_DURABLE_XA" stop-timeout="60000" locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="FIFO"/>
@@ -73,7 +73,7 @@
             <store name="duplicate-loader" class="org.jboss.as.clustering.infinispan.subsystem.CustomCacheLoader" shared="false" preload="false"/>
             <indexing index="LOCAL" auto-config="true"/>
         </replicated-cache>
-        <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="20" async-marshalling="true" statistics="false">
+        <distributed-cache name="dist" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4" remote-timeout="35000" start="EAGER" segments="20" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED" striping="true"/>
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="UNORDERED"/>
@@ -117,7 +117,7 @@
         </distributed-cache>
         <distributed-cache name="dist2" mode="SYNC" batching="false" l1-lifespan="1200000" owners="4"
                            remote-timeout="35000" start="EAGER" segments="20" capacity-factor="2.0"
-                           async-marshalling="true" statistics="true">
+                           statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_COMMITTED" striping="true"/>
             <transaction mode="FULL_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
             <eviction max-entries="20000" strategy="UNORDERED"/>

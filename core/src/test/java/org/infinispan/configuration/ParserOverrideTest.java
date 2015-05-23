@@ -27,7 +27,7 @@ public class ParserOverrideTest {
       final String cacheName = "asyncRepl";
       String xml1 = InfinispanStartTag.LATEST + JGROUPS_CONFIG +
             "<cache-container name=\"1\" default-cache=\"" + cacheName + "\">" +
-            "   <replicated-cache name=\"" + cacheName + "\" mode=\"ASYNC\" async-marshalling=\"false\">\n" +
+            "   <replicated-cache name=\"" + cacheName + "\" mode=\"ASYNC\" >\n" +
             "      <state-transfer enabled=\"false\"/>\n" +
             "      <locking isolation=\"REPEATABLE_READ\" concurrency-level=\"1000\" acquire-timeout=\"20000\"/>\n" +
             "      <store-as-binary/>\n" +

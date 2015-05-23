@@ -375,10 +375,6 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
 
     private void parseClusteredCacheAttribute(XMLExtendedStreamReader reader, int index, Attribute attribute, String value, ModelNode cache) throws XMLStreamException {
         switch (attribute) {
-            case ASYNC_MARSHALLING: {
-                ClusteredCacheResource.ASYNC_MARSHALLING.parseAndSetParameter(value, cache, reader);
-                break;
-            }
             case MODE: {
                 // note the use of ClusteredCacheAdd.MODE
                 ClusteredCacheResource.MODE.parseAndSetParameter(value, cache, reader);
