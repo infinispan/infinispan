@@ -13,18 +13,15 @@ import org.infinispan.remoting.ReplicationQueueImpl;
  *
  */
 public class AsyncConfiguration {
-
-   public static final AttributeDefinition<Boolean> MARSHALLING  = AttributeDefinition.builder("asyncMarshalling", false).immutable().build();
    public static final AttributeDefinition<ReplicationQueue> REPLICATION_QUEUE  = AttributeDefinition.<ReplicationQueue>builder("replicationQueue", null, ReplicationQueue.class).immutable().build();
    public static final AttributeDefinition<Long> REPLICATION_QUEUE_INTERVAL = AttributeDefinition.builder("replicationQueueInterval", 10l).build();
    public static final AttributeDefinition<Integer> REPLICATION_QUEUE_MAX_ELEMENTS  = AttributeDefinition.builder("replicationQueueMaxElements", 1000).build();
    public static final AttributeDefinition<Boolean> USE_REPLICATION_QUEUE = AttributeDefinition.builder("useReplicationQueue", false).immutable().build();
 
    static final AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AsyncConfiguration.class, MARSHALLING, REPLICATION_QUEUE, REPLICATION_QUEUE_INTERVAL, REPLICATION_QUEUE_MAX_ELEMENTS, USE_REPLICATION_QUEUE);
+      return new AttributeSet(AsyncConfiguration.class, REPLICATION_QUEUE, REPLICATION_QUEUE_INTERVAL, REPLICATION_QUEUE_MAX_ELEMENTS, USE_REPLICATION_QUEUE);
    }
 
-   private final Attribute<Boolean> marshalling;
    private final Attribute<ReplicationQueue> replicationQueue;
    private final Attribute<Long> replicationQueueInterval;
    private final Attribute<Integer> replicationQueueMaxElements;
@@ -35,21 +32,19 @@ public class AsyncConfiguration {
 
    AsyncConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
-      marshalling = attributes.attribute(MARSHALLING);
       replicationQueue = attributes.attribute(REPLICATION_QUEUE);
       replicationQueueInterval = attributes.attribute(REPLICATION_QUEUE_INTERVAL);
       replicationQueueMaxElements = attributes.attribute(REPLICATION_QUEUE_MAX_ELEMENTS);
       useReplicationQueue = attributes.attribute(USE_REPLICATION_QUEUE);
    }
 
+
    /**
-    * Asynchronous marshalling allows the caller to return even quicker, but it can
-    * suffer from reordering of operations. You can find more information at <a
-    * href="https://docs.jboss.org/author/display/ISPN/Asynchronous+Options"
-    * >https://docs.jboss.org/author/display/ISPN/Asynchronous+Options</a>.
+    * Async marshalling has been removed
     */
+   @Deprecated
    public boolean asyncMarshalling() {
-      return marshalling.get();
+      return false;
    }
 
    /**

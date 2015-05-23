@@ -47,7 +47,6 @@ public abstract class ClusteredCacheAdd extends CacheAdd {
         super.populate(fromModel, toModel);
 
         ClusteredCacheResource.MODE.validateAndSet(fromModel, toModel);
-        ClusteredCacheResource.ASYNC_MARSHALLING.validateAndSet(fromModel, toModel);
         ClusteredCacheResource.QUEUE_SIZE.validateAndSet(fromModel, toModel);
         ClusteredCacheResource.QUEUE_FLUSH_INTERVAL.validateAndSet(fromModel, toModel);
         ClusteredCacheResource.REMOTE_TIMEOUT.validateAndSet(fromModel, toModel);
@@ -75,7 +74,6 @@ public abstract class ClusteredCacheAdd extends CacheAdd {
         final long remoteTimeout = ClusteredCacheResource.REMOTE_TIMEOUT.resolveModelAttribute(context, cache).asLong();
         final int queueSize = ClusteredCacheResource.QUEUE_SIZE.resolveModelAttribute(context, cache).asInt();
         final long queueFlushInterval = ClusteredCacheResource.QUEUE_FLUSH_INTERVAL.resolveModelAttribute(context, cache).asLong();
-        final boolean asyncMarshalling = ClusteredCacheResource.ASYNC_MARSHALLING.resolveModelAttribute(context, cache).asBoolean();
 
         // adjust the cache mode used based on the value of clustered attribute MODE
         CacheMode cacheMode = mode.apply(this.mode);
@@ -88,10 +86,6 @@ public abstract class ClusteredCacheAdd extends CacheAdd {
             builder.clustering().async().useReplQueue(queueSize > 0);
             builder.clustering().async().replQueueMaxElements(queueSize);
             builder.clustering().async().replQueueInterval(queueFlushInterval);
-            if(asyncMarshalling)
-                builder.clustering().async().asyncMarshalling();
-            else
-                builder.clustering().async().syncMarshalling();
         }
     }
 }

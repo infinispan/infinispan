@@ -211,7 +211,6 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.invocationBatching().enabled());
       assertEquals(10, c.clustering().async().replQueueInterval());
       assertEquals(1000, c.clustering().async().replQueueMaxElements());
-      assertTrue(c.clustering().async().asyncMarshalling());
       assertTrue(c.jmxStatistics().enabled());
       assertEquals(30500, c.locking().lockAcquisitionTimeout());
       assertEquals(2500, c.locking().concurrencyLevel());

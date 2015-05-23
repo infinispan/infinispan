@@ -528,7 +528,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             throw new SuspectException("One or more nodes have left the cluster while replicating command " + rpcCommand);
          }
       }
-      boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
 
       List<org.jgroups.Address> jgAddressList = toJGroupsAddressListExcludingSelf(recipients, totalOrder);
       int membersSize = members.size();
@@ -540,10 +539,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
       if (broadcast) {
          rsps = dispatcher.broadcastRemoteCommands(rpcCommand, toJGroupsMode(mode), timeout,
-                                                   toJGroupsFilter(responseFilter), deliverOrder, asyncMarshalling, ignoreLeavers);
+                                                   toJGroupsFilter(responseFilter), deliverOrder, ignoreLeavers);
       } else if (totalOrder) {
          rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
-                                                toJGroupsFilter(responseFilter), deliverOrder, asyncMarshalling, ignoreLeavers);
+                                                toJGroupsFilter(responseFilter), deliverOrder, ignoreLeavers);
       } else {
          if (jgAddressList == null || !jgAddressList.isEmpty()) {
             boolean singleRecipient = !ignoreLeavers && jgAddressList != null && jgAddressList.size() == 1;
@@ -559,10 +558,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
                if (singleRecipient) {
                   if (singleJGAddress == null) singleJGAddress = jgAddressList.get(0);
                   singleResponse = dispatcher.invokeRemoteCommand(singleJGAddress, rpcCommand, toJGroupsMode(mode), timeout,
-                                                                  deliverOrder, asyncMarshalling);
+                                                                  deliverOrder);
                } else {
                   rsps = dispatcher.invokeRemoteCommands(jgAddressList, rpcCommand, toJGroupsMode(mode), timeout,
-                                                         toJGroupsFilter(responseFilter), deliverOrder, asyncMarshalling, ignoreLeavers);
+                                                         toJGroupsFilter(responseFilter), deliverOrder, ignoreLeavers);
                }
             }
          }
@@ -619,12 +618,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
             forJGroups.put(toJGroupsAddress(entry.getKey()), entry.getValue());
          }
       }
-      boolean asyncMarshalling = mode == ResponseMode.ASYNCHRONOUS;
       if (!usePriorityQueue && (ResponseMode.SYNCHRONOUS == mode || ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS == mode))
          usePriorityQueue = true;
 
       RspList<Object> rsps = dispatcher.invokeRemoteCommands(forJGroups, toJGroupsMode(mode), timeout,
-               usePriorityQueue, asyncMarshalling, ignoreLeavers);
+               usePriorityQueue, ignoreLeavers);
 
       if (mode.isAsynchronous() || rsps == null)
          return InfinispanCollections.emptyMap();// async case
@@ -684,7 +682,6 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    private static org.jgroups.blocks.ResponseMode toJGroupsMode(ResponseMode mode) {
       switch (mode) {
          case ASYNCHRONOUS:
-         case ASYNCHRONOUS_WITH_SYNC_MARSHALLING:
             return org.jgroups.blocks.ResponseMode.GET_NONE;
          case SYNCHRONOUS:
          case SYNCHRONOUS_IGNORE_LEAVERS:

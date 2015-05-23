@@ -204,7 +204,7 @@
 
    <!-- A typical, asynchronously replicated, clustered cache -->
    <!--
-   <replicated-cache name="asyncCache" mode="ASYNC" async-marshalling="true"/>
+   <replicated-cache name="asyncCache" mode="ASYNC" />
    -->
 
    <!--

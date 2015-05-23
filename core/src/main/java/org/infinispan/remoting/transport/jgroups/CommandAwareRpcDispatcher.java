@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -127,7 +126,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       } else if (oob) {
          deliverOrder = DeliverOrder.NONE;
       }
-      return invokeRemoteCommands(recipients, command, mode, timeout, filter, deliverOrder, asyncMarshalling, ignoreLeavers);
+      return invokeRemoteCommands(recipients, command, mode, timeout, filter, deliverOrder, ignoreLeavers);
    }
 
    /**
@@ -135,80 +134,56 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
     */
    public RspList<Object> invokeRemoteCommands(final List<Address> recipients, final ReplicableCommand command,
                                                final ResponseMode mode, final long timeout, final RspFilter filter,
-                                               final DeliverOrder deliverOrder, boolean asyncMarshalling,
-                                               final boolean ignoreLeavers) throws InterruptedException {
-      if (asyncMarshalling) {
-         asyncExecutor.submit(new Callable<RspList<Object>>() {
-            @Override
-            public RspList<Object> call() throws Exception {
-               return processCalls(command, recipients == null, timeout, filter, recipients, mode, deliverOrder,
-                                   req_marshaller, CommandAwareRpcDispatcher.this, ignoreLeavers);
-            }
-         });
-         return null; // don't wait for a response!
-      } else {
-         RspList<Object> response;
-         try {
-            response = processCalls(command, recipients == null, timeout, filter, recipients, mode, deliverOrder,
-                                    req_marshaller, this, ignoreLeavers);
-         } catch (InterruptedException e) {
-            throw e;
-         } catch (SuspectedException e) {
-            throw new SuspectException("One of the nodes " + recipients + " was suspected", e);
-         } catch (org.jgroups.TimeoutException e) {
-            throw new TimeoutException("One of the nodes " + recipients + " timed out", e);
-         } catch (Exception e) {
-            throw rewrapAsCacheException(e);
-         }
-         if (mode == ResponseMode.GET_NONE) return null; // "Traditional" async.
-         if (response.isEmpty() || containsOnlyNulls(response))
-            return null;
-         else
-            return response;
+                                               final DeliverOrder deliverOrder, final boolean ignoreLeavers) throws InterruptedException {
+      RspList<Object> response;
+      try {
+         response = processCalls(command, recipients == null, timeout, filter, recipients, mode, deliverOrder,
+                                 req_marshaller, this, ignoreLeavers);
+      } catch (InterruptedException e) {
+         throw e;
+      } catch (SuspectedException e) {
+         throw new SuspectException("One of the nodes " + recipients + " was suspected", e);
+      } catch (org.jgroups.TimeoutException e) {
+         throw new TimeoutException("One of the nodes " + recipients + " timed out", e);
+      } catch (Exception e) {
+         throw rewrapAsCacheException(e);
       }
+      if (mode == ResponseMode.GET_NONE) return null; // "Traditional" async.
+      if (response.isEmpty() || containsOnlyNulls(response))
+         return null;
+      else
+         return response;
    }
 
    /**
     * Runs a command on each node for each entry in the provided map.
-    * NOTE: if ignoreLeavers is true and the node is suspected while executing this 
+    * NOTE: if ignoreLeavers is true and the node is suspected while executing this
     * method will return a RspList containing for that node a value of ExceptionResponse
     * containing the SuspectException
-    * 
+    *
     * @param commands The commands and where to run them
     * @param mode The response mode to determine how many members must return
     * @param timeout How long to wait before timing out
     * @param oob Whether these should be submitted using out of band thread pool
-    * @param asyncMarshalling If marshalling should be done asynchronously
     * @param ignoreLeavers Whether to ignore leavers.  If this is true and a node leaves
     *        it will send back a response of SuspectException
     * @return The responses that came back in the provided time
     * @throws InterruptedException
     */
    public RspList<Object> invokeRemoteCommands(final Map<Address, ReplicableCommand> commands, final ResponseMode mode, final long timeout,
-                                               final boolean oob, boolean asyncMarshalling, final boolean ignoreLeavers) throws InterruptedException {
-      if (asyncMarshalling) {
-         asyncExecutor.submit(new Callable<RspList<Object>>() {
-            @Override
-            public RspList<Object> call() throws Exception {
-               return processCalls(commands, timeout, mode, req_marshaller,
-                     CommandAwareRpcDispatcher.this, oob, ignoreLeavers);
-            }
-         });
-         return null; // don't wait for a response!
-      } else {
-         try {
-            return processCalls(commands, timeout, mode,
-                  req_marshaller, this, oob, ignoreLeavers);
-         } catch (InterruptedException e) {
-            throw e;
-         } catch (SuspectedException e) {
-            throw new SuspectException("One of the nodes " + commands.keySet() + " was suspected", e);
-         } catch (org.jgroups.TimeoutException e) {
-            // TODO consider ignoreTimeout flag
-            throw new TimeoutException("One of the nodes " + commands.keySet() + " timed out", e);
-         } catch (Exception e) {
-            throw rewrapAsCacheException(e);
-         }
+                                               final boolean oob, final boolean ignoreLeavers) throws InterruptedException {
+      try {
+         return processCalls(commands, timeout, mode,
+               req_marshaller, this, oob, ignoreLeavers);
+      } catch (InterruptedException e) {
+         throw e;
+      } catch (SuspectedException e) {
+         throw new SuspectException("One of the nodes " + commands.keySet() + " was suspected", e);
+      } catch (org.jgroups.TimeoutException e) {
+         // TODO consider ignoreTimeout flag
+         throw new TimeoutException("One of the nodes " + commands.keySet() + " timed out", e);
+      } catch (Exception e) {
+         throw rewrapAsCacheException(e);
       }
    }
 
@@ -218,40 +193,28 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
     */
    @Deprecated
    public Response invokeRemoteCommand(final Address recipient, final ReplicableCommand command, final ResponseMode mode,
-                                       final long timeout, final boolean oob,
-                                       boolean asyncMarshalling) throws InterruptedException {
-      return invokeRemoteCommand(recipient, command, mode, timeout, oob ? DeliverOrder.NONE : DeliverOrder.PER_SENDER, asyncMarshalling);
+                                       final long timeout, final boolean oob) throws InterruptedException {
+      return invokeRemoteCommand(recipient, command, mode, timeout, oob ? DeliverOrder.NONE : DeliverOrder.PER_SENDER);
    }
 
    public Response invokeRemoteCommand(final Address recipient, final ReplicableCommand command, final ResponseMode mode,
-                                       final long timeout, final DeliverOrder deliverOrder, boolean asyncMarshalling) throws InterruptedException {
-      if (asyncMarshalling) {
-         asyncExecutor.submit(new Callable<Response>() {
-
-            @Override
-            public Response call() throws Exception {
-               return processSingleCall(command, timeout, recipient, mode, deliverOrder,
-                                        req_marshaller, CommandAwareRpcDispatcher.this, transport);
-            }
-         });
-         return null; // don't wait for a response!
-      } else {
-         Response response;
-         try {
-            response = processSingleCall(command, timeout, recipient, mode, deliverOrder,
-                                         req_marshaller, this, transport);
-         } catch (InterruptedException e) {
-            throw e;
-         } catch (SuspectedException e) {
-            throw new SuspectException("Node " + recipient + " was suspected", e);
-         } catch (org.jgroups.TimeoutException e) {
-            throw new TimeoutException("Node " + recipient + " timed out", e);
-         } catch (Exception e) {
-            throw rewrapAsCacheException(e);
-         }
-         if (mode == ResponseMode.GET_NONE) return null; // "Traditional" async.
-         return response;
+                                       final long timeout, final DeliverOrder deliverOrder) throws InterruptedException {
+      Response response;
+      try {
+         response = processSingleCall(command, timeout, recipient, mode, deliverOrder,
+                                      req_marshaller, this, transport);
+      } catch (InterruptedException e) {
+         throw e;
+      } catch (SuspectedException e) {
+         throw new SuspectException("Node " + recipient + " was suspected", e);
+      } catch (org.jgroups.TimeoutException e) {
+         throw new TimeoutException("Node " + recipient + " timed out", e);
+      } catch (Exception e) {
+         throw rewrapAsCacheException(e);
       }
+      if (mode == ResponseMode.GET_NONE) return null; // "Traditional" async.
+      return response;
+
    }
 
    /**
@@ -262,7 +225,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
    @Deprecated
    public RspList<Object> broadcastRemoteCommands(ReplicableCommand command, ResponseMode mode, long timeout,
                                                   boolean oob, RspFilter filter,
-                                                  boolean asyncMarshalling, boolean ignoreLeavers, boolean totalOrder)
+                                                  boolean ignoreLeavers, boolean totalOrder)
          throws InterruptedException {
       DeliverOrder deliverOrder = DeliverOrder.PER_SENDER;
       if (totalOrder) {
@@ -270,14 +233,13 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       } else if (oob) {
          deliverOrder = DeliverOrder.NONE;
       }
-      return broadcastRemoteCommands(command, mode, timeout, filter, deliverOrder, asyncMarshalling, ignoreLeavers);
+      return broadcastRemoteCommands(command, mode, timeout, filter, deliverOrder, ignoreLeavers);
    }
 
    public RspList<Object> broadcastRemoteCommands(ReplicableCommand command, ResponseMode mode, long timeout,
-                                                  RspFilter filter, DeliverOrder deliverOrder, boolean asyncMarshalling,
+                                                  RspFilter filter, DeliverOrder deliverOrder,
                                                   boolean ignoreLeavers) throws InterruptedException {
-      return invokeRemoteCommands(null, command, mode, timeout, filter, deliverOrder, asyncMarshalling,
-                                  ignoreLeavers);
+      return invokeRemoteCommands(null, command, mode, timeout, filter, deliverOrder, ignoreLeavers);
    }
 
    private boolean containsOnlyNulls(RspList<Object> l) {

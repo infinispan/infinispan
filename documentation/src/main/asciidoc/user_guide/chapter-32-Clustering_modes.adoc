@@ -570,64 +570,6 @@ to use asynchronous communication. What this means is that JGroups will send any
 replication/distribution/invalidation request to the wire but will not wait for a reply
 from the receiver.
 
-==== Asynchronous Marshalling
-This is a configurable boolean property of
-link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<[replicated|distributed|invalidation]-cache />`]
-element that indicates whether the actual call from Infinispan to the JGroups layer is
-done on a separate thread or not.
-When set to true, once Infinispan has figured out that a request needs to be sent to
-another node, it submits it to the async transport executor so that it can talk to the
-underlying JGroups layer.
-
-With asynchronous marshalling, Infinispan requests can return back to the client quicker
-compared to when async marshalling is set to false.
-The downside though is that client requests can be reordered before they have reached the
-JGroups layer.
-In other words, JGroups provides ordering guarantees even for async messages but with
-async marshalling turned on, requests can reach the JGroups in a different order in which
-they're called.
-This can effectively lead to data consistency issues in applications making multiple
-modifications on the same key/value pair.
-For example, with async marshalling turned on:
-
-App calls:
-
-[source,java]
-----
-cache.put("car", "bmw");
-cache.remove("car");
-
-----
-
-Other nodes could receive these operations in this order:
-
-[source,java]
-----
-cache.remove("car");
-cache.put("car", "bmw");
-
-----
-
-The end result is clearly different which is often not desirable.
-So, if your application makes multiple modifications on the same key, you should either:
-turn off asynchronous marshalling, or set a custom executor via
-link:http://docs.jboss.org/infinispan/{infinispanversion}/configdocs/infinispan-config-{infinispanversion}.html[`<transport executor="custom" />`]
-element and define the executor's max-threads to 1 in the _<threads>_ section.
-The first modification only applies to a particular named cache, whereas the second option
-affects all named caches in configuration file that are configured with async marshalling.
-It's worth noting though that having this type of executor configured with a single thread
-would defeat its purpose adding unnecessary contention point.
-It'd be better to simply switch off async marshalling.
-
-On the contrary, if your application only ever makes one modification per key/value pair
-and there's no happens-before relationship between them, then async marshalling is a very
-valid optimization that can increase performance of your application without data
-consistency risks.
-
-If you have async marshalling turned on and see exceptions related to
-java.util.concurrent.RejectedExecutionException, you should also consider switching off
-async marshalling.
-
 ==== Replication Queue
 The aim of the replication queue is to batch the individual cache operations and send them
 as one, as opposed to sending each cache operation individually.
@@ -644,7 +586,7 @@ takes less for data to arrive to other nodes.
 Finally, the <<_asynchronous_api, Asynchronous API>> can be used to emulate non-blocking
 APIs, whereby calls are handed over to a different thread and asynchronous API calls
 return to the client immediately.
-Similar to async marshalling, using this API can lead to reordering, so you should avoid
+Using this API can lead to reordering, so you should avoid
 calling modifying asynchronous methods on the same keys.
 
 ==== Return Values

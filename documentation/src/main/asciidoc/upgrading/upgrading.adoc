@@ -7,6 +7,12 @@ Manik Surtani, Mircea Markus, Galder Zamarreño, Pete Muir, and others from the 
 
 This guide walks you through the process of upgrading Infinispan.
 
+== Upgrading from 7.x to 8.0
+=== Configuration changes
+==== Removeal of Async Marshalling
+Async marshalling has been entirely dropped since it was never reliable enough. The "async-marshalling" attribute has been removed from the 8.0 XML schema and will be ignored when parsing 7.x configuration files. The programmatic configuration methods related to asyncMarshalling/syncMarshalling are now deprecated and have no effect aside from producing a WARN message in the logs.
+
+
 == Upgrading from 6.0 to 7.0
 === API Changes
 

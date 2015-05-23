@@ -18,7 +18,7 @@
             <store-as-binary/>
             <state-transfer enabled="false" timeout="240000" chunk-size="10000"/>
         </replicated-cache>
-        <replicated-cache name="asyncCache" async-marshalling="true" mode="ASYNC"/>
+        <replicated-cache name="asyncCache" mode="ASYNC"/>
     </cache-container>
 
 </infinispan>

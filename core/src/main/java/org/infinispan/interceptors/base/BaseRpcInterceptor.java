@@ -134,7 +134,7 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
          }
          return responseMap;
       } else {
-         RpcOptionsBuilder builder = rpcManager.getRpcOptionsBuilder(ResponseMode.getAsyncResponseMode(cacheConfiguration),
+         RpcOptionsBuilder builder = rpcManager.getRpcOptionsBuilder(ResponseMode.ASYNCHRONOUS,
                                                                      DeliverOrder.TOTAL);
          return rpcManager.invokeRemotely(recipients, prepareCommand, builder.build());
       }
