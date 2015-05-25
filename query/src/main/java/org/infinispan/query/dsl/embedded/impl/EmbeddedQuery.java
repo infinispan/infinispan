@@ -23,7 +23,7 @@ import java.util.PriorityQueue;
  * @author anistor@redhat,com
  * @since 7.0
  */
-public class EmbeddedQuery extends BaseQuery {
+public final class EmbeddedQuery extends BaseQuery {
 
    private static final int INITIAL_CAPACITY = 1000;
 
