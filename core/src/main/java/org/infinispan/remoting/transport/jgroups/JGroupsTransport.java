@@ -193,6 +193,11 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
    protected void startJGroupsChannelIfNeeded() {
       String clusterName = configuration.transport().clusterName();
+
+      // This might be one of the FORK channels trying to do the connect(), so take that
+      // into account otherwise we have missed accepting a view
+      boolean alreadyConnected = channel.isConnected();
+
       if (connectChannel) {
          try {
             channel.connect(clusterName);
@@ -216,10 +221,13 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
          }
       }
       address = fromJGroupsAddress(channel.getAddress());
-      if (!connectChannel) {
-         // the channel was already started externally, we need to initialize our member list
+
+      // If the channel was already started externally or by another FORK channel,
+      // we need to initialize our member list
+      if (alreadyConnected) {
          viewAccepted(channel.getView());
       }
+
       if (log.isInfoEnabled())
          log.localAndPhysicalAddress(clusterName, getAddress(), getPhysicalAddresses());
    }
