@@ -12,9 +12,10 @@ import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.Eviction;
 import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.EvictionListener;
-import org.infinispan.container.entries.ByteArrayCacheEntrySizeCalculator;
+import org.infinispan.commons.util.concurrent.jdk8backported.EntrySizeCalculator;
 import org.infinispan.container.entries.CacheEntrySizeCalculator;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MarshalledValueEntrySizeCalculator;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.eviction.EvictionManager;
 import org.infinispan.eviction.EvictionStrategy;
@@ -109,12 +110,33 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
          default:
             throw new IllegalArgumentException("No such eviction strategy " + strategy);
       }
-      BoundedEquivalentConcurrentHashMapV8.EntrySizeCalculator<K, InternalCacheEntry<K, V>> sizeCalculator =
+      EntrySizeCalculator<K, InternalCacheEntry<K, V>> sizeCalculator =
             thresholdPolicy == EvictionType.MEMORY ? new CacheEntrySizeCalculator<>(
-                  (BoundedEquivalentConcurrentHashMapV8.EntrySizeCalculator<K, V>) new ByteArrayCacheEntrySizeCalculator()) : null;
+                    new MarshalledValueEntrySizeCalculator()) : null;
 
       entries = new BoundedEquivalentConcurrentHashMapV8<>(thresholdSize, eviction, evictionListener, keyEquivalence,
               AnyEquivalence.getInstance(), sizeCalculator);
+   }
+
+   protected DefaultDataContainer(int concurrencyLevel, long thresholdSize,
+                                  EvictionStrategy strategy, EvictionThreadPolicy policy,
+                                  Equivalence<? super K> keyEquivalence,
+                                  EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
+      DefaultEvictionListener evictionListener;
+      // translate eviction policy and strategy
+      switch (policy) {
+         case PIGGYBACK:
+         case DEFAULT:
+            evictionListener = new DefaultEvictionListener();
+            break;
+         default:
+            throw new IllegalArgumentException("No such eviction thread policy " + strategy);
+      }
+
+      EntrySizeCalculator<K, InternalCacheEntry<K, V>> calc = new CacheEntrySizeCalculator<>(sizeCalculator);
+
+      entries = new BoundedEquivalentConcurrentHashMapV8<>(thresholdSize, Eviction.LRU, evictionListener, keyEquivalence,
+              AnyEquivalence.getInstance(), calc);
    }
 
    @Inject
@@ -133,6 +155,14 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
             Equivalence<? super K> keyEquivalence, EvictionType thresholdPolicy) {
       return new DefaultDataContainer<>(concurrencyLevel, maxEntries, strategy,
             thredPolicy, keyEquivalence, thresholdPolicy);
+   }
+
+   public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
+                                                                        EvictionStrategy strategy, EvictionThreadPolicy thredPolicy,
+                                                                        Equivalence<? super K> keyEquivalence,
+                                                                        EntrySizeCalculator<? super K, ? super V> sizeCalculator) {
+      return new DefaultDataContainer<>(concurrencyLevel, maxEntries, strategy,
+              thredPolicy, keyEquivalence, sizeCalculator);
    }
 
    public static <K, V> DefaultDataContainer<K, V> unBoundedDataContainer(int concurrencyLevel,

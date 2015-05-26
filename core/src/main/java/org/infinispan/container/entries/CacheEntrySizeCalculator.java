@@ -1,7 +1,7 @@
 package org.infinispan.container.entries;
 
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.AbstractSizeCalculatorHelper;
-import org.infinispan.commons.util.concurrent.jdk8backported.BoundedEquivalentConcurrentHashMapV8.EntrySizeCalculator;
+import org.infinispan.commons.util.concurrent.jdk8backported.AbstractEntrySizeCalculatorHelper;
+import org.infinispan.commons.util.concurrent.jdk8backported.EntrySizeCalculator;
 import org.infinispan.container.entries.metadata.MetadataImmortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataMortalCacheEntry;
 import org.infinispan.container.entries.metadata.MetadataTransientCacheEntry;
@@ -18,12 +18,12 @@ import org.infinispan.metadata.Metadata;
  * @author William Burns
  * @since 8.0
  */
-public class CacheEntrySizeCalculator<K, V> extends AbstractSizeCalculatorHelper<K, InternalCacheEntry<K, V>> {
-   private final EntrySizeCalculator<? super K, ? super V> calculator;
-
+public class CacheEntrySizeCalculator<K, V> extends AbstractEntrySizeCalculatorHelper<K, InternalCacheEntry<K, V>> {
    public CacheEntrySizeCalculator(EntrySizeCalculator<? super K, ? super V> calculator) {
       this.calculator = calculator;
    }
+
+   private final EntrySizeCalculator<? super K, ? super V> calculator;
 
    @Override
    public long calculateSize(K key, InternalCacheEntry<K, V> ice) {
@@ -88,6 +88,8 @@ public class CacheEntrySizeCalculator<K, V> extends AbstractSizeCalculatorHelper
             metadataSize = roundUpToNearest8(metadataSize);
             // This is for the NumericVersion and the long inside of it
             metadataSize += OBJECT_SIZE + POINTER_SIZE + 8;
+            metadataSize = roundUpToNearest8(metadataSize);
+         } else {
             metadataSize = roundUpToNearest8(metadataSize);
          }
       }
