@@ -49,11 +49,6 @@ public final class GetCacheEntryCommand extends AbstractDataCommand implements R
          return null;
       }
 
-      if (entry instanceof InternalCacheEntry) {
-         InternalCacheEntry ice = (InternalCacheEntry) entry;
-         if (ice.isL1Entry()) setRemotelyFetchedValue(ice);
-      }
-
       return entryFactory.copy(entry);
    }
 
