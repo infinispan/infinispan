@@ -14,7 +14,6 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
