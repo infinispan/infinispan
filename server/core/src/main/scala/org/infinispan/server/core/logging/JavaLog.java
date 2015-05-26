@@ -96,4 +96,9 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @LogMessage(level = WARN)
    @Message(value = "Server endpoint topology is empty, and cluster members are %s", id = 5021)
    void serverEndpointTopologyEmpty(String clusterMembers);
+
+   @LogMessage(level = ERROR)
+   @Message(value = "Exception writing response with message id %s", id = 5022)
+   void errorWritingResponse(long msgId, @Cause Throwable t);
+
 }

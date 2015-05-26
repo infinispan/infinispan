@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.test;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -58,8 +57,13 @@ public abstract class MultiHotRodServersTest extends MultipleCacheManagersTest {
       clientBuilder.addServer()
             .host("localhost")
             .port(serverPort)
+            .maxRetries(maxRetries())
             .pingOnStartup(false);
       return clientBuilder;
+   }
+
+   protected int maxRetries() {
+      return 0;
    }
 
    @AfterMethod(alwaysRun = true)
