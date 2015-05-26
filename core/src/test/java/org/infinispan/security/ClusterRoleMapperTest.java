@@ -17,7 +17,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups="functional", testName="security.ClusterPrincipalMapperTest")
+@Test(groups="functional", testName="security.ClusterRoleMapperTest")
 public class ClusterRoleMapperTest extends SingleCacheManagerTest {
    static final Subject ADMIN = TestingUtil.makeSubject("admin");
    static final Subject SUBJECT_A = TestingUtil.makeSubject("A");

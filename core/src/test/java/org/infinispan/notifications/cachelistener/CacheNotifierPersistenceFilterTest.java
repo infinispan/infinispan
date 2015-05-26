@@ -39,7 +39,7 @@ import static org.testng.AssertJUnit.assertNull;
  * @author wburns
  * @since 4.0
  */
-@Test(groups = "functional", testName = "notifications.cachelistener.CacheNotifierFilterTest")
+@Test(groups = "functional", testName = "notifications.cachelistener.CacheNotifierPersistenceFilterTest")
 public class CacheNotifierPersistenceFilterTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected ConfigurationBuilder builderUsed;

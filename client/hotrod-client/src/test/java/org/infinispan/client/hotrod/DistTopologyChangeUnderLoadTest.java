@@ -19,7 +19,7 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getLoadB
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.AssertJUnit.assertEquals;
 
-@Test(groups = "functional", testName = "client.hotrod.DistKeepRunningWithTopologyChangeTest")
+@Test(groups = "functional", testName = "client.hotrod.DistTopologyChangeUnderLoadTest")
 public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
 
    @Override

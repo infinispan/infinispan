@@ -11,7 +11,7 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
-@Test(groups = "functional", testName = "client.hotrod.retry.CompleteShutdownRetryTest")
+@Test(groups = "functional", testName = "client.hotrod.retry.CompleteShutdownReplRetryTest")
 public class CompleteShutdownReplRetryTest extends MultiHotRodServersTest {
 
    @Override

@@ -31,7 +31,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @author Tristan Tarrant
  * @since 5.2
  */
-@Test(testName = "cli-server.HotRodEncodingTest", groups = "functional")
+@Test(testName = "cli.interpreter.HotRodEncodingTest", groups = "functional")
 @CleanupAfterMethod
 public class HotRodEncodingTest extends SingleCacheManagerTest {
 

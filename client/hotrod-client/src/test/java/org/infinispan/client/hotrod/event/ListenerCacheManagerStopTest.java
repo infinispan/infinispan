@@ -30,7 +30,7 @@ import static org.infinispan.test.fwk.TestCacheManagerFactory.createCacheManager
  * @author gustavonalle
  * @since 7.2
  */
-@Test(groups = "functional", testName = "client.hotrod.event.ListenerStopTest")
+@Test(groups = "functional", testName = "client.hotrod.event.ListenerCacheManagerStopTest")
 public class ListenerCacheManagerStopTest extends AbstractInfinispanTest {
 
    HotRodServer hotRodServer;

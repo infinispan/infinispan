@@ -26,7 +26,7 @@ import static org.testng.AssertJUnit.*;
  * @author Jiri Holusa [jholusa@redhat.com]
  */
 @Test(groups = "functional", testName = "it.compatibility.EmbeddedHotRodCacheListenerTest")
-public class EmbeddedHotRotCacheListenerTest extends AbstractInfinispanTest {
+public class EmbeddedHotRodCacheListenerTest extends AbstractInfinispanTest {
 
    CompatibilityCacheFactory<String, String> cacheFactory;
 

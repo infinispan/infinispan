@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  * @author Pedro Ruivo
  * @since 7.2
  */
-@Test(groups = "functional", testName = "container.versioning.SynchronizationWriteSkewTest")
+@Test(groups = "functional", testName = "container.versioning.RecoveryEnabledWriteSkewTest")
 public class RecoveryEnabledWriteSkewTest extends AbstractClusteredWriteSkewTest {
    @Override
    protected CacheMode getCacheMode() {

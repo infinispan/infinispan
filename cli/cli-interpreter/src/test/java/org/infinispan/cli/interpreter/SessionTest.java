@@ -7,7 +7,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName="cli-server.SessionTest")
+@Test(groups = "functional", testName="cli.interpreter.SessionTest")
 public class SessionTest extends SingleCacheManagerTest {
 
    public void testSessionExpiration() throws Exception {

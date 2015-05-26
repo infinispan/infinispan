@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 
 import static org.junit.Assert.assertEquals;
 
-@Test(groups = "functional", testName = "query.externalizers.LuceneTerm")
+@Test(groups = "functional", testName = "query.externalizers.TermExternalizerTest")
 public class TermExternalizerTest extends MultipleCacheManagersTest {
 
    @Override

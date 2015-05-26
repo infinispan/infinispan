@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
 /**
  * Test with metadata disabled
  */
-@Test(groups = "unit", testName = "persistence.JpaStoreTest")
+@Test(groups = "unit", testName = "persistence.JpaStoreNoMetadataTest")
 public class JpaStoreNoMetadataTest extends JpaStoreTest {
    @Override
    protected boolean storeMetadata() {

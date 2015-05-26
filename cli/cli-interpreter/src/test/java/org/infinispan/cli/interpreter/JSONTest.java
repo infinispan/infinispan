@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-@Test(groups = "functional", testName="cli-server.JSONTest")
+@Test(groups = "functional", testName="cli.interpreter.JSONTest")
 public class JSONTest {
 
    public void testJSONMapping() throws JsonGenerationException, JsonMappingException, IOException {

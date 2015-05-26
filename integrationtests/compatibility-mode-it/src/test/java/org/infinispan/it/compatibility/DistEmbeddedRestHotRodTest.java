@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  * @author Martin Gencur
  * @since 6.0
  */
-@Test(groups = "functional", testName = "it.compatibility.DistEmbeddedHotRodTest")
+@Test(groups = "functional", testName = "it.compatibility.DistEmbeddedRestHotRodTest")
 public class DistEmbeddedRestHotRodTest extends ReplEmbeddedRestHotRodTest {
 
    private final int numOwners = 1;

@@ -14,7 +14,7 @@ import org.testng.annotations.Test;
  * @author Vladimir Blagojevic
  * @since 7.0
  */
-@Test(groups = "stress", testName = "distexec.mapreduce.DistributedSharedCacheFourNodesMapReduceTest")
+@Test(groups = "stress", testName = "distexec.mapreduce.LargeDistributedSharedCacheFourNodesMapReduceTest")
 public class LargeDistributedSharedCacheFourNodesMapReduceTest extends BaseLargeWordCountMapReduceTest {
 
    @Override

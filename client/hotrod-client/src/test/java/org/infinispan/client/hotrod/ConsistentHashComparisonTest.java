@@ -29,7 +29,7 @@ import static org.testng.Assert.assertEquals;
  *
  * @author Mircea Markus <mircea.markus@jboss.com> (C) 2011 Red Hat Inc.
  */
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "client.hotrod.ConsistentHashComparisonTest")
 public class ConsistentHashComparisonTest {
 
    public static final int PHISYCAL_NODES = 10;

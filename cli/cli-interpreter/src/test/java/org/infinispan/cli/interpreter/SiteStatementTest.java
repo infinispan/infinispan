@@ -24,7 +24,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @author Tristan Tarrant
  * @since 5.2
  */
-@Test(groups = "xsite", testName = "cli-server.SiteStatementTest")
+@Test(groups = "xsite", testName = "cli.interpreter.SiteStatementTest")
 public class SiteStatementTest extends AbstractTwoSitesTest {
 
    @Override

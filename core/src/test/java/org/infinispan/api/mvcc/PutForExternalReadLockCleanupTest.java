@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 
 import static org.testng.AssertJUnit.assertEquals;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "api.mvcc.PutForExternalReadLockCleanupTest")
 @CleanupAfterMethod
 public abstract class PutForExternalReadLockCleanupTest extends MultipleCacheManagersTest {
 

@@ -26,7 +26,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = {"functional", "smoke"}, testName = "security.SingleCacheManagerTest")
+@Test(groups = {"functional", "smoke"}, testName = "security.CacheAuthorizationTest")
 public class CacheAuthorizationTest extends SingleCacheManagerTest {
    static final Log log = LogFactory.getLog(CacheAuthorizationTest.class);
    static final Subject ADMIN;

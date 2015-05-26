@@ -23,7 +23,7 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName="cli-server.InterpreterTest")
+@Test(groups = "functional", testName="cli.interpreter.InterpreterTest")
 public class InterpreterTest extends SingleCacheManagerTest {
 
    @Override

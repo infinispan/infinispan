@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
  * @author Mircea Markus
  * @since 5.2
  */
-@Test (groups = "xsite")
+@Test (groups = "xsite", testName = "xsite.backupfailure.tx.ReplBackupTxFailureTest")
 public class ReplBackupTxFailureTest extends BaseBackupTxFailureTest {
 
    public ReplBackupTxFailureTest() {

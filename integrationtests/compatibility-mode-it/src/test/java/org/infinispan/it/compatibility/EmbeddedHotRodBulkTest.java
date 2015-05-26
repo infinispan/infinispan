@@ -23,7 +23,7 @@ import static org.testng.AssertJUnit.*;
  * @author Jiří Holuša
  * @since 6.0
  */
-@Test(groups = "functional", testName = "it.compatibility.CompatibilityTest")
+@Test(groups = "functional", testName = "it.compatibility.EmbeddedHotRodBulkTest")
 public class EmbeddedHotRodBulkTest extends AbstractInfinispanTest {
 
    CompatibilityCacheFactory<Integer, Integer> cacheFactory;

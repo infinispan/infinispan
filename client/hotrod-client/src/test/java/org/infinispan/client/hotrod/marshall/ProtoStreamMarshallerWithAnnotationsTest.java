@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
  * @author anistor@redhat.com
  * @since 7.1
  */
-@Test(testName = "client.hotrod.marshall.ProtoStreamMarshaller2Test", groups = "functional")
+@Test(testName = "client.hotrod.marshall.ProtoStreamMarshallerWithAnnotationsTest", groups = "functional")
 @CleanupAfterMethod
 public class ProtoStreamMarshallerWithAnnotationsTest extends SingleCacheManagerTest {
 

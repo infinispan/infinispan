@@ -30,7 +30,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * Test that a commit command that has timed out on a backup owner cannot write entries after the locks have been
  * released on the primary owner.
  */
-@Test(groups = "functional", testName = "statetransfer.CommitReplayTest")
+@Test(groups = "functional", testName = "statetransfer.CommitTimeoutTest")
 @CleanupAfterMethod
 public class CommitTimeoutTest extends MultipleCacheManagersTest {
 

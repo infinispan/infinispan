@@ -26,7 +26,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "scripting.ScriptingTest")
+@Test(groups = "functional", testName = "scripting.ClusteredScriptingTest")
 public class ClusteredScriptingTest extends MultipleCacheManagersTest {
 
    @Override

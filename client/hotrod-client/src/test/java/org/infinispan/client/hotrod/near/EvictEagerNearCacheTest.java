@@ -6,7 +6,7 @@ import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName = "client.hotrod.near.EvictNearCacheTest")
+@Test(groups = "functional", testName = "client.hotrod.near.EvictEagerNearCacheTest")
 public class EvictEagerNearCacheTest extends SingleHotRodServerTest {
 
    AssertsNearCache<Integer, String> assertClient;

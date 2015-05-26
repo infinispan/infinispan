@@ -17,7 +17,7 @@ import static org.testng.Assert.assertFalse;
  * @author gustavonalle
  * @since 7.0
  */
-@Test(groups = "unit", testName = "query.config.DefaultConfigDeclarativeTest")
+@Test(groups = "unit", testName = "query.config.DeclarativeAutoConfigTest")
 public class DeclarativeAutoConfigTest extends AbstractInfinispanTest {
 
    @Test

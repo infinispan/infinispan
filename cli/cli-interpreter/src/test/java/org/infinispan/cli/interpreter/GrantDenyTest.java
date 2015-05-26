@@ -27,7 +27,7 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional", testName="cli-server.InterpreterTest")
+@Test(groups = "functional", testName="cli.interpreter.GrantDenyTest")
 public class GrantDenyTest extends SingleCacheManagerTest {
    static final Subject ADMIN = TestingUtil.makeSubject("admin");
    private ClusterRoleMapper cpm;

@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
  * @author William Burns
  * @since 7.1
  */
-@Test(groups = "functional", testName = "util.concurrent.BoundedConcurrentHashMapTest")
+@Test(groups = "functional", testName = "util.concurrent.BoundedEquivalentConcurrentHashMapV8LRUTest")
 public class BoundedEquivalentConcurrentHashMapV8LRUTest extends BoundedEquivalentConcurrentHashMapV8BaseTest {
    @Override
    protected Eviction evictionPolicy() {

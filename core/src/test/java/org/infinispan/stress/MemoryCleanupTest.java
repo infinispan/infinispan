@@ -10,7 +10,7 @@ import org.infinispan.Cache;
 /**
  * @author Mircea.Markus@jboss.com
  */
-@Test  (groups = "stress", description = "designed to be run by hand")
+@Test  (groups = "stress", testName = "stress.MemoryCleanupTest", description = "designed to be run by hand")
 public class MemoryCleanupTest {
 
 

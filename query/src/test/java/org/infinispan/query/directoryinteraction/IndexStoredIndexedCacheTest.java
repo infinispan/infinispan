@@ -26,7 +26,7 @@ import org.testng.annotations.Test;
  * @author Sanne Grinovero
  * @since 5.2
  */
-@Test(groups = "functional", testName = "lucenedirectoryquery.IndexStoredIndexedCache")
+@Test(groups = "functional", testName = "lucenedirectoryquery.IndexStoredIndexedCacheTest")
 public class IndexStoredIndexedCacheTest extends MultipleCacheManagersTest {
 
    @Override

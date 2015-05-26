@@ -23,7 +23,7 @@ import static org.testng.Assert.assertEquals;
  * @author gustavonalle
  * @since 7.1
  */
-@Test(groups = "functional", testName = "query.distributed.ShardingMassIndexerTest")
+@Test(groups = "functional", testName = "query.distributed.ShardingMassIndexTest")
 public class ShardingMassIndexTest extends MultipleCacheManagersTest {
 
    protected static final int NUM_NODES = 3;

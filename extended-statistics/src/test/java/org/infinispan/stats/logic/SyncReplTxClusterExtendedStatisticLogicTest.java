@@ -9,9 +9,9 @@ import org.testng.annotations.Test;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "stats.logic.SyncReplTxClusterExtendedStatisticLogicTest")
-public class SyncTxClusterExtendedStatisticLogicTest extends BaseTxClusterExtendedStatisticLogicTest {
+public class SyncReplTxClusterExtendedStatisticLogicTest extends BaseTxClusterExtendedStatisticLogicTest {
 
-   public SyncTxClusterExtendedStatisticLogicTest() {
+   public SyncReplTxClusterExtendedStatisticLogicTest() {
       super(CacheMode.REPL_SYNC, false, false);
    }
 }

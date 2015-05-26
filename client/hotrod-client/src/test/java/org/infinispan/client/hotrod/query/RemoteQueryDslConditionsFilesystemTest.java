@@ -16,7 +16,7 @@ import static org.junit.Assert.assertTrue;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@Test(testName = "client.hotrod.query.RemoteQueryDslConditionsFilestoreTest", groups = "functional")
+@Test(testName = "client.hotrod.query.RemoteQueryDslConditionsFilesystemTest", groups = "functional")
 public class RemoteQueryDslConditionsFilesystemTest extends RemoteQueryDslConditionsTest {
 
    protected final String indexDirectory = TestingUtil.tmpDirectory(getClass());

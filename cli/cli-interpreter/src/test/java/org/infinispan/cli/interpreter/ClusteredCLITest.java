@@ -7,7 +7,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
-@Test(groups="functional", testName = "cli-server.ClusteredCLITest")
+@Test(groups="functional", testName = "cli.interpreter.ClusteredCLITest")
 public class ClusteredCLITest extends MultipleCacheManagersTest {
 
    public static String CACHE_NAME = "distCache";

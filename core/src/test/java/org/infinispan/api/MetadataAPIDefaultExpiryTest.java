@@ -14,7 +14,7 @@ import static org.infinispan.test.TestingUtil.*;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
-@Test(groups = "functional", testName = "api.MetadataAPITest")
+@Test(groups = "functional", testName = "api.MetadataAPIDefaultExpiryTest")
 public class MetadataAPIDefaultExpiryTest extends SingleCacheManagerTest {
 
    public static final int EXPIRATION_TIMEOUT = 3000;

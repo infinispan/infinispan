@@ -21,7 +21,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 7.1
  */
 
-@Test(groups = "functional", testName = "query.distributed.LocalCacheMassIndexer")
+@Test(groups = "functional", testName = "query.distributed.LocalCacheMassIndexerTest")
 public class LocalCacheMassIndexerTest extends SingleCacheManagerTest {
 
    private static final int NUM_ENTITIES = 2000;

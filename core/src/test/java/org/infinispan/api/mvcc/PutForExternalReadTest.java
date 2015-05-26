@@ -44,7 +44,7 @@ import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
 
-@Test(groups = "functional")
+@Test(groups = "functional", testName = "api.mvcc.PutForExternalReadTest")
 @CleanupAfterMethod
 public abstract class PutForExternalReadTest extends MultipleCacheManagersTest {
 

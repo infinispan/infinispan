@@ -27,7 +27,7 @@ import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
  * @author Galder Zamarreño
  * @since 5.3
  */
-@Test(groups = "functional", testName = "it.compatibility.ReplEmbeddedHotRodTest")
+@Test(groups = "functional", testName = "it.compatibility.ReplEmbeddedRestHotRodTest")
 public class ReplEmbeddedRestHotRodTest {
 
    CompatibilityCacheFactory<Object, Object> cacheFactory1;
