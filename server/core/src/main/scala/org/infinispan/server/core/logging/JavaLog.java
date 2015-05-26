@@ -98,7 +98,7 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    void serverEndpointTopologyEmpty(String clusterMembers);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Exception writing response with message id %s", id = 5022)
+   @Message(value = "Exception writing response with messageId=%s", id = 5022)
    void errorWritingResponse(long msgId, @Cause Throwable t);
 
 }

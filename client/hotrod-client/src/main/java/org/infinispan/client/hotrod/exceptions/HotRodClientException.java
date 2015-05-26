@@ -35,7 +35,7 @@ public class HotRodClientException extends RuntimeException {
    public String toString() {
       StringBuilder sb = new StringBuilder(getClass().getName());
       sb.append(":");
-      if (messageId != -1) sb.append("Request for message id[").append(messageId).append("]");
+      if (messageId != -1) sb.append("Request for messageId=").append(messageId);
       if (errorStatusCode != -1) sb.append(" returned ").append(toErrorMsg(errorStatusCode));
       String message = getLocalizedMessage();
       if (message != null) sb.append(": ").append(message);

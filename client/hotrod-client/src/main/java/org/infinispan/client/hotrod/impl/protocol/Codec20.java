@@ -98,8 +98,8 @@ public class Codec20 implements Codec, HotRodConstants {
       transport.writeVInt(params.topologyId.get());
 
       if (trace)
-         getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",
-            params.messageId, params.opCode, joinedFlags);
+         getLog().tracef("Wrote header for messageId=%d to %s. Operation code: %#04x. Flags: %#x",
+            params.messageId, transport, params.opCode, joinedFlags);
 
       return params;
    }
@@ -288,7 +288,7 @@ public class Codec20 implements Codec, HotRodConstants {
       }
 
       if (trace)
-         localLog.tracef("Received response for message id: %d", receivedMessageId);
+         localLog.tracef("Received response for messageId=%d", receivedMessageId);
 
       return receivedMessageId;
    }
@@ -337,7 +337,7 @@ public class Codec20 implements Codec, HotRodConstants {
             }
             case HotRodConstants.ILLEGAL_LIFECYCLE_STATE:
                msgFromServer = transport.readString();
-               throw new RemoteIllegalLifecycleStateException(msgFromServer, params.messageId, status);
+               throw new RemoteIllegalLifecycleStateException(msgFromServer, params.messageId, status, transport.getRemoteSocketAddress());
             case HotRodConstants.NODE_SUSPECTED:
                // Handle both Infinispan's and JGroups' suspicions
                msgFromServer = transport.readString();
