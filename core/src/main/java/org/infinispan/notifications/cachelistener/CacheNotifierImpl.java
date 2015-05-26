@@ -7,6 +7,7 @@ import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ServiceFinder;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
@@ -152,7 +153,12 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
     * is only used for that listener during the initial state transfer
     */
    private final ConcurrentMap<UUID, QueueingSegmentListener<K, V, ? extends Event<K, V>>> segmentHandler;
-   
+
+   /**
+    * An optional converter, to be used for converting the key/value before sending the event to listeners.
+    */
+   private TypeConverter typeConverter;
+
    public CacheNotifierImpl() {
       this(new ConcurrentHashMap<UUID, QueueingSegmentListener<K, V, ? extends Event<K, V>>>());
    }
@@ -224,6 +230,14 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    protected Log getLog() {
       return log;
+   }
+
+   @Override
+   public void setTypeConverter(TypeConverter typeConverter) {
+      if (this.typeConverter != null) {
+         throw new IllegalStateException("The type converter can be set only once");
+      }
+      this.typeConverter = typeConverter;
    }
 
    @Override
@@ -325,6 +339,12 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
    private void configureEvent(EventImpl<K, V> e, K key, V value, boolean pre, InvocationContext ctx,
                                FlagAffectedCommand command, V previousValue, Metadata previousMetadata) {
+      if (typeConverter != null) {
+         key = (K) typeConverter.unboxKey(key);
+         value = (V) typeConverter.unboxValue(value);
+         previousValue = (V) typeConverter.unboxValue(previousValue);
+      }
+
       e.setOriginLocal(ctx.isOriginLocal());
       e.setValue(pre ? previousValue : value);
       e.setPre(pre);
