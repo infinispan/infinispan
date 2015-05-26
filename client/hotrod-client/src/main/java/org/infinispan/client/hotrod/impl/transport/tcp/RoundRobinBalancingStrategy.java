@@ -40,6 +40,7 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
     */
    @Override
    public SocketAddress nextServer(Set<SocketAddress> failedServers) {
+      boolean isTraceEnabled = log.isTraceEnabled();
       for (int i = 0;; ++i) {
          SocketAddress server = getServerByIndex(index++);
          // don't allow index to overflow and have a negative value
@@ -47,6 +48,13 @@ public class RoundRobinBalancingStrategy implements FailoverRequestBalancingStra
             index = 0;
 
          if (failedServers == null || !failedServers.contains(server) || i >= failedServers.size()) {
+            if (isTraceEnabled) {
+               if (failedServers == null)
+                  log.tracef("Selected %s from %s", server, Arrays.toString(servers));
+               else
+                  log.tracef("Selected %s from %s, with failed servers %s", server, Arrays.toString(servers), failedServers.toString());
+            }
+
             return server;
          }
       }
