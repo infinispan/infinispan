@@ -265,28 +265,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       void onEntryRemoved(Entry<K, V> entry);
    }
 
-   @FunctionalInterface
-   public interface EntrySizeCalculator<K, V> {
-      long calculateSize(K key, V value);
-   }
-
-   private static long roundUpToNearest8(long size) {
+   static long roundUpToNearest8(long size) {
       return (size + 7) & ~0x7;
    }
 
-   public static abstract class AbstractSizeCalculatorHelper<K, V> implements EntrySizeCalculator<K, V> {
-      // This is how large the object header info is
-      public final static int OBJECT_SIZE = sun.misc.Unsafe.ADDRESS_SIZE;
-      // This is how larege an object pointer is - note that each object
-      // has to reference its class
-      public final static int POINTER_SIZE = sun.misc.Unsafe.ARRAY_OBJECT_INDEX_SCALE;
-
-      public long roundUpToNearest8(long size) {
-         return BoundedEquivalentConcurrentHashMapV8.roundUpToNearest8(size);
-      }
-   }
-
-   public static final class NodeSizeCalculatorWrapper<K, V> extends AbstractSizeCalculatorHelper<K, V> {
+   public static final class NodeSizeCalculatorWrapper<K, V> extends AbstractEntrySizeCalculatorHelper<K, V> {
       private final EntrySizeCalculator<? super K, ? super V> calculator;
       private final long nodeAverageSize;
 
@@ -6161,8 +6144,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * common value.  This class cannot be directly instantiated.
     * See {@link #keySet() keySet()},
     * {@link #keySet(Object) keySet(V)},
-    * {@link #newKeySet(Equivalence) newKeySet()},
-    * {@link #newKeySet(int, Equivalence) newKeySet(int)}.
+    * {@link #newKeySet(int, Equivalence) newKeySet()},
+    * {@link #newKeySet(int, int, Equivalence) newKeySet(int)}.
     *
     * @since 1.8
     */
