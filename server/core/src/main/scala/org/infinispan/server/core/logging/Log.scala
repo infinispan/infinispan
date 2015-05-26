@@ -84,4 +84,6 @@ trait Log {
 
    def logServerEndpointTopologyEmpty(clusterMembers: String) =
       log.serverEndpointTopologyEmpty(clusterMembers)
+
+   def logErrorWritingResponse(msgId: Long, t: Throwable) = log.errorWritingResponse(msgId, t)
 }
