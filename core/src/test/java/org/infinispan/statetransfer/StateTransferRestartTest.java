@@ -3,6 +3,7 @@ package org.infinispan.statetransfer;
 import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.ReplicableCommand;
@@ -48,8 +49,12 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
       volatile Callable<Void> callOnStateResponseCommand;
 
       @Override
-      public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout,
-                                                   ResponseFilter responseFilter, DeliverOrder deliverOrder, boolean anycast) throws Exception {
+      public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
+                                                                           ReplicableCommand rpcCommand,
+                                                                           ResponseMode mode, long timeout,
+                                                                           ResponseFilter responseFilter,
+                                                                           DeliverOrder deliverOrder,
+                                                                           boolean anycast) throws Exception {
          if (callOnStateResponseCommand != null && rpcCommand.getClass() == StateResponseCommand.class) {
             log.trace("Ignoring StateResponseCommand");
             try {
@@ -57,9 +62,9 @@ public class StateTransferRestartTest extends MultipleCacheManagersTest {
             } catch (Exception e) {
                log.error("Error in callOnStateResponseCommand", e);
             }
-            return InfinispanCollections.emptyMap();
+            return CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
          }
-         return super.invokeRemotely(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
+         return super.invokeRemotelyAsync(recipients, rpcCommand, mode, timeout, responseFilter, deliverOrder, anycast);
       }
    }
 

@@ -3,13 +3,12 @@ package org.infinispan.util;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
-import org.infinispan.remoting.RpcException;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseFilter;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
@@ -35,112 +34,20 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    }
 
    @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue, ResponseFilter responseFilter) {
-      log.trace("ControlledRpcManager.invokeRemotely1");
-      beforeInvokeRemotely(rpcCommand);
-      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue, responseFilter);
-      return afterInvokeRemotely(rpcCommand, responseMap);
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout, boolean usePriorityQueue) {
-      log.trace("ControlledRpcManager.invokeRemotely2");
-      beforeInvokeRemotely(rpcCommand);
-      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, mode, timeout, usePriorityQueue);
-      return afterInvokeRemotely(rpcCommand, responseMap);
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, ResponseMode mode, long timeout) {
-      log.trace("ControlledRpcManager.invokeRemotely3");
-      beforeInvokeRemotely(rpcCommand);
-      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, mode, timeout);
-      return afterInvokeRemotely(rpcCommand, responseMap);
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync) throws RpcException {
-      log.trace("ControlledRpcManager.invokeRemotely4");
-      beforeInvokeRemotely(rpcCommand);
-      Map<Address, Response> responseMap = realOne.invokeRemotely(recipients, rpcCommand, sync);
-      return afterInvokeRemotely(rpcCommand, responseMap);
-   }
-
-   @Override
-   public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue) throws RpcException {
-      log.trace("ControlledRpcManager.invokeRemotely5");
-      beforeInvokeRemotely(rpcCommand);
-      Map<Address, Response> responses = realOne.invokeRemotely(recipients, rpcCommand, sync, usePriorityQueue);
-      return afterInvokeRemotely(rpcCommand, responses);
-   }
-
-   @Override
-   public void broadcastRpcCommand(ReplicableCommand rpcCommand, boolean sync) throws RpcException {
-      log.trace("ControlledRpcManager.broadcastRpcCommand1");
-      beforeInvokeRemotely(rpcCommand);
-      realOne.broadcastRpcCommand(rpcCommand, sync);
-      afterInvokeRemotely(rpcCommand, null);
-   }
-
-   @Override
-   public void broadcastRpcCommand(ReplicableCommand rpcCommand, boolean sync, boolean usePriorityQueue) throws RpcException {
-      log.trace("ControlledRpcManager.broadcastRpcCommand2");
-      beforeInvokeRemotely(rpcCommand);
-      realOne.broadcastRpcCommand(rpcCommand, sync, usePriorityQueue);
-      afterInvokeRemotely(rpcCommand, null);
-   }
-
-   @Override
-   public void broadcastRpcCommandInFuture(ReplicableCommand rpcCommand, NotifyingNotifiableFuture<Object> future) {
-      log.trace("ControlledRpcManager.broadcastRpcCommandInFuture1");
-      beforeInvokeRemotely(rpcCommand);
-      realOne.broadcastRpcCommandInFuture(rpcCommand, future);
-      afterInvokeRemotely(rpcCommand, null);
-   }
-
-   @Override
-   public void broadcastRpcCommandInFuture(ReplicableCommand rpcCommand, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future) {
-      log.trace("ControlledRpcManager.broadcastRpcCommandInFuture2");
-      beforeInvokeRemotely(rpcCommand);
-      realOne.broadcastRpcCommandInFuture(rpcCommand, usePriorityQueue, future);
-      afterInvokeRemotely(rpcCommand, null);
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpcCommand, NotifyingNotifiableFuture<Object> future) {
-      log.trace("ControlledRpcManager.invokeRemotelyInFuture1");
-      beforeInvokeRemotely(rpcCommand);
-      realOne.invokeRemotelyInFuture(recipients, rpcCommand, future);
-      afterInvokeRemotely(rpcCommand, null);
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future) {
-      log.trace("ControlledRpcManager.invokeRemotelyInFuture2");
-      beforeInvokeRemotely(rpcCommand);
-      realOne.invokeRemotelyInFuture(recipients, rpcCommand, usePriorityQueue, future);
-      afterInvokeRemotely(rpcCommand, null);
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future, long timeout) {
-      log.trace("ControlledRpcManager.invokeRemotelyInFuture3");
-      beforeInvokeRemotely(rpcCommand);
-      realOne.invokeRemotelyInFuture(recipients, rpcCommand, usePriorityQueue, future, timeout);
-      afterInvokeRemotely(rpcCommand, null);
-   }
-
-   @Override
-   public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpcCommand, boolean usePriorityQueue, NotifyingNotifiableFuture<Object> future, long timeout, boolean ignoreLeavers) {
-      log.trace("ControlledRpcManager.invokeRemotelyInFuture4");
-      beforeInvokeRemotely(rpcCommand);
-      realOne.invokeRemotelyInFuture(recipients, rpcCommand, usePriorityQueue, future, timeout, ignoreLeavers);
-      afterInvokeRemotely(rpcCommand, null);
+   public CompletableFuture<Map<Address, Response>> invokeRemotelyAsync(Collection<Address> recipients,
+                                                                        ReplicableCommand rpc,
+                                                                        RpcOptions options) {
+      log.trace("ControlledRpcManager.invokeRemotelyAsync");
+      beforeInvokeRemotely(rpc);
+      CompletableFuture<Map<Address, Response>> future = realOne.invokeRemotelyAsync(recipients, rpc,
+            options);
+      afterInvokeRemotely(rpc, null);
+      return future;
    }
 
    @Override
    public Map<Address, Response> invokeRemotely(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-      log.trace("ControlledRpcManager.invokeRemotely6");
+      log.trace("ControlledRpcManager.invokeRemotely");
       beforeInvokeRemotely(rpc);
       Map<Address, Response> responses = realOne.invokeRemotely(recipients, rpc, options);
       return afterInvokeRemotely(rpc, responses);
@@ -148,7 +55,7 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
 
    @Override
    public Map<Address, Response> invokeRemotely(Map<Address, ReplicableCommand> rpcs, RpcOptions options) {
-      log.trace("ControlledRpcManager.invokeRemotely6");
+      log.trace("ControlledRpcManager.invokeRemotely");
       // TODO: left blank until we need to implement
       Map<Address, Response> responses = realOne.invokeRemotely(rpcs, options);
       return responses;
@@ -156,7 +63,7 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
 
    @Override
    public void invokeRemotelyInFuture(Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options, NotifyingNotifiableFuture<Object> future) {
-      log.trace("ControlledRpcManager.invokeRemotelyInFuture5");
+      log.trace("ControlledRpcManager.invokeRemotelyInFuture");
       beforeInvokeRemotely(rpc);
       realOne.invokeRemotelyInFuture(recipients, rpc, options, future);
       afterInvokeRemotely(rpc, null);
@@ -164,7 +71,7 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
 
    @Override
    public void invokeRemotelyInFuture(NotifyingNotifiableFuture<Map<Address, Response>> future, Collection<Address> recipients, ReplicableCommand rpc, RpcOptions options) {
-      log.trace("ControlledRpcManager.invokeRemotelyInFuture6");
+      log.trace("ControlledRpcManager.invokeRemotelyInFuture");
       beforeInvokeRemotely(rpc);
       realOne.invokeRemotelyInFuture(future, recipients, rpc, options);
       afterInvokeRemotely(rpc, null);
@@ -191,11 +98,6 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    }
 
    @Override
-   public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, boolean fifoOrder) {
-      return realOne.getRpcOptionsBuilder(responseMode, fifoOrder);
-   }
-
-   @Override
    public RpcOptionsBuilder getRpcOptionsBuilder(ResponseMode responseMode, DeliverOrder deliverOrder) {
       return realOne.getRpcOptionsBuilder(responseMode, deliverOrder);
    }
@@ -203,11 +105,6 @@ public abstract class AbstractControlledRpcManager implements RpcManager {
    @Override
    public RpcOptions getDefaultRpcOptions(boolean sync) {
       return realOne.getDefaultRpcOptions(sync);
-   }
-
-   @Override
-   public RpcOptions getDefaultRpcOptions(boolean sync, boolean fifoOrder) {
-      return realOne.getDefaultRpcOptions(sync, fifoOrder);
    }
 
    @Override
