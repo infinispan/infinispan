@@ -98,7 +98,7 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       }
       Object ret = invokeNextInterceptor(ctx, command);
       if (ret != null) {
-         if (needsUnboxing(command.getRemotelyFetchedValue())) {
+         if (needsUnboxing(ctx)) {
             return converter.unboxValue(ret);
          }
          return ret;
@@ -118,7 +118,7 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       if (ret != null) {
          CacheEntry entry = (CacheEntry) ret;
          Object returnValue = entry.getValue();
-         if (needsUnboxing(command.getRemotelyFetchedValue())) {
+         if (needsUnboxing(ctx)) {
             returnValue = converter.unboxValue(entry.getValue());
          }
          // Create a copy of the entry to avoid modifying the internal entry
@@ -129,8 +129,8 @@ public abstract class BaseTypeConverterInterceptor extends CommandInterceptor {
       return null;
    }
 
-   private boolean needsUnboxing(InternalCacheEntry remotelyFetchedValue) {
-      return remotelyFetchedValue == null;
+   private boolean needsUnboxing(InvocationContext ctx) {
+      return ctx.isOriginLocal();
    }
 
    @Override

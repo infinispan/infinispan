@@ -56,11 +56,6 @@ public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFet
          return null;
       }
 
-      if (entry instanceof InternalCacheEntry) {
-         InternalCacheEntry ice = (InternalCacheEntry) entry;
-         if (ice.isL1Entry()) setRemotelyFetchedValue(ice);
-      }
-
       return entry.getValue();
    }
 

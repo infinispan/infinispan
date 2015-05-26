@@ -19,6 +19,11 @@ public class CompleteShutdownReplRetryTest extends MultiHotRodServersTest {
       // Empty
    }
 
+   @Override
+   protected int maxRetries() {
+      return 1;
+   }
+
    public void testRetryAfterCompleteShutdown() {
       ConfigurationBuilder builder = hotRodCacheConfiguration(
          getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false));

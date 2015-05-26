@@ -7,6 +7,7 @@ import io.netty.handler.codec.MessageToMessageEncoder
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.ChannelHandler.Sharable
 import org.infinispan.server.hotrod.Events.Event
+import org.infinispan.server.hotrod.OperationStatus._
 
 /**
  * Hot Rod specific encoder.
@@ -30,15 +31,25 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
       msg match {
          case r: Response =>
             val encoder = getEncoder(r.version)
-            r.version match {
-               case VERSION_10 | VERSION_11 | VERSION_12 | VERSION_13 | VERSION_20 | VERSION_21 =>
-                  encoder.writeHeader(r, buf, addressCache, server)
-               // if error before reading version, don't send any topology changes
-               // cos the encoding might vary from one version to the other
-               case 0 => encoder.writeHeader(r, buf, null, null)
-            }
+            try {
+               r.version match {
+                  case VERSION_10 | VERSION_11 | VERSION_12 | VERSION_13 | VERSION_20 | VERSION_21 =>
+                     encoder.writeHeader(r, buf, addressCache, server)
+                  // if error before reading version, don't send any topology changes
+                  // cos the encoding might vary from one version to the other
+                  case 0 => encoder.writeHeader(r, buf, null, null)
+               }
 
-            encoder.writeResponse(r, buf, cacheManager, server)
+               encoder.writeResponse(r, buf, cacheManager, server)
+            }
+            catch {
+               case t: Throwable =>
+                  logErrorWritingResponse(r.messageId, t)
+                  buf.clear() // reset buffer
+                  val error = new ErrorResponse(r.version, r.messageId, r.cacheName, r.clientIntel, ServerError, r.topologyId, t.toString)
+                  encoder.writeHeader(error, buf, addressCache, server)
+                  encoder.writeResponse(error, buf, cacheManager, server)
+            }
          case e: Event =>
             val encoder = getEncoder(e.version)
             encoder.writeEvent(e, buf)

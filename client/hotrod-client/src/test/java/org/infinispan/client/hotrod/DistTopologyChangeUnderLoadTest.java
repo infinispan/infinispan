@@ -33,6 +33,11 @@ public class DistTopologyChangeUnderLoadTest extends MultiHotRodServersTest {
       return hotRodCacheConfiguration(builder);
    }
 
+   @Override
+   protected int maxRetries() {
+      return 1;
+   }
+
    public void testPutsSucceedWhileTopologyChanges() throws Exception {
       RemoteCache<Integer, String> remote = client(0).getCache();
       remote.put(1, "v1");
