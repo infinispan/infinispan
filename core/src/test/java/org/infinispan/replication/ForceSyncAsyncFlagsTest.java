@@ -52,17 +52,17 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
 
       // check that the replication call was sync
       cache1.put("k", "v");
-      verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),
-                                           any(ReplicableCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(),
-                                           any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
+      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
+            eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(), any(ResponseFilter.class),
+            any(DeliverOrder.class), anyBoolean());
 
       reset(mockTransport);
 
       // verify FORCE_ASYNCHRONOUS flag on SYNC cache
       cache1.withFlags(Flag.FORCE_ASYNCHRONOUS).put("k", "v");
-      verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),
-                                           any(ReplicableCommand.class), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
-                                           any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
+      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
+            eq(ResponseMode.ASYNCHRONOUS), anyLong(), any(ResponseFilter.class), any(DeliverOrder.class),
+            anyBoolean());
    }
 
    public void testForceSyncFlagUsage() throws Exception {
@@ -79,15 +79,15 @@ public class ForceSyncAsyncFlagsTest extends MultipleCacheManagersTest {
       rpcManager.setTransport(mockTransport);
 
       cache1.put("k", "v");
-      verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),
-                                           any(ReplicableCommand.class), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
-                                           any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
+      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
+            eq(ResponseMode.ASYNCHRONOUS), anyLong(), any(ResponseFilter.class), any(DeliverOrder.class),
+            anyBoolean());
       reset(mockTransport);
 
       // verify FORCE_SYNCHRONOUS flag on ASYNC cache
       cache1.withFlags(Flag.FORCE_SYNCHRONOUS).put("k", "v");
-      verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),
-                                           any(ReplicableCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(),
-                                           any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
+      verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class), any(ReplicableCommand.class),
+            eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(), any(ResponseFilter.class),
+            any(DeliverOrder.class), anyBoolean());
    }
 }

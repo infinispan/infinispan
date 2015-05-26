@@ -11,6 +11,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -43,7 +44,7 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
       RpcManager rpcManager = cache(0, "testCache").getAdvancedCache().getRpcManager();
       ReplicableCommand command = createReplicableCommandForTest(EXPECTED_RETURN_VALUE);
 
-      Map<Address, Response> remoteResponses = rpcManager.invokeRemotely(null, command, true, true);
+      Map<Address, Response> remoteResponses = rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true));
       log.tracef("Responses were: %s", remoteResponses);
 
       assertEquals(1, remoteResponses.size());
@@ -64,7 +65,7 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
       ReplicableCommand command = createReplicableCommandForTest(new IllegalArgumentException("exception!"));
 
       try {
-         rpcManager.invokeRemotely(null, command, true, true);
+         rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(true));
          fail("Expected RemoteException not thrown");
       } catch (RemoteException e) {
          assertTrue(e.getCause() instanceof IllegalArgumentException);
@@ -81,7 +82,9 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
       RpcManager rpcManager = cache(0, "testCache").getAdvancedCache().getRpcManager();
       ReplicableCommand command = createReplicableCommandForTest(EXPECTED_RETURN_VALUE);
 
-      Map<Address, Response> remoteResponses = rpcManager.invokeRemotely(null, command, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, 5000);
+      RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS)
+            .timeout(5000, TimeUnit.MILLISECONDS).build();
+      Map<Address, Response> remoteResponses = rpcManager.invokeRemotely(null, command, rpcOptions);
       log.tracef("Responses were: %s", remoteResponses);
 
       assertEquals(1, remoteResponses.size());
@@ -102,7 +105,9 @@ public class RpcManagerCustomReplicableCommandTest extends MultipleCacheManagers
       ReplicableCommand command = createReplicableCommandForTest(new IllegalArgumentException("exception!"));
 
       try {
-         rpcManager.invokeRemotely(null, command, ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, 5000);
+         RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS)
+               .timeout(5000, TimeUnit.MILLISECONDS).build();
+         rpcManager.invokeRemotely(null, command, rpcOptions);
          fail("Expected RemoteException not thrown");
       } catch (RemoteException e) {
          assertTrue(e.getCause() instanceof IllegalArgumentException);

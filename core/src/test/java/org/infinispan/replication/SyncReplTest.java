@@ -21,7 +21,9 @@ import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyCollectionOf;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
@@ -155,9 +157,9 @@ public class SyncReplTest extends MultipleCacheManagersTest {
 
          // check that the replication call was sync
          cache1.put("k", "v");
-         verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),
-                                              any(ReplicableCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(),
-                                              any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
+         verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class),
+               any(ReplicableCommand.class), eq(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS), anyLong(),
+               any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
 
          // resume to test for async
          asyncRpcManager = (RpcManagerImpl) TestingUtil.extractComponent(asyncCache1, RpcManager.class);
@@ -166,9 +168,9 @@ public class SyncReplTest extends MultipleCacheManagersTest {
          reset(mockTransport);
 
          asyncCache1.put("k", "v");
-         verify(mockTransport).invokeRemotely(anyCollectionOf(Address.class),
-                                              any(ReplicableCommand.class), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
-                                              any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
+         verify(mockTransport).invokeRemotelyAsync(anyCollectionOf(Address.class),
+               any(ReplicableCommand.class), eq(ResponseMode.ASYNCHRONOUS), anyLong(),
+               any(ResponseFilter.class), any(DeliverOrder.class), anyBoolean());
       } finally {
          // replace original transport
          if (rpcManager != null)
