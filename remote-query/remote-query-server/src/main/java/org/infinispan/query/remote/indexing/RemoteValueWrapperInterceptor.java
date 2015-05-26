@@ -3,7 +3,9 @@ package org.infinispan.query.remote.indexing;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.context.Flag;
+import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.compat.BaseTypeConverterInterceptor;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Set;
 
@@ -21,6 +23,12 @@ public final class RemoteValueWrapperInterceptor extends BaseTypeConverterInterc
    private final ProtobufValueWrapperTypeConverter protobufTypeConverter = new ProtobufValueWrapperTypeConverter();
 
    private final PassThroughTypeConverter passThroughTypeConverter = new PassThroughTypeConverter();
+
+   @SuppressWarnings("unused")
+   @Inject
+   public void injectDependencies(CacheNotifier cacheNotifier) {
+      cacheNotifier.setTypeConverter(protobufTypeConverter);
+   }
 
    protected TypeConverter<Object, Object, Object, Object> determineTypeConverter(Set<Flag> flags) {
       return flags != null && flags.contains(Flag.OPERATION_HOTROD) ? protobufTypeConverter : passThroughTypeConverter;

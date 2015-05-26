@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -106,4 +107,11 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
    void notifyTopologyChanged(CacheTopology oldTopology, CacheTopology newTopology, int newTopologyId, boolean pre);
 
    void notifyPartitionStatusChanged(AvailabilityMode mode, boolean pre);
+
+   /**
+    * Set an optional converter to be used for converting the key/value of the event before notifying the listeners.
+    *
+    * @param typeConverter the converter instance; can be {@code null}
+    */
+   void setTypeConverter(TypeConverter typeConverter);
 }
