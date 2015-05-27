@@ -45,6 +45,18 @@ public class JCacheManager extends AbstractJCacheManager {
       sm = new ServerManager(configuration.servers().get(0).host());
    }
 
+   public JCacheManager(URI uri, RemoteCacheManager remoteCacheManager, CachingProvider provider) {
+      super(uri, null, provider, null, true);
+      cm = remoteCacheManager;
+      if (cm.getConfiguration().forceReturnValues()) {
+         cmForceReturnValue = cm;
+      } else {
+         ConfigurationBuilder builder = new ConfigurationBuilder();
+         builder.read(remoteCacheManager.getConfiguration()).forceReturnValues(true);
+         cmForceReturnValue = new RemoteCacheManager(builder.build(), true);
+      }
+   }
+
    @Override
    public ClassLoader getClassLoader() {
       return cm.getConfiguration().classLoader();
@@ -79,8 +91,12 @@ public class JCacheManager extends AbstractJCacheManager {
 
    @Override
    protected <K, V, I extends BasicCache<K, V>> AbstractJCache<K, V> create(I ispnCache) {
-      return null;
-      //FIXME implement me
+      RemoteCache<K, V> remoteCache = (RemoteCache<K, V>) ispnCache;
+      String cacheName = remoteCache.getName();
+      RemoteCache<K, V> ispnCacheForceReturnValue = cmForceReturnValue.getCache(cacheName);
+
+      ConfigurationAdapter<K, V> adapter = ConfigurationAdapter.create();
+      return new JCache(remoteCache, ispnCacheForceReturnValue, this, adapter);
    }
 
    @Override

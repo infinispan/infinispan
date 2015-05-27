@@ -1,17 +1,18 @@
-package org.infinispan.jcache.annotation;
+package org.infinispan.jcache.embedded.annotation;
 
 import org.infinispan.cdi.InfinispanExtension;
 import org.infinispan.cdi.InfinispanExtensionEmbedded;
 import org.infinispan.cdi.util.BeanManagerProvider;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.jcache.annotation.Contracts;
+import org.infinispan.jcache.annotation.InjectedCacheResolver;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 import javax.cache.Cache;
 import javax.cache.Caching;
 import javax.cache.annotation.CacheInvocationContext;
-import javax.cache.annotation.CacheResolver;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
@@ -28,14 +29,14 @@ import java.util.Set;
  * Injected cache resolver for situations where caches and/or cache managers
  * are injected into the CDI beans. In these situations, bridging is required
  * in order to bridge between the Infinispan based caches and the JCache
- * cache instances which is what it's expected by the specification cache
+ * cache instances which is what is expected by the specification cache
  * resolver.
  *
  * @author Galder Zamarreño
  * @since 5.3
  */
 @ApplicationScoped
-public class InjectedCacheResolver implements CacheResolver {
+public class EmbeddedInjectedCacheResolver implements InjectedCacheResolver {
 
    private EmbeddedCacheManager defaultCacheManager;
 
@@ -43,11 +44,11 @@ public class InjectedCacheResolver implements CacheResolver {
    private JCacheManager defaultJCacheManager;
 
    // for proxy.
-   public InjectedCacheResolver() {
+   public EmbeddedInjectedCacheResolver() {
    }
 
    @Inject
-   public InjectedCacheResolver(final InfinispanExtension extension, final BeanManager beanManager) {
+   public EmbeddedInjectedCacheResolver(final InfinispanExtension extension, final BeanManager beanManager) {
       final Set<InfinispanExtensionEmbedded.InstalledCacheManager> installedCacheManagers = extension.getEmbeddedExtension().getInstalledEmbeddedCacheManagers(beanManager);
       for (final InfinispanExtensionEmbedded.InstalledCacheManager installedCacheManager : installedCacheManagers) {
          final JCacheManager jcacheManager = toJCacheManager(installedCacheManager.getCacheManager());
@@ -131,5 +132,4 @@ public class InjectedCacheResolver implements CacheResolver {
       final CreationalContext<?> createCreationalContext = bm.createCreationalContext(configurationBean);
       return (T) bm.getReference(configurationBean, beanType, createCreationalContext);
    }
-
 }
