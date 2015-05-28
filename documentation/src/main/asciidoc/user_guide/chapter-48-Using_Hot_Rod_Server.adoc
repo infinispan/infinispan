@@ -251,10 +251,15 @@ plugged with the name and the cache event filter factory instance. Plugging the
 Infinispan Server with a custom filter involves the following steps:
 
 1. Create a JAR file with the filter implementation within it.
-2. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory` file
+2. Optional: If the cache uses custom key/value classes, these must be
+included in the JAR so that the callbacks can be executed with the correctly
+unmarshalled key and/or value instances. If the client listener has `useRawData`
+enabled, this is not necessary since the callback key/value instances will be
+provided in binary format.
+3. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 filter class implementation.
-3. Deploy the JAR file in the Infinispan Server.
+4. Deploy the JAR file in the Infinispan Server.
 
 On top of that, the client listener needs to be linked with this cache event
 filter factory by adding the factory's name to the @ClientListener annotation:
@@ -410,10 +415,15 @@ plugged with the name and the cache event converter factory instance. Plugging t
 Infinispan Server with an event converter involves the following steps:
 
 1. Create a JAR file with the converter implementation within it.
-2. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory` file
+2. Optional: If the cache uses custom key/value classes, these must be
+included in the JAR so that the callbacks can be executed with the correctly
+unmarshalled key and/or value instances. If the client listener has `useRawData`
+enabled, this is not necessary since the callback key/value instances will be
+provided in binary format.
+3. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventConverterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 converter class implementation.
-3. Deploy the JAR file in the Infinispan Server.
+4. Deploy the JAR file in the Infinispan Server.
 
 On top of that, the client listener needs to be linked with this converter
 factory by adding the factory's name to the @ClientListener annotation:
@@ -531,10 +541,15 @@ name and the cache event converter factory instance. Plugging the Infinispan
 Server with an event converter involves the following steps:
 
 1. Create a JAR file with the converter implementation within it.
-2. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory` file
+2. Optional: If the cache uses custom key/value classes, these must be
+included in the JAR so that the callbacks can be executed with the correctly
+unmarshalled key and/or value instances. If the client listener has `useRawData`
+enabled, this is not necessary since the callback key/value instances will be
+provided in binary format.
+3. Create a `META-INF/services/org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory` file
 within the JAR file and within it, write the fully qualified class name of the
 converter class implementation.
-3. Deploy the JAR file in the Infinispan Server.
+4. Deploy the JAR file in the Infinispan Server.
 
 From a client perspective, to be able to use the combined filter and
 converter class, the client listener must define the same filter factory and

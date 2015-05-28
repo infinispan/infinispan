@@ -29,7 +29,7 @@ public abstract class CustomEventLogListener {
       assertEquals(0, customEvents.size());
    }
 
-   public void expectSingleCustomEvent(Integer key, String value) {
+   public <K, V> void expectSingleCustomEvent(K key, V value) {
       CustomEvent event = pollEvent();
       assertEquals(key, event.key);
       assertEquals(value, event.value);

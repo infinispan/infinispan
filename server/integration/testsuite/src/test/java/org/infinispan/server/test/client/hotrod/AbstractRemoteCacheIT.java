@@ -908,6 +908,69 @@ public abstract class AbstractRemoteCacheIT {
         }
     }
 
+    @Test
+    public void testEventFilteringCustomPojo() {
+        final CustomPojoFilteredEventLogListener eventListener = new CustomPojoFilteredEventLogListener();
+        remoteCache.addClientListener(eventListener, new Object[]{"two"}, null);
+        try {
+            expectNoEvents(eventListener);
+            remoteCache.put(1, new Person("one"));
+            expectNoEvents(eventListener);
+            remoteCache.put(2, new Person("two"));
+            expectOnlyCreatedEvent(2, eventListener);
+            remoteCache.remove(1);
+            expectNoEvents(eventListener);
+            remoteCache.remove(2);
+            expectOnlyRemovedEvent(2, eventListener);
+        } finally {
+            remoteCache.removeClientListener(eventListener);
+        }
+    }
+
+    @Test
+    public void testCustomEventsCustomPojo() {
+        final CustomPojoCustomEventLogListener eventListener = new CustomPojoCustomEventLogListener();
+        remoteCache.addClientListener(eventListener, null, new Object[]{new Person("two")});
+        try {
+            eventListener.expectNoEvents();
+            remoteCache.put(1, new Person("one"));
+            eventListener.expectSingleCustomEvent(1, new Person("one"));
+            remoteCache.put(2, new Person("two"));
+            eventListener.expectSingleCustomEvent(2, null);
+        } finally {
+            remoteCache.removeClientListener(eventListener);
+        }
+    }
+
+    @Test
+    public void testCustomFilterEventsCustomPojo() {
+        final CustomPojoFilterCustomEventLogListener eventListener = new CustomPojoFilterCustomEventLogListener();
+        remoteCache.addClientListener(eventListener, new Object[]{new Id(3)}, null);
+        try {
+            eventListener.expectNoEvents();
+            remoteCache.put(new Id(1), new Person("one"));
+            eventListener.expectSingleCustomEvent(new Id(1), new Person("one"));
+            remoteCache.put(new Id(1), new Person("uno"));
+            eventListener.expectSingleCustomEvent(new Id(1), new Person("uno"));
+            remoteCache.put(new Id(2), new Person("two"));
+            eventListener.expectSingleCustomEvent(new Id(2), new Person("two"));
+            remoteCache.put(new Id(2), new Person("dos"));
+            eventListener.expectSingleCustomEvent(new Id(2), new Person("dos"));
+            remoteCache.put(new Id(3), new Person("three"));
+            eventListener.expectSingleCustomEvent(new Id(3), null);
+            remoteCache.put(new Id(3), new Person("tres"));
+            eventListener.expectSingleCustomEvent(new Id(3), null);
+            remoteCache.remove(new Id(1));
+            eventListener.expectSingleCustomEvent(new Id(1), null);
+            remoteCache.remove(new Id(2));
+            eventListener.expectSingleCustomEvent(new Id(2), null);
+            remoteCache.remove(new Id(3));
+            eventListener.expectSingleCustomEvent(new Id(3), null);
+        } finally {
+            remoteCache.removeClientListener(eventListener);
+        }
+    }
+
     public static <K> void expectOnlyCreatedEvent(K key, EventLogListener eventListener) {
         expectSingleEvent(key, eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
         expectNoEvents(eventListener, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
@@ -979,7 +1042,16 @@ public abstract class AbstractRemoteCacheIT {
     @ClientListener(filterFactoryName = "filter-converter-factory", converterFactoryName = "filter-converter-factory")
     public static class FilterCustomEventLogListener extends CustomEventLogListener {}
 
-    static class Person implements Serializable {
+    @ClientListener(filterFactoryName = "pojo-filter-factory")
+    public static class CustomPojoFilteredEventLogListener extends EventLogListener {}
+
+    @ClientListener(converterFactoryName = "pojo-converter-factory")
+    public static class CustomPojoCustomEventLogListener extends CustomEventLogListener {}
+
+    @ClientListener(filterFactoryName = "pojo-filter-converter-factory", converterFactoryName = "pojo-filter-converter-factory")
+    public static class CustomPojoFilterCustomEventLogListener extends CustomEventLogListener {}
+
+    public static class Person implements Serializable {
 
         final String name;
 
@@ -1006,6 +1078,30 @@ public abstract class AbstractRemoteCacheIT {
         @Override
         public int hashCode() {
             return name.hashCode();
+        }
+    }
+
+    public static class Id implements Serializable {
+        final byte id;
+        public Id(int id) {
+            this.id = (byte) id;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Id id1 = (Id) o;
+
+            if (id != id1.id) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return id;
         }
     }
 
