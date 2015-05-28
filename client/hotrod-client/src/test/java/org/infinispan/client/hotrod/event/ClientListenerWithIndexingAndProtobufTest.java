@@ -75,6 +75,7 @@ public class ClientListenerWithIndexingAndProtobufTest extends MultiHotRodServer
 
       remoteCache.put("user_" + user1.getId(), user1);
 
+      assertEquals(1, remoteCache.size());
       assertEquals(1, listener.created);
 
       remoteCache.removeClientListener(listener);
