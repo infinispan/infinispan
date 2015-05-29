@@ -43,6 +43,11 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
+   public void undefineConfiguration(String configurationName) {
+      cm.undefineConfiguration(configurationName);
+   }
+
+   @Override
    public String getClusterName() {
       return cm.getClusterName();
    }

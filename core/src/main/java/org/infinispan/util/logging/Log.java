@@ -1342,4 +1342,10 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Ignoring asyncMarshalling configuration", id = 369)
    void ignoreAsyncMarshalling();
+
+   @Message(value = "Cache name '%s' cannot be used as it is a reserved, internal name", id = 370)
+   IllegalArgumentException illegalCacheName(String name);
+
+   @Message(value = "Cannot remove cache configuration '%s' because it is in use", id = 371)
+   IllegalStateException configurationInUse(String configurationName);
 }
