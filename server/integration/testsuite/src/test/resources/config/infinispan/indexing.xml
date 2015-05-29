@@ -4,7 +4,6 @@
                 <transport stack="${jboss.default.jgroups.stack:udp}" executor="infinispan-transport" lock-timeout="240000"/>
                 <replicated-cache name="repltestcache" mode="SYNC" start="EAGER" module="org.infinispan.remote-query.server">
                     <indexing index="ALL">
-                        <property name="default.directory_provider">infinispan</property>
                         <property name="default.indexmanager">org.infinispan.query.indexmanager.InfinispanIndexManager</property>
                     </indexing>
                 </replicated-cache>

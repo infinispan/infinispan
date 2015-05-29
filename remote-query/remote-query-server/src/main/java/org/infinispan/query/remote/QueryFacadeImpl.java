@@ -1,6 +1,10 @@
 package org.infinispan.query.remote;
 
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
@@ -11,7 +15,6 @@ import org.hibernate.search.bridge.builtin.NumericFieldBridge;
 import org.hibernate.search.bridge.builtin.StringBridge;
 import org.hibernate.search.bridge.builtin.impl.NullEncodingTwoWayFieldBridge;
 import org.hibernate.search.bridge.builtin.impl.TwoWayString2FieldBridgeAdaptor;
-import org.hibernate.search.query.dsl.QueryBuilder;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
@@ -150,14 +153,10 @@ public final class QueryFacadeImpl implements QueryFacade {
       boolean isCompatMode = cacheConfiguration.compatibility().enabled();
       if (!isCompatMode) {
          // restrict on entity type
-         QueryBuilder qb = searchFactory.buildQueryBuilder().forEntity(parsingResult.getTargetEntity()).get();
-         luceneQuery = qb.bool()
-               .must(qb.keyword().onField(TYPE_FIELD_NAME)
-                           .ignoreFieldBridge()
-                           .ignoreAnalyzer()
-                           .matching(parsingResult.getTargetEntityName()).createQuery())
-               .must(luceneQuery)
-               .createQuery();
+         BooleanQuery booleanQuery = new BooleanQuery();
+         booleanQuery.add(new BooleanClause(new TermQuery(new Term(TYPE_FIELD_NAME, parsingResult.getTargetEntityName())), BooleanClause.Occur.MUST));
+         booleanQuery.add(new BooleanClause(luceneQuery, BooleanClause.Occur.MUST));
+         luceneQuery = booleanQuery;
       }
 
       CacheQuery cacheQuery = searchManager.getQuery(luceneQuery, parsingResult.getTargetEntity());
