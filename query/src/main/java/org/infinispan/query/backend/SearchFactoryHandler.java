@@ -1,6 +1,5 @@
 package org.infinispan.query.backend;
 
-import org.hibernate.search.backend.spi.Worker;
 import org.hibernate.search.spi.SearchIntegrator;
 
 import java.util.ArrayList;
@@ -40,7 +39,8 @@ final class SearchFactoryHandler {
          }
          else {
             handleOnDemandRegistration(potentialNewType);
-            return clusterRegistry.get(potentialNewType);
+            Boolean isIndexable = clusterRegistry.get(potentialNewType);
+            return isIndexable != null ? isIndexable.booleanValue() : false;
          }
       } else {
          return false;
@@ -48,12 +48,17 @@ final class SearchFactoryHandler {
    }
 
    private void handleOnDemandRegistration(Class<?>... classes) {
-      final Class<?>[] toAdd = filterAlreadyIndexed(classes);
-      if (toAdd.length == 0) {
-         return;
+      List<Class<?>> reducedSet = new ArrayList<>(classes.length);
+      for (Class<?> type : classes) {
+         if (!clusterRegistry.containsKey(type)) {
+            reducedSet.add(type);
+         }
       }
-      updateSearchFactory(toAdd);
-      updateClusterRegistry(toAdd);
+      if (!reducedSet.isEmpty()) {
+         Class<?>[] toAdd = reducedSet.toArray(new Class[reducedSet.size()]);
+         updateSearchFactory(toAdd);
+         updateClusterRegistry(toAdd);
+      }
    }
 
    private void updateClusterRegistry(final Class<?>... classes) {
@@ -75,8 +80,7 @@ final class SearchFactoryHandler {
          if (reducedSet.isEmpty()) {
             return;
          }
-         final Class<?>[] newtypes = new Class<?>[reducedSet.size()];
-         reducedSet.toArray(newtypes);
+         final Class<?>[] newtypes = reducedSet.toArray(new Class<?>[reducedSet.size()]);
          transactionHelper.runSuspendingTx(new Operation() {
             @Override
             public void execute() {
@@ -91,26 +95,8 @@ final class SearchFactoryHandler {
       }
    }
 
-   public SearchIntegrator getSearchFactory() {
-      return searchFactory;
-   }
-
-   Worker getWorker() {
-      return searchFactory.getWorker();
-   }
-
    boolean isIndexed(final Class<?> c) {
       return this.searchFactory.getIndexBinding(c) != null;
-   }
-
-   private Class<?>[] filterAlreadyIndexed(Class... classes) {
-      ArrayList<Class<?>> toAdd = new ArrayList<>(classes.length);
-      for (Class<?> type : classes) {
-         if (!clusterRegistry.containsKey(type)) {
-            toAdd.add(type);
-         }
-      }
-      return toAdd.toArray(new Class[toAdd.size()]);
    }
 
    void handleClusterRegistryRegistration(final Class<?> clazz) {

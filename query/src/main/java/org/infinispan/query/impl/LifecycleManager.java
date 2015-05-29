@@ -60,6 +60,7 @@ import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.impl.massindex.IndexWorker;
 import org.infinispan.query.logging.Log;
 import org.infinispan.query.spi.ProgrammaticSearchMappingProvider;
+import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
@@ -111,6 +112,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
    }
 
    private void addCacheDependencyIfNeeded(String cacheStarting, EmbeddedCacheManager cacheManager, Properties properties) {
+      if (!ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME.equals(cacheStarting)) {
+         cacheManager.addCacheDependency(cacheStarting, ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
+      }
       if (hasInfinispanDirectory(properties) && !DEFAULT_CACHES.contains(cacheStarting)) {
          String metadataCacheName = getMetadataCacheName(properties);
          String lockingCacheName = getLockingCacheName(properties);
@@ -278,6 +282,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          Cache cache = cr.getComponent(Cache.class);
          while (providers.hasNext()) {
             ProgrammaticSearchMappingProvider provider = providers.next();
+            if (log.isDebugEnabled()) {
+               log.debugf("Loading programmatic search mappings for cache %s from provider : %s", cache.getName(), provider.getClass().getName());
+            }
             provider.defineMappings(cache, mapping);
          }
       }
