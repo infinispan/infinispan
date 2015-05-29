@@ -362,7 +362,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       if (cacheName == null || configOverride == null)
          throw new NullPointerException("Null arguments not allowed");
       if (cacheName.equals(DEFAULT_CACHE_NAME))
-         throw new IllegalArgumentException("Cache name cannot be used as it is a reserved, internal name");
+         throw log.illegalCacheName(DEFAULT_CACHE_NAME);
       if (checkExisting) {
          Configuration existing = configurationOverrides.get(cacheName);
          if (existing != null) {
@@ -382,6 +382,22 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       Configuration configuration = builder.build(globalConfiguration);
       configurationOverrides.put(cacheName, configuration);
       return configuration;
+   }
+
+   @Override
+   public void undefineConfiguration(String configurationName) {
+      authzHelper.checkPermission(AuthorizationPermission.ADMIN);
+      if (configurationName.equals(DEFAULT_CACHE_NAME))
+         throw log.illegalCacheName(DEFAULT_CACHE_NAME);
+      Configuration existing = configurationOverrides.get(configurationName);
+      if (existing != null) {
+         for(CacheWrapper cache : caches.values()) {
+            if (cache.getCache().getCacheConfiguration() == existing) {
+               throw log.configurationInUse(configurationName);
+            }
+         }
+         configurationOverrides.remove(configurationName);
+      }
    }
 
    /**

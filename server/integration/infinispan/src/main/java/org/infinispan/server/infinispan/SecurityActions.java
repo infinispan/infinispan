@@ -109,6 +109,17 @@ public final class SecurityActions {
         doPrivileged(action);
     }
 
+    public static void undefineContainerConfiguration(final EmbeddedCacheManager container, final String name) {
+        PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
+            @Override
+            public Void run() {
+                container.undefineConfiguration(name);
+                return null;
+            }
+        };
+        doPrivileged(action);
+    }
+
     public static <K, V> Cache<K, V> startCache(final EmbeddedCacheManager container, final String name) {
         PrivilegedAction<Cache<K, V>> action = new PrivilegedAction<Cache<K, V>>() {
             @Override

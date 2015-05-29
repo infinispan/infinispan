@@ -88,6 +88,15 @@ public interface EmbeddedCacheManager extends CacheContainer, Listenable {
    Configuration defineConfiguration(String cacheName, String templateCacheName, Configuration configurationOverride);
 
    /**
+    * Removes a configuration from the set of defined configurations. If the configuration is currently in use by one of the
+    * caches, an {@link IllegalStateException} is thrown. If the named configuration does not exist, nothing
+    * happens
+    *
+    * @param configurationName     the named configuration
+    */
+   void undefineConfiguration(String configurationName);
+
+   /**
     * @return the name of the cluster.  Null if running in local mode.
     */
    String getClusterName();

@@ -91,6 +91,7 @@ public abstract class AbstractCacheConfigurationService implements Service<Confi
     @Override
     public void stop(StopContext context) {
         this.config = null;
+        SecurityActions.undefineContainerConfiguration(this.getCacheContainer(), this.name);
         log.debugf("%s cache configuration stopped", this.name);
     }
 }
