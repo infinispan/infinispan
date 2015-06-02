@@ -5,20 +5,26 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.UserPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.NotIndexedMarshaller;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.protostream.FileDescriptorSource;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.CacheQuery;
+import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
+import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
 import org.infinispan.query.remote.ProtobufMetadataManager;
-import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.CleanupAfterMethod;
@@ -33,7 +39,6 @@ import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemo
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Tests compatibility between remote query and embedded mode.
@@ -44,6 +49,12 @@ import static org.junit.Assert.assertEquals;
 @Test(testName = "client.hotrod.marshall.EmbeddedCompatTest", groups = "functional")
 @CleanupAfterMethod
 public class EmbeddedCompatTest extends SingleCacheManagerTest {
+
+   private static final String NOT_INDEXED_PROTO_SCHEMA = "package sample_bank_account;\n" +
+         "/* @Indexed(false) */\n" +
+         "message NotIndexed {\n" +
+         "\toptional string notIndexedField = 1;\n" +
+         "}\n";
 
    private HotRodServer hotRodServer;
    private RemoteCacheManager remoteCacheManager;
@@ -68,15 +79,22 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       remoteCache = remoteCacheManager.getCache();
 
       //initialize client-side serialization context
-      MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(remoteCacheManager));
+      SerializationContext clientSerCtx = ProtoStreamMarshaller.getSerializationContext(remoteCacheManager);
+      MarshallerRegistration.registerMarshallers(clientSerCtx);
+      clientSerCtx.registerProtoFiles(FileDescriptorSource.fromString("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA));
+      clientSerCtx.registerMarshaller(new NotIndexedMarshaller());
 
       //initialize server-side serialization context
-      RemoteCache<String, String> metadataCache = remoteCacheManager.getCache(ProtobufMetadataManagerConstants.PROTOBUF_METADATA_CACHE_NAME);
-      metadataCache.put("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
-      assertFalse(metadataCache.containsKey(ProtobufMetadataManagerConstants.ERRORS_KEY_SUFFIX));
-
       ProtobufMetadataManager protobufMetadataManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
+      protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", Util.read(Util.getResourceAsStream("/sample_bank_account/bank.proto", getClass().getClassLoader())));
+      protobufMetadataManager.registerProtofile("not_indexed.proto", NOT_INDEXED_PROTO_SCHEMA);
+      assertNull(protobufMetadataManager.getFileErrors("sample_bank_account/bank.proto"));
+      assertNull(protobufMetadataManager.getFileErrors("not_indexed.proto"));
+      assertNull(protobufMetadataManager.getFilesWithErrors());
+
       protobufMetadataManager.registerMarshaller(new EmbeddedAccountMarshaller());
+      protobufMetadataManager.registerMarshaller(new EmbeddedUserMarshaller());
+      protobufMetadataManager.registerMarshaller(new NotIndexedMarshaller());
 
       return cacheManager;
    }
@@ -104,11 +122,11 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals(1, cache.keySet().size());
       Object key = cache.keySet().iterator().next();
       Object localObject = cache.get(key);
-      assertEmbeddedAccount((Account) localObject);
+      assertAccount((Account) localObject, AccountHS.class);
 
       // get the object through the remote cache interface and check it's the same object we put
       Account fromRemoteCache = remoteCache.get(1);
-      assertRemoteAccount(fromRemoteCache);
+      assertAccount(fromRemoteCache, AccountPB.class);
    }
 
    public void testPutAndGetForEmbeddedEntry() throws Exception {
@@ -122,11 +140,11 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals(1, remoteCache.keySet().size());
       Object key = remoteCache.keySet().iterator().next();
       Object remoteObject = remoteCache.get(key);
-      assertRemoteAccount((Account) remoteObject);
+      assertAccount((Account) remoteObject, AccountPB.class);
 
       // get the object through the embedded cache interface and check it's the same object we put
       Account fromEmbeddedCache = (Account) cache.get(1);
-      assertEmbeddedAccount(fromEmbeddedCache);
+      assertAccount(fromEmbeddedCache, AccountHS.class);
    }
 
    public void testRemoteQuery() throws Exception {
@@ -142,7 +160,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertRemoteAccount(list.get(0));
+      assertAccount(list.get(0), AccountPB.class);
    }
 
    public void testRemoteQueryForEmbeddedEntry() throws Exception {
@@ -161,7 +179,46 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
 
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertRemoteAccount(list.get(0));
+      assertAccount(list.get(0), AccountPB.class);
+   }
+
+   public void testRemoteQueryForEmbeddedEntryOnNonIndexedField() throws Exception {
+      UserHS user = new UserHS();
+      user.setId(1);
+      user.setName("test name");
+      user.setSurname("test surname");
+      user.setNotes("1234567890");
+      cache.put(1, user);
+
+      // get user back from remote cache via query and check its attributes
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.from(UserPB.class)
+            .having("notes").like("%567%").toBuilder()
+            .build();
+      List<UserPB> list = query.list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertNotNull(list.get(0));
+      assertEquals(UserPB.class, list.get(0).getClass());
+      assertEquals(1, list.get(0).getId());
+      assertEquals("1234567890", list.get(0).getNotes());
+   }
+
+   public void testRemoteQueryForEmbeddedEntryOnNonIndexedType() throws Exception {
+      cache.put(1, new NotIndexed("testing 123"));
+
+      // get user back from remote cache via query and check its attributes
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.from("sample_bank_account.NotIndexed")
+            .having("notIndexedField").like("%123%").toBuilder()
+            .build();
+      List<NotIndexed> list = query.list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertNotNull(list.get(0));
+      assertEquals("testing 123", list.get(0).notIndexedField);
    }
 
    public void testRemoteQueryWithProjectionsForEmbeddedEntry() throws Exception {
@@ -190,15 +247,16 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       remoteCache.put(1, account);
 
       // get account back from local cache via query and check its attributes
-      org.apache.lucene.search.Query query = org.infinispan.query.Search.getSearchManager(cache)
+      SearchManager searchManager = org.infinispan.query.Search.getSearchManager(cache);
+      org.apache.lucene.search.Query query = searchManager
             .buildQueryBuilderForClass(AccountHS.class).get()
             .keyword().wildcard().onField("description").matching("*test*").createQuery();
-      CacheQuery cacheQuery = org.infinispan.query.Search.getSearchManager(cache).getQuery(query);
+      CacheQuery cacheQuery = searchManager.getQuery(query);
       List<Object> list = cacheQuery.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
-      assertEmbeddedAccount((Account) list.get(0));
+      assertAccount((Account) list.get(0), AccountHS.class);
    }
 
    private AccountPB createAccount() {
@@ -209,16 +267,9 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       return account;
    }
 
-   private void assertRemoteAccount(Account account) {
+   private void assertAccount(Account account, Class<?> cls) {
       assertNotNull(account);
-      assertEquals(AccountPB.class, account.getClass());
-      assertEquals(1, account.getId());
-      assertEquals("test description", account.getDescription());
-      assertEquals(42, account.getCreationDate().getTime());
-   }
-
-   private void assertEmbeddedAccount(Account account) {
-      assertEquals(AccountHS.class, account.getClass());
+      assertEquals(cls, account.getClass());
       assertEquals(1, account.getId());
       assertEquals("test description", account.getDescription());
       assertEquals(42, account.getCreationDate().getTime());
