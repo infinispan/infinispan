@@ -66,7 +66,7 @@ public class MultiHotRodServerQueryTest extends MultiHotRodServersTest {
       //initialize server-side serialization context
       ProtobufMetadataManager protobufMetadataManager = manager(0).getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
       protobufMetadataManager.registerProtofile("sample_bank_account/bank.proto", read("/sample_bank_account/bank.proto"));
-      assertNull(protobufMetadataManager.getFileErrors("/sample_bank_account/bank.proto"));
+      assertNull(protobufMetadataManager.getFileErrors("sample_bank_account/bank.proto"));
       assertNull(protobufMetadataManager.getFilesWithErrors());
 
       //initialize client-side serialization context
