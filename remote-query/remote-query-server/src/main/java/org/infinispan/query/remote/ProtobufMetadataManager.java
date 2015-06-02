@@ -83,7 +83,7 @@ public final class ProtobufMetadataManager implements ProtobufMetadataManagerMBe
    }
 
    @Inject
-   public void init(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
+   protected void init(EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
       this.cacheManager = cacheManager;
       internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME, getProtobufMetadataCacheConfig().build(), EnumSet.of(InternalCacheRegistry.Flag.USER));
    }

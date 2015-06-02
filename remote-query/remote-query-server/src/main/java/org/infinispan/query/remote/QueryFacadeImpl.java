@@ -5,6 +5,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
+import org.hibernate.hql.ParsingException;
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
@@ -83,7 +84,13 @@ public final class QueryFacadeImpl implements QueryFacade {
             try {
                response = executeIndexedQuery(cache, cacheConfiguration, serCtx, request);
             } catch (IllegalArgumentException e) {
-               if (e.getMessage().contains("ISPN018002")) {
+               if (e.getMessage().contains("ISPN018002:") || e.getMessage().contains("HQL100001:")) {
+                  response = executeNonIndexedQuery(cache, cacheConfiguration, serCtx, request);
+               } else {
+                  throw e;
+               }
+            } catch (ParsingException e) {
+               if (e.getMessage().contains("HQL100002:")) {
                   response = executeNonIndexedQuery(cache, cacheConfiguration, serCtx, request);
                } else {
                   throw e;
