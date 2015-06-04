@@ -2746,7 +2746,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                               if (!isEvict) {
                                  evictionPolicy.onEntryRemove(p);
                               }
-                              notifyListenerOfRemoval(p, isEvict);
+                              if (pv != null) {
+                                notifyListenerOfRemoval(p, isEvict);
+                              }
                            }
                         }
                      }
