@@ -50,12 +50,14 @@ public class GlobalConfiguration {
    private final ThreadPoolConfiguration replicationQueueThreadPool;
    private final ThreadPoolConfiguration persistenceThreadPool;
    private final ThreadPoolConfiguration stateTransferThreadPool;
+   private final ThreadPoolConfiguration asyncThreadPool;
 
    GlobalConfiguration(ThreadPoolConfiguration evictionThreadPool,
          ThreadPoolConfiguration listenerThreadPool,
          ThreadPoolConfiguration replicationQueueThreadPool,
          ThreadPoolConfiguration persistenceThreadPool,
          ThreadPoolConfiguration stateTransferThreadPool,
+         ThreadPoolConfiguration asyncThreadPool,
          GlobalJmxStatisticsConfiguration globalJmxStatistics,
          TransportConfiguration transport, GlobalSecurityConfiguration security,
          SerializationConfiguration serialization, ShutdownConfiguration shutdown,
@@ -65,6 +67,7 @@ public class GlobalConfiguration {
       this.replicationQueueThreadPool = replicationQueueThreadPool;
       this.persistenceThreadPool = persistenceThreadPool;
       this.stateTransferThreadPool = stateTransferThreadPool;
+      this.asyncThreadPool = asyncThreadPool;
       this.globalJmxStatistics = globalJmxStatistics;
       this.transport = transport;
       this.security = security;
@@ -150,9 +153,13 @@ public class GlobalConfiguration {
    public ThreadPoolConfiguration persistenceThreadPool() {
       return persistenceThreadPool;
    }
-   
+
    public ThreadPoolConfiguration stateTransferThreadPool() {
       return stateTransferThreadPool;
+   }
+
+   public ThreadPoolConfiguration asyncThreadPool() {
+      return asyncThreadPool;
    }
 
    public GlobalJmxStatisticsConfiguration globalJmxStatistics() {

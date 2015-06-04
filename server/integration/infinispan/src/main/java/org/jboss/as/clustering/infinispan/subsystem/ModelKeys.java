@@ -31,6 +31,7 @@ public class ModelKeys {
     static final String ALIAS = "alias";
     static final String ALIASES = "aliases";
     static final String APPEND_CACHE_NAME_TO_PATH = "append-cache-name-to-path";
+    static final String ASYNC_EXECUTOR = "async-executor";
     static final String ASYNC_MARSHALLING = "async-marshalling";
     static final String AUDIT_LOGGER = "audit-logger";
     static final String AUTHORIZATION = "authorization";

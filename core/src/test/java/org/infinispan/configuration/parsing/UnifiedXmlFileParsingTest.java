@@ -91,6 +91,30 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(c.eviction().type() == EvictionType.MEMORY);
       c = cm.getCache("invalid").getCacheConfiguration();
       assertTrue(c.eviction().type() == EvictionType.MEMORY);
+
+      DefaultThreadFactory threadFactory;
+      BlockingThreadPoolExecutorFactory threadPool;
+
+      threadFactory = cm.getCacheManagerConfiguration().asyncThreadPool().threadFactory();
+      assertEquals("infinispan", threadFactory.threadGroup().getName());
+      assertEquals("%G %i", threadFactory.threadNamePattern());
+      assertEquals(5, threadFactory.initialPriority());
+      threadPool = cm.getCacheManagerConfiguration().asyncThreadPool().threadPoolFactory();
+      assertEquals(TestCacheManagerFactory.ASYNC_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.ASYNC_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.ASYNC_EXEC_QUEUE_SIZE, threadPool.queueLength()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
+
+      threadFactory = cm.getCacheManagerConfiguration().stateTransferThreadPool().threadFactory();
+      assertEquals("infinispan", threadFactory.threadGroup().getName());
+      assertEquals("%G %i", threadFactory.threadNamePattern());
+      assertEquals(5, threadFactory.initialPriority());
+      threadPool = cm.getCacheManagerConfiguration().stateTransferThreadPool().threadPoolFactory();
+      assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_QUEUE_SIZE, threadPool.queueLength()); //
+      // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
    }
 
    private static void configurationCheck70(EmbeddedCacheManager cm) {
@@ -111,12 +135,19 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("jgroups-tcp.xml", g.transport().properties().getProperty("stackFilePath-tcp"));
       assertEquals("tcp", g.transport().properties().getProperty("stack"));
 
-      DefaultThreadFactory threadFactory =
-            cm.getCacheManagerConfiguration().listenerThreadPool().threadFactory();
+      DefaultThreadFactory threadFactory;
+      BlockingThreadPoolExecutorFactory threadPool;
+
+      threadFactory = cm.getCacheManagerConfiguration().listenerThreadPool().threadFactory();
       assertEquals("infinispan", threadFactory.threadGroup().getName());
       assertEquals("%G %i", threadFactory.threadNamePattern());
       assertEquals(5, threadFactory.initialPriority());
-
+      threadPool = cm.getCacheManagerConfiguration().listenerThreadPool().threadPoolFactory();
+      assertEquals(1, threadPool.coreThreads());
+      assertEquals(1, threadPool.maxThreads());
+      assertEquals(0, threadPool.queueLength());
+      assertEquals(0, threadPool.keepAlive());
+      
       assertTrue(cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadPoolFactory() instanceof CachedThreadPoolExecutorFactory);
       threadFactory = cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadFactory();
       assertEquals("infinispan", threadFactory.threadGroup().getName());
@@ -141,25 +172,25 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals("%G %i", threadFactory.threadNamePattern());
       assertEquals(5, threadFactory.initialPriority());
 
+      threadFactory = cm.getCacheManagerConfiguration().transport().remoteCommandThreadPool().threadFactory();
+      assertEquals("infinispan", threadFactory.threadGroup().getName());
+      assertEquals("%G %i", threadFactory.threadNamePattern());
+      assertEquals(5, threadFactory.initialPriority());
+      threadPool = cm.getCacheManagerConfiguration().transport().remoteCommandThreadPool().threadPoolFactory();
+      assertEquals(TestCacheManagerFactory.REMOTE_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.REMOTE_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.REMOTE_EXEC_QUEUE_SIZE, threadPool.queueLength()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
+
       threadFactory = cm.getCacheManagerConfiguration().transport().transportThreadPool().threadFactory();
       assertEquals("infinispan", threadFactory.threadGroup().getName());
       assertEquals("%G %i", threadFactory.threadNamePattern());
       assertEquals(5, threadFactory.initialPriority());
-      BlockingThreadPoolExecutorFactory threadPool = cm.getCacheManagerConfiguration().transport().transportThreadPool().threadPoolFactory();
-      assertEquals(6, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
-      assertEquals(6, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
-      assertEquals(10000, threadPool.queueLength()); // overriden by TestCacheManagerFactory
-      assertEquals(30000, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
-
-      threadFactory = cm.getCacheManagerConfiguration().listenerThreadPool().threadFactory();
-      assertEquals("infinispan", threadFactory.threadGroup().getName());
-      assertEquals("%G %i", threadFactory.threadNamePattern());
-      assertEquals(5, threadFactory.initialPriority());
-      threadPool = cm.getCacheManagerConfiguration().listenerThreadPool().threadPoolFactory();
-      assertEquals(1, threadPool.coreThreads());
-      assertEquals(1, threadPool.maxThreads());
-      assertEquals(0, threadPool.queueLength());
-      assertEquals(0, threadPool.keepAlive());
+      threadPool = cm.getCacheManagerConfiguration().transport().transportThreadPool().threadPoolFactory();
+      assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_MAX_THREADS, threadPool.coreThreads()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_MAX_THREADS, threadPool.maxThreads()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_QUEUE_SIZE, threadPool.queueLength()); // overriden by TestCacheManagerFactory
+      assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
 
       assertTrue(g.serialization().marshaller() instanceof VersionAwareMarshaller);
       assertEquals(Version.getVersionShort("1.0"), g.serialization().version());

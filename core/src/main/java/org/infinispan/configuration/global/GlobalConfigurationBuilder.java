@@ -24,6 +24,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final ThreadPoolConfigurationBuilder replicationQueueThreadPool;
    private final ThreadPoolConfigurationBuilder persistenceThreadPool;
    private final ThreadPoolConfigurationBuilder stateTransferThreadPool;
+   private final ThreadPoolConfigurationBuilder asyncThreadPool;
    private final ShutdownConfigurationBuilder shutdown;
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
    private final SiteConfigurationBuilder site;
@@ -43,6 +44,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.replicationQueueThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.persistenceThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.stateTransferThreadPool = new ThreadPoolConfigurationBuilder(this);
+      this.asyncThreadPool = new ThreadPoolConfigurationBuilder(this);
    }
 
    /**
@@ -138,11 +140,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       return null;
    }
 
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link #evictionThreadPool()} instead.
-    */
-   @Deprecated
    @Override
    public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
       return null;
@@ -185,6 +182,10 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    
    public ThreadPoolConfigurationBuilder stateTransferThreadPool() {
       return stateTransferThreadPool;
+   }
+
+   public ThreadPoolConfigurationBuilder asyncThreadPool() {
+      return asyncThreadPool;
    }
 
    @Override
@@ -255,6 +256,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             replicationQueueThreadPool.create(),
             persistenceThreadPool.create(),
             stateTransferThreadPool.create(),
+            asyncThreadPool.create(),
             globalJmxStatistics.create(),
             transport.create(),
             security.create(),

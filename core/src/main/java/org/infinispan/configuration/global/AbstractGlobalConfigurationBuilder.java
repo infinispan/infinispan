@@ -94,6 +94,11 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    }
 
    @Override
+   public ThreadPoolConfigurationBuilder asyncThreadPool() {
+      return globalConfig.asyncThreadPool();
+   }
+
+   @Override
    public ThreadPoolConfigurationBuilder replicationQueueThreadPool() {
       return globalConfig.replicationQueueThreadPool();
    }
