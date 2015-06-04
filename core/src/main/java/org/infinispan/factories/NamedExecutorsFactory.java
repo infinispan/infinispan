@@ -3,9 +3,9 @@ package org.infinispan.factories;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.executors.BlockingThreadPoolExecutorFactory;
 import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
-import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.executors.LazyInitializingBlockingTaskAwareExecutorService;
 import org.infinispan.executors.LazyInitializingExecutorService;
 import org.infinispan.executors.LazyInitializingScheduledExecutorService;
@@ -14,9 +14,21 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.threads.DefaultThreadFactory;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 
-import java.util.concurrent.*;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 
-import static org.infinispan.factories.KnownComponentNames.*;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.TOTAL_ORDER_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.shortened;
 
 /**
  * A factory that specifically knows how to create named executors.
@@ -37,6 +49,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private ScheduledExecutorService asyncReplicationExecutor;
    private BlockingTaskAwareExecutorService totalOrderExecutor;
    private ExecutorService stateTransferExecutor;
+   private ExecutorService asyncOperationsExecutor;
 
    @Override
    @SuppressWarnings("unchecked")
@@ -124,6 +137,15 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                }
             }
             return (T) stateTransferExecutor;
+         } else if (componentName.equals(ASYNC_OPERATIONS_EXECUTOR)) {
+            synchronized (this) {
+               if (asyncOperationsExecutor == null) {
+                  asyncOperationsExecutor = createExecutorService(
+                        globalConfiguration.asyncThreadPool(), globalConfiguration,
+                        ASYNC_OPERATIONS_EXECUTOR, ExecutorServiceType.DEFAULT);
+               }
+            }
+            return (T) asyncOperationsExecutor;
          } else {
             throw new CacheConfigurationException("Unknown named executor " + componentName);
          }

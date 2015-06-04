@@ -18,6 +18,7 @@ public enum Attribute {
     AFTER("after"),
     ALIASES("aliases"),
     ALLOW_DUPLICATE_DOMAINS("duplicate-domains"),
+    ASYNC_EXECUTOR("async-executor"),
     ASYNC_MARSHALLING("async-marshalling"),
     AUDIT_LOGGER("audit-logger"),
     AUTO_COMMIT("auto-commit"),

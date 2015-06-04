@@ -31,6 +31,8 @@ public interface GlobalConfigurationChildBuilder {
    
    ThreadPoolConfigurationBuilder stateTransferThreadPool();
 
+   ThreadPoolConfigurationBuilder asyncThreadPool();
+
    ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor();
 
    ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor();

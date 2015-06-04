@@ -112,6 +112,12 @@
                 <xs:documentation>Defines the executor used for asynchronous cache listener notifications.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="async-executor" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>Defines the executor used for asynchronous cache operations.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="eviction-executor" type="xs:string">
             <xs:annotation>
                 <xs:documentation>Defines the scheduled executor used for evictions.</xs:documentation>

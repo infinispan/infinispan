@@ -473,6 +473,10 @@ public class Parser80 implements ConfigurationParser {
                log.ignoreXmlAttribute(attribute);
                break;
             }
+            case ASYNC_EXECUTOR: {
+               builder.asyncThreadPool().read(createThreadPoolConfiguration(value, ASYNC_OPERATIONS_EXECUTOR));
+               break;
+            }
             case LISTENER_EXECUTOR: {
                builder.listenerThreadPool().read(
                      createThreadPoolConfiguration(value, ASYNC_NOTIFICATION_EXECUTOR));

@@ -326,6 +326,8 @@
                 </c:simple-property>
                 <c:simple-property name="listener-executor" required="false" type="string" readOnly="true"
                                    description="The executor used for the replication queue"/>
+                <c:simple-property name="async-executor" required="false" type="string" readOnly="true"
+                                   description="The executor used for async cache operations"/>
                 <c:simple-property name="eviction-executor" required="false" type="string" readOnly="true"
                                    description="The scheduled executor used for eviction"/>
                 <c:simple-property name="module" required="false" type="string" readOnly="true"

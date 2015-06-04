@@ -8,15 +8,27 @@
    </jgroups>
    <threads>
       <thread-factory name="infinispan-factory" group-name="infinispan" thread-name-pattern="%G %i" priority="5"/>
-      <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="infinispan-factory" core-threads="1" max-threads="1" queue-length="0" keepalive-time="0" /> <!-- listener-executor -->
-      <blocking-bounded-queue-thread-pool name="infinispan-transport" thread-factory="infinispan-factory" core-threads="5" max-threads="10" queue-length="100" keepalive-time="10000" /> <!-- transport.executor -->
-      <blocking-bounded-queue-thread-pool name="infinispan-state-transfer" thread-factory="infinispan-factory" core-threads="1" max-threads="60" queue-length="0" keepalive-time="0" /> <!-- state-transfer-executor -->
-      <cached-thread-pool name="infinispan-cached" thread-factory="infinispan-factory" /> <!-- transport.total-order-executor, transport.remote-command-executor, persistence-executor -->
-      <scheduled-thread-pool name="infinispan-expiration" thread-factory="infinispan-factory" /> <!-- expiration-executor -->
-      <scheduled-thread-pool name="infinispan-repl-queue" thread-factory="infinispan-factory" /> <!-- replication-queue-executor -->
+      <!-- listener-executor -->
+      <blocking-bounded-queue-thread-pool name="infinispan-async" thread-factory="infinispan-factory"
+            core-threads="5" max-threads="5" queue-length="0" keepalive-time="0"/>
+      <!-- listener-executor -->
+      <blocking-bounded-queue-thread-pool name="infinispan-listener" thread-factory="infinispan-factory"
+            core-threads="1" max-threads="1" queue-length="0" keepalive-time="0"/>
+      <!-- transport.executor -->
+      <blocking-bounded-queue-thread-pool name="infinispan-transport" thread-factory="infinispan-factory"
+            core-threads="5" max-threads="10" queue-length="100" keepalive-time="10000"/>
+      <!-- state-transfer-executor -->
+      <blocking-bounded-queue-thread-pool name="infinispan-state-transfer" thread-factory="infinispan-factory"
+            core-threads="1" max-threads="60" queue-length="0" keepalive-time="0"/>
+      <!-- transport.total-order-executor, transport.remote-command-executor, persistence-executor -->
+      <cached-thread-pool name="infinispan-cached" thread-factory="infinispan-factory" />
+      <!-- expiration-executor -->
+      <scheduled-thread-pool name="infinispan-expiration" thread-factory="infinispan-factory" />
+      <!-- replication-queue-executor -->
+      <scheduled-thread-pool name="infinispan-repl-queue" thread-factory="infinispan-factory" />
    </threads>
 
-   <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" expiration-executor="infinispan-expiration"
+   <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" async-executor="infinispan-async" expiration-executor="infinispan-expiration"
                     jndi-name="java:global/infinispan/maximal"  state-transfer-executor="infinispan-state-transfer" listener-executor="infinispan-listener" replication-queue-executor="infinispan-repl-queue"
                     persistence-executor="infinispan-cached" module="org.infinispan" statistics="true" shutdown-hook="DONT_REGISTER">
       <transport cluster="maximal-cluster" executor="infinispan-transport" total-order-executor="infinispan-cached" remote-command-executor="infinispan-cached" lock-timeout="120000" stack="tcp" node-name="a-node" machine="a" rack="b" site="c"/>
