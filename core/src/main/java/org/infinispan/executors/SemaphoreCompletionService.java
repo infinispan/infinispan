@@ -101,11 +101,18 @@ public class SemaphoreCompletionService<T> implements CompletionService<T> {
    }
 
    private void executeFront() {
-      if (semaphore.tryAcquire()) {
+      while (!queue.isEmpty() && semaphore.tryAcquire()) {
          QueueingTask next = queue.poll();
          if (next != null) {
+            // Execute the task, and it will release the permit when it finishes
             executor.execute(next);
+            // Only execute one task, if there are other tasks and permits available, they will be scheduled
+            // to be executed either by the threads that released the permits or by the threads that added
+            // the tasks.
+            return;
          } else {
+            // Perform another iteration, in case someone adds a task and skips executing it just before
+            // we release the permit
             semaphore.release();
          }
       }
