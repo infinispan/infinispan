@@ -170,12 +170,14 @@ public class UnsignedNumeric {
     *
     * @param i int to write
     */
-   public static void writeUnsignedInt(byte[] bytes, int offset, int i) {
+   public static int writeUnsignedInt(byte[] bytes, int offset, int i) {
+      int localOffset = offset;
       while ((i & ~0x7F) != 0) {
-         bytes[offset++] = (byte) ((i & 0x7f) | 0x80);
+         bytes[localOffset++] = (byte) ((i & 0x7f) | 0x80);
          i >>>= 7;
       }
-      bytes[offset] = (byte) i;
+      bytes[localOffset] = (byte) i;
+      return localOffset + 1;
    }
 
 
