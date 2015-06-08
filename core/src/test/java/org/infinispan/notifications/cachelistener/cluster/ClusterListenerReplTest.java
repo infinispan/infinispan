@@ -90,9 +90,13 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
       ClusterListener clusterListener = new ClusterListener();
       cache0.addListener(clusterListener);
 
-      CyclicBarrier barrier = new CyclicBarrier(2);
-      BlockingInterceptor blockingInterceptor = new BlockingInterceptor(barrier, PutKeyValueCommand.class, true, false);
-      cache2.getAdvancedCache().addInterceptorBefore(blockingInterceptor, EntryWrappingInterceptor.class);
+      CyclicBarrier barrier = new CyclicBarrier(3);
+      BlockingInterceptor blockingInterceptor0 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
+            true, false);
+      cache0.getAdvancedCache().addInterceptorBefore(blockingInterceptor0, EntryWrappingInterceptor.class);
+      BlockingInterceptor blockingInterceptor2 = new BlockingInterceptor(barrier, PutKeyValueCommand.class,
+            true, false);
+      cache2.getAdvancedCache().addInterceptorBefore(blockingInterceptor2, EntryWrappingInterceptor.class);
 
       final MagicKey key = new MagicKey(cache1, cache2);
       Future<String> future = fork(new Callable<String>() {
@@ -102,7 +106,7 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
          }
       });
 
-      // Wait until the primary owner has sent the put command successfully to  backup
+      // Wait until the primary owner has sent the put command successfully to both backups
       barrier.await(10, TimeUnit.SECONDS);
 
       // Remove the interceptor so the next command can proceed properly
