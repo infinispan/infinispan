@@ -37,4 +37,16 @@ public final class OrExpr extends BooleanOperatorExpr {
       sb.append(")");
       return sb.toString();
    }
+
+   @Override
+   public String toJpaString() {
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < children.size(); i++) {
+         if (i != 0) {
+            sb.append(" OR ");
+         }
+         sb.append("(").append(children.get(i).toJpaString()).append(")");
+      }
+      return sb.toString();
+   }
 }

@@ -39,4 +39,9 @@ public class IsNullExpr implements PrimaryPredicateExpr {
    public String toString() {
       return "IS_NULL(" + child + ')';
    }
+
+   @Override
+   public String toJpaString() {
+      return child.toString() + " IS NULL";
+   }
 }

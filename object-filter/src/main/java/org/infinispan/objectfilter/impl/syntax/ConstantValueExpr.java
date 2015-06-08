@@ -11,6 +11,9 @@ public final class ConstantValueExpr implements ValueExpr {
    private final Comparable constantValue;
 
    public ConstantValueExpr(Comparable constantValue) {
+      if (constantValue == null) {
+         throw new IllegalArgumentException("constantValue cannot be null");
+      }
       this.constantValue = constantValue;
    }
 
@@ -39,5 +42,16 @@ public final class ConstantValueExpr implements ValueExpr {
    @Override
    public String toString() {
       return "CONST(" + constantValue + ')';
+   }
+
+   @Override
+   public String toJpaString() {
+      if (constantValue instanceof String) {
+         return "\"" + constantValue + "\"";
+      }
+      if (constantValue instanceof Character) {
+         return "'" + constantValue + "'";
+      }
+      return "" + constantValue;
    }
 }

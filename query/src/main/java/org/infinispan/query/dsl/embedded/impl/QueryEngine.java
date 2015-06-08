@@ -2,7 +2,6 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.hibernate.hql.ParsingException;
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
@@ -14,7 +13,15 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.objectfilter.Matcher;
+import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.impl.BaseMatcher;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
+import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
+import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
+import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
+import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
+import org.infinispan.objectfilter.impl.syntax.JPATreePrinter;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
@@ -45,6 +52,8 @@ public class QueryEngine {
 
    private final QueryParser queryParser = new QueryParser();
 
+   private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
+
    private final EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
       @Override
       public Class<?> getClassFromName(String entityName) {
@@ -64,23 +73,38 @@ public class QueryEngine {
    }
 
    public Query buildQuery(QueryFactory queryFactory, String jpqlString, long startOffset, int maxResults) {
-      if (searchManager != null) {
-         try {
-            return buildLuceneQuery(queryFactory, jpqlString, startOffset, maxResults, null);
-         } catch (ParsingException e) {
-            // if the exception was due a non-indexed field we will try to execute it again with the non-indexed engine
-            if (!e.getMessage().startsWith("HQL100002")) {
-               throw e;
-            }
-         } catch (IllegalArgumentException e) {
-            // if the exception was due a non-indexed entity we will try to execute it again with the non-indexed engine
-            if (!e.getMessage().startsWith("HQL100001")) {
-               throw e;
-            }
-         }
-      }
+      Class<? extends Matcher> matcherImplClass = ReflectionMatcher.class;
 
-      return new EmbeddedQuery(queryFactory, cache, makeFilter(cache, jpqlString, ReflectionMatcher.class), startOffset, maxResults);
+      if (searchManager != null) {
+         BaseMatcher matcher = (BaseMatcher) cache.getAdvancedCache().getComponentRegistry().getComponent(matcherImplClass);
+         FilterParsingResult<Class<?>> parsingResult = matcher.parse(jpqlString, null);
+         BooleanExpr normalizedExpr = booleanFilterNormalizer.normalize(parsingResult.getQuery());
+
+         if (normalizedExpr == ConstantBooleanExpr.FALSE) {
+            return new EmptyResultQuery(queryFactory, cache, jpqlString, startOffset, maxResults);
+         }
+
+         BooleShannonExpansion bse = new BooleShannonExpansion(new HibernateSearchIndexedFieldProvider(searchFactory, parsingResult.getTargetEntityMetadata()));
+         BooleanExpr expansion = bse.expand(normalizedExpr);
+
+         if (expansion == normalizedExpr) {  // identity comparison is intended here!
+            // everything is indexed, so go the Lucene way
+            //todo [anistor] we should be able to generate the lucene query ourselves rather than depend on hibernate-hql-lucene to do it
+            return buildLuceneQuery(queryFactory, jpqlString, startOffset, maxResults, null);
+         }
+
+         if (expansion == ConstantBooleanExpr.TRUE) {
+            // expansion leads to a full non-indexed query
+            return new EmbeddedQuery(queryFactory, cache, makeFilter(cache, jpqlString, matcherImplClass), startOffset, maxResults);
+         }
+
+         String expandedJpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), expansion, null);
+         Query expandedQuery = buildLuceneQuery(queryFactory, expandedJpaOut, -1, -1, null);
+         ObjectFilter objectFilter = matcher.getObjectFilter(jpqlString);
+         return new HybridQuery(queryFactory, cache, jpqlString, objectFilter, startOffset, maxResults, expandedQuery);
+      } else {
+         return new EmbeddedQuery(queryFactory, cache, makeFilter(cache, jpqlString, matcherImplClass), startOffset, maxResults);
+      }
    }
 
    private JPAFilterAndConverter makeFilter(final AdvancedCache<?, ?> cache, final String jpaQuery, final Class<? extends Matcher> matcherImplClass) {
@@ -97,11 +121,16 @@ public class QueryEngine {
       });
    }
 
+   /**
+    * Build a Lucene index query.
+    */
    public LuceneQuery buildLuceneQuery(QueryFactory queryFactory, String jpqlString, long startOffset, int maxResults, org.apache.lucene.search.Query additionalLuceneQuery) {
       if (searchManager == null) {
          throw new IllegalStateException("Cannot run Lucene queries on a cache that does not have indexing enabled");
       }
+
       LuceneQueryParsingResult parsingResult;
+
       if (queryCache != null) {
          KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, LuceneQueryParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
@@ -114,6 +143,7 @@ public class QueryEngine {
       }
 
       org.apache.lucene.search.Query luceneQuery = parsingResult.getQuery();
+
       if (additionalLuceneQuery != null) {
          BooleanQuery booleanQuery = new BooleanQuery();
          booleanQuery.add(new BooleanClause(additionalLuceneQuery, BooleanClause.Occur.MUST));
@@ -126,18 +156,21 @@ public class QueryEngine {
       if (parsingResult.getSort() != null) {
          cacheQuery = cacheQuery.sort(parsingResult.getSort());
       }
+
+      String[] projection = null;
       if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
          int projSize = parsingResult.getProjections().size();
-         cacheQuery = cacheQuery.projection(parsingResult.getProjections().toArray(new String[projSize]));
+         projection = parsingResult.getProjections().toArray(new String[projSize]);
+         cacheQuery = cacheQuery.projection(projection);
       }
       if (startOffset >= 0) {
          cacheQuery = cacheQuery.firstResult((int) startOffset);
       }
-      if (maxResults >= 0) {
+      if (maxResults > 0) {
          cacheQuery = cacheQuery.maxResults(maxResults);
       }
 
-      return new EmbeddedLuceneQuery(queryFactory, jpqlString, cacheQuery);
+      return new EmbeddedLuceneQuery(queryFactory, jpqlString, projection, cacheQuery);
    }
 
    private LuceneQueryParsingResult transformJpaToLucene(String jpqlString) {

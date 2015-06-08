@@ -18,15 +18,16 @@ import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
@@ -123,7 +124,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    }
 
    public void testPutAndGet() throws Exception {
-      Account account = createAccountPB();
+      Account account = createAccountPB(1);
       remoteCache.put(1, account);
 
       // try to get the object through the local cache interface and check it's the same object we put
@@ -156,7 +157,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    }
 
    public void testRemoteQuery() throws Exception {
-      Account account = createAccountPB();
+      Account account = createAccountPB(1);
       remoteCache.put(1, account);
 
       // get account back from remote cache via query and check its attributes
@@ -183,7 +184,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       Query query = qf.from(AccountPB.class)
             .having("description").like("%test%").toBuilder()
             .build();
-      List<AccountPB> list = query.list();
+      List<Account> list = query.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -203,7 +204,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       Query query = qf.from(UserPB.class)
             .having("notes").like("%567%").toBuilder()
             .build();
-      List<UserPB> list = query.list();
+      List<User> list = query.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -229,6 +230,33 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals("testing 123", list.get(0).notIndexedField);
    }
 
+   public void testRemoteQueryForEmbeddedEntryOnIndexedAndNonIndexedField() throws Exception {
+      UserHS user = new UserHS();
+      user.setId(1);
+      user.setName("test name");
+      user.setSurname("test surname");
+      user.setNotes("1234567890");
+      cache.put(1, user);
+
+      // get user back from remote cache via query and check its attributes
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.from(UserPB.class)
+            .having("notes").like("%567%")
+            .and()
+            .having("surname").eq("test surname")
+            .toBuilder()
+            .build();
+      List<User> list = query.list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertNotNull(list.get(0));
+      assertEquals(UserPB.class, list.get(0).getClass());
+      assertEquals(1, list.get(0).getId());
+      assertEquals("1234567890", list.get(0).getNotes());
+      assertEquals("test surname", list.get(0).getSurname());
+   }
+
    public void testRemoteQueryWithProjectionsForEmbeddedEntry() throws Exception {
       AccountHS account = new AccountHS();
       account.setId(1);
@@ -250,8 +278,8 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals(1, list.get(0)[1]);
    }
 
-   public void testEmbeddedQuery() throws Exception {
-      Account account = createAccountPB();
+   public void testEmbeddedLuceneQuery() throws Exception {
+      Account account = createAccountPB(1);
       remoteCache.put(1, account);
 
       // get account back from local cache via query and check its attributes
@@ -267,8 +295,74 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertAccount((Account) list.get(0), AccountHS.class);
    }
 
+   public void testEmbeddedQueryForEmbeddedEntryOnNonIndexedField() throws Exception {
+      UserHS user = new UserHS();
+      user.setId(1);
+      user.setName("test name");
+      user.setSurname("test surname");
+      user.setNotes("1234567890");
+      cache.put(1, user);
+
+      // get user back from remote cache via query and check its attributes
+      QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
+      Query query = qf.from(UserHS.class)
+            .having("notes").like("%567%").toBuilder()
+            .build();
+      List<User> list = query.list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertNotNull(list.get(0));
+      assertEquals(UserHS.class, list.get(0).getClass());
+      assertEquals(1, list.get(0).getId());
+      assertEquals("1234567890", list.get(0).getNotes());
+   }
+
+   public void testEmbeddedQueryForEmbeddedEntryOnNonIndexedType() throws Exception {
+      cache.put(1, new NotIndexed("testing 123"));
+
+      // get user back from remote cache via query and check its attributes
+      QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
+      Query query = qf.from(NotIndexed.class)
+            .having("notIndexedField").like("%123%").toBuilder()
+            .build();
+      List<NotIndexed> list = query.list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertNotNull(list.get(0));
+      assertEquals("testing 123", list.get(0).notIndexedField);
+   }
+
+   public void testEmbeddedQueryForEmbeddedEntryOnIndexedAndNonIndexedField() throws Exception {
+      UserHS user = new UserHS();
+      user.setId(1);
+      user.setName("test name");
+      user.setSurname("test surname");
+      user.setNotes("1234567890");
+      cache.put(1, user);
+
+      // get user back from remote cache via query and check its attributes
+      QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
+      Query query = qf.from(UserHS.class)
+            .having("notes").like("%567%")
+            .and()
+            .having("surname").eq("test surname")
+            .toBuilder()
+            .build();
+      List<User> list = query.list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertNotNull(list.get(0));
+      assertEquals(UserHS.class, list.get(0).getClass());
+      assertEquals(1, list.get(0).getId());
+      assertEquals("1234567890", list.get(0).getNotes());
+      assertEquals("test surname", list.get(0).getSurname());
+   }
+
    public void testIterationForRemote() throws Exception {
-      IntStream.range(0, 10).forEach(id -> remoteCache.put(id, createAccount(id)));
+      IntStream.range(0, 10).forEach(id -> remoteCache.put(id, createAccountPB(id)));
 
       // Remote unfiltered iteration
       CloseableIterator<Map.Entry<Object, Object>> remoteUnfilteredIterator = remoteCache.retrieveEntries(null, null, 10);
@@ -280,7 +374,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       });
 
       // Remote filtered iteration
-      KeyValueFilterConverterFactory<Integer, Account,String> filterConverterFactory = () ->
+      KeyValueFilterConverterFactory<Integer, Account, String> filterConverterFactory = () ->
             new AbstractKeyValueFilterConverter<Integer, Account, String>() {
                @Override
                public String filterAndConvert(Integer key, Account value, Metadata metadata) {
@@ -312,11 +406,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       });
    }
 
-   private AccountPB createAccountPB() {
-      return createAccount(1);
-   }
-
-   private AccountPB createAccount(int id) {
+   private AccountPB createAccountPB(int id) {
       AccountPB account = new AccountPB();
       account.setId(id);
       account.setDescription("test description");

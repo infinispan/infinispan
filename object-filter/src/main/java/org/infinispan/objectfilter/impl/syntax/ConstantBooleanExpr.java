@@ -57,4 +57,9 @@ public final class ConstantBooleanExpr implements PrimaryPredicateExpr {
    public String toString() {
       return constantValue ? "CONST_TRUE" : "CONST_FALSE";
    }
+
+   @Override
+   public String toJpaString() {
+      return constantValue ? "TRUE" : "FALSE";
+   }
 }

@@ -9,6 +9,7 @@ import org.infinispan.objectfilter.impl.predicateindex.PredicateIndex;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETree;
 import org.infinispan.objectfilter.impl.predicateindex.be.BETreeMaker;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
+import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 
 import java.util.ArrayList;
@@ -25,6 +26,8 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
    private final PredicateIndex<AttributeMetadata, AttributeId> predicateIndex;
 
    private final List<FilterSubscriptionImpl> filterSubscriptions = new ArrayList<FilterSubscriptionImpl>();
+
+   private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    private final BETreeMaker<AttributeId> treeMaker;
 
@@ -71,7 +74,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       }
    }
 
-   public FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> addFilter(String queryString, BooleanExpr normalizedFilter, List<String> projection, List<SortField> sortFields, FilterCallback callback, Object[] eventTypes) {
+   public FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> addFilter(String queryString, BooleanExpr query, List<String> projection, List<SortField> sortFields, FilterCallback callback, Object[] eventTypes) {
       if (eventTypes != null) {
          if (eventTypes.length == 0) {
             eventTypes = null;
@@ -101,7 +104,9 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
          }
       }
 
-      BETree beTree = treeMaker.make(normalizedFilter);
+      query = booleanFilterNormalizer.normalize(query);
+      BETree beTree = treeMaker.make(query);
+
       FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>(queryString, useIntervals, metadataAdapter, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields, eventTypes);
       filterSubscription.registerProjection(predicateIndex);
       filterSubscription.subscribe(predicateIndex);
