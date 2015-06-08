@@ -107,7 +107,8 @@ public class LevelDBStoreConfigurationParser80 implements ConfigurationParser {
 
    private void parseLevelDBCacheStoreExpiry(XMLExtendedStreamReader reader, LevelDBStoreConfigurationBuilder builder) throws XMLStreamException {
       for (int i = 0; i < reader.getAttributeCount(); i++) {
-         String value = reader.getAttributeValue(i);
+         String attributeValue = reader.getAttributeValue(i);
+         String value = StringPropertyReplacer.replaceProperties(attributeValue);
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
             case PATH: {
