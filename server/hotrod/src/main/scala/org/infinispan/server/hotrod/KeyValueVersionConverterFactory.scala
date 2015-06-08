@@ -1,7 +1,6 @@
 package org.infinispan.server.hotrod
 
-import java.io.{ObjectOutput, ObjectInput}
-import java.nio.ByteBuffer
+import java.io.{ObjectInput, ObjectOutput}
 
 import org.infinispan.commons.io.UnsignedNumeric
 import org.infinispan.commons.marshall.AbstractExternalizer
@@ -23,17 +22,37 @@ object KeyValueVersionConverterFactory {
          val capacity = UnsignedNumeric.sizeUnsignedInt(key.length) + key.length +
             (if (newValue != null) UnsignedNumeric.sizeUnsignedInt(newValue.length) + newValue.length + 8 else 0)
 
-         val out = ByteBuffer.allocate(capacity)
-         UnsignedNumeric.writeUnsignedInt(out, key.length)
-         out.put(key)
+         val out = Array.ofDim[Byte](capacity)
+         var offset = UnsignedNumeric.writeUnsignedInt(out, 0, key.length)
+         offset = putBytes(key, offset, out)
          if (newValue != null) {
-            UnsignedNumeric.writeUnsignedInt(out, newValue.length)
-            out.put(newValue)
-            out.putLong(newMetadata.version().asInstanceOf[NumericVersion].getVersion)
+            offset = UnsignedNumeric.writeUnsignedInt(out, offset, newValue.length)
+            offset = putBytes(newValue, offset, out)
+            putLong(newMetadata.version().asInstanceOf[NumericVersion].getVersion, offset, out)
          }
-
-         out.array()
+         out
       }
+   }
+
+   private def putBytes(bytes: Array[Byte], offset: Int, out: Array[Byte]): Int = {
+      var localOffset = offset
+      bytes.foreach(b => {
+         out.update(localOffset, b)
+         localOffset += 1
+      })
+      localOffset
+   }
+
+   private def putLong(l: Long, offset: Int, out: Array[Byte]): Int = {
+      out.update(offset, (l >> 56).toByte)
+      out.update(offset + 1, (l >> 48).toByte)
+      out.update(offset + 2, (l >> 40).toByte)
+      out.update(offset + 3, (l >> 32).toByte)
+      out.update(offset + 4, (l >> 24).toByte)
+      out.update(offset + 5, (l >> 16).toByte)
+      out.update(offset + 6, (l >> 8).toByte)
+      out.update(offset + 7, l.toByte)
+      offset + 8
    }
 
    object KeyValueVersionConverter {
