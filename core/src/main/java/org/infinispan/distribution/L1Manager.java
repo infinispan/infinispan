@@ -24,7 +24,7 @@ public interface L1Manager {
 	 */
 	void addRequestor(Object key, Address requestor);
 
-   Future<Object> flushCache(Collection<Object> key, Address origin, boolean assumeOriginKeptEntryInL1);
+   Future<?> flushCache(Collection<Object> key, Address origin, boolean assumeOriginKeptEntryInL1);
 
    /**
     * Registers the given write synchronizer to be notified whenever a remote value is looked up for the given key.

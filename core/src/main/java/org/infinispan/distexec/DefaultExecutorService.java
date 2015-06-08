@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.*;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.infinispan.AdvancedCache;
@@ -862,9 +863,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          } catch (Exception e) {
             // The RPC could have finished with a org.infinispan.util.concurrent.TimeoutException right before
             // the Future.get timeout expired. If that's the case, we want to throw a TimeoutException.
-            long remainingNanos = timeoutNanos > 0 ? timeService.remainingTime(endNanos, TimeUnit.NANOSECONDS) : timeoutNanos;
-            if (timeoutNanos > 0 && remainingNanos <= 0) {
-               if (trace) log.tracef("Distributed task timed out, throwing a TimeoutException and ignoring exception", e);
+            if (e instanceof ExecutionException && e.getCause() instanceof org.infinispan.util.concurrent.TimeoutException) {
+               if (trace) log.tracef(
+                     "Distributed task timed out, throwing a TimeoutException and ignoring exception", e);
                throw new TimeoutException();
             }
             boolean canFailover = failedOverCount++ < getOwningTask().getTaskFailoverPolicy().maxFailoverAttempts();
@@ -976,7 +977,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
    private class RemoteDistributedTaskPart<V> extends DistributedTaskPart<V> {
       private final Address executionTarget;
-      private final NotifyingFutureImpl<Object> future = new NotifyingFutureImpl<Object>();
+      private CompletableFuture<Map<Address, Response>> future;
 
       public RemoteDistributedTaskPart(DistributedTask<V> task, DistributedExecuteCommand<V> command,
                                  List<Object> inputKeys, Address executionTarget, int failoverCount) {
@@ -996,9 +997,11 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       public void execute() {
          if (trace) log.tracef("Sending %s to remote execution at node %s", this, getExecutionTarget());
          try {
-            rpc.invokeRemotelyInFuture(Collections.singletonList(getExecutionTarget()), getCommand(),
-                  rpc.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
-                        .timeout(getOwningTask().timeout(), TimeUnit.MILLISECONDS).build(), future);
+            CompletableFuture<Map<Address, Response>> remoteFuture = rpc.invokeRemotelyAsync(
+                  Collections.singletonList(getExecutionTarget()), getCommand(), rpc.getRpcOptionsBuilder(
+                        ResponseMode.SYNCHRONOUS).timeout(getOwningTask().timeout(), TimeUnit.MILLISECONDS)
+                        .build());
+            future = remoteFuture;
          } catch (Throwable e) {
             log.remoteExecutionFailed(getExecutionTarget(), e);
          }
@@ -1062,12 +1065,9 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       @Override
       public NotifyingFuture<V> attachListener(final FutureListener<V> listener) {
-         future.attachListener(new FutureListener<Object>() {
-               @Override
-               public void futureDone(Future<Object> future) {
-                  listener.futureDone(RemoteDistributedTaskPart.this);
-               }
-            });
+         future.whenComplete((value, throwable) -> {
+            listener.futureDone(this);
+         });
          return this;
       }
    }
