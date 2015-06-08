@@ -21,6 +21,7 @@ import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.Transport;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.logging.Log;
@@ -459,7 +460,16 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    public boolean isRebalancingEnabled() throws Exception {
       ReplicableCommand command = new CacheTopologyControlCommand(null,
             CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), transport.getViewId());
-      return (Boolean) executeOnCoordinator(command, getGlobalTimeout());
+      while (true) {
+         Address coordinator = transport.getCoordinator();
+         int nextViewId = transport.getViewId() + 1;
+         try {
+            return (Boolean) executeOnCoordinator(command, getGlobalTimeout());
+         } catch (SuspectException e) {
+            if (trace) log.tracef("Coordinator left the cluster while querying rebalancing status, retrying");
+            transport.waitForView(nextViewId);
+         }
+      }
    }
 
    @Override
