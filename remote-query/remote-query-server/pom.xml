@@ -25,6 +25,11 @@
 
       <dependency>
          <groupId>${project.groupId}</groupId>
+         <artifactId>infinispan-query-dsl</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
          <artifactId>infinispan-remote-query-client</artifactId>
       </dependency>
 

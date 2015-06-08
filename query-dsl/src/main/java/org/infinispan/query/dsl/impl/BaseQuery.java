@@ -13,9 +13,12 @@ public abstract class BaseQuery implements Query {
 
    protected final String jpaQuery;
 
-   public BaseQuery(QueryFactory queryFactory, String jpaQuery) {
+   protected final String[] projection;
+
+   protected BaseQuery(QueryFactory queryFactory, String jpaQuery, String[] projection) {
       this.queryFactory = queryFactory;
       this.jpaQuery = jpaQuery;
+      this.projection = projection != null && projection.length > 0 ? projection : null;
    }
 
    public QueryFactory getQueryFactory() {
@@ -24,5 +27,9 @@ public abstract class BaseQuery implements Query {
 
    public String getJPAQuery() {
       return jpaQuery;
+   }
+
+   public String[] getProjection() {
+      return projection;
    }
 }

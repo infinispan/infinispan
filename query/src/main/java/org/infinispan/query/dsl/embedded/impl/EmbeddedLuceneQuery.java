@@ -16,19 +16,21 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
-final class EmbeddedLuceneQuery extends BaseQuery implements LuceneQuery {
+//todo [anistor] make local
+public final class EmbeddedLuceneQuery extends BaseQuery implements LuceneQuery {
 
    private final CacheQuery cacheQuery;
 
-   EmbeddedLuceneQuery(QueryFactory queryFactory, String jpaQuery, CacheQuery cacheQuery) {
-      super(queryFactory, jpaQuery);
+   //todo [anistor] make local
+   public EmbeddedLuceneQuery(QueryFactory queryFactory, String jpaQuery, String[] projection, CacheQuery cacheQuery) {
+      super(queryFactory, jpaQuery, projection);
       this.cacheQuery = cacheQuery;
    }
 
    @Override
    @SuppressWarnings("unchecked")
    public <T> List<T> list() {
-      return (List<T>) cacheQuery.list();
+      return (List<T>) cacheQuery.list();    //todo [anistor] cache this result to be similar in behaviour with EmbeddedQuery?
    }
 
    @Override

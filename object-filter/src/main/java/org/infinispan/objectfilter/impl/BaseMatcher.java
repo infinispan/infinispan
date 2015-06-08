@@ -8,8 +8,6 @@ import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
-import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
-import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
 
@@ -22,7 +20,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author anistor@redhat.com
  * @since 7.0
  */
-abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements Matcher {
+//todo [anistor] make package local
+public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements Matcher {
 
    private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
@@ -31,8 +30,6 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
    private final Lock write = readWriteLock.writeLock();
 
    private final QueryParser queryParser = new QueryParser();
-
-   private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
 
    protected final Map<String, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>> filtersByTypeName = new HashMap<String, FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>>();
 
@@ -73,9 +70,9 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
 
    @Override
    public ObjectFilter getObjectFilter(String jpaQuery) {
-      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery);
-      BooleanExpr normalizedFilter = booleanFilterNormalizer.normalize(parsingResult.getQuery());
-      return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, createMetadataAdapter(parsingResult.getTargetEntityMetadata()), jpaQuery, parsingResult, normalizedFilter);
+      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, null);
+      MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter = createMetadataAdapter(parsingResult.getTargetEntityMetadata());
+      return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, parsingResult.getQuery(), parsingResult.getProjections(), parsingResult.getSortFields());
    }
 
    @Override
@@ -92,8 +89,7 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
 
    @Override
    public FilterSubscription registerFilter(String jpaQuery, FilterCallback callback, Object... eventType) {
-      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery);
-      BooleanExpr normalizedFilter = booleanFilterNormalizer.normalize(parsingResult.getQuery());
+      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, null);
 
       write.lock();
       try {
@@ -103,15 +99,15 @@ abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId extends 
             filtersByTypeName.put(parsingResult.getTargetEntityName(), filterRegistry);
             filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }
-         return filterRegistry.addFilter(jpaQuery, normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), callback, eventType);
+         return filterRegistry.addFilter(jpaQuery, parsingResult.getQuery(), parsingResult.getProjections(), parsingResult.getSortFields(), callback, eventType);
       } finally {
          write.unlock();
       }
    }
 
-   private FilterParsingResult<TypeMetadata> parse(String jpaQuery) {
+   public FilterParsingResult<TypeMetadata> parse(String jpaQuery, Map<String, Object> namedParameters) {
       //todo [anistor] query params not yet fully supported by HQL parser. to be added later.
-      return queryParser.parseQuery(jpaQuery, createFilterProcessingChain(null));
+      return queryParser.parseQuery(jpaQuery, createFilterProcessingChain(namedParameters));
    }
 
    @Override

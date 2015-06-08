@@ -3,13 +3,13 @@ package org.infinispan.objectfilter.impl;
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.SortField;
-import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.predicateindex.AttributeNode;
 import org.infinispan.objectfilter.impl.predicateindex.FilterEvalContext;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author anistor@redhat.com
@@ -32,12 +32,12 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    public ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher,
                            MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
-                           String jpaQuery, FilterParsingResult<TypeMetadata> parsingResult, BooleanExpr normalizedFilter) {
+                           String queryString, BooleanExpr query, List<String> projections, List<SortField> sortFields) {
       this.matcher = matcher;
 
       //todo [anistor] we need an efficient single-filter registry
       FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = new FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>(metadataAdapter, false);
-      filterSubscription = filterRegistry.addFilter(jpaQuery, normalizedFilter, parsingResult.getProjections(), parsingResult.getSortFields(), emptyCallback, null);
+      filterSubscription = filterRegistry.addFilter(queryString, query, projections, sortFields, emptyCallback, null);
       root = filterRegistry.getPredicateIndex().getRoot();
    }
 

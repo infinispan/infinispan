@@ -31,8 +31,8 @@ public final class RemoteQuery extends BaseQuery {
    private int totalResults;
 
    RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl cache, SerializationContext serializationContext,
-                      String jpaQuery, long startOffset, int maxResults) {
-      super(queryFactory, jpaQuery);
+               String jpaQuery, String[] projection, long startOffset, int maxResults) {
+      super(queryFactory, jpaQuery, projection);
       this.cache = cache;
       this.serializationContext = serializationContext;
       this.startOffset = startOffset;

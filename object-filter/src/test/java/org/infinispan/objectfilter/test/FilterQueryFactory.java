@@ -59,14 +59,14 @@ public final class FilterQueryFactory extends BaseQueryFactory<Query> {
          if (log.isTraceEnabled()) {
             log.tracef("JPQL string : %s", jpqlString);
          }
-         return new FilterQuery(queryFactory, jpqlString);
+         return new FilterQuery(queryFactory, jpqlString, projection);
       }
    }
 
    private static final class FilterQuery extends BaseQuery {
 
-      FilterQuery(QueryFactory queryFactory, String jpaQuery) {
-         super(queryFactory, jpaQuery);
+      FilterQuery(QueryFactory queryFactory, String jpaQuery, String[] projection) {
+         super(queryFactory, jpaQuery, projection);
       }
 
       // TODO [anistor] need to rethink the dsl Query/QueryBuilder interfaces to accommodate the filtering scenario ...
@@ -81,4 +81,3 @@ public final class FilterQueryFactory extends BaseQueryFactory<Query> {
       }
    }
 }
-
