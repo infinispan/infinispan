@@ -19,16 +19,15 @@ import java.util.Set;
 import org.hibernate.boot.registry.StandardServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
-import org.hibernate.cache.spi.CacheKey;
 import org.hibernate.cache.spi.GeneralDataRegion;
 import org.hibernate.cache.spi.QueryResultsRegion;
 import org.hibernate.cache.spi.Region;
 import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
-import org.junit.Ignore;
-import org.junit.Test;
 import org.infinispan.AdvancedCache;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.jboss.logging.Logger;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -39,6 +38,7 @@ import static org.junit.Assert.assertNull;
  * @author Galder Zamarreño
  * @since 3.5
  */
+<<<<<<< HEAD
 <<<<<<< HEAD
 public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionImplTestCase {
 <<<<<<< HEAD
@@ -368,6 +368,9 @@ public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionIm
 =======
 public abstract class AbstractGeneralDataRegionTestCase<T extends CacheKey> extends AbstractRegionImplTestCase<T> {
 >>>>>>> HHH-9840 Allow 2nd level cache implementations to customize the various key implementations
+=======
+public abstract class AbstractGeneralDataRegionTestCase extends AbstractRegionImplTestCase {
+>>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
 	private static final Logger log = Logger.getLogger( AbstractGeneralDataRegionTestCase.class );
 
 >>>>>>> HHH-6098 - Slight naming changes in regards to new logging classes
@@ -386,12 +389,12 @@ public abstract class AbstractGeneralDataRegionTestCase<T extends CacheKey> exte
 	}
 
 	@Override
-	protected void putInRegion(Region region, T key, Object value) {
+	protected void putInRegion(Region region, Object key, Object value) {
 		((GeneralDataRegion) region).put( key, value );
 	}
 
 	@Override
-	protected void removeFromRegion(Region region, T key) {
+	protected void removeFromRegion(Region region, Object key) {
 		((GeneralDataRegion) region).evict( key );
 	}
 

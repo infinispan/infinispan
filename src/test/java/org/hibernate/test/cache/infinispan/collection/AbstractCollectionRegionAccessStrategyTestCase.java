@@ -18,7 +18,11 @@ import javax.transaction.TransactionManager;
 >>>>>>> HHH-5942 - Migrate to JUnit 4
 =======
 
+<<<<<<< HEAD
 >>>>>>> HHH-7197 reimport imports
+=======
+import javax.transaction.TransactionManager;
+>>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -30,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 <<<<<<< HEAD
 =======
 
+<<<<<<< HEAD
 >>>>>>> HHH-9840 Allow 2nd level cache implementations to customize the various key implementations
 import javax.transaction.TransactionManager;
 =======
@@ -76,6 +81,9 @@ import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 =======
 >>>>>>> HHH-7197 reimport imports
 =======
+=======
+import junit.framework.AssertionFailedError;
+>>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 >>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 import org.hibernate.cache.infinispan.InfinispanRegionFactory;
@@ -85,7 +93,6 @@ import org.hibernate.cache.infinispan.collection.CollectionRegionImpl;
 import org.hibernate.cache.infinispan.util.Caches;
 import org.hibernate.cache.internal.CacheDataDescriptionImpl;
 import org.hibernate.cache.spi.CacheDataDescription;
-import org.hibernate.cache.spi.CollectionCacheKey;
 import org.hibernate.cache.spi.access.AccessType;
 import org.hibernate.cache.spi.access.CollectionRegionAccessStrategy;
 import org.hibernate.internal.util.compare.ComparableComparator;
@@ -104,6 +111,7 @@ import org.infinispan.transaction.tm.BatchModeTransactionManager;
 =======
 =======
 import org.hibernate.test.cache.infinispan.util.TestingKeyFactory;
+<<<<<<< HEAD
 >>>>>>> HHH-9840 Allow 2nd level cache implementations to customize the various key implementations
 import org.junit.After;
 import org.junit.Before;
@@ -111,11 +119,19 @@ import org.junit.Test;
 
 import junit.framework.AssertionFailedError;
 
+=======
+>>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.jboss.logging.Logger;
+<<<<<<< HEAD
 >>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
+=======
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+>>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.junit.Assert.assertEquals;
@@ -145,6 +161,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractCollectionRegionAccessStrategyTestCase extends AbstractNonFunctionalTestCase {
 	private static final Logger log = Logger.getLogger( AbstractCollectionRegionAccessStrategyTestCase.class );
+<<<<<<< HEAD
 
 <<<<<<< HEAD
     public static final String REGION_NAME = "test/com.foo.test";
@@ -715,6 +732,8 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 
     }
 =======
+=======
+>>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
 	public static final String REGION_NAME = "test/com.foo.test";
 	public static final String KEY_BASE = "KEY";
 	public static final String VALUE1 = "VALUE1";
@@ -890,7 +909,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 
 	private void putFromLoadTest(final boolean useMinimalAPI) throws Exception {
 
-		final CollectionCacheKey KEY = TestingKeyFactory.generateCollectionCacheKey( KEY_BASE + testCount++ );
+		final Object KEY = TestingKeyFactory.generateCollectionCacheKey( KEY_BASE + testCount++ );
 
 		final CountDownLatch writeLatch1 = new CountDownLatch( 1 );
 		final CountDownLatch writeLatch2 = new CountDownLatch( 1 );
@@ -1042,7 +1061,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 
 	private void evictOrRemoveTest(final boolean evict) throws Exception {
 
-		final CollectionCacheKey KEY = TestingKeyFactory.generateCollectionCacheKey( KEY_BASE + testCount++ );
+		final Object KEY = TestingKeyFactory.generateCollectionCacheKey( KEY_BASE + testCount++ );
 
 		assertNull( "local is clean", localAccessStrategy.get( KEY, System.currentTimeMillis() ) );
 		assertNull( "remote is clean", remoteAccessStrategy.get( KEY, System.currentTimeMillis() ) );
@@ -1073,7 +1092,7 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 
 	private void evictOrRemoveAllTest(final boolean evict) throws Exception {
 
-		final CollectionCacheKey KEY = TestingKeyFactory.generateCollectionCacheKey( KEY_BASE + testCount++ );
+		final Object KEY = TestingKeyFactory.generateCollectionCacheKey( KEY_BASE + testCount++ );
 
 		assertEquals( 0, getValidKeyCount( localCollectionRegion.getCache().keySet() ) );
 
