@@ -223,7 +223,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
 
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
-      Future<Object> invalidationFuture = null;
+      Future<?> invalidationFuture = null;
       Set<Object> keys = command.getMap().keySet();
       Set<Object> toInvalidate = new HashSet<Object>(keys.size());
       for (Object k : keys) {
@@ -296,7 +296,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          }
          return invokeNextInterceptor(ctx, command);
       }
-      Future<Object> l1InvalidationFuture = invalidateL1(ctx, command, assumeOriginKeptEntryInL1);
+      Future<?> l1InvalidationFuture = invalidateL1(ctx, command, assumeOriginKeptEntryInL1);
       Object returnValue = invokeNextInterceptor(ctx, command);
       processInvalidationResult(ctx, command, l1InvalidationFuture);
       removeFromLocalL1(ctx, command);
@@ -323,7 +323,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       invokeNextInterceptor(ctx, command);
    }
 
-   private void processInvalidationResult(InvocationContext ctx, FlagAffectedCommand command, Future<Object> l1InvalidationFuture) throws InterruptedException, ExecutionException {
+   private void processInvalidationResult(InvocationContext ctx, FlagAffectedCommand command, Future<?> l1InvalidationFuture) throws InterruptedException, ExecutionException {
       if (l1InvalidationFuture != null) {
          if (isSynchronous(command)) {
             l1InvalidationFuture.get();
@@ -331,8 +331,8 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
    }
 
-   private Future<Object> invalidateL1(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) {
-      Future<Object> l1InvalidationFuture = null;
+   private Future<?> invalidateL1(InvocationContext ctx, DataWriteCommand command, boolean assumeOriginKeptEntryInL1) {
+      Future<?> l1InvalidationFuture = null;
       if (cdl.localNodeIsOwner(command.getKey())) {
          l1InvalidationFuture = l1Manager.flushCache(Collections.singletonList(command.getKey()), ctx.getOrigin(), assumeOriginKeptEntryInL1);
       } else if (trace) {

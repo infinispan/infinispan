@@ -4,8 +4,6 @@ import org.infinispan.Cache;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.concurrent.AbstractInProcessFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.LocalInvocation;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
@@ -27,6 +25,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -175,11 +174,10 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
 
    private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) throws Exception {
       final RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
-      final NotifyingNotifiableFuture<Map<Address, Response>> remoteFuture = new NotifyingFutureImpl<>();
+      CompletableFuture<Map<Address, Response>> remoteFuture = rpcManager
+            .invokeRemotelyAsync(null, command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
       final Map<Address, Response> responseMap = new HashMap<>();
-      rpcManager.invokeRemotelyInFuture(remoteFuture, null, command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
       responseMap.put(rpcManager.getAddress(), LocalInvocation.newInstanceFromCache(cache, command).call());
-      //noinspection unchecked
       responseMap.putAll(remoteFuture.get());
       return responseMap;
    }
@@ -199,10 +197,8 @@ public class ClusteredCacheBackupReceiver extends BaseBackupReceiver {
 
       public void executeRemote() {
          final RpcManager rpcManager = cache.getAdvancedCache().getRpcManager();
-         NotifyingNotifiableFuture<Map<Address, Response>> future = new NotifyingFutureImpl<>();
-         remoteFuture = future;
-         rpcManager.invokeRemotelyInFuture(future, Collections.singletonList(address), newStatePushCommand(cache, chunk),
-                                           rpcManager.getDefaultRpcOptions(true));
+         remoteFuture = rpcManager.invokeRemotelyAsync(Collections.singletonList(address),
+               newStatePushCommand(cache, chunk), rpcManager.getDefaultRpcOptions(true));
       }
 
       public void executeLocal() {

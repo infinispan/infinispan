@@ -2,7 +2,6 @@ package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.RemoteFetchingCommand;
@@ -13,20 +12,15 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.concurrent.CompositeNotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
 import org.infinispan.remoting.RemoteException;
+import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -39,11 +33,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Non-transactional interceptor used by distributed caches that support concurrent writes.
@@ -111,7 +104,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       ConsistentHash ch = dm.getConsistentHash();
       Address localAddress = rpcManager.getAddress();
       if (ctx.isOriginLocal()) {
-         List<NotifyingFuture<Object>> futures = new ArrayList<>(
+         List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(
                rpcManager.getMembers().size() - 1);
          // TODO: if async we don't need to do futures...
          RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
@@ -121,22 +114,20 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
             }
             Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
             if (!segments.isEmpty()) {
-               Map<Object, Object> segmentEntriesMap = 
-                     new ReadOnlySegmentAwareMap<>(originalMap, ch,
-                           segments);
+               Map<Object, Object> segmentEntriesMap =
+                     new ReadOnlySegmentAwareMap<>(originalMap, ch, segments);
                if (!segmentEntriesMap.isEmpty()) {
                   PutMapCommand copy = new PutMapCommand(command);
                   copy.setMap(segmentEntriesMap);
-                  NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl<>();
-                  rpcManager.invokeRemotelyInFuture(Collections.singletonList(member), 
-                        copy, options, future);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                        Collections.singletonList(member), copy, options);
                   futures.add(future);
                }
             }
          }
          if (futures.size() > 0) {
-            CompositeNotifyingFuture<Object> compFuture = 
-                  new CompositeNotifyingFuture<>(futures);
+            CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+            CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
             try {
                compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
             } catch (ExecutionException e) {
@@ -168,8 +159,7 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
          int backupOwnerSize = backupOwnerSegments.size();
          if (backupOwnerSize > 0) {
-            List<NotifyingFuture<Object>> futures = new ArrayList<>(
-                  backupOwnerSize);
+            List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
             RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
             command.setFlags(Flag.SKIP_LOCKING);
             command.setForwarded(true);
@@ -181,16 +171,15 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                if (!segmentEntriesMap.isEmpty()) {
                   PutMapCommand copy = new PutMapCommand(command);
                   copy.setMap(segmentEntriesMap);
-                  NotifyingNotifiableFuture<Object> future = new NotifyingFutureImpl<>();
-                  rpcManager.invokeRemotelyInFuture(Collections.singletonList(entry.getKey()),
-                        copy, options, future);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                        Collections.singletonList(entry.getKey()), copy, options);
                   futures.add(future);
                }
             }
             command.setForwarded(false);
             if (futures.size() > 0) {
-               CompositeNotifyingFuture<Object> compFuture = 
-                     new CompositeNotifyingFuture<>(futures);
+               CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+               CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
                try {
                   compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
                } catch (ExecutionException e) {

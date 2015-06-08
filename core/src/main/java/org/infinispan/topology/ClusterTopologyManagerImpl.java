@@ -42,10 +42,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
@@ -452,13 +452,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          return responseValues;
       }
 
-      Future<Map<Address, Response>> remoteFuture = asyncTransportExecutor.submit(new Callable<Map<Address, Response>>() {
-         @Override
-         public Map<Address, Response> call() throws Exception {
-            return transport.invokeRemotely(null, command,
-                  ResponseMode.SYNCHRONOUS, timeout, filter, DeliverOrder.NONE, false);
-         }
-      });
+      CompletableFuture<Map<Address, Response>> remoteFuture = transport.invokeRemotelyAsync(null, command,
+            ResponseMode.SYNCHRONOUS, timeout, filter, DeliverOrder.NONE, false);
 
       // invoke the command on the local node
       gcr.wireDependencies(command);

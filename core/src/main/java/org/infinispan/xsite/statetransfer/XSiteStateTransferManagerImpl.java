@@ -3,8 +3,6 @@ package org.infinispan.xsite.statetransfer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.configuration.cache.BackupConfiguration;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.SitesConfiguration;
@@ -37,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -366,8 +365,8 @@ public class XSiteStateTransferManagerImpl implements XSiteStateTransferManager 
 
    private Map<Address, Response> invokeRemotelyInLocalSite(CacheRpcCommand command) throws Exception {
       commandsFactory.initializeReplicableCommand(command, false);
-      final NotifyingNotifiableFuture<Map<Address, Response>> remoteFuture = new NotifyingFutureImpl<>();
-      rpcManager.invokeRemotelyInFuture(remoteFuture, null, command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
+      CompletableFuture<Map<Address, Response>> remoteFuture = rpcManager.invokeRemotelyAsync(null,
+            command, rpcManager.getDefaultRpcOptions(true, DeliverOrder.NONE));
       final Future<Response> localFuture = asyncExecutor.submit(
             LocalInvocation.newInstance(responseGenerator, command, commandsFactory, rpcManager.getAddress()));
       final Map<Address, Response> responseMap = new HashMap<>();
