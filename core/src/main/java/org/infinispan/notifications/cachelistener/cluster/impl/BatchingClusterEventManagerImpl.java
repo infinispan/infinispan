@@ -99,7 +99,7 @@ public class BatchingClusterEventManagerImpl<K, V> implements ClusterEventManage
                } else {
                   service.submit(entry.getKey(), new MultiClusterEventCallable<>(value.events));
                }
-            } else if (value.events.size() == 1){
+            } else if (value.events.size() == 1) {
                Entry<UUID, Collection<ClusterEvent<K, V>>> entryValue = value.events.entrySet().iterator().next();
                if (value.sync) {
                   completion.submit(entry.getKey(), new ClusterEventCallable<K, V>(entryValue.getKey(), entryValue.getValue()));

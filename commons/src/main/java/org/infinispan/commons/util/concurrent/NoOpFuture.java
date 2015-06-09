@@ -11,9 +11,16 @@ import java.util.concurrent.TimeoutException;
  */
 public class NoOpFuture<E> implements NotifyingNotifiableFuture<E> {
    private final E returnValue;
+   private final Throwable t;
 
    public NoOpFuture(E returnValue) {
       this.returnValue = returnValue;
+      this.t = null;
+   }
+
+   public NoOpFuture(Throwable t) {
+      this.returnValue = null;
+      this.t = t;
    }
 
    @Override
@@ -33,12 +40,15 @@ public class NoOpFuture<E> implements NotifyingNotifiableFuture<E> {
 
    @Override
    public E get() throws InterruptedException, ExecutionException {
+      if (t != null) {
+         throw new ExecutionException(t);
+      }
       return returnValue;
    }
 
    @Override
    public E get(long l, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
-      return returnValue;
+      return get();
    }
 
    @Override
