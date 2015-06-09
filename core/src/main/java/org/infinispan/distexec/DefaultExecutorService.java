@@ -21,6 +21,7 @@ import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.FutureListener;
+import org.infinispan.commons.util.concurrent.NoOpFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
 import org.infinispan.configuration.cache.Configuration;
@@ -36,6 +37,7 @@ import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.TopologyAwareAddress;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
 import org.infinispan.util.TimeService;
@@ -411,8 +413,8 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          throw new NullPointerException();
       List<Address> members = getMembers();
       if (!members.contains(target)) {
-         throw new IllegalArgumentException("Target node " + target
-                  + " is not a cluster member, members are " + members);
+         return new NoOpFuture<>(new SuspectException("Target node " + target
+                  + " is not a cluster member, members are " + members));
       }
       Address me = getAddress();
       DistributedExecuteCommand<T> c = null;
