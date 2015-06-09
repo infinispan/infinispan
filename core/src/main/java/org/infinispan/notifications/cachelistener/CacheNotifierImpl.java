@@ -301,9 +301,19 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
          configureEvent(e, key, value, pre, ctx, command, null, null);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryCreatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
-         if (!ctx.isInTxScope()) {
-            eventManager.sendEvents();
+         boolean sendEvents = !ctx.isInTxScope();
+         try {
+            for (CacheEntryListenerInvocation<K, V> listener : cacheEntryCreatedListeners) {
+               listener.invoke(e, isLocalNodePrimaryOwner);
+            }
+            if (sendEvents) {
+               eventManager.sendEvents();
+               sendEvents = false;
+            }
+         } finally {
+            if (sendEvents) {
+               eventManager.dropEvents();
+            }
          }
       }
    }
@@ -315,9 +325,19 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
          configureEvent(e, key, value, pre, ctx, command, previousValue, previousMetadata);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryModifiedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
-         if (!ctx.isInTxScope()) {
-            eventManager.sendEvents();
+         boolean sendEvents = !ctx.isInTxScope();
+         try {
+            for (CacheEntryListenerInvocation<K, V> listener : cacheEntryModifiedListeners) {
+               listener.invoke(e, isLocalNodePrimaryOwner);
+            }
+            if (sendEvents) {
+               eventManager.sendEvents();
+               sendEvents = false;
+            }
+         } finally {
+            if (sendEvents) {
+               eventManager.dropEvents();
+            }
          }
       }
    }
@@ -330,9 +350,19 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          configureEvent(e, key, null, pre, ctx, command, previousValue, previousMetadata);
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryRemovedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
-         if (!ctx.isInTxScope()) {
-            eventManager.sendEvents();
+         boolean sendEvents = !ctx.isInTxScope();
+         try {
+            for (CacheEntryListenerInvocation<K, V> listener : cacheEntryRemovedListeners) {
+               listener.invoke(e, isLocalNodePrimaryOwner);
+            }
+            if (sendEvents) {
+               eventManager.sendEvents();
+               sendEvents = false;
+            }
+         } finally {
+            if (sendEvents) {
+               eventManager.dropEvents();
+            }
          }
       }
    }

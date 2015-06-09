@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
@@ -22,6 +23,9 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * Test for verifying that the DistributedExecutors also work on the Local Cache.
@@ -382,8 +386,8 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
       des.submit((Address) null, new SimpleCallable());
    }
 
-   @Test(expectedExceptions = IllegalArgumentException.class)
-   public void testBasicTargetCallableWithIllegalTarget() {
+   @Test
+   public void testBasicTargetCallableWithIllegalTarget() throws InterruptedException, ExecutionException {
       Cache<Object, Object> cache1 = getCache();
 
       DistributedExecutorService des = createDES(cache1);
@@ -393,7 +397,16 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
             return -1;
          }
       };
-      des.submit(fakeAddress, new SimpleCallable());
+      Future<?> future = des.submit(fakeAddress, new SimpleCallable());
+      try {
+         future.get();
+         fail("Test should have thrown an execution exception!");
+      } catch (ExecutionException e) {
+         Throwable t = e.getCause();
+         if (!(t instanceof SuspectException)) {
+            throw e;
+         }
+      }
    }
 
    public void testBasicDistributedCallableWitkKeys() throws Exception {
