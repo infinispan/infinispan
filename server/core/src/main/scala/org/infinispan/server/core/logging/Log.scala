@@ -86,4 +86,6 @@ trait Log {
       log.serverEndpointTopologyEmpty(clusterMembers)
 
    def logErrorWritingResponse(msgId: Long, t: Throwable) = log.errorWritingResponse(msgId, t)
+
+   def logErrorEncodingMessage(msg: Any, t: Throwable) = log.errorEncodingMessage(msg, t)
 }
