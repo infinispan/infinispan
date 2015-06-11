@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import io.netty.buffer.ByteBuf
+import io.netty.util.internal.PlatformDependent
 import logging.Log
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.commons.util.Util
@@ -18,7 +19,7 @@ import org.infinispan.server.hotrod.OperationStatus._
  */
 @Sharable
 class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
-        extends MessageToByteEncoder[Any] with Constants with Log {
+        extends MessageToByteEncoder[Any](PlatformDependent.directBufferPreferred()) with Constants with Log {
 
    private lazy val isClustered: Boolean = cacheManager.getCacheManagerConfiguration.transport.transport != null
    private lazy val addressCache: AddressCache =

@@ -176,8 +176,8 @@ public class UnsignedNumeric {
          bytes[localOffset++] = (byte) ((i & 0x7f) | 0x80);
          i >>>= 7;
       }
-      bytes[localOffset] = (byte) i;
-      return localOffset + 1;
+      bytes[localOffset++] = (byte) i;
+      return localOffset - offset;
    }
 
 
