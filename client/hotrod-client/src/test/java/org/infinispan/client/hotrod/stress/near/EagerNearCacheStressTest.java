@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
@@ -24,7 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManagers;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
@@ -40,13 +39,11 @@ public class EagerNearCacheStressTest {
 
    static int NUM_CLIENTS = 3;
    static int NUM_THREADS_PER_CLIENT = 10;
-   static AtomicInteger ID = new AtomicInteger();
    static ExecutorService EXEC = Executors.newCachedThreadPool();
 
    static final int NUM_OPERATIONS = 10_000_000;
    static final int NUM_KEYS_PRELOAD = 1_000;
    static final int KEY_RANGE = 1_000;
-   static final Random R = new Random();
 
    @AfterClass
    public static void shutdownExecutor() {
@@ -56,10 +53,6 @@ public class EagerNearCacheStressTest {
    EmbeddedCacheManager createCacheManager() {
       return TestCacheManagerFactory.createCacheManager(hotRodCacheConfiguration());
    }
-
-//   HotRodServer createHotRodServer(EmbeddedCacheManager cm) {
-//      return HotRodClientTestingUtil.startHotRodServer(cm);
-//   }
 
    RemoteCacheManager getRemoteCacheManager(int port) {
       return getRemoteCacheManager(port, NearCacheMode.DISABLED, -1);
@@ -73,10 +66,10 @@ public class EagerNearCacheStressTest {
    }
 
    public void testLocalPreloadAndGetPut10to1() {
-      runPreloadAndOps("l_PL_get", NearCacheMode.EAGER, -1, 0.90);
+      runPreloadAndOps(NearCacheMode.EAGER, -1, 0.90);
    }
 
-   void runPreloadAndOps(String name, NearCacheMode nearCacheMode, int maxEntries, double getRatio) {
+   void runPreloadAndOps(NearCacheMode nearCacheMode, int maxEntries, double getRatio) {
       EmbeddedCacheManager cm = createCacheManager();
       //HotRodServer server = createHotRodServer(cm);
       int port = 11222;
@@ -85,7 +78,7 @@ public class EagerNearCacheStressTest {
       for (int i = 0; i < NUM_CLIENTS; i++)
          remotecms[i] = getRemoteCacheManager(port, nearCacheMode, maxEntries);
       try {
-         ops(name, remotecms, getRatio);
+         ops(remotecms, getRatio);
       } finally {
          killRemoteCacheManagers(remotecms);
          //killServers(server);
@@ -93,13 +86,13 @@ public class EagerNearCacheStressTest {
       }
    }
 
-   void ops(String testName, RemoteCacheManager[] remotecms, double getRatio) {
+   void ops(RemoteCacheManager[] remotecms, double getRatio) {
       CyclicBarrier barrier = new CyclicBarrier((NUM_CLIENTS * NUM_THREADS_PER_CLIENT) + 1);
       List<Future<Void>> futures = new ArrayList<>(NUM_CLIENTS * NUM_THREADS_PER_CLIENT);
       for (RemoteCacheManager remotecm : remotecms) {
          RemoteCache<Integer, String> remote = remotecm.getCache();
          for (int i = 0; i < NUM_THREADS_PER_CLIENT; i++) {
-            Callable<Void> call = new Main(barrier, testName, remote, getRatio);
+            Callable<Void> call = new Main(barrier, remote, getRatio);
             futures.add(EXEC.submit(call));
          }
       }
@@ -128,16 +121,12 @@ public class EagerNearCacheStressTest {
 
       final CyclicBarrier barrier;
       final RemoteCache<Integer, String> remote;
-      final int threadId;
-      final String testName;
       final double getRatio;
 
-      Runner(CyclicBarrier barrier, String testName, RemoteCache<Integer, String> remote, double getRatio) {
+      Runner(CyclicBarrier barrier, RemoteCache<Integer, String> remote, double getRatio) {
          this.barrier = barrier;
          this.remote = remote;
          this.getRatio = getRatio;
-         this.threadId = ID.incrementAndGet();
-         this.testName = testName;
       }
 
       @Override
@@ -155,9 +144,10 @@ public class EagerNearCacheStressTest {
    }
 
    final static class Main extends Runner {
+      static final ThreadLocalRandom R = ThreadLocalRandom.current();
 
-      Main(CyclicBarrier barrier, String testName, RemoteCache<Integer, String> remote, double getRatio) {
-         super(barrier, testName, remote, getRatio);
+      Main(CyclicBarrier barrier, RemoteCache<Integer, String> remote, double getRatio) {
+         super(barrier, remote, getRatio);
       }
 
       @Override

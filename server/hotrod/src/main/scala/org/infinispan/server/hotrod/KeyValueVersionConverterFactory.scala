@@ -24,10 +24,10 @@ object KeyValueVersionConverterFactory {
 
          val out = Array.ofDim[Byte](capacity)
          var offset = UnsignedNumeric.writeUnsignedInt(out, 0, key.length)
-         offset = putBytes(key, offset, out)
+         offset += putBytes(key, offset, out)
          if (newValue != null) {
-            offset = UnsignedNumeric.writeUnsignedInt(out, offset, newValue.length)
-            offset = putBytes(newValue, offset, out)
+            offset += UnsignedNumeric.writeUnsignedInt(out, offset, newValue.length)
+            offset += putBytes(newValue, offset, out)
             putLong(newMetadata.version().asInstanceOf[NumericVersion].getVersion, offset, out)
          }
          out
@@ -40,7 +40,7 @@ object KeyValueVersionConverterFactory {
          out.update(localOffset, b)
          localOffset += 1
       })
-      localOffset
+      localOffset - offset
    }
 
    private def putLong(l: Long, offset: Int, out: Array[Byte]): Int = {
