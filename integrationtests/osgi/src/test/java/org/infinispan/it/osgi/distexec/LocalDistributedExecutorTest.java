@@ -176,7 +176,7 @@ public class LocalDistributedExecutorTest extends org.infinispan.distexec.LocalD
       super.testBasicTargetCallableWithNullTarget();
    }
 
-   @Test(expected = IllegalArgumentException.class)
+   @Test
    public void testBasicTargetCallableWithIllegalTarget() throws ExecutionException, InterruptedException {
       super.testBasicTargetCallableWithIllegalTarget();
    }
