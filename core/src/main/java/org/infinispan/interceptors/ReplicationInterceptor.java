@@ -36,6 +36,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -296,7 +297,7 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
     * time. If the operation didn't originate locally we won't do any replication either.
     */
    private Object handleCrudMethod(InvocationContext ctx, WriteCommand command, boolean skipRemoteGet) throws Throwable {
-      if (!skipRemoteGet) {
+      if (!skipRemoteGet || command.hasFlag(Flag.DELTA_WRITE)) {
          remoteGetBeforeWrite(ctx, command);
       }
 
@@ -309,12 +310,13 @@ public class ReplicationInterceptor extends ClusteringInterceptor {
    }
 
    private void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command) throws Throwable {
-      if (command instanceof AbstractDataCommand && (isNeedReliableReturnValues(command) || command.isConditional())) {
+      if (command instanceof AbstractDataCommand &&
+              (isNeedReliableReturnValues(command) || command.isConditional() || command.hasFlag(Flag.DELTA_WRITE))) {
          AbstractDataCommand singleKeyCommand = (AbstractDataCommand) command;
 
          Object returnValue = null;
          // get it remotely if we do not have it yet
-         if (needsRemoteGet(ctx, singleKeyCommand)) {
+         if (needsRemoteGet(ctx, singleKeyCommand) || command.hasFlag(Flag.DELTA_WRITE)) {
             returnValue = remoteGet(ctx, singleKeyCommand.getKey(), singleKeyCommand, true);
          }
          if (returnValue == null) {
