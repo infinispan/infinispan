@@ -2,14 +2,20 @@ package org.infinispan.commands;
 
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distexec.mapreduce.MapReduceTask;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.statetransfer.StateTransferManager;
+import org.infinispan.topology.CacheTopology;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -24,7 +30,6 @@ public class CreateCacheCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 29;
 
    private EmbeddedCacheManager cacheManager;
-   private StateTransferManager stm;
    private String cacheNameToCreate;
    private String cacheConfigurationName;
    private boolean start;
@@ -50,43 +55,58 @@ public class CreateCacheCommand extends BaseRpcCommand {
       this.size = size;
    }
 
-   public void init(EmbeddedCacheManager cacheManager, StateTransferManager stateTransferManager){
+   public void init(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
-      this.stm = stateTransferManager;
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      Configuration cacheConfig = null;
-      if (cacheConfigurationName != null) {
-         cacheConfig = cacheManager.getCacheConfiguration(cacheConfigurationName);
-         if (cacheConfig == null) {
-            // Special case for the default temporary cache, which may or may not have been defined by the user
-            if (MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME.equals(cacheConfigurationName)) {
-               cacheConfig = new ConfigurationBuilder().unsafe().unreliableReturnValues(true).clustering()
-                     .cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build();
-               log.debugf("Using default tmp cache configuration, defined as ", cacheNameToCreate);
-            } else {
-               throw new IllegalStateException("Cache configuration " + cacheConfigurationName
-                     + " is not defined on node " + this.cacheManager.getAddress());
-            }
+      if (cacheConfigurationName == null) {
+         throw new NullPointerException("Cache configuration name is required");
+      }
+
+      Configuration cacheConfig = cacheManager.getCacheConfiguration(cacheConfigurationName);
+      if (cacheConfig == null) {
+         // Special case for the default temporary cache, which may or may not have been defined by the user
+         if (MapReduceTask.DEFAULT_TMP_CACHE_CONFIGURATION_NAME.equals(cacheConfigurationName)) {
+            cacheConfig = new ConfigurationBuilder().unsafe().unreliableReturnValues(true).clustering()
+                  .cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync().build(); log.debugf(
+                  "Using default tmp cache configuration, defined as ", cacheNameToCreate);
+         } else {
+            throw new IllegalStateException(
+                  "Cache configuration " + cacheConfigurationName + " is not defined on node " +
+                  this.cacheManager.getAddress());
          }
       }
 
       cacheManager.defineConfiguration(cacheNameToCreate, cacheConfig);
-      cacheManager.getCache(cacheNameToCreate);
-      final long startTime = System.nanoTime();
-      final long maxRunTime = TimeUnit.MILLISECONDS.toNanos(cacheConfig.clustering().stateTransfer().timeout());
-      int expectedSize = cacheManager.getTransport().getMembers().size();
-      while (stm.getCacheTopology().getMembers().size() != expectedSize && stm.getCacheTopology().getPendingCH() != null) {
-         Thread.sleep(50);
-         long estimatedRunTime = System.nanoTime() - startTime;
-         if (estimatedRunTime > maxRunTime) {
-            throw log.creatingTmpCacheTimedOut(cacheNameToCreate, cacheManager.getAddress());
-         }
-      }
+      Cache<Object, Object> cache = cacheManager.getCache(cacheNameToCreate);
+      waitForCacheToStabilize(cache, cacheConfig);
       log.debugf("Defined and started cache %s", cacheNameToCreate);
       return true;
+   }
+
+   protected void waitForCacheToStabilize(Cache<Object, Object> cache, Configuration cacheConfig)
+         throws InterruptedException {
+      ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
+      StateTransferManager stateTransferManager = componentRegistry.getStateTransferManager();
+      StateTransferLock stateTransferLock = componentRegistry.getStateTransferLock();
+      TimeService timeService = componentRegistry.getTimeService();
+
+      long endTime = timeService.expectedEndTime(cacheConfig.clustering().stateTransfer().timeout(),
+            TimeUnit.MILLISECONDS);
+      int expectedSize = cacheManager.getTransport().getMembers().size();
+      CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
+      while (cacheTopology.getMembers().size() != expectedSize || cacheTopology.getPendingCH() != null) {
+         long remainingTime = timeService.remainingTime(endTime, TimeUnit.NANOSECONDS);
+         try {
+            stateTransferLock.waitForTopology(cacheTopology.getTopologyId() + 1, remainingTime,
+                  TimeUnit.NANOSECONDS);
+         } catch (TimeoutException ignored) {
+            throw log.creatingTmpCacheTimedOut(cacheNameToCreate, cacheManager.getAddress());
+         }
+         cacheTopology = stateTransferManager.getCacheTopology();
+      }
    }
 
    @Override

@@ -106,10 +106,9 @@ public class SessionImpl implements Session {
          CommandsFactory factory = clusteredCache.getComponentRegistry().getComponent(CommandsFactory.class);
 
          CreateCacheCommand ccc = factory.buildCreateCacheCommand(cacheName, baseCacheName);
-         StateTransferManager transferManager = clusteredCache.getComponentRegistry().getComponent(StateTransferManager.class);
          try {
             rpc.invokeRemotely(null, ccc, rpc.getDefaultRpcOptions(true));
-            ccc.init(cacheManager, transferManager);
+            ccc.init(cacheManager);
             ccc.perform(null);
          } catch (Throwable e) {
             throw log.cannotCreateClusteredCaches(e, cacheName);
