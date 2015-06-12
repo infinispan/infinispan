@@ -664,6 +664,11 @@ public class MapReduceManagerImpl implements MapReduceManager {
       public Iterator<E> iterator(){
          return list.iterator();
       }
+
+      @Override
+      public String toString() {
+         return "DeltaAwareList(" + list.size() + ")" + String.valueOf(list);
+      }
    }
 
    private static class DeltaList<E> implements Delta {

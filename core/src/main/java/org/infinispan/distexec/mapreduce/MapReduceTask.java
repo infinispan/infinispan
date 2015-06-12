@@ -540,7 +540,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
       // invoke locally
       try {
-         ccc.init(cache.getCacheManager(), stateTransferManager);
+         ccc.init(cache.getCacheManager());
          try {
             ccc.perform(null);
          } catch (Throwable e) {
