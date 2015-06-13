@@ -18,6 +18,7 @@
 
    <modules>
       <module>versions</module>
+      <module>commons</module>
       <module>jgroups</module>
       <module>infinispan</module>
       <module>endpoint</module>
@@ -37,6 +38,7 @@
          </activation>
          <modules>
             <module>versions</module>
+            <module>commons</module>
             <module>jgroups</module>
             <module>infinispan</module>
             <module>endpoint</module>

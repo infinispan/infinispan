@@ -23,7 +23,7 @@
 package org.jboss.as.clustering.infinispan;
 
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.jboss.as.clustering.jgroups.ServiceContainerHelper;
+import org.infinispan.server.jgroups.ServiceContainerHelper;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceRegistry;

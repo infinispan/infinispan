@@ -23,7 +23,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import java.io.Serializable;
 
-import org.jboss.as.clustering.jgroups.subsystem.JGroupsExtension;
+import org.infinispan.server.jgroups.subsystem.JGroupsExtension;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.RunningMode;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
