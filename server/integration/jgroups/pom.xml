@@ -21,6 +21,10 @@
             <artifactId>infinispan-commons</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.infinispan.server</groupId>
+            <artifactId>infinispan-server-commons</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.wildfly.core</groupId>
             <artifactId>wildfly-jmx</artifactId>
         </dependency>
@@ -37,6 +41,10 @@
             <artifactId>wildfly-threads</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-naming</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jgroups</groupId>
             <artifactId>jgroups</artifactId>
         </dependency>
@@ -44,6 +52,12 @@
         <dependency>
             <groupId>org.jboss.byteman</groupId>
             <artifactId>byteman-bmunit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.infinispan.server</groupId>
+            <artifactId>infinispan-server-commons</artifactId>
+            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>

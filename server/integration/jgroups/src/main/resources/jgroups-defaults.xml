@@ -30,44 +30,12 @@
       mcast_recv_buf_size="25m"
       ip_ttl="${jgroups.ip_ttl:2}"
       thread_naming_pattern="pl"
-      enable_diagnostics="false"
-
-      thread_pool.min_threads="${jgroups.thread_pool.min_threads:2}"
-      thread_pool.max_threads="${jgroups.thread_pool.max_threads:30}"
-      thread_pool.keep_alive_time="60000"
-      thread_pool.queue_enabled="false"
-
-      internal_thread_pool.min_threads="${jgroups.internal_thread_pool.min_threads:5}"
-      internal_thread_pool.max_threads="${jgroups.internal_thread_pool.max_threads:20}"
-      internal_thread_pool.keep_alive_time="60000"
-      internal_thread_pool.queue_enabled="true"
-      internal_thread_pool.queue_max_size="500"
-
-      oob_thread_pool.min_threads="${jgroups.oob_thread_pool.min_threads:20}"
-      oob_thread_pool.max_threads="${jgroups.oob_thread_pool.max_threads:200}"
-      oob_thread_pool.keep_alive_time="60000"
-      oob_thread_pool.queue_enabled="false"/>
+      enable_diagnostics="false" />
    <TCP 
       enable_diagnostics="false"
       thread_naming_pattern="pl"
       send_buf_size="640k"
-      sock_conn_timeout="300"
-
-      thread_pool.min_threads="${jgroups.thread_pool.min_threads:2}"
-      thread_pool.max_threads="${jgroups.thread_pool.max_threads:30}"
-      thread_pool.keep_alive_time="60000"
-      thread_pool.queue_enabled="false"
-
-      internal_thread_pool.min_threads="${jgroups.internal_thread_pool.min_threads:5}"
-      internal_thread_pool.max_threads="${jgroups.internal_thread_pool.max_threads:20}"
-      internal_thread_pool.keep_alive_time="60000"
-      internal_thread_pool.queue_enabled="true"
-      internal_thread_pool.queue_max_size="500"
-
-      oob_thread_pool.min_threads="${jgroups.oob_thread_pool.min_threads:20}"
-      oob_thread_pool.max_threads="${jgroups.oob_thread_pool.max_threads:200}"
-      oob_thread_pool.keep_alive_time="60000"
-      oob_thread_pool.queue_enabled="false"/>
+      sock_conn_timeout="300" />
    <PING />
    <MPING 
       ip_ttl="${jgroups.udp.ip_ttl:2}"/>

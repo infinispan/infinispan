@@ -28,7 +28,7 @@ import java.util.concurrent.ThreadFactory;
 
 import org.infinispan.commons.executors.ExecutorFactory;
 import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
-import org.jboss.as.clustering.concurrent.ManagedExecutorService;
+import org.infinispan.server.commons.concurrent.ManagedExecutorService;
 
 /**
  * Executor factory that produces {@link ManagedExecutorService} instances.

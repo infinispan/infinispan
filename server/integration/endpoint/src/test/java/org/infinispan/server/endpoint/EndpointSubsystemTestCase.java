@@ -31,8 +31,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import org.infinispan.server.commons.subsystem.ClusteringSubsystemTest;
 import org.infinispan.server.endpoint.subsystem.EndpointExtension;
-import org.jboss.as.clustering.subsystem.ClusteringSubsystemTest;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.subsystem.test.KernelServices;

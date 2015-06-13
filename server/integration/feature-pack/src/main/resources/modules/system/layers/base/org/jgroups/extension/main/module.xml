@@ -11,6 +11,7 @@
 
     <dependencies>
         <module name="javax.api"/>
+        <module name="org.infinispan.server.commons" />
         <module name="org.jboss.as.controller"/>
         <module name="org.jboss.as.core-security"/>
         <module name="org.jboss.as.domain-management"/>
