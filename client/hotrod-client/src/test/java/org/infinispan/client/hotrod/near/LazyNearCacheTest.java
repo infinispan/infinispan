@@ -6,6 +6,7 @@ import org.testng.annotations.Test;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.withRemoteCacheManager;
 
+@Deprecated
 @Test(groups = "functional", testName = "client.hotrod.near.LazyNearCacheTest")
 public class LazyNearCacheTest extends EagerNearCacheTest {
    @Override

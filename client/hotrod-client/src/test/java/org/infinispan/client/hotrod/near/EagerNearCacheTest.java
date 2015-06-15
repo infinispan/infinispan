@@ -12,6 +12,7 @@ import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.CacheConfigurationException;
 import org.testng.annotations.Test;
 
+@Deprecated
 @Test(groups = "functional", testName = "client.hotrod.near.EagerNearCacheTest")
 public class EagerNearCacheTest extends SingleHotRodServerTest {
 

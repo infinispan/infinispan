@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
+@Deprecated
 @Test(groups = "functional", testName = "client.hotrod.near.ClusterEagerNearCacheTest")
 public class ClusterEagerNearCacheTest extends MultiHotRodServersTest {
 

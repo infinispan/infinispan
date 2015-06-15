@@ -729,27 +729,14 @@ data. Enabling near caching can significantly improve the performance of read
 operations `get` and `getVersioned` since data can potentially be located
 locally within the Hot Rod client instead of having to go remote.
 
-To enable near caching, the user must decide how to configure the near cache
-to work, either `lazy` or `eager`, and define its size:
+To enable near caching, the user must set the near cache mode to `INVALIDATED`.
+By doing that near cache is populated upon retrievals from the server via
+calls to `get` or `getVersioned` operations. When near cached entries are
+updated or removed server-side, the cached near cache entries are invalidated.
+If a key is requested after it's been invalidated, it'll have to be re-fetched
+from the server.
 
-* Lazy near caching: In lazy mode, near cache is only populated upon retrievals
-from the server via calls to `get` or `getVersioned` operations. When near
-cached entries are updated or removed server-side, the cached near cache
-entries are eliminated. The advantage of lazy mode is that it's the most
-lightweight mode, but the downside is that if a key is requested after it's
-been modified, it'll have to be re-fetched from the server.
-
-* Eager near caching: In eager mode, the near cache is populated when
-`get`/`getVersioned` are called, and when new entries are created server side,
-and when entries are modified. The advantage of eager caching is that the near
-cache is eagerly updated without the need to call `get`/`getVersioned`
-operations. On top of that, when an entry is modified, the new value is
-directly sent to the client so that if a `get`/`getVersioned` operation is
-executed, the value is directly fetched from the near cache. The downside of
-eager mode is that it's a more heavyweight mode and hence takes up more
-resources in terms of bandwith.
-
-* Size: When near cache is enabled, its size must be configured by defining
+When near cache is enabled, its size must be configured by defining
 the maximum number of entries to keep in the near cache. When the maximum is
 reached, near cached entries are evicted using a least-recently-used (LRU)
 algorithm. If providing 0 or a negative value, it is assumed that the near
@@ -768,13 +755,13 @@ import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 ...
 
-// For lazy near caches
-ConfigurationBuilder lazyUnbounded = new ConfigurationBuilder();
-lazy.nearCache().mode(NearCacheMode.LAZY).maxEntries(-1);
+// Unbounded invalidated near cache
+ConfigurationBuilder unbounded = new ConfigurationBuilder();
+unbounded.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(-1);
 
-// For eager near caches
-ConfigurationBuilder eagerBounded = new ConfigurationBuilder();
-eager.nearCache().mode(NearCacheMode.EAGER).maxEntries(100);
+// Bounded invalidated near cache
+ConfigurationBuilder bounded = new ConfigurationBuilder();
+bounded.nearCache().mode(NearCacheMode.INVALIDATED).maxEntries(100);
 ----
 
 NOTE: Near caches work the same way for local caches as they do for clustered

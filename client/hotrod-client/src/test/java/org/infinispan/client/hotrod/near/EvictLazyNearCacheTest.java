@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.near;
 import org.infinispan.client.hotrod.configuration.NearCacheMode;
 import org.testng.annotations.Test;
 
+@Deprecated
 @Test(groups = "functional", testName = "client.hotrod.near.EvictLazyNearCacheTest")
 public class EvictLazyNearCacheTest extends EvictEagerNearCacheTest {
 
