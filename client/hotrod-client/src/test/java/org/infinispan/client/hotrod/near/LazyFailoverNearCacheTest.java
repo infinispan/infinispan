@@ -15,6 +15,7 @@ import java.util.List;
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.findServerAndKill;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 
+@Deprecated
 @Test(groups = "functional", testName = "client.hotrod.near.LazyFailoverNearCacheTest")
 public class LazyFailoverNearCacheTest extends EagerFailoverNearCacheTest {
 
