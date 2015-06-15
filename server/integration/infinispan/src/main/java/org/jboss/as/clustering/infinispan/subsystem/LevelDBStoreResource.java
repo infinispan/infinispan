@@ -90,13 +90,13 @@ public class LevelDBStoreResource extends BaseStoreResource {
                     .build();
 
     // operations
-    private static final OperationDefinition LEVELDB_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LEVELDB_STORE))
+    private static final OperationDefinition LEVELDB_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.LEVELDB_STORE))
         .setParameters(COMMON_STORE_PARAMETERS)
         .addParameter(PATH)
         .addParameter(BLOCK_SIZE)
         .addParameter(CACHE_SIZE)
         .addParameter(CLEAR_THRESHOLD)
-        .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LEVELDB_STORE))
+        .setAttributeResolver(new InfinispanResourceDescriptionResolver(ModelKeys.LEVELDB_STORE))
         .build();
 
     private final ResolvePathHandler resolvePathHandler;

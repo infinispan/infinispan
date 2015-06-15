@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.protostream.sampledomain.marshallers.MarshallerRegistration;
 import org.infinispan.query.dsl.Query;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.Queries;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.junit.Arquillian;
@@ -48,7 +49,7 @@ public class RemoteQueryDescriptorIT {
    @InfinispanResource("clustered-indexless-descriptor-2")
    RemoteInfinispanServer server2;
 
-   public static final String MBEAN = "jboss.infinispan:type=RemoteQuery,name=\"clustered\",component=ProtobufMetadataManager";
+   public static final String MBEAN = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=RemoteQuery,name=\"clustered\",component=ProtobufMetadataManager";
 
    @Test
    public void testDescriptorPropagation() throws Exception {
@@ -77,7 +78,7 @@ public class RemoteQueryDescriptorIT {
 
    private void assertRegisteredOn(RemoteInfinispanServer server) throws Exception {
       Object proto = invoke(getJmxConnection(server), "getProtofile", "sample_bank_account/bank.proto");
-     
+
       assertTrue(proto.toString().contains("message User"));
    }
 

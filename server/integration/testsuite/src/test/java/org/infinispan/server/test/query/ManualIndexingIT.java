@@ -10,6 +10,7 @@ import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.Search;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.QueryBuilder;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.Queries;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -70,7 +71,7 @@ public class ManualIndexingIT extends RemoteQueryBaseIT {
         assertEquals(0, qb.build().list().size());
 
         //manual indexing
-        ObjectName massIndexerName = new ObjectName("jboss.infinispan:type=Query,manager="
+        ObjectName massIndexerName = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Query,manager="
                 + ObjectName.quote(CACHE_CONTAINER_NAME)
                 + ",cache=" + ObjectName.quote(CACHE_NAME)
                 + ",component=MassIndexer");

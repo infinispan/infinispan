@@ -21,6 +21,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import org.infinispan.commons.util.Util;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
@@ -55,7 +56,7 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
         final String cacheContainerName = address.getElement(address.size() - 1).getValue();
         final ServiceController<?> controller = context.getServiceRegistry(false).getService(
-              EmbeddedCacheManagerService.getServiceName(cacheContainerName));
+              CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
 
         EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
         ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);
@@ -73,7 +74,7 @@ public class UploadProtoFileOperationHandler implements OperationStepHandler {
                  nameArray[i] = modelNode.asString();
                  String urlString = descriptorsUrls.get(i).asString();
                  contentArray[i] = Util.read(new URL(urlString).openStream());
-                 i++;   
+                 i++;
               }
               protoManager.registerProtofiles(nameArray, contentArray);
            } catch (Exception e) {

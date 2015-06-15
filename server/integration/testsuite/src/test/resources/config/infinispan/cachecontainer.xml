@@ -4,6 +4,6 @@
             </cache-container>
             <cache-container name="special-cache-container" start="EAGER" default-cache="special-cache">
                 <local-cache name="special-cache" />
-                <local-cache name="default" />
+                <local-cache name="other-cache" />
             </cache-container>
         </subsystem>

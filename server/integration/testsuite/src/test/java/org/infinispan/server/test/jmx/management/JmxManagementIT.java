@@ -24,6 +24,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
@@ -44,10 +45,10 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 @WithRunningServer({@RunningServer(name = "jmx-management-1"),@RunningServer(name = "jmx-management-2")})
 public class JmxManagementIT {
-
+    final String JMX_DOMAIN = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME;
     /* cache MBeans */
-    final String distCachePrefix = "jboss.infinispan:type=Cache,name=\"default(dist_sync)\",manager=\"clustered\",component=";
-    final String memcachedCachePrefix = "jboss.infinispan:type=Cache,name=\"memcachedCache(dist_sync)\",manager=\"clustered\",component=";
+    final String distCachePrefix = JMX_DOMAIN + ":type=Cache,name=\"default(dist_sync)\",manager=\"clustered\",component=";
+    final String memcachedCachePrefix = JMX_DOMAIN + ":type=Cache,name=\"memcachedCache(dist_sync)\",manager=\"clustered\",component=";
     final String distCacheMBean = distCachePrefix + "Cache";
     final String distributionManagerMBean = distCachePrefix + "DistributionManager";
     // was renamed from DistributedStateTransferManager to StateTransferManager in 6.1.0ER1
@@ -56,13 +57,13 @@ public class JmxManagementIT {
     final String rpcManagerMBean = distCachePrefix + "RpcManager";
     final String distCacheStatisticsMBean = distCachePrefix + "Statistics";
     final String memcachedCacheStatisticsMBean = memcachedCachePrefix + "Statistics";
-    final String newExtraCacheMBean = "jboss.infinispan:type=Cache,name=\"extracache(local)\",manager=\"clustered\",component=Cache";
+    final String newExtraCacheMBean = JMX_DOMAIN + ":type=Cache,name=\"extracache(local)\",manager=\"clustered\",component=Cache";
     /* cache manager MBeans */
-    final String managerPrefix = "jboss.infinispan:type=CacheManager,name=\"clustered\",component=";
+    final String managerPrefix = JMX_DOMAIN + ":type=CacheManager,name=\"clustered\",component=";
     final String cacheManagerMBean = managerPrefix + "CacheManager";
     /* server module MBeans */
-    final String hotRodServerMBean = "jboss.infinispan:type=Server,name=HotRod,component=Transport";
-    final String memCachedServerMBean = "jboss.infinispan:type=Server,name=Memcached,component=Transport";
+    final String hotRodServerMBean = JMX_DOMAIN + ":type=Server,name=HotRod,component=Transport";
+    final String memCachedServerMBean = JMX_DOMAIN + ":type=Server,name=Memcached,component=Transport";
     final String protocolMBeanPrefix = "jgroups:type=protocol,cluster=\"default\",protocol=";
 
     @InfinispanResource("jmx-management-1")
@@ -274,6 +275,6 @@ public class JmxManagementIT {
     /* for channel and protocol MBeans, test only they're registered, not all the attributes/operations */
     @Test
     public void testJGroupsChannelMBeanAvailable() throws Exception {
-        assertTrue(provider.getConnection().isRegistered(new ObjectName("jgroups:type=channel,cluster=\"clustered\"")));
+        assertTrue(provider.getConnection().isRegistered(new ObjectName("jgroups:type=channel,cluster=\"cluster\"")));
     }
 }

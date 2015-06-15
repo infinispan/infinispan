@@ -37,7 +37,7 @@ public class AuthorizationRoleResource extends SimpleResourceDefinition {
     static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { NAME, PERMISSIONS };
 
     AuthorizationRoleResource() {
-        super(PathElement.pathElement(ModelKeys.ROLE), InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY, ModelKeys.AUTHORIZATION, ModelKeys.ROLE), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
+        super(PathElement.pathElement(ModelKeys.ROLE), new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY, ModelKeys.AUTHORIZATION, ModelKeys.ROLE), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 
     @Override

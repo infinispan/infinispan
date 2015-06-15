@@ -53,7 +53,7 @@ public class BackupSiteStateTransferResource extends SimpleResourceDefinition {
    private final boolean runtimeRegistration;
 
    BackupSiteStateTransferResource(boolean runtimeRegistration) {
-      super(PathElement.pathElement(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME), InfinispanExtension.getResourceDescriptionResolver(ModelKeys.BACKUP, ModelKeys.STATE_TRANSFER), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
+      super(PathElement.pathElement(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME), new InfinispanResourceDescriptionResolver(ModelKeys.BACKUP, ModelKeys.STATE_TRANSFER), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
       this.runtimeRegistration = runtimeRegistration;
    }
 

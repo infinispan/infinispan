@@ -1,6 +1,6 @@
 package org.infinispan.server.infinispan.actions;
 
-import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
+import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 
 /**
  * GetDefinedCacheCountAction.
@@ -9,9 +9,9 @@ import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
  * @since 7.0
  */
 
-public class GetDefinedCacheCountAction extends AbstractDefaultEmbeddedCacheManagerAction<String> {
+public class GetDefinedCacheCountAction extends AbstractDefaultCacheContainerAction<String> {
 
-   public GetDefinedCacheCountAction(DefaultEmbeddedCacheManager cacheManager) {
+   public GetDefinedCacheCountAction(DefaultCacheContainer cacheManager) {
       super(cacheManager);
    }
 

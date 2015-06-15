@@ -27,6 +27,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUB
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.SimpleResourceDefinition;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.GenericSubsystemDescribeHandler;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
@@ -38,11 +39,13 @@ import org.jboss.as.controller.services.path.ResolvePathHandler;
  */
 public class InfinispanSubsystemRootResource extends SimpleResourceDefinition {
 
+    static final PathElement PATH = PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, InfinispanExtension.SUBSYSTEM_NAME);
+
     private final ResolvePathHandler resolvePathHandler;
     private final boolean runtimeRegistration;
     public InfinispanSubsystemRootResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(PathElement.pathElement(SUBSYSTEM, InfinispanExtension.SUBSYSTEM_NAME),
-                InfinispanExtension.getResourceDescriptionResolver(),
+                new InfinispanResourceDescriptionResolver(),
                 InfinispanSubsystemAdd.INSTANCE,
                 ReloadRequiredRemoveStepHandler.INSTANCE);
         this.resolvePathHandler = resolvePathHandler;

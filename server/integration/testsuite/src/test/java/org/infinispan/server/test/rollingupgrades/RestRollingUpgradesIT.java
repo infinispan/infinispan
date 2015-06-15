@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.RollingUpgrades;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
@@ -77,7 +78,7 @@ public class RestRollingUpgradesIT {
 
             provider2 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer2);
 
-            final ObjectName rollMan = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(local)\","
+            final ObjectName rollMan = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(local)\","
                     + "manager=\"local\"," + "component=RollingUpgradeManager");
 
             invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});

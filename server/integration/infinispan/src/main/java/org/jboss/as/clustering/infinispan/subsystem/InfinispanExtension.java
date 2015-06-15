@@ -23,16 +23,17 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import java.util.List;
 
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.jboss.as.controller.Extension;
 import org.jboss.as.controller.ExtensionContext;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
-import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.jboss.dmr.ModelNode;
 import org.jboss.staxmapper.XMLElementReader;
+import org.kohsuke.MetaInfServices;
 
 /**
  * Defines the Infinispan subsystem and its addressable resources.
@@ -41,23 +42,11 @@ import org.jboss.staxmapper.XMLElementReader;
  * @author Richard Achmatowicz
  * @author Tristan Tarrant
  */
+@MetaInfServices
 public class InfinispanExtension implements Extension {
-
-    public static final String SUBSYSTEM_NAME = "infinispan";
+    public static final String SUBSYSTEM_NAME = InfinispanSubsystem.SUBSYSTEM_NAME;
     static final PathElement SUBSYSTEM_PATH = PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, SUBSYSTEM_NAME);
     public static final String RESOURCE_NAME = InfinispanExtension.class.getPackage().getName() + ".LocalDescriptions";
-
-    private static final int MANAGEMENT_API_MAJOR_VERSION = 7;
-    private static final int MANAGEMENT_API_MINOR_VERSION = 0;
-    private static final int MANAGEMENT_API_MICRO_VERSION = 0;
-
-    static ResourceDescriptionResolver getResourceDescriptionResolver(final String... keyPrefix) {
-           StringBuilder prefix = new StringBuilder(SUBSYSTEM_NAME);
-           for (String kp : keyPrefix) {
-               prefix.append('.').append(kp);
-           }
-            return new InfinispanResourceDescriptionResolver(prefix.toString(), RESOURCE_NAME, InfinispanExtension.class.getClassLoader());
-    }
 
     /**
      * {@inheritDoc}
@@ -66,8 +55,7 @@ public class InfinispanExtension implements Extension {
     @Override
     public void initialize(ExtensionContext context) {
         // IMPORTANT: Management API version != xsd version! Not all Management API changes result in XSD changes
-        SubsystemRegistration subsystem = context.registerSubsystem(SUBSYSTEM_NAME, MANAGEMENT_API_MAJOR_VERSION,
-                MANAGEMENT_API_MINOR_VERSION, MANAGEMENT_API_MICRO_VERSION);
+        SubsystemRegistration subsystem = context.registerSubsystem(SUBSYSTEM_NAME, Namespace.CURRENT.getVersion());
         // Create the path resolver handler
         final ResolvePathHandler resolvePathHandler;
         if (context.getProcessType().isServer()) {

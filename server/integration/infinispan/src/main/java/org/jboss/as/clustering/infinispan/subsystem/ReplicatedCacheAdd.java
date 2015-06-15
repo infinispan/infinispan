@@ -43,7 +43,7 @@ public class ReplicatedCacheAdd extends SharedStateCacheAdd {
         return operation;
     }
 
-    private ReplicatedCacheAdd() {
+    ReplicatedCacheAdd() {
         super(CacheMode.REPL_SYNC);
     }
 }

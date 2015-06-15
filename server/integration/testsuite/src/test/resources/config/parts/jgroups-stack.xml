@@ -1,1 +1,1 @@
-<transport stack="${jboss.default.jgroups.stack:udp}" lock-timeout="60000"/>
+<transport lock-timeout="60000"/>

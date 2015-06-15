@@ -29,7 +29,6 @@ import org.infinispan.server.infinispan.SecurityActions;
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
 import org.jboss.logging.Logger;
 import org.jboss.msc.service.Service;
-import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
@@ -43,10 +42,6 @@ public abstract class AbstractCacheConfigurationService implements Service<Confi
     private volatile Configuration config;
 
     private static final Logger log = Logger.getLogger(AbstractCacheConfigurationService.class.getPackage().getName());
-
-    public static ServiceName getServiceName(String container, String cache) {
-        return CacheService.getServiceName(container, cache).append("config");
-    }
 
     protected AbstractCacheConfigurationService(String name) {
         this.name = name;

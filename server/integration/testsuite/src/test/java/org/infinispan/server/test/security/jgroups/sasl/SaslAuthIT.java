@@ -18,14 +18,15 @@ import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * 
+ *
  * Test JGroups' SASL protocol with various mechs (namely with DIGEST-MD5 and GSSAPI).
- * 
+ *
  * @author Martin Gencur
  * @author vjuranek
  * @since 7.0
@@ -49,7 +50,7 @@ public class SaslAuthIT {
    final String JOINING_NODE_KRB = "clustered-sasl-krb-2";
    final String MECH_KRB = "GSSAPI";
 
-   final String SASL_MBEAN = "jgroups:type=protocol,cluster=\"clustered\",protocol=SASL";
+   final String SASL_MBEAN = "jgroups:type=protocol,cluster=\"cluster\",protocol=SASL";
 
    private static ApacheDsKrbLdap krbLdapServer;
 
@@ -70,7 +71,7 @@ public class SaslAuthIT {
       saslTest(COORDINATOR_NODE_MD5, JOINING_NODE_MD5, MECH_MD5);
    }
 
-   @Test
+   @Ignore
    @WithRunningServer(@RunningServer(name = COORDINATOR_NODE_KRB))
    public void testSaslKrb() throws Exception {
       saslTest(COORDINATOR_NODE_KRB, JOINING_NODE_KRB, MECH_KRB);

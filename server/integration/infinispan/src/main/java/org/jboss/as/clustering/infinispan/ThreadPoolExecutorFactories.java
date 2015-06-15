@@ -1,12 +1,12 @@
 package org.jboss.as.clustering.infinispan;
 
-import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
-import org.jboss.as.clustering.concurrent.ManagedExecutorService;
-import org.jboss.as.clustering.concurrent.ManagedScheduledExecutorService;
-
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
+import org.infinispan.server.commons.concurrent.ManagedExecutorService;
+import org.infinispan.server.commons.concurrent.ManagedScheduledExecutorService;
 
 public final class ThreadPoolExecutorFactories {
 

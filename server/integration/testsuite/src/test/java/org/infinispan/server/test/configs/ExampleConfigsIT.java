@@ -25,12 +25,14 @@ import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
+import org.infinispan.arquillian.utils.MBeanObjectsProvider;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.ITestUtils;
@@ -156,7 +158,7 @@ public class ExampleConfigsIT {
         provider2 = new MBeanServerConnectionProvider(s2.server.getHotrodEndpoint().getInetAddress().getHostName(),
                                                       SERVER2_MGMT_PORT);
 
-        final ObjectName rollMan = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(local)\","
+        final ObjectName rollMan = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(local)\","
                 + "manager=\"local\"," + "component=RollingUpgradeManager");
 
         invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
@@ -213,7 +215,7 @@ public class ExampleConfigsIT {
             provider2 = new MBeanServerConnectionProvider(s2.server.getRESTEndpoint().getInetAddress().getHostName(),
                                                           SERVER2_MGMT_PORT);
 
-            final ObjectName rollMan = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(local)\","
+            final ObjectName rollMan = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(local)\","
                                                             + "manager=\"local\"," + "component=RollingUpgradeManager");
 
             invokeOperation(provider2, rollMan.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});

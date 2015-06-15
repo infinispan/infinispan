@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServers;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.RollingUpgradesDist;
 import org.infinispan.server.test.client.rest.RESTHelper;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
@@ -98,12 +99,12 @@ public class RestRollingUpgradesDistIT {
 
             provider3 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer3);
 
-            final ObjectName rollMan3 = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(dist_sync)\","
+            final ObjectName rollMan3 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
                     + "manager=\"clustered\"," + "component=RollingUpgradeManager");
 
             invokeOperation(provider3, rollMan3.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
-            final ObjectName rollMan1 = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(dist_sync)\","
+            final ObjectName rollMan1 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
                     + "manager=\"clustered-new\"," + "component=RollingUpgradeManager");
 
             invokeOperation(provider1, rollMan1.toString(), "synchronizeData", new Object[]{"rest"},

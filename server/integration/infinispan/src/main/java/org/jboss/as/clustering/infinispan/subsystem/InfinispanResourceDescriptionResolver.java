@@ -1,12 +1,16 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.clustering.infinispan.subsystem.ClusteredCacheMetricsHandler.ClusteredCacheMetrics;
-import org.jboss.as.controller.descriptions.StandardResourceDescriptionResolver;
-
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
+
+import org.infinispan.server.commons.controller.descriptions.SubsystemResourceDescriptionResolver;
+import org.jboss.as.clustering.infinispan.subsystem.ClusteredCacheMetricsHandler.ClusteredCacheMetrics;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 
 /**
  * Custom resource description resolver to handle resources structured in a class hierarchy
@@ -14,12 +18,25 @@ import java.util.ResourceBundle;
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
-public class InfinispanResourceDescriptionResolver extends StandardResourceDescriptionResolver {
+public class InfinispanResourceDescriptionResolver extends SubsystemResourceDescriptionResolver {
 
-    private static final Map<String, String> sharedAttributeResolver;
+    private Map<String, String> sharedAttributeResolver = new HashMap<>();
 
-    public InfinispanResourceDescriptionResolver(String keyPrefix, String bundleBaseName, ClassLoader bundleLoader) {
-        super(keyPrefix, bundleBaseName, bundleLoader, true, false);
+    InfinispanResourceDescriptionResolver() {
+        this(Collections.<String>emptyList());
+    }
+
+    InfinispanResourceDescriptionResolver(String keyPrefix) {
+        this(Collections.singletonList(keyPrefix));
+    }
+
+    InfinispanResourceDescriptionResolver(String... keyPrefixes) {
+        this(Arrays.asList(keyPrefixes));
+    }
+
+    private InfinispanResourceDescriptionResolver(List<String> keyPrefixes) {
+        super(InfinispanExtension.SUBSYSTEM_NAME, keyPrefixes, InfinispanExtension.class);
+        initMap();
     }
 
     @Override
@@ -29,6 +46,14 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
             return bundle.getString(getBundleKey(attributeName));
         }
         return super.getResourceAttributeDescription(attributeName, locale, bundle);
+    }
+
+    @Override
+    public String getResourceAttributeDeprecatedDescription(String attributeName, Locale locale, ResourceBundle bundle) {
+        if (sharedAttributeResolver.containsKey(attributeName)) {
+            return bundle.getString(getVariableBundleKey(attributeName, ModelDescriptionConstants.DEPRECATED));
+        }
+        return super.getResourceAttributeDeprecatedDescription(attributeName, locale, bundle);
     }
 
     @Override
@@ -47,6 +72,14 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
             return bundle.getString(getBundleKey(paramName));
         }
         return super.getOperationParameterDescription(operationName, paramName, locale, bundle);
+    }
+
+    @Override
+    public String getOperationParameterDeprecatedDescription(String operationName, String paramName, Locale locale, ResourceBundle bundle) {
+        if (sharedAttributeResolver.containsKey(paramName)) {
+            return bundle.getString(getVariableBundleKey(paramName, ModelDescriptionConstants.DEPRECATED));
+        }
+        return super.getOperationParameterDeprecatedDescription(operationName, paramName, locale, bundle);
     }
 
     @Override
@@ -75,23 +108,20 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         final String prefix = sharedAttributeResolver.get(name);
         StringBuilder sb = new StringBuilder(InfinispanExtension.SUBSYSTEM_NAME);
         // construct the key prefix
-        if (prefix == null) {
-            sb = sb.append('.').append(name);
-        } else {
-            sb = sb.append('.').append(prefix).append('.').append(name);
+        if (prefix != null) {
+            sb.append('.').append(prefix);
         }
+        sb.append('.').append(name);
         // construct the key suffix
         if (variable != null) {
             for (String arg : variable) {
-                if (sb.length() > 0)
-                    sb.append('.');
-                sb.append(arg);
+                sb.append('.').append(arg);
             }
         }
         return sb.toString();
     }
 
-    static {
+    private void initMap() {
         sharedAttributeResolver = new HashMap<String, String>();
         // shared cache attributes
         sharedAttributeResolver.put(ModelKeys.BATCHING, "cache");

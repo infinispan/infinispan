@@ -523,10 +523,11 @@
                         <username.other>${username.other}</username.other>
                         <password.other>${password.other}</password.other>
 
-                        
                         <node0.ip>${node0.ip}</node0.ip>
                         <node1.ip>${node1.ip}</node1.ip>
                         <node2.ip>${node2.ip}</node2.ip>
+                        
+                        <server.jmx.domain>jboss.datagrid-infinispan</server.jmx.domain>
                     </systemPropertyVariables>
                     
                     <additionalClasspathElements>

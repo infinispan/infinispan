@@ -168,63 +168,63 @@ public class CacheResource extends SimpleResourceDefinition {
     // operations
     static final OperationDefinition CLEAR_CACHE =
             new SimpleOperationDefinitionBuilder("clear-cache",
-                    InfinispanExtension.getResourceDescriptionResolver("cache")
+                    new InfinispanResourceDescriptionResolver("cache")
             ).build();
     static final OperationDefinition STOP_CACHE =
             new SimpleOperationDefinitionBuilder("stop-cache",
-                    InfinispanExtension.getResourceDescriptionResolver("cache")
+                    new InfinispanResourceDescriptionResolver("cache")
             ).build();
     static final OperationDefinition START_CACHE =
             new SimpleOperationDefinitionBuilder("start-cache",
-                    InfinispanExtension.getResourceDescriptionResolver("cache")
+                    new InfinispanResourceDescriptionResolver("cache")
             ).build();
     static final OperationDefinition RESET_STATISTICS =
             new SimpleOperationDefinitionBuilder("reset-statistics",
-                    InfinispanExtension.getResourceDescriptionResolver("cache")
+                    new InfinispanResourceDescriptionResolver("cache")
             ).build();
     static final OperationDefinition RESET_ACTIVATION_STATISTICS =
             new SimpleOperationDefinitionBuilder(
                     "reset-activation-statistics",
-                    InfinispanExtension.getResourceDescriptionResolver("cache")
+                    new InfinispanResourceDescriptionResolver("cache")
             ).build();
     static final OperationDefinition RESET_INVALIDATION_STATISTICS =
             new SimpleOperationDefinitionBuilder(
                     "reset-invalidation-statistics",
-                    InfinispanExtension.getResourceDescriptionResolver("cache")
+                    new InfinispanResourceDescriptionResolver("cache")
             ).build();
     static final OperationDefinition RESET_PASSIVATION_STATISTICS =
             new SimpleOperationDefinitionBuilder(
                     "reset-passivation-statistics",
-                    InfinispanExtension.getResourceDescriptionResolver("cache")
+                    new InfinispanResourceDescriptionResolver("cache")
             ).build();
     static final OperationDefinition RESET_RPC_MANAGER_STATISTICS =
             new SimpleOperationDefinitionBuilder(
                     "reset-rpc-manager-statistics",
-                    InfinispanExtension.getResourceDescriptionResolver("cache")
+                    new InfinispanResourceDescriptionResolver("cache")
             ).build();
 
     static final OperationDefinition SYNCHRONIZE_DATA =
            new SimpleOperationDefinitionBuilder(
                    "synchronize-data",
-                   InfinispanExtension.getResourceDescriptionResolver("cache")
+                   new InfinispanResourceDescriptionResolver("cache")
            ).setParameters(MIGRATOR_NAME).build();
 
     static final OperationDefinition DISCONNECT_SOURCE =
            new SimpleOperationDefinitionBuilder(
                   "disconnect-source",
-                  InfinispanExtension.getResourceDescriptionResolver("cache")
+                  new InfinispanResourceDescriptionResolver("cache")
            ).setParameters(MIGRATOR_NAME).build();
 
     static final OperationDefinition RECORD_KNOWN_GLOBAL_KEYSET =
            new SimpleOperationDefinitionBuilder(
                   "record-known-global-keyset",
-                  InfinispanExtension.getResourceDescriptionResolver("cache")
+                  new InfinispanResourceDescriptionResolver("cache")
            ).build();
 
     static final OperationDefinition MASS_REINDEX =
           new SimpleOperationDefinitionBuilder(
                   "mass-reindex",
-                  InfinispanExtension.getResourceDescriptionResolver("cache")
+                  new InfinispanResourceDescriptionResolver("cache")
           ).build();
 
 

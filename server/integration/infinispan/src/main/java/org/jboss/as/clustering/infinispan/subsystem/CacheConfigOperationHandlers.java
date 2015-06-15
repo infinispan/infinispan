@@ -26,7 +26,6 @@ import static org.jboss.as.clustering.infinispan.subsystem.LevelDBCompressionRes
 import static org.jboss.as.clustering.infinispan.subsystem.LevelDBExpirationResource.LEVELDB_EXPIRATION_ATTRIBUTES;
 import static org.jboss.as.clustering.infinispan.subsystem.LevelDBImplementationResource.LEVELDB_IMPLEMENTATION_ATTRIBUTES;
 import static org.jboss.as.clustering.infinispan.subsystem.StoreWriteBehindResource.WRITE_BEHIND_ATTRIBUTES;
-import static org.jboss.as.clustering.infinispan.subsystem.TransportResource.TRANSPORT_ATTRIBUTES;
 
 import java.util.Arrays;
 
@@ -50,8 +49,6 @@ import org.jboss.dmr.Property;
  * @author William Burns (c) 2013 Red Hat Inc.
  */
 public class CacheConfigOperationHandlers {
-
-    static final OperationStepHandler TRANSPORT_ADD = new CacheConfigAdd(TRANSPORT_ATTRIBUTES);
     static final OperationStepHandler CONTAINER_SECURITY_ADD = new CacheConfigAdd();
 
     static final OperationStepHandler LOADER_ADD = new CacheLoaderAdd();

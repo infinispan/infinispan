@@ -20,11 +20,11 @@ package org.infinispan.server.endpoint.subsystem;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.endpoint.Constants;
-import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfiguration;
-import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService;
+import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
+import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.core.security.ServerSecurityManager;
@@ -41,24 +41,16 @@ import org.jboss.msc.value.InjectedValue;
 
 
 public class EndpointUtils {
-   private static final String INFINISPAN_SERVICE_NAME = "infinispan";
-
    public static ServiceName getCacheServiceName(String cacheContainerName, String cacheName) {
-      ServiceName cacheServiceName = getCacheContainerServiceName(cacheContainerName);
       if (cacheName != null) {
-         cacheServiceName = cacheServiceName.append(cacheName);
+         return CacheServiceName.CACHE.getServiceName(cacheContainerName, cacheName);
       } else {
-         cacheServiceName = cacheServiceName.append(CacheContainer.DEFAULT_CACHE_NAME);
+         return CacheServiceName.CACHE.getServiceName(cacheContainerName);
       }
-      return cacheServiceName;
    }
 
    public static ServiceName getCacheContainerServiceName(String cacheContainerName) {
-      ServiceName cacheContainerServiceName = ServiceName.JBOSS.append(INFINISPAN_SERVICE_NAME);
-      if (cacheContainerName != null) {
-         cacheContainerServiceName = cacheContainerServiceName.append(cacheContainerName);
-      }
-      return cacheContainerServiceName;
+      return CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName);
    }
 
    public static ServiceName getServiceName(final ModelNode node, final String... prefix) {
@@ -77,10 +69,10 @@ public class EndpointUtils {
    }
 
    public static void addCacheContainerConfigurationDependency(ServiceBuilder<?> builder, String cacheContainerName,
-         InjectedValue<EmbeddedCacheManagerConfiguration> target) {
-      ServiceName cacheContainerConfigurationServiceName = EmbeddedCacheManagerConfigurationService
+         InjectedValue<GlobalConfiguration> target) {
+      ServiceName cacheContainerConfigurationServiceName = CacheContainerServiceName.CONFIGURATION
             .getServiceName(cacheContainerName);
-      builder.addDependency(cacheContainerConfigurationServiceName, EmbeddedCacheManagerConfiguration.class, target);
+      builder.addDependency(cacheContainerConfigurationServiceName, GlobalConfiguration.class, target);
    }
 
    public static void addCacheContainerDependency(ServiceBuilder<?> builder, String cacheContainerName, InjectedValue<EmbeddedCacheManager> target) {

@@ -43,7 +43,7 @@ public class InvalidationCacheAdd extends ClusteredCacheAdd {
         return operation;
     }
 
-    private InvalidationCacheAdd() {
+    InvalidationCacheAdd() {
         super(CacheMode.INVALIDATION_SYNC);
     }
 }

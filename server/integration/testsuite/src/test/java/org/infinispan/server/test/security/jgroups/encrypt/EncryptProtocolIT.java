@@ -1,3 +1,4 @@
+
 package org.infinispan.server.test.security.jgroups.encrypt;
 
 import static org.infinispan.server.test.util.ITestUtils.SERVER1_MGMT_PORT;
@@ -52,7 +53,7 @@ public class EncryptProtocolIT {
     final String COORDINATOR_NODE = "clustered-encrypt-1";
     final String JOINING_NODE = "clustered-encrypt-2";
 
-    final String ENCRYPT_MBEAN = "jgroups:type=protocol,cluster=\"clustered\",protocol=ENCRYPT";
+    final String ENCRYPT_MBEAN = "jgroups:type=protocol,cluster=\"cluster\",protocol=ENCRYPT";
     final String ENCRYPT_PROPERTY_KEY = "key_store_name";
     final String ENCRYPT_PROPERTY_VALUE_SUFFIX = "server_jceks.keystore";
     final String ENCRYPT_PASSWORD_KEY = "store_password";
@@ -99,8 +100,8 @@ public class EncryptProtocolIT {
             //check that ENCRYPT protocol is registered with JGroups
             assertTrue(getAttribute(providerCoordinator, ENCRYPT_MBEAN, ENCRYPT_PROPERTY_KEY).endsWith(ENCRYPT_PROPERTY_VALUE_SUFFIX));
             assertTrue(getAttribute(providerFriend, ENCRYPT_MBEAN, ENCRYPT_PROPERTY_KEY).endsWith(ENCRYPT_PROPERTY_VALUE_SUFFIX));
-            
-            //JGRP-1854: check that ENCRYPT password is not visible via JMX 
+
+            //JGRP-1854: check that ENCRYPT password is not visible via JMX
             assertNull(getAttribute(providerCoordinator, ENCRYPT_MBEAN, ENCRYPT_PASSWORD_KEY));
 
             mcFriend.set("key1", "value1");

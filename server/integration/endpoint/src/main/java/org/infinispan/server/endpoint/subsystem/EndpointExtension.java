@@ -28,12 +28,14 @@ import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
 import org.jboss.dmr.ModelNode;
 import org.jboss.staxmapper.XMLElementReader;
+import org.kohsuke.MetaInfServices;
 
 
 /**
  * @author <a href="http://gleamynode.net/">Trustin Lee</a>
  * @author Tristan Tarrant
  */
+@MetaInfServices
 public class EndpointExtension implements Extension {
 
    private static final int MANAGEMENT_API_MAJOR_VERSION = 1;

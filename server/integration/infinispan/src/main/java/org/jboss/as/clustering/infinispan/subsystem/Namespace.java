@@ -24,6 +24,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import java.util.List;
 
+import org.jboss.as.controller.ModelVersion;
 import org.jboss.dmr.ModelNode;
 import org.jboss.staxmapper.XMLElementReader;
 
@@ -54,12 +55,14 @@ public enum Namespace {
     private final int minor;
     private final XMLElementReader<List<ModelNode>> reader;
     private final String domain;
+    private final ModelVersion version;
 
     Namespace(String domain, int major, int minor, XMLElementReader<List<ModelNode>> reader) {
         this.domain = domain;
         this.major = major;
         this.minor = minor;
         this.reader = reader;
+        this.version = ModelVersion.create(major, minor);
     }
 
     /**
@@ -73,5 +76,13 @@ public enum Namespace {
 
     public XMLElementReader<List<ModelNode>> getXMLReader() {
         return this.reader;
+    }
+
+    public ModelVersion getVersion() {
+        return this.version;
+    }
+
+    public String format(String format) {
+        return String.format(format, major, minor);
     }
 }

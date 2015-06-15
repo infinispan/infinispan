@@ -22,7 +22,7 @@ abstract class CacheChildResource extends SimpleResourceDefinition {
 
     CacheChildResource(PathElement path, String resourceKey, CacheResource cacheResource,
             AttributeDefinition[] attributes) {
-        super(path, InfinispanExtension.getResourceDescriptionResolver(resourceKey),
+        super(path, new InfinispanResourceDescriptionResolver(resourceKey),
                 new RestartCacheResourceAdd(cacheResource.getPathElement().getKey(), cacheResource.getCacheAddHandler(), attributes),
                 new RestartCacheResourceRemove(cacheResource.getPathElement().getKey(), cacheResource.getCacheAddHandler()));
         this.cacheResource = cacheResource;

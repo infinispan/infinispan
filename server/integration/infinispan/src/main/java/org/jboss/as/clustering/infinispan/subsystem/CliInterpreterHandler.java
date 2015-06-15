@@ -4,6 +4,7 @@ import org.infinispan.cli.interpreter.Interpreter;
 import org.infinispan.cli.interpreter.result.ResultKeys;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.infinispan.SecurityActions;
+import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
@@ -77,7 +78,7 @@ public class CliInterpreterHandler implements OperationStepHandler {
       final PathAddress address = pathAddress(operation.require(OP_ADDR));
       final String cacheContainerName = address.getLastElement().getValue();
       final ServiceController<?> controller = context.getServiceRegistry(false)
-            .getService(EmbeddedCacheManagerService.getServiceName(cacheContainerName));
+            .getService(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
       EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
 
       if (cacheManager == null) {

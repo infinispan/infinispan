@@ -1,5 +1,7 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.server.jgroups.subsystem.ChannelResourceDefinition;
+import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
@@ -163,16 +165,19 @@ public final class InfinispanSubsystemXMLReader_6_0 implements XMLElementReader<
         PathAddress transportAddress = containerAddress.append(ModelKeys.TRANSPORT, ModelKeys.TRANSPORT_NAME);
         ModelNode transport = Util.createAddOperation(transportAddress);
 
+        String cluster = null;
+        String stack = null;
+
         for (int i = 0; i < reader.getAttributeCount(); i++) {
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case STACK: {
-                    TransportResource.STACK.parseAndSetParameter(value, transport, reader);
+                    stack = value;
                     break;
                 }
                 case CLUSTER: {
-                    TransportResource.CLUSTER.parseAndSetParameter(value, transport, reader);
+                    cluster = value;
                     break;
                 }
                 case EXECUTOR: {
@@ -192,6 +197,16 @@ public final class InfinispanSubsystemXMLReader_6_0 implements XMLElementReader<
                 }
             }
         }
+
+        String channel = (cluster != null) ? cluster : ("cluster-" + containerAddress.getLastElement().getValue());
+        TransportResource.CHANNEL.parseAndSetParameter(channel, transport, reader);
+        PathAddress channelAddress = PathAddress.pathAddress(JGroupsSubsystemResourceDefinition.PATH, ChannelResourceDefinition.pathElement(channel));
+        ModelNode channelOperation = Util.createAddOperation(channelAddress);
+        if (stack != null) {
+            ChannelResourceDefinition.STACK.parseAndSetParameter(stack, channelOperation, reader);
+        }
+        operations.add(channelOperation);
+
         ParseUtils.requireNoContent(reader);
 
         operations.add(transport);

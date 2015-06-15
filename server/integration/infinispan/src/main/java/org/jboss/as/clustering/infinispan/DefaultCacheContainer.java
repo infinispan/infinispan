@@ -31,30 +31,35 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.AbstractDelegatingAdvancedCache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.global.GlobalConfiguration;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.manager.impl.AbstractDelegatingEmbeddedCacheManager;
+import org.infinispan.server.infinispan.spi.CacheContainer;
 
 /**
  * EmbeddedCacheManager decorator that overrides the default cache semantics of a cache manager.
  * @author Paul Ferraro
  */
-public class DefaultEmbeddedCacheManager extends AbstractDelegatingEmbeddedCacheManager {
+public class DefaultCacheContainer extends AbstractDelegatingEmbeddedCacheManager implements CacheContainer {
 
     private final String defaultCache;
 
-    public DefaultEmbeddedCacheManager(GlobalConfiguration global, String defaultCache) {
+    public DefaultCacheContainer(GlobalConfiguration global, String defaultCache) {
         this(new DefaultCacheManager(global, null, false), defaultCache);
     }
 
-    public DefaultEmbeddedCacheManager(GlobalConfiguration global, Configuration config, String defaultCache) {
+    public DefaultCacheContainer(GlobalConfiguration global, Configuration config, String defaultCache) {
         this(new DefaultCacheManager(global, config, false), defaultCache);
     }
 
-    public DefaultEmbeddedCacheManager(EmbeddedCacheManager container, String defaultCache) {
+    public DefaultCacheContainer(EmbeddedCacheManager container, String defaultCache) {
         super(container);
         this.defaultCache = defaultCache;
+    }
+
+    @Override
+    public String getDefaultCacheName() {
+        return defaultCache;
     }
 
     @Override
@@ -202,7 +207,7 @@ public class DefaultEmbeddedCacheManager extends AbstractDelegatingEmbeddedCache
 
         @Override
         public EmbeddedCacheManager getCacheManager() {
-            return DefaultEmbeddedCacheManager.this;
+            return DefaultCacheContainer.this;
         }
 
         @Override

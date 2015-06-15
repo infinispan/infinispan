@@ -51,9 +51,6 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
     private volatile XAResourceRecovery recovery;
 
     private static final Logger log = Logger.getLogger(CacheService.class.getPackage().getName());
-    public static ServiceName getServiceName(String container, String cache) {
-        return EmbeddedCacheManagerService.getServiceName(container).append((cache != null) ? cache : CacheContainer.DEFAULT_CACHE_NAME);
-    }
 
     public interface Dependencies {
         EmbeddedCacheManager getCacheContainer();

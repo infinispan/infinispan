@@ -38,8 +38,8 @@ public class InvalidationCacheResource extends ClusteredCacheResource {
 
     public InvalidationCacheResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(INVALIDATION_CACHE_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.INVALIDATION_CACHE),
+                new InfinispanResourceDescriptionResolver(ModelKeys.INVALIDATION_CACHE),
                 InvalidationCacheAdd.INSTANCE,
-                CacheRemove.INSTANCE, resolvePathHandler, runtimeRegistration);
+                new CacheRemoveHandler(), resolvePathHandler, runtimeRegistration);
     }
 }

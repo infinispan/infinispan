@@ -35,7 +35,7 @@
       <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
       <version.junit>4.11</version.junit>
       <version.org.infinispan>${project.version}</version.org.infinispan>
-      <version.org.infinispan.arquillian.container>1.2.0.Alpha2</version.org.infinispan.arquillian.container>
+      <version.org.infinispan.arquillian.container>1.2.0.Alpha3</version.org.infinispan.arquillian.container>
       <version.org.slf4j>1.7.2</version.org.slf4j>
 
       <!-- WildFly dependencies -->
@@ -143,6 +143,12 @@
 
          <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>infinispan-server-cli</artifactId>
+            <version>${project.version}</version>
+         </dependency>
+
+         <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-commons</artifactId>
             <version>${project.version}</version>
          </dependency>
@@ -151,12 +157,12 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-commons</artifactId>
             <version>${project.version}</version>
+            <type>test-jar</type>
          </dependency>
 
          <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>infinispan-server-commons</artifactId>
-            <type>test-jar</type>
+            <artifactId>infinispan-server-jgroups</artifactId>
             <version>${project.version}</version>
          </dependency>
 
@@ -164,6 +170,7 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>infinispan-server-jgroups</artifactId>
             <version>${project.version}</version>
+            <type>test-jar</type>
          </dependency>
 
          <dependency>

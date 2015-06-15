@@ -12,6 +12,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.server.infinispan.SecurityActions;
+import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.xsite.XSiteAdminOperations;
@@ -53,7 +54,7 @@ public abstract class CacheCommands implements OperationStepHandler {
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
         final String cacheContainerName = address.getElement(address.size() - 2 - pathOffset).getValue();
         final String cacheName = address.getElement(address.size() - 1 - pathOffset).getValue();
-        final ServiceController<?> controller = context.getServiceRegistry(false).getService(CacheService.getServiceName(cacheContainerName, cacheName));
+        final ServiceController<?> controller = context.getServiceRegistry(false).getService(CacheServiceName.CACHE.getServiceName(cacheContainerName, cacheName));
         Cache<?, ?> cache = (Cache<?, ?>) controller.getValue();
 
         ModelNode operationResult = null;

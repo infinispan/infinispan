@@ -21,6 +21,9 @@
       </delete>
       <delete dir="${output.dir}/appclient" />
       <delete dir="${output.dir}/welcome-content" />
+      <delete>
+         <fileset dir="${output.dir}/docs/schema" excludesfile="keep-schemas.txt"/>
+      </delete>
    </target>
    
    <target name="server-version">

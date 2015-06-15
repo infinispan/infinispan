@@ -41,10 +41,10 @@ public class ClusterLoaderResource extends BaseLoaderResource {
                    .build();
 
     // operations
-    private static final OperationDefinition CLUSTER_LOADER_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CLUSTER_LOADER))
+    private static final OperationDefinition CLUSTER_LOADER_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.CLUSTER_LOADER))
         .setParameters(COMMON_LOADER_PARAMETERS)
         .addParameter(REMOTE_TIMEOUT)
-        .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CLUSTER_LOADER))
+        .setAttributeResolver(new InfinispanResourceDescriptionResolver(ModelKeys.CLUSTER_LOADER))
         .build();
 
     public ClusterLoaderResource(CacheResource cacheResource) {

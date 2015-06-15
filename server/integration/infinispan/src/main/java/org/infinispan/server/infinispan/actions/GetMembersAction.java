@@ -1,7 +1,7 @@
 package org.infinispan.server.infinispan.actions;
 
 import org.infinispan.remoting.transport.Address;
-import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
+import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 
 import java.util.List;
 
@@ -12,9 +12,9 @@ import java.util.List;
  * @since 7.0
  */
 
-public class GetMembersAction extends AbstractDefaultEmbeddedCacheManagerAction<List<Address>> {
+public class GetMembersAction extends AbstractDefaultCacheContainerAction<List<Address>> {
 
-   public GetMembersAction(DefaultEmbeddedCacheManager cacheManager) {
+   public GetMembersAction(DefaultCacheContainer cacheManager) {
       super(cacheManager);
    }
 

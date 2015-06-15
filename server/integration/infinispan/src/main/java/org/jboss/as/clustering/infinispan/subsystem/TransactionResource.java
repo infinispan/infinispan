@@ -91,21 +91,21 @@ public class TransactionResource extends CacheChildResource {
 
     // operations
     static final OperationDefinition RESET_TX_STATISTICS =
-            new SimpleOperationDefinitionBuilder("reset-transaction-statistics", InfinispanExtension.getResourceDescriptionResolver("transaction"))
+            new SimpleOperationDefinitionBuilder("reset-transaction-statistics", new InfinispanResourceDescriptionResolver("transaction"))
                 .build();
     static final OperationDefinition LIST_IN_DOUBT_TRANSACTIONS =
-            new SimpleOperationDefinitionBuilder("list-in-doubt-transactions", InfinispanExtension.getResourceDescriptionResolver("transaction"))
+            new SimpleOperationDefinitionBuilder("list-in-doubt-transactions", new InfinispanResourceDescriptionResolver("transaction"))
                 .build();
     static final OperationDefinition TRANSACTION_FORCE_COMMIT =
-            new SimpleOperationDefinitionBuilder("force-commit-transaction", InfinispanExtension.getResourceDescriptionResolver("transaction.recovery"))
+            new SimpleOperationDefinitionBuilder("force-commit-transaction", new InfinispanResourceDescriptionResolver("transaction.recovery"))
                 .addParameter(TX_INTERNAL_ID)
                 .build();
     static final OperationDefinition TRANSACTION_FORCE_ROLLBACK =
-            new SimpleOperationDefinitionBuilder("force-rollback-transaction", InfinispanExtension.getResourceDescriptionResolver("transaction.recovery"))
+            new SimpleOperationDefinitionBuilder("force-rollback-transaction", new InfinispanResourceDescriptionResolver("transaction.recovery"))
                 .addParameter(TX_INTERNAL_ID)
                 .build();
     static final OperationDefinition TRANSACTION_FORGET =
-            new SimpleOperationDefinitionBuilder("forget-transaction", InfinispanExtension.getResourceDescriptionResolver("transaction.recovery"))
+            new SimpleOperationDefinitionBuilder("forget-transaction", new InfinispanResourceDescriptionResolver("transaction.recovery"))
                 .addParameter(TX_INTERNAL_ID)
                 .build();
 

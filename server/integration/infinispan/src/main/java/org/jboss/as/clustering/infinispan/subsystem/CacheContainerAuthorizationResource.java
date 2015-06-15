@@ -53,7 +53,7 @@ public class CacheContainerAuthorizationResource extends SimpleResourceDefinitio
     static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { MAPPER };
 
     CacheContainerAuthorizationResource() {
-        super(PathElement.pathElement(ModelKeys.AUTHORIZATION), InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY, ModelKeys.AUTHORIZATION), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
+        super(PathElement.pathElement(ModelKeys.AUTHORIZATION), new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY, ModelKeys.AUTHORIZATION), new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 
     @Override

@@ -44,7 +44,7 @@ import org.infinispan.server.infinispan.actions.ResetInterceptorJmxStatisticsAct
 import org.infinispan.server.infinispan.actions.StartCacheAction;
 import org.infinispan.server.infinispan.actions.StopCacheAction;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
+import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 
 /**
  * SecurityActions for the org.infinispan.server.infinispan package
@@ -178,52 +178,52 @@ public final class SecurityActions {
         return doPrivileged(action);
     }
 
-    public static Address getCacheManagerLocalAddress(DefaultEmbeddedCacheManager cacheManager) {
+    public static Address getCacheManagerLocalAddress(DefaultCacheContainer cacheManager) {
         GetCacheManagerAddress action = new GetCacheManagerAddress(cacheManager);
         return doPrivileged(action);
     }
 
-    public static Address getCacheManagerCoordinatorAddress(DefaultEmbeddedCacheManager cacheManager) {
+    public static Address getCacheManagerCoordinatorAddress(DefaultCacheContainer cacheManager) {
         GetCacheManagerCoordinatorAddress action = new GetCacheManagerCoordinatorAddress(cacheManager);
         return doPrivileged(action);
     }
 
-    public static boolean getCacheManagerIsCoordinator(DefaultEmbeddedCacheManager cacheManager) {
+    public static boolean getCacheManagerIsCoordinator(DefaultCacheContainer cacheManager) {
         GetCacheManagerIsCoordinatorAction action = new GetCacheManagerIsCoordinatorAction(cacheManager);
         return doPrivileged(action);
     }
 
-    public static String getCacheManagerClusterName(DefaultEmbeddedCacheManager cacheManager) {
+    public static String getCacheManagerClusterName(DefaultCacheContainer cacheManager) {
         GetCacheManagerClusterNameAction action = new GetCacheManagerClusterNameAction(cacheManager);
         return doPrivileged(action);
     }
 
-    public static String getCacheManagerClusterAvailability(DefaultEmbeddedCacheManager cacheManager) {
+    public static String getCacheManagerClusterAvailability(DefaultCacheContainer cacheManager) {
         GetCacheManagerClusterAvailabilityAction action = new GetCacheManagerClusterAvailabilityAction(cacheManager);
         return doPrivileged(action);
     }
 
-    public static String getDefinedCacheNames(DefaultEmbeddedCacheManager cacheManager) {
+    public static String getDefinedCacheNames(DefaultCacheContainer cacheManager) {
         GetDefinedCacheNamesAction action = new GetDefinedCacheNamesAction(cacheManager);
         return doPrivileged(action);
     }
 
-    public static String getCacheCreatedCount(DefaultEmbeddedCacheManager cacheManager) {
+    public static String getCacheCreatedCount(DefaultCacheContainer cacheManager) {
         GetCreatedCacheCountAction action = new GetCreatedCacheCountAction(cacheManager);
         return doPrivileged(action);
     }
 
-    public static String getDefinedCacheCount(DefaultEmbeddedCacheManager cacheManager) {
+    public static String getDefinedCacheCount(DefaultCacheContainer cacheManager) {
         GetDefinedCacheCountAction action = new GetDefinedCacheCountAction(cacheManager);
         return doPrivileged(action);
     }
 
-    public static String getRunningCacheCount(DefaultEmbeddedCacheManager cacheManager) {
+    public static String getRunningCacheCount(DefaultCacheContainer cacheManager) {
         GetRunningCacheCountAction action = new GetRunningCacheCountAction(cacheManager);
         return doPrivileged(action);
     }
 
-    public static List<Address> getMembers(DefaultEmbeddedCacheManager cacheManager) {
+    public static List<Address> getMembers(DefaultCacheContainer cacheManager) {
         GetMembersAction action = new GetMembersAction(cacheManager);
         return doPrivileged(action);
     }

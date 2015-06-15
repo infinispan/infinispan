@@ -56,13 +56,13 @@ public class MixedKeyedJDBCStoreResource extends BaseJDBCStoreResource {
                .build();
 
     // operations
-    private static final OperationDefinition MIXED_KEYED_JDBC_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.MIXED_KEYED_JDBC_STORE))
+    private static final OperationDefinition MIXED_KEYED_JDBC_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.MIXED_KEYED_JDBC_STORE))
         .setParameters(COMMON_STORE_PARAMETERS)
         .addParameter(DATA_SOURCE)
         .addParameter(DIALECT)
         .addParameter(STRING_KEYED_TABLE)
         .addParameter(BINARY_KEYED_TABLE)
-        .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.JDBC_STORE))
+        .setAttributeResolver(new InfinispanResourceDescriptionResolver(ModelKeys.JDBC_STORE))
         .build();
 
 

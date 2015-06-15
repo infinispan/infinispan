@@ -82,7 +82,7 @@ public class BaseStoreResource extends BaseLoaderResource {
     static final AttributeDefinition[] COMMON_STORE_PARAMETERS = {SHARED, PRELOAD, PASSIVATION, FETCH_STATE, PURGE, READ_ONLY, SINGLETON, PROPERTIES};
 
     // operations
-    private static final OperationDefinition CACHE_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.STORE))
+    private static final OperationDefinition CACHE_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.STORE))
         .setParameters(COMMON_STORE_PARAMETERS)
         .build();
 

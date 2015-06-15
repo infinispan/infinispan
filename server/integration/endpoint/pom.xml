@@ -154,7 +154,7 @@
          <artifactId>junit</artifactId>
          <scope>test</scope>
       </dependency>
-      
+
       <dependency>
          <groupId>org.wildfly.core</groupId>
          <artifactId>wildfly-subsystem-test</artifactId>
@@ -163,16 +163,22 @@
       </dependency>
 
       <dependency>
-         <groupId>org.wildfly</groupId>
-         <artifactId>wildfly-clustering-common</artifactId>
+         <groupId>org.infinispan.server</groupId>
+         <artifactId>infinispan-server-commons</artifactId>
          <scope>test</scope>
-         <classifier>tests</classifier>
+         <type>test-jar</type>
       </dependency>
-      
+
       <dependency>
          <groupId>org.jboss.logging</groupId>
          <artifactId>jboss-logging-processor</artifactId>
          <scope>provided</scope>
+         <optional>true</optional>
+      </dependency>
+
+      <dependency>
+         <groupId>org.kohsuke.metainf-services</groupId>
+         <artifactId>metainf-services</artifactId>
          <optional>true</optional>
       </dependency>
 

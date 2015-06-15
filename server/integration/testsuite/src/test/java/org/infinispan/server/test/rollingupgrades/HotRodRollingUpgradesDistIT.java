@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.RollingUpgradesDist;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.infinispan.server.test.util.RemoteInfinispanMBeans;
@@ -124,12 +125,12 @@ public class HotRodRollingUpgradesDistIT {
 
             provider3 = new MBeanServerConnectionProvider("127.0.0.1", managementPortServer3);
 
-            final ObjectName rollMan3 = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(dist_sync)\","
+            final ObjectName rollMan3 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
                     + "manager=\"clustered\"," + "component=RollingUpgradeManager");
 
             invokeOperation(provider3, rollMan3.toString(), "recordKnownGlobalKeyset", new Object[]{}, new String[]{});
 
-            final ObjectName rollMan1 = new ObjectName("jboss.infinispan:type=Cache," + "name=\"default(dist_sync)\","
+            final ObjectName rollMan1 = new ObjectName("jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache," + "name=\"default(dist_sync)\","
                     + "manager=\"clustered-new\"," + "component=RollingUpgradeManager");
 
             invokeOperation(provider1, rollMan1.toString(), "synchronizeData", new Object[]{"hotrod"},

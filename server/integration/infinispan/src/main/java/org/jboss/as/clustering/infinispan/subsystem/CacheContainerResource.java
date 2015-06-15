@@ -152,15 +152,15 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                .setAllowExpression(false)
                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                .build();
-   
+
     static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, LISTENER_EXECUTOR, ASYNC_EXECUTOR, EVICTION_EXECUTOR, EXPIRATION_EXECUTOR, STATE_TRANSFER_EXECUTOR, REPLICATION_QUEUE_EXECUTOR, CACHE_CONTAINER_MODULE, STATISTICS};
 
     // operations
-    static final OperationDefinition ALIAS_ADD = new SimpleOperationDefinitionBuilder("add-alias", InfinispanExtension.getResourceDescriptionResolver("cache-container.alias"))
+    static final OperationDefinition ALIAS_ADD = new SimpleOperationDefinitionBuilder("add-alias", new InfinispanResourceDescriptionResolver("cache-container.alias"))
             .setParameters(NAME)
             .build();
 
-    static final OperationDefinition ALIAS_REMOVE = new SimpleOperationDefinitionBuilder("remove-alias", InfinispanExtension.getResourceDescriptionResolver("cache-container.alias"))
+    static final OperationDefinition ALIAS_REMOVE = new SimpleOperationDefinitionBuilder("remove-alias", new InfinispanResourceDescriptionResolver("cache-container.alias"))
             .setParameters(NAME)
             .build();
 
@@ -176,24 +176,24 @@ public class CacheContainerResource extends SimpleResourceDefinition {
            new StringListAttributeDefinition.Builder("file-contents")
                    .build();
 
-    static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
+    static final OperationDefinition UPLOAD_PROTO = new SimpleOperationDefinitionBuilder("upload-proto-schemas", new InfinispanResourceDescriptionResolver("cache-container"))
            .setParameters(PROTO_NAMES, PROTO_URLS)
            .build();
 
-    static final OperationDefinition REGISTER_PROTO = new SimpleOperationDefinitionBuilder("register-proto-schemas", InfinispanExtension.getResourceDescriptionResolver("cache-container"))
+    static final OperationDefinition REGISTER_PROTO = new SimpleOperationDefinitionBuilder("register-proto-schemas", new InfinispanResourceDescriptionResolver("cache-container"))
            .setParameters(PROTO_NAMES, PROTO_CONTENTS)
            .build();
 
-    static final OperationDefinition CLI_INTERPRETER = new SimpleOperationDefinitionBuilder("cli-interpreter", InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
+    static final OperationDefinition CLI_INTERPRETER = new SimpleOperationDefinitionBuilder("cli-interpreter", new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER))
            .build();
 
     private final ResolvePathHandler resolvePathHandler;
     private final boolean runtimeRegistration;
     public CacheContainerResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(CONTAINER_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER),
-                CacheContainerAdd.INSTANCE,
-                CacheContainerRemove.INSTANCE);
+                new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER),
+                new CacheContainerAddHandler(),
+                new CacheContainerRemoveHandler());
         this.resolvePathHandler = resolvePathHandler;
         this.runtimeRegistration = runtimeRegistration;
     }

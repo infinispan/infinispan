@@ -36,7 +36,7 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
 public class CacheContainerSecurityResource extends SimpleResourceDefinition {
 
     CacheContainerSecurityResource() {
-        super(PathElement.pathElement(ModelKeys.SECURITY), InfinispanExtension.getResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY), CacheConfigOperationHandlers.CONTAINER_SECURITY_ADD,
+        super(PathElement.pathElement(ModelKeys.SECURITY), new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY), CacheConfigOperationHandlers.CONTAINER_SECURITY_ADD,
                 ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 

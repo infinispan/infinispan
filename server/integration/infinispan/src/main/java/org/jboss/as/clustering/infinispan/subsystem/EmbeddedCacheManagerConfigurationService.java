@@ -32,8 +32,8 @@ import org.infinispan.configuration.global.TransportConfigurationBuilder;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.ClusterRoleMapper;
-import org.infinispan.server.jgroups.ChannelFactory;
-import org.infinispan.server.jgroups.subsystem.ChannelService;
+import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
+import org.infinispan.server.jgroups.spi.ChannelFactory;
 import org.jboss.as.clustering.infinispan.ChannelTransport;
 import org.jboss.as.clustering.infinispan.MBeanServerProvider;
 import org.jboss.as.clustering.infinispan.ManagedExecutorFactory;
@@ -49,6 +49,7 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
+import org.jgroups.Channel;
 
 import javax.management.MBeanServer;
 import java.util.List;
@@ -61,13 +62,11 @@ import java.util.concurrent.ScheduledExecutorService;
  * @author Paul Ferraro
  */
 public class EmbeddedCacheManagerConfigurationService implements Service<EmbeddedCacheManagerConfiguration>, EmbeddedCacheManagerConfiguration {
-    public static ServiceName getServiceName(String name) {
-        return EmbeddedCacheManagerService.getServiceName(name).append("config");
-    }
 
     interface TransportConfiguration {
         Long getLockTimeout();
         ChannelFactory getChannelFactory();
+        Channel getChannel();
         Executor getExecutor();
         Executor getTotalOrderExecutor();
         Executor getRemoteCommandExecutor();
@@ -154,13 +153,13 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         TransportConfigurationBuilder transportBuilder = builder.transport();
 
         if (transport != null) {
-            transportBuilder.transport(new ChannelTransport(context.getController().getServiceContainer(), ChannelService.getServiceName(this.name)));
+            transportBuilder.transport(new ChannelTransport(transport.getChannel(), transport.getChannelFactory()));
             Long timeout = transport.getLockTimeout();
             if (timeout != null) {
                 transportBuilder.distributedSyncTimeout(timeout.longValue());
             }
             // Topology is retrieved from the channel
-            org.jboss.as.clustering.jgroups.TransportConfiguration.Topology topology = transport.getChannelFactory().getProtocolStackConfiguration().getTransport().getTopology();
+            org.infinispan.server.jgroups.spi.TransportConfiguration.Topology topology = transport.getChannelFactory().getProtocolStackConfiguration().getTransport().getTopology();
             if (topology != null) {
                 String site = topology.getSite();
                 if (site != null) {
@@ -236,7 +235,7 @@ public class EmbeddedCacheManagerConfigurationService implements Service<Embedde
         }
 
         GlobalJmxStatisticsConfigurationBuilder jmxBuilder = builder.globalJmxStatistics().cacheManagerName(this.name);
-        jmxBuilder.jmxDomain(EmbeddedCacheManagerService.getServiceName(null).getCanonicalName());
+        jmxBuilder.jmxDomain(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(null).getCanonicalName());
 
         MBeanServer server = this.dependencies.getMBeanServer();
         if (server != null && this.statistics) {

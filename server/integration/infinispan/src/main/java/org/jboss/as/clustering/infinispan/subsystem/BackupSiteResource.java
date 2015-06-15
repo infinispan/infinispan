@@ -91,39 +91,39 @@ public class BackupSiteResource extends CacheChildResource {
 
     // operations
     static final OperationDefinition BACKUP_BRING_SITE_ONLINE =
-            new SimpleOperationDefinitionBuilder("bring-site-online", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+            new SimpleOperationDefinitionBuilder("bring-site-online", new InfinispanResourceDescriptionResolver("backup.ops"))
                 .build();
 
     static final OperationDefinition BACKUP_TAKE_SITE_OFFLINE =
-            new SimpleOperationDefinitionBuilder("take-site-offline", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+            new SimpleOperationDefinitionBuilder("take-site-offline", new InfinispanResourceDescriptionResolver("backup.ops"))
                 .build();
 
     static final OperationDefinition BACKUP_SITE_STATUS =
-            new SimpleOperationDefinitionBuilder("site-status", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+            new SimpleOperationDefinitionBuilder("site-status", new InfinispanResourceDescriptionResolver("backup.ops"))
                 .build();
 
     static final OperationDefinition BACKUP_PUSH_STATE =
-            new SimpleOperationDefinitionBuilder("push-state", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+            new SimpleOperationDefinitionBuilder("push-state", new InfinispanResourceDescriptionResolver("backup.ops"))
                .build();
 
     static final OperationDefinition BACKUP_CANCEL_PUSH_STATE =
-            new SimpleOperationDefinitionBuilder("cancel-push", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+            new SimpleOperationDefinitionBuilder("cancel-push", new InfinispanResourceDescriptionResolver("backup.ops"))
                .build();
 
     static final OperationDefinition BACKUP_CANCEL_RECEIVE_STATE =
-            new SimpleOperationDefinitionBuilder("cancel-receive", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+            new SimpleOperationDefinitionBuilder("cancel-receive", new InfinispanResourceDescriptionResolver("backup.ops"))
                .build();
 
     static final OperationDefinition BACKUP_PUSH_STATE_STATUS =
-            new SimpleOperationDefinitionBuilder("push-state-status", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+            new SimpleOperationDefinitionBuilder("push-state-status", new InfinispanResourceDescriptionResolver("backup.ops"))
                .build();
 
     static final OperationDefinition BACKUP_CLEAR_PUSH_STATE_STATUS =
-            new SimpleOperationDefinitionBuilder("clear-push-state-status", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+            new SimpleOperationDefinitionBuilder("clear-push-state-status", new InfinispanResourceDescriptionResolver("backup.ops"))
                .build();
 
     static final OperationDefinition BACKUP_SENDING_SITE =
-            new SimpleOperationDefinitionBuilder("get-sending-site", InfinispanExtension.getResourceDescriptionResolver("backup.ops"))
+            new SimpleOperationDefinitionBuilder("get-sending-site", new InfinispanResourceDescriptionResolver("backup.ops"))
                .build();
 
     BackupSiteResource(CacheResource cacheResource) {

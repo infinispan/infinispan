@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.server.commons.controller.ReloadRequiredAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
@@ -46,9 +47,9 @@ public class TransportResource extends SimpleResourceDefinition {
     public static final PathElement TRANSPORT_PATH = PathElement.pathElement(ModelKeys.TRANSPORT, ModelKeys.TRANSPORT_NAME);
 
     // attributes
-    static final SimpleAttributeDefinition CLUSTER =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.CLUSTER, ModelType.STRING, true)
-                    .setXmlName(Attribute.CLUSTER.getLocalName())
+    static final SimpleAttributeDefinition CHANNEL =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.CHANNEL, ModelType.STRING, true)
+                    .setXmlName(Attribute.CHANNEL.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
@@ -76,14 +77,6 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
-    // if stack is null, use default stack
-    static final SimpleAttributeDefinition STACK =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.STACK, ModelType.STRING, true)
-                    .setXmlName(Attribute.STACK.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .build();
-
     static final SimpleAttributeDefinition STRICT_PEER_TO_PEER =
             new SimpleAttributeDefinitionBuilder(ModelKeys.STRICT_PEER_TO_PEER, ModelType.BOOLEAN, true)
                     .setXmlName(Attribute.STRICT_PEER_TO_PEER.getLocalName())
@@ -92,6 +85,7 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
+    @Deprecated
     static final SimpleAttributeDefinition TOTAL_ORDER_EXECUTOR =
             new SimpleAttributeDefinitionBuilder(ModelKeys.TOTAL_ORDER_EXECUTOR, ModelType.STRING, true)
                     .setXmlName(Attribute.TOTAL_ORDER_EXECUTOR.getLocalName())
@@ -99,13 +93,13 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
-    static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {STACK, CLUSTER, EXECUTOR, LOCK_TIMEOUT,
+    static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {CHANNEL, EXECUTOR, LOCK_TIMEOUT,
             REMOTE_COMMAND_EXECUTOR, STRICT_PEER_TO_PEER, TOTAL_ORDER_EXECUTOR};
 
     public TransportResource() {
         super(TRANSPORT_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.TRANSPORT),
-                CacheConfigOperationHandlers.TRANSPORT_ADD,
+                new InfinispanResourceDescriptionResolver(ModelKeys.TRANSPORT),
+                new ReloadRequiredAddStepHandler(TRANSPORT_ATTRIBUTES),
                 ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 
@@ -113,7 +107,6 @@ public class TransportResource extends SimpleResourceDefinition {
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
 
-        // check that we don't need a special handler here?
         final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(TRANSPORT_ATTRIBUTES);
         for (AttributeDefinition attr : TRANSPORT_ATTRIBUTES) {
             resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);

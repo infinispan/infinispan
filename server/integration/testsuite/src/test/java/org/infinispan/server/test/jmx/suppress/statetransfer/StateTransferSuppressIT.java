@@ -11,6 +11,7 @@ import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.client.memcached.MemcachedClient;
 import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.container.test.api.ContainerController;
@@ -52,8 +53,8 @@ public class StateTransferSuppressIT {
     private static final String HOTROD_CACHE_NAME = "default";
 
     /* cache MBeans */
-    final String HOTROD_DIST_CACHE_PREFIX = "jboss.infinispan:type=Cache,name=\"" + HOTROD_CACHE_NAME + "(dist_sync)\",manager=\"" + getCacheManagerName() + "\",component=";
-    final String MEMCACHED_DIST_CACHE_PREFIX = "jboss.infinispan:type=Cache,name=\"" + MEMCACHED_CACHE_NAME + "(dist_sync)\",manager=\"" + getCacheManagerName() + "\",component=";
+    final String HOTROD_DIST_CACHE_PREFIX = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache,name=\"" + HOTROD_CACHE_NAME + "(dist_sync)\",manager=\"" + getCacheManagerName() + "\",component=";
+    final String MEMCACHED_DIST_CACHE_PREFIX = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache,name=\"" + MEMCACHED_CACHE_NAME + "(dist_sync)\",manager=\"" + getCacheManagerName() + "\",component=";
     final String HOTROD_RPC_MANAGER_MBEAN = HOTROD_DIST_CACHE_PREFIX + "RpcManager";
     final String MEMCACHED_RPC_MANAGER_MBEAN = MEMCACHED_DIST_CACHE_PREFIX + "RpcManager";
 
@@ -63,12 +64,12 @@ public class StateTransferSuppressIT {
     final String PENDING_VIEW_AS_STRING_ATTR_NAME = "PendingViewAsString";
 
     /* JMX result views */
-    private final String OWNERS_2_MEMBERS_NODE1_NODE2 = "[node0/" + getCacheManagerName() + ", node1/" + getCacheManagerName() + "]";
-    private final String OWNERS_2_MEMBERS_NODE2_NODE3 = "[node1/" + getCacheManagerName() + ", node2/" + getCacheManagerName() + "]";
-    private final String OWNERS_2_MEMBERS_NODE1_NODE2_NODE3 = "[node0/" + getCacheManagerName() + ", node1/" + getCacheManagerName() + ", node2/" + getCacheManagerName() + "]";
+    private final String OWNERS_2_MEMBERS_NODE1_NODE2 = "[node0, node1]";
+    private final String OWNERS_2_MEMBERS_NODE2_NODE3 = "[node1, node2]";
+    private final String OWNERS_2_MEMBERS_NODE1_NODE2_NODE3 = "[node0, node1, node2]";
 
     /* server module MBeans */
-    private final String LOCAL_TOPOLOGY_MANAGER = "jboss.infinispan:type=CacheManager,name=\"" + getCacheManagerName() + "\",component=LocalTopologyManager";
+    private final String LOCAL_TOPOLOGY_MANAGER = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=CacheManager,name=\"" + getCacheManagerName() + "\",component=LocalTopologyManager";
 
     @InfinispanResource(CONTAINER1)
     RemoteInfinispanServer server1;
