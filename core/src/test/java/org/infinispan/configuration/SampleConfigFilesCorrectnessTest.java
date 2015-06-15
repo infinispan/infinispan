@@ -37,7 +37,7 @@ public class SampleConfigFilesCorrectnessTest {
       log4jLogger.setLevel(Level.WARN);
       appender = new InMemoryAppender();
       log4jLogger.addAppender(appender);
-      configRoot = "../distribution/src/main/release/common/configs/config-samples".replaceAll("/", File.separator);
+      configRoot = "../distribution/src/main/release/common/configs/config-samples".replace('/', File.separatorChar);
    }
 
    @AfterMethod
