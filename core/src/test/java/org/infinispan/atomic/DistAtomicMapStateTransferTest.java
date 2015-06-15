@@ -1,6 +1,7 @@
 package org.infinispan.atomic;
 
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
@@ -17,5 +18,12 @@ public class DistAtomicMapStateTransferTest extends BaseAtomicMapStateTransferTe
 
    public DistAtomicMapStateTransferTest() {
       super(CacheMode.DIST_SYNC, TransactionMode.TRANSACTIONAL);
+   }
+
+   @Override
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder configurationBuilder = super.getConfigurationBuilder();
+      configurationBuilder.clustering().hash().numOwners(1);
+      return configurationBuilder;
    }
 }

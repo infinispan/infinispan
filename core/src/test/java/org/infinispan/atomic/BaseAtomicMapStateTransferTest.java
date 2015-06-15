@@ -11,12 +11,10 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
 import org.infinispan.tx.dld.ControlledRpcManager;
+import org.infinispan.util.Util;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static org.testng.AssertJUnit.assertEquals;
@@ -47,14 +45,14 @@ public abstract class BaseAtomicMapStateTransferTest extends MultipleCacheManage
         createClusteredCaches(1, "atomic", c);
     }
 
-    private ConfigurationBuilder getConfigurationBuilder() {
+    protected ConfigurationBuilder getConfigurationBuilder() {
         ConfigurationBuilder c = new ConfigurationBuilder();
         c.clustering().cacheMode(cacheMode);
         c.transaction().transactionMode(transactionMode);
         return c;
     }
 
-    public final void testAtomicMapPutDuringJoin() throws ExecutionException, InterruptedException {
+    public final void testAtomicMapPutDuringJoin() throws Exception {
         Cache cache = cache(0, "atomic");
         ControlledRpcManager crm = new ControlledRpcManager(cache.getAdvancedCache().getRpcManager());
         TestingUtil.replaceComponent(cache, RpcManager.class, crm, true);
@@ -84,6 +82,23 @@ public abstract class BaseAtomicMapStateTransferTest extends MultipleCacheManage
         Cache cache2 = future.get();
 
         AtomicMap atomicMap2 = AtomicMapLookup.getAtomicMap(cache2, atomicMapKey);
-        assertEquals(new HashSet<String>(Arrays.asList("key1", "key2")), atomicMap2.keySet());
+        assertEquals(Util.asSet("key1", "key2"), atomicMap.keySet());
+        assertEquals(Util.asSet("key1", "key2"), atomicMap2.keySet());
+
+        cache.getAdvancedCache().getTransactionManager().begin();
+        atomicMap.put("key3", "value3");
+        atomicMap.put("key4", "value4");
+        cache.getAdvancedCache().getTransactionManager().commit();
+
+        assertEquals(Util.asSet("key1", "key2", "key3", "key4"), atomicMap.keySet());
+        assertEquals(Util.asSet("key1", "key2", "key3", "key4"), atomicMap2.keySet());
+
+        cache2.getAdvancedCache().getTransactionManager().begin();
+        atomicMap2.put("key5", "value5");
+        atomicMap2.put("key6", "value6");
+        cache2.getAdvancedCache().getTransactionManager().commit();
+
+        assertEquals(Util.asSet("key1", "key2", "key3", "key4", "key5", "key6"), atomicMap.keySet());
+        assertEquals(Util.asSet("key1", "key2", "key3", "key4", "key5", "key6"), atomicMap2.keySet());
     }
 }
