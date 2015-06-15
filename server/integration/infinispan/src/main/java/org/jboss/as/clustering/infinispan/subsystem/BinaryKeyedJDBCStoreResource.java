@@ -56,7 +56,7 @@ public class BinaryKeyedJDBCStoreResource extends BaseJDBCStoreResource {
             .build();
 
     // operations
-    private static final OperationDefinition BINARY_KEYED_JDBC_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.BINARY_KEYED_JDBC_STORE))
+    private static final OperationDefinition BINARY_KEYED_JDBC_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.BINARY_KEYED_JDBC_STORE))
         .setParameters(COMMON_STORE_PARAMETERS)
         .addParameter(DATA_SOURCE)
         .addParameter(DIALECT)

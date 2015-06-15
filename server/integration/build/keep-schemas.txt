@@ -1,0 +1,10 @@
+jboss-as-cli_*.xsd
+jboss-as-config_*.xsd
+jboss-as-datasources_*.xsd
+jboss-as-deployment-scanner_*.xsd
+jboss-as-jmx_*.xsd
+jboss-as-logging_*.xsd
+jboss-as-txn_*.xsd
+jboss-as-xts_*.xsd
+jboss-infinispan-*.xsd
+module-*.xsd

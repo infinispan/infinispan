@@ -11,6 +11,7 @@ import org.infinispan.persistence.cluster.MyCustomCacheStore;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.infinispan.server.test.category.CacheStore;
 import org.infinispan.server.test.util.ITestUtils;
 import org.jboss.arquillian.junit.Arquillian;
@@ -43,7 +44,7 @@ public class CustomCacheStoreIT {
    RemoteInfinispanServer server;
 
    final int managementPort = 9990;
-   final String cacheLoaderMBean = "jboss.infinispan:type=Cache,name=\"default(local)\",manager=\"local\",component=CacheLoader";
+   final String cacheLoaderMBean = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=Cache,name=\"default(local)\",manager=\"local\",component=CacheLoader";
 
    @BeforeClass
    public static void before() throws Exception {

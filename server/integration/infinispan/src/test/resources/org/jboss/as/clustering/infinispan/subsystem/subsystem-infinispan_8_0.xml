@@ -3,7 +3,7 @@
         <local-cache name="local"/>
     </cache-container>
     <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" jndi-name="java:global/infinispan/maximal" module="org.infinispan" statistics="false">
-        <transport cluster="maximal-cluster" lock-timeout="120000" stack="tcp" strict-peer-to-peer="false"/>
+        <transport channel="maximal-channel" lock-timeout="120000" strict-peer-to-peer="false"/>
         <local-cache name="local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
             <transaction mode="NON_DURABLE_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>

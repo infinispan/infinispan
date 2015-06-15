@@ -8,9 +8,10 @@ import java.util.Map;
 
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.server.infinispan.SecurityActions;
+import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.stats.CacheContainerStats;
 import org.infinispan.Version;
-import org.jboss.as.clustering.infinispan.DefaultEmbeddedCacheManager;
+import org.jboss.as.clustering.infinispan.DefaultCacheContainer;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -105,18 +106,18 @@ public class CacheContainerMetricsHandler extends AbstractRuntimeOnlyHandler {
         final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
         final String cacheContainerName = address.getLastElement().getValue();
         final String attrName = operation.require(ModelDescriptionConstants.NAME).asString();
-        final ServiceController<?> controller = context.getServiceRegistry(false).getService(EmbeddedCacheManagerService.getServiceName(cacheContainerName));
-        DefaultEmbeddedCacheManager cacheManager = (DefaultEmbeddedCacheManager) controller.getValue();
+        final ServiceController<?> controller = context.getServiceRegistry(false).getService(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
+        DefaultCacheContainer cacheManager = (DefaultCacheContainer) controller.getValue();
 
         CacheManagerMetrics metric = CacheManagerMetrics.getStat(attrName);
         ModelNode result = new ModelNode();
-        CacheContainerStats stats = cacheManager.getStats();
 
         if (metric == null) {
             context.getFailureDescription().set(String.format("Unknown metric %s", attrName));
         } else if (cacheManager == null) {
             context.getFailureDescription().set(String.format("Unavailable cache container %s", attrName));
         } else {
+            CacheContainerStats stats = cacheManager.getStats();
             switch (metric) {
                 case CACHE_MANAGER_STATUS:
                     result.set(SecurityActions.getCacheManagerStatus(cacheManager).toString());

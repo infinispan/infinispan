@@ -150,6 +150,10 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
       return log;
    }
 
+   protected ScheduledExecutorService getTimeoutExecutor() {
+      return timeoutExecutor;
+  }
+
    // ------------------------------------------------------------------------------------------------------------------
    // Lifecycle and setup stuff
    // ------------------------------------------------------------------------------------------------------------------

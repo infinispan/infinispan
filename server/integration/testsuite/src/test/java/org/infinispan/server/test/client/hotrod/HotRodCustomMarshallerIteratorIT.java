@@ -29,6 +29,7 @@ import org.infinispan.protostream.sampledomain.marshallers.GenderMarshaller;
 import org.infinispan.protostream.sampledomain.marshallers.UserMarshaller;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.infinispan.server.test.category.HotRodLocal;
+import org.infinispan.server.test.category.Unstable;
 import org.infinispan.server.test.util.RemoteCacheManagerFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OverProtocol;
@@ -53,7 +54,9 @@ import org.junit.runner.RunWith;
  * @since 8.0
  */
 @RunWith(Arquillian.class)
-@Category(HotRodLocal.class)
+// @Category(HotRodLocal.class)
+// Restore this when WFLY-4771 is resolved
+@Category({Unstable.class})
 public class HotRodCustomMarshallerIteratorIT {
 
    private static final String TO_STRING_FILTER_CONVERTER_FACTORY_NAME = "to-string-filter-converter";

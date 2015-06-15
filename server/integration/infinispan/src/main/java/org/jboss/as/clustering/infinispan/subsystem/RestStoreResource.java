@@ -138,13 +138,13 @@ public class RestStoreResource extends BaseStoreResource {
     static final AttributeDefinition[] REST_STORE_ATTRIBUTES = {PATH, APPEND_CACHE_NAME_TO_PATH, CONNECTION_POOL, REMOTE_SERVERS};
 
     // operations
-    private static final OperationDefinition REST_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.REST_STORE))
+    private static final OperationDefinition REST_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.REST_STORE))
         .setParameters(COMMON_STORE_PARAMETERS)
         .addParameter(PATH)
         .addParameter(APPEND_CACHE_NAME_TO_PATH)
         .addParameter(CONNECTION_POOL)
         .addParameter(REMOTE_SERVERS)
-        .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.REST_STORE))
+        .setAttributeResolver(new InfinispanResourceDescriptionResolver(ModelKeys.REST_STORE))
         .build();
 
     public RestStoreResource(CacheResource cacheResource) {

@@ -34,10 +34,10 @@ public class LoaderResource extends BaseLoaderResource {
                    .build();
 
     // operations
-    private static final OperationDefinition LOADER_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LOADER))
+    private static final OperationDefinition LOADER_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.LOADER))
         .setParameters(COMMON_LOADER_PARAMETERS)
         .addParameter(CLASS)
-        .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LOADER))
+        .setAttributeResolver(new InfinispanResourceDescriptionResolver(ModelKeys.LOADER))
         .build();
 
     public LoaderResource(CacheResource cacheResource) {

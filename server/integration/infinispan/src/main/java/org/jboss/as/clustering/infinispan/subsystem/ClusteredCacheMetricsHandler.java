@@ -8,6 +8,7 @@ import java.util.Map;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.stats.ClusterCacheStats;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
@@ -104,7 +105,7 @@ public class ClusteredCacheMetricsHandler extends AbstractRuntimeOnlyHandler {
       final String cacheName = address.getLastElement().getValue();
       final String attrName = operation.require(NAME).asString();
       final ServiceController<?> controller = context.getServiceRegistry(false).getService(
-            CacheService.getServiceName(cacheContainerName, cacheName));
+            CacheServiceName.CACHE.getServiceName(cacheContainerName, cacheName));
       Cache<?, ?> cache = (Cache<?, ?>) controller.getValue();
       ClusteredCacheMetrics metric = ClusteredCacheMetrics.getStat(attrName);
       ModelNode result = new ModelNode();

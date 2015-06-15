@@ -25,6 +25,8 @@ import static org.jboss.as.controller.client.helpers.ClientConstants.SUCCESS;
 import org.jboss.dmr.ModelNode;
 
 public class ServerManager {
+   private static final String INFINISPAN_SUBSYSTEM_NAME = "datagrid-infinispan";
+   private static final String INFINISPAN_ENDPOINT_SUBSYSTEM_NAME = "datagrid-infinispan-endpoint";
    private String host;
    private int port;
 
@@ -45,7 +47,7 @@ public class ServerManager {
       withManagementClient(host, port, new ManagementRunnable() {
          @Override
          public void run(ModelControllerClient client) throws Exception {
-            PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, "infinispan")
+            PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
                   .append("cache-container", getHotRodCacheContainer(client));
 
             ModelNode op = new ModelNode();
@@ -75,7 +77,7 @@ public class ServerManager {
          withManagementClient(host, port, new ManagementRunnable() {
             @Override
             public void run(ModelControllerClient client) throws Exception {
-               PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, "infinispan")
+               PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
                      .append("cache-container", getHotRodCacheContainer(client))
                      .append(cacheType, cacheName);
 
@@ -112,7 +114,7 @@ public class ServerManager {
       withManagementClient(host, port, new ManagementRunnable() {
          @Override
          public void run(ModelControllerClient client) throws Exception {
-            PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, "infinispan")
+            PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
                   .append("cache-container", getHotRodCacheContainer(client))
                   .append("local-cache", cacheName);
 
@@ -135,7 +137,7 @@ public class ServerManager {
       withManagementClient(host, port, new ManagementRunnable() {
          @Override
          public void run(ModelControllerClient client) throws Exception {
-            PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, "infinispan")
+            PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
                   .append("cache-container", getHotRodCacheContainer(client))
                   .append("local-cache", cacheName);
 
@@ -152,7 +154,7 @@ public class ServerManager {
    }
 
    private String getHotRodCacheContainer(ModelControllerClient client) throws IOException {
-      PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, "endpoint")
+      PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_ENDPOINT_SUBSYSTEM_NAME)
             .append("hotrod-connector", "hotrod-connector");
 
       ModelNode op = new ModelNode();

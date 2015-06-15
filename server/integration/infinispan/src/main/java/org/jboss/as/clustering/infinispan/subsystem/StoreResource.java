@@ -63,10 +63,10 @@ public class StoreResource extends BaseStoreResource {
                    .build();
 
     // operations
-    private static final OperationDefinition STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.STORE))
+    private static final OperationDefinition STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.STORE))
         .setParameters(COMMON_STORE_PARAMETERS)
         .addParameter(CLASS)
-        .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.STORE))
+        .setAttributeResolver(new InfinispanResourceDescriptionResolver(ModelKeys.STORE))
         .build();
 
     public StoreResource(CacheResource cacheResource) {

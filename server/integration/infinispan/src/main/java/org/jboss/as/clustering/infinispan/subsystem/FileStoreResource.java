@@ -80,12 +80,12 @@ public class FileStoreResource extends BaseStoreResource {
                     .build();
 
     // operations
-    private static final OperationDefinition FILE_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.FILE_STORE))
+    private static final OperationDefinition FILE_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.FILE_STORE))
         .setParameters(COMMON_STORE_PARAMETERS)
         .addParameter(MAX_ENTRIES)
         .addParameter(RELATIVE_TO)
         .addParameter(PATH)
-        .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.FILE_STORE))
+        .setAttributeResolver(new InfinispanResourceDescriptionResolver(ModelKeys.FILE_STORE))
         .build();
 
     private final ResolvePathHandler resolvePathHandler;

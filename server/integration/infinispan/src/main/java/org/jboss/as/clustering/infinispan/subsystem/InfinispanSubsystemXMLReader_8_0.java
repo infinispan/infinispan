@@ -188,12 +188,8 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
-                case STACK: {
-                    TransportResource.STACK.parseAndSetParameter(value, transport, reader);
-                    break;
-                }
-                case CLUSTER: {
-                    TransportResource.CLUSTER.parseAndSetParameter(value, transport, reader);
+                case CHANNEL: {
+                    TransportResource.CHANNEL.parseAndSetParameter(value, transport, reader);
                     break;
                 }
                 case EXECUTOR: {

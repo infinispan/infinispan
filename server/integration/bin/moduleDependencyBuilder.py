@@ -8,7 +8,7 @@ class Server:
 		doc = ET.parse(path)
 		self.path = path
 		self.extensions = []
-		extensions = doc.findall('{0}extensions/{0}extension'.format("{urn:jboss:domain:1.0}"))
+		extensions = doc.findall('{0}extensions/{0}extension'.format("{urn:jboss:domain:3.0}"))
 		for extension in extensions:
 			self.extensions.append(extension.get('module'))
 
@@ -33,7 +33,7 @@ class Module:
 		self.path = path	
 		self.name = root.get('name')
 		self.dependencies = []
-		dependencies = doc.findall('{0}dependencies/{0}module'.format("{urn:jboss:module:1.0}"))
+		dependencies = doc.findall('{0}dependencies/{0}module'.format("{urn:jboss:module:1.3}"))
 		for dependency in dependencies:
 			self.dependencies.append(dependency.get('name'))
 

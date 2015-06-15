@@ -38,7 +38,7 @@ public class LocalCacheAdd extends CacheAdd {
 
     static final LocalCacheAdd INSTANCE = new LocalCacheAdd();
 
-    private LocalCacheAdd() {
+    LocalCacheAdd() {
         super(CacheMode.LOCAL);
     }
 

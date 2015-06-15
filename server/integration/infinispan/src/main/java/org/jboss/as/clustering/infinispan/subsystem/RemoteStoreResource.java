@@ -106,7 +106,7 @@ public class RemoteStoreResource extends BaseStoreResource {
     static final AttributeDefinition[] REMOTE_STORE_ATTRIBUTES = {CACHE, HOTROD_WRAPPING, TCP_NO_DELAY, RAW_VALUES, SOCKET_TIMEOUT, REMOTE_SERVERS};
 
     // operations
-    private static final OperationDefinition REMOTE_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.REMOTE_STORE))
+    private static final OperationDefinition REMOTE_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.REMOTE_STORE))
         .setParameters(COMMON_STORE_PARAMETERS)
         .addParameter(CACHE)
         .addParameter(HOTROD_WRAPPING)
@@ -114,7 +114,7 @@ public class RemoteStoreResource extends BaseStoreResource {
         .addParameter(TCP_NO_DELAY)
         .addParameter(SOCKET_TIMEOUT)
         .addParameter(REMOTE_SERVERS)
-        .setAttributeResolver(InfinispanExtension.getResourceDescriptionResolver(ModelKeys.REMOTE_STORE))
+        .setAttributeResolver(new InfinispanResourceDescriptionResolver(ModelKeys.REMOTE_STORE))
         .build();
 
     public RemoteStoreResource(CacheResource cacheResource) {

@@ -1,7 +1,7 @@
         <subsystem xmlns="urn:infinispan:server:core:8.0" >
 
             <cache-container name="clustered" default-cache="test_cache_not_indexed">
-                <transport stack="${jboss.default.jgroups.stack:udp}" lock-timeout="240000"/>
+                <transport lock-timeout="240000"/>
                 <security>
                     <authorization>
                         <identity-role-mapper/>

@@ -2,6 +2,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.remote.ProtobufMetadataManager;
+import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
@@ -31,7 +32,7 @@ public class RegisterProtoSchemasOperationHandler implements OperationStepHandle
       final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
       final String cacheContainerName = address.getElement(address.size() - 1).getValue();
       final ServiceController<?> controller = context.getServiceRegistry(false).getService(
-              EmbeddedCacheManagerService.getServiceName(cacheContainerName));
+              CacheContainerServiceName.CACHE_CONTAINER.getServiceName(cacheContainerName));
 
       EmbeddedCacheManager cacheManager = (EmbeddedCacheManager) controller.getValue();
       ProtobufMetadataManager protoManager = cacheManager.getGlobalComponentRegistry().getComponent(ProtobufMetadataManager.class);

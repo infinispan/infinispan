@@ -1,5 +1,6 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
@@ -38,7 +39,7 @@ public class RestartCacheResourceRemove extends RestartParentResourceRemoveHandl
         int position = parentAddress.size();
         PathAddress cacheAddress = parentAddress.subAddress(position - 1);
         PathAddress containerAddress = parentAddress.subAddress(position - 2, position - 1);
-        return CacheService.getServiceName(containerAddress.getLastElement().getValue(), cacheAddress.getLastElement()
+        return CacheServiceName.CACHE.getServiceName(containerAddress.getLastElement().getValue(), cacheAddress.getLastElement()
                 .getValue());
     }
 
@@ -54,7 +55,7 @@ public class RestartCacheResourceRemove extends RestartParentResourceRemoveHandl
         bindInfo = ContextNames.bindInfoFor(InfinispanJndiName.createCacheJndiName(jndiName, containerName, cacheName));
         context.removeService(bindInfo.getBinderServiceName());
         super.removeServices(context, parentService, parentModel);
-        context.removeService(CacheConfigurationService.getServiceName(containerName, cacheName));
+        context.removeService(CacheServiceName.CONFIGURATION.getServiceName(containerName, cacheName));
     }
 
     @Override

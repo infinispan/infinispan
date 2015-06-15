@@ -38,8 +38,8 @@ public class ReplicatedCacheResource extends SharedCacheResource {
 
     public ReplicatedCacheResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(REPLICATED_CACHE_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.REPLICATED_CACHE),
+                new InfinispanResourceDescriptionResolver(ModelKeys.REPLICATED_CACHE),
                 ReplicatedCacheAdd.INSTANCE,
-                CacheRemove.INSTANCE, resolvePathHandler, runtimeRegistration);
+                new CacheRemoveHandler(), resolvePathHandler, runtimeRegistration);
     }
 }

@@ -108,9 +108,9 @@ public class DistributedCacheResource extends SharedCacheResource {
 
     public DistributedCacheResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(DISTRIBUTED_CACHE_PATH,
-                InfinispanExtension.getResourceDescriptionResolver(ModelKeys.DISTRIBUTED_CACHE),
+                new InfinispanResourceDescriptionResolver(ModelKeys.DISTRIBUTED_CACHE),
                 DistributedCacheAdd.INSTANCE,
-                CacheRemove.INSTANCE, resolvePathHandler, runtimeRegistration);
+                new CacheRemoveHandler(), resolvePathHandler, runtimeRegistration);
     }
 
     @Override

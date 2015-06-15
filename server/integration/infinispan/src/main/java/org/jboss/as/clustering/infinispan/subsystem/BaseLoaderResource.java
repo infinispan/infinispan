@@ -79,14 +79,14 @@ public class BaseLoaderResource extends CacheChildResource {
     static final AttributeDefinition[] COMMON_LOADER_PARAMETERS = {SHARED, PRELOAD, PROPERTIES};
 
     // operations
-    private static final OperationDefinition CACHE_LOADER_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LOADER))
+    private static final OperationDefinition CACHE_LOADER_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.LOADER))
         .setParameters(COMMON_LOADER_PARAMETERS)
         .build();
 
     private static final OperationDefinition RESET_LOADER_STATISTICS =
          new SimpleOperationDefinitionBuilder(
                "reset-loader-statistics",
-               InfinispanExtension.getResourceDescriptionResolver(ModelKeys.LOADER)
+               new InfinispanResourceDescriptionResolver(ModelKeys.LOADER)
          ).build();
 
     public BaseLoaderResource(PathElement path, String resourceKey, CacheResource cacheResource, AttributeDefinition[] attributes) {

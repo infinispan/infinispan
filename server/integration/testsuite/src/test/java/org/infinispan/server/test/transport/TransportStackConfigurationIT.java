@@ -5,6 +5,7 @@ import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.arquillian.core.RunningServer;
 import org.infinispan.arquillian.core.WithRunningServer;
 import org.infinispan.arquillian.utils.MBeanServerConnectionProvider;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.jboss.arquillian.container.test.api.Config;
 import org.jboss.arquillian.container.test.api.ContainerController;
 import org.jboss.arquillian.junit.Arquillian;
@@ -41,8 +42,8 @@ public class TransportStackConfigurationIT {
     @ArquillianResource
     ContainerController controller;
     private MBeanServerConnectionProvider provider;
-    String udpProtocolMBean = "jgroups:type=protocol,cluster=\"clustered\",protocol=UDP";
-    String tcpProtocolMBean = "jgroups:type=protocol,cluster=\"clustered\",protocol=TCP";
+    String udpProtocolMBean = "jgroups:type=protocol,cluster=\"cluster\",protocol=UDP";
+    String tcpProtocolMBean = "jgroups:type=protocol,cluster=\"cluster\",protocol=TCP";
 
     /*
      * When setting a stack attribute on <transport> config. element, there has to be a UDP protocol
@@ -99,7 +100,7 @@ public class TransportStackConfigurationIT {
         while (true) {
             try {
                 String line = s.nextLine();
-                if (line.contains("Service \"jboss.infinispan.clustered.config\"") &&
+                if (line.contains("Service \"jboss."+InfinispanSubsystem.SUBSYSTEM_NAME + ".clustered.config\"") &&
                         line.substring(line.indexOf("dependencies:")).contains("jboss.thread.executor.infinispan-transport")) {
                     return true;
                 }

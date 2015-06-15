@@ -16,6 +16,7 @@ import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.jboss.arquillian.junit.Arquillian;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -61,11 +62,11 @@ public class CacheContainerIT {
     @Test
     public void testEndpointConfiguration() throws Exception {
         RemoteCache<String, String> cache1 = rcm1.getCache("default");
-        RemoteCache<String, String> cache2 = rcm2.getCache("default");
+        RemoteCache<String, String> cache2 = rcm2.getCache("other-cache");
         cache1.put("key", "value");
         cache2.put("key2", "value2");
         assertTrue(1 == server1.getCacheManager("default").getCache("default").getNumberOfEntries());
-        assertTrue(1 == server1.getCacheManager("special-cache-container").getCache("default").getNumberOfEntries());
+        assertTrue(1 == server1.getCacheManager("special-cache-container").getCache("other-cache").getNumberOfEntries());
         cache1.remove("key");
         cache2.remove("key2");
     }
@@ -75,7 +76,7 @@ public class CacheContainerIT {
         RemoteCache<String, String> cache = rcm2.getCache();
         cache.put("key", "value");
         assertTrue(1 == server1.getCacheManager("special-cache-container").getCache("special-cache").getNumberOfEntries());
-        assertTrue(0 == server1.getCacheManager("special-cache-container").getCache("default").getNumberOfEntries());
+        assertTrue(0 == server1.getCacheManager("special-cache-container").getCache("other-cache").getNumberOfEntries());
         cache.remove("key");
     }
 
@@ -97,7 +98,7 @@ public class CacheContainerIT {
         while (true) {
             try {
                 String line = s.nextLine();
-                if (line.contains("Service \"jboss.infinispan.default.config\"") && line.contains("dependencies:")) {
+                if (line.contains("Service \"jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ".default.config\"") && line.contains("dependencies:")) {
                     String dependencies = line.substring(line.indexOf("dependencies:"));
                     if (dependencies.contains(executorPrefix + "test-infinispan-repl-queue")
                             && dependencies.contains(executorPrefix + "test-infinispan-listener")
@@ -105,11 +106,11 @@ public class CacheContainerIT {
                         b1 = true;
                     }
                 }
-                if (line.contains("Service \"jboss.infinispan.special-cache-container\"") &&
+                if (line.contains("Service \"jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ".special-cache-container\"") &&
                         line.contains("mode ACTIVE state UP")) {
                     b2 = true;
                 }
-                if (line.contains("Service \"jboss.infinispan.default\"") &&
+                if (line.contains("Service \"jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ".other-cache\"") &&
                         line.contains("mode ON_DEMAND state UP")) {
                     b3 = true;
                 }

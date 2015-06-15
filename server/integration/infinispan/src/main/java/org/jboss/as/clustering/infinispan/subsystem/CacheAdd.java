@@ -61,6 +61,8 @@ import org.infinispan.persistence.remote.configuration.RemoteStoreConfigurationB
 import org.infinispan.persistence.rest.configuration.RestStoreConfigurationBuilder;
 import org.infinispan.persistence.rest.metadata.MimeMetadataHelper;
 import org.infinispan.persistence.spi.CacheLoader;
+import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
+import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
 import org.infinispan.util.concurrent.IsolationLevel;
@@ -263,7 +265,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         return controllers;
     }
 
-    void removeRuntimeServices(OperationContext context, ModelNode operation, ModelNode model)
+    void removeRuntimeServices(OperationContext context, ModelNode operation, ModelNode containerModel, ModelNode cacheModel)
             throws OperationFailedException {
         // get container and cache addresses
         final PathAddress cacheAddress = getCacheAddressFromOperation(operation) ;
@@ -275,13 +277,13 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         // remove all services started by CacheAdd, in reverse order
         // remove the binder service
         ModelNode resolvedValue = null;
-        final String jndiName = (resolvedValue = CacheResource.JNDI_NAME.resolveModelAttribute(context, model)).isDefined() ? resolvedValue.asString() : null;
+        final String jndiName = (resolvedValue = CacheResource.JNDI_NAME.resolveModelAttribute(context, cacheModel)).isDefined() ? resolvedValue.asString() : null;
         ContextNames.BindInfo bindInfo = ContextNames.bindInfoFor(InfinispanJndiName.createCacheJndiName(jndiName, containerName, cacheName));
         context.removeService(bindInfo.getBinderServiceName()) ;
         // remove the CacheService instance
-        context.removeService(CacheService.getServiceName(containerName, cacheName));
+        context.removeService(CacheServiceName.CACHE.getServiceName(containerName, cacheName));
         // remove the cache configuration service
-        context.removeService(CacheConfigurationService.getServiceName(containerName, cacheName));
+        context.removeService(CacheServiceName.CONFIGURATION.getServiceName(containerName, cacheName));
 
         log.debugf("cache %s removed for container %s", cacheName, containerName);
     }
@@ -302,8 +304,8 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<EmbeddedCacheManager>();
         final CacheConfigurationDependencies cacheConfigurationDependencies = new CacheConfigurationDependencies(container);
         final Service<Configuration> service = new CacheConfigurationService(cacheName, builder, moduleId, cacheConfigurationDependencies);
-        final ServiceBuilder<?> configBuilder = target.addService(CacheConfigurationService.getServiceName(containerName, cacheName), service)
-                .addDependency(EmbeddedCacheManagerService.getServiceName(containerName), EmbeddedCacheManager.class, container)
+        final ServiceBuilder<?> configBuilder = target.addService(CacheServiceName.CONFIGURATION.getServiceName(containerName, cacheName), service)
+                .addDependency(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName), EmbeddedCacheManager.class, container)
                 .addDependency(Services.JBOSS_SERVICE_MODULE_LOADER, ModuleLoader.class, cacheConfigurationDependencies.getModuleLoaderInjector())
                 .setInitialMode(ServiceController.Mode.PASSIVE)
         ;
@@ -320,10 +322,6 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         for (Dependency<?> dependency : dependencies) {
             this.addDependency(configBuilder, dependency);
         }
-        // add an alias for the default cache
-        if (cacheName.equals(defaultCache)) {
-            configBuilder.addAliases(CacheConfigurationService.getServiceName(containerName, null));
-        }
         return configBuilder.install();
     }
 
@@ -333,18 +331,13 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<EmbeddedCacheManager>();
         final CacheDependencies cacheDependencies = new CacheDependencies(container);
         final Service<Cache<Object, Object>> service = new CacheService<Object, Object>(cacheName, cacheDependencies);
-        final ServiceBuilder<?> builder = target.addService(CacheService.getServiceName(containerName, cacheName), service)
-                .addDependency(CacheConfigurationService.getServiceName(containerName, cacheName))
-                .addDependency(EmbeddedCacheManagerService.getServiceName(containerName), EmbeddedCacheManager.class, container)
+        final ServiceBuilder<?> builder = target.addService(CacheServiceName.CACHE.getServiceName(containerName, cacheName), service)
+                .addDependency(CacheServiceName.CONFIGURATION.getServiceName(containerName, cacheName))
+                .addDependency(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName), EmbeddedCacheManager.class, container)
                 .setInitialMode(initialMode)
         ;
         if (config.transaction().recovery().enabled()) {
             builder.addDependency(TxnServices.JBOSS_TXN_ARJUNA_RECOVERY_MANAGER, XAResourceRecoveryRegistry.class, cacheDependencies.getRecoveryRegistryInjector());
-        }
-
-        // add an alias for the default cache
-        if (cacheName.equals(defaultCache)) {
-            builder.addAliases(CacheService.getServiceName(containerName, null));
         }
 
         builder.addDependency(DeployedCacheStoreFactoryService.SERVICE_NAME, DeployedCacheStoreFactory.class, cacheDependencies.getDeployedCacheStoreFactoryInjector());
@@ -355,7 +348,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
     @SuppressWarnings("rawtypes")
     ServiceController<?> installJndiService(ServiceTarget target, String containerName, String cacheName, String jndiName) {
 
-        final ServiceName cacheServiceName = CacheService.getServiceName(containerName, cacheName);
+        final ServiceName cacheServiceName = CacheServiceName.CACHE.getServiceName(containerName, cacheName);
         final ContextNames.BindInfo bindInfo = ContextNames.bindInfoFor(jndiName);
         final BinderService binder = new BinderService(bindInfo.getBindName());
         return target.addService(bindInfo.getBinderServiceName(), binder)

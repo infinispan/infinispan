@@ -22,38 +22,48 @@
 
 package org.jboss.as.clustering.infinispan;
 
+import java.nio.ByteBuffer;
+
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
+import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
-import org.infinispan.server.jgroups.ServiceContainerHelper;
-import org.jboss.msc.service.ServiceController;
-import org.jboss.msc.service.ServiceName;
-import org.jboss.msc.service.ServiceRegistry;
-import org.jboss.msc.service.StartException;
+import org.infinispan.remoting.transport.jgroups.MarshallerAdapter;
+import org.infinispan.server.jgroups.spi.ChannelFactory;
 import org.jgroups.Channel;
 
 /**
+ * Custom {@link JGroupsTransport} that uses a provided channel.
  * @author Paul Ferraro
  */
 public class ChannelTransport extends JGroupsTransport {
 
-    private final ServiceRegistry registry;
-    private final ServiceName channelName;
+    final ChannelFactory factory;
 
-    public ChannelTransport(ServiceRegistry registry, ServiceName channelName) {
-        this.registry = registry;
-        this.channelName = channelName;
+    public ChannelTransport(Channel channel, ChannelFactory factory) {
+        super(channel);
+        this.factory = factory;
+    }
+
+    @Override
+    protected void initRPCDispatcher() {
+        this.dispatcher = new CommandAwareRpcDispatcher(channel, this, globalHandler, this.getTimeoutExecutor());
+        MarshallerAdapter adapter = new MarshallerAdapter(this.marshaller) {
+            @Override
+            public Object objectFromBuffer(byte[] buffer, int offset, int length) throws Exception {
+                return ChannelTransport.this.factory.isUnknownForkResponse(ByteBuffer.wrap(buffer, offset, length)) ? CacheNotFoundResponse.INSTANCE : super.objectFromBuffer(buffer, offset, length);
+            }
+        };
+        this.dispatcher.setRequestMarshaller(adapter);
+        this.dispatcher.setResponseMarshaller(adapter);
+        this.dispatcher.start();
     }
 
     @Override
     protected synchronized void initChannel() {
-        ServiceController<Channel> service = ServiceContainerHelper.getService(this.registry, this.channelName);
-        try {
-            this.channel = ServiceContainerHelper.getValue(service);
-            this.channel.setDiscardOwnMessages(false);
-            this.connectChannel = true;
-            this.disconnectChannel = true;
-            this.closeChannel = false;
-        } catch (StartException e) {
-            throw new IllegalStateException(e);
-        }
+        this.channel.setDiscardOwnMessages(false);
+        this.connectChannel = true;
+        this.disconnectChannel = true;
+        this.closeChannel = false;
     }
 }
+

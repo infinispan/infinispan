@@ -14,6 +14,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.server.infinispan.SecurityActions;
+import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.util.concurrent.locks.LockManagerImpl;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
@@ -135,7 +136,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         final String cacheContainerName = address.getElement(address.size() - 2).getValue();
         final String cacheName = address.getLastElement().getValue();
         final String attrName = operation.require(NAME).asString();
-        final ServiceController<?> controller = context.getServiceRegistry(false).getService(CacheService.getServiceName(cacheContainerName, cacheName));
+        final ServiceController<?> controller = context.getServiceRegistry(false).getService(CacheServiceName.CACHE.getServiceName(cacheContainerName, cacheName));
         Cache<?, ?> cache = (Cache<?, ?>) controller.getValue();
         CacheMetrics metric = CacheMetrics.getStat(attrName);
         ModelNode result = new ModelNode();

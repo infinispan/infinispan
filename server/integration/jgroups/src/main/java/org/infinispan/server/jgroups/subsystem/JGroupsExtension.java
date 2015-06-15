@@ -33,6 +33,7 @@ import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
 import org.jboss.as.controller.transform.description.TransformationDescription;
 import org.jgroups.Global;
+import org.kohsuke.MetaInfServices;
 
 /**
  * Registers the JGroups subsystem.
@@ -40,9 +41,10 @@ import org.jgroups.Global;
  * @author Paul Ferraro
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
+@MetaInfServices
 public class JGroupsExtension implements Extension {
 
-    public static final String SUBSYSTEM_NAME = "jgroups-core";
+    public static final String SUBSYSTEM_NAME = "datagrid-jgroups";
 
     // Workaround for JGRP-1475
     // Configure JGroups to use jboss-logging.

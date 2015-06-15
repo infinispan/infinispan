@@ -25,7 +25,6 @@ package org.infinispan.server.jgroups.subsystem;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
@@ -170,9 +169,9 @@ public class JGroupsSubsystemXMLWriter implements XMLElementWriter<SubsystemMars
 
     private static void writeSasl(XMLExtendedStreamWriter writer, ModelNode sasl) throws XMLStreamException {
         writer.writeStartElement(Element.SASL.getLocalName());
-        for(AttributeDefinition attr : SaslResourceDefinition.ATTRIBUTES) {
-            writeAttribute(writer, sasl, attr);
-        }
+        writeAttribute(writer, sasl, SaslResourceDefinition.CLUSTER_ROLE);
+        writeAttribute(writer, sasl, SaslResourceDefinition.MECH);
+        writeAttribute(writer, sasl, SaslResourceDefinition.SECURITY_REALM);
         writeElement(writer, sasl, ProtocolResourceDefinition.PROPERTIES);
         writer.writeEndElement();
     }

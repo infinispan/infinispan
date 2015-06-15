@@ -28,6 +28,7 @@ import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
 
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.core.ProtocolServer;
 import org.infinispan.server.core.configuration.ProtocolServerConfiguration;
@@ -57,7 +58,7 @@ class ProtocolServerService implements Service<ProtocolServer> {
    // attribute)
    private final InjectedValue<EmbeddedCacheManager> cacheManager = new InjectedValue<EmbeddedCacheManager>();
    // The cacheManager configuration service
-   private final InjectedValue<EmbeddedCacheManagerConfiguration> cacheManagerConfiguration = new InjectedValue<EmbeddedCacheManagerConfiguration>();
+   private final InjectedValue<GlobalConfiguration> cacheManagerConfiguration = new InjectedValue<GlobalConfiguration>();
    // The socketBinding that will be injected by the container
    private final InjectedValue<SocketBinding> socketBinding = new InjectedValue<SocketBinding>();
    // The security realm for authentication that will be injected by the container
@@ -96,10 +97,10 @@ class ProtocolServerService implements Service<ProtocolServer> {
 
       boolean done = false;
       try {
-         EmbeddedCacheManagerConfiguration embeddedCacheManagerConfiguration = cacheManagerConfiguration.getOptionalValue();
-         if (embeddedCacheManagerConfiguration != null) {
+         GlobalConfiguration embeddedCacheManagerConfiguration = cacheManagerConfiguration.getOptionalValue();
+         /*if (embeddedCacheManagerConfiguration != null) {
             configurationBuilder.defaultCacheName(embeddedCacheManagerConfiguration.getDefaultCache());
-         }
+         }*/
          SocketBinding socketBinding = getSocketBinding().getValue();
          InetSocketAddress socketAddress = socketBinding.getSocketAddress();
          configurationBuilder.host(socketAddress.getAddress().getHostAddress());
@@ -219,7 +220,7 @@ class ProtocolServerService implements Service<ProtocolServer> {
       return protocolServer;
    }
 
-   InjectedValue<EmbeddedCacheManagerConfiguration> getCacheManagerConfiguration() {
+   InjectedValue<GlobalConfiguration> getCacheManagerConfiguration() {
       return cacheManagerConfiguration;
    }
 
