@@ -76,9 +76,8 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    }
 
    protected boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command) {
-         if(command.hasFlag(Flag.CACHE_MODE_LOCAL)
-            || (command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && !command.hasFlag(Flag.DELTA_WRITE)
-            || command.hasFlag(Flag.IGNORE_RETURN_VALUES))) {
+      if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || !command.hasFlag(Flag.DELTA_WRITE) &&
+            (command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || command.hasFlag(Flag.IGNORE_RETURN_VALUES))) {
          return false;
       }
       boolean shouldFetchFromRemote = false;
