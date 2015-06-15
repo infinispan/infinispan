@@ -320,21 +320,29 @@ public class XmlFileParsingTest extends AbstractInfinispanTest {
             cm.getCacheManagerConfiguration().persistenceThreadPool().threadFactory();
       assertEquals("PersistenceThread", persistenceThreadFactory.threadNamePattern());
 
+      BlockingThreadPoolExecutorFactory asyncThreadPool =
+            cm.getCacheManagerConfiguration().asyncThreadPool().threadPoolFactory();
+      assertEquals(TestCacheManagerFactory.ASYNC_EXEC_MAX_THREADS, asyncThreadPool.maxThreads());
+      assertEquals(TestCacheManagerFactory.ASYNC_EXEC_QUEUE_SIZE, asyncThreadPool.queueLength());
+      assertEquals(TestCacheManagerFactory.KEEP_ALIVE, asyncThreadPool.keepAlive());
+
       BlockingThreadPoolExecutorFactory transportThreadPool =
             cm.getCacheManagerConfiguration().transport().transportThreadPool().threadPoolFactory();
-      assertEquals(TestCacheManagerFactory.MAX_ASYNC_EXEC_THREADS, transportThreadPool.maxThreads());
-      assertEquals(TestCacheManagerFactory.ASYNC_EXEC_QUEUE_SIZE, transportThreadPool.queueLength());
+      assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_MAX_THREADS, transportThreadPool.maxThreads());
+      assertEquals(TestCacheManagerFactory.TRANSPORT_EXEC_QUEUE_SIZE, transportThreadPool.queueLength());
+      assertEquals(TestCacheManagerFactory.KEEP_ALIVE, transportThreadPool.keepAlive());
 
       BlockingThreadPoolExecutorFactory remoteCommandThreadPool =
             cm.getCacheManagerConfiguration().transport().remoteCommandThreadPool().threadPoolFactory();
-      assertEquals(TestCacheManagerFactory.MAX_REQ_EXEC_THREADS, remoteCommandThreadPool.maxThreads());
+      assertEquals(TestCacheManagerFactory.REMOTE_EXEC_MAX_THREADS, remoteCommandThreadPool.maxThreads());
+      assertEquals(TestCacheManagerFactory.REMOTE_EXEC_QUEUE_SIZE, remoteCommandThreadPool.queueLength());
       assertEquals(TestCacheManagerFactory.KEEP_ALIVE, remoteCommandThreadPool.keepAlive());
 
       BlockingThreadPoolExecutorFactory stateTransferThreadPool =
             cm.getCacheManagerConfiguration().stateTransferThreadPool().threadPoolFactory();
-      assertEquals(20, stateTransferThreadPool.maxThreads());
-      assertEquals(5, stateTransferThreadPool.queueLength());
-      assertEquals(60000, stateTransferThreadPool.keepAlive());
+      assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_MAX_THREADS, stateTransferThreadPool.maxThreads());
+      assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_QUEUE_SIZE, stateTransferThreadPool.queueLength());
+      assertEquals(TestCacheManagerFactory.KEEP_ALIVE, stateTransferThreadPool.keepAlive());
 
       BlockingThreadPoolExecutorFactory totalOrderThreadPool =
             cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadPoolFactory();

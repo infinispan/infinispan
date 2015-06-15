@@ -114,7 +114,7 @@ import static org.infinispan.context.Flag.IGNORE_RETURN_VALUES;
 import static org.infinispan.context.Flag.PUT_FOR_EXTERNAL_READ;
 import static org.infinispan.context.Flag.ZERO_LOCK_ACQUISITION_TIMEOUT;
 import static org.infinispan.context.InvocationContextFactory.UNBOUNDED;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 
 /**
@@ -179,7 +179,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
                                   @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                                   DistributionManager distributionManager,
                                   EmbeddedCacheManager cacheManager,
-                                  @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncExecutor,
+                                  @ComponentName(ASYNC_OPERATIONS_EXECUTOR) ExecutorService asyncExecutor,
                                   TransactionTable txTable, RecoveryManager recoveryManager, TransactionCoordinator txCoordinator,
                                   LockManager lockManager,
                                   AuthorizationManager authorizationManager,
