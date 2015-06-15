@@ -76,17 +76,17 @@ public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
    }
 
    protected boolean needsRemoteGet(InvocationContext ctx, AbstractDataCommand command) {
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)
-            || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            || command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+         if(command.hasFlag(Flag.CACHE_MODE_LOCAL)
+            || (command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) && !command.hasFlag(Flag.DELTA_WRITE)
+            || command.hasFlag(Flag.IGNORE_RETURN_VALUES))) {
          return false;
       }
       boolean shouldFetchFromRemote = false;
       CacheEntry entry = ctx.lookupEntry(command.getKey());
-      if (entry == null || entry.isNull() || entry.isLockPlaceholder()) {
+      if (entry == null || entry.isNull() || entry.isLockPlaceholder()){
          Object key = command.getKey();
          ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
-         shouldFetchFromRemote = ctx.isOriginLocal() && !ch.isKeyLocalToNode(rpcManager.getAddress(), key) && !dataContainer.containsKey(key);
+         shouldFetchFromRemote = (ctx.isOriginLocal() || command.hasFlag(Flag.DELTA_WRITE)) && !ch.isKeyLocalToNode(rpcManager.getAddress(), key) && !dataContainer.containsKey(key);
          if (!shouldFetchFromRemote && getLog().isTraceEnabled()) {
             getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", key, rpcManager.getAddress(), ch.locateOwners(key));
          }
