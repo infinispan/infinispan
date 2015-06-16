@@ -121,6 +121,10 @@
             <maven-resource group="org.infinispan" artifact="infinispan-tree" />
         </module-def>
 
+        <module-def name="org.jboss.marshalling" slot="${infinispan.slot}">
+            <maven-resource group="org.jboss.marshalling" artifact="jboss-marshalling-osgi" />
+        </module-def>
+
         <module-def name="org.jgroups" slot="${infinispan.slot}">
             <maven-resource group="org.jgroups" artifact="jgroups" />
         </module-def>
