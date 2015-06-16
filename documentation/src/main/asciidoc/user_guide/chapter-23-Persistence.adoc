@@ -649,6 +649,27 @@ For a list of ClusterCacheLoader configuration refer to the link:http://docs.jbo
 
 NOTE: The ClusterCacheLoader does not support preloading(preload=true). It also won't provide state if fetchPersistentSate=true.
 
+=== Custom Cache Store deployment
+A Custom Cache Store might be packaged into a separate JAR file and deployed in a HotRod server using the following steps:
+
+1. Create a JAR file (or use a link:https://github.com/infinispan/infinispan-cachestore-archetype[Custom Cache Store Archetype]) and implement one of the interfaces within it:
+* `org.infinispan.persistence.spi.AdvancedCacheWriter`
+* `org.infinispan.persistence.spi.AdvancedCacheLoader`
+* `org.infinispan.persistence.spi.CacheLoader`
+* `org.infinispan.persistence.spi.CacheWriter`
+* `org.infinispan.persistence.spi.ExternalStore`
+* `org.infinispan.persistence.spi.AdvancedLoadWriteStore`
+2. It is possible to create a Custom Cache Store configuration. This requires implementing `AbstractStoreConfiguration` and `AbstractStoreConfigurationBuilder`. Additionally, 2 annotations need to be added to the configuration - `@ConfigurationFor` and `@BuiltBy`. However this is an optional step.
+3. Create a proper file in `META-INF/services/`, which reflects the implementation:
+* `/META-INF/services/org.infinispan.persistence.spi.AdvancedCacheWriter`
+* `/META-INF/services/org.infinispan.persistence.spi.AdvancedCacheLoader`
+* `/META-INF/services/org.infinispan.persistence.spi.CacheLoader`
+* `/META-INF/services/org.infinispan.persistence.spi.CacheWriter`
+* `/META-INF/services/org.infinispan.persistence.spi.ExternalStore`
+* `/META-INF/services/org.infinispan.persistence.spi.AdvancedLoadWriteStore`
+Write the fully qualified class name of the Custom Cache Store class implementation.
+4. Deploy the JAR file in the Infinispan Server.
+
 === Command-Line Interface cache loader
 The Command-Line Interface (CLI) cache loader is a cache loader implementation
 that retrieves data from another Infinispan node using the CLI. The node to
