@@ -88,6 +88,15 @@ public abstract class AbstractTransport implements Transport {
    }
 
    @Override
+   public void writeOptionalString(String string) {
+      if (string == null) {
+         writeSignedVInt(-1);
+      } else {
+         writeOptionalArray(string.getBytes(HotRodConstants.HOTROD_STRING_CHARSET));
+      }
+   }
+
+   @Override
    public TransportFactory getTransportFactory() {
       return transportFactory;
    }
@@ -95,6 +104,12 @@ public abstract class AbstractTransport implements Transport {
    @Override
    public void writeArray(byte[] toAppend) {
       writeVInt(toAppend.length);
+      writeBytes(toAppend);
+   }
+
+   @Override
+   public void writeOptionalArray(byte[] toAppend) {
+      writeSignedVInt(toAppend.length);
       writeBytes(toAppend);
    }
 

@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
@@ -14,6 +15,7 @@ import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import static org.infinispan.commons.util.InfinispanCollections.emptySet;
 import static org.testng.Assert.assertFalse;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -30,6 +32,21 @@ public class SingleServerRemoteIteratorTest extends SingleHotRodServerTest imple
    public void testEmptyCache() {
       try (CloseableIterator<Entry<Object, Object>> iterator = remoteCacheManager.getCache().retrieveEntries(null, null, 100)) {
          assertFalse(iterator.hasNext());
+         assertFalse(iterator.hasNext());
+      }
+   }
+
+   @Test
+   public void testEmptySegments() {
+      populateCache(1, i -> "value " + i, remoteCacheManager.getCache());
+      try (CloseableIterator<Entry<Object, Object>> iterator = remoteCacheManager.getCache().retrieveEntries(null, emptySet(), 100)) {
+         assertFalse(iterator.hasNext());
+      }
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN006016.*")
+   public void testEmptyFilter() {
+      try (CloseableIterator<Entry<Object, Object>> iterator = remoteCacheManager.getCache().retrieveEntries("", null, 100)) {
          assertFalse(iterator.hasNext());
       }
    }

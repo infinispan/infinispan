@@ -159,9 +159,9 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
    /**
     * Retrieve entries from the server
     *
-    * @param filterConverterFactory Factory name for the KeyValueFilterConverter or null
-    * @param segments               The segments to iterate. If empty or null all segments will be iterated
-    * @param batchSize              The number of entries transferred from the server at a time
+    * @param filterConverterFactory Factory name for the KeyValueFilterConverter or null for no filtering.
+    * @param segments               The segments to iterate. If null all segments will be iterated. An empty set will filter out all entries.
+    * @param batchSize              The number of entries transferred from the server at a time.
     * @return Iterator for the entries
     */
    CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize);

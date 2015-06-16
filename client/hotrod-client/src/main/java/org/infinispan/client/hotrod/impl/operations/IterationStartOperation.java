@@ -66,14 +66,15 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
    @Override
    protected IterationStartResponse executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, ITERATION_START_REQUEST);
-      // TODO use a more compact BitSet implementation, like http://roaringbitmap.org/
-      BitSet bitSet = new BitSet();
-      if (segments != null && !segments.isEmpty()) {
+      if (segments == null) {
+         transport.writeSignedVInt(-1);
+      } else {
+         // TODO use a more compact BitSet implementation, like http://roaringbitmap.org/
+         BitSet bitSet = new BitSet();
          segments.stream().forEach(bitSet::set);
+         transport.writeOptionalArray(bitSet.toByteArray());
       }
-      transport.writeArray(bitSet.toByteArray());
-
-      transport.writeString(filterConverterFactory);
+      transport.writeOptionalString(filterConverterFactory);
       transport.writeVInt(batchSize);
       transport.flush();
 

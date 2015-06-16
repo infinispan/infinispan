@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -20,7 +19,7 @@ public class NoOpSegmentKeyTracker implements KeyTracker {
 
    @Override
    public Set<Integer> missedSegments() {
-      return Collections.emptySet();
+      return null;
    }
 
 }

@@ -3,7 +3,7 @@ package org.infinispan.server.hotrod.iteration
 import java.io.{ObjectInput, ObjectOutput}
 import java.util.{BitSet => JavaBitSet}
 
-import org.infinispan.commons.io.UnsignedNumeric.{readUnsignedInt, writeUnsignedInt}
+import org.infinispan.commons.io.SignedNumeric.{readSignedInt, writeSignedInt}
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
 import org.infinispan.distribution.ch.ConsistentHash
@@ -22,10 +22,9 @@ import scala.util._
 
 class IterationFilter[K, V, Any](val compat: Boolean,
                                  val providedFilter: Option[KeyValueFilterConverter[K, V, Any]],
-                                 val segments: Bytes,
+                                 val segmentsBitSet: Option[JavaBitSet],
                                  val marshaller: Option[Marshaller]) extends AbstractKeyValueFilterConverter[K, V, Any] {
 
-   private lazy val bitSet = JavaBitSet.valueOf(segments)
    private var filterMarshaller: Marshaller = _
    private var consistentHash: Option[ConsistentHash] = _
 
@@ -47,12 +46,13 @@ class IterationFilter[K, V, Any](val compat: Boolean,
    }
 
    private def filterBySegment(key: K, value: V, metadata: Metadata): Option[V] = {
-      if (segments.isEmpty) Some(value)
+      if (segmentsBitSet.isEmpty) Some(value)
       else {
          for {
+            bs <- segmentsBitSet
             ch <- consistentHash
             f <- Option(ch.getSegment(key))
-            if bitSet.get(f)
+            if bs.get(f)
          } yield value
       }
    }
@@ -78,25 +78,34 @@ class IterationFilterExternalizer[K, V, C] extends AbstractExternalizer[Iteratio
    override def readObject(input: ObjectInput): IterationFilter[K, V, C] = {
       val compat = input.readBoolean()
       val filter = input.readObject().asInstanceOf[Option[KeyValueFilterConverter[K, V, C]]]
-      val size = readUnsignedInt(input)
-      val bytes = new Bytes(size)
-      input.readFully(bytes)
+      val segmentsSize = readSignedInt(input)
+      val bytes = if (segmentsSize < 0) None
+      else {
+         val buf = new Bytes(segmentsSize)
+         input.readFully(buf)
+         Some(JavaBitSet.valueOf(buf))
+      }
       val marshallerClass = input.readObject().asInstanceOf[Class[Marshaller]]
-      val marshaller = MarshallerBuilder.fromClass(Option(marshallerClass),filter)
+      val marshaller = MarshallerBuilder.fromClass(Option(marshallerClass), filter)
       new IterationFilter[K, V, C](compat, filter, bytes, Option(marshaller))
    }
 
    override def writeObject(output: ObjectOutput, obj: IterationFilter[K, V, C]) = {
       output.writeBoolean(obj.compat)
       output.writeObject(obj.providedFilter)
-      writeUnsignedInt(output, obj.segments.length)
-      output.write(obj.segments)
+      obj.segmentsBitSet match {
+         case None => writeSignedInt(output, -1)
+         case Some(s) =>
+            val bytes = s.toByteArray
+            writeSignedInt(output, bytes.length)
+            output.write(bytes)
+      }
       output.writeObject(MarshallerBuilder.toClass(obj))
    }
 }
 
 object MarshallerBuilder {
-   def toClass[K, V, C](filter: IterationFilter[K,V,C]) = filter.marshaller.map(_.getClass).orNull
+   def toClass[K, V, C](filter: IterationFilter[K, V, C]) = filter.marshaller.map(_.getClass).orNull
 
    def fromClass[K, V, C](marshallerClass: Option[Class[Marshaller]], filter: Option[KeyValueFilterConverter[K, V, C]]): Marshaller = {
       val withClassLoaderCtor = for {
@@ -111,7 +120,7 @@ object MarshallerBuilder {
    }
 
    private def withEmptyCtor(marshallerClass: Option[Class[Marshaller]]) = marshallerClass.map(_.newInstance())
-   
+
    def genericFromFilter[K, V, C](filter: Option[KeyValueFilterConverter[K, V, C]]): Marshaller = {
       new GenericJBossMarshaller(filter.map(_.getClass.getClassLoader).orNull)
    }

@@ -14,9 +14,13 @@ public interface Transport {
 
    void writeArray(byte[] toAppend);
 
+   void writeOptionalArray(byte[] toAppend);
+
    void writeByte(short toWrite);
 
    void writeVInt(int vint);
+
+   void writeSignedVInt(int toWrite);
 
    void writeVLong(long l);
 
@@ -49,6 +53,8 @@ public interface Transport {
    int read4ByteInt();
 
    void writeString(String string);
+
+   void writeOptionalString(String string);
 
    byte[] dumpStream();
 

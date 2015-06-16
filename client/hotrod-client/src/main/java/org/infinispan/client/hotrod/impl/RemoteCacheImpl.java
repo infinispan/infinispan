@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -156,6 +157,23 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize) {
       assertRemoteCacheManagerIsStarted();
+      if (segments != null && segments.isEmpty()) {
+         return new CloseableIterator<Entry<Object, Object>>() {
+            @Override
+            public void close() {
+            }
+
+            @Override
+            public boolean hasNext() {
+               return false;
+            }
+
+            @Override
+            public Entry<Object, Object> next() {
+               throw new NoSuchElementException();
+            }
+         };
+      }
       RemoteCloseableIterator remoteCloseableIterator = new RemoteCloseableIterator(operationsFactory, filterConverterFactory, segments, batchSize, marshaller);
       remoteCloseableIterator.start();
       return remoteCloseableIterator;

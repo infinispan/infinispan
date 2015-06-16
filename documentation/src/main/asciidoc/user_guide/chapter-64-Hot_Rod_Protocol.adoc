@@ -48,6 +48,11 @@ byte, values from 128 to 16,383 are stored in two bytes, and so on:
 | `...`       |                 |                   |
 |==============================================================================
 +
+* signed vInt: The vInt above is also able to encode negative values, but will
+always use the maximum size (5 bytes) no matter how small the endoded value is.
+In order to have a small payload for negative values too, signed vInts uses ZigZag
+encoding on top of the vInt encoding.
+More details link:$$http://developers.google.com/protocol-buffers/docs/encoding#types$$[here]
 
 * vLong : Refers to unsigned variable length long values similar to vInt but
 applied to longer values. They're between 1 and 9 bytes long.
@@ -1582,15 +1587,17 @@ Request format:
 [cols="3,^2,10",options="header"]
 |==============================================================================
 | Field Name          | Size       | Value
-| Segments size       | vInt       |  Size of the bitset encoding of the segments ids to iterate on. The size is the maximum segment id rounded to nearest multiple of 8.
-| Segments            | byte array | (Optional) the segments ids bitset encoded, where each bit with value 1 represents a segment in the set. Byte order is little-endian. +
+| Segments size       | signed vInt|  Size of the bitset encoding of the segments ids to iterate on. The size is the maximum segment id rounded to nearest multiple of 8. +
+A value -1 indicates no segment filtering is to be done
+| Segments            | byte array | (Optional) Contains the segments ids bitset encoded, where each bit with value 1 represents a segment in the set. Byte order is little-endian. +
 Example: segments [1,3,12,13] would result in the following encoding: +
 00001010 00110000 +
 size: 16 bits +
 first byte: represents segments from 0 to 7, from which 1 and 3 are set +
 second byte: represents segments from 8 to 15, from which 12 and 13 are set +
-More details in the java.util.BitSet implementation
-| FilterConverter     | String      | (Optional) KeyValueFilterConverter factory name deployed on the server
+More details in the java.util.BitSet implementation. Segments will be sent if the previous field is not negative
+| FilterConverter size| signed vInt | The size of the String representing a KeyValueFilterConverter factory name deployed on the server, or -1 if no filter will be used
+| FilterConverter     | UTF-8 byte array | (Optional) KeyValueFilterConverter factory name deployed on the server. Present if previous field is not negative
 | BatchSize           | vInt        | number of entries to transfers from the server at one go
 |==============================================================================
 

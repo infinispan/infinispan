@@ -15,6 +15,7 @@ import org.infinispan.server.hotrod.OperationStatus.OperationStatus
 import org.infinispan.server.hotrod._
 import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.util.concurrent.ConcurrentHashSet
+import java.util.{BitSet => JavaBitSet}
 
 /**
  * @author gustavonalle
@@ -22,7 +23,7 @@ import org.infinispan.util.concurrent.ConcurrentHashSet
  */
 trait IterationManager {
    type IterationId = String
-   def start(cacheName: String, segments: Bytes, filterConverterFactory: String, batch: Integer): IterationId
+   def start(cacheName: String, segments: Option[JavaBitSet], filterConverterFactory: Option[String], batch: Integer): IterationId
    def next(cacheName: String, iterationId: IterationId): IterableIterationResult
    def close(cacheName: String, iterationId: IterationId): Boolean
    def addKeyValueFilterConverterFactory[K, V, C](name: String, factory: KeyValueFilterConverterFactory[K, V, C]): Unit
@@ -77,7 +78,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
    private val iterationStateMap = CollectionFactory.makeConcurrentMap[String, IterationState]()
    private val filterConverterFactoryMap = CollectionFactory.makeConcurrentMap[String, KeyValueFilterConverterFactory[_, _, _]]()
 
-   override def start(cacheName: String, segments: Bytes, filterConverterFactory: String, batch: Integer): IterationId = {
+   override def start(cacheName: String, segments: Option[JavaBitSet], filterConverterFactory: Option[String], batch: Integer): IterationId = {
       val iterationId = UUID.randomUUID().toString
       val entryRetriever = cacheManager.getCache(cacheName).getAdvancedCache.getComponentRegistry.getComponent(classOf[EntryRetriever[_, _]])
       val segmentListener = new IterationSegmentsListener
@@ -85,7 +86,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
 
       val filter = {
          val customFilter = buildCustomFilter(filterConverterFactory)
-         if (customFilter.isDefined || (segments != null && segments.nonEmpty)) {
+         if (customFilter.isDefined || segments.isDefined) {
             new IterationFilter(compatInfo.enabled, customFilter, segments, marshaller)
          } else null
       }
@@ -97,10 +98,13 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
       iterationId
    }
 
-   private def buildCustomFilter[K, V, Any](name: String) = {
-      if (name == null || name.isEmpty) None
-      else
-         Option(filterConverterFactoryMap.get(name)).map(_.getFilterConverter).orElse(throw log.missingKeyValueFilterConverterFactory(name))
+   private def buildCustomFilter[K, V, Any](optName: Option[String]) = {
+      optName match {
+         case None => None
+         case Some(name) => Option(filterConverterFactoryMap.get(name))
+                 .map(_.getFilterConverter)
+                 .orElse(throw log.missingKeyValueFilterConverterFactory(name))
+      }
    }
 
    override def next(cacheName: String, iterationId: IterationId): IterableIterationResult = {

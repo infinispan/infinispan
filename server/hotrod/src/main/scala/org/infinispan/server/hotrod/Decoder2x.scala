@@ -39,6 +39,7 @@ import org.infinispan.server.core.transport.SaslQopHandler
 import org.infinispan.scripting.ScriptingManager
 import javax.script.SimpleBindings
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
+import java.util.{BitSet => JavaBitSet}
 
 import java.util.HashSet
 import java.util.HashMap
@@ -392,10 +393,10 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          case PutAllRequest | GetAllRequest =>
             decoder.checkpointTo(HotRodDecoderState.DECODE_PARAMETERS)
          case IterationStartRequest =>
-            val segments = readRangedBytes(buffer)
-            val filterConverterFactory = readString(buffer)
+            val segments = readOptRangedBytes(buffer)
+            val filterConverterFactory = readOptString(buffer)
             val batchSize = readUnsignedInt(buffer)
-            val iterationId = server.iterationManager.start(cache.getName, segments, filterConverterFactory, batchSize)
+            val iterationId = server.iterationManager.start(cache.getName, segments.map(JavaBitSet.valueOf), filterConverterFactory, batchSize)
             new IterationStartResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, iterationId)
          case IterationNextRequest =>
             val iterationId = readString(buffer)

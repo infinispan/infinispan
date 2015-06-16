@@ -30,7 +30,7 @@ public class SegmentKeyTracker implements KeyTracker {
       if (log.isDebugEnabled()) log.debugf("Created SegmentKeyTracker with %d segments", numSegments);
       this.segmentConsistentHash = segmentConsistentHash;
       IntStream.range(0, segmentConsistentHash.getNumSegments())
-               .forEach(i -> keysPerSegment.set(i, CollectionFactory.makeSet(ByteArrayEquivalence.INSTANCE)));
+              .forEach(i -> keysPerSegment.set(i, CollectionFactory.makeSet(ByteArrayEquivalence.INSTANCE)));
    }
 
    public boolean track(byte[] key) {
@@ -42,7 +42,9 @@ public class SegmentKeyTracker implements KeyTracker {
    }
 
    public Set<Integer> missedSegments() {
-      Set<Integer> missed = new HashSet<>(keysPerSegment.length());
+      int length = keysPerSegment.length();
+      if (length == 0) return null;
+      Set<Integer> missed = new HashSet<>(length);
       for (int i = 0; i < keysPerSegment.length(); i++) {
          if (keysPerSegment.get(i) != null) {
             missed.add(i);

@@ -4,6 +4,7 @@ import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedInt;
 import static org.infinispan.commons.io.UnsignedNumeric.readUnsignedLong;
 import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedInt;
 import static org.infinispan.commons.io.UnsignedNumeric.writeUnsignedLong;
+import static org.infinispan.commons.io.SignedNumeric.writeSignedInt;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -93,6 +94,16 @@ public class TcpTransport extends AbstractTransport {
    public void writeVInt(int vInt) {
       try {
          writeUnsignedInt(socketOutputStream, vInt);
+      } catch (IOException e) {
+         invalid = true;
+         throw new TransportException(e, serverAddress);
+      }
+   }
+
+   @Override
+   public void writeSignedVInt(int vInt) {
+      try {
+         writeSignedInt(socketOutputStream, vInt);
       } catch (IOException e) {
          invalid = true;
          throw new TransportException(e, serverAddress);

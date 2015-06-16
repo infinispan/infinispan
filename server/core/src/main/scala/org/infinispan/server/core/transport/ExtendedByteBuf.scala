@@ -2,6 +2,7 @@ package org.infinispan.server.core.transport
 
 import io.netty.buffer.{ByteBuf, Unpooled}
 import io.netty.util.CharsetUtil
+import org.infinispan.commons.io.SignedNumeric
 
 
 object ExtendedByteBuf {
@@ -16,6 +17,10 @@ object ExtendedByteBuf {
 
    def readRangedBytes(bf: ByteBuf): Array[Byte] = {
       val length = readUnsignedInt(bf)
+      readRangedBytes(bf, length)
+   }
+
+   def readRangedBytes(bf: ByteBuf, length: Int): Array[Byte] = {
       if (length > 0) {
          val array = new Array[Byte](length)
          bf.readBytes(array)
@@ -23,6 +28,24 @@ object ExtendedByteBuf {
       } else {
          Array[Byte]()
       }
+   }
+
+   /**
+    * Reads optional range of bytes. Negative lengths are translated to None,
+    * 0 length represents empty Array
+    */
+   def readOptRangedBytes(bf: ByteBuf): Option[Array[Byte]] = {
+      val length = SignedNumeric.decode(readUnsignedInt(bf))
+      if (length < 0) None else Some(readRangedBytes(bf, length))
+   }
+
+   /**
+    * Reads an optional String. 0 length is an empty string, negative length
+    * is translated to None.
+    */
+   def readOptString(bf: ByteBuf): Option[String] = {
+      val bytes = readOptRangedBytes(bf)
+      bytes.map(new String(_, CharsetUtil.UTF_8))
    }
 
    /**
