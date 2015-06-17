@@ -935,40 +935,6 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
          return part.get(timeout, unit);
       }
 
-      @Override
-      public int hashCode() {
-         final int prime = 31;
-         int result = 1;
-         result = prime * result + getOuterType().hashCode();
-         result = prime * result + ((distCommand == null) ? 0 : distCommand.hashCode());
-         return result;
-      }
-
-      @Override
-      public boolean equals(Object obj) {
-         if (this == obj) {
-            return true;
-         }
-         if (obj == null) {
-            return false;
-         }
-         if (!(obj instanceof DistributedTaskPart)) {
-            return false;
-         }
-         DistributedTaskPart other = (DistributedTaskPart) obj;
-         if (!getOuterType().equals(other.getOuterType())) {
-            return false;
-         }
-         if (distCommand == null) {
-            if (other.distCommand != null) {
-               return false;
-            }
-         } else if (!distCommand.equals(other.distCommand)) {
-            return false;
-         }
-         return true;
-      }
-
       protected void setCancelled() {
          cancelled = true;
       }
