@@ -43,6 +43,7 @@ public enum Attribute {
     EXPIRATION_EXECUTOR("expiration-executor"),
     FAILURE_POLICY_CLASS("failure-policy-class"),
     FETCH_STATE("fetch-state"),
+    @Deprecated
     FLUSH_LOCK_TIMEOUT("flush-lock-timeout"),
     GROUP_NAME("group-name"),
     ID("id"),
@@ -101,6 +102,7 @@ public enum Attribute {
     SEGMENTS("segments"),
     SHARED("shared"),
     SHUTDOWN_HOOK("shutdown-hook"),
+    @Deprecated
     SHUTDOWN_TIMEOUT("shutdown-timeout"),
     SINGLETON("singleton"),
     SITE("site"),
