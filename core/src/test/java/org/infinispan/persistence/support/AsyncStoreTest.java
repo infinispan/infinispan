@@ -389,6 +389,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             .addStore(new LockableStoreConfigurationBuilder(builder.persistence()));
       lcscsBuilder.async()
             .modificationQueueSize(10);
+      lcscsBuilder.async()
+            .shutdownTimeout(50);
 
       writer = new AdvancedAsyncCacheWriter(underlying);
       writer.init(PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller));
