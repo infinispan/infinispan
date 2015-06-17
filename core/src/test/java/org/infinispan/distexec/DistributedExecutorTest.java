@@ -2,6 +2,7 @@ package org.infinispan.distexec;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -19,6 +20,9 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Tests org.infinispan.distexec.DistributedExecutorService
@@ -163,7 +167,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
       Future<Integer> future = des.submit(target, builder.build());
 
-      AssertJUnit.assertEquals((Integer) 1, future.get());
+      assertEquals((Integer) 1, future.get());
    }
 
    public void testTaskCancellation() throws Exception {
@@ -172,7 +176,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
       DistributedExecutorService des = createDES(getCache());
       List<Address> cacheMembers = getCache().getAdvancedCache().getRpcManager().getMembers();
-      AssertJUnit.assertEquals(caches(cacheName()).size(), cacheMembers.size());
+      assertEquals(caches(cacheName()).size(), cacheMembers.size());
 
       DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder(new LongRunningCallable());
       final Future<Integer> future = des.submit(address(1), tb.build());
@@ -201,7 +205,7 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       DistributedExecutorService des = createDES(getCache());
       List<Address> cacheMembers = getCache().getAdvancedCache().getRpcManager().getMembers();
       List<Address> members = new ArrayList<Address>(cacheMembers);
-      AssertJUnit.assertEquals(caches(cacheName()).size(), members.size());
+      assertEquals(caches(cacheName()).size(), members.size());
       members.remove(getCache().getAdvancedCache().getRpcManager().getAddress());
       
       DistributedTaskBuilder<Integer> tb = des.createDistributedTaskBuilder( new LongRunningCallable());
@@ -305,10 +309,12 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
 
       List<Future<Boolean>> list = des.submitEverywhere(new SimpleDistributedCallable(true),
                                                         new String[] { "key1", "key2", "key5", "key6" });
-      assert list != null && !list.isEmpty();
+      assertTrue(list != null && !list.isEmpty());
       for (Future<Boolean> f : list) {
          assert f.get();
       }
+      // Check that the futures are distinct
+      assertEquals(list.size(), new HashSet<>(list).size());
 
       //the same using DistributedTask API
       DistributedTaskBuilder<Boolean> taskBuilder = des.createDistributedTaskBuilder(new SimpleDistributedCallable(true));
@@ -318,6 +324,8 @@ public class DistributedExecutorTest extends LocalDistributedExecutorTest {
       for (Future<Boolean> f : list) {
          assert f.get();
       }
+      // Check that the futures are distinct
+      assertEquals(list.size(), new HashSet<>(list).size());
    }
    
    static class LongRunningCallable implements DistributedCallable<Object, Object, Integer>, Serializable {
