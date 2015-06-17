@@ -8,6 +8,7 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.concurrent.ParallelIterableMap;
+import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
@@ -653,7 +654,9 @@ public class StateConsumerImpl implements StateConsumer {
    // Must run after the PersistenceManager
    @Start(priority = 20)
    public void start() {
-      isFetchEnabled = configuration.clustering().stateTransfer().fetchInMemoryState() || configuration.persistence().fetchPersistentState();
+      CacheMode mode = configuration.clustering().cacheMode();
+      isFetchEnabled = (mode.isDistributed() || mode.isReplicated()) &&
+              (configuration.clustering().stateTransfer().fetchInMemoryState() || configuration.persistence().fetchPersistentState());
       //rpc options does not changes in runtime. we can use always the same instance.
       rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS)
             .timeout(timeout, TimeUnit.MILLISECONDS).build();
