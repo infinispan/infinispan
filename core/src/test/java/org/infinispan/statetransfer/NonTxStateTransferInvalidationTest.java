@@ -23,7 +23,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
@@ -31,7 +30,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 import static org.testng.AssertJUnit.assertNull;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.fail;
 
 /**
@@ -53,7 +52,7 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
       waitForClusterToForm();
    }
 
-   public void testStateTransfer() throws Exception {
+   public void testStateTransferDisabled() throws Exception {
       // Insert initial data in the cache
       Set<Object> keys = new HashSet<Object>();
       for (int i = 0; i < NUM_KEYS; i++) {
@@ -77,12 +76,8 @@ public class NonTxStateTransferInvalidationTest extends MultipleCacheManagersTes
          InternalCacheEntry d2 = advancedCache(2).getDataContainer().get(key);
          assertEquals(key, d0.getValue());
          assertNull(d1);
-         if (d2 != null) {
-            keysOnJoiner++;
-         }
+         assertNull(d2);
       }
-
-      assertTrue("The joiner should receive at least one key", keysOnJoiner > 0);
    }
 
    @Test(groups = "unstable", description = "See ISPN-4016")
