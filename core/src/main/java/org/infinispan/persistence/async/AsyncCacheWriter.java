@@ -118,7 +118,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
    @Override
    public void stop() {
       if (trace) log.tracef("Stop async store %s", this);
-      stateLock.writeLock(1);
+      stateLock.writeLock(0);
       stopped = true;
       stateLock.writeUnlock();
       try {

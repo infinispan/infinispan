@@ -135,13 +135,13 @@ class BufferLock {
 
    /**
     * Acquires the write lock and consumes the specified amount of buffer space. Blocks if the
-    * buffer is full or if the object is currently locked for reading.
+    * object is currently locked for reading, or if the buffer is full and count is greater than 0.
     *
     * @param count
     *           number of items the caller intends to write
     */
    void writeLock(int count) {
-      if (counter != null)
+      if (count > 0 && counter != null)
          counter.acquireShared(count);
       sync.acquireShared(1);
    }
