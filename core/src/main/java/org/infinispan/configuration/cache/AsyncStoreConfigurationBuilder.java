@@ -42,20 +42,19 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    /**
-    * Timeout to acquire the lock which guards the state to be flushed to the cache store
-    * periodically. The timeout can be adjusted for a running cache.
+    * Unused.
     */
+   @Deprecated
    public AsyncStoreConfigurationBuilder<S> flushLockTimeout(long l) {
-      attributes.attribute(FLUSH_LOCK_TIMEOUT).set(l);
       return this;
    }
 
    /**
-    * Timeout to acquire the lock which guards the state to be flushed to the cache store
-    * periodically. The timeout can be adjusted for a running cache.
+    * Unused.
     */
+   @Deprecated
    public AsyncStoreConfigurationBuilder<S> flushLockTimeout(long l, TimeUnit unit) {
-      return flushLockTimeout(unit.toMillis(l));
+      return this;
    }
 
    /**
@@ -70,22 +69,19 @@ public class AsyncStoreConfigurationBuilder<S> extends AbstractStoreConfiguratio
    }
 
    /**
-    * Timeout to stop the cache store. When the store is stopped it's possible that some
-    * modifications still need to be applied; you likely want to set a very large timeout to make
-    * sure to not loose data
+    * Unused.
     */
+   @Deprecated
    public AsyncStoreConfigurationBuilder<S> shutdownTimeout(long l) {
-      attributes.attribute(SHUTDOWN_TIMEOUT).set(l);
       return this;
    }
 
    /**
-    * Timeout to stop the cache store. When the store is stopped it's possible that some
-    * modifications still need to be applied; you likely want to set a very large timeout to make
-    * sure to not loose data
+    * Unused.
     */
+   @Deprecated
    public AsyncStoreConfigurationBuilder<S> shutdownTimeout(long l, TimeUnit unit) {
-      return shutdownTimeout(unit.toMillis(l));
+      return this;
    }
 
    /**
