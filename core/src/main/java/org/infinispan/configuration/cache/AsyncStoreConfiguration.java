@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -15,19 +13,15 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
  */
 public class AsyncStoreConfiguration {
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).immutable().build();
-   public static final AttributeDefinition<Long> FLUSH_LOCK_TIMEOUT = AttributeDefinition.builder("flushLockTimeout", 1l).build();
    public static final AttributeDefinition<Integer> MODIFICATION_QUEUE_SIZE  = AttributeDefinition.builder("modificationQueueSize", 1024).immutable().build();
-   public static final AttributeDefinition<Long> SHUTDOWN_TIMEOUT = AttributeDefinition.builder("shutdownTimeout", TimeUnit.SECONDS.toMillis(25)).build();
    public static final AttributeDefinition<Integer> THREAD_POOL_SIZE = AttributeDefinition.builder("threadPoolSize", 1).immutable().build();
 
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(AsyncStoreConfiguration.class, ENABLED, FLUSH_LOCK_TIMEOUT, MODIFICATION_QUEUE_SIZE, SHUTDOWN_TIMEOUT, THREAD_POOL_SIZE);
+      return new AttributeSet(AsyncStoreConfiguration.class, ENABLED, MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE);
    }
 
    private final Attribute<Boolean> enabled;
-   private final Attribute<Long> flushLockTimeout;
    private final Attribute<Integer> modificationQueueSize;
-   private final Attribute<Long> shutdownTimeout;
    private final Attribute<Integer> threadPoolSize;
 
    private final AttributeSet attributes;
@@ -35,9 +29,7 @@ public class AsyncStoreConfiguration {
    AsyncStoreConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       enabled = attributes.attribute(ENABLED);
-      flushLockTimeout = attributes.attribute(FLUSH_LOCK_TIMEOUT);
       modificationQueueSize = attributes.attribute(MODIFICATION_QUEUE_SIZE);
-      shutdownTimeout = attributes.attribute(SHUTDOWN_TIMEOUT);
       threadPoolSize = attributes.attribute(THREAD_POOL_SIZE);
    }
 
@@ -49,21 +41,18 @@ public class AsyncStoreConfiguration {
    }
 
    /**
-    * Timeout to acquire the lock which guards the state to be flushed to the cache store
-    * periodically. The timeout can be adjusted for a running cache.
-    *
-    * @return
+    * Unused
     */
+   @Deprecated
    public long flushLockTimeout() {
-      return flushLockTimeout.get();
+      return 0;
    }
 
    /**
-    * Timeout to acquire the lock which guards the state to be flushed to the cache store
-    * periodically. The timeout can be adjusted for a running cache.
+    * Unused
     */
+   @Deprecated
    public AsyncStoreConfiguration flushLockTimeout(long l) {
-      flushLockTimeout.set(l);
       return this;
    }
 
@@ -78,16 +67,18 @@ public class AsyncStoreConfiguration {
    }
 
    /**
-    * Timeout to stop the cache store. When the store is stopped it's possible that some
-    * modifications still need to be applied; you likely want to set a very large timeout to make
-    * sure to not loose data
+    * Unused
     */
+   @Deprecated
    public long shutdownTimeout() {
-      return shutdownTimeout.get();
+      return 0;
    }
 
+   /**
+    * Unused
+    */
+   @Deprecated
    public AsyncStoreConfiguration shutdownTimeout(long l) {
-      shutdownTimeout.set(l);
       return this;
    }
 
