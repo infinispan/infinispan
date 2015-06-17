@@ -1,6 +1,5 @@
 package org.infinispan.persistence.async;
 
-import org.infinispan.commons.CacheException;
 import org.infinispan.persistence.modifications.Clear;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.ModificationsList;
@@ -37,11 +36,6 @@ public class State {
    volatile State next;
 
    /**
-    * True if the CacheStore has been stopped (i.e. this is the last state to process).
-    */
-   volatile boolean stopped = false;
-
-   /**
     * Number of worker threads that currently work with this instance.
     */
    CountDownLatch workerThreads;
@@ -50,8 +44,6 @@ public class State {
       this.clear = clear;
       this.modifications = modMap;
       this.next = next;
-      if (next != null)
-         stopped = next.stopped;
    }
 
    /**
@@ -81,8 +73,6 @@ public class State {
     *           the Modification to add, supports modification types STORE, REMOVE and LIST
     */
    void put(Modification mod) {
-      if (stopped)
-         throw new CacheException("AsyncCacheWriter stopped; no longer accepting more entries.");
       switch (mod.getType()) {
          case STORE:
             modifications.put(((Store) mod).getKey(), mod);

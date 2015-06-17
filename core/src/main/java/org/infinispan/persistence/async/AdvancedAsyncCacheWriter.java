@@ -24,6 +24,7 @@ public class AdvancedAsyncCacheWriter extends AsyncCacheWriter implements Advanc
    public void clear() {
       stateLock.writeLock(1);
       try {
+         assertNotStopped();
          state.set(newState(true, state.get().next));
       } finally {
          stateLock.reset(1);

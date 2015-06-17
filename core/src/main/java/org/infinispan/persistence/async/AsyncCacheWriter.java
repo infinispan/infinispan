@@ -9,6 +9,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.Remove;
 import org.infinispan.persistence.modifications.Store;
+import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.persistence.spi.CacheWriter;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -69,6 +70,8 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
    protected BufferLock stateLock;
    @GuardedBy("stateLock")
    protected final AtomicReference<State> state = new AtomicReference<State>();
+   @GuardedBy("stateLock")
+   private boolean stopped;
 
    protected AsyncStoreConfiguration asyncConfiguration;
 
@@ -91,6 +94,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
    public void start() {
       log.debugf("Async cache loader starting %s", this);
       state.set(newState(false, null));
+      stopped = false;
       stateLock = new BufferLock(asyncConfiguration.modificationQueueSize());
 
       // Create a thread pool with unbounded work queue, so that all work is accepted and eventually
@@ -115,7 +119,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
    public void stop() {
       if (trace) log.tracef("Stop async store %s", this);
       stateLock.writeLock(1);
-      state.get().stopped = true;
+      stopped = true;
       stateLock.writeUnlock();
       try {
          // It is safe to wait without timeout because the thread pool uses an unbounded work queue (i.e.
@@ -168,12 +172,18 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
       return new State(clear, map, next);
    }
 
+   void assertNotStopped() throws CacheException {
+      if (stopped)
+         throw new CacheException("AsyncCacheWriter stopped; no longer accepting more entries.");
+   }
+
    private void put(Modification mod, int count) {
       stateLock.writeLock(count);
       try {
          if (log.isTraceEnabled())
             log.tracef("Queue modification: %s", mod);
 
+         assertNotStopped();
          state.get().put(mod);
       } finally {
          stateLock.writeUnlock();
@@ -196,9 +206,11 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
          try {
             for (;;) {
                final State s, head, tail;
+               final boolean shouldStop;
                stateLock.readLock();
                try {
                   s = state.get();
+                  shouldStop = stopped;
                   tail = s.next;
                   assert tail == null || tail.next == null : "State chain longer than 3 entries!";
                   head = newState(false, s);
@@ -257,7 +269,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                   }
 
                   // if this is the last state to process, wait for background threads, then quit
-                  if (s.stopped && head.modifications.isEmpty()) {
+                  if (shouldStop && head.modifications.isEmpty()) {
                      s.workerThreads.await();
                      return;
                   }
