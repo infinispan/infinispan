@@ -39,7 +39,9 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -352,6 +354,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
 
    public static class LockableStore extends DummyInMemoryStore {
       private final ReentrantLock lock = new ReentrantLock();
+      private final Set<Thread> threads = new HashSet<>();
 
       public LockableStore() {
          super();
@@ -362,17 +365,18 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       public void write(MarshalledEntry entry) {
          lock.lock();
          try {
+            threads.add(Thread.currentThread());
             super.write(entry);
          } finally {
             lock.unlock();
          }
-
       }
 
       @Override
       public boolean delete(Object key) {
          lock.lock();
          try {
+            threads.add(Thread.currentThread());
             return super.delete(key);
          } finally {
             lock.unlock();
@@ -388,7 +392,8 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             .persistence()
             .addStore(new LockableStoreConfigurationBuilder(builder.persistence()));
       lcscsBuilder.async()
-            .modificationQueueSize(10);
+            .modificationQueueSize(10)
+            .threadPoolSize(3);
       lcscsBuilder.async()
             .shutdownTimeout(50);
 
@@ -421,6 +426,7 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       } finally {
          writer.stop();
       }
+      assertEquals(3, underlying.threads.size());
    }
 
    private static abstract class OneEntryCacheManagerCallable extends CacheManagerCallable {
