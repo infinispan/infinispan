@@ -229,38 +229,28 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                      clearStore();
                   }
 
-                  List<Modification> mods;
-                  if (tail != null) {
-                     // if there's work in progress, push-back keys that are still in use to the head state
-                     mods = new ArrayList<Modification>();
+                  final List<Modification> mods = new ArrayList<>(s.modifications.size());
+                  final List<Modification> deferredMods = new ArrayList<>();
+                  if (tail != null && tail.workerThreads.getCount() > 0) {
+                     // sort out modifications that are still in use by tail's AsyncStoreProcessors
                      for (Map.Entry<Object, Modification> e : s.modifications.entrySet()) {
                         if (!tail.modifications.containsKey(e.getKey()))
                            mods.add(e.getValue());
-                        else {
-                           if (!head.clear && head.modifications.putIfAbsent(e.getKey(), e.getValue()) == null)
-                              stateLock.add(1);
-                           s.modifications.remove(e.getKey());
-                        }
+                        else
+                           deferredMods.add(e.getValue());
                      }
                   } else {
-                     mods = new ArrayList<Modification>(s.modifications.values());
+                     mods.addAll(s.modifications.values());
                   }
 
-                  // distribute modifications evenly across worker threads
-                  int threads = Math.min(mods.size(), asyncConfiguration.threadPoolSize());
-                  s.workerThreads = new CountDownLatch(threads);
-                  if (threads > 0) {
-                     // schedule background threads
-                     int start = 0;
-                     int quotient = mods.size() / threads;
-                     int remainder = mods.size() % threads;
-                     for (int i = 0; i < threads; i++) {
-                        int end = start + quotient + (i < remainder ? 1 : 0);
-                        executor.execute(new AsyncStoreProcessor(mods.subList(start, end), s));
-                        start = end;
-                     }
-                     assert start == mods.size() : "Thread distribution is broken!";
-                  }
+                  // create AsyncStoreProcessors
+                  final List<AsyncStoreProcessor> procs = createProcessors(s, mods);
+                  final List<AsyncStoreProcessor> deferredProcs = createProcessors(s, deferredMods);
+                  s.workerThreads = new CountDownLatch(procs.size() + deferredProcs.size());
+
+                  // schedule AsyncStoreProcessors that don't conflict with tail's processors
+                  for (AsyncStoreProcessor processor : procs)
+                     executor.execute(processor);
 
                   // wait until background threads of previous round are done
                   if (tail != null) {
@@ -268,8 +258,12 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                      s.next = null;
                   }
 
+                  // schedule remaining AsyncStoreProcessors
+                  for (AsyncStoreProcessor processor : deferredProcs)
+                     executor.execute(processor);
+
                   // if this is the last state to process, wait for background threads, then quit
-                  if (shouldStop && head.modifications.isEmpty()) {
+                  if (shouldStop) {
                      s.workerThreads.await();
                      return;
                   }
@@ -280,6 +274,25 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
          } finally {
             LogFactory.popNDC(trace);
          }
+      }
+
+      private List<AsyncStoreProcessor> createProcessors(State state, List<Modification> mods) {
+         List<AsyncStoreProcessor> result = new ArrayList<>();
+         // distribute modifications evenly across worker threads
+         int threads = Math.min(mods.size(), asyncConfiguration.threadPoolSize());
+         if (threads > 0) {
+            // create background threads
+            int start = 0;
+            int quotient = mods.size() / threads;
+            int remainder = mods.size() % threads;
+            for (int i = 0; i < threads; i++) {
+               int end = start + quotient + (i < remainder ? 1 : 0);
+               result.add(new AsyncStoreProcessor(mods.subList(start, end), state));
+               start = end;
+            }
+            assert start == mods.size() : "Thread distribution is broken!";
+         }
+         return result;
       }
    }
 
