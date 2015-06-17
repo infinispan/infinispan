@@ -306,15 +306,18 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
 
       @Override
       public void run() {
-         // try 3 times to store the modifications
-         retryWork(3);
+         try {
+            // try 3 times to store the modifications
+            retryWork(3);
 
-         // decrement active worker threads and disconnect myState if this was the last one
-         myState.workerThreads.countDown();
-         if (myState.workerThreads.getCount() == 0)
-            for (State s = state.get(); s != null; s = s.next)
-               if (s.next == myState)
-                  s.next = null;
+         } finally {
+            // decrement active worker threads and disconnect myState if this was the last one
+            myState.workerThreads.countDown();
+            if (myState.workerThreads.getCount() == 0)
+               for (State s = state.get(); s != null; s = s.next)
+                  if (s.next == myState)
+                     s.next = null;
+         }
       }
 
       private void retryWork(int maxRetries) {
