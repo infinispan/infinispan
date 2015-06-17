@@ -234,6 +234,33 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
       assertEquals(me.getValue(), key + lastValue[0]);
    }
 
+   @Test(timeOut=30000)
+   public void testConcurrentClearAndStop() throws Exception {
+      TestResourceTracker.backgroundTestStarted(this);
+      createStore(true);
+
+      // start a thread that keeps clearing the store until its stopped
+      Thread t = new Thread() {
+         @Override
+         public void run() {
+            try {
+               for (;;)
+                  writer.clear();
+            } catch (CacheException expected) {
+            }
+         }
+      };
+      t.start();
+
+      // wait until thread has started
+      Thread.sleep(500);
+      writer.stop();
+
+      // background thread should exit with CacheException
+      t.join(1000);
+      assertFalse(t.isAlive());
+   }
+
    private void doTestPut(int number, String key, String value) throws Exception {
 
       log.tracef("before write");
