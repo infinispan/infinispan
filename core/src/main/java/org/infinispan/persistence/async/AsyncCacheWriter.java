@@ -217,7 +217,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                   if (s.clear) {
                      // clear() must be called synchronously, wait until background threads are done
                      if (tail != null)
-                        workerThreadsAwait(tail.workerThreads);
+                        tail.workerThreads.await();
 
                      clearStore();
                   }
@@ -257,18 +257,15 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
 
                   // wait until background threads of previous round are done
                   if (tail != null) {
-                     workerThreadsAwait(tail.workerThreads);
+                     tail.workerThreads.await();
                      s.next = null;
                   }
 
                   // if this is the last state to process, wait for background threads, then quit
                   if (shouldStop(s)) {
-                     workerThreadsAwait(s.workerThreads);
+                     s.workerThreads.await();
                      return;
                   }
-               } catch (InterruptedException e) {
-                  log.asyncStoreCoordinatorInterrupted(e);
-                  Thread.currentThread().interrupt();
                } catch (Exception e) {
                   log.unexpectedErrorInAsyncStoreCoordinator(e);
                }
@@ -295,12 +292,6 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
 
       private boolean shouldStop(State s) {
          return s.stopped && s.modifications.isEmpty();
-      }
-
-      private void workerThreadsAwait(CountDownLatch latch) throws InterruptedException {
-         boolean await = latch.await(shutdownTimeout, TimeUnit.MILLISECONDS);
-         if (!await)
-            throw log.waitingForWorkerThreadsFailed(latch);
       }
    }
 

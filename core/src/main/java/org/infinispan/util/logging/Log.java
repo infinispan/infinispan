@@ -53,7 +53,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CountDownLatch;
 
 import static org.jboss.logging.Logger.Level.*;
 
@@ -259,10 +258,6 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "Unable to process some async modifications after %d retries!", id = 53)
    void unableToProcessAsyncModifications(int retries);
-
-   @LogMessage(level = ERROR)
-   @Message(value = "AsyncStoreCoordinator interrupted", id = 54)
-   void asyncStoreCoordinatorInterrupted(@Cause InterruptedException e);
 
    @LogMessage(level = ERROR)
    @Message(value = "Unexpected error in AsyncStoreCoordinator thread. AsyncCacheWriter is dead!", id = 55)
@@ -868,9 +863,6 @@ public interface Log extends BasicLogger {
 
    @Message(value="Cache is in an invalid state: %s", id = 232)
    IllegalStateException invalidCacheState(String cacheState);
-
-   @Message(value="Waiting on work threads latch failed: %s", id = 233)
-   TimeoutException waitingForWorkerThreadsFailed(CountDownLatch latch);
 
    @Message(value = "Root element for %s already registered in ParserRegistry", id = 234)
    IllegalArgumentException parserRootElementAlreadyRegistered(QName qName);
