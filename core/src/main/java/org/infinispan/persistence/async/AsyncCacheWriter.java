@@ -195,12 +195,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
          LogFactory.pushNDC(cacheName, trace);
          try {
             for (;;) {
-               State s, head, tail;
-               s = state.get();
-               if (shouldStop(s)) {
-                  return;
-               }
-
+               final State s, head, tail;
                stateLock.readLock();
                try {
                   s = state.get();
@@ -262,7 +257,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                   }
 
                   // if this is the last state to process, wait for background threads, then quit
-                  if (shouldStop(s)) {
+                  if (s.stopped && head.modifications.isEmpty()) {
                      s.workerThreads.await();
                      return;
                   }
@@ -273,10 +268,6 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
          } finally {
             LogFactory.popNDC(trace);
          }
-      }
-
-      private boolean shouldStop(State s) {
-         return s.stopped && s.modifications.isEmpty();
       }
    }
 
