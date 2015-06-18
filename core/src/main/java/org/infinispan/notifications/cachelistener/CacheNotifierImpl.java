@@ -1166,7 +1166,9 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
 
       @Override
       public void invoke(Event<K, V> event) {
-         doRealInvocation(event);
+         if (shouldInvoke(event)) {
+            doRealInvocation(event);
+         }
       }
 
       /**
@@ -1210,12 +1212,15 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          invocation.invoke(event);
       }
 
+      protected boolean shouldInvoke(Event<K, V> event) {
+         return observation.shouldInvoke(event.isPre());
+      }
+
       protected CacheEntryEvent<K, V> shouldInvoke(CacheEntryEvent<K, V> event, boolean isLocalNodePrimaryOwner) {
          if (onlyPrimary && !isLocalNodePrimaryOwner) return null;
          if (event instanceof EventImpl) {
             EventImpl<K, V> eventImpl = (EventImpl<K, V>)event;
-            boolean isPre = eventImpl.isPre();
-            if (!observation.shouldInvoke(isPre)) return null;
+            if (!shouldInvoke(event)) return null;
             EventType eventType;
             // Only use the filter if it was provided and we have an event that we can filter properly
             if (filter != null && (eventType = getEvent(eventImpl)) != null) {
