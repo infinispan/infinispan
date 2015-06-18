@@ -7,6 +7,9 @@ import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
 import org.hibernate.hql.lucene.LuceneQueryParsingResult;
+import org.hibernate.hql.lucene.internal.builder.ClassBasedLucenePropertyHelper;
+import org.hibernate.hql.lucene.spi.FieldBridgeProvider;
+import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.Util;
@@ -21,6 +24,7 @@ import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.util.KeyValuePair;
 
 import java.security.PrivilegedAction;
+import java.util.Arrays;
 
 /**
  * @author anistor@redhat.com
@@ -137,7 +141,17 @@ public class QueryEngine {
    }
 
    private LuceneQueryParsingResult transformJpaToLucene(String jpqlString) {
-      LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver).buildProcessingChainForClassBasedEntities();
+      FieldBridgeProvider fieldBridgeProvider = new FieldBridgeProvider() {
+
+         private final ClassBasedLucenePropertyHelper propertyHelper = new ClassBasedLucenePropertyHelper(searchFactory, entityNamesResolver);
+
+         @Override
+         public FieldBridge getFieldBridge(String type, String propertyPath) {
+            return propertyHelper.getFieldBridge(type, Arrays.asList(propertyPath.split("[.]")));
+         }
+      };
+      LuceneProcessingChain processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
+            .buildProcessingChainForClassBasedEntities(fieldBridgeProvider);
       return queryParser.parseQuery(jpqlString, processingChain);
    }
 }

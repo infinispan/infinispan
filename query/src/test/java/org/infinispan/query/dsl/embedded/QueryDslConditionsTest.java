@@ -205,6 +205,28 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Doe", list.get(0).getSurname());
    }
 
+   public void testEqEmptyString() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").eq("")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertTrue(list.isEmpty());
+   }
+
+   public void testEqSentence() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getAccountImplClass())
+            .having("description").eq("John Doe's first bank account")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+   }
+
    public void testEq() throws Exception {
       QueryFactory qf = getQueryFactory();
 
