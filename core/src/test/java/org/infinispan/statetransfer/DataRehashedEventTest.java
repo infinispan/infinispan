@@ -31,13 +31,13 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       createClusteredCaches(1, defaultConfig);
-
-      Cache<Object, Object> c1 = cache(0);
-      rehashListener = new DataRehashedListener();
-      c1.addListener(rehashListener);
    }
 
    public void testJoinAndLeave() {
+      Cache<Object, Object> c1 = cache(0);
+      rehashListener = new DataRehashedListener();
+      c1.addListener(rehashListener);
+
       ConsistentHash ch1Node = advancedCache(0).getDistributionManager().getReadConsistentHash();
       assertEquals(rehashListener.removeEvents().size(), 0);
 
@@ -114,6 +114,23 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
       assertEquals(events.size(), 0);
    }
 
+   public void testPostOnlyEvent() {
+      Cache<Object, Object> c1 = cache(0);
+      rehashListener = new DataRehashedListenrPostOnly();
+      c1.addListener(rehashListener);
+
+      ConsistentHash ch1Node = advancedCache(0).getDistributionManager().getReadConsistentHash();
+      assertEquals(rehashListener.removeEvents().size(), 0);
+
+      // start a second node and wait for the rebalance to end
+      addClusterEnabledCacheManager(defaultConfig);
+      cache(1);
+      TestingUtil.waitForRehashToComplete(cache(0), cache(1));
+
+      List<DataRehashedEvent<Object, Object>> events = rehashListener.removeEvents();
+      assertEquals(1, events.size());
+   }
+
    @Listener
    public class DataRehashedListener {
       private volatile List<DataRehashedEvent<Object, Object>> events = new CopyOnWriteArrayList<DataRehashedEvent<Object, Object>>();
@@ -138,5 +155,10 @@ public class DataRehashedEventTest extends MultipleCacheManagersTest {
             }
          });
       }
+   }
+
+   @Listener(observation = Listener.Observation.POST)
+   public class DataRehashedListenrPostOnly extends DataRehashedListener {
+
    }
 }
