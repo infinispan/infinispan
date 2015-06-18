@@ -43,7 +43,7 @@ public abstract class SingleHotRodServerTest extends SingleCacheManagerTest {
       return new InternalRemoteCacheManager(builder.build());
    }
 
-   @AfterClass
+   @AfterClass(alwaysRun = true)
    public void shutDownHotrod() {
       killRemoteCacheManager(remoteCacheManager);
       killServers(hotrodServer);
