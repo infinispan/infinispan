@@ -360,7 +360,7 @@ def release():
   else:
     prettyprint("In dry-run mode.  Not pushing tag to remote origin and not removing temp release branch %s." % git.working_branch, Levels.DEBUG)
   
-  prettyprint("\n\n\nDone!  Now all you need to do is the remaining post-release tasks as outlined in https://docspace.corp.redhat.com/docs/DOC-28594", Levels.INFO)
+  prettyprint("\n\n\nDone!  Now all you need to do is the remaining post-release tasks as outlined in https://mojo.redhat.com/docs/DOC-60994", Levels.INFO)
 
 if __name__ == "__main__":
   release()
