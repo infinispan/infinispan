@@ -347,8 +347,8 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public CreateCacheCommand buildCreateCacheCommand(String tmpCacheName, String defaultTmpCacheConfigurationName, boolean start, int size) {
-      return actual.buildCreateCacheCommand(tmpCacheName, defaultTmpCacheConfigurationName, start, size);
+   public CreateCacheCommand buildCreateCacheCommand(String tmpCacheName, String defaultTmpCacheConfigurationName, int size) {
+      return actual.buildCreateCacheCommand(tmpCacheName, defaultTmpCacheConfigurationName, size);
    }
 
    @Override

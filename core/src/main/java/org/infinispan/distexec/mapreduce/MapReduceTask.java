@@ -27,7 +27,6 @@ import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
-import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -159,7 +158,6 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
    protected RpcOptionsBuilder rpcOptionsBuilder;
    protected String customIntermediateCacheName;
    protected String intermediateCacheConfigurationName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
-   private StateTransferManager stateTransferManager;
    private static final int MAX_COLLECTOR_SIZE = 1000;
 
    /**
@@ -218,7 +216,6 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       this.marshaller = componentRegistry.getComponent(StreamingMarshaller.class, CACHE_MARSHALLER);
       this.mapReduceManager = componentRegistry.getComponent(MapReduceManager.class);
       this.cancellationService = componentRegistry.getComponent(CancellationService.class);
-      this.stateTransferManager = componentRegistry.getComponent(StateTransferManager.class);
       this.taskId = UUID.randomUUID();
       if (useIntermediateSharedCache) {
          this.customIntermediateCacheName = DEFAULT_TMP_CACHE_CONFIGURATION_NAME;
@@ -531,7 +528,9 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       CommandsFactory factory = cache.getComponentRegistry().getComponent(CommandsFactory.class);
 
       //first create tmp caches on all nodes
-      final CreateCacheCommand ccc = factory.buildCreateCacheCommand(tmpCacheName, intermediateCacheConfigurationName, true, rpc.getMembers().size());
+      final CreateCacheCommand ccc = factory.buildCreateCacheCommand(tmpCacheName,
+                                                                     intermediateCacheConfigurationName,
+                                                                     rpc.getMembers().size());
       log.debugf("Invoking %s across members %s ", ccc, cache.getRpcManager().getMembers());
 
       // invoke remotely
@@ -541,12 +540,8 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
       // invoke locally
       try {
          ccc.init(cache.getCacheManager());
-         try {
-            ccc.perform(null);
-         } catch (Throwable e) {
-            throw new MapReduceException("Could not initialize temporary caches for MapReduce task on remote nodes ", e);
-         }
-      } catch (Exception e) {
+         ccc.perform(null);
+      } catch (Throwable e) {
          throw new MapReduceException(e);
       }
 

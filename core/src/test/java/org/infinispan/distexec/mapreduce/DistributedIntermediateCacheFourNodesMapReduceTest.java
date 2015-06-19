@@ -1,13 +1,12 @@
 package org.infinispan.distexec.mapreduce;
 
 
-import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
 
 
@@ -52,18 +51,17 @@ public class DistributedIntermediateCacheFourNodesMapReduceTest extends BaseWord
    @Test(expectedExceptions={CacheException.class})
    public void testIntermediateCacheNotCreatedOnAllNodes() throws Exception {
       String cacheNameConfig = "notCreatedOnAllNodes";
-      Cache c = cache(0, cacheName());
-      MapReduceTask<String, String, String, Integer> t = new MapReduceTask<String, String, String, Integer>(c, true,
-            false);
+      Cache<String, String> c = cache(0, cacheName());
+      MapReduceTask<String, String, String, Integer> t = new MapReduceTask<>(c, true, false);
       ConfigurationBuilder cacheConfig = new ConfigurationBuilder();
-      cacheConfig.unsafe().unreliableReturnValues(true).clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2)
-            .sync();
+      cacheConfig.unsafe().unreliableReturnValues(true)
+                 .clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2)
+                 .stateTransfer().timeout(5, TimeUnit.SECONDS);
 
       //define configuration only on first node
-      Iterator<EmbeddedCacheManager> iterator = getCacheManagers().iterator();
-      iterator.next().defineConfiguration(cacheNameConfig, cacheConfig.build());
+      manager(0).defineConfiguration(cacheNameConfig, cacheConfig.build());
 
-      t.usingIntermediateCache(cacheNameConfig);
+      t.usingSharedIntermediateCache("irrelevant", cacheNameConfig);
       t.mappedWith(new WordCountMapper()).reducedWith(new WordCountReducer());
       t.execute();
    }

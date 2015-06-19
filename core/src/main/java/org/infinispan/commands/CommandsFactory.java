@@ -405,10 +405,9 @@ public interface CommandsFactory {
    /**
     * Builds a CreateCacheCommand used to create/start cache around Infinispan cluster
     *
-    * @param start if true, then this command also makes sure that the cache is started on all the nodes in the cluster.
-    * @param size the expected number of nodes where this node runs
+    * @param size If {@code size > 0}, the command will wait until the cache runs on at least {@code size} nodes.
     */
-   CreateCacheCommand buildCreateCacheCommand(String tmpCacheName, String defaultTmpCacheConfigurationName, boolean start, int size);
+   CreateCacheCommand buildCreateCacheCommand(String tmpCacheName, String defaultTmpCacheConfigurationName, int size);
 
    /**
     * Builds CancelCommandCommand used to cancel other commands executing on Infinispan cluster
