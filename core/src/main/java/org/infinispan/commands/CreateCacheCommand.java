@@ -32,8 +32,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
    private EmbeddedCacheManager cacheManager;
    private String cacheNameToCreate;
    private String cacheConfigurationName;
-   private boolean start;
-   private int size;
+   private int expectedMembers;
 
    private CreateCacheCommand() {
       super(null);
@@ -44,15 +43,15 @@ public class CreateCacheCommand extends BaseRpcCommand {
    }
 
    public CreateCacheCommand(String ownerCacheName, String cacheNameToCreate, String cacheConfigurationName) {
-      this(ownerCacheName, cacheNameToCreate, cacheConfigurationName, false, 0);
+      this(ownerCacheName, cacheNameToCreate, cacheConfigurationName, 0);
    }
 
-   public CreateCacheCommand(String cacheName, String cacheNameToCreate, String cacheConfigurationName, boolean start, int size) {
+   public CreateCacheCommand(String cacheName, String cacheNameToCreate, String cacheConfigurationName,
+                             int expectedMembers) {
       super(cacheName);
       this.cacheNameToCreate = cacheNameToCreate;
       this.cacheConfigurationName = cacheConfigurationName;
-      this.start = start;
-      this.size = size;
+      this.expectedMembers = expectedMembers;
    }
 
    public void init(EmbeddedCacheManager cacheManager) {
@@ -95,9 +94,8 @@ public class CreateCacheCommand extends BaseRpcCommand {
 
       long endTime = timeService.expectedEndTime(cacheConfig.clustering().stateTransfer().timeout(),
             TimeUnit.MILLISECONDS);
-      int expectedSize = cacheManager.getTransport().getMembers().size();
       CacheTopology cacheTopology = stateTransferManager.getCacheTopology();
-      while (cacheTopology.getMembers().size() != expectedSize || cacheTopology.getPendingCH() != null) {
+      while (cacheTopology.getMembers().size() < expectedMembers || cacheTopology.getPendingCH() != null) {
          long remainingTime = timeService.remainingTime(endTime, TimeUnit.NANOSECONDS);
          try {
             stateTransferLock.waitForTopology(cacheTopology.getTopologyId() + 1, remainingTime,
@@ -116,7 +114,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[] {cacheNameToCreate, cacheConfigurationName, start, size};
+      return new Object[]{cacheNameToCreate, cacheConfigurationName, expectedMembers};
    }
 
    @Override
@@ -127,8 +125,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
       int i = 0;
       cacheNameToCreate = (String) parameters[i++];
       cacheConfigurationName = (String) parameters[i++];
-      start = (Boolean) parameters[i++];
-      size = (Integer) parameters[i];
+      expectedMembers = (Integer) parameters[i];
    }
 
    @Override
@@ -167,7 +164,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
       } else if (!cacheNameToCreate.equals(other.cacheNameToCreate)) {
          return false;
       }
-      return this.start == other.start && this.size == other.size;
+      return this.expectedMembers == other.expectedMembers;
    }
 
    @Override
@@ -176,8 +173,7 @@ public class CreateCacheCommand extends BaseRpcCommand {
             "cacheManager=" + cacheManager +
             ", cacheNameToCreate='" + cacheNameToCreate + '\'' +
             ", cacheConfigurationName='" + cacheConfigurationName + '\'' +
-            ", start=" + start + '\'' +
-            ", size=" + size +
+            ", expectedMembers=" + expectedMembers +
             '}';
    }
 

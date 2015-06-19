@@ -580,8 +580,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public CreateCacheCommand buildCreateCacheCommand(String cacheNameToCreate, String cacheConfigurationName, boolean start, int size) {
-      return new CreateCacheCommand(cacheName, cacheNameToCreate, cacheConfigurationName, start, size);
+   public CreateCacheCommand buildCreateCacheCommand(String cacheNameToCreate, String cacheConfigurationName, int size) {
+      return new CreateCacheCommand(cacheName, cacheNameToCreate, cacheConfigurationName, size);
    }
 
    @Override

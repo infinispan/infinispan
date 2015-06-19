@@ -1,14 +1,13 @@
 package org.infinispan.distexec.mapreduce;
 
 
-import java.util.Iterator;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.testng.annotations.Test;
+
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -39,8 +38,7 @@ public class DistributedIntermediateSharedCacheFourNodesMapReduceTest extends Ba
    @Override
    protected MapReduceTask<String, String, String, Integer> createMapReduceTask(Cache c) {
       //run distributed reduce with per task cache - cache specified by the user
-      MapReduceTask<String, String, String, Integer> t = new MapReduceTask<String, String, String, Integer>(c, true,
-            false);
+      MapReduceTask<String, String, String, Integer> t = new MapReduceTask<>(c, true, false);
       ConfigurationBuilder cacheConfig = new ConfigurationBuilder();
       cacheConfig.unsafe().unreliableReturnValues(true)
       .clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2).sync();
@@ -53,16 +51,15 @@ public class DistributedIntermediateSharedCacheFourNodesMapReduceTest extends Ba
    @Test(expectedExceptions={CacheException.class})
    public void testIntermediateCacheNotCreatedOnAllNodes() throws Exception {
       String cacheNameConfig = "notCreatedOnAllNodes";
-      Cache c = cache(0, cacheName());
-      MapReduceTask<String, String, String, Integer> t = new MapReduceTask<String, String, String, Integer>(c, true,
-            false);
+      Cache<String, String> c = cache(0, cacheName());
+      MapReduceTask<String, String, String, Integer> t = new MapReduceTask<>(c, true, false);
       ConfigurationBuilder cacheConfig = new ConfigurationBuilder();
-      cacheConfig.unsafe().unreliableReturnValues(true).clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2)
-            .sync();
+      cacheConfig.unsafe().unreliableReturnValues(true)
+                 .clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(2)
+                 .stateTransfer().timeout(5, TimeUnit.SECONDS);
 
       //define configuration only on first node
-      Iterator<EmbeddedCacheManager> iterator = getCacheManagers().iterator();
-      iterator.next().defineConfiguration(cacheNameConfig, cacheConfig.build());
+      manager(0).defineConfiguration(cacheNameConfig, cacheConfig.build());
 
       t.usingSharedIntermediateCache("irrelevant", cacheNameConfig);
       t.mappedWith(new WordCountMapper()).reducedWith(new WordCountReducer());
