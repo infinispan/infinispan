@@ -64,7 +64,6 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
    private ExecutorService executor;
    private Thread coordinator;
    private int concurrencyLevel;
-   private long shutdownTimeout;
    private String cacheName;
 
    protected BufferLock stateLock;
@@ -85,18 +84,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
       Cache cache = ctx.getCache();
       Configuration cacheCfg = cache != null ? cache.getCacheConfiguration() : null;
       concurrencyLevel = cacheCfg != null ? cacheCfg.locking().concurrencyLevel() : 16;
-      long cacheStopTimeout = cacheCfg != null ? cacheCfg.transaction().cacheStopTimeout() : 30000;
-      Long configuredAsyncStopTimeout = this.asyncConfiguration.shutdownTimeout();
       cacheName = cache != null ? cache.getName() : null;
-
-      // Async store shutdown timeout cannot be bigger than
-      // the overall cache stop timeout, so limit it accordingly.
-      if (configuredAsyncStopTimeout >= cacheStopTimeout) {
-         shutdownTimeout = Math.round(cacheStopTimeout * 0.90);
-         log.asyncStoreShutdownTimeoutTooHigh(configuredAsyncStopTimeout, cacheStopTimeout, shutdownTimeout);
-      } else {
-         shutdownTimeout = configuredAsyncStopTimeout;
-      }
    }
 
    @Override
@@ -105,6 +93,8 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
       state.set(newState(false, null));
       stateLock = new BufferLock(asyncConfiguration.modificationQueueSize());
 
+      // Create a thread pool with unbounded work queue, so that all work is accepted and eventually
+      // executed. A bounded queue could throw RejectedExecutionException and thus lose data.
       int poolSize = asyncConfiguration.threadPoolSize();
       executor = new ThreadPoolExecutor(0, poolSize, 120L, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(),
                                         new ThreadFactory() {
@@ -127,8 +117,17 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
       state.get().stopped = true;
       stateLock.writeUnlock();
       try {
-         coordinator.join(shutdownTimeout);
-         if (coordinator.isAlive())
+         // It is safe to wait without timeout because the thread pool uses an unbounded work queue (i.e.
+         // all work handed to the pool will be accepted and eventually executed) and AsyncStoreProcessors
+         // decrement the workerThreads latch in a finally block (i.e. even if the back-end store throws
+         // java.lang.Error). The coordinator thread can only block forever if the back-end's write() /
+         // remove() methods block, but this is no different from PassivationManager.stop() being blocked
+         // in a synchronous call to write() / remove().
+         coordinator.join();
+         // The coordinator thread waits for AsyncStoreProcessor threads to count down their latch (nearly
+         // at the end). Thus the threads should have terminated or terminate instantly.
+         executor.shutdown();
+         if (!executor.awaitTermination(1, TimeUnit.SECONDS))
             log.errorAsyncStoreNotStopped();
       } catch (InterruptedException e) {
          log.interruptedWaitingAsyncStorePush(e);
@@ -271,22 +270,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
                }
             }
          } finally {
-            try {
-               // Wait for existing workers to finish
-               boolean workersTerminated = false;
-               try {
-                  executor.shutdown();
-                  workersTerminated = executor.awaitTermination(shutdownTimeout, TimeUnit.MILLISECONDS);
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-               }
-               if (!workersTerminated) {
-                  // if the worker threads did not finish cleanly in the allotted time then we try to interrupt them to shut down
-                  executor.shutdownNow();
-               }
-            } finally {
-               LogFactory.popNDC(trace);
-            }
+            LogFactory.popNDC(trace);
          }
       }
 
