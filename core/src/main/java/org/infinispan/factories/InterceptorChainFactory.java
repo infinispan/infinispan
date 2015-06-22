@@ -133,7 +133,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          interceptorChain.appendInterceptor(createInterceptor(new IsMarshallableInterceptor(), IsMarshallableInterceptor.class), false);
 
       // load the cache management interceptor next
-      interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);
+      if (configuration.jmxStatistics().available()) {
+         interceptorChain.appendInterceptor(createInterceptor(new CacheMgmtInterceptor(), CacheMgmtInterceptor.class), false);
+      }
 
       // load the state transfer lock interceptor
       // the state transfer lock ensures that the cache member list is up-to-date

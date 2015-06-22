@@ -821,6 +821,10 @@ public class Parser72 implements ConfigurationParser {
             builder.jmxStatistics().enabled(Boolean.valueOf(value));
             break;
          }
+         case STATISTICS_AVAILABLE: {
+            builder.jmxStatistics().available(Boolean.valueOf(value));
+            break;
+         }
          case SPIN_DURATION: {
             long spin = Long.parseLong(value);
             if (spin > 0)
