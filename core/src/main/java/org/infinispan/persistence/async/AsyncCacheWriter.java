@@ -167,7 +167,7 @@ public class AsyncCacheWriter extends DelegatingCacheWriter {
    }
 
 
-   State newState(boolean clear, State next) {
+   protected State newState(boolean clear, State next) {
       ConcurrentMap<Object, Modification> map = CollectionFactory.makeConcurrentMap(64, concurrencyLevel);
       return new State(clear, map, next);
    }
