@@ -24,7 +24,7 @@ public class HotRodPlainAuthLdapIT extends HotRodSaslAuthTestBase {
    
    @BeforeClass
    public static void kerberosSetup() throws Exception {
-      ldap = new ApacheDsLdap("localhost");
+      ldap = new ApacheDsLdap();
       ldap.start();
    }
 

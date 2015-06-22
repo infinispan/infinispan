@@ -12,7 +12,7 @@ import org.junit.runner.RunWith;
 
 /**
  * 
- * @author vjuranek
+ * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
 @RunWith(Arquillian.class)

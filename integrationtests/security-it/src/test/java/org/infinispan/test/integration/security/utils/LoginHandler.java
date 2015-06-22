@@ -9,7 +9,7 @@ import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 
 /** 
- * @author vjuranek
+ * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
 public class LoginHandler implements CallbackHandler {
