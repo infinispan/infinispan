@@ -13,25 +13,32 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 public class JMXStatisticsConfiguration {
 
    public static final AttributeDefinition<Boolean> ENABLED = AttributeDefinition.builder("enabled", false).build();
+   public static final AttributeDefinition<Boolean> AVAILABLE = AttributeDefinition.builder("available", true).build();
    static AttributeSet attributeDefinitionSet() {
-      return new AttributeSet(JMXStatisticsConfiguration.class, ENABLED);
+      return new AttributeSet(JMXStatisticsConfiguration.class, ENABLED, AVAILABLE);
    }
 
    private final Attribute<Boolean> enabled;
+   private final Attribute<Boolean> available;
    private final AttributeSet attributes;
 
    /**
     * Enable or disable statistics gathering and reporting
     *
-    * @param enabled
+    * @param attributes
     */
    JMXStatisticsConfiguration(AttributeSet attributes) {
       this.attributes = attributes.checkProtection();
       enabled = attributes.attribute(ENABLED);
+      available = attributes.attribute(AVAILABLE);
    }
 
    public boolean enabled() {
       return enabled.get();
+   }
+
+   public boolean available() {
+      return available.get();
    }
 
    public AttributeSet attributes() {
