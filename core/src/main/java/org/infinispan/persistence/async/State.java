@@ -40,7 +40,7 @@ public class State {
     */
    CountDownLatch workerThreads;
 
-   State(boolean clear, ConcurrentMap<Object, Modification> modMap, State next) {
+   public State(boolean clear, ConcurrentMap<Object, Modification> modMap, State next) {
       this.clear = clear;
       this.modifications = modMap;
       this.next = next;
