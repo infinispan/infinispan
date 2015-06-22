@@ -566,12 +566,6 @@ public interface Log extends BasicLogger {
    void couldNotRollbackPrepared1PcTransaction(LocalTransaction localTransaction, @Cause Throwable e1);
 
    @LogMessage(level = WARN)
-   @Message(value = "The async store shutdown timeout (%d ms) is too high compared " +
-         "to cache stop timeout (%d ms), so instead using %d ms for async store stop wait", id = 142)
-   void asyncStoreShutdownTimeoutTooHigh(long configuredAsyncStopTimeout,
-      long cacheStopTimeout, long asyncStopTimeout);
-
-   @LogMessage(level = WARN)
    @Message(value = "Received a key that doesn't map to this node: %s, mapped to %s", id = 143)
    void keyDoesNotMapToLocalNode(Object key, Collection<Address> nodes);
 
