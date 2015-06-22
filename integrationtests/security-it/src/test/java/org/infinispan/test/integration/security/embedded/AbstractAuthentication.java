@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * @author vjuranek
+ * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
 public abstract class AbstractAuthentication {

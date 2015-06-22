@@ -1,5 +1,4 @@
-
- package org.infinispan.test.integration.security.utils;
+package org.infinispan.test.integration.security.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -22,7 +21,7 @@ import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 
  /**
- * @author vjuranek
+ * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
 public class ApacheDsLdap {
@@ -34,9 +33,9 @@ public class ApacheDsLdap {
    protected DirectoryService directoryService;
    protected LdapServer ldapServer;
 
-   public ApacheDsLdap(String hostname) throws Exception {
+   public ApacheDsLdap() throws Exception {
       createDs();
-      createLdap(hostname);
+      createLdap();
    }
   
    public void start() throws Exception {
@@ -74,7 +73,7 @@ public class ApacheDsLdap {
    }
    
    @CreateLdapServer(transports = { @CreateTransport( protocol = "LDAP",  port = LDAP_PORT) })
-   public void createLdap(final String hostname) throws Exception {
+   public void createLdap() throws Exception {
       final String initFile = System.getProperty("ldap.init.file", LDAP_INIT_FILE);
       final String ldifContent = IOUtils.toString(getClass().getClassLoader().getResource(initFile));
       final SchemaManager schemaManager = directoryService.getSchemaManager();

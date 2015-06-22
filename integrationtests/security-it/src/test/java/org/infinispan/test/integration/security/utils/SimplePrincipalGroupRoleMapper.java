@@ -17,7 +17,7 @@ import org.jboss.security.SimplePrincipal;
  * roles. These principals are assumed to be {@link SimplePrincipal}s. {@link SimpleGroup} of
  * {@link SimplePrincipal}s is returned by WildFly logging modules, e.g. AdvancedLdapLoginModule.
  * 
- * @author vjuranek
+ * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
 public class SimplePrincipalGroupRoleMapper implements PrincipalRoleMapper {

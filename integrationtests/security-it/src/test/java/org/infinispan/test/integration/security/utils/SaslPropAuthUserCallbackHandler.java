@@ -12,7 +12,7 @@ import javax.security.sasl.RealmCallback;
 
 /**
  * 
- * @author vjuranek
+ * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
 public class SaslPropAuthUserCallbackHandler implements CallbackHandler {

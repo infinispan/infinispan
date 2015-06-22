@@ -30,8 +30,8 @@ import org.apache.directory.server.ldap.handlers.sasl.plain.PlainMechanismHandle
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
 
-/** 
- * @author vjuranek
+/**
+ * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
 public class ApacheDsKrbLdap {
@@ -51,18 +51,18 @@ public class ApacheDsKrbLdap {
       createKdc();
       createLdap(hostname);
    }
-  
+
    public void start() throws Exception {
       ldapServer.start();
    }
-   
+
    public void stop() throws Exception {
       kdcServer.stop();
       ldapServer.stop();
       directoryService.shutdown();
       FileUtils.deleteDirectory(directoryService.getInstanceLayout().getInstanceDirectory());
    }
-   
+
    @CreateDS(
          name = "InfinispanDS",
          partitions = {
@@ -71,50 +71,52 @@ public class ApacheDsKrbLdap {
                      suffix = BASE_DN,
                      contextEntry = @ContextEntry(
                            entryLdif =
-                           "dn: " + BASE_DN + "\n" +
-                           "dc: infinispan\n" +
-                           "objectClass: top\n" +
-                           "objectClass: domain\n\n" ),
-                           indexes = {
-                              @CreateIndex( attribute = "objectClass" ),
-                              @CreateIndex( attribute = "dc" ),
-                              @CreateIndex( attribute = "ou" )
-                           }
-                     )
+                                 "dn: " + BASE_DN + "\n" +
+                                       "dc: infinispan\n" +
+                                       "objectClass: top\n" +
+                                       "objectClass: domain\n\n"),
+                     indexes = {
+                           @CreateIndex(attribute = "objectClass"),
+                           @CreateIndex(attribute = "dc"),
+                           @CreateIndex(attribute = "ou")
+                     }
+               )
          },
-         additionalInterceptors = { KeyDerivationInterceptor.class }
+         additionalInterceptors = {
+               KeyDerivationInterceptor.class
+         }
    )
    public void createDs() throws Exception {
       directoryService = DSAnnotationProcessor.getDirectoryService();
    }
-   
+
    @CreateKdcServer(
          primaryRealm = KERBEROS_PRIMARY_REALM,
          kdcPrincipal = "krbtgt/" + KERBEROS_PRIMARY_REALM + "@" + KERBEROS_PRIMARY_REALM,
          searchBaseDn = BASE_DN,
-         transports = {@CreateTransport( protocol = "UDP", port = KERBEROS_PORT)}
+         transports = {@CreateTransport(protocol = "UDP", port = KERBEROS_PORT)}
    )
    public void createKdc() throws Exception {
-      kdcServer = ServerAnnotationProcessor.getKdcServer(directoryService, KERBEROS_PORT);
+      kdcServer = KdcServerAnnotationProcessor.getKdcServer(directoryService);
    }
-   
+
    @CreateLdapServer(
-         transports = { @CreateTransport( protocol = "LDAP",  port = LDAP_PORT) },
+         transports = {@CreateTransport(protocol = "LDAP", port = LDAP_PORT)},
          saslRealms = {KERBEROS_PRIMARY_REALM},
          saslMechanisms = {
-               @SaslMechanism( name=SupportedSaslMechanisms.GSSAPI, implClass=GssapiMechanismHandler.class),
-               @SaslMechanism( name= SupportedSaslMechanisms.PLAIN, implClass=PlainMechanismHandler.class ),
-               @SaslMechanism( name=SupportedSaslMechanisms.CRAM_MD5, implClass=CramMd5MechanismHandler.class),
-               @SaslMechanism( name= SupportedSaslMechanisms.DIGEST_MD5, implClass=DigestMd5MechanismHandler.class),
-               @SaslMechanism( name=SupportedSaslMechanisms.NTLM, implClass=NtlmMechanismHandler.class),
-               @SaslMechanism( name=SupportedSaslMechanisms.GSS_SPNEGO, implClass=NtlmMechanismHandler.class)
+               @SaslMechanism(name = SupportedSaslMechanisms.GSSAPI, implClass = GssapiMechanismHandler.class),
+               @SaslMechanism(name = SupportedSaslMechanisms.PLAIN, implClass = PlainMechanismHandler.class),
+               @SaslMechanism(name = SupportedSaslMechanisms.CRAM_MD5, implClass = CramMd5MechanismHandler.class),
+               @SaslMechanism(name = SupportedSaslMechanisms.DIGEST_MD5, implClass = DigestMd5MechanismHandler.class),
+               @SaslMechanism(name = SupportedSaslMechanisms.NTLM, implClass = NtlmMechanismHandler.class),
+               @SaslMechanism(name = SupportedSaslMechanisms.GSS_SPNEGO, implClass = NtlmMechanismHandler.class)
          }
    )
    public void createLdap(final String hostname) throws Exception {
       final String initFile = System.getProperty("ldap.init.file", LDAP_INIT_FILE);
       final String ldifContent = IOUtils.toString(getClass().getClassLoader().getResource(initFile));
       final SchemaManager schemaManager = directoryService.getSchemaManager();
-     
+
       try {
          for (LdifEntry ldifEntry : new LdifReader(IOUtils.toInputStream(ldifContent))) {
             directoryService.getAdminSession().add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
@@ -123,11 +125,10 @@ public class ApacheDsKrbLdap {
          log.error("Error adding ldif entries", e);
          throw e;
       }
-      final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);    
+      final CreateLdapServer createLdapServer = (CreateLdapServer) AnnotationUtils.getInstance(CreateLdapServer.class);
       ldapServer = ServerAnnotationProcessor.instantiateLdapServer(createLdapServer, directoryService);
       ldapServer.setSearchBaseDn(BASE_DN);
       ldapServer.setSaslHost(hostname);
       ldapServer.setSaslPrincipal("ldap/" + hostname + "@" + KERBEROS_PRIMARY_REALM);
    }
-
 }

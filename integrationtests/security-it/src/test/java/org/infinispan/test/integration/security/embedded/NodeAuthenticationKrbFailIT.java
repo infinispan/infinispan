@@ -1,40 +1,31 @@
 package org.infinispan.test.integration.security.embedded;
 
-import org.infinispan.test.integration.security.utils.ApacheDsKrbLdap;
 import org.infinispan.test.integration.security.utils.Deployments;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.OperateOnDeployment;
 import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.junit.InSequence;
+import org.jboss.as.arquillian.api.ServerSetup;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * 
- * @author vjuranek
+ * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
 @RunWith(Arquillian.class)
+@ServerSetup({
+      NodeAuthenticationKrbFailIT.KerberosSystemPropertiesSetupTask.class,
+      NodeAuthenticationKrbFailIT.SecurityDomainsSetupTask.class,
+      NodeAuthenticationKrbFailIT.SecurityTraceLoggingServerSetupTask.class,
+      NodeAuthenticationKrbFailIT.KrbLdapServerSetupTask.class,
+      NodeAuthenticationKrbFailIT.Krb5ConfServerSetupTask.class
+})
 public class NodeAuthenticationKrbFailIT extends AbstractNodeAuthentication {
 
    protected static final String JOINING_NODE = "node1";
-
-   private static ApacheDsKrbLdap krbLdapServer;
-
-   @BeforeClass
-   public static void kerberosSetup() throws Exception {
-      krbLdapServer = new ApacheDsKrbLdap("127.0.0.1");
-      krbLdapServer.start();
-   }
-
-   @AfterClass
-   public static void ldapTearDown() throws Exception {
-      krbLdapServer.stop();
-   }
 
    @Override
    protected String getCoordinatorNodeConfig() {
@@ -70,5 +61,4 @@ public class NodeAuthenticationKrbFailIT extends AbstractNodeAuthentication {
    public void testReadItemOnJoiningNode() throws Exception {
       super.testReadItemOnJoiningNode();
    }
-
 }
