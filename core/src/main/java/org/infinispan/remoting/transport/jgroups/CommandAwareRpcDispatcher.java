@@ -37,6 +37,7 @@ import org.jgroups.util.RspList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.remoting.transport.jgroups.JGroupsTransport.fromJGroupsAddress;
@@ -257,7 +258,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
       SingleResponseFuture retval = new SingleResponseFuture(request);
       if (timeout > 0 && !retval.isDone()) {
-         timeoutExecutor.schedule(retval::timeout, timeout, TimeUnit.MILLISECONDS);
+         ScheduledFuture<?> future = timeoutExecutor.schedule(retval::timeout, timeout, TimeUnit.MILLISECONDS);
+         retval.whenComplete((r, t) -> future.cancel(false));
       }
       return retval;
    }
@@ -314,7 +316,8 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          }
       }
       if (timeout > 0 && !retval.isDone()) {
-         timeoutExecutor.schedule(retval::timeout, timeout, TimeUnit.MILLISECONDS);
+         ScheduledFuture<?> future = timeoutExecutor.schedule(retval::timeout, timeout, TimeUnit.MILLISECONDS);
+         retval.whenComplete((r, t) -> future.cancel(false));
       }
       return retval;
    }
