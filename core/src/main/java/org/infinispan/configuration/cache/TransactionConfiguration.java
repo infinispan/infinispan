@@ -1,7 +1,5 @@
 package org.infinispan.configuration.cache;
 
-import java.util.concurrent.TimeUnit;
-
 import org.infinispan.commons.configuration.attributes.Attribute;
 import org.infinispan.commons.configuration.attributes.AttributeDefinition;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
@@ -12,6 +10,8 @@ import org.infinispan.transaction.TransactionProtocol;
 import org.infinispan.transaction.lookup.GenericTransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
 import org.infinispan.transaction.lookup.TransactionSynchronizationRegistryLookup;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Defines transactional (JTA) characteristics of the cache.
