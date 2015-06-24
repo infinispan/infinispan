@@ -367,6 +367,9 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    @Override
    public Iterator<Cache.Entry<K, V>> iterator() {
+      if (isClosed()) {
+         throw log.cacheClosed(cache.getStatus());
+      }
       return new Itr();
    }
 
@@ -498,6 +501,9 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
 
    @Override
    public void removeAll() {
+      if (isClosed()) {
+         throw log.cacheClosed(cache.getStatus());
+      }
       // Calling cache.clear() won't work since there's currently no way to
       // for an Infinispan cache store to figure out all keys store and pass
       // them to CacheWriter.deleteAll(), hence, delete individually.

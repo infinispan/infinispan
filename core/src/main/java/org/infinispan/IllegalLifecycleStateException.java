@@ -1,5 +1,7 @@
 package org.infinispan;
 
+import org.infinispan.commons.CacheException;
+
 /**
  * This exception is thrown when the cache or cache manager does not have the
  * right lifecycle state for operations to be called on it. Situations like
@@ -8,7 +10,7 @@ package org.infinispan;
  *
  * @since 7.0
  */
-public class IllegalLifecycleStateException extends IllegalStateException {
+public class IllegalLifecycleStateException extends CacheException {
    public IllegalLifecycleStateException() {
    }
 

@@ -1,6 +1,7 @@
 package org.infinispan.manager;
 
 import org.infinispan.Cache;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfigurationFor;
@@ -240,7 +241,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test(expectedExceptions = IllegalStateException.class)
+   @Test(expectedExceptions = IllegalLifecycleStateException.class)
    public void testCacheStopManagerStopFollowedByGetCache() {
       EmbeddedCacheManager localCacheManager = createCacheManager(false);
       try {
@@ -254,7 +255,7 @@ public class CacheManagerTest extends AbstractInfinispanTest {
       }
    }
 
-   @Test(expectedExceptions = IllegalStateException.class)
+   @Test(expectedExceptions = IllegalLifecycleStateException.class)
    public void testCacheStopManagerStopFollowedByCacheOp() {
       EmbeddedCacheManager localCacheManager = createCacheManager(false);
       try {
