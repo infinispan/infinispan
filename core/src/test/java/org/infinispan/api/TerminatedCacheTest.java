@@ -1,6 +1,7 @@
 package org.infinispan.api;
 
 import org.infinispan.Cache;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -22,7 +23,7 @@ public class TerminatedCacheTest extends SingleCacheManagerTest {
       return TestCacheManagerFactory.createCacheManager(false);
    }
 
-   @Test(expectedExceptions = IllegalStateException.class)
+   @Test(expectedExceptions = IllegalLifecycleStateException.class)
    public void testCacheStopFollowedByGetCache() {
       Cache cache = cacheManager.getCache();
       cache.put("k", "v");
@@ -31,7 +32,7 @@ public class TerminatedCacheTest extends SingleCacheManagerTest {
       cache2.put("k", "v2");
    }
 
-   @Test(expectedExceptions = IllegalStateException.class)
+   @Test(expectedExceptions = IllegalLifecycleStateException.class)
    public void testCacheStopFollowedByCacheOp() {
       Cache cache = cacheManager.getCache("big");
       cache.put("k", "v");

@@ -1,6 +1,7 @@
 package org.infinispan.tx;
 
 import org.infinispan.Cache;
+import org.infinispan.IllegalLifecycleStateException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
@@ -48,7 +49,7 @@ public class TerminatedCacheWhileInTxTest extends SingleCacheManagerTest {
     * on-going transactions or non-transactional invocations are not allowed
     * once the cache is in stopping mode.
     */
-   @Test(expectedExceptions = IllegalStateException.class)
+   @Test(expectedExceptions = IllegalLifecycleStateException.class)
    public void testNotAllowCallsWhileStopping(Method m) throws Throwable {
       stopCacheCalls(m, true);
    }
