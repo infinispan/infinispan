@@ -22,8 +22,7 @@ import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.transaction.TransactionMode;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * Abstract class for query tests for uber jars.
@@ -58,17 +57,16 @@ public abstract class AbstractQueryTest {
       QueryBuilder queryBuilder = new QueryBuilder(STANDARD_ANALYZER);
       Query query = queryBuilder.createBooleanQuery(fieldName, searchString);
       SearchManager queryFactory = Search.getSearchManager(m_cache);
-      CacheQuery cacheQuery = queryFactory.getQuery(query);
-
-      return cacheQuery;
+      return queryFactory.getQuery(query);
    }
 
-   protected void assertIndexingKnows(Cache<Object, Object> cache, Class<?>... types) {
-      ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
+   protected void assertIndexingKnows(BasicCache<?, ?> cache, Class<?>... types) {
+      ComponentRegistry cr = ((Cache) cache).getAdvancedCache().getComponentRegistry();
       SearchIntegrator searchIntegrator = cr.getComponent(SearchIntegrator.class);
       assertNotNull(searchIntegrator);
-
-      assertEquals(new HashSet<Class<?>>(Arrays.asList(types)), searchIntegrator.getIndexedTypes());
+      HashSet<Class<?>> expectedTypes = new HashSet<Class<?>>(Arrays.asList(types));
+      HashSet<Class<?>> indexedTypes = new HashSet<Class<?>>(searchIntegrator.getIndexedTypes());
+      assertEquals(expectedTypes,  indexedTypes);
    }
 
    protected static BasicCache<Object, Object> getCacheForWrite() {
