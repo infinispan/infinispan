@@ -68,6 +68,11 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    }
 
    @Override
+   public ReflectionPropertyHelper getPropertyHelper() {
+      return propertyHelper;
+   }
+
+   @Override
    protected MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> createMetadataAdapter(Class<?> clazz) {
       return new MetadataAdapterImpl(clazz);
    }

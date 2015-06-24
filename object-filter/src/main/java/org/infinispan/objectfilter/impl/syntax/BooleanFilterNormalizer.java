@@ -248,6 +248,6 @@ public final class BooleanFilterNormalizer {
    };
 
    public BooleanExpr normalize(BooleanExpr booleanExpr) {
-      return booleanExpr.acceptVisitor(simplifierVisitor);
+      return booleanExpr == null ? null : booleanExpr.acceptVisitor(simplifierVisitor);
    }
 }

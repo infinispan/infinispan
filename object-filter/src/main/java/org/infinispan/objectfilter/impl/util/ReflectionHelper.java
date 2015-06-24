@@ -24,6 +24,9 @@ public final class ReflectionHelper {
       //todo [anistor] use this info to validate the query uses the types correctly
       Class<?> getPropertyType();
 
+      /**
+       * Indicates if this is a repeated property (ie. array or collection).
+       */
       boolean isMultiple();
 
       Object getValue(Object instance);

@@ -17,15 +17,16 @@ import java.util.NoSuchElementException;
  * @author anistor@redhat.com
  * @since 8.0
  */
-//todo [anistor] make local
-public final class HybridQuery extends BaseEmbeddedQuery {
+class HybridQuery extends BaseEmbeddedQuery {
 
-   private final ObjectFilter objectFilter;
+   protected final ObjectFilter objectFilter;
 
-   private final Query baseQuery;
+   protected final Query baseQuery;
 
-   //todo [anistor] make local
-   public HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, ObjectFilter objectFilter, long startOffset, int maxResults, Query baseQuery) {
+   HybridQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery,
+               ObjectFilter objectFilter,
+               long startOffset, int maxResults,
+               Query baseQuery) {
       super(queryFactory, cache, jpaQuery, objectFilter.getProjection(), startOffset, maxResults);
       this.objectFilter = objectFilter;
       this.baseQuery = baseQuery;
@@ -38,13 +39,13 @@ public final class HybridQuery extends BaseEmbeddedQuery {
 
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
-      final Iterator<Object> it = baseQuery.list().iterator();
-
       return new CloseableIterator<ObjectFilter.FilterResult>() {
+
+         private final Iterator<?> it = getBaseIterator();
 
          private ObjectFilter.FilterResult nextResult = null;
 
-         private boolean ready = false;
+         private boolean isReady = false;
 
          @Override
          public void close() {
@@ -58,8 +59,9 @@ public final class HybridQuery extends BaseEmbeddedQuery {
 
          @Override
          public ObjectFilter.FilterResult next() {
-            if (hasNext()) {
-               ready = false;
+            update();
+            if (nextResult != null) {
+               isReady = false;
                return nextResult;
             } else {
                throw new NoSuchElementException();
@@ -67,17 +69,21 @@ public final class HybridQuery extends BaseEmbeddedQuery {
          }
 
          private void update() {
-            if (!ready) {
+            if (!isReady) {
                if (it.hasNext()) {
                   Object next = it.next();
                   nextResult = objectFilter.filter(next);
                } else {
                   nextResult = null;
                }
-               ready = true;
+               isReady = true;
             }
          }
       };
+   }
+
+   protected Iterator<?> getBaseIterator() {
+      return baseQuery.list().iterator();
    }
 
    @Override

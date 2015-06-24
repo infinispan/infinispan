@@ -20,7 +20,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public class JPAProtobufFilterAndConverter<K> extends JPAFilterAndConverter<K, ProtobufValueWrapper> {
+public final class JPAProtobufFilterAndConverter<K> extends JPAFilterAndConverter<K, ProtobufValueWrapper> {
 
    public JPAProtobufFilterAndConverter(String jpaQuery) {
       super(jpaQuery, ProtobufMatcher.class);

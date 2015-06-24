@@ -72,6 +72,11 @@ public final class ProtobufMatcher extends BaseMatcher<Descriptor, FieldDescript
    }
 
    @Override
+   public ProtobufPropertyHelper getPropertyHelper() {
+      return propertyHelper;
+   }
+
+   @Override
    protected MetadataAdapter<Descriptor, FieldDescriptor, Integer> createMetadataAdapter(Descriptor messageDescriptor) {
       return new MetadataAdapterImpl(messageDescriptor);
    }

@@ -25,7 +25,7 @@ public class ProtobufMatcherTest extends AbstractMatcherTest {
    }
 
    @Override
-   public FilterQueryFactory createQueryFactory() {
+   protected FilterQueryFactory createQueryFactory() {
       return queryFactory;
    }
 

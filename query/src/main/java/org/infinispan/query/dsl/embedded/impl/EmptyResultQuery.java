@@ -15,11 +15,9 @@ import java.util.NoSuchElementException;
  * @author anistor@redhat.com
  * @since 8.0
  */
-//todo [anistor] make local
-public final class EmptyResultQuery extends BaseEmbeddedQuery {
+final class EmptyResultQuery extends BaseEmbeddedQuery {
 
-   //todo [anistor] make local
-   public EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, long startOffset, int maxResults) {
+   EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, long startOffset, int maxResults) {
       super(queryFactory, cache, jpaQuery, null, startOffset, maxResults);
    }
 

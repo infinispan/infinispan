@@ -16,13 +16,13 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 /**
- * Base class for embedded-mode query implementations.
+ * Base class for embedded-mode query implementations. Subclasses need to implement {@link #getIterator()} and {@link
+ * #getComparator()} methods and this class will take care of sorting (fully in-memory).
  *
  * @author anistor@redhat.com
  * @since 8.0
  */
-//todo [anistor] make local
-public abstract class BaseEmbeddedQuery extends BaseQuery {
+abstract class BaseEmbeddedQuery extends BaseQuery {
 
    private static final int INITIAL_CAPACITY = 1000;
 
@@ -31,7 +31,7 @@ public abstract class BaseEmbeddedQuery extends BaseQuery {
    /**
     * The cached results, lazily evaluated.
     */
-   private List results;
+   private List<Object> results;
 
    private int resultSize;
 
@@ -62,20 +62,23 @@ public abstract class BaseEmbeddedQuery extends BaseQuery {
       if (results == null) {
          results = listInternal();
       }
-      return results;
+      return (List<T>) results;
    }
 
-   private List listInternal() {
-      List results;
+   private List<Object> listInternal() {
+      List<Object> results;
 
       CloseableIterator<ObjectFilter.FilterResult> iterator = getIterator();
-      Comparator<Comparable[]> comparator = getComparator();
+      if (!iterator.hasNext()) {
+         return Collections.emptyList();
+      }
 
+      Comparator<Comparable[]> comparator = getComparator();
       if (comparator == null) {
          // collect unsorted results and get the requested page if any was specified
          try {
             if (iterator.hasNext()) {
-               results = new ArrayList(INITIAL_CAPACITY);
+               results = new ArrayList<Object>(INITIAL_CAPACITY);
                while (iterator.hasNext()) {
                   ObjectFilter.FilterResult entry = iterator.next();
                   resultSize++;
@@ -151,6 +154,10 @@ public abstract class BaseEmbeddedQuery extends BaseQuery {
             '}';
    }
 
+   /**
+    * Compares two {@link ObjectFilter.FilterResult} objects based on a given {@link Comparator} and reverses the
+    * result.
+    */
    private static class ReverseFilterResultComparator implements Comparator<ObjectFilter.FilterResult> {
 
       private final Comparator<Comparable[]> comparator;

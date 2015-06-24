@@ -1,9 +1,10 @@
-package org.infinispan.query.remote.indexing;
+package org.infinispan.query.remote;
 
 import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
 import org.infinispan.protostream.descriptors.Descriptor;
 import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.protostream.descriptors.JavaType;
+import org.infinispan.query.remote.indexing.IndexingMetadata;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.IndexedFieldProvider {
+final class ProtobufIndexedFieldProvider implements BooleShannonExpansion.IndexedFieldProvider {
 
    private final Descriptor messageDescriptor;
 

@@ -8,7 +8,7 @@ import java.util.Iterator;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class ReflectionMatcherEvalContext extends MatcherEvalContext<Class<?>, ReflectionHelper.PropertyAccessor, String> {
+public final class ReflectionMatcherEvalContext extends MatcherEvalContext<Class<?>, ReflectionHelper.PropertyAccessor, String> {
 
    private final Class<?> entityType;
 

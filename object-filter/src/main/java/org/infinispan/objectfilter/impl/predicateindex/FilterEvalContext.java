@@ -57,9 +57,9 @@ public final class FilterEvalContext {
     * Returns the result of the filter. This method should be called only after the evaluation of all predicates (except
     * the ones that were suspended).
     *
-    * @return true if the filter matches the given input, false otherwise
+    * @return {@code true} if the filter matches the given input, {@code false} otherwise
     */
-   public boolean getMatchResult() {
+   public boolean isMatching() {
       return treeCounters[0] == BETree.EXPR_TRUE;
    }
 

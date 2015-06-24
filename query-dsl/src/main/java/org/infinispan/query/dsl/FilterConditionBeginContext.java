@@ -10,6 +10,8 @@ public interface FilterConditionBeginContext {
 
    FilterConditionEndContext having(String attributePath);
 
+   FilterConditionEndContext having(Expression expression);
+
    FilterConditionBeginContext not();
 
    FilterConditionContext not(FilterConditionContext fcc);

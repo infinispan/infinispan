@@ -53,4 +53,9 @@ public class NoOpVisitor implements Visitor {
    public ValueExpr visit(PropertyValueExpr propertyValueExpr) {
       return propertyValueExpr;
    }
+
+   @Override
+   public ValueExpr visit(AggregationExpr aggregationExpr) {
+      return aggregationExpr;
+   }
 }

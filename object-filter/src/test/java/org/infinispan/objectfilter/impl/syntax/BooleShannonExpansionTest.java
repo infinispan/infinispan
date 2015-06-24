@@ -30,7 +30,7 @@ public class BooleShannonExpansionTest {
     */
    private void assertExpectedTree(String jpaQuery, String expectedExprStr, String expectedJpa) {
       FilterParsingResult<Class<?>> parsingResult = queryParser.parseQuery(jpaQuery, FilterProcessingChain.build(entityNamesResolver, propertyHelper, null));
-      BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getQuery());
+      BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
 
       BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(new BooleShannonExpansion.IndexedFieldProvider() {
          @Override

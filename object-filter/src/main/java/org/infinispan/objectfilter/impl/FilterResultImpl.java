@@ -17,6 +17,9 @@ public final class FilterResultImpl implements ObjectFilter.FilterResult {
    private final Comparable[] sortProjection;
 
    public FilterResultImpl(Object instance, Object[] projection, Comparable[] sortProjection) {
+      if (instance != null && projection != null) {
+         throw new IllegalArgumentException("instance and projection cannot be both non-null");
+      }
       if (instance == null && projection == null) {
          throw new IllegalArgumentException("instance and projection cannot be both null");
       }

@@ -9,9 +9,9 @@ package org.infinispan.objectfilter;
 public interface SortField {
 
    /**
-    * The '.' separated field path.
+    * The field path.
     */
-   String getPath();
+   PropertyPath getPath();
 
    /**
     * Indicates if sorting is ascending or descending.

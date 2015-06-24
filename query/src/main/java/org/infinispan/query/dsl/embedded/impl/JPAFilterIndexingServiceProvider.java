@@ -241,7 +241,7 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
             if (filterAndConvert && event instanceof EventImpl) {
                EventImpl<K, V> eventImpl = (EventImpl<K, V>) event;
                EventImpl<K, V> clone = eventImpl.clone();
-               clone.setValue((V) makeFilterResult(instance, projection, sortProjection));
+               clone.setValue((V) makeFilterResult(projection == null ? instance : null, projection, sortProjection));
                event = clone;
             }
             for (DelegatingCacheEntryListenerInvocation<K, V> invocation : invocations) {

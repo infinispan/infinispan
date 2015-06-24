@@ -108,6 +108,11 @@ public final class BooleShannonExpansion {
       public ValueExpr visit(PropertyValueExpr propertyValueExpr) {
          return propertyValueExpr;
       }
+
+      @Override
+      public ValueExpr visit(AggregationExpr aggregationExpr) {
+         return aggregationExpr;
+      }
    }
 
    private static class Replacer implements Visitor {
@@ -208,6 +213,11 @@ public final class BooleShannonExpansion {
          return propertyValueExpr;
       }
 
+      @Override
+      public ValueExpr visit(AggregationExpr aggregationExpr) {
+         return aggregationExpr;
+      }
+
       private BooleanExpr replacePredicate(PrimaryPredicateExpr primaryPredicateExpr) {
          switch (PredicateOptimisations.comparePrimaryPredicates(false, primaryPredicateExpr, false, toReplace)) {
             case 0:
@@ -222,6 +232,13 @@ public final class BooleShannonExpansion {
       }
    }
 
+   /**
+    * Creates a less restrictive (expanded) query that matches the same objects as the input query plus potentially some
+    * more.
+    *
+    * @param booleanExpr the expression to expand
+    * @return the expanded query if some of the fields are non-indexed or the input query if all fields are indexed
+    */
    public BooleanExpr expand(BooleanExpr booleanExpr) {
       if (booleanExpr instanceof ConstantBooleanExpr) {
          return booleanExpr;

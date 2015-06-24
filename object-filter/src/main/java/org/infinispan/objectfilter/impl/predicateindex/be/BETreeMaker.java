@@ -33,7 +33,9 @@ public final class BETreeMaker<AttributeId extends Comparable<AttributeId>> {
       List<BENode> nodes = new ArrayList<BENode>();
       List<Integer> treeCounters = new ArrayList<Integer>();
 
-      if (booleanExpr instanceof ConstantBooleanExpr) {
+      if (booleanExpr == null) {
+         treeCounters.add(BETree.EXPR_TRUE);
+      } else if (booleanExpr instanceof ConstantBooleanExpr) {
          treeCounters.add(((ConstantBooleanExpr) booleanExpr).getValue() ? BETree.EXPR_TRUE : BETree.EXPR_FALSE);
       } else {
          preorderTraversal(null, booleanExpr, nodes, treeCounters);

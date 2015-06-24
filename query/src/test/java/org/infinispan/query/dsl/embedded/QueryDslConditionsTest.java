@@ -1,19 +1,10 @@
 package org.infinispan.query.dsl.embedded;
 
-import static org.junit.Assert.*;
-import static org.testng.Assert.assertNotEquals;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-
 import org.hibernate.hql.ParsingException;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.query.Search;
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
@@ -27,6 +18,16 @@ import org.infinispan.query.dsl.embedded.testdomain.Transaction;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+
+import static org.junit.Assert.*;
+import static org.testng.Assert.assertNotEquals;
 
 /**
  * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model.
@@ -267,7 +268,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
-               .and().having("surname").eq("Doe")
+            .and().having("surname").eq("Doe")
             .toBuilder().build();
 
       List<User> list = q.list();
@@ -743,7 +744,29 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       queryBuilder.build();  // exception expected
    }
 
-   public void testIsNull() throws Exception {
+   public void testIsNull1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("surname").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(0, list.size());
+   }
+
+   public void testIsNull2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .not().having("surname").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   public void testIsNull3() throws Exception {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
@@ -753,6 +776,41 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<User> list = q.list();
       assertEquals(1, list.size());
       assertEquals(3, list.get(0).getId());
+   }
+
+   public void testIsNullNumericWithProjection1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .setProjection("name", "surname", "age")
+            .orderBy("name", SortOrder.ASC)
+            .orderBy("surname", SortOrder.ASC)
+            .orderBy("age", SortOrder.ASC)
+            .having("age").isNull()
+            .toBuilder().build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals("Spider", list.get(0)[0]);
+      assertEquals("Man", list.get(0)[1]);
+      assertNull(list.get(0)[2]);
+      assertEquals("Spider", list.get(1)[0]);
+      assertEquals("Woman", list.get(1)[1]);
+      assertNull(list.get(1)[2]);
+   }
+
+   public void testIsNullNumericWithProjection2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .setProjection("name", "age")
+            .not().having("age").isNull()
+            .toBuilder().build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("John", list.get(0)[0]);
+      assertEquals(22, list.get(0)[1]);
    }
 
    public void testContains1() throws Exception {
@@ -1635,5 +1693,77 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<User> list = q.list();
       assertEquals(3, q.getResultSize());
       assertEquals(2, list.size());
+   }
+
+   public void testGroupBy() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("name")
+            .groupBy("name")
+            .orderBy("name")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("John", list.get(0)[0]);
+      assertEquals(1, list.get(1).length);
+      assertEquals("Spider", list.get(1)[0]);
+   }
+
+   public void testGroupBy2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.sum("age"))
+            .groupBy("name")
+            .orderBy("name")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(22, list.get(0)[0]);
+      assertEquals(1, list.get(1).length);
+      assertEquals(null, list.get(1)[0]);
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   public void testGroupBy3() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("name")
+            .groupBy("name")
+            .orderBy("surname")
+            .build();
+
+      q.list();
+   }
+
+   public void testGroupBy4() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.max("addresses.postCode"))
+            .groupBy("name")
+            .orderBy("name")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("X1234", list.get(0)[0]);
+      assertEquals(1, list.get(1).length);
+      assertEquals("Y12", list.get(1)[0]);
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "Queries containing grouping and aggregation functions must use projections.")
+   public void testGroupBy5() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .groupBy("name")
+            .build();
+      q.list();
    }
 }

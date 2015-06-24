@@ -67,7 +67,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       // notify subscribers
       for (FilterSubscriptionImpl s : filterSubscriptions) {
          FilterEvalContext filterEvalContext = ctx.getFilterEvalContext(s);
-         if (filterEvalContext.getMatchResult()) {
+         if (filterEvalContext.isMatching()) {
             // check if event type is matching
             s.getCallback().onFilterResult(ctx.getUserContext(), ctx.getInstance(), ctx.getEventType(), filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
          }
@@ -100,7 +100,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       if (sortFields != null && !sortFields.isEmpty()) {
          translatedSortFields = new ArrayList<List<AttributeId>>(sortFields.size());
          for (SortField sortField : sortFields) {
-            translatedSortFields.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(sortField.getPath())));
+            translatedSortFields.add(metadataAdapter.translatePropertyPath(sortField.getPath().getPath()));
          }
       }
 

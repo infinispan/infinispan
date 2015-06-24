@@ -5,7 +5,7 @@ import org.infinispan.objectfilter.impl.syntax.AndExpr;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
-import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.ValueExpr;
 
 /**
  * @author anistor@redhat.com
@@ -13,18 +13,18 @@ import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
  */
 class FilterRangePredicate extends RangePredicate<BooleanExpr> {
 
-   private final boolean isRepeatedProperty;
+   private final ValueExpr valueExpr;
 
-   public FilterRangePredicate(String propertyName, boolean isRepeatedProperty, Object lower, Object upper) {
-      super(propertyName, lower, upper);
-      this.isRepeatedProperty = isRepeatedProperty;
+   public FilterRangePredicate(ValueExpr valueExpr, Object lower, Object upper) {
+      super(valueExpr.toJpaString(), lower, upper);
+      this.valueExpr = valueExpr;
    }
 
    @Override
    public BooleanExpr getQuery() {
       return new AndExpr(
-            new ComparisonExpr(new PropertyValueExpr(propertyName, isRepeatedProperty), new ConstantValueExpr((Comparable) lower), ComparisonExpr.Type.GREATER_OR_EQUAL),
-            new ComparisonExpr(new PropertyValueExpr(propertyName, isRepeatedProperty), new ConstantValueExpr((Comparable) upper), ComparisonExpr.Type.LESS_OR_EQUAL)
+            new ComparisonExpr(valueExpr, new ConstantValueExpr((Comparable) lower), ComparisonExpr.Type.GREATER_OR_EQUAL),
+            new ComparisonExpr(valueExpr, new ConstantValueExpr((Comparable) upper), ComparisonExpr.Type.LESS_OR_EQUAL)
       );
    }
 }

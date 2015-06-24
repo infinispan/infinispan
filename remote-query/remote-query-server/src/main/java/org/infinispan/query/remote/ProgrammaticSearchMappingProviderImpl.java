@@ -15,7 +15,7 @@ import org.kohsuke.MetaInfServices;
  * @since 6.0
  */
 @MetaInfServices
-public class ProgrammaticSearchMappingProviderImpl implements ProgrammaticSearchMappingProvider {
+public final class ProgrammaticSearchMappingProviderImpl implements ProgrammaticSearchMappingProvider {
 
    @Override
    public void defineMappings(Cache cache, SearchMapping searchMapping) {

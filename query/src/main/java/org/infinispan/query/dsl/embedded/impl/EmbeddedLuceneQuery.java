@@ -16,13 +16,11 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
-//todo [anistor] make local
-public final class EmbeddedLuceneQuery extends BaseQuery implements LuceneQuery {
+final class EmbeddedLuceneQuery extends BaseQuery implements LuceneQuery {
 
    private final CacheQuery cacheQuery;
 
-   //todo [anistor] make local
-   public EmbeddedLuceneQuery(QueryFactory queryFactory, String jpaQuery, String[] projection, CacheQuery cacheQuery) {
+   EmbeddedLuceneQuery(QueryFactory queryFactory, String jpaQuery, String[] projection, CacheQuery cacheQuery) {
       super(queryFactory, jpaQuery, projection);
       this.cacheQuery = cacheQuery;
    }
