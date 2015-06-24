@@ -259,6 +259,11 @@ public class TransactionConfigurationBuilder extends AbstractConfigurationChildB
       return this;
    }
 
+   /**
+    * @return are transactional notifications (
+    *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionRegistered} and
+    *    {@link org.infinispan.notifications.cachelistener.annotation.TransactionCompleted}) triggered?
+    */
    public TransactionConfigurationBuilder notifications(boolean enabled) {
       attributes.attribute(NOTIFICATIONS).set(enabled);
       return this;
