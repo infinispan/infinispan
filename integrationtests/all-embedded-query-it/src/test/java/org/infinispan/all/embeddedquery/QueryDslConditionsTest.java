@@ -1,8 +1,6 @@
 package org.infinispan.all.embeddedquery;
 
 import org.hibernate.hql.ParsingException;
-import org.hibernate.search.spi.SearchIntegrator;
-import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.Account;
 import org.infinispan.all.embeddedquery.testdomain.Address;
 import org.infinispan.all.embeddedquery.testdomain.ModelFactory;
@@ -188,19 +186,10 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
    @Test
    public void testIndexPresence() {
-      SearchIntegrator searchFactory = Search.getSearchManager((Cache) getCacheForQuery()).unwrap(SearchIntegrator.class);
-
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getUserImplClass()));
-      assertNotNull(searchFactory.getIndexManager(getModelFactory().getUserImplClass().getName()));
-
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getAccountImplClass()));
-      assertNotNull(searchFactory.getIndexManager(getModelFactory().getAccountImplClass().getName()));
-
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getTransactionImplClass()));
-      assertNotNull(searchFactory.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
-
-      assertFalse(searchFactory.getIndexedTypes().contains(getModelFactory().getAddressImplClass()));
-      assertNull(searchFactory.getIndexManager(getModelFactory().getAddressImplClass().getName()));
+      assertIndexingKnows(getCacheForQuery(),
+                          getModelFactory().getUserImplClass(),
+                          getModelFactory().getAccountImplClass(),
+                          getModelFactory().getTransactionImplClass());
    }
 
    @Test
