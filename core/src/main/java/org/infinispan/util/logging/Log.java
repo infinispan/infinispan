@@ -1349,6 +1349,6 @@ public interface Log extends BasicLogger {
    @Message(value = "Cannot remove cache configuration '%s' because it is in use", id = 371)
    IllegalStateException configurationInUse(String configurationName);
 
-   @Message(value = "Statistics are enabled while these are not available.", id = 372)
+   @Message(value = "Statistics are enabled while attribute 'available' is set to false.", id = 372)
    CacheConfigurationException statisticsEnabledNotAvailable();
 }

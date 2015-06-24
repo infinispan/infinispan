@@ -37,6 +37,10 @@ public class JMXStatisticsConfiguration {
       return enabled.get();
    }
 
+   /**
+    * If set to false, statistics gathering cannot be enabled during runtime. Performance optimization.
+    * @return
+    */
    public boolean available() {
       return available.get();
    }

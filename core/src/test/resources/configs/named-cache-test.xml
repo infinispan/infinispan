@@ -127,6 +127,9 @@
       <local-cache name="storeKeyValueBinary">
          <store-as-binary keys="true" values="false"/>
       </local-cache>
+      <local-cache name="statisticsDisabled" statistics="false" statistics-available="false">
+         <transaction notifications="false" />
+      </local-cache>
    </cache-container>
 
 </infinispan>

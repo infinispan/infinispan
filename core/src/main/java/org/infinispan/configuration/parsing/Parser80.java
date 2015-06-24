@@ -824,6 +824,10 @@ public class Parser80 implements ConfigurationParser {
             builder.jmxStatistics().enabled(Boolean.valueOf(value));
             break;
          }
+         case STATISTICS_AVAILABLE: {
+            builder.jmxStatistics().available(Boolean.valueOf(value));
+            break;
+         }
          case SPIN_DURATION: {
             long spin = Long.parseLong(value);
             if (spin > 0)
@@ -1351,6 +1355,10 @@ public class Parser80 implements ConfigurationParser {
             }
             case RECOVERY_INFO_CACHE_NAME: {
                builder.transaction().recovery().recoveryInfoCacheName(value);
+               break;
+            }
+            case NOTIFICATIONS: {
+               builder.transaction().notifications(Boolean.parseBoolean(value));
                break;
             }
             default: {

@@ -50,6 +50,11 @@ public class JMXStatisticsConfigurationBuilder extends AbstractConfigurationChil
       return this;
    }
 
+   /**
+    * If set to false, statistics gathering cannot be enabled during runtime. Performance optimization.
+    * @param available
+    * @return
+    */
    public JMXStatisticsConfigurationBuilder available(boolean available) {
       attributes.attribute(AVAILABLE).set(available);
       return this;

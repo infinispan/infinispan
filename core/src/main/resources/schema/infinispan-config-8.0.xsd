@@ -653,6 +653,11 @@
         <xs:documentation>Determines whether or not the cache should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute name="statistics-available" type="xs:boolean" default="true">
+      <xs:annotation>
+        <xs:documentation>If set to false, statistics gathering cannot be enabled during runtime. Keep disabled for optimal performance.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute name="deadlock-detection-spin" type="xs:long" default="100">
       <xs:annotation>
         <xs:documentation>
