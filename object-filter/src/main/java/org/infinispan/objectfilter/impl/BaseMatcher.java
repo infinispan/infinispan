@@ -1,5 +1,6 @@
 package org.infinispan.objectfilter.impl;
 
+import org.hibernate.hql.ParsingException;
 import org.hibernate.hql.QueryParser;
 import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
@@ -7,6 +8,7 @@ import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
+import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
@@ -70,9 +72,11 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(String jpaQuery) {
+      //todo [anistor] possible optimisation: if jpaQuery is a contradiction or a tautology just return a special instance that rejects/accepts anything. how do we handle projections then?
       FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, null);
+      disallowGroupingAndAggregations(parsingResult);
       MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter = createMetadataAdapter(parsingResult.getTargetEntityMetadata());
-      return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, parsingResult.getQuery(), parsingResult.getProjections(), parsingResult.getSortFields());
+      return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields());
    }
 
    @Override
@@ -90,6 +94,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public FilterSubscription registerFilter(String jpaQuery, FilterCallback callback, Object... eventType) {
       FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, null);
+      disallowGroupingAndAggregations(parsingResult);
 
       write.lock();
       try {
@@ -99,7 +104,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
             filtersByTypeName.put(parsingResult.getTargetEntityName(), filterRegistry);
             filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }
-         return filterRegistry.addFilter(jpaQuery, parsingResult.getQuery(), parsingResult.getProjections(), parsingResult.getSortFields(), callback, eventType);
+         return filterRegistry.addFilter(jpaQuery, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields(), callback, eventType);
       } finally {
          write.unlock();
       }
@@ -108,6 +113,12 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    public FilterParsingResult<TypeMetadata> parse(String jpaQuery, Map<String, Object> namedParameters) {
       //todo [anistor] query params not yet fully supported by HQL parser. to be added later.
       return queryParser.parseQuery(jpaQuery, createFilterProcessingChain(namedParameters));
+   }
+
+   private void disallowGroupingAndAggregations(FilterParsingResult<TypeMetadata> parsingResult) {
+      if (parsingResult.hasGroupingOrAggregations()) {
+         throw new ParsingException("Matcher and ObjectFilter do not allow grouping or aggregations");
+      }
    }
 
    @Override
@@ -145,7 +156,19 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    protected abstract FilterProcessingChain<TypeMetadata> createFilterProcessingChain(Map<String, Object> namedParameters);
 
+   public abstract ObjectPropertyHelper<TypeMetadata> getPropertyHelper();
+
    protected abstract MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> createMetadataAdapter(TypeMetadata typeMetadata);
 
    protected abstract FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> getFilterRegistryForType(TypeMetadata entityType);
+
+   /**
+    * Decorates a matching instance before it is presented to the caller of the {@link ObjectFilter#filter(Object)}.
+    *
+    * @param instance never null
+    * @return the converted/decorated instance
+    */
+   protected Object convert(Object instance) {
+      return instance;
+   }
 }

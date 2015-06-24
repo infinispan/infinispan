@@ -59,7 +59,14 @@ public final class FilterQueryFactory extends BaseQueryFactory<Query> {
          if (log.isTraceEnabled()) {
             log.tracef("JPQL string : %s", jpqlString);
          }
-         return new FilterQuery(queryFactory, jpqlString, projection);
+         String[] _projection = null;
+         if (projection != null) {
+            _projection = new String[projection.length];
+            for (int i = 0; i < projection.length; i++) {
+               _projection[i] = projection[i].toString();
+            }
+         }
+         return new FilterQuery(queryFactory, jpqlString, _projection);
       }
    }
 

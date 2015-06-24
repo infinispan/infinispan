@@ -23,7 +23,7 @@ public class BooleanFilterNormalizerTest {
 
    private void assertExpectedTree(String jpaQuery, String expectedExprStr) {
       FilterParsingResult<Class<?>> parsingResult = queryParser.parseQuery(jpaQuery, FilterProcessingChain.build(entityNamesResolver, propertyHelper, null));
-      BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getQuery());
+      BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       assertEquals(expectedExprStr, expr.toString());
    }
 

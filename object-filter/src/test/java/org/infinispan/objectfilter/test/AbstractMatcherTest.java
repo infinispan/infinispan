@@ -196,8 +196,14 @@ public abstract class AbstractMatcherTest {
    }
 
    @Test
-   public void testIsNotNull() throws Exception {
+   public void testIsNotNull1() throws Exception {
       String queryString = "from org.infinispan.objectfilter.test.model.Person p where p.surname is not null";
+      assertTrue(match(queryString, createPerson1()));
+   }
+
+   @Test
+   public void testIsNotNull2() throws Exception {
+      String queryString = "from org.infinispan.objectfilter.test.model.Person p where not(p.surname is null)";
       assertTrue(match(queryString, createPerson1()));
    }
 
@@ -716,6 +722,26 @@ public abstract class AbstractMatcherTest {
       expectedException.expectMessage("ISPN000405");
 
       String queryString = "select p.phoneNumbers from org.infinispan.objectfilter.test.model.Person p";
+
+      Matcher matcher = createMatcher();
+
+      matcher.registerFilter(queryString, new FilterCallback() {
+         @Override
+         public void onFilterResult(Object userContext, Object instance, Object eventType, Object[] projection, Comparable[] sortProjection) {
+         }
+      });
+   }
+
+   @Test
+   public void testDisallowGroupingAndAggregations() throws Exception {
+      expectedException.expect(ParsingException.class);
+      expectedException.expectMessage("Matcher and ObjectFilter do not allow grouping or aggregations");
+
+      String queryString = "SELECT sum(p.age) " +
+            "FROM org.infinispan.objectfilter.test.model.Person p " +
+            "WHERE p.age <= 99 " +
+            "GROUP BY p.name " +
+            "HAVING COUNT(p.age) > 3";
 
       Matcher matcher = createMatcher();
 

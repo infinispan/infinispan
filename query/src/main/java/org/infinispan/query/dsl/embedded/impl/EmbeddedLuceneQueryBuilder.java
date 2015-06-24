@@ -31,6 +31,6 @@ final class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
       if (log.isTraceEnabled()) {
          log.tracef("JPQL string : %s", jpqlString);
       }
-      return queryEngine.buildLuceneQuery(queryFactory, jpqlString, startOffset, maxResults, null);
+      return queryEngine.buildLuceneQuery(queryFactory, jpqlString, startOffset, maxResults);
    }
 }

@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
@@ -28,9 +29,15 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    /**
     * The attribute paths for the projection.
     */
-   protected String[] projection;
+   protected Expression[] projection;
+
+   protected String[] groupBy;
 
    protected BaseCondition filterCondition;
+
+   protected BaseCondition whereFilterCondition;
+
+   protected BaseCondition havingFilterCondition;
 
    protected List<SortCriteria> sortCriteria;
 
@@ -51,12 +58,27 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder<T> orderBy(String attributePath, SortOrder sortOrder) {
+   public QueryBuilder<T> orderBy(Expression pathExpression) {
+      return orderBy(pathExpression, SortOrder.ASC);
+   }
+
+   @Override
+   public QueryBuilder<T> orderBy(Expression pathExpression, SortOrder sortOrder) {
       if (sortCriteria == null) {
          sortCriteria = new ArrayList<SortCriteria>();
       }
-      sortCriteria.add(new SortCriteria(attributePath, sortOrder));
+      sortCriteria.add(new SortCriteria(pathExpression, sortOrder));
       return this;
+   }
+
+   @Override
+   public QueryBuilder<T> orderBy(String attributePath) {
+      return orderBy(attributePath, SortOrder.ASC);
+   }
+
+   @Override
+   public QueryBuilder<T> orderBy(String attributePath, SortOrder sortOrder) {
+      return orderBy(Expression.property(attributePath), sortOrder);
    }
 
    protected List<SortCriteria> getSortCriteria() {
@@ -64,13 +86,53 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
    }
 
    @Override
-   public QueryBuilder<T> setProjection(String... projection) {
+   public QueryBuilder<T> select(String... attributePath) {
+      if (attributePath == null || attributePath.length == 0) {
+         throw new IllegalArgumentException("Projection cannot be null or empty");
+      }
+      Expression[] projection = new Expression[attributePath.length];
+      for (int i = 0 ; i < attributePath.length; i++) {
+         projection[i] = Expression.property(attributePath[i]);
+      }
+      return select(projection);
+   }
+
+   @Override
+   public QueryBuilder<T> select(Expression... projection) {
+      if (projection == null || projection.length == 0) {
+         throw new IllegalArgumentException("Projection cannot be null or empty");
+      }
+      if (this.projection != null) {
+         throw new IllegalStateException("Projection can be specified only once");
+      }
       this.projection = projection;
       return this;
    }
 
-   protected String[] getProjection() {
+   @Override
+   @Deprecated
+   public QueryBuilder<T> setProjection(String... projection) {
+      return select(projection);
+   }
+
+   protected Expression[] getProjection() {
       return projection;
+   }
+
+   @Override
+   public QueryBuilder groupBy(String... groupBy) {
+      if (groupBy == null || groupBy.length == 0) {
+         throw new IllegalArgumentException("Grouping cannot be null or empty");
+      }
+      if (this.groupBy != null) {
+         throw new IllegalStateException("Grouping can be specified only once");
+      }
+      this.groupBy = groupBy;
+      return this;
+   }
+
+   protected String[] getGroupBy() {
+      return groupBy;
    }
 
    @Override
@@ -91,19 +153,37 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
       return this;
    }
 
-   protected BaseCondition getFilterCondition() {
-      return filterCondition;
+   protected BaseCondition getWhereFilterCondition() {
+      return whereFilterCondition;
+   }
+
+   protected BaseCondition getHavingFilterCondition() {
+      return havingFilterCondition;
+   }
+
+   @Override
+   public FilterConditionEndContext having(Expression expression) {
+      if (filterCondition != null) {
+         throw new IllegalStateException("Sentence already started. Cannot use 'having(..)' again.");
+      }
+      AttributeCondition attributeCondition = new AttributeCondition(queryFactory, expression);
+      attributeCondition.setQueryBuilder(this);
+      setFilterCondition(attributeCondition);
+      return attributeCondition;
    }
 
    @Override
    public FilterConditionEndContext having(String attributePath) {
-      if (filterCondition != null) {
-         throw new IllegalStateException("Sentence already started. Cannot use 'having(..)' again.");
+      return having(Expression.property(attributePath));
+   }
+
+   private void setFilterCondition(BaseCondition filterCondition) {
+      this.filterCondition = filterCondition;
+      if (groupBy == null) {
+         whereFilterCondition = filterCondition;
+      } else {
+         havingFilterCondition = filterCondition;
       }
-      AttributeCondition attributeCondition = new AttributeCondition(queryFactory, attributePath);
-      attributeCondition.setQueryBuilder(this);
-      filterCondition = attributeCondition;
-      return attributeCondition;
    }
 
    @Override
@@ -113,7 +193,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
       }
       IncompleteCondition incompleteCondition = new IncompleteCondition(queryFactory);
       incompleteCondition.setQueryBuilder(this);
-      filterCondition = incompleteCondition;
+      setFilterCondition(incompleteCondition);
       return incompleteCondition.not();
    }
 
@@ -137,7 +217,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
 
       NotCondition notCondition = new NotCondition(queryFactory, baseCondition);
       notCondition.setQueryBuilder(this);
-      filterCondition = notCondition;
+      setFilterCondition(notCondition);
       return filterCondition;
    }
 

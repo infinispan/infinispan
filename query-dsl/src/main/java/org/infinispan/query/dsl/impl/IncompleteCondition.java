@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
@@ -38,16 +39,21 @@ class IncompleteCondition extends BaseCondition implements FilterConditionBeginC
    }
 
    @Override
-   public FilterConditionEndContext having(String attributePath) {
+   public FilterConditionEndContext having(Expression expression) {
       if (filterCondition != null) {
          throw new IllegalStateException("Sentence already started. Cannot use 'having(..)' again.");
       }
-      AttributeCondition attributeCondition = new AttributeCondition(queryFactory, attributePath);
+      AttributeCondition attributeCondition = new AttributeCondition(queryFactory, expression);
       attributeCondition.setNegated(isNegated);
       attributeCondition.setQueryBuilder(queryBuilder);
       attributeCondition.setParent(this);
       filterCondition = attributeCondition;
       return attributeCondition;
+   }
+
+   @Override
+   public FilterConditionEndContext having(String attributePath) {
+      return having(Expression.property(attributePath));
    }
 
    @Override

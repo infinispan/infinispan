@@ -3,7 +3,7 @@ package org.infinispan.objectfilter.impl.hql.predicate;
 import org.hibernate.hql.ast.spi.predicate.IsNullPredicate;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.IsNullExpr;
-import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.ValueExpr;
 
 /**
  * @author anistor@redhat.com
@@ -11,15 +11,15 @@ import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
  */
 class FilterIsNullPredicate extends IsNullPredicate<BooleanExpr> {
 
-   private final boolean isRepeatedProperty;
+   private final ValueExpr valueExpr;
 
-   public FilterIsNullPredicate(String propertyName, boolean isRepeatedProperty) {
-      super(propertyName);
-      this.isRepeatedProperty = isRepeatedProperty;
+   public FilterIsNullPredicate(ValueExpr valueExpr) {
+      super(valueExpr.toJpaString());
+      this.valueExpr = valueExpr;
    }
 
    @Override
    public BooleanExpr getQuery() {
-      return new IsNullExpr(new PropertyValueExpr(propertyName, isRepeatedProperty));
+      return new IsNullExpr(valueExpr);
    }
 }

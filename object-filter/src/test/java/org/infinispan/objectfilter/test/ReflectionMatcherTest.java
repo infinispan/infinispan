@@ -11,7 +11,7 @@ public class ReflectionMatcherTest extends AbstractMatcherTest {
    private final FilterQueryFactory queryFactory = new FilterQueryFactory();
 
    @Override
-   public FilterQueryFactory createQueryFactory() {
+   protected FilterQueryFactory createQueryFactory() {
       return queryFactory;
    }
 

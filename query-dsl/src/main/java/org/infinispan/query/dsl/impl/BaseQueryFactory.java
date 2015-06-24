@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionBeginContext;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
@@ -14,7 +15,12 @@ public abstract class BaseQueryFactory<T extends Query> implements QueryFactory<
 
    @Override
    public FilterConditionEndContext having(String attributePath) {
-      return new AttributeCondition(this, attributePath);
+      return having(Expression.property(attributePath));
+   }
+
+   @Override
+   public FilterConditionEndContext having(Expression expression) {
+      return new AttributeCondition(this, expression);
    }
 
    @Override

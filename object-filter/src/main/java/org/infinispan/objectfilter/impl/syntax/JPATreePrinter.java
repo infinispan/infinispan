@@ -12,19 +12,25 @@ import java.util.List;
  */
 public final class JPATreePrinter {
 
-   public static String printTree(String entityTypeName, BooleanExpr query, List<SortField> sortFields) {
+   public static String printTree(BooleanExpr whereClause) {
       StringBuilder sb = new StringBuilder();
-      sb.append("FROM ").append(entityTypeName);
-      if (query != ConstantBooleanExpr.TRUE) {
-         sb.append(" WHERE ").append(query.toJpaString());
+      if (whereClause != null && whereClause != ConstantBooleanExpr.TRUE) {
+         sb.append(" WHERE ").append(whereClause.toJpaString());
       }
-      if (sortFields != null && !sortFields.isEmpty()) {
+      return sb.toString();
+   }
+
+   public static String printTree(String fromEntityTypeName, BooleanExpr whereClause, List<SortField> orderBy) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("FROM ").append(fromEntityTypeName);
+      sb.append(printTree(whereClause));
+      if (orderBy != null && !orderBy.isEmpty()) {
          sb.append(" ORDER BY ");
-         for (int i = 0; i < sortFields.size(); i++) {
+         for (int i = 0; i < orderBy.size(); i++) {
             if (i != 0) {
                sb.append(", ");
             }
-            SortField sf = sortFields.get(i);
+            SortField sf = orderBy.get(i);
             sb.append(sf.getPath());
             if (!sf.isAscending()) {
                sb.append(" DESC");

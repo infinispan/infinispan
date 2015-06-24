@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 
 import java.text.DateFormat;
@@ -34,24 +35,46 @@ public class JPAQueryGenerator implements Visitor<String> {
       if (baseQueryBuilder.getProjection() != null && baseQueryBuilder.getProjection().length != 0) {
          sb.append("SELECT ");
          boolean isFirst = true;
-         for (String projection : baseQueryBuilder.getProjection()) {
+         for (Expression projection : baseQueryBuilder.getProjection()) {
             if (isFirst) {
                isFirst = false;
             } else {
                sb.append(", ");
             }
-            sb.append(alias).append('.').append(projection);
+            appendAttributePath(sb, projection);
          }
          sb.append(' ');
       }
 
       sb.append("FROM ").append(baseQueryBuilder.getRootTypeName()).append(' ').append(alias);
 
-      if (baseQueryBuilder.getFilterCondition() != null) {
-         BaseCondition baseCondition = baseQueryBuilder.getFilterCondition().getRoot();
+      if (baseQueryBuilder.getWhereFilterCondition() != null) {
+         BaseCondition baseCondition = baseQueryBuilder.getWhereFilterCondition().getRoot();
          String whereCondition = baseCondition.accept(this);
          if (!whereCondition.isEmpty()) {
             sb.append(" WHERE ").append(whereCondition);
+         }
+      }
+
+      if (baseQueryBuilder.getGroupBy() != null && baseQueryBuilder.getGroupBy().length != 0) {
+         sb.append(" GROUP BY ");
+         boolean isFirst = true;
+         for (String groupBy : baseQueryBuilder.getGroupBy()) {
+            if (isFirst) {
+               isFirst = false;
+            } else {
+               sb.append(", ");
+            }
+            sb.append(alias).append('.').append(groupBy);
+         }
+         sb.append(' ');
+      }
+
+      if (baseQueryBuilder.getHavingFilterCondition() != null) {
+         BaseCondition baseCondition = baseQueryBuilder.getHavingFilterCondition().getRoot();
+         String havingCondition = baseCondition.accept(this);
+         if (!havingCondition.isEmpty()) {
+            sb.append(" HAVING ").append(havingCondition);
          }
       }
 
@@ -249,7 +272,7 @@ public class JPAQueryGenerator implements Visitor<String> {
 
    @Override
    public String visit(AttributeCondition attributeCondition) {
-      if (attributeCondition.getAttributePath() == null || attributeCondition.getOperatorAndArgument() == null) {
+      if (attributeCondition.getExpression() == null || attributeCondition.getOperatorAndArgument() == null) {
          throw new IllegalStateException("Incomplete sentence. Missing attribute path or operator.");
       }
 
@@ -257,7 +280,18 @@ public class JPAQueryGenerator implements Visitor<String> {
    }
 
    private void appendAttributePath(StringBuilder sb, AttributeCondition attributeCondition) {
-      sb.append(alias).append('.').append(attributeCondition.getAttributePath());
+      appendAttributePath(sb, attributeCondition.getExpression());
+   }
+
+   private void appendAttributePath(StringBuilder sb, Expression expression) {
+      PathExpression pathExpression = (PathExpression) expression;
+      if (pathExpression.getAggregationType() != null) {
+         sb.append(pathExpression.getAggregationType().name()).append('(');
+      }
+      sb.append(alias).append('.').append(pathExpression.getPath());
+      if (pathExpression.getAggregationType() != null) {
+         sb.append(')');
+      }
    }
 
    private void appendArgument(StringBuilder sb, Object argument) {

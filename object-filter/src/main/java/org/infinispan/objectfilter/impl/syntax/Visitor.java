@@ -23,4 +23,6 @@ public interface Visitor {
    ValueExpr visit(ConstantValueExpr constantValueExpr);
 
    ValueExpr visit(PropertyValueExpr propertyValueExpr);
+
+   ValueExpr visit(AggregationExpr aggregationExpr);
 }

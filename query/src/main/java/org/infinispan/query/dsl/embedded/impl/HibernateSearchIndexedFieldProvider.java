@@ -14,13 +14,13 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 8.0
  */
-public final class HibernateSearchIndexedFieldProvider implements BooleShannonExpansion.IndexedFieldProvider {
+final class HibernateSearchIndexedFieldProvider implements BooleShannonExpansion.IndexedFieldProvider {
 
    private final SearchIntegrator searchFactory;
 
    private final Class<?> entityClass;
 
-   public HibernateSearchIndexedFieldProvider(SearchIntegrator searchFactory, Class<?> entityClass) {
+   HibernateSearchIndexedFieldProvider(SearchIntegrator searchFactory, Class<?> entityClass) {
       this.searchFactory = searchFactory;
       this.entityClass = entityClass;
    }

@@ -3,7 +3,7 @@ package org.infinispan.objectfilter.impl.hql.predicate;
 import org.hibernate.hql.ast.spi.predicate.LikePredicate;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.LikeExpr;
-import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.ValueExpr;
 
 /**
  * @author anistor@redhat.com
@@ -11,15 +11,15 @@ import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
  */
 class FilterLikePredicate extends LikePredicate<BooleanExpr> {
 
-   private final boolean isRepeatedProperty;
+   private final ValueExpr valueExpr;
 
-   public FilterLikePredicate(String propertyName, boolean isRepeatedProperty, String patternValue) {
-      super(propertyName, patternValue, null);
-      this.isRepeatedProperty = isRepeatedProperty;
+   public FilterLikePredicate(ValueExpr valueExpr, String patternValue, Character escapeCharacter) {
+      super(valueExpr.toJpaString(), patternValue, escapeCharacter);
+      this.valueExpr = valueExpr;
    }
 
    @Override
    public BooleanExpr getQuery() {
-      return new LikeExpr(new PropertyValueExpr(propertyName, isRepeatedProperty), patternValue);
+      return new LikeExpr(valueExpr, patternValue);
    }
 }

@@ -26,6 +26,8 @@ public interface QueryFactory<Q extends Query> {
     */
    QueryBuilder<Q> from(String entityType);
 
+   FilterConditionEndContext having(Expression expression);
+
    /**
     * Creates a condition on the given attribute path that is to be completed later by using it as a sub-condition.
     *

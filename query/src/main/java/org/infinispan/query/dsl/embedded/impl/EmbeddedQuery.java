@@ -16,14 +16,12 @@ import java.util.Map;
  * @author anistor@redhat,com
  * @since 7.0
  */
-//todo [anistor] make local
-public final class EmbeddedQuery extends BaseEmbeddedQuery {
+final class EmbeddedQuery extends BaseEmbeddedQuery {
 
    private final JPAFilterAndConverter filter;
 
-   //todo [anistor] make local
-   public EmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, JPAFilterAndConverter filter,
-                        long startOffset, int maxResults) {
+   EmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, JPAFilterAndConverter filter,
+                 long startOffset, int maxResults) {
       super(queryFactory, cache, filter.getJPAQuery(), filter.getObjectFilter().getProjection(), startOffset, maxResults);
       this.filter = filter;
    }
@@ -35,8 +33,9 @@ public final class EmbeddedQuery extends BaseEmbeddedQuery {
 
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
-      final CloseableIterator<Map.Entry<?, ObjectFilter.FilterResult>> it = cache.filterEntries(filter).converter(filter).iterator();
       return new CloseableIterator<ObjectFilter.FilterResult>() {
+
+         private final CloseableIterator<Map.Entry<?, ObjectFilter.FilterResult>> it = cache.filterEntries(filter).converter(filter).iterator();
 
          @Override
          public boolean hasNext() {

@@ -34,7 +34,7 @@ public class ProtobufParsingTest extends AbstractParsingTest {
       String jpaQuery = "from org.infinispan.objectfilter.test.model.Person p where p.name is not null";
       FilterParsingResult<Descriptor> result = queryParser.parseQuery(jpaQuery, createFilterProcessingChain());
 
-      assertNotNull(result.getQuery());
+      assertNotNull(result.getWhereClause());
 
       assertEquals("org.infinispan.objectfilter.test.model.Person", result.getTargetEntityName());
       assertEquals("org.infinispan.objectfilter.test.model.Person", result.getTargetEntityMetadata().getFullName());

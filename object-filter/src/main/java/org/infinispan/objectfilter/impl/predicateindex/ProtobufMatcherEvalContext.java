@@ -16,7 +16,7 @@ import java.io.IOException;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, FieldDescriptor, Integer> implements TagHandler {
+public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, FieldDescriptor, Integer> implements TagHandler {
 
    private static final Object DUMMY_VALUE = new Object();
 
@@ -120,7 +120,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, F
          // found an uninteresting nesting level, start skipping from here on until this level ends
          skipping++;
       } else {
-         throw new IllegalStateException("No nested message is expected");
+         throw new IllegalStateException("No nested message is supported");
       }
    }
 
@@ -134,7 +134,7 @@ public class ProtobufMatcherEvalContext extends MatcherEvalContext<Descriptor, F
             skipping--;
          }
       } else {
-         throw new IllegalStateException("No nested message is expected");
+         throw new IllegalStateException("No nested message is supported");
       }
    }
 

@@ -5,7 +5,8 @@ import org.hibernate.hql.ast.spi.predicate.*;
 import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate.Type;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
-import org.infinispan.objectfilter.impl.util.StringHelper;
+import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.ValueExpr;
 
 import java.util.List;
 
@@ -13,7 +14,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public class FilterPredicateFactory implements PredicateFactory<BooleanExpr> {
+public final class FilterPredicateFactory implements PredicateFactory<BooleanExpr> {
 
    private final EntityNamesResolver entityNamesResolver;
 
@@ -35,18 +36,21 @@ public class FilterPredicateFactory implements PredicateFactory<BooleanExpr> {
    @Override
    public ComparisonPredicate<BooleanExpr> getComparisonPredicate(String entityType, Type comparisonType,
                                                                   List<String> propertyPath, Object comparisonValue) {
-      return new FilterComparisonPredicate(getPathAsString(propertyPath), propertyHelper.isRepeatedProperty(entityType, propertyPath), comparisonType, comparisonValue);
+      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      return new FilterComparisonPredicate(valueExpr, comparisonType, comparisonValue);
    }
 
    @Override
    public InPredicate<BooleanExpr> getInPredicate(String entityType, List<String> propertyPath, List<Object> values) {
-      return new FilterInPredicate(getPathAsString(propertyPath), propertyHelper.isRepeatedProperty(entityType, propertyPath), values);
+      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      return new FilterInPredicate(valueExpr, values);
    }
 
    @Override
    public RangePredicate<BooleanExpr> getRangePredicate(String entityType, List<String> propertyPath,
                                                         Object lowerValue, Object upperValue) {
-      return new FilterRangePredicate(getPathAsString(propertyPath), propertyHelper.isRepeatedProperty(entityType, propertyPath), lowerValue, upperValue);
+      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      return new FilterRangePredicate(valueExpr, lowerValue, upperValue);
    }
 
    @Override
@@ -67,15 +71,13 @@ public class FilterPredicateFactory implements PredicateFactory<BooleanExpr> {
    @Override
    public LikePredicate<BooleanExpr> getLikePredicate(String entityType, List<String> propertyPath,
                                                       String patternValue, Character escapeCharacter) {
-      return new FilterLikePredicate(getPathAsString(propertyPath), propertyHelper.isRepeatedProperty(entityType, propertyPath), patternValue);
+      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      return new FilterLikePredicate(valueExpr, patternValue, escapeCharacter);
    }
 
    @Override
    public IsNullPredicate<BooleanExpr> getIsNullPredicate(String entityType, List<String> propertyPath) {
-      return new FilterIsNullPredicate(getPathAsString(propertyPath), propertyHelper.isRepeatedProperty(entityType, propertyPath));
-   }
-
-   private String getPathAsString(List<String> propertyPath) {
-      return StringHelper.join(propertyPath, ".");
+      ValueExpr valueExpr = new PropertyValueExpr(propertyPath, propertyHelper.isRepeatedProperty(entityType, propertyPath));
+      return new FilterIsNullPredicate(valueExpr);
    }
 }

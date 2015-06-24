@@ -1,24 +1,31 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.SortOrder;
 
 /**
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class SortCriteria {
+public final class SortCriteria {
 
-   private final String attributePath;
+   private final Expression pathExpression;
 
    private final SortOrder sortOrder;
 
-   SortCriteria(String attributePath, SortOrder sortOrder) {
-      this.attributePath = attributePath;
+   SortCriteria(Expression pathExpression, SortOrder sortOrder) {
+      if (pathExpression == null) {
+         throw new IllegalArgumentException("pathExpression cannot be null");
+      }
+      if (sortOrder == null) {
+         throw new IllegalArgumentException("sortOrder cannot be null");
+      }
+      this.pathExpression = pathExpression;
       this.sortOrder = sortOrder;
    }
 
-   public String getAttributePath() {
-      return attributePath;
+   public Expression getAttributePath() {
+      return pathExpression;
    }
 
    public SortOrder getSortOrder() {
@@ -28,7 +35,7 @@ public class SortCriteria {
    @Override
    public String toString() {
       return "SortCriteria{" +
-            "attributePath='" + attributePath + '\'' +
+            "pathExpression='" + pathExpression + '\'' +
             ", sortOrder=" + sortOrder +
             '}';
    }

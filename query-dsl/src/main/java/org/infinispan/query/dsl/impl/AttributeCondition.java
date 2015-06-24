@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl.impl;
 
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionContext;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.QueryFactory;
@@ -15,23 +16,23 @@ import java.util.Collection;
  */
 class AttributeCondition extends BaseCondition implements FilterConditionEndContext, RangeConditionContext {
 
-   private final String attributePath;
+   private final Expression expression;
 
    private boolean isNegated;
 
    private OperatorAndArgument operatorAndArgument;
 
-   public AttributeCondition(QueryFactory queryFactory, String attributePath) {
+   public AttributeCondition(QueryFactory queryFactory, Expression expression) {
       super(queryFactory);
-      this.attributePath = attributePath;
+      this.expression = expression;
    }
 
    OperatorAndArgument getOperatorAndArgument() {
       return operatorAndArgument;
    }
 
-   String getAttributePath() {
-      return attributePath;
+   Expression getExpression() {
+      return expression;
    }
 
    boolean isNegated() {
@@ -171,7 +172,7 @@ class AttributeCondition extends BaseCondition implements FilterConditionEndCont
    public String toString() {
       return "AttributeCondition{" +
             "isNegated=" + isNegated +
-            ", attributePath='" + attributePath + '\'' +
+            ", expression='" + expression + '\'' +
             ", operatorAndArgument=" + operatorAndArgument +
             '}';
    }

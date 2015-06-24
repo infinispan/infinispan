@@ -7,6 +7,7 @@ import org.hibernate.hql.ast.spi.QueryRendererProcessor;
 import org.hibernate.hql.ast.spi.QueryResolverProcessor;
 import org.hibernate.hql.ast.spi.SingleEntityQueryBuilder;
 import org.infinispan.objectfilter.impl.hql.predicate.FilterPredicateFactory;
+import org.infinispan.objectfilter.impl.hql.predicate.SingleEntityHavingQueryBuilderImpl;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
 import java.util.Arrays;
@@ -42,8 +43,9 @@ public final class FilterProcessingChain<TypeMetadata> implements AstProcessingC
       QueryResolverProcessor resolverProcessor = new QueryResolverProcessor(new FilterQueryResolverDelegate(entityNamesResolver, propertyHelper));
 
       SingleEntityQueryBuilder<BooleanExpr> queryBuilder = SingleEntityQueryBuilder.getInstance(new FilterPredicateFactory(entityNamesResolver, propertyHelper), propertyHelper);
+      SingleEntityHavingQueryBuilderImpl havingQueryBuilder = new SingleEntityHavingQueryBuilderImpl(entityNamesResolver, propertyHelper);
 
-      FilterRendererDelegate<TypeMetadata> rendererDelegate = new FilterRendererDelegate<TypeMetadata>(entityNamesResolver, propertyHelper, queryBuilder, namedParameters);
+      FilterRendererDelegate<TypeMetadata> rendererDelegate = new FilterRendererDelegate<TypeMetadata>(entityNamesResolver, propertyHelper, queryBuilder, havingQueryBuilder, namedParameters);
 
       QueryRendererProcessor rendererProcessor = new QueryRendererProcessor(rendererDelegate);
 

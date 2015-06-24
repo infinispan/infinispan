@@ -1,14 +1,16 @@
 package org.infinispan.objectfilter.impl.hql;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
+import org.infinispan.objectfilter.PropertyPath;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * @param <TypeMetadata> is either java.lang.Class or org.infinispan.protostream.descriptors.Descriptor
+ * @param <TypeMetadata> is either {@link java.lang.Class} or {@link org.infinispan.protostream.descriptors.Descriptor}
  * @author anistor@redhat.com
  * @since 7.0
  */
@@ -16,16 +18,16 @@ public final class FilterParsingResult<TypeMetadata> {
 
    public static final class SortFieldImpl implements SortField {
 
-      public final String path;
+      public final PropertyPath path;
 
       public final boolean isAscending;
 
-      public SortFieldImpl(String path, boolean isAscending) {
+      public SortFieldImpl(PropertyPath path, boolean isAscending) {
          this.path = path;
          this.isAscending = isAscending;
       }
 
-      public String getPath() {
+      public PropertyPath getPath() {
          return path;
       }
 
@@ -39,18 +41,22 @@ public final class FilterParsingResult<TypeMetadata> {
       }
    }
 
-   private final BooleanExpr filter;
+   private final BooleanExpr whereFilter;
+   private final BooleanExpr havingFilter;
    private final String targetEntityName;
    private final TypeMetadata targetEntityMetadata;
-   private final List<String> projections;
+   private final List<PropertyPath> projectedPaths;
+   private final List<PropertyPath> groupBy;
    private final List<SortField> sortFields;
 
-   public FilterParsingResult(BooleanExpr filter, String targetEntityName, TypeMetadata targetEntityMetadata,
-                              List<String> projections, List<SortField> sortFields) {
-      this.filter = filter;
+   FilterParsingResult(BooleanExpr whereFilter, BooleanExpr havingFilter, String targetEntityName, TypeMetadata targetEntityMetadata,
+                       List<PropertyPath> projectedPaths, List<PropertyPath> groupBy, List<SortField> sortFields) {
+      this.whereFilter = whereFilter;
+      this.havingFilter = havingFilter;
       this.targetEntityName = targetEntityName;
       this.targetEntityMetadata = targetEntityMetadata;
-      this.projections = projections != null ? projections : Collections.<String>emptyList();
+      this.projectedPaths = projectedPaths != null ? projectedPaths : Collections.<PropertyPath>emptyList();
+      this.groupBy = groupBy != null ? groupBy : Collections.<PropertyPath>emptyList();
       this.sortFields = sortFields != null ? sortFields : Collections.<SortField>emptyList();
    }
 
@@ -59,8 +65,12 @@ public final class FilterParsingResult<TypeMetadata> {
     *
     * @return the filter created while walking the parse tree
     */
-   public BooleanExpr getQuery() {
-      return filter;
+   public BooleanExpr getWhereClause() {
+      return whereFilter;
+   }
+
+   public BooleanExpr getHavingClause() {
+      return havingFilter;
    }
 
    /**
@@ -90,7 +100,36 @@ public final class FilterParsingResult<TypeMetadata> {
     * projections
     */
    public List<String> getProjections() {
+      List<String> projections = new ArrayList<>(projectedPaths.size());
+      for (PropertyPath p : projectedPaths) {
+         projections.add(p.asStringPath());
+      }
       return projections;
+   }
+
+   public List<PropertyPath> getProjectedPaths() {
+      return projectedPaths;
+   }
+
+   public boolean hasGroupingOrAggregations() {
+      if (havingFilter != null || !groupBy.isEmpty()) {
+         return true;
+      }
+      for (PropertyPath p : projectedPaths) {
+         if (p.getAggregationType() != null) {
+            return true;
+         }
+      }
+      for (SortField s : sortFields) {
+         if (s.getPath().getAggregationType() != null) {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   public List<PropertyPath> getGroupBy() {
+      return groupBy;
    }
 
    public List<SortField> getSortFields() {
@@ -99,7 +138,7 @@ public final class FilterParsingResult<TypeMetadata> {
 
    @Override
    public String toString() {
-      return "FilterParsingResult [filter=" + filter + ", targetEntityName=" + targetEntityName
-            + ", projections=" + projections + ", sortFields=" + sortFields + "]";
+      return "FilterParsingResult [filter=" + whereFilter + ", havingFilter=" + havingFilter + ", targetEntityName=" + targetEntityName
+            + ", projectedPaths=" + projectedPaths + ", sortFields=" + sortFields + "]";
    }
 }

@@ -8,11 +8,11 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 7.0
  */
-public final class PropertyValueExpr implements ValueExpr {
+public class PropertyValueExpr implements ValueExpr {
 
-   private final List<String> propertyPath;
+   protected final List<String> propertyPath;
 
-   private final boolean isRepeated;
+   protected final boolean isRepeated;
 
    public PropertyValueExpr(List<String> propertyPath, boolean isRepeated) {
       this.propertyPath = propertyPath;

@@ -30,9 +30,9 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
       }
    };
 
-   public ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher,
-                           MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
-                           String queryString, BooleanExpr query, List<String> projections, List<SortField> sortFields) {
+   ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher,
+                    MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
+                    String queryString, BooleanExpr query, List<String> projections, List<SortField> sortFields) {
       this.matcher = matcher;
 
       //todo [anistor] we need an efficient single-filter registry
@@ -72,8 +72,9 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
          FilterEvalContext filterEvalContext = matcherEvalContext.initSingleFilterContext(filterSubscription);
          matcherEvalContext.process(root);
 
-         if (filterEvalContext.getMatchResult()) {
-            return new FilterResultImpl(instance, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
+         if (filterEvalContext.isMatching()) {
+            Object o = filterEvalContext.getProjection() == null ? matcher.convert(instance) : null;
+            return new FilterResultImpl(o, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
          }
       }
 

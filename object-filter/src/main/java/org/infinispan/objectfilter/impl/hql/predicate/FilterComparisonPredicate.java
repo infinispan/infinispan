@@ -4,7 +4,7 @@ import org.hibernate.hql.ast.spi.predicate.ComparisonPredicate;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 import org.infinispan.objectfilter.impl.syntax.ComparisonExpr;
 import org.infinispan.objectfilter.impl.syntax.ConstantValueExpr;
-import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
+import org.infinispan.objectfilter.impl.syntax.ValueExpr;
 
 /**
  * @author anistor@redhat.com
@@ -12,35 +12,35 @@ import org.infinispan.objectfilter.impl.syntax.PropertyValueExpr;
  */
 class FilterComparisonPredicate extends ComparisonPredicate<BooleanExpr> {
 
-   private final boolean isRepeatedProperty;
+   private final ValueExpr valueExpr;
 
-   public FilterComparisonPredicate(String propertyName, boolean isRepeatedProperty, Type comparisonType, Object comparisonValue) {
-      super(propertyName, comparisonType, comparisonValue);
-      this.isRepeatedProperty = isRepeatedProperty;
+   public FilterComparisonPredicate(ValueExpr valueExpr, Type comparisonType, Object comparisonValue) {
+      super(valueExpr.toJpaString(), comparisonType, comparisonValue);
+      this.valueExpr = valueExpr;
    }
 
    @Override
    protected BooleanExpr getStrictlyLessQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName, isRepeatedProperty), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.LESS);
+      return new ComparisonExpr(valueExpr, new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.LESS);
    }
 
    @Override
    protected BooleanExpr getLessOrEqualsQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName, isRepeatedProperty), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.LESS_OR_EQUAL);
+      return new ComparisonExpr(valueExpr, new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.LESS_OR_EQUAL);
    }
 
    @Override
    protected BooleanExpr getEqualsQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName, isRepeatedProperty), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.EQUAL);
+      return new ComparisonExpr(valueExpr, new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.EQUAL);
    }
 
    @Override
    protected BooleanExpr getGreaterOrEqualsQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName, isRepeatedProperty), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.GREATER_OR_EQUAL);
+      return new ComparisonExpr(valueExpr, new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.GREATER_OR_EQUAL);
    }
 
    @Override
    protected BooleanExpr getStrictlyGreaterQuery() {
-      return new ComparisonExpr(new PropertyValueExpr(propertyName, isRepeatedProperty), new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.GREATER);
+      return new ComparisonExpr(valueExpr, new ConstantValueExpr((Comparable) value), ComparisonExpr.Type.GREATER);
    }
 }
