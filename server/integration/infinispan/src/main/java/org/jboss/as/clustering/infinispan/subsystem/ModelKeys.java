@@ -139,6 +139,7 @@ public class ModelKeys {
     static final String MODIFICATION_QUEUE_SIZE = "modification-queue-size";
     static final String MODULE = "module";
     static final String NAME = "name";
+    static final String NOTIFICATIONS = "notifications";
     static final String OUTBOUND_SOCKET_BINDING = "outbound-socket-binding";
     static final String OWNERS = "owners";
     static final String PARTITION_HANDLING = "partition-handling";
@@ -188,6 +189,7 @@ public class ModelKeys {
     static final String STATE_TRANSFER_NAME = "STATE_TRANSFER";
     static final String STATE_TRANSFER_EXECUTOR = "state-transfer-executor";
     static final String STATISTICS = "statistics";
+    static final String STATISTICS_AVAILABLE = "statistics-available";
     static final String STOP_TIMEOUT = "stop-timeout";
     static final String STORE = "store";
     static final String STORE_NAME = "STORE";

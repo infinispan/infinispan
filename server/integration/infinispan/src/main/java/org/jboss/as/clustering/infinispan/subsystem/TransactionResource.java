@@ -71,8 +71,15 @@ public class TransactionResource extends CacheChildResource {
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(30000))
                     .build();
+   static final SimpleAttributeDefinition NOTIFICATIONS =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.NOTIFICATIONS, ModelType.BOOLEAN, true)
+                   .setXmlName(Attribute.NOTIFICATIONS.getLocalName())
+                   .setAllowExpression(false)
+                   .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                   .setDefaultValue(new ModelNode().set(true))
+                   .build();
 
-    static final AttributeDefinition[] TRANSACTION_ATTRIBUTES = {MODE, STOP_TIMEOUT, LOCKING};
+    static final AttributeDefinition[] TRANSACTION_ATTRIBUTES = {MODE, STOP_TIMEOUT, LOCKING, NOTIFICATIONS};
 
  // operation parameters
     static final SimpleAttributeDefinition TX_INTERNAL_ID =

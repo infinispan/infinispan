@@ -128,7 +128,15 @@ public class CacheResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
-    static final SimpleAttributeDefinition MIGRATOR_NAME =
+   static final SimpleAttributeDefinition STATISTICS_AVAILABLE =
+         new SimpleAttributeDefinitionBuilder(ModelKeys.STATISTICS_AVAILABLE, ModelType.BOOLEAN, true)
+               .setXmlName(Attribute.STATISTICS_AVAILABLE.getLocalName())
+               .setAllowExpression(false)
+               .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+               .setDefaultValue(new ModelNode().set(true))
+               .build();
+
+   static final SimpleAttributeDefinition MIGRATOR_NAME =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MIGRATOR_NAME, ModelType.STRING, true)
                    .setAllowExpression(false)
                    .build();
@@ -147,7 +155,7 @@ public class CacheResource extends SimpleResourceDefinition {
                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                    .build();
 
-    static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, INDEXING, INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS, REMOTE_CACHE, REMOTE_SITE};
+    static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, INDEXING, INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE};
 
     // here for legacy purposes only
     static final SimpleAttributeDefinition NAME =

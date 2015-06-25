@@ -68,7 +68,7 @@ public class InfinispanSubsystemTestCase extends ClusteringSubsystemTest {
                                          { "subsystem-infinispan_7_0.xml", 88 },
                                          { "subsystem-infinispan_7_1.xml", 88 },
                                          { "subsystem-infinispan_7_2.xml", 88 },
-                                         { "subsystem-infinispan_8_0.xml", 88 },
+                                         { "subsystem-infinispan_8_0.xml", 90 },
                                        };
       return Arrays.asList(data);
     }
