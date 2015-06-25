@@ -105,6 +105,7 @@ public class InfinispanResourceDescriptionResolver extends StandardResourceDescr
         sharedAttributeResolver.put(ModelKeys.REMOTE_SITE, "cache");
         sharedAttributeResolver.put(ModelKeys.START, "cache");
         sharedAttributeResolver.put(ModelKeys.STATISTICS, "cache");
+        sharedAttributeResolver.put(ModelKeys.STATISTICS_AVAILABLE, "cache");
 
         sharedAttributeResolver.put(ModelKeys.ASYNC_MARSHALLING, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.CACHE_AVAILABILITY, "clustered-cache");

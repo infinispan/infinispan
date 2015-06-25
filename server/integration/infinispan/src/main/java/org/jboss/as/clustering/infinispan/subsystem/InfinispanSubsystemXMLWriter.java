@@ -215,6 +215,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         this.writeOptional(writer, Attribute.JNDI_NAME, cache, ModelKeys.JNDI_NAME);
         this.writeOptional(writer, Attribute.MODULE, cache, ModelKeys.MODULE);
         this.writeOptional(writer, Attribute.STATISTICS, cache, ModelKeys.STATISTICS);
+        this.writeOptional(writer, Attribute.STATISTICS_AVAILABLE, cache, ModelKeys.STATISTICS_AVAILABLE);
 
         if (cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME).isDefined()) {
             writer.writeStartElement(Element.LOCKING.getLocalName());
@@ -232,6 +233,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             this.writeOptional(writer, Attribute.STOP_TIMEOUT, transaction, ModelKeys.STOP_TIMEOUT);
             this.writeOptional(writer, Attribute.MODE, transaction, ModelKeys.MODE);
             this.writeOptional(writer, Attribute.LOCKING, transaction, ModelKeys.LOCKING);
+            this.writeOptional(writer, Attribute.NOTIFICATIONS, transaction, ModelKeys.NOTIFICATIONS);
             writer.writeEndElement();
         }
 

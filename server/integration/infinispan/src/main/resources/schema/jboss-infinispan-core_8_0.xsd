@@ -445,6 +445,11 @@
                 <xs:documentation>Determines whether or not the cache should collect statistics.  Keep disabled for optimal performance.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
+        <xs:attribute name="statistics-available" type="xs:boolean" default="true">
+            <xs:annotation>
+                <xs:documentation>If set to false, statistics gathering cannot be enabled during runtime. Keep disabled for optimal performance.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:complexType name="local-cache">
@@ -490,6 +495,13 @@
         <xs:attribute name="locking" type="tns:locking-mode" default="OPTIMISTIC">
             <xs:annotation>
                 <xs:documentation>The locking mode for this cache, one of OPTIMISTIC or PESSIMISTIC.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="notifications" type="xs:boolean" default="true">
+            <xs:annotation>
+                <xs:documentation>
+                    Enables or disables triggering transactional notifications on cache listeners. By default is enabled.
+                </xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>

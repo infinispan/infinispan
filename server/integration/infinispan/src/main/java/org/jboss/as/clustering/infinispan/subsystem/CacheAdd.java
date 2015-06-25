@@ -393,6 +393,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         CacheResource.CACHE_MODULE.validateAndSet(fromModel, toModel);
         CacheResource.INDEXING_PROPERTIES.validateAndSet(fromModel, toModel);
         CacheResource.STATISTICS.validateAndSet(fromModel, toModel);
+        CacheResource.STATISTICS_AVAILABLE.validateAndSet(fromModel, toModel);
         CacheResource.REMOTE_CACHE.validateAndSet(fromModel, toModel);
         CacheResource.REMOTE_SITE.validateAndSet(fromModel, toModel);
     }
@@ -409,6 +410,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             throws OperationFailedException {
 
         builder.jmxStatistics().enabled(CacheResource.STATISTICS.resolveModelAttribute(context, cache).asBoolean());
+        builder.jmxStatistics().available(CacheResource.STATISTICS_AVAILABLE.resolveModelAttribute(context, cache).asBoolean());
 
         final Indexing indexing = Indexing.valueOf(CacheResource.INDEXING.resolveModelAttribute(context, cache).asString());
         final boolean autoConfig = CacheResource.INDEXING_AUTO_CONFIG.resolveModelAttribute(context, cache).asBoolean();
@@ -467,8 +469,9 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
             final long stopTimeout = TransactionResource.STOP_TIMEOUT.resolveModelAttribute(context, transaction).asLong();
             txMode = TransactionMode.valueOf(TransactionResource.MODE.resolveModelAttribute(context, transaction).asString());
             lockingMode = LockingMode.valueOf(TransactionResource.LOCKING.resolveModelAttribute(context, transaction).asString());
+            boolean notifications = TransactionResource.NOTIFICATIONS.resolveModelAttribute(context, transaction).asBoolean();
 
-            builder.transaction().cacheStopTimeout(stopTimeout);
+            builder.transaction().cacheStopTimeout(stopTimeout).notifications(notifications);
         }
         builder.transaction()
                 .transactionMode(txMode.getMode())

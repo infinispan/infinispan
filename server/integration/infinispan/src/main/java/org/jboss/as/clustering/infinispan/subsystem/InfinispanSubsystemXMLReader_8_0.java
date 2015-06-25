@@ -371,6 +371,10 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
                 CacheResource.STATISTICS.parseAndSetParameter(value, cache, reader);
                 break;
             }
+            case STATISTICS_AVAILABLE: {
+                CacheResource.STATISTICS_AVAILABLE.parseAndSetParameter(value, cache, reader);
+                break;
+            }
             default: {
                 throw ParseUtils.unexpectedAttribute(reader, index);
             }
@@ -770,6 +774,10 @@ public final class InfinispanSubsystemXMLReader_8_0 implements XMLElementReader<
                 }
                 case LOCKING: {
                     TransactionResource.LOCKING.parseAndSetParameter(value, transaction, reader);
+                    break;
+                }
+                case NOTIFICATIONS: {
+                    TransactionResource.NOTIFICATIONS.parseAndSetParameter(value, transaction, reader);
                     break;
                 }
                 default: {
