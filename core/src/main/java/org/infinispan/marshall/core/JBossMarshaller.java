@@ -141,16 +141,20 @@ public class JBossMarshaller extends AbstractJBossMarshaller implements Streamin
 
       @Override
       public Writer getObjectWriter(Object o) throws IOException {
-         ExternalizerTable table = this.externalizerTable;
-         if (table == null) {
-            throw new IllegalLifecycleStateException("Cache marshaller has been stopped");
-         }
-         return table.getObjectWriter(o);
+         return getExternalizerTable().getObjectWriter(o);
       }
 
       @Override
       public Object readObject(Unmarshaller input) throws IOException, ClassNotFoundException {
-         return externalizerTable.readObject(input);
+         return getExternalizerTable().readObject(input);
+      }
+
+      private ExternalizerTable getExternalizerTable() {
+         ExternalizerTable table = this.externalizerTable;
+         if (table == null) {
+            throw new IllegalLifecycleStateException("Cache marshaller has been stopped");
+         }
+         return table;
       }
    }
 }
