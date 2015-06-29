@@ -2,8 +2,11 @@ package org.infinispan.util.mocks;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.functional.*;
+import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.functional.impl.ListenerNotifier;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.metadata.Metadata;
@@ -71,6 +74,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.infinispan.xsite.XSiteAdminCommand.*;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.*;
@@ -397,6 +404,56 @@ public class ControlledCommandFactory implements CommandsFactory {
    @Override
    public GetCacheEntryCommand buildGetCacheEntryCommand(Object key, Set<Flag> explicitFlags) {
       return actual.buildGetCacheEntryCommand(key, explicitFlags);
+   }
+
+   @Override
+   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<EntryView.ReadEntryView<K, V>, R> f) {
+      return actual.buildReadOnlyKeyCommand(key, f);
+   }
+
+   @Override
+   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Set<? extends K> keys, Function<EntryView.ReadEntryView<K, V>, R> f) {
+      return actual.buildReadOnlyManyCommand(keys, f);
+   }
+
+   @Override
+   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(ListenerNotifier<K, V> notifier, K key, Consumer<EntryView.WriteEntryView<V>> f) {
+      return actual.buildWriteOnlyKeyCommand(notifier, key, f);
+   }
+
+   @Override
+   public <K, V, R> ReadWriteKeyValueCommand buildReadWriteKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f) {
+      return actual.buildReadWriteKeyValueCommand(notifier, key, value, f);
+   }
+
+   @Override
+   public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(ListenerNotifier<K, V> notifier, K key, Function<EntryView.ReadWriteEntryView<K, V>, R> f) {
+      return actual.buildReadWriteKeyCommand(notifier, key, f);
+   }
+
+   @Override
+   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(ListenerNotifier<K, V> notifier, Map<? extends K, ? extends V> entries, BiConsumer<V, EntryView.WriteEntryView<V>> f) {
+      return actual.buildWriteOnlyManyEntriesCommand(notifier, entries, f);
+   }
+
+   @Override
+   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value, BiConsumer<V, EntryView.WriteEntryView<V>> f) {
+      return actual.buildWriteOnlyKeyValueCommand(notifier, key, value, f);
+   }
+
+   @Override
+   public <K, V> WriteOnlyManyCommand buildWriteOnlyManyCommand(ListenerNotifier<K, V> notifier, Set<? extends K> keys, Consumer<EntryView.WriteEntryView<V>> f) {
+      return actual.buildWriteOnlyManyCommand(notifier, keys, f);
+   }
+
+   @Override
+   public <K, V, R> ReadWriteManyCommand buildReadWriteManyCommand(ListenerNotifier<K, V> notifier, Set<? extends K> keys, Function<EntryView.ReadWriteEntryView<K, V>, R> f) {
+      return actual.buildReadWriteManyCommand(notifier, keys, f);
+   }
+
+   @Override
+   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(ListenerNotifier<K, V> notifier, Map<? extends K, ? extends V> entries, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f) {
+      return actual.buildReadWriteManyEntriesCommand(notifier, entries, f);
    }
 
 }

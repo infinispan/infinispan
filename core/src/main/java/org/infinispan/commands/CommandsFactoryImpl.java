@@ -1,11 +1,18 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.functional.*;
+import org.infinispan.commons.api.functional.EntryView;
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
+import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.functional.impl.ListenerNotifier;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.iteration.impl.EntryRetriever;
@@ -107,6 +114,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.infinispan.xsite.XSiteAdminCommand.*;
 import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.*;
@@ -688,4 +699,55 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private CommandInvocationId generateUUID() {
       return CommandInvocationId.generateId(clusteringDependentLogic.getAddress());
    }
+
+   @Override
+   public <K, V, R> ReadOnlyKeyCommand<K, V, R> buildReadOnlyKeyCommand(K key, Function<ReadEntryView<K, V>, R> f) {
+      return new ReadOnlyKeyCommand<>(key, f);
+   }
+
+   @Override
+   public <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
+      return new ReadOnlyManyCommand<>(keys, f);
+   }
+
+   @Override
+   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(ListenerNotifier<K, V> notifier, K key, Consumer<WriteEntryView<V>> f) {
+      return new WriteOnlyKeyCommand<>(notifier, key, f);
+   }
+
+   @Override
+   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
+      return new ReadWriteKeyValueCommand<>(notifier, key, value, f);
+   }
+
+   @Override
+   public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(ListenerNotifier<K, V> notifier, K key, Function<ReadWriteEntryView<K, V>, R> f) {
+      return new ReadWriteKeyCommand<>(notifier, key, f);
+   }
+
+   @Override
+   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(ListenerNotifier<K, V> notifier, Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
+      return new WriteOnlyManyEntriesCommand<>(notifier, entries, f);
+   }
+
+   @Override
+   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
+      return new WriteOnlyKeyValueCommand<>(notifier, key, value, f);
+   }
+
+   @Override
+   public <K, V> WriteOnlyManyCommand buildWriteOnlyManyCommand(ListenerNotifier<K, V> notifier, Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
+      return new WriteOnlyManyCommand<>(notifier, keys, f);
+   }
+
+   @Override
+   public <K, V, R> ReadWriteManyCommand buildReadWriteManyCommand(ListenerNotifier<K, V> notifier, Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
+      return new ReadWriteManyCommand<>(notifier, keys, f);
+   }
+
+   @Override
+   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(ListenerNotifier<K, V> notifier, Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
+      return new ReadWriteManyEntriesCommand<>(notifier, entries, f);
+   }
+
 }

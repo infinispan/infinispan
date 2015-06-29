@@ -11,6 +11,7 @@ import org.infinispan.commands.AbstractVisitor;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.DataCommand;
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.functional.*;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -19,11 +20,9 @@ import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.*;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
@@ -195,10 +194,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
    }
 
-   private void wrapEntryForPutIfNeeded(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   private void wrapEntryForPutIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) throws Throwable {
       if (shouldWrap(command.getKey(), ctx, command)) {
          entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isConditional(), command,
-                                      command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
+            command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
       }
    }
 
@@ -315,6 +314,98 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       return invokeNextInterceptor(ctx, command);
    }
 
+   @Override
+   public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+      return visitDataReadCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      try {
+         for (Object key : command.getKeys()) {
+            entryFactory.wrapEntryForReading(ctx, key, null);
+         }
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         if (ctx.isInTxScope()) {
+            for (Object key : command.getKeys()) {
+               CacheEntry entry = ctx.lookupEntry(key);
+               if (entry != null) {
+                  entry.setSkipLookup(true);
+               }
+            }
+         }
+      }
+   }
+
+   @Override
+   public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
+      wrapEntryForPutIfNeeded(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+   }
+
+   @Override
+   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+      wrapEntryForPutIfNeeded(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+   }
+
+   @Override
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+      wrapEntryForPutIfNeeded(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+   }
+
+   @Override
+   public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+      for (Object key : command.getEntries().keySet()) {
+         if (shouldWrap(key, ctx, command)) {
+            //the put map never reads the keys
+            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
+         }
+      }
+      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+      for (Object key : command.getKeys()) {
+         if (shouldWrap(key, ctx, command)) {
+            //the put map never reads the keys
+            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
+         }
+      }
+      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+      wrapEntryForPutIfNeeded(ctx, command);
+      return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, command.getMetadata());
+   }
+
+   @Override
+   public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      for (Object key : command.getKeys()) {
+         if (shouldWrap(key, ctx, command)) {
+            //the put map never reads the keys
+            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
+         }
+      }
+      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      for (Object key : command.getEntries().keySet()) {
+         if (shouldWrap(key, ctx, command)) {
+            //the put map never reads the keys
+            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
+         }
+      }
+      return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
+   }
+
    private Flag extractStateTransferFlag(InvocationContext ctx, FlagAffectedCommand command) {
       if (command == null) {
          //commit command
@@ -428,7 +519,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    /**
     * Locks the value for the keys accessed by the command to avoid being override from a remote get.
     */
-   private Object setSkipRemoteGetsAndInvokeNextForPutMapCommand(InvocationContext context, PutMapCommand command) throws Throwable {
+   private Object setSkipRemoteGetsAndInvokeNextForPutMapCommand(InvocationContext context, WriteCommand command) throws Throwable {
       Object retVal = invokeNextAndApplyChanges(context, command, command.getMetadata());
       if (context.isInTxScope()) {
          for (Object key : command.getAffectedKeys()) {

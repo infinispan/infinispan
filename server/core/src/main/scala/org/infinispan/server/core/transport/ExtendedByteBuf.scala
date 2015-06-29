@@ -61,7 +61,7 @@ object ExtendedByteBuf {
    def writeUnsignedInt(i: Int, bf: ByteBuf) = VInt.write(bf, i)
    def writeUnsignedLong(l: Long, bf: ByteBuf) = VLong.write(bf, l)
 
-   def writeRangedBytes(src: Array[Byte], bf: ByteBuf) {
+   def   writeRangedBytes(src: Array[Byte], bf: ByteBuf) {
       writeUnsignedInt(src.length, bf)
       if (src.length > 0)
          bf.writeBytes(src)
