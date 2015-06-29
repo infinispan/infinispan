@@ -54,6 +54,10 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
             case e: Event =>
                val encoder = getEncoder(e.version)
                encoder.writeEvent(e, buf)
+            case None =>
+               // Do nothing
+            case _ =>
+               logErrorUnexpectedMessage(msg)
          }
 
          if (isTrace)

@@ -88,4 +88,6 @@ trait Log {
    def logErrorWritingResponse(msgId: Long, t: Throwable) = log.errorWritingResponse(msgId, t)
 
    def logErrorEncodingMessage(msg: Any, t: Throwable) = log.errorEncodingMessage(msg, t)
+
+   def logErrorUnexpectedMessage(msg: Any) = log.errorUnexpectedMessage(msg)
 }

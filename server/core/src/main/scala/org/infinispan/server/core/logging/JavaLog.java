@@ -105,4 +105,8 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "Exception encoding message %s", id = 5023)
    void errorEncodingMessage(Object msg, @Cause Throwable t);
 
+   @LogMessage(level = ERROR)
+   @Message(value = "Request to encode unexpected message %s", id = 5024)
+   void errorUnexpectedMessage(Object msg);
+
 }
