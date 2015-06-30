@@ -42,7 +42,7 @@ public class TestHelper {
     */
    public static void verifyIndex(File rootDir, String indexName, int termsAdded, boolean inverted) throws IOException {
       File indexDir = new File(rootDir, indexName);
-      Directory directory = FSDirectory.open(indexDir);
+      Directory directory = FSDirectory.open(indexDir.toPath());
       try {
          verifyOnDirectory(directory, termsAdded, inverted);
       }
@@ -97,7 +97,7 @@ public class TestHelper {
     */
    public static void createIndex(File rootDir, String indexName, int termsToAdd, boolean invert) throws IOException {
       File indexDir = new File(rootDir, indexName);
-      FSDirectory directory = FSDirectory.open(indexDir);
+      FSDirectory directory = FSDirectory.open(indexDir.toPath());
       try {
          CacheTestSupport.initializeDirectory(directory);
          IndexWriter iwriter = LuceneSettings.openWriter(directory, 100000);

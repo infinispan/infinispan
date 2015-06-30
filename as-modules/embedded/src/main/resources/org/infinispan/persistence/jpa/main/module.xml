@@ -16,6 +16,7 @@
         <module name="org.hibernate"/>
         <module name="org.infinispan.core" slot="${slot}"/>
         <module name="org.infinispan.commons" slot="${slot}"/>
+        <module name="org.javassist"/>
         <module name="org.jboss.logging"/>
     </dependencies>
 </module>

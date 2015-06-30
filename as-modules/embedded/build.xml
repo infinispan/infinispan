@@ -5,7 +5,7 @@
     <import file="../lib.xml" />
 
     <major-minor version="${project.version}" property="infinispan.slot" prefix="ispn-"/>
-    <major-minor version="${version.lucene}" property="lucene4.slot"/>
+    <major-minor version="${version.lucene}" property="lucene.slot"/>
     <major-minor version="${version.hibernate.search}" property="hibernate.search.slot"/>
     <property name="hibernate-search-directory-provider-ref" value="for-hibernatesearch-${hibernate.search.slot}"/>
 
@@ -27,7 +27,7 @@
 
         <filterset id="module-filter">
             <filter token="infinispan.slot" value="${infinispan.slot}" />
-            <filter token="lucene4.slot" value="${lucene4.slot}" />
+            <filter token="lucene.slot" value="${lucene.slot}" />
             <filter token="hibernate.search.slot" value="${hibernate.search.slot}" />
             <filter token="hibernate-search-directory-provider-ref" value="${hibernate-search-directory-provider-ref}" />
         </filterset>
@@ -137,7 +137,7 @@
             <maven-resource group="org.iq80.leveldb" artifact="leveldb" />
         </module-def>
 
-        <module-def name="org.apache.lucene" slot="${lucene4.slot}">
+        <module-def name="org.apache.lucene" slot="${lucene.slot}">
             <maven-resource group="org.apache.lucene" artifact="lucene-core" />
             <maven-resource group="org.apache.lucene" artifact="lucene-queries" />
             <maven-resource group="org.apache.lucene" artifact="lucene-analyzers-common" />
@@ -145,6 +145,11 @@
             <maven-resource group="org.apache.lucene" artifact="lucene-highlighter" />
             <maven-resource group="org.apache.lucene" artifact="lucene-grouping" />
             <maven-resource group="org.apache.lucene" artifact="lucene-facet" />
+        </module-def>
+
+        <module-def name="org.apache.lucene.internal" slot="${lucene.slot}">
+            <maven-resource group="org.apache.lucene" artifact="lucene-misc" />
+            <maven-resource group="org.apache.lucene" artifact="lucene-backward-codecs" />
         </module-def>
 
         <module-def name="org.hibernate.hql.parser" slot="${infinispan.slot}">

@@ -5,6 +5,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.Cache;
+import org.infinispan.commons.util.Util;
 import org.infinispan.lucene.ChunkCacheKey;
 import org.infinispan.lucene.DirectoryIntegrityCheck;
 import org.infinispan.lucene.FileCacheKey;
@@ -16,6 +17,7 @@ import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * Tests covering the functionality of NoopSegmentreadLocker.
@@ -34,10 +36,9 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
 
    @Test @Override
    public void testIndexWritingAndFinding() throws IOException, InterruptedException {
-      verifyBoth(cache0,cache1);
+      verifyIgnoringFiles(cache0, cache1, Util.asSet("pending_segments_1"));
       IndexOutput indexOutput = dirA.createOutput(filename, IOContext.DEFAULT);
       indexOutput.writeString("no need to write, nobody ever will read this");
-      indexOutput.flush();
       indexOutput.close();
       assertFileExistsHavingRLCount(filename, 0, true);
       IndexInput firstOpenOnB = dirB.openInput(filename, IOContext.DEFAULT);
@@ -66,8 +67,22 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
 
       dirA.close();
       dirB.close();
-      verifyDirectoryStructure(cache0);
-      verifyDirectoryStructure(cache1);
+      Set<String> left_behind = Util.asSet("pending_segments_1", "readme.txt");
+      verifyIgnoringFiles(cache0, left_behind);
+      verifyIgnoringFiles(cache1, left_behind);
+   }
+
+   void verifyIgnoringFiles(Cache cache0, Cache cache1, Set<String> files) {
+      verifyIgnoringFiles(cache0, files);
+      verifyIgnoringFiles(cache1, files);
+   }
+
+   /**
+    * Lucene 5 creates temporary "pending_segments_n" files during commit that get renamed to "segment_n", and since the
+    * NoopSegmentReadLocker never deletes files, some garbage are left behind
+    */
+   void verifyIgnoringFiles(Cache cache,Set<String> ignoring) {
+      DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEX_NAME, ignoring);
    }
 
    private void assertFileAfterDeletion(Cache cache) {
@@ -98,41 +113,4 @@ public class NoopSegmentReadLockerTest extends DistributedSegmentReadLockerTest 
       AssertJUnit.assertTrue(fileNameExistsInCache);
    }
 
-   private void verifyDirectoryStructure(Cache cache) {
-      FileListCacheValue fileList = (FileListCacheValue) cache.get(new FileListCacheKey(INDEX_NAME));
-      AssertJUnit.assertNotNull(fileList);
-      int fileListCacheKeyInstances = 0;
-
-      for (Object key : cache.keySet()) {
-         if (key instanceof ChunkCacheKey) {
-            ChunkCacheKey existingChunkKey = (ChunkCacheKey) key;
-            AssertJUnit.assertEquals(existingChunkKey.getIndexName(), INDEX_NAME);
-            Object value = cache.get(existingChunkKey);
-            AssertJUnit.assertNotNull(value);
-            AssertJUnit.assertTrue(value instanceof byte[]);
-            byte[] buffer = (byte[]) cache.get(existingChunkKey);
-            AssertJUnit.assertTrue(buffer.length != 0);
-         } else if (key instanceof FileCacheKey) {
-            FileCacheKey fileCacheKey = (FileCacheKey) key;
-            AssertJUnit.assertEquals(fileCacheKey.getIndexName(), INDEX_NAME);
-            String filename = fileCacheKey.getFileName();
-            Object value = cache.get(fileCacheKey);
-            AssertJUnit.assertNotNull(value);
-            AssertJUnit.assertTrue(value instanceof FileMetadata);
-            FileMetadata metadata = (FileMetadata) value;
-            long totalFileSize = metadata.getSize();
-            long actualFileSize = DirectoryIntegrityCheck.deepCountFileSize(fileCacheKey, cache);
-            AssertJUnit.assertEquals(actualFileSize, totalFileSize);
-
-            if(filename.contains(this.filename)) {
-               AssertJUnit.assertFalse(fileCacheKey + " should not have existed", fileList.contains(filename));
-            } else {
-               AssertJUnit.assertTrue(fileCacheKey + " should not have existed", fileList.contains(filename));
-            }
-         } else if (key instanceof FileListCacheKey) {
-            fileListCacheKeyInstances++;
-            AssertJUnit.assertEquals(1, fileListCacheKeyInstances);
-         }
-      }
-   }
 }

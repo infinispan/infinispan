@@ -1,7 +1,9 @@
 package org.infinispan.lucene.locking;
 
+import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.lucene.impl.DirectoryBuilderImpl;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
@@ -27,7 +29,9 @@ public class TransactionalLockManagerExcFunctionalTest extends TransactionalLock
       cache(1, "lucene").stop();
       TestingUtil.killCacheManagers(cacheManagers);
 
-      makeLockFactory(cache1, commonIndexName);
+      LockFactory lockFactory = makeLockFactory();
+
+      lockFactory.makeLock(new DirectoryBuilderImpl(cache1,cache1,cache1,commonIndexName).create(),"myLock");
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "Failed looking up TransactionManager. Check if any transaction manager is associated with Infinispan cache: 'lucene'")
@@ -35,7 +39,9 @@ public class TransactionalLockManagerExcFunctionalTest extends TransactionalLock
       final String commonIndexName = "myIndex";
 
       Cache cache1 = cache(0, "lucene");
-      makeLockFactory(cache1, commonIndexName);
+      LockFactory lockFactory = makeLockFactory();
+
+      lockFactory.makeLock(new DirectoryBuilderImpl(cache1,cache1,cache1,commonIndexName).create(),"myLock");
    }
 
    @Test(dataProvider = "writeLockNameProvider", enabled=false) @Override

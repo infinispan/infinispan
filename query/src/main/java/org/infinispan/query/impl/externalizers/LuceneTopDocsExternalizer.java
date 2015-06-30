@@ -20,31 +20,6 @@ public class LuceneTopDocsExternalizer extends AbstractExternalizer<TopDocs> {
 
    @Override
    public TopDocs readObject(final ObjectInput input) throws IOException, ClassNotFoundException {
-      return readObjectStatic(input);
-   }
-
-   @Override
-   public void writeObject(final ObjectOutput output, final TopDocs topDocs) throws IOException {
-      writeObjectStatic(output, topDocs);
-   }
-
-   @Override
-   public Integer getId() {
-      return ExternalizerIds.LUCENE_TOPDOCS;
-   }
-
-   static void writeObjectStatic(final ObjectOutput output, final TopDocs topDocs) throws IOException {
-      UnsignedNumeric.writeUnsignedInt(output, topDocs.totalHits);
-      output.writeFloat(topDocs.getMaxScore());
-      final ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-      final int count = scoreDocs.length;
-      UnsignedNumeric.writeUnsignedInt(output, count);
-      for (int i=0; i<count; i++) {
-         output.writeObject(scoreDocs[i]);
-      }
-   }
-
-   static TopDocs readObjectStatic(final ObjectInput input) throws IOException, ClassNotFoundException {
       final int totalHits = UnsignedNumeric.readUnsignedInt(input);
       final float maxScore = input.readFloat();
       final int scoreCount = UnsignedNumeric.readUnsignedInt(input);
@@ -54,4 +29,22 @@ public class LuceneTopDocsExternalizer extends AbstractExternalizer<TopDocs> {
       }
       return new TopDocs(totalHits, scoreDocs, maxScore);
    }
+
+   @Override
+   public void writeObject(final ObjectOutput output, final TopDocs topDocs) throws IOException {
+      UnsignedNumeric.writeUnsignedInt(output, topDocs.totalHits);
+      output.writeFloat(topDocs.getMaxScore());
+      final ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+      final int count = scoreDocs.length;
+      UnsignedNumeric.writeUnsignedInt(output, count);
+      for (ScoreDoc scoreDoc : scoreDocs) {
+         output.writeObject(scoreDoc);
+      }
+   }
+
+   @Override
+   public Integer getId() {
+      return ExternalizerIds.LUCENE_TOPDOCS;
+   }
+
 }

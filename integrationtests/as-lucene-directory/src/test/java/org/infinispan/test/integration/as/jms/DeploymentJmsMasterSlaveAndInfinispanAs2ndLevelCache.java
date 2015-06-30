@@ -34,7 +34,7 @@ public final class DeploymentJmsMasterSlaveAndInfinispanAs2ndLevelCache {
    public static Archive<?> createMaster(String deploymentName) throws Exception {
       return baseArchive(deploymentName, masterPersistenceXml(deploymentName))
             .addClass(RegistrationMdb.class)
-            .addAsWebInfResource(hornetqJmsXml(), "hornetq-jms.xml")
+            .addAsWebInfResource(activeMQJmsXml(), "activemq-jms.xml")
             ;
    }
 
@@ -126,18 +126,18 @@ public final class DeploymentJmsMasterSlaveAndInfinispanAs2ndLevelCache {
             .up();
    }
 
-   private static Asset hornetqJmsXml() {
-      String hornetqXml =
+   private static Asset activeMQJmsXml() {
+      String activeMqXml =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                  + "<messaging-deployment xmlns=\"urn:jboss:messaging-deployment:1.0\">"
-                  + "<hornetq-server>"
+                  + "<messaging-deployment xmlns=\"urn:jboss:messaging-activemq-deployment:1.0\">"
+                  + "<server>"
                   + "<jms-destinations>"
                   + "<jms-queue name=\"hsearchQueue\">"
                   + "<entry name=\"" + RegistrationConfiguration.DESTINATION_QUEUE + "\"/>"
                   + "</jms-queue>"
                   + "</jms-destinations>"
-                  + "</hornetq-server>"
+                  + "</server>"
                   + "</messaging-deployment>";
-      return new StringAsset(hornetqXml);
+      return new StringAsset(activeMqXml);
    }
 }

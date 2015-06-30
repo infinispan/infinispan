@@ -1,42 +1,44 @@
 package org.infinispan.query.impl.externalizers;
 
+import org.apache.lucene.search.TopDocs;
+import org.infinispan.commons.io.UnsignedNumeric;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.query.clustered.NodeTopDocs;
+
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import org.apache.lucene.search.TopDocs;
-import org.infinispan.commons.io.UnsignedNumeric;
-import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.Util;
-import org.infinispan.query.clustered.ISPNEagerTopDocs;
-
-public class ClusteredTopDocsExternalizer extends AbstractExternalizer<ISPNEagerTopDocs> {
+public class ClusteredTopDocsExternalizer extends AbstractExternalizer<NodeTopDocs> {
 
    @Override
-   public Set<Class<? extends ISPNEagerTopDocs>> getTypeClasses() {
-      return Util.<Class<? extends ISPNEagerTopDocs>>asSet(ISPNEagerTopDocs.class);
+   public Set<Class<? extends NodeTopDocs>> getTypeClasses() {
+      return Util.<Class<? extends NodeTopDocs>>asSet(NodeTopDocs.class);
    }
 
    @Override
-   public ISPNEagerTopDocs readObject(final ObjectInput input) throws IOException, ClassNotFoundException {
+   public NodeTopDocs readObject(final ObjectInput input) throws IOException, ClassNotFoundException {
       final int keysNumber = UnsignedNumeric.readUnsignedInt(input);
       final Object[] keys = new Object[keysNumber];
       for (int i=0; i<keysNumber; i++) {
          keys[i] = input.readObject();
       }
-      final TopDocs innerTopDocs = LuceneTopDocsExternalizer.readObjectStatic(input);
-      return new ISPNEagerTopDocs(innerTopDocs, keys);
+      final TopDocs innerTopDocs = (TopDocs) input.readObject();
+      return new NodeTopDocs(innerTopDocs, keys);
    }
 
    @Override
-   public void writeObject(final ObjectOutput output, final ISPNEagerTopDocs topDocs) throws IOException {
+   public void writeObject(final ObjectOutput output, final NodeTopDocs topDocs) throws IOException {
       final Object[] keys = topDocs.keys;
-      UnsignedNumeric.writeUnsignedInt(output, keys.length);
-      for (Object o : keys) {
-         output.writeObject(o);
+      int size = keys == null ? 0 : keys.length;
+      UnsignedNumeric.writeUnsignedInt(output, size);
+      for (int i = 0; i < size; i++) {
+         output.writeObject(keys[i]);
       }
-      LuceneTopDocsExternalizer.writeObjectStatic(output, topDocs);
+
+      output.writeObject(topDocs.topDocs);
    }
 
    @Override

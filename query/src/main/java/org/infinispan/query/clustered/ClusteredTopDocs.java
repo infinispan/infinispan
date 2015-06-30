@@ -3,7 +3,6 @@ package org.infinispan.query.clustered;
 import java.util.UUID;
 
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -18,14 +17,14 @@ public class ClusteredTopDocs {
 
    private int currentIndex = 0;
 
-   private final TopDocs topDocs;
+   private final NodeTopDocs nodeTopDocs;
 
    private final UUID id;
 
    private Address nodeAddress;
 
-   ClusteredTopDocs(TopDocs topDocs, UUID id) {
-      this.topDocs = topDocs;
+   ClusteredTopDocs(NodeTopDocs nodeTopDocs, UUID id) {
+      this.nodeTopDocs = nodeTopDocs;
       this.id = id;
    }
 
@@ -34,18 +33,18 @@ public class ClusteredTopDocs {
    }
 
    public boolean hasNext() {
-      return !(currentIndex >= topDocs.scoreDocs.length);
+      return !(currentIndex >= nodeTopDocs.topDocs.scoreDocs.length);
    }
 
-   public TopDocs getTopDocs() {
-      return topDocs;
+   public NodeTopDocs getNodeTopDocs() {
+      return nodeTopDocs;
    }
 
    public ClusteredDoc getNext() {
-      if (currentIndex >= topDocs.scoreDocs.length)
+      if (currentIndex >= nodeTopDocs.topDocs.scoreDocs.length)
          return null;
 
-      ScoreDoc scoreDoc = topDocs.scoreDocs[currentIndex];
+      ScoreDoc scoreDoc = nodeTopDocs.topDocs.scoreDocs[currentIndex];
       return new ClusteredScoreDoc(scoreDoc, id, currentIndex++);
    }
 

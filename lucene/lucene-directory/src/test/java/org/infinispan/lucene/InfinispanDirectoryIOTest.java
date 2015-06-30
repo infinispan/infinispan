@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -77,8 +78,8 @@ public class InfinispanDirectoryIOTest {
       for (int i = 0; i < REPEATABLE_BUFFER_SIZE; i++) {
          io.writeByte(bytesGenerator.nextByte());
       }
-      io.flush();
-      assert io.length() == REPEATABLE_BUFFER_SIZE;
+      ((InfinispanIndexOutput)io).flush();
+      assert ((InfinispanIndexOutput)io).length() == REPEATABLE_BUFFER_SIZE;
 
       //Text to write on file with repeatable text
       final String someText = "This is some text";
@@ -91,11 +92,12 @@ public class InfinispanDirectoryIOTest {
          io.writeBytes(someTextAsBytes, someTextAsBytes.length);
       }
 
-      io.close();
+      ((InfinispanIndexOutput)io).flush();
+      ((InfinispanIndexOutput)io).close();
       bytesGenerator.reset();
       final long finalSize = REPEATABLE_BUFFER_SIZE + someTextAsBytes.length;
-      assert io.length() == finalSize;
-      assert io.length() == DirectoryIntegrityCheck.deepCountFileSize(new FileCacheKey(INDEXNAME,fileName), cache);
+      assert ((InfinispanIndexOutput)io).length() == finalSize;
+      assert ((InfinispanIndexOutput)io).length() == DirectoryIntegrityCheck.deepCountFileSize(new FileCacheKey(INDEXNAME,fileName), cache);
 
       int indexPointer = 0;
       Arrays.sort(pointers);
@@ -176,8 +178,9 @@ public class InfinispanDirectoryIOTest {
       assertReadByteWorkingCorrectly(dir, newFileName, fileSize);
       assertReadBytesWorkingCorrectly(dir, newFileName, fileSize, readBuffer);
       DirectoryIntegrityCheck.verifyDirectoryStructure(cache, INDEXNAME);
-      assert dir.fileExists(newFileName);
-      assert dir.fileExists(fileName) == false;
+      List<String> fileList = Arrays.asList(dir.listAll());
+      assert fileList.contains(newFileName);
+      assert !fileList.contains(fileName);
    }
 
    @Test
@@ -477,10 +480,9 @@ public class InfinispanDirectoryIOTest {
       io.writeByte((byte) 66);
       io.writeByte((byte) 69);
 
-      io.flush();
       io.close();
 
-      assert dir.fileExists("MyNewFile.txt");
+      assert Arrays.asList(dir.listAll()).contains("MyNewFile.txt");
       assert null != cache.get(new ChunkCacheKey(INDEXNAME, "MyNewFile.txt", 0, BUFFER_SIZE));
 
       // test contents by reading:
@@ -616,7 +618,7 @@ public class InfinispanDirectoryIOTest {
       if (cache != null) {
          AssertJUnit.assertEquals(writeSize, DirectoryIntegrityCheck.deepCountFileSize(new FileCacheKey(INDEXNAME,filename), cache));
       }
-      AssertJUnit.assertEquals(writeSize, indexOutput.length());
+      AssertJUnit.assertEquals(writeSize, indexOutput.getFilePointer());
       byte[] results = new byte[readSize];
       IndexInput openInput = dir.openInput(filename, IOContext.DEFAULT);
       try {
@@ -642,7 +644,6 @@ public class InfinispanDirectoryIOTest {
       IndexOutput indexOutput = dir.createOutput(filename, IOContext.DEFAULT);
       for (int i = 0; i < 10; i++) {
          indexOutput.writeBytes(manyBytes, bufferSize);
-         indexOutput.flush();
       }
       indexOutput.close();
       IndexInput input = dir.openInput(filename, IOContext.DEFAULT);

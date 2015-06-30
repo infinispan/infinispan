@@ -11,18 +11,24 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.Lock;
 import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
+import org.infinispan.context.Flag;
+import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Directory implementation for Apache Lucene.
- * Meant to be compatible with versions 4.0+
+ * Meant to be compatible with versions 5.0+
  *
  * @since 5.2
  * @author Sanne Grinovero
  * @see org.apache.lucene.store.Directory
  * @see org.apache.lucene.store.LockFactory
  */
-class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
+class DirectoryLucene extends Directory implements DirectoryExtensions {
+
+   private static final Log log = LogFactory.getLog(DirectoryLucene.class);
 
    private final DirectoryImplementor impl;
 
@@ -35,6 +41,7 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
    /**
     * @param metadataCache the cache to be used for all smaller metadata: prefer replication over distribution, avoid eviction
     * @param chunksCache the cache to use for the space consuming segments: prefer distribution, enable eviction if needed
+    * @param distLocksCache the cache to use for locks, to avoid more than one process to write to the index
     * @param indexName the unique index name, useful to store multiple indexes in the same caches
     * @param lf the LockFactory to be used by IndexWriters. @see org.infinispan.lucene.locking
     * @param chunkSize segments are fragmented in chunkSize bytes; larger values are more efficient for searching but less for distribution and network replication
@@ -42,21 +49,11 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
     * @param fileListUpdatedAsync When true, the writes to the list of currently existing files in the Directory will use the putAsync method rather than put.
     * @param deleteExecutor The Executor to run file deletes in the background
     */
-   public DirectoryLuceneV4(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync, Executor deleteExecutor) {
+   public DirectoryLucene(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, LockFactory lf, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync, Executor deleteExecutor) {
       this.deleteExecutor = deleteExecutor;
-      this.impl = new DirectoryImplementor(metadataCache, chunksCache, indexName, chunkSize, readLocker, fileListUpdatedAsync);
+      this.impl = new DirectoryImplementor(metadataCache, chunksCache, distLocksCache, indexName, chunkSize, readLocker, fileListUpdatedAsync);
       this.indexName = indexName;
       this.lockFactory = lf;
-      this.lockFactory.setLockPrefix(this.getLockID());
-   }
-
-   /**
-    * {@inheritDoc}
-    */
-   @Override
-   public boolean fileExists(final String name) {
-      ensureOpen();
-      return impl.fileExists(name);
    }
 
    /**
@@ -144,23 +141,8 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
    }
 
    @Override
-   public void clearLock(String lockName) throws IOException {
-      lockFactory.clearLock(lockName);
-   }
-
-   @Override
-   public LockFactory getLockFactory() {
-      return lockFactory;
-   }
-
-   @Override
    public Lock makeLock(String lockName) {
-      return lockFactory.makeLock(lockName);
-   }
-
-   @Override
-   public void setLockFactory(LockFactory lockFactory) throws IOException {
-      this.lockFactory = lockFactory;
+      return lockFactory.makeLock(this, lockName);
    }
 
    @Override
@@ -176,6 +158,24 @@ class DirectoryLuceneV4 extends Directory implements DirectoryExtensions {
    @Override
    public Cache getDataCache() {
       return impl.getDataCache();
+   }
+
+   /**
+    * Force release of the lock in this directory. Make sure to understand the
+    * consequences
+    */
+   @Override
+   public void forceUnlock(String lockName) {
+      Cache<Object, Integer> lockCache = getDistLockCache().getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE, Flag.SKIP_CACHE_LOAD);
+      FileCacheKey fileCacheKey = new FileCacheKey(indexName, lockName);
+      Object previousValue = lockCache.remove(fileCacheKey);
+      if (previousValue!=null && log.isTraceEnabled()) {
+         log.tracef("Lock forcibly removed for index: %s", indexName);
+      }
+   }
+
+   public Cache<Object, Integer> getDistLockCache() {
+      return impl.getDistLocksCache();
    }
 
    final class DeleteTask implements Runnable {

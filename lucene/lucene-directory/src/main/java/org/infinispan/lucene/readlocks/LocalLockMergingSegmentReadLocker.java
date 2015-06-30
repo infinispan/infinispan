@@ -42,6 +42,10 @@ public class LocalLockMergingSegmentReadLocker implements SegmentReadLocker {
       this.delegate = new DistributedSegmentReadLocker((Cache<Object, Integer>) locksCache, chunksCache, metadataCache, indexName);
    }
 
+   public LocalLockMergingSegmentReadLocker(Cache<?, ?> locksCache, Cache<?, ?> chunksCache, Cache<?, ?> metadataCache, String indexName, boolean forceSynchronousDeletes) {
+      this.delegate = new DistributedSegmentReadLocker((Cache<Object, Integer>) locksCache, chunksCache, metadataCache, indexName, forceSynchronousDeletes);
+   }
+
    /**
     * {@inheritDoc}
     */

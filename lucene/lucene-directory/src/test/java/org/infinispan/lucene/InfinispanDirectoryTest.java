@@ -4,6 +4,8 @@ import static org.infinispan.lucene.CacheTestSupport.assertTextIsFoundInIds;
 import static org.infinispan.lucene.CacheTestSupport.writeTextToIndex;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
@@ -90,8 +92,10 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
 
          ((DirectoryExtensions) dir).renameFile(fileName, newFileName);
 
-         assert !dir.fileExists(fileName);
-         assert dir.fileExists(newFileName);
+         List<String> files = Arrays.asList(dir.listAll());
+
+         assert !files.contains(fileName);
+         assert files.contains(newFileName);
       } finally {
          if (dir != null) dir.close();
       }
@@ -117,7 +121,6 @@ public class InfinispanDirectoryTest extends SingleCacheManagerTest {
          io.writeByte((byte) 66);
          io.writeByte((byte) 69);
       } finally {
-         io.flush();
          io.close();
       }
    }

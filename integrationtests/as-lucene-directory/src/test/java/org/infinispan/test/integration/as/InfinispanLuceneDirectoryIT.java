@@ -4,7 +4,8 @@ import com.google.common.base.Joiner;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.SortedDocValuesField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.facet.FacetField;
 import org.apache.lucene.facet.FacetResult;
 import org.apache.lucene.facet.Facets;
@@ -13,10 +14,10 @@ import org.apache.lucene.facet.FacetsConfig;
 import org.apache.lucene.facet.taxonomy.FastTaxonomyFacetCounts;
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyReader;
 import org.apache.lucene.facet.taxonomy.directory.DirectoryTaxonomyWriter;
-import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -26,6 +27,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.grouping.GroupingSearch;
 import org.apache.lucene.search.grouping.TopGroups;
 import org.apache.lucene.store.Directory;
+import org.apache.lucene.util.BytesRef;
 import org.infinispan.Cache;
 import org.infinispan.Version;
 import org.infinispan.lucene.directory.DirectoryBuilder;
@@ -61,7 +63,6 @@ public class InfinispanLuceneDirectoryIT {
    private Directory directory;
    private EmbeddedCacheManager cacheManager;
    private Cache<?, ?> cache;
-   private static final org.apache.lucene.util.Version LUCENE_VERSION = org.apache.lucene.util.Version.LATEST;
 
    @Before
    public void setup() {
@@ -91,16 +92,16 @@ public class InfinispanLuceneDirectoryIT {
    }
 
    @Test
-   public void testCoreLucene4() throws IOException {
-      Document document = buildLuceneDoc("field1", "The quick brown fox jumped over the lazy dog");
+   public void testCoreLucene() throws IOException {
+      Document document = buildSimpleLuceneDoc("field1", "The quick brown fox jumped over the lazy dog");
       index(document);
 
       assertEquals(9, terms("field1").size());
    }
 
    @Test
-   public void testQParserLucene4() throws IOException, ParseException {
-      Document document = buildLuceneDoc("field1", "The quick brown fox jumped over the lazy dog");
+   public void testQParserLucene() throws IOException, ParseException {
+      Document document = buildSimpleLuceneDoc("field1", "The quick brown fox jumped over the lazy dog");
       index(document);
       Query matchingQuery = buildQuery("field1:box~");
       Query nonMatchingQuery = buildQuery("-field1:over");
@@ -112,9 +113,9 @@ public class InfinispanLuceneDirectoryIT {
 
    @Test
    public void testGrouping() throws IOException {
-      Document doc1 = buildLuceneDoc("field1", "value1");
-      Document doc2 = buildLuceneDoc("field1", "value1");
-      Document doc3 = buildLuceneDoc("field1", "value2");
+      Document doc1 = buildDocValueLuceneDoc("field1", "value1");
+      Document doc2 = buildDocValueLuceneDoc("field1", "value1");
+      Document doc3 = buildDocValueLuceneDoc("field1", "value2");
       index(doc1, doc2, doc3);
       GroupingSearch groupingSearch = new GroupingSearch("field1");
       TopGroups<Object> topGroups = groupingSearch.search(openSearcher(), new MatchAllDocsQuery(), 0, 10);
@@ -158,12 +159,12 @@ public class InfinispanLuceneDirectoryIT {
 
    private Terms terms(String field) throws IOException {
       DirectoryReader reader = DirectoryReader.open(directory);
-      AtomicReaderContext readerContext = reader.getContext().leaves().iterator().next();
+      LeafReaderContext readerContext = reader.getContext().leaves().iterator().next();
       return readerContext.reader().terms(field);
    }
 
    private void index(Document... documents) throws IOException {
-      IndexWriterConfig iwc = new IndexWriterConfig(LUCENE_VERSION, new WhitespaceAnalyzer());
+      IndexWriterConfig iwc = new IndexWriterConfig(new WhitespaceAnalyzer());
       IndexWriter indexWriter = new IndexWriter(directory, iwc);
       for (Document doc : documents) {
          indexWriter.addDocument(doc);
@@ -171,11 +172,17 @@ public class InfinispanLuceneDirectoryIT {
       indexWriter.close();
    }
 
-   private Document buildLuceneDoc(String fieldName, String contents) {
+   private Document buildDocValueLuceneDoc(String fieldName, String contents) {
       Document document = new Document();
-      FieldType fieldType = new FieldType();
-      fieldType.setIndexed(true);
-      document.add(new Field(fieldName, contents, fieldType));
+      Field field = new SortedDocValuesField(fieldName, new BytesRef(contents));
+      document.add(field);
+      return document;
+   }
+
+   private Document buildSimpleLuceneDoc(String fieldName, String contents) {
+      Document document = new Document();
+      Field field = new TextField(fieldName, contents, Field.Store.NO);
+      document.add(field);
       return document;
    }
 

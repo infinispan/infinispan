@@ -21,4 +21,6 @@ public interface DirectoryExtensions {
 
    Cache getDataCache();
 
+   void forceUnlock(String lockName);
+
 }

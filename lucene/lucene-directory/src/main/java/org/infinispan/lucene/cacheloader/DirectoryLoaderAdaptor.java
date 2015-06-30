@@ -1,7 +1,7 @@
 package org.infinispan.lucene.cacheloader;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -88,16 +88,18 @@ final class DirectoryLoaderAdaptor {
          return;
       }
       int collectedKeys = 0;
-      //First we collect the (single) FileListCacheKey
-      FileListCacheKey rootKey = new FileListCacheKey(indexName);
-      if (keysToExclude==null || ! keysToExclude.contains(rootKey)) { //unless it was excluded
-         if (keysCollector.add(rootKey) ) { //unless it was already collected
-            collectedKeys++;
-         }
-      }
       try {
-         //Now we collect first all FileCacheKey (keys for file metadata)
+         //First we collect the (single) FileListCacheKey
          String[] listAll = directory.listAll();
+         if (listAll.length != 0) {
+            FileListCacheKey rootKey = new FileListCacheKey(indexName);
+            if (keysToExclude == null || !keysToExclude.contains(rootKey)) { //unless it was excluded
+               if (keysCollector.add(rootKey)) { //unless it was already collected
+                  collectedKeys++;
+               }
+            }
+         }
+         //Now we collect first all FileCacheKey (keys for file metadata)
          for (String fileName : listAll) {
             if (collectedKeys >= maxElements) return;
             FileCacheKey key = new FileCacheKey(indexName, fileName);
@@ -120,8 +122,7 @@ final class DirectoryLoaderAdaptor {
                }
             }
          }
-      }
-      catch (IOException e) {
+      } catch (IOException e) {
          throw log.exceptionInCacheLoader(e);
       }
    }
@@ -255,7 +256,7 @@ final class DirectoryLoaderAdaptor {
          final int chunkId = chunkCacheKey.getChunkId();
          return Boolean.valueOf((chunkId * bufferSize) < (length + bufferSize));
       }
-      catch (FileNotFoundException nfne) {
+      catch (NoSuchFileException nfne) {
          //Ok, we might check for file existence first.. but it's reasonable to be
          //optimistic.
          return Boolean.FALSE;
@@ -266,7 +267,12 @@ final class DirectoryLoaderAdaptor {
     * ContainsKey implementation for chunk elements
     */
    protected Boolean containsKeyIntern(final FileCacheKey fileCacheKey) throws IOException {
-      return Boolean.valueOf(directory.fileExists(fileCacheKey.getFileName()));
+      for(String file: directory.listAll()) {
+         if(file.equals(fileCacheKey.getFileName())) {
+            return true;
+         }
+      }
+      return false;
    }
 
    /**

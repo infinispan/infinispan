@@ -1,9 +1,5 @@
 package org.infinispan.lucene.impl;
 
-import java.io.IOException;
-import java.util.zip.CRC32;
-import java.util.zip.Checksum;
-
 import org.apache.lucene.store.BufferedChecksum;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.AdvancedCache;
@@ -14,6 +10,10 @@ import org.infinispan.lucene.FileCacheKey;
 import org.infinispan.lucene.FileMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
+import java.util.zip.CRC32;
+import java.util.zip.Checksum;
 
 /**
  * Responsible for writing to a <code>Directory</code>
@@ -51,6 +51,7 @@ public class InfinispanIndexOutput extends IndexOutput {
    private int currentChunkNumber = 0;
 
    public InfinispanIndexOutput(final AdvancedCache<FileCacheKey, FileMetadata> metadataCache, final AdvancedCache<ChunkCacheKey, Object> chunksCache, final FileCacheKey fileKey, final int bufferSize, final FileListOperations fileList) {
+      super("InfinispanIndexOutput{metadataCache=" + metadataCache + ", chunksCache=" + chunksCache + ", fileKey=" + fileKey + ", bufferSize=" + bufferSize + '}');
       this.metadataCache = metadataCache;
       this.chunksCache = chunksCache;
       this.chunksCacheForStorage = chunksCache.withFlags(Flag.IGNORE_RETURN_VALUES);

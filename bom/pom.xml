@@ -66,12 +66,12 @@
       <version.commons.pool>1.6</version.commons.pool>
       <version.gnu.getopt>1.0.13</version.gnu.getopt>
       <version.hibernate.javax.persistence>1.0.0.Final</version.hibernate.javax.persistence>
-      <version.hibernate.core>4.3.10.Final</version.hibernate.core>
-      <version.hibernate.search>5.3.0.Final</version.hibernate.search>
+      <version.hibernate.core>5.0.0.CR3</version.hibernate.core>
+      <version.hibernate.search>5.5.0.Alpha1</version.hibernate.search>
       <version.javax.cache>1.0.0</version.javax.cache>
       <version.cdi>1.0-SP4</version.cdi>
       <version.jboss.marshalling>1.4.10.Final</version.jboss.marshalling>
-      <version.jboss.logging>3.2.1.Final</version.jboss.logging>
+      <version.jboss.logging>3.3.0.Final</version.jboss.logging>
       <version.jgroups>3.6.4.Final</version.jgroups>
       <version.jta>1.0.1.Final</version.jta>
       <version.netty>4.0.25.Final</version.netty>
@@ -87,8 +87,8 @@
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
       <version.hibernate_dep.classmate>0.5.4</version.hibernate_dep.classmate>
-      <version.hibernate_dep.hibernate-commons-annotations>4.0.5.Final</version.hibernate_dep.hibernate-commons-annotations>
-      <version.hibernate_dep.jandex>1.1.0.Final</version.hibernate_dep.jandex>
+      <version.hibernate_dep.hibernate-commons-annotations>5.0.0.Final</version.hibernate_dep.hibernate-commons-annotations>
+      <version.hibernate_dep.jandex>1.2.2.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javaassist>3.18.1-GA</version.hibernate_dep.javaassist>
 
       <uberjar.deps.optional>true</uberjar.deps.optional>

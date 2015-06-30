@@ -1,4 +1,4 @@
-package org.infinispan.lucene.locking;
+package org.infinispan.lucene.impl;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import org.infinispan.util.logging.LogFactory;
  *
  * @since 4.0
  * @author Sanne Grinovero
- * @see org.infinispan.lucene.locking.TransactionalLockFactory
+ * @see TransactionalLockFactory
  * @see org.apache.lucene.store.Lock
  */
 @SuppressWarnings("unchecked")

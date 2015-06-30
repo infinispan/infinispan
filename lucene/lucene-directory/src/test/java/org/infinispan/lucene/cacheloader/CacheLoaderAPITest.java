@@ -57,7 +57,7 @@ public class CacheLoaderAPITest extends SingleCacheManagerTest {
       assert directoriesCreated : "couldn't create directory for test";
 
       //We need at least one Directory to exist on filesystem to trigger the problem
-      FSDirectory luceneDirectory = FSDirectory.open(subDir);
+      FSDirectory luceneDirectory = FSDirectory.open(subDir.toPath());
       luceneDirectory.close();
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.persistence()

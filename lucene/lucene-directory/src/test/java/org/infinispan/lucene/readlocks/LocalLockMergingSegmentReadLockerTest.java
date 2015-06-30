@@ -29,7 +29,6 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
       verifyBoth(cache0,cache1);
       IndexOutput indexOutput = dirA.createOutput(filename, IOContext.DEFAULT);
       indexOutput.writeString("no need to write, nobody ever will read this");
-      indexOutput.flush();
       indexOutput.close();
       assertFileExistsHavingRLCount(filename, 1, true);
       IndexInput firstOpenOnB = dirB.openInput(filename, IOContext.DEFAULT);
@@ -68,14 +67,14 @@ public class LocalLockMergingSegmentReadLockerTest extends DistributedSegmentRea
    Directory createDirectory(Cache cache) {
       return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
             .chunkSize(CHUNK_SIZE)
-            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, INDEX_NAME))
+            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, cache, cache, INDEX_NAME, true))
             .create();
    }
 
    Directory createAdditionalDirectory(Cache cache) {
       return DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME)
             .chunkSize(CHUNK_SIZE)
-            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, cache, cache, INDEX_NAME))
+            .overrideSegmentReadLocker(new LocalLockMergingSegmentReadLocker(cache, cache, cache, INDEX_NAME, true))
             .create();
    }
 
