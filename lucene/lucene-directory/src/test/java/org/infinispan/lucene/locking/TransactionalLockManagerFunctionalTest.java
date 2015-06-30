@@ -1,7 +1,7 @@
 package org.infinispan.lucene.locking;
 
 import org.apache.lucene.store.LockFactory;
-import org.infinispan.Cache;
+import org.infinispan.lucene.impl.TransactionalLockFactory;
 import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
@@ -16,8 +16,8 @@ import org.testng.annotations.Test;
 public class TransactionalLockManagerFunctionalTest extends LockManagerFunctionalTest {
 
    @Override
-   protected LockFactory makeLockFactory(Cache cache, String commonIndexName) {
-      return new TransactionalLockFactory(cache, commonIndexName);
+   protected LockFactory makeLockFactory() {
+      return TransactionalLockFactory.INSTANCE;
    }
 
    @Override

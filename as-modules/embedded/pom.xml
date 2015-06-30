@@ -97,7 +97,7 @@
          <groupId>org.hibernate</groupId>
          <artifactId>hibernate-search-modules</artifactId>
          <version>${version.hibernate.search}</version>
-         <classifier>wildfly-8-dist</classifier>
+         <classifier>wildfly-10-dist</classifier>
          <type>zip</type>
       </dependency>
 
@@ -121,6 +121,24 @@
       <dependency>
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-grouping</artifactId>
+         <version>${version.lucene}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-facet</artifactId>
+         <version>${version.lucene}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-misc</artifactId>
+         <version>${version.lucene}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-backward-codecs</artifactId>
          <version>${version.lucene}</version>
       </dependency>
       

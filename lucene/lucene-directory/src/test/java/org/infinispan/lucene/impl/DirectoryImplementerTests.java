@@ -9,7 +9,6 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
 import org.apache.lucene.store.LockFactory;
-import org.apache.lucene.util.Version;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
@@ -72,16 +71,11 @@ public class DirectoryImplementerTests extends SingleCacheManagerTest {
    public void testOverrideWriteLocker() throws IOException {
       Directory dir = null;
       try {
-         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE)
+         dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache,  INDEX_NAME).chunkSize(BUFFER_SIZE)
                .overrideWriteLocker(new LockFactory() {
                   @Override
-                  public Lock makeLock(String lockName) {
+                  public Lock makeLock(Directory dir, String lockName) {
                      return null;
-                  }
-
-                  @Override
-                  public void clearLock(String lockName) throws IOException {
-
                   }
                })
                .create();
@@ -100,7 +94,7 @@ public class DirectoryImplementerTests extends SingleCacheManagerTest {
       try {
 
          dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache, INDEX_NAME).chunkSize(BUFFER_SIZE).create();
-         AssertJUnit.assertEquals(INDEX_NAME, ((DirectoryLuceneV4) dir).getIndexName());
+         AssertJUnit.assertEquals(INDEX_NAME, ((DirectoryLucene) dir).getIndexName());
          AssertJUnit.assertEquals("InfinispanDirectory{indexName=\'" + INDEX_NAME + "\'}", dir.toString());
 
       } finally {
@@ -112,8 +106,7 @@ public class DirectoryImplementerTests extends SingleCacheManagerTest {
    public void testConfigureAsyncDeletes() throws Exception {
       Cache cache = cacheManager.getCache();
       Directory dir = null;
-      Version version = Version.LATEST;
-      IndexWriterConfig iwc = new IndexWriterConfig(version, new StandardAnalyzer());
+      IndexWriterConfig iwc = new IndexWriterConfig(new StandardAnalyzer());
       iwc.setMaxBufferedDocs(2);
       IndexWriter indexWriter = null;
       Document document = new Document();
@@ -160,7 +153,7 @@ public class DirectoryImplementerTests extends SingleCacheManagerTest {
 
       @Override
       protected void afterExecute(Runnable r, Throwable t) {
-         DirectoryLuceneV4.DeleteTask task = (DirectoryLuceneV4.DeleteTask) r;
+         DirectoryLucene.DeleteTask task = (DirectoryLucene.DeleteTask) r;
          String name = task.getFileName();
          String segment = extractSegmentName(name);
          if (segment != null) {

@@ -89,7 +89,7 @@ public class PerformanceCompareStressTest extends AbstractInfinispanTest {
       File indexDir = new File(TestingUtil.tmpDirectory(this.getClass()), indexName);
       boolean directoriesCreated = indexDir.mkdirs();
       assert directoriesCreated : "couldn't create directory for FSDirectory test";
-      FSDirectory dir = FSDirectory.open(indexDir);
+      FSDirectory dir = FSDirectory.open(indexDir.toPath());
       stressTestDirectoryInternal(dir, dir, "FSDirectory");
    }
 

@@ -40,4 +40,6 @@ public interface ExternalizerIds {
    Integer INDEX_WORKER = 1613;
 
    Integer JPA_CACHE_EVENT_FILTER_CONVERTER = 1614;
+
+   Integer LUCENE_BYTES_REF = 1615;
 }

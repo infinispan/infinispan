@@ -162,7 +162,7 @@ public abstract class CacheTestSupport {
    }
 
    public static void initializeDirectory(Directory directory) throws IOException {
-      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.analyzer);
       IndexWriter iwriter = new IndexWriter(directory, indexWriterConfig);
       iwriter.commit();
       iwriter.close();
@@ -178,7 +178,7 @@ public abstract class CacheTestSupport {
     * @param term
     */
    public static void removeByTerm(Directory dir, String term) throws IOException {
-      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.analyzer);
       IndexWriter iw = new IndexWriter(dir, indexWriterConfig);
       iw.deleteDocuments(new Term("body", term));
       iw.commit();
@@ -221,7 +221,7 @@ public abstract class CacheTestSupport {
     * @throws IOException
     */
    public static void writeTextToIndex(Directory dir, int id, String text) throws IOException {
-      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.analyzer);
       IndexWriter iw = new IndexWriter(dir, indexWriterConfig);
       Document doc = new Document();
       doc.add(new StringField("id", String.valueOf(id), Field.Store.YES));
@@ -236,7 +236,7 @@ public abstract class CacheTestSupport {
     * byte-shuffling exercise to test.
     */
    public static void optimizeIndex(Directory dir) throws IOException {
-      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.LUCENE_VERSION, LuceneSettings.analyzer);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LuceneSettings.analyzer);
       IndexWriter iw = new IndexWriter(dir, indexWriterConfig);
       iw.forceMerge(1, true);
       iw.close();

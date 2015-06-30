@@ -1,8 +1,5 @@
 package org.infinispan.lucene.impl;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.store.IndexOutput;
 import org.infinispan.AdvancedCache;
@@ -16,6 +13,8 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 /**
  * Common code for different Directory implementations.
@@ -29,6 +28,7 @@ class DirectoryImplementor {
 
     protected final AdvancedCache<FileCacheKey, FileMetadata> metadataCache;
     protected final AdvancedCache<ChunkCacheKey, Object> chunksCache;
+    protected final AdvancedCache<Object, Integer> distLocksCache;
 
     // indexName is used to be able to store multiple named indexes in the same caches
     protected final String indexName;
@@ -40,15 +40,16 @@ class DirectoryImplementor {
     private final SegmentReadLocker readLocks;
     private final FileCacheKey segmentsGenFileKey;
 
-    public DirectoryImplementor(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, String indexName, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync) {
+    public DirectoryImplementor(Cache<?, ?> metadataCache, Cache<?, ?> chunksCache, Cache<?, ?> distLocksCache, String indexName, int chunkSize, SegmentReadLocker readLocker, boolean fileListUpdatedAsync) {
         if (chunkSize <= 0)
            throw new IllegalArgumentException("chunkSize must be a positive integer");
         this.metadataCache = (AdvancedCache<FileCacheKey, FileMetadata>) metadataCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
         this.chunksCache = (AdvancedCache<ChunkCacheKey, Object>) chunksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
+        this.distLocksCache = (AdvancedCache<Object, Integer>) distLocksCache.getAdvancedCache().withFlags(Flag.SKIP_INDEXING);
         this.indexName = indexName;
         this.chunkSize = chunkSize;
         this.fileOps = new FileListOperations(this.metadataCache, indexName, fileListUpdatedAsync);
-        segmentsGenFileKey = new FileCacheKey(indexName, IndexFileNames.SEGMENTS_GEN);
+        this.segmentsGenFileKey = new FileCacheKey(indexName, IndexFileNames.SEGMENTS);
         this.readLocks = readLocker;
      }
 
@@ -108,7 +109,7 @@ class DirectoryImplementor {
     }
 
     IndexOutput createOutput(final String name) {
-       if (IndexFileNames.SEGMENTS_GEN.equals(name)) {
+       if (IndexFileNames.SEGMENTS.equals(name)) {
           return new InfinispanIndexOutput(metadataCache, chunksCache, segmentsGenFileKey, chunkSize, fileOps);
        }
        else {
@@ -169,6 +170,10 @@ class DirectoryImplementor {
 
     public Cache getDataCache() {
        return chunksCache;
+    }
+
+    public Cache<Object, Integer> getDistLocksCache() {
+      return distLocksCache;
     }
 
 }

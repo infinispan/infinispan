@@ -3,7 +3,7 @@ package org.infinispan.query.clustered.commandworkers;
 import org.apache.lucene.search.TopDocs;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
 import org.infinispan.query.backend.KeyTransformationHandler;
-import org.infinispan.query.clustered.ISPNEagerTopDocs;
+import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryResponse;
 
 /**
@@ -22,7 +22,7 @@ public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
       DocumentExtractor extractor = query.queryDocumentExtractor();
       try {
          int resultSize = query.queryResultSize();
-         ISPNEagerTopDocs eagerTopDocs = collectKeys(extractor);
+         NodeTopDocs eagerTopDocs = collectKeys(extractor);
          QueryResponse queryResponse = new QueryResponse(eagerTopDocs, getQueryBox().getMyId(), resultSize);
          queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
          return queryResponse;
@@ -32,7 +32,7 @@ public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
       }
    }
 
-   private ISPNEagerTopDocs collectKeys(DocumentExtractor extractor) {
+   private NodeTopDocs collectKeys(DocumentExtractor extractor) {
       TopDocs topDocs = extractor.getTopDocs();
 
       Object[] keys = new Object[topDocs.scoreDocs.length];
@@ -45,7 +45,7 @@ public class CQCreateEagerQuery extends ClusteredQueryCommandWorker {
                keyTransformationHandler, i);
       }
 
-      return new ISPNEagerTopDocs(topDocs, keys);
+      return new NodeTopDocs(topDocs, keys);
    }
 
 }

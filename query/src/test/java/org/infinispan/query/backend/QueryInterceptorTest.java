@@ -126,7 +126,7 @@ public class QueryInterceptorTest {
 
    @Test
    public void shouldDeleteSingleIndex() throws Exception {
-     withCacheManager(new CacheManagerCallable(createCacheManager(MAX_CACHE_ENTRIES)) {
+      withCacheManager(new CacheManagerCallable(createCacheManager(MAX_CACHE_ENTRIES)) {
          @Override
          public void call() {
             Cache<String, Object> cache = cm.getCache();
@@ -154,20 +154,20 @@ public class QueryInterceptorTest {
 
    protected EmbeddedCacheManager createCacheManager(int maxEntries) throws Exception {
       return new DefaultCacheManager(
-            new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build(),
-            new ConfigurationBuilder()
-                  .eviction().strategy(EvictionStrategy.LRU).maxEntries(maxEntries)
-                  .persistence().passivation(true)
-                  .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
-                  .indexing().index(Index.ALL)
-                  .addProperty("default.directory_provider", "filesystem")
-                  .addProperty("default.indexBase", indexDir.getAbsolutePath())
-                  .addProperty("lucene_version", "LUCENE_CURRENT")
-                  .build()
+              new GlobalConfigurationBuilder().globalJmxStatistics().allowDuplicateDomains(true).build(),
+              new ConfigurationBuilder()
+                      .eviction().strategy(EvictionStrategy.LRU).size(maxEntries)
+                      .persistence().passivation(true)
+                      .addSingleFileStore().location(storeDir.getAbsolutePath()).preload(true)
+                      .indexing().index(Index.ALL)
+                      .addProperty("default.directory_provider", "filesystem")
+                      .addProperty("default.indexBase", indexDir.getAbsolutePath())
+                      .addProperty("lucene_version", "LUCENE_CURRENT")
+                      .build()
       );
    }
 
-   private int countIndex(Class<?> entityType, Cache<?,?> cache) {
+   private int countIndex(Class<?> entityType, Cache<?, ?> cache) {
       return Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), entityType).getResultSize();
    }
 
@@ -189,11 +189,12 @@ public class QueryInterceptorTest {
       }
 
       private long getLuceneIndexVersion() {
-         return SegmentInfos.getLastCommitGeneration(indexBase.list());
+         return indexBase.list() == null ? -1 : SegmentInfos.getLastCommitGeneration(indexBase.list());
       }
    }
 
    @Listener
+   @SuppressWarnings("unused")
    private static final class CacheListener {
 
       private final LongAdder passivationCount = new LongAdder();

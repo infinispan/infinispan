@@ -2,6 +2,7 @@ package org.infinispan.query.clustered.commandworkers;
 
 import org.apache.lucene.search.TopDocs;
 import org.hibernate.search.query.engine.spi.DocumentExtractor;
+import org.infinispan.query.clustered.NodeTopDocs;
 import org.infinispan.query.clustered.QueryBox;
 import org.infinispan.query.clustered.QueryResponse;
 
@@ -28,7 +29,7 @@ public class CQCreateLazyQuery extends ClusteredQueryCommandWorker {
       
       // returning the QueryResponse 
       TopDocs topDocs = extractor.getTopDocs();
-      QueryResponse queryResponse = new QueryResponse(topDocs, box.getMyId(), resultSize);
+      QueryResponse queryResponse = new QueryResponse(new NodeTopDocs(topDocs), box.getMyId(), resultSize);
       queryResponse.setAddress(cache.getAdvancedCache().getRpcManager().getAddress());
       return queryResponse;
    }

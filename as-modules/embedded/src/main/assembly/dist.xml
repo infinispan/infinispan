@@ -22,7 +22,7 @@
     <dependencySet>
       <unpack>true</unpack>
       <includes>
-        <include>org.hibernate:hibernate-search-modules:zip:wildfly-8-dist</include>
+        <include>org.hibernate:hibernate-search-modules:zip:wildfly-10-dist</include>
       </includes>
       <unpackOptions>
          <excludes>

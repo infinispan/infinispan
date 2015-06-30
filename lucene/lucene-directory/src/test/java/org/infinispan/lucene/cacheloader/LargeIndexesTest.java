@@ -43,7 +43,6 @@ public class LargeIndexesTest {
       });
       when(mockDirectory.fileLength(FILE_NAME)).thenReturn(TEST_SIZE);
       verify(mockDirectory, never()).listAll();
-      verify(mockDirectory, never()).fileExists(FILE_NAME);
       return mockDirectory;
    }
 

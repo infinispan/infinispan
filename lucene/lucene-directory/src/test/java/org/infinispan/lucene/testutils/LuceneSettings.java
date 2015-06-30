@@ -32,7 +32,7 @@ public class LuceneSettings {
    }
 
    public static IndexWriter openWriter(Directory directory, int maxMergeDocs, boolean useSerialMerger) throws IOException {
-      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(LUCENE_VERSION, analyzer);
+      IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
       if (useSerialMerger) {
          indexWriterConfig.setMergeScheduler(mergeScheduler);
       }

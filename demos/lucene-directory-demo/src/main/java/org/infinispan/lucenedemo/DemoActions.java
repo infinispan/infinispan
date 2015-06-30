@@ -110,7 +110,7 @@ public class DemoActions {
    }
 
    private IndexWriterConfig makeIndexWriterConfig() {
-      return new IndexWriterConfig(luceneVersion, analyzer);
+      return new IndexWriterConfig(analyzer);
    }
 
    /**

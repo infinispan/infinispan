@@ -203,7 +203,7 @@ public class LuceneCacheLoader implements AdvancedCacheLoader {
     */
    private FSDirectory openLuceneDirectory(final File path) {
       try {
-         return FSDirectory.open(path);
+         return FSDirectory.open(path.toPath());
       }
       catch (IOException e) {
          throw log.exceptionInCacheLoader(e);

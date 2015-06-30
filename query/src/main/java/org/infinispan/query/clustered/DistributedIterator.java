@@ -3,6 +3,7 @@ package org.infinispan.query.clustered;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.TopFieldDocs;
 import org.infinispan.AdvancedCache;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.logging.Log;
@@ -10,9 +11,9 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 /**
  * DistributedIterator.
@@ -36,9 +37,7 @@ public class DistributedIterator implements ResultIterator {
    private final int resultSize;
    private final int maxResults;
    private final int firstResult;
-   private final UUID[] clusterIDs;
    private final ClusteredTopDocs[] partialResults;
-   private final TopDocs[] partialTopDocs;
    private final int[] partialPositionNext;
    private final TopDocs mergedResults;
 
@@ -49,19 +48,21 @@ public class DistributedIterator implements ResultIterator {
       this.firstResult = firstResult;
       this.cache = cache;
       final int parallels = topDocsResponses.size();
-      this.clusterIDs = new UUID[parallels];
       this.partialResults = new ClusteredTopDocs[parallels];
-      this.partialTopDocs = new TopDocs[parallels];
+      TopDocs[] partialTopDocs = sort != null ? new TopFieldDocs[parallels] : new TopDocs[parallels];
       this.partialPositionNext = new int[parallels];
       int i=0;
       for (Entry<UUID, ClusteredTopDocs> entry : topDocsResponses.entrySet()) {
-         clusterIDs[i] = entry.getKey();
          partialResults[i] = entry.getValue();
-         partialTopDocs[i] = partialResults[i].getTopDocs();
+         partialTopDocs[i] = partialResults[i].getNodeTopDocs().topDocs;
          i++;
       }
       try {
-         mergedResults = TopDocs.merge(sort, firstResult, maxResults, partialTopDocs);
+         if (sort != null) {
+            mergedResults = TopDocs.merge(sort, firstResult, maxResults, (TopFieldDocs[]) partialTopDocs);
+         } else {
+            mergedResults = TopDocs.merge(firstResult, maxResults, partialTopDocs);
+         }
       } catch (IOException e) {
          throw log.unexpectedIOException(e);
       }
@@ -86,7 +87,7 @@ public class DistributedIterator implements ResultIterator {
    }
 
    public Object fetchValue(int scoreIndex, ClusteredTopDocs topDoc) {
-      ISPNEagerTopDocs eagerTopDocs = (ISPNEagerTopDocs) topDoc.getTopDocs();
+      NodeTopDocs eagerTopDocs = (NodeTopDocs) topDoc.getNodeTopDocs();
       return cache.get(eagerTopDocs.keys[scoreIndex]);
    }
 

@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -160,7 +161,7 @@ public class StoredIndexTest {
     * releases.
     */
    @AfterClass
-   public static void removeFileSystemStoredIndexes() {
+   public static void removeFileSystemStoredIndexes() throws IOException {
       File targetDir = TestConstants.getTargetDir(StoredIndexTest.class);
       FileHelper.delete(new File(targetDir, "LuceneIndexesData"));
       FileHelper.delete(new File(targetDir, "LuceneIndexesMetaData"));

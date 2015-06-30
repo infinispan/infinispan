@@ -70,7 +70,7 @@ public class IndexReadingStressTest {
       File indexDir = new File(TestingUtil.tmpDirectory(this.getClass()), indexName);
       boolean directoriesCreated = indexDir.mkdirs();
       assert directoriesCreated : "couldn't create directory for FSDirectory test";
-      FSDirectory dir = FSDirectory.open(indexDir);
+      FSDirectory dir = FSDirectory.open(indexDir.toPath());
       testDirectory(dir, "FSDirectory");
    }
 

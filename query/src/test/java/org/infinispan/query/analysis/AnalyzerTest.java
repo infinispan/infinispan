@@ -24,8 +24,8 @@ import static org.junit.Assert.assertEquals;
  * @author Emmanuel Bernard
  * @author Hardy Ferentschik
  */
-@Test(groups = "functional", testName = "query.analysis.SolrAnalyzerTest")
-public class SolrAnalyzerTest extends SingleCacheManagerTest {
+@Test(groups = "functional", testName = "query.analysis.AnalyzerTest")
+public class AnalyzerTest extends SingleCacheManagerTest {
 
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cfg = getDefaultStandaloneCacheConfig(true);
@@ -46,7 +46,7 @@ public class SolrAnalyzerTest extends SingleCacheManagerTest {
    public void testAnalyzerDef() throws Exception {
       // create the test instance
       Team team = new Team();
-      team.setDescription( "This is a D\u00E0scription" );  // \u00E0 == � - ISOLatin1AccentFilterFactory should strip of diacritic 
+      team.setDescription( "This is a D\u00E0scription" );  // \u00E0 == � - ISOLatin1AccentFilterFactory should strip of diacritic
       team.setLocation( "Atlanta" );
       team.setName( "ATL team" );
 
@@ -119,7 +119,7 @@ public class SolrAnalyzerTest extends SingleCacheManagerTest {
       analyzer = search.getAnalyzer( "synonym_analyzer" );
       text = "ipod cosmos";
       tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "ipod", "i-pod", "universe", "cosmos" } );
+      assertTokensEqual(tokens, new String[]{"ipod", "i-pod", "cosmos", "universe"});
 
       analyzer = search.getAnalyzer( "shingle_analyzer" );
       text = "please divide this sentence into shingles";

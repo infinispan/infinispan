@@ -3,7 +3,6 @@ package org.infinispan.query.clustered;
 import java.io.Serializable;
 import java.util.UUID;
 
-import org.apache.lucene.search.TopDocs;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -20,7 +19,7 @@ public class QueryResponse implements Serializable {
 
    private UUID nodeUUID;
 
-   private TopDocs topDocs;
+   private NodeTopDocs nodeTopDocs;
 
    private Address address;
 
@@ -28,8 +27,8 @@ public class QueryResponse implements Serializable {
 
    private Object fetchedValue;
 
-   public TopDocs getTopDocs() {
-      return topDocs;
+   public NodeTopDocs getTopDocs() {
+      return nodeTopDocs;
    }
 
    public QueryResponse(Object value) {
@@ -40,9 +39,9 @@ public class QueryResponse implements Serializable {
       this.resultSize = resultSize;
    }
 
-   public QueryResponse(TopDocs topDocs, UUID nodeUUid, int resultSize) {
+   public QueryResponse(NodeTopDocs nodeTopDocs, UUID nodeUUid, int resultSize) {
       this.nodeUUID = nodeUUid;
-      this.topDocs = topDocs;
+      this.nodeTopDocs = nodeTopDocs;
       this.resultSize = resultSize;
    }
 

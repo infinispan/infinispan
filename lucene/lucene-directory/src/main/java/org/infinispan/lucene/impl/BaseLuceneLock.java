@@ -1,4 +1,4 @@
-package org.infinispan.lucene.locking;
+package org.infinispan.lucene.impl;
 
 import java.io.Closeable;
 import org.apache.lucene.store.Lock;

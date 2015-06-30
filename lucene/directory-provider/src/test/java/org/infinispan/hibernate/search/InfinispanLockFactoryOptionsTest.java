@@ -7,14 +7,14 @@ import org.apache.lucene.store.SingleInstanceLockFactory;
 import org.hibernate.search.annotations.DocumentId;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
-import org.hibernate.search.cfg.spi.DirectoryProviderService;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.hibernate.search.indexes.spi.IndexManager;
 import org.hibernate.search.store.DirectoryProvider;
 import org.hibernate.search.test.directoryProvider.CustomLockFactoryProvider;
 import org.hibernate.search.testsupport.junit.SearchFactoryHolder;
 import org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider;
-import org.infinispan.lucene.locking.BaseLockFactory;
+import org.infinispan.lucene.impl.BaseLockFactory;
+import org.infinispan.test.TestingUtil;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,7 +63,7 @@ public class InfinispanLockFactoryOptionsTest {
 
    private void verifyLockFactoryForIndexIs(String indexName, Class<? extends LockFactory> expectedType) {
       Directory directory = directoryByName(indexName);
-      LockFactory lockFactory = directory.getLockFactory();
+      LockFactory lockFactory = TestingUtil.extractField(directory, "lockFactory");
       Assert.assertEquals(expectedType, lockFactory.getClass());
    }
 

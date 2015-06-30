@@ -1,9 +1,9 @@
 package org.infinispan.lucene.testutils;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
-import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -41,9 +41,9 @@ public class LuceneUtils {
    public static Set<String> readTerms(String field, Directory directory) throws IOException {
       try (DirectoryReader reader = DirectoryReader.open(directory)) {
          Set<String> termStrings = new TreeSet<>();
-         for (AtomicReaderContext atomicReaderContext : reader.leaves()) {
-            AtomicReader atomicReader = atomicReaderContext.reader();
-            TermsEnum iterator = atomicReader.terms(field).iterator(null);
+         for (LeafReaderContext atomicReaderContext : reader.leaves()) {
+            LeafReader atomicReader = atomicReaderContext.reader();
+            TermsEnum iterator = atomicReader.terms(field).iterator();
             BytesRef next = iterator.next();
             while (next != null) {
                termStrings.add(iterator.term().utf8ToString());

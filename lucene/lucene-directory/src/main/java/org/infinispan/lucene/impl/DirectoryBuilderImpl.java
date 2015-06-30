@@ -6,7 +6,6 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.lucene.directory.BuildContext;
-import org.infinispan.lucene.locking.BaseLockFactory;
 import org.infinispan.lucene.logging.Log;
 import org.infinispan.lucene.readlocks.DistributedSegmentReadLocker;
 import org.infinispan.lucene.readlocks.SegmentReadLocker;
@@ -55,7 +54,7 @@ public class DirectoryBuilderImpl implements BuildContext {
    @Override
    public Directory create() {
       if (lockFactory == null) {
-         lockFactory = makeDefaultLockFactory(distLocksCache, indexName);
+         lockFactory = makeDefaultLockFactory();
       }
       if (srl == null) {
          srl = makeDefaultSegmentReadLocker(metadataCache, chunksCache, distLocksCache, indexName);
@@ -63,7 +62,7 @@ public class DirectoryBuilderImpl implements BuildContext {
       if (deleteExecutor == null) {
          deleteExecutor = new WithinThreadExecutor();
       }
-      return new DirectoryLuceneV4(metadataCache, chunksCache, indexName, lockFactory, chunkSize, srl, writeFileListAsync, deleteExecutor);
+      return new DirectoryLucene(metadataCache, chunksCache, distLocksCache, indexName, lockFactory, chunkSize, srl, writeFileListAsync, deleteExecutor);
    }
 
    @Override
@@ -133,10 +132,8 @@ public class DirectoryBuilderImpl implements BuildContext {
       return cache;
    }
 
-   private static LockFactory makeDefaultLockFactory(Cache<?, ?> cache, String indexName) {
-      checkNotNull(cache, "cache");
-      checkNotNull(indexName, "indexName");
-      return new BaseLockFactory(cache, indexName);
+   private static LockFactory makeDefaultLockFactory() {
+      return BaseLockFactory.INSTANCE;
    }
 
    private static void validateMetadataCache(Cache<?, ?> cache, String indexName) {

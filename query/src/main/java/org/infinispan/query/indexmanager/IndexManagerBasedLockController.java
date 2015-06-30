@@ -1,19 +1,18 @@
 package org.infinispan.query.indexmanager;
 
-import java.io.IOException;
-
-import javax.transaction.Transaction;
-import javax.transaction.TransactionManager;
-
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
-import org.apache.lucene.store.LockFactory;
 import org.apache.lucene.store.LockObtainFailedException;
 import org.hibernate.search.indexes.spi.DirectoryBasedIndexManager;
 import org.infinispan.commons.CacheException;
+import org.infinispan.lucene.impl.DirectoryExtensions;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+
+import javax.transaction.Transaction;
+import javax.transaction.TransactionManager;
+import java.io.IOException;
 
 /**
  * Used to control and override the ownership of the Lucene index lock.
@@ -54,15 +53,15 @@ final class IndexManagerBasedLockController implements IndexLockController {
     * @return true if the lock is free at the time of returning.
     */
    private boolean waitForAvailabilityInternal() {
-      final LockFactory lockFactory = getLockFactory();
-      final Lock lock = lockFactory.makeLock(IndexWriter.WRITE_LOCK_NAME);
+      final Directory directory = indexManager.getDirectoryProvider().getDirectory();
+      final Lock lock = directory.makeLock(IndexWriter.WRITE_LOCK_NAME);
       try {
          if (! lock.isLocked()) {
             return true;
          }
          else {
             try {
-               final boolean obtained = lock.obtain( 10000 );
+               final boolean obtained = lock.obtain(10000);
                if (obtained) {
                   lock.close();
                   return true;
@@ -117,18 +116,9 @@ final class IndexManagerBasedLockController implements IndexLockController {
    }
 
    private void forceLockClearInternal() {
-      LockFactory lockFactory = getLockFactory();
-      try {
-         log.warn("Forcing clear of index lock");
-         lockFactory.clearLock(IndexWriter.WRITE_LOCK_NAME);
-      } catch (IOException e) {
-         log.error(e);
-      }
-   }
-
-   private LockFactory getLockFactory() {
-      Directory directory = indexManager.getDirectoryProvider().getDirectory();
-      return directory.getLockFactory();
+      final Directory directory = indexManager.getDirectoryProvider().getDirectory();
+      log.warn("Forcing clear of index lock");
+      ((DirectoryExtensions) directory).forceUnlock(IndexWriter.WRITE_LOCK_NAME);
    }
 
 }
