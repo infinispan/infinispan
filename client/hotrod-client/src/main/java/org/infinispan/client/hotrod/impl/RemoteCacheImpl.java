@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -712,4 +713,9 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 		ExecuteOperation op = operationsFactory.newExecuteOperation(taskName, marshalledParams);
 		return MarshallerUtil.bytes2obj(marshaller, op.execute());
 	}
+
+   @Override
+   public CacheTopologyInfo getCacheTopologyInfo() {
+      return operationsFactory.getCacheTopologyInfo();
+   }
 }

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.MetadataValue;
 import org.infinispan.client.hotrod.RemoteCache;
@@ -391,6 +392,11 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public <T> T execute(String scriptName, Map<String, ?> params) {
       return delegate.execute(scriptName, params);
+   }
+
+   @Override
+   public CacheTopologyInfo getCacheTopologyInfo() {
+      return delegate.getCacheTopologyInfo();
    }
 
    @Override

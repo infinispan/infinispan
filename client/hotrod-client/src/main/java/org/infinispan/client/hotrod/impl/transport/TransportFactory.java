@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.net.ssl.SSLContext;
 
+import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
@@ -32,6 +33,8 @@ public interface TransportFactory {
    void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet);
 
    void destroy();
+
+   CacheTopologyInfo getCacheTopologyInfo(byte[] cacheName);
 
    /**
     * @deprecated Only called for Hot Rod 1.x protocol.

@@ -8,7 +8,14 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
+import org.infinispan.commons.util.Immutables;
 import org.infinispan.commons.util.Util;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.stream.IntStream;
+
+import static java.util.Arrays.stream;
 
 /**
  * @author Galder Zamarreño
@@ -52,6 +59,16 @@ public final class SegmentConsistentHash implements ConsistentHash {
       return Util.getNormalizedHash(object, hash);
    }
 
+   @Override
+   public Map<SocketAddress, Set<Integer>> getSegmentsByServer() {
+      Map<SocketAddress, Set<Integer>> map = new HashMap<>();
+      IntStream.range(0, segmentOwners.length).forEach(seg -> {
+         SocketAddress[] owners = segmentOwners[seg];
+         stream(owners).forEach(s -> map.computeIfAbsent(s, k -> new HashSet<>(owners.length)).add(seg));
+      });
+      return Immutables.immutableMapWrap(map);
+   }
+   
    public int getNumSegments() {
       return numSegments;
    }

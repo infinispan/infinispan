@@ -92,7 +92,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
    private def writeEmptyHashInfo(t: AbstractTopologyResponse, buffer: ByteBuf) {
       trace("Return limited hash distribution aware header because the client %s doesn't ", t)
       buffer.writeByte(0) // Hash Function Version
-      buffer.writeByte(0) // Num segments in topology
+      writeUnsignedInt(t.numSegments, buffer)
    }
 
    private def writeHashTopologyUpdate(h: HashDistAware20Response, cache: Cache, buf: ByteBuf) {
@@ -132,15 +132,15 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
 
          for (segmentId <- 0 until numSegments) {
             val owners = ch.locateOwnersForSegment(segmentId).filter(members.contains)
-            val numOwnersToSend = Math.min(2, owners.size)
-            if (numOwnersToSend == 0) {
+            val ownersSize = owners.size
+            if (ownersSize == 0) {
                // When sending partial updates, number of owners could be 0,
                // in which case just take the first member in the list.
                buf.writeByte(1)
                writeUnsignedInt(0, buf)
             } else {
-               buf.writeByte(numOwnersToSend)
-               owners.take(numOwnersToSend).foreach { ownerAddr =>
+               buf.writeByte(ownersSize)
+               owners.foreach { ownerAddr =>
                   indexedMembers.get(ownerAddr) match {
                      case Some(index) => writeUnsignedInt(index, buf)
                      case None => // Do not add to indexes
@@ -209,12 +209,12 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
             if (isTrace) trace("Send partial topology update with topology id %s", topologyId)
          }
       }
-
+      val numSegments = Option(SecurityActions.getCacheDistributionManager(cache)).map(_.getReadConsistentHash).map(_.getNumSegments).getOrElse(0)
       val config = SecurityActions.getCacheConfiguration(cache)
       if (r.clientIntel == INTELLIGENCE_TOPOLOGY_AWARE || !config.clustering().cacheMode().isDistributed) {
-         Some(TopologyAwareResponse(topologyId, serverEndpoints))
+         Some(TopologyAwareResponse(topologyId, serverEndpoints, numSegments))
       } else {
-         Some(HashDistAware20Response(topologyId, serverEndpoints, DEFAULT_CONSISTENT_HASH_VERSION))
+         Some(HashDistAware20Response(topologyId, serverEndpoints, numSegments, DEFAULT_CONSISTENT_HASH_VERSION))
       }
    }
 
