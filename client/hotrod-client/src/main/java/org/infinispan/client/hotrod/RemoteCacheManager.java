@@ -144,7 +144,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
    private volatile boolean started = false;
    private final Map<String, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<String, RemoteCacheHolder>();
-   private final AtomicInteger defaultCacheTopologyId = new AtomicInteger(-1);
+   private final AtomicInteger defaultCacheTopologyId = new AtomicInteger(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
    private Configuration configuration;
    private Codec codec;
 

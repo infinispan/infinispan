@@ -120,4 +120,10 @@ public class ConsistentHashV1 implements ConsistentHash {
    public final int getNormalizedHash(Object object) {
       return Util.getNormalizedHash(object, hash);
    }
+
+   @Override
+   public Map<SocketAddress, Set<Integer>> getSegmentsByServer() {
+      throw new UnsupportedOperationException();
+   }
+
 }

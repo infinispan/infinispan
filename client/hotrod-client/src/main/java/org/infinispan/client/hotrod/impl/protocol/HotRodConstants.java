@@ -110,4 +110,6 @@ public interface HotRodConstants {
 
    static final byte INFINITE_LIFESPAN = 0x01;
    static final byte INFINITE_MAXIDLE = 0x02;
+
+   static final int DEFAULT_CACHE_TOPOLOGY = -1;
 }

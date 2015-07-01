@@ -293,30 +293,34 @@ class ExecResponse(override val version: Byte, override val messageId: Long, ove
 }
 
 
-abstract class AbstractTopologyResponse(val topologyId: Int, val serverEndpointsMap : Map[Address, ServerAddress])
+abstract class AbstractTopologyResponse(val topologyId: Int, val serverEndpointsMap : Map[Address, ServerAddress], val numSegments: Int)
 
 abstract class AbstractHashDistAwareResponse(override val topologyId: Int,
                                              override val serverEndpointsMap : Map[Address, ServerAddress],
+                                             override val numSegments: Int,
                                              val numOwners: Int, val hashFunction: Byte, val hashSpace: Int)
-        extends AbstractTopologyResponse(topologyId, serverEndpointsMap)
+        extends AbstractTopologyResponse(topologyId, serverEndpointsMap, numSegments)
 
 case class TopologyAwareResponse(override val topologyId: Int,
-                                 override val serverEndpointsMap : Map[Address, ServerAddress])
-      extends AbstractTopologyResponse(topologyId, serverEndpointsMap)
+                                 override val serverEndpointsMap : Map[Address, ServerAddress],
+                                 override val numSegments: Int)
+      extends AbstractTopologyResponse(topologyId, serverEndpointsMap, numSegments)
 
 case class HashDistAwareResponse(override val topologyId: Int,
                                  override val serverEndpointsMap : Map[Address, ServerAddress],
+                                 override val numSegments: Int,
                                  override val numOwners: Int, override val hashFunction: Byte,
                                  override val hashSpace: Int)
-        extends AbstractHashDistAwareResponse(topologyId, serverEndpointsMap, numOwners, hashFunction, hashSpace)
+        extends AbstractHashDistAwareResponse(topologyId, serverEndpointsMap, numSegments, numOwners, hashFunction, hashSpace)
 
 case class HashDistAware11Response(override val topologyId: Int,
                                    override val serverEndpointsMap : Map[Address, ServerAddress],
                                    override val numOwners: Int, override val hashFunction: Byte,
                                    override val hashSpace: Int, numVNodes: Int)
-        extends AbstractHashDistAwareResponse(topologyId, serverEndpointsMap, numOwners, hashFunction, hashSpace)
+        extends AbstractHashDistAwareResponse(topologyId, serverEndpointsMap, 0, numOwners, hashFunction, hashSpace)
 
 case class HashDistAware20Response(override val topologyId: Int,
         override val serverEndpointsMap : Map[Address, ServerAddress],
+        override val numSegments: Int,
         hashFunction: Byte)
-        extends AbstractTopologyResponse(topologyId, serverEndpointsMap)
+        extends AbstractTopologyResponse(topologyId, serverEndpointsMap, numSegments)

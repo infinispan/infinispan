@@ -181,5 +181,9 @@ public class ConsistentHashComparisonTest {
          return Util.getNormalizedHash(key, hash);
       }
 
+      @Override
+      public Map<SocketAddress, Set<Integer>> getSegmentsByServer() {
+         return null;
+      }
    }
 }

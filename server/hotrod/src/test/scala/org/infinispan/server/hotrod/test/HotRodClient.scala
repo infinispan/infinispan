@@ -613,14 +613,16 @@ private class Decoder(client: HotRodClient) extends ReplayingDecoder[Void] with 
       val hashFunction = buf.readByte
       val numSegments = readUnsignedInt(buf)
       var segments = mutable.ListBuffer[Iterable[ServerAddress]]()
-      for (i <- 1 to numSegments) {
-         val owners = buf.readByte()
-         var membersInSegment = mutable.ListBuffer[ServerAddress]()
-         for (j <- 1 to owners) {
-            val index = readUnsignedInt(buf)
-            membersInSegment += members(index)
+      if(hashFunction > 0) {
+         for (i <- 1 to numSegments) {
+            val owners = buf.readByte()
+            var membersInSegment = mutable.ListBuffer[ServerAddress]()
+            for (j <- 1 to owners) {
+               val index = readUnsignedInt(buf)
+               membersInSegment += members(index)
+            }
+            segments += membersInSegment.toList
          }
-         segments += membersInSegment.toList
       }
 
       Some(TestHashDistAware20Response(topologyId, members.toList, segments.toList, hashFunction))

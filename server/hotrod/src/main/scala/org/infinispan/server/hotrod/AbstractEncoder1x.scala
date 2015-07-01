@@ -181,7 +181,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
 
       val config = cache.getCacheConfiguration
       if (r.clientIntel == INTELLIGENCE_TOPOLOGY_AWARE || !config.clustering().cacheMode().isDistributed) {
-         TopologyAwareResponse(responseTopologyId, serverEndpointsMap)
+         TopologyAwareResponse(responseTopologyId, serverEndpointsMap, 0)
       } else {
          // Must be 3 and distributed
          createHashDistAwareResp(responseTopologyId, serverEndpointsMap, config)
@@ -190,7 +190,7 @@ abstract class AbstractEncoder1x extends AbstractVersionedEncoder with Constants
 
    protected def createHashDistAwareResp(topologyId: Int, serverEndpointsMap: Map[Address, ServerAddress],
                                          cfg: Configuration): AbstractHashDistAwareResponse = {
-      HashDistAwareResponse(topologyId, serverEndpointsMap, cfg.clustering().hash().numOwners(),
+      HashDistAwareResponse(topologyId, serverEndpointsMap, 0, cfg.clustering().hash().numOwners(),
          DEFAULT_CONSISTENT_HASH_VERSION_1x, Integer.MAX_VALUE)
    }
 

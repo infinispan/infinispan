@@ -7,25 +7,29 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.ssl.SSLContext;
 
+import net.jcip.annotations.GuardedBy;
 import net.jcip.annotations.ThreadSafe;
 
 import org.apache.commons.pool.KeyedObjectPool;
 import org.apache.commons.pool.impl.GenericKeyedObjectPool;
+import org.infinispan.client.hotrod.CacheTopologyInfo;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.configuration.SslConfiguration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.TransportException;
+import org.infinispan.client.hotrod.impl.TopologyInfo;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
-import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
@@ -54,13 +58,8 @@ public class TcpTransportFactory implements TransportFactory {
    private GenericKeyedObjectPool<SocketAddress, TcpTransport> connectionPool;
    // Per cache request balancing strategy
    private Map<byte[], FailoverRequestBalancingStrategy> balancers;
-   // Per cache consistent hash
-   private Map<byte[], ConsistentHash> consistentHashes;
    private Configuration configuration;
-   private Collection<SocketAddress> servers;
    private Collection<SocketAddress> initialServers;
-   private final ConsistentHashFactory hashFactory = new ConsistentHashFactory();
-
    // the primitive fields are often accessed separately from the rest so it makes sense not to require synchronization for them
    private volatile boolean tcpNoDelay;
    private volatile boolean tcpKeepAlive;
@@ -69,29 +68,27 @@ public class TcpTransportFactory implements TransportFactory {
    private volatile int maxRetries;
    private volatile SSLContext sslContext;
    private volatile ClientListenerNotifier listenerNotifier;
-   private volatile AtomicInteger topologyId;
+   @GuardedBy("lock")
+   private volatile TopologyInfo topologyInfo;
 
    @Override
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier) {
       synchronized (lock) {
          this.listenerNotifier = listenerNotifier;
          this.configuration = configuration;
-         hashFactory.init(configuration);
          boolean pingOnStartup = configuration.pingOnStartup();
-         servers = new ArrayList<SocketAddress>();
-         initialServers = new ArrayList<SocketAddress>();
+         Collection<SocketAddress> servers = new ArrayList<>();
+         initialServers = new ArrayList<>();
          for(ServerConfiguration server : configuration.servers()) {
             servers.add(new InetSocketAddress(server.host(), server.port()));
          }
          initialServers.addAll(servers);
-         servers = Collections.unmodifiableCollection(servers);
+         topologyInfo = new TopologyInfo(defaultCacheTopologyId, Collections.unmodifiableCollection(servers), configuration);
          tcpNoDelay = configuration.tcpNoDelay();
          tcpKeepAlive = configuration.tcpKeepAlive();
          soTimeout = configuration.socketTimeout();
          connectTimeout = configuration.connectionTimeout();
          maxRetries = configuration.maxRetries();
-         topologyId = defaultCacheTopologyId;
-
          if (configuration.security().ssl().enabled()) {
             SslConfiguration ssl = configuration.security().ssl();
             if (ssl.sslContext() != null) {
@@ -119,7 +116,6 @@ public class TcpTransportFactory implements TransportFactory {
                      configuration.connectionPool());
          createAndPreparePool(poolFactory);
          balancers = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
-         consistentHashes = CollectionFactory.makeMap(ByteArrayEquivalence.INSTANCE, AnyEquivalence.getInstance());
          addBalancer(RemoteCacheManager.cacheNameBytes());
       }
 
@@ -135,12 +131,13 @@ public class TcpTransportFactory implements TransportFactory {
             : new FailoverToRequestBalancingStrategyDelegate(cfgBalancer);
 
       balancers.put(cacheName, balancer);
-      balancer.setServers(servers);
+      balancer.setServers(topologyInfo.getServers());
       return balancer;
    }
 
    private void pingServers() {
       GenericKeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
+      Collection<SocketAddress> servers = topologyInfo.getServers();
       for (SocketAddress addr : servers) {
          try {
             // Go through all statically configured nodes and force a
@@ -164,6 +161,7 @@ public class TcpTransportFactory implements TransportFactory {
    private void createAndPreparePool(PropsKeyedObjectPoolFactory<SocketAddress, TcpTransport> poolFactory) {
       connectionPool = (GenericKeyedObjectPool<SocketAddress, TcpTransport>)
             poolFactory.createPool();
+      Collection<SocketAddress> servers = topologyInfo.getServers();
       for (SocketAddress addr: servers) {
          connectionPool.preparePool(addr, false);
       }
@@ -182,28 +180,23 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    @Override
+   public CacheTopologyInfo getCacheTopologyInfo(byte[] cacheName) {
+      synchronized (lock) {
+         return topologyInfo.getCacheTopologyInfo(cacheName);
+      }
+   }
+
+   @Override
    public void updateHashFunction(Map<SocketAddress, Set<Integer>> servers2Hash, int numKeyOwners, short hashFunctionVersion, int hashSpace, byte[] cacheName) {
-       synchronized (lock) {
-         ConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
-         if (hash == null) {
-            log.noHasHFunctionConfigured(hashFunctionVersion);
-         } else {
-            hash.init(servers2Hash, numKeyOwners, hashSpace);
-         }
-         consistentHashes.put(cacheName, hash);
+      synchronized (lock) {
+         topologyInfo.updateTopology(servers2Hash, numKeyOwners, hashFunctionVersion, hashSpace, cacheName);
       }
    }
 
    @Override
    public void updateHashFunction(SocketAddress[][] segmentOwners, int numSegments, short hashFunctionVersion, byte[] cacheName) {
       synchronized (lock) {
-         SegmentConsistentHash hash = hashFactory.newConsistentHash(hashFunctionVersion);
-         if (hash == null) {
-            log.noHasHFunctionConfigured(hashFunctionVersion);
-         } else {
-            hash.init(segmentOwners, numSegments);
-         }
-         consistentHashes.put(cacheName, hash);
+         topologyInfo.updateTopology(segmentOwners, numSegments, hashFunctionVersion, cacheName);
       }
    }
 
@@ -242,15 +235,8 @@ public class TcpTransportFactory implements TransportFactory {
    public Transport getTransport(byte[] key, Set<SocketAddress> failedServers, byte[] cacheName) {
       SocketAddress server;
       synchronized (lock) {
-         ConsistentHash consistentHash = consistentHashes.get(cacheName);
-         if (consistentHash != null) {
-            server = consistentHash.getServer(key);
-            if (log.isTraceEnabled()) {
-               log.tracef("Using consistent hash for determining the server: " + server);
-            }
-         } else {
-            server = getNextServer(failedServers, cacheName);
-         }
+         Optional<SocketAddress> hashAwareServer = topologyInfo.getHashAwareServer(key, cacheName);
+         server = hashAwareServer.orElse(getNextServer(failedServers, cacheName));
       }
       return borrowTransportFromPool(server);
    }
@@ -295,9 +281,10 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet) {
       synchronized (lock) {
-         Set<SocketAddress> addedServers = new HashSet<SocketAddress>(newServers);
+         Collection<SocketAddress> servers = topologyInfo.getServers();
+         Set<SocketAddress> addedServers = new HashSet<>(newServers);
          addedServers.removeAll(servers);
-         Set<SocketAddress> failedServers = new HashSet<SocketAddress>(servers);
+         Set<SocketAddress> failedServers = new HashSet<>(servers);
          failedServers.removeAll(newServers);
          if (log.isTraceEnabled()) {
             log.tracef("Current list: %s", servers);
@@ -328,6 +315,7 @@ public class TcpTransportFactory implements TransportFactory {
          }
 
          servers = Collections.unmodifiableList(new ArrayList(newServers));
+         topologyInfo.updateServers(servers);
 
          if (!failedServers.isEmpty()) {
             listenerNotifier.failoverClientListeners(failedServers);
@@ -340,7 +328,7 @@ public class TcpTransportFactory implements TransportFactory {
 
    public Collection<SocketAddress> getServers() {
       synchronized (lock) {
-         return servers;
+         return topologyInfo.getServers();
       }
    }
 
@@ -372,13 +360,13 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public ConsistentHash getConsistentHash(byte[] cacheName) {
       synchronized (lock) {
-         return consistentHashes.get(cacheName);
+         return topologyInfo.getConsistentHash(cacheName);
       }
    }
 
    @Override
    public ConsistentHashFactory getConsistentHashFactory() {
-      return hashFactory;
+      return topologyInfo.getConsistentHashFactory();
    }
 
    @Override
@@ -417,7 +405,7 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public void reset(byte[] cacheName) {
       updateServers(initialServers, cacheName, true);
-      topologyId.set(-1);
+      topologyInfo.setTopologyId(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
    }
 
    /**

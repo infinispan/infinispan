@@ -388,12 +388,14 @@ public class Codec20 implements Codec, HotRodConstants {
       short hashFunctionVersion = transport.readByte();
       int numSegments = transport.readVInt();
       SocketAddress[][] segmentOwners = new SocketAddress[numSegments][];
-      for (int i = 0; i < numSegments; i++) {
-         short numOwners = transport.readByte();
-         segmentOwners[i] = new SocketAddress[numOwners];
-         for (int j = 0; j < numOwners; j++) {
-            int memberIndex = transport.readVInt();
-            segmentOwners[i][j] = addresses[memberIndex];
+      if (hashFunctionVersion > 0) {
+         for (int i = 0; i < numSegments; i++) {
+            short numOwners = transport.readByte();
+            segmentOwners[i] = new SocketAddress[numOwners];
+            for (int j = 0; j < numOwners; j++) {
+               int memberIndex = transport.readVInt();
+               segmentOwners[i][j] = addresses[memberIndex];
+            }
          }
       }
 
@@ -410,8 +412,8 @@ public class Codec20 implements Codec, HotRodConstants {
          if (trace)
             localLog.tracef("Updating client hash function with %s number of segments", numSegments);
 
-         transport.getTransportFactory().updateHashFunction(segmentOwners, numSegments, hashFunctionVersion, cacheName);
       }
+      transport.getTransportFactory().updateHashFunction(segmentOwners, numSegments, hashFunctionVersion, cacheName);
    }
 
 }
