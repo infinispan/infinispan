@@ -30,9 +30,7 @@ import java.util.List;
  * @author Martin Gencur
  */
 @RunWith(Arquillian.class)
-//@Category({HotRodLocal.class, HotRodClustered.class, Smoke.class})
-// Restore this when WFLY-4771 is resolved
-@Category({Unstable.class})
+@Category({HotRodLocal.class, HotRodClustered.class, Smoke.class})
 public class HotRodRemoteCacheIT extends AbstractRemoteCacheIT {
 
     @InfinispanResource("container1")

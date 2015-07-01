@@ -50,9 +50,7 @@ import static org.junit.Assert.assertNotNull;
  * @author Galder Zamarreño
  */
 @RunWith(Arquillian.class)
-//@Category(HotRodLocal.class)
-// Restore this when WFLY-4771 is resolved
-@Category({Unstable.class})
+@Category(HotRodLocal.class)
 public class HotRodCustomMarshallerEventIT {
 
     private final String TEST_CACHE_NAME = "testcache";
