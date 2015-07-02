@@ -24,6 +24,7 @@ public final class MarshallerRegistration {
       ctx.registerProtoFiles(fileDescriptorSource);
       ctx.registerMarshaller(new QueryRequest.Marshaller());
       ctx.registerMarshaller(new QueryResponse.Marshaller());
+      ctx.registerMarshaller(new ContinuousQueryResult.Marshaller());
       ctx.registerMarshaller(new FilterResult.Marshaller());
    }
 }

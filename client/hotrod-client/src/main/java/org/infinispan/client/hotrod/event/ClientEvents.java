@@ -1,9 +1,18 @@
 package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
+import org.infinispan.query.remote.client.ContinuousQueryResult;
+
+import java.io.IOException;
 
 public class ClientEvents {
 
@@ -12,6 +21,8 @@ public class ClientEvents {
     * the server.
     */
    public static final String QUERY_DSL_FILTER_FACTORY_NAME = "query-dsl-filter-converter-factory";
+
+   public static final String CONTINUOUS_QUERY_FILTER_FACTORY_NAME = "continuous-query-filter-converter-factory";
 
    private static final ClientCacheFailoverEvent FAILOVER_EVENT_SINGLETON = new ClientCacheFailoverEvent() {
       @Override
@@ -52,5 +63,42 @@ public class ClientEvents {
       }
       Object[] factoryParams = new Object[]{((BaseQuery) query).getJPAQuery()};
       remoteCache.addClientListener(listener, factoryParams, factoryParams);
+   }
+
+   public static Object addContinuousQueryListener(RemoteCache<?, ?> remoteCache, ContinuousQueryListener queryListener, Query query) {
+      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCache.getRemoteCacheManager());
+      Object[] factoryParams = new Object[]{((BaseQuery) query).getJPAQuery()};
+      ClientEntryListener eventListener = new ClientEntryListener(serCtx, queryListener);
+      remoteCache.addClientListener(eventListener, factoryParams, factoryParams);
+      return eventListener;
+   }
+
+   @ClientListener(filterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
+         converterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
+         useRawData = true, includeCurrentState = true)
+   public static class ClientEntryListener {
+
+      private final SerializationContext serializationContext;
+
+      private final ContinuousQueryListener queryListener;
+
+      public ClientEntryListener(SerializationContext serializationContext, ContinuousQueryListener queryListener) {
+         this.serializationContext = serializationContext;
+         this.queryListener = queryListener;
+      }
+
+      @ClientCacheEntryCreated
+      @ClientCacheEntryModified
+      @ClientCacheEntryRemoved
+      public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) throws IOException {
+         ContinuousQueryResult cqresult = ProtobufUtil.fromByteArray(serializationContext, (byte[]) event.getEventData(), ContinuousQueryResult.class);
+         Object key = ProtobufUtil.fromWrappedByteArray(serializationContext, cqresult.getKey());
+         Object value = cqresult.getValue() != null ? ProtobufUtil.fromWrappedByteArray(serializationContext, cqresult.getValue()) : null;
+         if (cqresult.isJoining()) {
+            queryListener.resultJoining(key, value);
+         } else {
+            queryListener.resultLeaving(key);
+         }
+      }
    }
 }

@@ -21,6 +21,7 @@ import org.infinispan.lifecycle.AbstractModuleLifecycle;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.query.remote.filter.JPAContinuousQueryProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.filter.JPAProtobufCacheEventFilterConverter;
 import org.infinispan.query.remote.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
@@ -48,6 +49,7 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
       externalizerMap.put(ExternalizerIds.PROTOBUF_VALUE_WRAPPER, new ProtobufValueWrapper.Externalizer());
       externalizerMap.put(ExternalizerIds.JPA_PROTOBUF_CACHE_EVENT_FILTER_CONVERTER, new JPAProtobufCacheEventFilterConverter.Externalizer());
       externalizerMap.put(ExternalizerIds.JPA_PROTOBUF_FILTER_AND_CONVERTER, new JPAProtobufFilterAndConverter.Externalizer());
+      externalizerMap.put(ExternalizerIds.JPA_CONTINUOUS_QUERY_CACHE_EVENT_FILTER_CONVERTER, new JPAContinuousQueryProtobufCacheEventFilterConverter.Externalizer());
    }
 
    @Override

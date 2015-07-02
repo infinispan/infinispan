@@ -36,13 +36,13 @@ message QueryResponse {
     */
    required int32 numResults = 1;
 
-  /**
-   * Indicates presence and size of projections.
-   *
-   *      0 - no projection
-   * 1 .. N - projection with N components
-   *    < 0 - illegal value
-   */
+   /**
+    * Indicates presence and size of projections.
+    *
+    *      0 - no projection
+    * 1 .. N - projection with N components
+    *    < 0 - illegal value
+    */
    required int32 projectionSize = 2;
 
    /**
@@ -53,4 +53,16 @@ message QueryResponse {
    repeated org.infinispan.protostream.WrappedMessage results = 3;
 
    required int64 totalResults = 4;
+}
+
+/**
+ * @TypeId(1000104)
+ */
+message ContinuousQueryResult {
+
+   required bool joining = 1;
+
+   required bytes key = 2;
+
+   optional bytes value = 3;
 }
