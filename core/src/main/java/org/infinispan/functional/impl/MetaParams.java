@@ -3,12 +3,19 @@ package org.infinispan.functional.impl;
 import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.api.functional.MetaParam.Id;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
+import org.infinispan.marshall.core.Ids;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Represents a {@link MetaParam} collection.
@@ -39,7 +46,7 @@ import java.util.Optional;
  *    </li>
  *    <li>Why is metadata parameters class not thread safe? Because we expect
  *    any updates to it to acquire write locks on the entire
- *    {@link InternalEntry} which references the
+ *    {@link org.infinispan.container.entries.CacheEntry} which references the
  *    metadata parameters collection, and hence any updates could be done
  *    without the need to keep metadata parameters concurrently safe. Also,
  *    remember that metadata parameters is internal only. Users can retrieve
@@ -142,4 +149,31 @@ public final class MetaParams {
       return new MetaParams(new MetaParam[]{});
    }
 
+   public static final class Externalizer extends AbstractExternalizer<MetaParams> {
+      @Override
+      public void writeObject(ObjectOutput oo, MetaParams o) throws IOException {
+         oo.writeInt(o.metas.length);
+         for (Object meta : o.metas) oo.writeObject(meta);
+      }
+
+      @Override
+      public MetaParams readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         int length = input.readInt();
+         MetaParam[] metas = new MetaParam[length];
+         for (int i = 0; i < length; i++)
+            metas[i] = (MetaParam) input.readObject();
+
+         return MetaParams.of(metas);
+      }
+
+      @Override
+      public Set<Class<? extends MetaParams>> getTypeClasses() {
+         return Util.<Class<? extends MetaParams>>asSet(MetaParams.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.META_PARAMS;
+      }
+   }
 }

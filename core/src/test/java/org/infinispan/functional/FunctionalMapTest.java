@@ -4,23 +4,31 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.EntryVersion.NumericEntryVersion;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.MetaParam.EntryVersionParam;
 import org.infinispan.commons.api.functional.MetaParam.Lifespan;
 import org.infinispan.commons.api.functional.Traversable;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,13 +36,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
 import static org.infinispan.test.TestingUtil.withCacheManager;
+import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.*;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -45,42 +58,134 @@ import static org.testng.AssertJUnit.*;
  * are required by Hot Rod.
  */
 @Test(groups = "functional", testName = "functional.FunctionalMapTest")
-public class FunctionalMapTest extends SingleCacheManagerTest {
+public class FunctionalMapTest extends MultipleCacheManagersTest {
 
-   private ReadOnlyMap<Integer, String> readOnlyMap;
-   private WriteOnlyMap<Integer, String> writeOnlyMap;
-   private ReadWriteMap<Integer, String> readWriteMap;
+   private static final String DIST = "dist";
+   private static final String REPL = "repl";
+   private static final Random R = new Random();
 
-   @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager();
+   FunctionalMapImpl<Integer, String> local1;
+   FunctionalMapImpl<Integer, String> local2;
+
+   FunctionalMapImpl<Object, String> dist1;
+   FunctionalMapImpl<Object, String> dist2;
+
+   FunctionalMapImpl<Object, String> repl1;
+   FunctionalMapImpl<Object, String> repl2;
+
+//   private ReadOnlyMap<Integer, String> readOnlyMap;
+//   private WriteOnlyMap<Integer, String> writeOnlyMap;
+//   private ReadWriteMap<Integer, String> readWriteMap;
+
+   <K> ReadOnlyMap<K, String> ro(FunctionalMapImpl<K, String> fmap) {
+      return ReadOnlyMapImpl.create(fmap);
+   }
+
+   <K> WriteOnlyMap<K, String> wo(FunctionalMapImpl<K, String> fmap) {
+      return WriteOnlyMapImpl.create(fmap);
+   }
+
+   <K> ReadWriteMap<K, String> rw(FunctionalMapImpl<K, String> fmap) {
+      return ReadWriteMapImpl.create(fmap);
+   }
+
+   Supplier<Integer> supplyIntKey() {
+      return () -> R.nextInt(Integer.MAX_VALUE);
    }
 
    @Override
-   protected void setup() throws Exception {
-      super.setup();
-      AdvancedCache<Integer, String> advCache = cacheManager.<Integer, String>getCache().getAdvancedCache();
-      FunctionalMapImpl<Integer, String> functionalMap = FunctionalMapImpl.create(advCache);
-      readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
-      writeOnlyMap = WriteOnlyMapImpl.create(functionalMap);
-      readWriteMap = ReadWriteMapImpl.create(functionalMap);
+   protected void createCacheManagers() throws Throwable {
+      // Create local caches as default in a cluster of 2
+      createClusteredCaches(2, new ConfigurationBuilder());
+      // Create distributed caches
+      ConfigurationBuilder distBuilder = new ConfigurationBuilder();
+      distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1);
+      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(DIST, distBuilder.build()));
+      // Create replicated caches
+      ConfigurationBuilder replBuilder = new ConfigurationBuilder();
+      replBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
+      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
+      // Wait for cluster to form
+      waitForClusterToForm(DIST, REPL);
+   }
+
+   @BeforeClass
+   @Override
+   public void createBeforeClass() throws Throwable {
+      super.createBeforeClass();
+      local1 = FunctionalMapImpl.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
+      local2 = FunctionalMapImpl.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
+      dist1 = FunctionalMapImpl.create(cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache());
+      dist2 = FunctionalMapImpl.create(cacheManagers.get(1).<Object, String>getCache(DIST).getAdvancedCache());
+      repl1 = FunctionalMapImpl.create(cacheManagers.get(0).<Object, String>getCache(REPL).getAdvancedCache());
+      repl2 = FunctionalMapImpl.create(cacheManagers.get(1).<Object, String>getCache(REPL).getAdvancedCache());
+   }
+
+//   @Override
+//   protected EmbeddedCacheManager createCacheManager() throws Exception {
+//      return TestCacheManagerFactory.createCacheManager();
+//   }
+
+//   @Override
+//   protected void setup() throws Exception {
+//      super.setup();
+//      AdvancedCache<Integer, String> advCache = cacheManager.<Integer, String>getCache().getAdvancedCache();
+//      FunctionalMapImpl<Integer, String> functionalMap = FunctionalMapImpl.create(advCache);
+//      readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
+//      writeOnlyMap = WriteOnlyMapImpl.create(functionalMap);
+//      readWriteMap = ReadWriteMapImpl.create(functionalMap);
+//   }
+
+   public void testLocalReadOnlyGetsEmpty() {
+      doReadOnlyGetsEmpty(supplyIntKey(), ro(local1));
+   }
+
+   public void testReplReadOnlyGetsEmpty() {
+      doReadOnlyGetsEmpty(supplyKeyForCache(0, REPL), ro(repl1));
+      doReadOnlyGetsEmpty(supplyKeyForCache(1, REPL), ro(repl1));
+   }
+
+   public void testDistReadOnlyGetsEmpty() {
+      doReadOnlyGetsEmpty(supplyKeyForCache(0, DIST), ro(dist1));
+      doReadOnlyGetsEmpty(supplyKeyForCache(1, DIST), ro(dist1));
    }
 
    /**
     * Read-only allows to retrieve an empty cache entry.
     */
-   public void testReadOnlyGetsEmpty() {
-      await(readOnlyMap.eval(1, ReadEntryView::find).thenAccept(v -> assertEquals(Optional.empty(), v)));
+   private <K> void doReadOnlyGetsEmpty(Supplier<K> keySupplier, ReadOnlyMap<K, String> map) {
+      K key = keySupplier.get();
+      await(map.eval(key, ReadEntryView::find).thenAccept(v -> assertEquals(Optional.empty(), v)));
+   }
+
+   public void testLocalWriteConstantAndReadGetsValue() {
+      doWriteConstantAndReadGetsValue(supplyIntKey(), ro(local1), wo(local2));
+   }
+
+   public void testReplWriteConstantAndReadGetsValue() {
+      ReadOnlyMap<Object, String> ro1 = ro(repl1);
+      WriteOnlyMap<Object, String> wo2 = wo(repl2);
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, REPL), ro1, wo2);
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, REPL), ro1, wo2);
+   }
+
+   public void testDistWriteConstantAndReadGetsValue() {
+      ReadOnlyMap<Object, String> ro1 = ro(dist1);
+      WriteOnlyMap<Object, String> wo2 = wo(dist2);
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, DIST), ro1, wo2);
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, DIST), ro1, wo2);
    }
 
    /**
     * Write-only allows for constant, non-capturing, values to be written,
     * and read-only allows for those values to be retrieved.
     */
-   public void testWriteOnlyNonCapturingConstantValueAndReadOnlyGetsValue() {
+   private <K> void doWriteConstantAndReadGetsValue(Supplier<K> keySupplier,
+         ReadOnlyMap<K, String> map1, WriteOnlyMap<K, String> map2) {
+      K key = keySupplier.get();
       await(
-         writeOnlyMap.eval(1, writeView -> writeView.set("one")).thenCompose(r ->
-               readOnlyMap.eval(1, ReadEntryView::get).thenAccept(v -> {
+         map2.eval(key, SetStringConstant.INSTANCE).thenCompose(r ->
+               map1.eval(key, ReadEntryView::get).thenAccept(v -> {
                      assertNull(r);
                      assertEquals("one", v);
                   }
@@ -89,14 +194,48 @@ public class FunctionalMapTest extends SingleCacheManagerTest {
       );
    }
 
+   @SerializeWith(value = SetStringConstant.Externalizer0.class)
+   private static final class SetStringConstant implements Consumer<WriteEntryView<String>> {
+      @Override
+      public void accept(WriteEntryView<String> wo) {
+         wo.set("one");
+      }
+
+      private static final SetStringConstant INSTANCE = new SetStringConstant();
+      public static final class Externalizer0 implements Externalizer<Object> {
+         public void writeObject(ObjectOutput oo, Object o) {}
+         public Object readObject(ObjectInput input) { return INSTANCE; }
+      }
+   }
+
+   public void testLocalWriteValueAndReadValueAndMetadata() {
+      doWriteValueAndReadValueAndMetadata(supplyIntKey(), ro(local1), wo(local2));
+   }
+
+   public void testReplWriteValueAndReadValueAndMetadata() {
+      ReadOnlyMap<Object, String> ro1 = ro(repl1);
+      WriteOnlyMap<Object, String> wo2 = wo(repl2);
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, REPL), ro1, wo2);
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, REPL), ro1, wo2);
+   }
+
+   public void testDistWriteValueAndReadValueAndMetadata() {
+      ReadOnlyMap<Object, String> ro1 = ro(dist1);
+      WriteOnlyMap<Object, String> wo2 = wo(dist2);
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, DIST), ro1, wo2);
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, DIST), ro1, wo2);
+   }
+
    /**
     * Write-only allows for non-capturing values to be written along with metadata,
     * and read-only allows for both values and metadata to be retrieved.
     */
-   public void testWriteOnlyNonCapturingValueAndMetadataReadOnlyValueAndMetadata() {
+   private <K> void doWriteValueAndReadValueAndMetadata(Supplier<K> keySupplier,
+         ReadOnlyMap<K, String> map1, WriteOnlyMap<K, String> map2) {
+      K key = keySupplier.get();
       await(
-         writeOnlyMap.eval(1, "one", (v, writeView) -> writeView.set(v, new Lifespan(100000))).thenCompose(r ->
-               readOnlyMap.eval(1, ro -> ro).thenAccept(ro -> {
+         map2.eval(key, "one", SetValueAndConstantLifespan.getInstance()).thenCompose(r ->
+               map1.eval(key, ro -> ro).thenAccept(ro -> {
                      assertNull(r);
                      assertEquals(Optional.of("one"), ro.find());
                      assertEquals("one", ro.get());
@@ -108,31 +247,116 @@ public class FunctionalMapTest extends SingleCacheManagerTest {
       );
    }
 
+   @SerializeWith(value = SetValueAndConstantLifespan.Externalizer0.class)
+   private static final class SetValueAndConstantLifespan<V>
+         implements BiConsumer<V, WriteEntryView<V>> {
+      @Override
+      public void accept(V v, WriteEntryView<V> wo) {
+         wo.set(v, new Lifespan(100000));
+      }
+
+      @SuppressWarnings("unchecked")
+      private static <V> SetValueAndConstantLifespan<V> getInstance() {
+         return INSTANCE;
+      }
+
+      private static final SetValueAndConstantLifespan INSTANCE =
+         new SetValueAndConstantLifespan<>();
+      public static final class Externalizer0 implements Externalizer<Object> {
+         public void writeObject(ObjectOutput oo, Object o) {}
+         public Object readObject(ObjectInput input) { return INSTANCE; }
+      }
+   }
+
+   public void testLocalReadWriteGetsEmpty() {
+      doReadWriteGetsEmpty(supplyIntKey(), rw(local1));
+   }
+
+   public void testReplReadWriteGetsEmpty() {
+      doReadWriteGetsEmpty(supplyKeyForCache(0, REPL), rw(repl1));
+      doReadWriteGetsEmpty(supplyKeyForCache(1, REPL), rw(repl1));
+   }
+
+   public void testDistReadWriteGetsEmpty() {
+      doReadWriteGetsEmpty(supplyKeyForCache(0, DIST), rw(dist1));
+      doReadWriteGetsEmpty(supplyKeyForCache(1, DIST), rw(dist1));
+   }
+
    /**
     * Read-write allows to retrieve an empty cache entry.
     */
-   public void testReadWriteGetsEmpty() {
-      await(readWriteMap.eval(1, ReadWriteEntryView::find).thenAccept(v -> assertEquals(Optional.empty(), v)));
+   private <K> void doReadWriteGetsEmpty(Supplier<K> keySupplier, ReadWriteMap<K, String> map) {
+      K key = keySupplier.get();
+      await(map.eval(key, findReadWrite()).thenAccept(v -> assertEquals(Optional.empty(), v)));
+   }
+
+   public void testLocalReadWriteValuesReturnPrevious() {
+      doReadWriteConstantReturnPrev(supplyIntKey(), rw(local1), rw(local2));
+   }
+
+   public void testReplReadWriteValuesReturnPrevious() {
+      doReadWriteConstantReturnPrev(supplyKeyForCache(0, REPL), rw(repl1), rw(repl2));
+      doReadWriteConstantReturnPrev(supplyKeyForCache(1, REPL), rw(repl1), rw(repl2));
+   }
+
+   public void testDistReadWriteValuesReturnPrevious() {
+      doReadWriteConstantReturnPrev(supplyKeyForCache(0, DIST), rw(dist1), rw(dist2));
+      doReadWriteConstantReturnPrev(supplyKeyForCache(1, DIST), rw(dist1), rw(dist2));
    }
 
    /**
     * Read-write allows for constant, non-capturing, values to be written,
     * returns previous value, and also allows values to be retrieved.
     */
-   public void testReadWriteValuesReturnPreviousAndGet() {
+   private <K> void doReadWriteConstantReturnPrev(Supplier<K> keySupplier,
+         ReadWriteMap<K, String> map1, ReadWriteMap<K, String> map2) {
+      K key = keySupplier.get();
       await(
-         readWriteMap.eval(1, readWrite -> {
-            Optional<String> prev = readWrite.find();
-            readWrite.set("one");
-            return prev;
-         }).thenCompose(r ->
-               readWriteMap.eval(1, ReadWriteEntryView::get).thenAccept(v -> {
+         map2.eval(key, SetStringConstantReturnPrevious.getInstance()).thenCompose(r ->
+               map1.eval(key, getReadWrite()).thenAccept(v -> {
                      assertFalse(r.isPresent());
                      assertEquals("one", v);
                   }
                )
          )
       );
+   }
+
+   @SerializeWith(value = SetStringConstantReturnPrevious.Externalizer0.class)
+   private static final class SetStringConstantReturnPrevious<K>
+         implements Function<ReadWriteEntryView<K, String>, Optional<String>> {
+      @Override
+      public Optional<String> apply(ReadWriteEntryView<K, String> rw) {
+         Optional<String> prev = rw.find();
+         rw.set("one");
+         return prev;
+      }
+
+      @SuppressWarnings("unchecked")
+      private static <K> SetStringConstantReturnPrevious<K> getInstance() {
+         return INSTANCE;
+      }
+
+      private static final SetStringConstantReturnPrevious INSTANCE =
+         new SetStringConstantReturnPrevious<>();
+      public static final class Externalizer0 implements Externalizer<Object> {
+         public void writeObject(ObjectOutput oo, Object o) {}
+         public Object readObject(ObjectInput input) { return INSTANCE; }
+      }
+   }
+
+   public void testLocalReadWriteForConditionalParamBasedReplace() {
+      doReadWriteForConditionalParamBasedReplace(supplyIntKey(), rw(local1), rw(local2));
+   }
+
+   public void testReplReadWriteForConditionalParamBasedReplace() {
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, REPL), rw(repl1), rw(repl2));
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, REPL), rw(repl1), rw(repl2));
+   }
+
+   public void testDistReadWriteForConditionalParamBasedReplace() {
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, DIST), rw(dist1), rw(dist2));
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, DIST), rw(dist1), rw(dist2));
    }
 
    /**
@@ -145,35 +369,87 @@ public class FunctionalMapTest extends SingleCacheManagerTest {
     * atomicity at the level of the function that compares the version
     * information.
     */
-   public void testReadWriteAllowsForConditionalParameterBasedReplace() {
-      replaceWithVersion(100, rw -> {
+   private <K> void doReadWriteForConditionalParamBasedReplace(Supplier<K> keySupplier,
+         ReadWriteMap<K, String> map1, ReadWriteMap<K, String> map2) {
+      replaceWithVersion(keySupplier, map1, map2, 100, rw -> {
             assertEquals("uno", rw.get());
             assertEquals(new EntryVersionParam<>(new NumericEntryVersion(200)),
                rw.getMetaParam(EntryVersionParam.ID()));
          }
       );
-      replaceWithVersion(900, rw -> {
+      replaceWithVersion(keySupplier, map1, map2, 900, rw -> {
          assertEquals(Optional.of("one"), rw.find());
          assertEquals(Optional.of(new EntryVersionParam<>(new NumericEntryVersion(100))),
             rw.findMetaParam(EntryVersionParam.ID()));
       });
    }
 
-   private void replaceWithVersion(long version, Consumer<ReadWriteEntryView<Integer, String>> asserts) {
+   private <K> void replaceWithVersion(Supplier<K> keySupplier,
+         ReadWriteMap<K, String> map1, ReadWriteMap<K, String> map2,
+         long version, Consumer<ReadWriteEntryView<K, String>> asserts) {
+      K key = keySupplier.get();
       await(
-         readWriteMap.eval(1, rw -> rw.set("one", new EntryVersionParam<>(new NumericEntryVersion(100)))).thenCompose(r ->
-               readWriteMap.eval(1, rw -> {
-                  EntryVersionParam<Long> versionParam = rw.getMetaParam(EntryVersionParam.ID());
-                  if (versionParam.get().compareTo(new NumericEntryVersion(version)) == EQUAL)
-                     rw.set("uno", new EntryVersionParam<>(new NumericEntryVersion(200)));
-                  return rw;
-               }).thenAccept(rw -> {
-                     assertNull(r);
-                     asserts.accept(rw);
-                  }
-               )
+         map1.eval(key, SetStringAndVersionConstant.getInstance()).thenCompose(r ->
+            map2.eval(key, new VersionBasedConditionalReplace<>(version)).thenAccept(rw -> {
+                  assertNull(r);
+                  asserts.accept(rw);
+               }
+            )
          )
       );
+   }
+
+   @SerializeWith(value = SetStringAndVersionConstant.Externalizer0.class)
+   private static final class SetStringAndVersionConstant<K>
+         implements Function<ReadWriteEntryView<K, String>, Void> {
+      @Override
+      public Void apply(ReadWriteEntryView<K, String> rw) {
+         rw.set("one", new EntryVersionParam<>(new NumericEntryVersion(100)));
+         return null;
+      }
+
+      @SuppressWarnings("unchecked")
+      private static <K> SetStringAndVersionConstant<K> getInstance() {
+         return INSTANCE;
+      }
+
+      private static final SetStringAndVersionConstant INSTANCE =
+         new SetStringAndVersionConstant<>();
+      public static final class Externalizer0 implements Externalizer<Object> {
+         public void writeObject(ObjectOutput oo, Object o) {}
+         public Object readObject(ObjectInput input) { return INSTANCE; }
+      }
+   }
+
+   @SerializeWith(value = VersionBasedConditionalReplace.Externalizer0.class)
+   private static final class VersionBasedConditionalReplace<K>
+      implements Function<ReadWriteEntryView<K, String>, ReadWriteEntryView<K, String>> {
+      private final long version;
+
+      private VersionBasedConditionalReplace(long version) {
+         this.version = version;
+      }
+
+      @Override
+      public ReadWriteEntryView<K, String> apply(ReadWriteEntryView<K, String> rw) {
+         EntryVersionParam<Long> versionParam = rw.getMetaParam(EntryVersionParam.ID());
+         if (versionParam.get().compareTo(new NumericEntryVersion(version)) == EQUAL)
+            rw.set("uno", new EntryVersionParam<>(new NumericEntryVersion(200)));
+         return rw;
+      }
+
+      public static final class Externalizer0 implements Externalizer<VersionBasedConditionalReplace<?>> {
+         @Override
+         public void writeObject(ObjectOutput output, VersionBasedConditionalReplace<?> object) throws IOException {
+            output.writeLong(object.version);
+         }
+
+         @Override
+         public VersionBasedConditionalReplace<?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            long version = input.readLong();
+            return new VersionBasedConditionalReplace<>(version);
+         }
+      }
    }
 
    public void testAutoClose() throws Exception {
@@ -201,52 +477,91 @@ public class FunctionalMapTest extends SingleCacheManagerTest {
       });
    }
 
-   public void testReadOnlyEvalManyEmpty() {
-      Traversable<ReadEntryView<Integer, String>> t = readOnlyMap
-         .evalMany(new HashSet<>(Arrays.asList(1, 2, 3)), ro -> ro);
+   public void testLocalReadOnlyEvalManyEmpty() {
+      doReadOnlyEvalManyEmpty(supplyIntKey(), ro(local1));
+   }
+
+   public void testReplReadOnlyEvalManyEmpty() {
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, REPL), ro(repl1));
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, REPL), ro(repl1));
+   }
+
+   public void testDistReadOnlyEvalManyEmpty() {
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, DIST), ro(dist1));
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, DIST), ro(dist1));
+   }
+
+   private <K> void doReadOnlyEvalManyEmpty(Supplier<K> keySupplier, ReadOnlyMap<K, String> map) {
+      K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
+      Traversable<ReadEntryView<K, String>> t = map
+         .evalMany(new HashSet<>(Arrays.asList(key1, key2, key3)), ro -> ro);
       t.forEach(ro -> assertFalse(ro.find().isPresent()));
    }
 
-   public void testReadWriteManyToUpdateSubsetAndReturnPreviousValues() {
-      Map<Integer, String> data = new HashMap<>();
-      data.put(1, "one");
-      data.put(2, "two");
-      data.put(3, "three");
-      consume(writeOnlyMap.evalMany(data, (v, wo) -> wo.set(v)));
-      Traversable<String> currentValues = readOnlyMap.evalMany(data.keySet(), ro -> ro.get());
+   public void testLocalUpdateSubsetAndReturnPrevs() {
+      doUpdateSubsetAndReturnPrevs(supplyIntKey(), ro(local1), wo(local2), rw(local2));
+   }
+
+   public void testReplUpdateSubsetAndReturnPrevs() {
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, REPL), ro(repl1), wo(repl2), rw(repl2));
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, REPL), ro(repl1), wo(repl2), rw(repl2));
+   }
+
+   public void testDistUpdateSubsetAndReturnPrevs() {
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, DIST), ro(dist1), wo(dist2), rw(dist2));
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, DIST), ro(dist1), wo(dist2), rw(dist2));
+   }
+
+   private <K> void doUpdateSubsetAndReturnPrevs(Supplier<K> keySupplier,
+         ReadOnlyMap<K, String> map1, WriteOnlyMap<K, String> map2, ReadWriteMap<K, String> map3) {
+      K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
+      Map<K, String> data = new HashMap<>();
+      data.put(key1, "one");
+      data.put(key2, "two");
+      data.put(key3, "three");
+      consume(map2.evalMany(data, setValueConsumer()));
+      Traversable<String> currentValues = map1.evalMany(data.keySet(), ro -> ro.get());
       List<String> collectedValues = currentValues.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
       assertEquals(collectedValues, new ArrayList<>(data.values()));
 
-      Map<Integer, String> newData = new HashMap<>();
-      newData.put(1, "bat");
-      newData.put(2, "bi");
-      newData.put(3, "hiru");
-      Traversable<String> prevTraversable = readWriteMap.evalMany(newData, (v, rw) -> {
-         String prev = rw.get();
-         rw.set(v);
-         return prev;
-      });
+      Map<K, String> newData = new HashMap<>();
+      newData.put(key1, "bat");
+      newData.put(key2, "bi");
+      newData.put(key3, "hiru");
+      Traversable<String> prevTraversable = map3.evalMany(newData, setValueReturnPrevOrNull());
       List<String> collectedPrev = prevTraversable.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
       assertEquals(new ArrayList<>(data.values()), collectedPrev);
 
-      Traversable<String> updatedValues = readOnlyMap.evalMany(data.keySet(), ro -> ro.get());
+      Traversable<String> updatedValues = map1.evalMany(data.keySet(), ro -> ro.get());
       List<String> collectedUpdates = updatedValues.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
       assertEquals(new ArrayList<>(newData.values()), collectedUpdates);
    }
 
-   public void testReadWriteEntriesToRemoveAllAndReturnPreviousValues() {
-      Map<Integer, String> data = new HashMap<>();
-      data.put(1, "one");
-      data.put(2, "two");
-      data.put(3, "three");
-      consume(writeOnlyMap.evalMany(data, (v, wo) -> wo.set(v)));
-      Traversable<String> prevTraversable = readWriteMap.evalAll(rw -> {
-         String prev = rw.get();
-         rw.remove();
-         return prev;
-      });
-      List<String> prevValues = prevTraversable.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-      assertEquals(new ArrayList<>(data.values()), prevValues);
+   public void testLocalReadWriteToRemoveAllAndReturnPrevs() {
+      doReadWriteToRemoveAllAndReturnPrevs(supplyIntKey(), wo(local1), rw(local2));
+   }
+
+   public void testReplReadWriteToRemoveAllAndReturnPrevs() {
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, REPL), wo(repl1), rw(repl2));
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, REPL), wo(repl1), rw(repl2));
+   }
+
+   public void testDistReadWriteToRemoveAllAndReturnPrevs() {
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, DIST), wo(dist1), rw(dist2));
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, DIST), wo(dist1), rw(dist2));
+   }
+
+   private <K> void doReadWriteToRemoveAllAndReturnPrevs(Supplier<K> keySupplier,
+         WriteOnlyMap<K, String> map1, ReadWriteMap<K, String> map2) {
+      K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
+      Map<K, String> data = new HashMap<>();
+      data.put(key1, "one");
+      data.put(key2, "two");
+      data.put(key3, "three");
+      consume(map1.evalMany(data, setValueConsumer()));
+      Traversable<String> prevTraversable = map2.evalAll(removeReturnPrevOrNull());
+      Set<String> prevValues = prevTraversable.collect(HashSet::new, HashSet::add, HashSet::addAll);
+      assertEquals(new HashSet<>(data.values()), prevValues);
    }
 
    private static void consume(CloseableIterator<Void> it) {

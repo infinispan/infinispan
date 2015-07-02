@@ -20,57 +20,36 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand {
+public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand {
 
-   // TODO: Sort out when all commands have been developed
-   public static final byte COMMAND_ID = 48;
+   public static final byte COMMAND_ID = 50;
 
-   private ListenerNotifier<K, V> notifier;
    private Map<? extends K, ? extends V> entries;
    private BiFunction<V, ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteManyEntriesCommand(ListenerNotifier<K, V> notifier,
-         Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
+   private int topologyId = -1;
+   boolean isForwarded = false;
+   private List<R> remoteReturns = new ArrayList<>();
+
+   public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
       this.entries = entries;
       this.f = f;
-      this.notifier = notifier;
    }
 
    public ReadWriteManyEntriesCommand() {
+   }
+
+   public ReadWriteManyEntriesCommand(ReadWriteManyEntriesCommand command) {
+      this.entries = command.entries;
+      this.f = command.f;
    }
 
    public Map<? extends K, ? extends V> getEntries() {
       return entries;
    }
 
-   @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean isReturnValueExpected() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      // Can't return a lazy stream here because the current code in
-      // EntryWrappingInterceptor expects any changes to be done eagerly,
-      // otherwise they're not applied. So, apply the function eagerly and
-      // return a lazy stream of the void returns.
-      List<R> returns = new ArrayList<>(entries.size());
-      entries.forEach((k, v) -> {
-         CacheEntry<K, V> entry = ctx.lookupEntry(k);
-         R r = f.apply(v, EntryViews.readWrite(entry, notifier));
-         returns.add(r);
-      });
-      return returns.stream();
+   public void setEntries(Map<? extends K, ? extends V> entries) {
+      this.entries = entries;
    }
 
    @Override
@@ -79,8 +58,71 @@ public class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand {
    }
 
    @Override
+   public void setParameters(int commandId, Object[] parameters) {
+      entries = (Map<? extends K, ? extends V>) parameters[0];
+      f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) parameters[1];
+      isForwarded = (Boolean) parameters[2];
+   }
+
+   @Override
    public Object[] getParameters() {
-      return new Object[0];  // TODO: Customise this generated block
+      return new Object[]{entries, f, isForwarded};
+   }
+
+   public boolean isForwarded() {
+      return isForwarded;
+   }
+
+   public void setForwarded(boolean forwarded) {
+      isForwarded = forwarded;
+   }
+
+   @Override
+   public boolean isReturnValueExpected() {
+      return true;
+   }
+
+   @Override
+   public int getTopologyId() {
+      return topologyId;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public void setTopologyId(int topologyId) {
+      this.topologyId = topologyId;
+   }
+
+   public void addAllRemoteReturns(List<R> returns) {
+      remoteReturns.addAll(returns);
+   }
+
+   @Override
+   public boolean shouldInvoke(InvocationContext ctx) {
+      return true;
+   }
+
+   @Override
+   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+      return visitor.visitReadWriteManyEntriesCommand(ctx, this);
+   }
+
+   @Override
+   public Object perform(InvocationContext ctx) throws Throwable {
+      // Can't return a lazy stream here because the current code in
+      // EntryWrappingInterceptor expects any changes to be done eagerly,
+      // otherwise they're not applied. So, apply the function eagerly and
+      // return a lazy stream of the void returns.
+      List<R> returns = new ArrayList<>(remoteReturns);
+      entries.forEach((k, v) -> {
+         CacheEntry<K, V> entry = ctx.lookupEntry(k);
+
+         // Could be that the key is not local, 'null' is how this is signalled
+         if (entry != null) {
+            R r = f.apply(v, EntryViews.readWrite(entry, null));
+            returns.add(r);
+         }
+      });
+      return returns;
    }
 
    @Override
@@ -114,12 +156,7 @@ public class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand {
    }
 
    @Override
-   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitReadWriteManyEntriesCommand(ctx, this);
-   }
-
-   @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
+   public boolean canBlock() {
       return false;  // TODO: Customise this generated block
    }
 
@@ -155,16 +192,6 @@ public class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand {
 
    @Override
    public void setMetadata(Metadata metadata) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public int getTopologyId() {
-      return 0;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
       // TODO: Customise this generated block
    }
 

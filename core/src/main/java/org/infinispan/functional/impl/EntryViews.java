@@ -1,19 +1,22 @@
 package org.infinispan.functional.impl;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.api.functional.FunctionalMap;
-import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
-import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.MetaParam;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.metadata.impl.MetaParamsInternalMetadata;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 
 public final class EntryViews {
 
@@ -29,17 +32,9 @@ public final class EntryViews {
       return new WriteViewImpl<>(entry, notifier);
    }
 
-//   public static <K, V> WriteEntryView<V> writeOnlyWithMap(K key, WriteOnlyMap<K, V> map) {
-//      return new DirectWriteViewImpl<>(key, map);
-//   }
-
    public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, ListenerNotifier<K, V> notifier) {
       return new ReadWriteViewImpl<>(entry, notifier);
    }
-
-//   public static <K, V> ReadWriteEntryView<K, V> readWriteWithMap(K key, ReadWriteMap<K, V> map) {
-//      return new DirectWriteViewImpl<>(key, map);
-//   }
 
    public static <K, V> ReadEntryView<K, V> noValue(K key) {
       return new NoValueView<>(key);
@@ -114,7 +109,7 @@ public final class EntryViews {
 
          // Data written, no assumptions about previous value can be made,
          // hence we cannot distinguish between create or update.
-         notifier.notifyOnWrite(EntryViews.readOnly(entry));
+         //notifier.notifyOnWrite(EntryViews.readOnly(entry));
          return null;
       }
 
@@ -123,7 +118,7 @@ public final class EntryViews {
          entry.setRemoved(true);
          entry.setChanged(true);
          // For remove write-only listener events, create a value-less read entry view
-         notifier.notifyOnWrite(EntryViews.noValue(entry.getKey()));
+         //notifier.notifyOnWrite(EntryViews.noValue(entry.getKey()));
          return null;
       }
    }
@@ -168,7 +163,7 @@ public final class EntryViews {
          entry.setRemoved(true);
          entry.setChanged(true);
          // For remove write-only listener events, create a value-less read entry view
-         notifier.notifyOnWrite(EntryViews.noValue(entry.getKey()));
+         //notifier.notifyOnWrite(EntryViews.noValue(entry.getKey()));
          return null;
       }
 
@@ -204,6 +199,29 @@ public final class EntryViews {
             throw new NoSuchElementException("No value present");
 
          return entry.getValue();
+      }
+   }
+
+   public static final class ReadWriteViewImplExternalizer extends AbstractExternalizer<ReadWriteViewImpl> {
+      @Override
+      public void writeObject(ObjectOutput output, ReadWriteViewImpl object) throws IOException {
+         output.writeObject(object.entry);
+      }
+
+      @Override
+      public ReadWriteViewImpl<?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         CacheEntry entry = (CacheEntry) input.readObject();
+         return new ReadWriteViewImpl<>(entry, null);
+      }
+
+      @Override
+      public Set<Class<? extends ReadWriteViewImpl>> getTypeClasses() {
+         return Util.<Class<? extends ReadWriteViewImpl>>asSet(ReadWriteViewImpl.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.READ_WRITE_VIEW_IMPL;
       }
    }
 
@@ -251,75 +269,5 @@ public final class EntryViews {
          entry.setMetadata(MetaParamsInternalMetadata.from(metaParams));
       }
    }
-
-//   private static final class DirectWriteViewImpl<K, V> implements WriteEntryView<V> {
-//      private final K key;
-//      private final WriteOnlyMap<K, V> map;
-//
-//      public DirectWriteViewImpl(K key, WriteOnlyMap<K, V> map) {
-//         this.key = key;
-//         this.map = map;
-//      }
-//
-//      @Override
-//      public Void set(V value, MetaParam.Writable... metas) {
-//         map.eval(key, wo -> wo.set(value, metas));
-//         return null;
-//      }
-//
-//      @Override
-//      public Void remove() {
-//         map.eval(key, WriteEntryView::remove);
-//         return null;
-//      }
-//   }
-
-//   private static final class DirectReadWriteViewImpl<K, V> implements ReadWriteEntryView<K, V> {
-//      private final K key;
-//      private final ReadWriteMap<K, V> map;
-//
-//      public DirectReadWriteViewImpl(K key, ReadWriteMap<K, V> map) {
-//         this.key = key;
-//         this.map = map;
-//      }
-//
-//      @Override
-//      public Void set(V value, MetaParam.Writable... metas) {
-//         map.eval(key, wo -> wo.set(value, metas));
-//         // TODO: What to do with CompletableFuture?
-//         return null;
-//      }
-//
-//      @Override
-//      public Void remove() {
-//         map.eval(key, WriteEntryView::remove);
-//         return null;
-//      }
-//
-//      @Override
-//      public K key() {
-//         return key;
-//      }
-//
-//      @Override
-//      public V get() throws NoSuchElementException {
-//         return null;  // TODO: Customise this generated block
-//      }
-//
-//      @Override
-//      public Optional<V> find() {
-//         return null;  // TODO: Customise this generated block
-//      }
-//
-//      @Override
-//      public <T> T getMetaParam(MetaParam.Id<T> id) throws NoSuchElementException {
-//         return null;  // TODO: Customise this generated block
-//      }
-//
-//      @Override
-//      public <T> Optional<T> findMetaParam(MetaParam.Id<T> id) {
-//         return null;  // TODO: Customise this generated block
-//      }
-//   }
 
 }

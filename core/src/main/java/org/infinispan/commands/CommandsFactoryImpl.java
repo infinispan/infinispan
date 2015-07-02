@@ -165,6 +165,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
+   // Functional
+   private ListenerNotifier functionalNotifier;
+
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier<Object, Object> notifier, Cache<Object, Object> cache,
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
@@ -177,7 +180,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 ClusteringDependentLogic clusteringDependentLogic) {
+                                 ClusteringDependentLogic clusteringDependentLogic, ListenerNotifier functionalNotifier) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -204,6 +207,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.localStreamManager = localStreamManager;
       this.clusterStreamManager = clusterStreamManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
+      this.functionalNotifier = functionalNotifier;
    }
 
    @Start(priority = 1)
@@ -711,43 +715,43 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(ListenerNotifier<K, V> notifier, K key, Consumer<WriteEntryView<V>> f) {
-      return new WriteOnlyKeyCommand<>(notifier, key, f);
+   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f) {
+      return new WriteOnlyKeyCommand<>(key, f);
    }
 
    @Override
-   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteKeyValueCommand<>(notifier, key, value, f);
+   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
+      return new ReadWriteKeyValueCommand<>(key, value, f);
    }
 
    @Override
-   public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(ListenerNotifier<K, V> notifier, K key, Function<ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteKeyCommand<>(notifier, key, f);
+   public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f) {
+      return new ReadWriteKeyCommand<>(key, f);
    }
 
    @Override
-   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(ListenerNotifier<K, V> notifier, Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
-      return new WriteOnlyManyEntriesCommand<>(notifier, entries, f);
+   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
+      return new WriteOnlyManyEntriesCommand<>(entries, f);
    }
 
    @Override
-   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      return new WriteOnlyKeyValueCommand<>(notifier, key, value, f);
+   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
+      return new WriteOnlyKeyValueCommand<>(key, value, f);
    }
 
    @Override
-   public <K, V> WriteOnlyManyCommand buildWriteOnlyManyCommand(ListenerNotifier<K, V> notifier, Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
-      return new WriteOnlyManyCommand<>(notifier, keys, f);
+   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
+      return new WriteOnlyManyCommand<>(keys, f);
    }
 
    @Override
-   public <K, V, R> ReadWriteManyCommand buildReadWriteManyCommand(ListenerNotifier<K, V> notifier, Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteManyCommand<>(notifier, keys, f);
+   public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
+      return new ReadWriteManyCommand<>(keys, f);
    }
 
    @Override
-   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(ListenerNotifier<K, V> notifier, Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteManyEntriesCommand<>(notifier, entries, f);
+   public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
+      return new ReadWriteManyEntriesCommand<>(entries, f);
    }
 
 }

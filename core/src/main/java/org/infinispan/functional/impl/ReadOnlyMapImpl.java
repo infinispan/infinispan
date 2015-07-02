@@ -44,7 +44,7 @@ public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> imp
 
    @Override
    public <R> CompletableFuture<R> eval(K key, Function<ReadEntryView<K, V>, R> f) {
-      log.tracef("Invoked eval(k=%s, %s)%n", key, params);
+      log.tracef("Invoked eval(k=%s, %s)", key, params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       ReadOnlyKeyCommand cmd = fmap.cmdFactory().buildReadOnlyKeyCommand(key, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(false, 1);
@@ -53,7 +53,7 @@ public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> imp
 
    @Override
    public <R> Traversable<R> evalMany(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
-      log.tracef("Invoked evalMany(m=%s, %s)%n", keys, params);
+      log.tracef("Invoked evalMany(m=%s, %s)", keys, params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       ReadOnlyManyCommand<K, V, R> cmd = fmap.cmdFactory().buildReadOnlyManyCommand(keys, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(false, keys.size());
@@ -62,14 +62,14 @@ public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> imp
 
    @Override
    public Traversable<K> keys() {
-      log.tracef("Invoked keys(%s)%n", params);
+      log.tracef("Invoked keys(%s)", params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       return withWaitTraversable(waitMode, () -> fmap.cache.keySet().stream());
    }
 
    @Override
    public Traversable<ReadEntryView<K, V>> entries() {
-      log.tracef("Invoked entries(%s)%n", params);
+      log.tracef("Invoked entries(%s)", params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       CloseableIterator<CacheEntry<K, V>> it = fmap.cache
             .filterEntries(AcceptAllKeyValueFilter.getInstance()).iterator();

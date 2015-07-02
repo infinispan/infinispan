@@ -4,19 +4,24 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.functional.impl.EntryViews;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-public class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand {
-
-   public static final byte COMMAND_ID = 48;
+public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand {
 
    private Set<? extends K> keys;
    private Function<ReadEntryView<K, V>, R> f;
+
+   private ConsistentHash ch;
+   // TODO: remotely fetched are because of compatibility - can't we just always return InternalCacheEntry and have
+   //       the unboxing executed as the topmost interceptor?
+   private Map<Object, InternalCacheEntry> remotelyFetched;
 
    public ReadOnlyManyCommand(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f) {
       this.keys = keys;
@@ -31,13 +36,34 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand {
    }
 
    @Override
+   public byte getCommandId() {
+      return -1;
+   }
+
+   @Override
    public void setParameters(int commandId, Object[] parameters) {
-      // No-op
+      // Not really replicated
    }
 
    @Override
    public Object[] getParameters() {
       return new Object[0];
+   }
+
+   public ConsistentHash getConsistentHash() {
+      return ch;
+   }
+
+   public void setConsistentHashAndAddress(ConsistentHash ch) {
+      this.ch = ch;
+   }
+
+   public Map<Object, InternalCacheEntry> getRemotelyFetched() {
+      return remotelyFetched;
+   }
+
+   public void setRemotelyFetched(Map<Object, InternalCacheEntry> remotelyFetched) {
+      this.remotelyFetched = remotelyFetched;
    }
 
    @Override
@@ -46,11 +72,6 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand {
          CacheEntry<K, V> me = lookupCacheEntry(ctx, k);
          return f.apply(me == null ? EntryViews.noValue(k) : EntryViews.readOnly(me));
       });
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
    }
 
    private CacheEntry<K, V> lookupCacheEntry(InvocationContext ctx, Object key) {
@@ -62,4 +83,13 @@ public class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand {
       return visitor.visitReadOnlyManyCommand(ctx, this);
    }
 
+   @Override
+   public String toString() {
+      return "ReadOnlyManyCommand{" +
+         "keys=" + keys +
+         ", f=" + f +
+         ", ch=" + ch +
+         ", remotelyFetched=" + remotelyFetched +
+         '}';
+   }
 }

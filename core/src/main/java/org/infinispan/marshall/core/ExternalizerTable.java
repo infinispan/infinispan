@@ -24,6 +24,7 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.MortalCacheValue;
+import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
@@ -62,16 +63,12 @@ import org.infinispan.filter.CompositeKeyValueFilter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilterAsKeyFilter;
 import org.infinispan.filter.NullValueConverter;
-import org.infinispan.marshall.exts.ArrayExternalizers;
-import org.infinispan.marshall.exts.CacheRpcCommandExternalizer;
-import org.infinispan.marshall.exts.EnumSetExternalizer;
-import org.infinispan.marshall.exts.ListExternalizer;
-import org.infinispan.marshall.exts.MapExternalizer;
-import org.infinispan.marshall.exts.ReplicableCommandExternalizer;
-import org.infinispan.marshall.exts.SetExternalizer;
-import org.infinispan.marshall.exts.SingletonListExternalizer;
+import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.MetaParams;
+import org.infinispan.marshall.exts.*;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
+import org.infinispan.metadata.impl.MetaParamsInternalMetadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;
@@ -352,11 +349,27 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new AcceptAllKeyValueFilter.Externalizer());
       addInternalExternalizer(new ManagerStatusResponse.Externalizer());
       addInternalExternalizer(new MultiClusterEventCallable.Externalizer());
+
       addInternalExternalizer(new IntermediateOperationExternalizer());
       addInternalExternalizer(new TerminalOperationExternalizer());
       addInternalExternalizer(new StreamMarshalling.StreamMarshallingExternalizer());
       addInternalExternalizer(new CommandInvocationId.Externalizer());
       addInternalExternalizer(new CacheFilters.CacheFiltersExternalizer());
+
+
+      addInternalExternalizer(new OptionalExternalizer());
+
+      addInternalExternalizer(new MetaParamsInternalMetadata.Externalizer());
+      addInternalExternalizer(new MetaParams.Externalizer());
+
+      // TODO: Add other MetaParam externalizers
+      addInternalExternalizer(new MetaParamExternalizers.LifespanExternalizer());
+      addInternalExternalizer(new MetaParamExternalizers.EntryVersionParamExternalizer());
+      addInternalExternalizer(new MetaParamExternalizers.NumericEntryVersionExternalizer());
+
+      // TODO: Add other EntryView externalizers
+      addInternalExternalizer(new EntryViews.ReadWriteViewImplExternalizer());
+      addInternalExternalizer(new ReadCommittedEntry.Externalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

@@ -1,14 +1,15 @@
-package org.infinispan.jcache.functional;
+package org.infinispan.functional.decorators;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.Param;
-import org.infinispan.commons.api.functional.Status;
 import org.infinispan.commons.api.functional.Traversable;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -23,20 +24,26 @@ import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.EntryProcessorResult;
 import javax.cache.processor.MutableEntry;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+
+import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.*;
+import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.removeConsumer;
 
 /**
  * A {@link Cache} implementation that uses the operations exposed by
  * {@link ReadOnlyMap}, {@link WriteOnlyMap} and {@link ReadWriteMap}, and
  * validates their usefulness.
  */
-public class JCacheDecorator<K, V> implements Cache<K, V> {
+public class FunctionalJCache<K, V> implements Cache<K, V> {
 
    final ReadOnlyMap<K, V> readOnly;
    final WriteOnlyMap<K, V> writeOnly;
@@ -44,11 +51,15 @@ public class JCacheDecorator<K, V> implements Cache<K, V> {
 
    // Rudimentary constructor, we'll provide more idiomatic construction
    // via main Infinispan class which is still to be defined
-   public JCacheDecorator(FunctionalMapImpl<K, V> map) {
+   private FunctionalJCache(FunctionalMapImpl<K, V> map) {
       FunctionalMapImpl<K, V> blockingMap = map.withParams(Param.WaitMode.BLOCKING);
       this.readOnly = ReadOnlyMapImpl.create(blockingMap);
       this.writeOnly = WriteOnlyMapImpl.create(blockingMap);
       this.readWrite = ReadWriteMapImpl.create(blockingMap);
+   }
+
+   public static <K, V> Cache<K, V> create(AdvancedCache<K, V> cache) {
+      return new FunctionalJCache<>(FunctionalMapImpl.create(cache));
    }
 
    @Override
@@ -69,16 +80,12 @@ public class JCacheDecorator<K, V> implements Cache<K, V> {
 
    @Override
    public void put(K key, V value) {
-      await(writeOnly.eval(key, value, (v, wo) -> wo.set(v)));
+      await(writeOnly.eval(key, value, setValueConsumer()));
    }
 
    @Override
    public V getAndPut(K key, V value) {
-      return await(readWrite.eval(key, value, (v, rw) -> {
-         V prev = rw.find().orElse(null);
-         rw.set(v);
-         return prev;
-      }));
+      return await(readWrite.eval(key, value, setValueReturnPrevOrNull()));
    }
 
    @Override
@@ -88,74 +95,42 @@ public class JCacheDecorator<K, V> implements Cache<K, V> {
       // With blocking, the iterator gets pro-actively consumed, and the
       // return offers the possibility to re-iterate by the user.
       // Since the iteration here has no result, we can skip the iteration altogether.
-      writeOnly.evalMany(map, (ev, v) -> v.set(ev));
+      writeOnly.evalMany(map, setValueConsumer());
    }
 
    @Override
    public boolean putIfAbsent(K key, V value) {
-      return await(readWrite.eval(key, value, (v, rw) -> {
-         Optional<V> opt = rw.find();
-         boolean success = !opt.isPresent();
-         if (success) rw.set(v);
-         return success;
-      }));
+      return await(readWrite.eval(key, value, setValueIfAbsentReturnBoolean()));
    }
 
    @Override
    public boolean remove(K key) {
-      return await(readWrite.eval(key, v -> {
-         boolean success = v.find().isPresent();
-         v.remove();
-         return success;
-      }));
+      return await(readWrite.eval(key, removeReturnBoolean()));
    }
 
    @Override
    public boolean remove(K key, V oldValue) {
-      return await(readWrite.eval(key, oldValue, (v, rw) -> rw.find().map(prev -> {
-         if (prev.equals(v)) {
-            rw.remove();
-            return true;
-         }
-
-         return false;
-      }).orElse(false)));
+      return await(readWrite.eval(key, oldValue, removeIfValueEqualsReturnBoolean()));
    }
 
    @Override
    public V getAndRemove(K key) {
-      return await(readWrite.eval(key, v -> {
-         V prev = v.find().orElse(null);
-         v.remove();
-         return prev;
-      }));
+      return await(readWrite.eval(key, removeReturnPrevOrNull()));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      return await(readWrite.eval(key, newValue, (v, rw) -> rw.find().map(prev -> {
-         if (prev.equals(oldValue)) {
-            rw.set(v);
-            return true;
-         }
-         return false;
-      }).orElse(false)));
+      return await(readWrite.eval(key, newValue, setValueIfEqualsReturnBoolean(oldValue)));
    }
 
    @Override
    public boolean replace(K key, V value) {
-      return await(readWrite.eval(key, value, (v, rw) -> rw.find().map(prev -> {
-         rw.set(v);
-         return true;
-      }).orElse(false)));
+      return await(readWrite.eval(key, value, setValueIfPresentReturnBoolean()));
    }
 
    @Override
    public V getAndReplace(K key, V value) {
-      return await(readWrite.eval(key, value, (v, rw) -> rw.find().map(prev -> {
-         rw.set(v);
-         return prev;
-      }).orElse(null)));
+      return await(readWrite.eval(key, value, setValueIfPresentReturnPrevOrNull()));
    }
 
    @Override
@@ -165,12 +140,12 @@ public class JCacheDecorator<K, V> implements Cache<K, V> {
       // With blocking, the iterator gets pro-actively consumed, and the
       // return offers the possibility to re-iterate by the user.
       // Since the iteration here has no result, we can skip the iteration altogether.
-      writeOnly.evalMany(keys, WriteEntryView::remove);
+      writeOnly.evalMany(keys, removeConsumer());
    }
 
    @Override
    public void removeAll() {
-      writeOnly.evalAll(WriteEntryView::remove);
+      writeOnly.evalAll(removeConsumer());
    }
 
    @Override
@@ -205,8 +180,39 @@ public class JCacheDecorator<K, V> implements Cache<K, V> {
 
    @Override
    public <T> T invoke(K key, EntryProcessor<K, V, T> entryProcessor, Object... arguments) throws EntryProcessorException {
-      return await(readWrite.eval(key, rw ->
-         entryProcessor.process(new ReadWriteMutableEntry<>(rw), arguments)));
+      return await(readWrite.eval(key, new InvokeFunction<>(entryProcessor, arguments)));
+   }
+
+   @SerializeWith(value = InvokeFunction.Externalizer0.class)
+   private static final class InvokeFunction<K, V, T> implements Function<ReadWriteEntryView<K, V>, T> {
+      private final EntryProcessor<K, V, T> entryProcessor;
+      private final Object[] arguments;
+
+      private InvokeFunction(EntryProcessor<K, V, T> entryProcessor, Object[] arguments) {
+         this.entryProcessor = entryProcessor;
+         this.arguments = arguments;
+      }
+
+      @Override
+      public T apply(ReadWriteEntryView<K, V> rw) {
+         return entryProcessor.process(new ReadWriteMutableEntry<>(rw), arguments);
+      }
+
+      public static final class Externalizer0 implements Externalizer<InvokeFunction<?, ?, ?>> {
+         public void writeObject(ObjectOutput oo, InvokeFunction<?, ?, ?> o) throws IOException {
+            oo.writeObject(o.entryProcessor);
+            oo.writeInt(o.arguments.length);
+            for (Object argument : o.arguments)
+               oo.writeObject(argument);
+         }
+         public InvokeFunction<?, ?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            EntryProcessor<?, ?, ?> entryProcessor = (EntryProcessor<?, ?, ?>) input.readObject();
+            int length = input.readInt();
+            Object[] arguments = new Object[length];
+            for (int i = 0; i < length; i++) arguments[i] = input.readObject();
+            return new InvokeFunction<>(entryProcessor, arguments);
+         }
+      }
    }
 
    private static final class ReadWriteMutableEntry<K, V> implements MutableEntry<K, V> {
@@ -249,15 +255,51 @@ public class JCacheDecorator<K, V> implements Cache<K, V> {
 
    @Override
    public <T> Map<K, EntryProcessorResult<T>> invokeAll(Set<? extends K> keys, EntryProcessor<K, V, T> entryProcessor, Object... arguments) {
-      Traversable<EntryProcessorResultWithKey<K, T>> t = readWrite.evalMany(keys, rw -> {
-            T res = entryProcessor.process(new ReadWriteMutableEntry<>(rw), arguments);
-            return new EntryProcessorResultWithKey<>(rw.key(), res);
-         }
-      );
+      Traversable<EntryProcessorResultWithKey<K, T>> t = readWrite.evalMany(
+            keys, new InvokeAllFunction<>(entryProcessor, arguments));
+//      Traversable<EntryProcessorResultWithKey<K, T>> t = readWrite.evalMany(keys, rw -> {
+//            T res = entryProcessor.process(new ReadWriteMutableEntry<>(rw), arguments);
+//            return new EntryProcessorResultWithKey<>(rw.key(), res);
+//         }
+//      );
 
       return t.collect(HashMap::new, (m, res) -> m.put(res.key, res), HashMap::putAll);
    }
 
+   @SerializeWith(value = InvokeAllFunction.Externalizer0.class)
+   private static final class InvokeAllFunction<K, V, T> implements Function<ReadWriteEntryView<K, V>, EntryProcessorResultWithKey<K, T>> {
+      private final EntryProcessor<K, V, T> entryProcessor;
+      private final Object[] arguments;
+
+      private InvokeAllFunction(EntryProcessor<K, V, T> entryProcessor, Object[] arguments) {
+         this.entryProcessor = entryProcessor;
+         this.arguments = arguments;
+      }
+
+      @Override
+      public EntryProcessorResultWithKey<K, T> apply(ReadWriteEntryView<K, V> rw) {
+         T res = entryProcessor.process(new ReadWriteMutableEntry<>(rw), arguments);
+         return new EntryProcessorResultWithKey<>(rw.key(), res);
+      }
+
+      public static final class Externalizer0 implements Externalizer<InvokeAllFunction<?, ?, ?>> {
+         public void writeObject(ObjectOutput oo, InvokeAllFunction<?, ?, ?> o) throws IOException {
+            oo.writeObject(o.entryProcessor);
+            oo.writeInt(o.arguments.length);
+            for (Object argument : o.arguments)
+               oo.writeObject(argument);
+         }
+         public InvokeAllFunction<?, ?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            EntryProcessor<?, ?, ?> entryProcessor = (EntryProcessor<?, ?, ?>) input.readObject();
+            int length = input.readInt();
+            Object[] arguments = new Object[length];
+            for (int i = 0; i < length; i++) arguments[i] = input.readObject();
+            return new InvokeAllFunction<>(entryProcessor, arguments);
+         }
+      }
+   }
+
+   @SerializeWith(EntryProcessorResultWithKey.Externalizer0.class)
    private static final class EntryProcessorResultWithKey<K, T> implements EntryProcessorResult<T> {
       final K key;
       final T t;
@@ -270,6 +312,21 @@ public class JCacheDecorator<K, V> implements Cache<K, V> {
       @Override
       public T get() throws EntryProcessorException {
          return t;
+      }
+
+      public static final class Externalizer0 implements Externalizer<EntryProcessorResultWithKey<?, ?>> {
+         @Override
+         public void writeObject(ObjectOutput oo, EntryProcessorResultWithKey<?, ?> o) throws IOException {
+            oo.writeObject(o.key);
+            oo.writeObject(o.t);
+         }
+
+         @Override
+         public EntryProcessorResultWithKey<?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+            Object key = input.readObject();
+            Object t = input.readObject();
+            return new EntryProcessorResultWithKey<>(key, t);
+         }
       }
    }
 

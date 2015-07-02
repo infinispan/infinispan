@@ -1,5 +1,6 @@
-package org.infinispan.functional;
+package org.infinispan.functional.decorators;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
@@ -14,18 +15,19 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+
+import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.*;
 
 /**
  * A {@link ConcurrentMap} implementation that uses the operations exposed by
  * {@link ReadOnlyMap}, {@link WriteOnlyMap} and {@link ReadWriteMap}, and
  * validates their usefulness.
  */
-public final class ConcurrentMapDecorator<K, V> implements ConcurrentMap<K, V>  {
+public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>  {
 
    final ReadOnlyMap<K, V> readOnly;
    final WriteOnlyMap<K, V> writeOnly;
@@ -33,11 +35,15 @@ public final class ConcurrentMapDecorator<K, V> implements ConcurrentMap<K, V>  
 
    // Rudimentary constructor, we'll provide more idiomatic construction
    // via main Infinispan class which is still to be defined
-   public ConcurrentMapDecorator(FunctionalMapImpl<K, V> map) {
+   private FunctionalConcurrentMap(FunctionalMapImpl<K, V> map) {
       FunctionalMapImpl<K, V> blockingMap = map.withParams(WaitMode.BLOCKING);
       this.readOnly = ReadOnlyMapImpl.create(blockingMap);
       this.writeOnly = WriteOnlyMapImpl.create(blockingMap);
       this.readWrite = ReadWriteMapImpl.create(blockingMap);
+   }
+
+   public static <K, V> ConcurrentMap<K, V> create(AdvancedCache<K, V> cache) {
+      return new FunctionalConcurrentMap<>(FunctionalMapImpl.create(cache));
    }
 
    @Override
@@ -77,20 +83,12 @@ public final class ConcurrentMapDecorator<K, V> implements ConcurrentMap<K, V>  
 
    @Override
    public V put(K key, V value) {
-      return await(readWrite.eval(toK(key), value, (v, rw) -> {
-         V prev = rw.find().orElse(null);
-         rw.set(v);
-         return prev;
-      }));
+      return await(readWrite.eval(toK(key), value, setValueReturnPrevOrNull()));
    }
 
    @Override
    public V remove(Object key) {
-      return await(readWrite.eval(toK(key), v -> {
-         V prev = v.find().orElse(null);
-         v.remove();
-         return prev;
-      }));
+      return await(readWrite.eval(toK(key), removeReturnPrevOrNull()));
    }
 
    @Override
@@ -99,7 +97,7 @@ public final class ConcurrentMapDecorator<K, V> implements ConcurrentMap<K, V>  
       // With blocking, the iterator gets pro-actively consumed, and the
       // return offers the possibility to re-iterate by the user.
       // Since the iteration here has no result, we can skip the iteration altogether.
-      writeOnly.evalMany(m, (ev, v) -> v.set(ev));
+      writeOnly.evalMany(m, setValueConsumer());
    }
 
    @Override
@@ -159,45 +157,22 @@ public final class ConcurrentMapDecorator<K, V> implements ConcurrentMap<K, V>  
 
    @Override
    public V putIfAbsent(K key, V value) {
-      return await(readWrite.eval(toK(key), value, (v, rw) -> {
-         Optional<V> opt = rw.find();
-         V prev = opt.orElse(null);
-         if (!opt.isPresent())
-            rw.set(v);
-
-         return prev;
-      }));
+      return await(readWrite.eval(toK(key), value, setValueIfAbsentReturnPrevOrNull()));
    }
 
    @Override
    public boolean remove(Object key, Object value) {
-      return await(readWrite.eval(toK(key), toV(value), (v, rw) -> rw.find().map(prev -> {
-         if (prev.equals(value)) {
-            rw.remove();
-            return true;
-         }
-
-         return false;
-      }).orElse(false)));
+      return await(readWrite.eval(toK(key), toV(value), removeIfValueEqualsReturnBoolean()));
    }
 
    @Override
    public boolean replace(K key, V oldValue, V newValue) {
-      return await(readWrite.eval(toK(key), newValue, (v, rw) -> rw.find().map(prev -> {
-         if (prev.equals(oldValue)) {
-            rw.set(v);
-            return true;
-         }
-         return false;
-      }).orElse(false)));
+      return await(readWrite.eval(toK(key), newValue, setValueIfEqualsReturnBoolean(oldValue)));
    }
 
    @Override
    public V replace(K key, V value) {
-      return await(readWrite.eval(toK(key), value, (v, rw) -> rw.find().map(prev -> {
-         rw.set(v);
-         return prev;
-      }).orElse(null)));
+      return await(readWrite.eval(toK(key), value, setValueIfPresentReturnPrevOrNull()));
    }
 
    public static <T> T await(CompletableFuture<T> cf) {

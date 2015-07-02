@@ -4,6 +4,14 @@ import org.infinispan.atomic.DeltaAware;
 import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
@@ -120,7 +128,11 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class,
             PutMapCommand.class, RemoveCommand.class,
-            ReplaceCommand.class, GetKeysInGroupCommand.class);
+            ReplaceCommand.class, GetKeysInGroupCommand.class,
+            ReadWriteKeyCommand.class, ReadWriteKeyValueCommand.class,
+            WriteOnlyKeyCommand.class, WriteOnlyKeyValueCommand.class,
+            WriteOnlyManyCommand.class, WriteOnlyManyEntriesCommand.class,
+            ReadWriteManyCommand.class, ReadWriteManyEntriesCommand.class);
       // Search only those commands that replicable and not cache specific replicable commands
       Collection<Class<? extends ReplicableCommand>> moduleCommands = globalComponentRegistry.getModuleProperties().moduleOnlyReplicableCommands();
       if (moduleCommands != null && !moduleCommands.isEmpty()) coreCommands.addAll(moduleCommands);

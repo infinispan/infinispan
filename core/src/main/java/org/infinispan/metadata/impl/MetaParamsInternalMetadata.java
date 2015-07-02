@@ -3,15 +3,22 @@ package org.infinispan.metadata.impl;
 import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.api.functional.MetaParam.Lifespan;
 import org.infinispan.commons.api.functional.MetaParam.MaxIdle;
+import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.functional.impl.MetaParams;
+import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
 
-public class MetaParamsInternalMetadata implements InternalMetadata, MetaParam.Lookup {
+public final class MetaParamsInternalMetadata implements InternalMetadata, MetaParam.Lookup {
 
    final MetaParams params;
 
@@ -73,6 +80,29 @@ public class MetaParamsInternalMetadata implements InternalMetadata, MetaParam.L
    @Override
    public <T> Optional<T> findMetaParam(MetaParam.Id<T> id) {
       return params.find(id);
+   }
+
+   public static final class Externalizer extends AbstractExternalizer<MetaParamsInternalMetadata> {
+      @Override
+      public void writeObject(ObjectOutput oo, MetaParamsInternalMetadata o) throws IOException {
+         oo.writeObject(o.params);
+      }
+
+      @Override
+      public MetaParamsInternalMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         MetaParams params = (MetaParams) input.readObject();
+         return new MetaParamsInternalMetadata(params);
+      }
+
+      @Override
+      public Set<Class<? extends MetaParamsInternalMetadata>> getTypeClasses() {
+         return Util.<Class<? extends MetaParamsInternalMetadata>>asSet(MetaParamsInternalMetadata.class);
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.META_PARAMS_INTERNAL_METADATA;
+      }
    }
 
 }

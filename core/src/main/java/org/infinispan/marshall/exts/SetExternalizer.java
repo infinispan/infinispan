@@ -6,6 +6,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.marshall.MarshallUtil;
 import org.infinispan.commons.util.Util;
+import org.infinispan.distribution.util.ReadOnlySegmentAwareSet;
 import org.infinispan.marshall.core.Ids;
 import org.jboss.marshalling.util.IdentityIntMap;
 
@@ -32,6 +33,7 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
    public SetExternalizer() {
       numbers.put(HashSet.class, HASH_SET);
       numbers.put(TreeSet.class, TREE_SET);
+      numbers.put(ReadOnlySegmentAwareSet.class, HASH_SET);
    }
 
    @Override
@@ -69,7 +71,8 @@ public class SetExternalizer extends AbstractExternalizer<Set> {
 
    @Override
    public Set<Class<? extends Set>> getTypeClasses() {
-      return Util.<Class<? extends Set>>asSet(HashSet.class, TreeSet.class);
+      return Util.<Class<? extends Set>>asSet(HashSet.class, TreeSet.class,
+         ReadOnlySegmentAwareSet.class);
    }
 
 }

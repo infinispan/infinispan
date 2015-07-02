@@ -1,63 +1,61 @@
 package org.infinispan.commands.functional;
 
-import com.sun.org.apache.xalan.internal.xsltc.compiler.util.MultiHashtable;
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.AbstractDataWriteCommand;
-import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.container.entries.MVCCEntry;
-import org.infinispan.context.Flag;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.ListenerNotifier;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.metadata.Metadata;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
-public class WriteOnlyManyEntriesCommand<K, V> implements WriteCommand {
+public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCommand {
 
-   // TODO: Sort out when all commands have been developed
-   public static final byte COMMAND_ID = 48;
+   public static final byte COMMAND_ID = 54;
 
-   private ListenerNotifier<K, V> notifier;
    private Map<? extends K, ? extends V> entries;
    private BiConsumer<V, WriteEntryView<V>> f;
 
-   public WriteOnlyManyEntriesCommand(ListenerNotifier<K, V> notifier,
-         Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
+   public WriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
       this.entries = entries;
       this.f = f;
-      this.notifier = notifier;
+   }
+
+   public WriteOnlyManyEntriesCommand(WriteOnlyManyEntriesCommand<K, V> command) {
+      this.entries = command.entries;
+      this.f = command.f;
    }
 
    public WriteOnlyManyEntriesCommand() {
    }
 
-   @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean isReturnValueExpected() {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean canBlock() {
-      return false;  // TODO: Customise this generated block
-   }
-
    public Map<? extends K, ? extends V> getEntries() {
       return entries;
+   }
+
+   public void setEntries(Map<? extends K, ? extends V> entries) {
+      this.entries = entries;
+   }
+
+   @Override
+   public byte getCommandId() {
+      return COMMAND_ID;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public void setParameters(int commandId, Object[] parameters) {
+      entries = (Map<? extends K, ? extends V>) parameters[0];
+      f = (BiConsumer<V, WriteEntryView<V>>) parameters[1];
+      isForwarded = (Boolean) parameters[2];
+   }
+
+   @Override
+   public Object[] getParameters() {
+      return new Object[]{entries, f, isForwarded};
    }
 
    @Override
@@ -68,41 +66,25 @@ public class WriteOnlyManyEntriesCommand<K, V> implements WriteCommand {
       // return a lazy stream of the void returns.
       List<Void> returns = new ArrayList<>(entries.size());
       for (Map.Entry<? extends K, ? extends V> entry : entries.entrySet()) {
-         MVCCEntry<K, V> mvccEntry = (MVCCEntry<K, V>) ctx.lookupEntry(entry.getKey());
-         f.accept(entry.getValue(), EntryViews.writeOnly(mvccEntry, notifier));
-         returns.add(null);
+         CacheEntry<K, V> cacheEntry = ctx.lookupEntry(entry.getKey());
+
+         // Could be that the key is not local, 'null' is how this is signalled
+         if (cacheEntry != null) {
+            f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry, null));
+            returns.add(null);
+         }
       }
       return returns.stream();
    }
 
    @Override
-   public byte getCommandId() {
-      return 0;  // TODO: Customise this generated block
+   public boolean isReturnValueExpected() {
+      return false;  // TODO: Customise this generated block
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[0];  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean isSuccessful() {
-      return true;
-   }
-
-   @Override
-   public boolean isConditional() {
-      return false;
-   }
-
-   @Override
-   public ValueMatcher getValueMatcher() {
-      return ValueMatcher.MATCH_ALWAYS;
-   }
-
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // No-op
+   public boolean canBlock() {
+      return false;  // TODO: Customise this generated block
    }
 
    @Override
@@ -121,52 +103,8 @@ public class WriteOnlyManyEntriesCommand<K, V> implements WriteCommand {
    }
 
    @Override
-   public boolean shouldInvoke(InvocationContext ctx) {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;  // TODO: Customise this generated block
    }
 
-   @Override
-   public Set<Flag> getFlags() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setFlags(Set<Flag> flags) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setFlags(Flag... flags) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean hasFlag(Flag flag) {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public Metadata getMetadata() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setMetadata(Metadata metadata) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public int getTopologyId() {
-      return 0;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void setTopologyId(int topologyId) {
-      // TODO: Customise this generated block
-   }
 }

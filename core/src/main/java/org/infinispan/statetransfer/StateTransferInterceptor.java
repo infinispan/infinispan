@@ -4,6 +4,8 @@ import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.ReadOnlyManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
@@ -173,6 +175,35 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          waitForTopology(newTopologyId);
 
          return visitGetAllCommand(ctx, command);
+      }
+   }
+
+   @Override
+   public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      if (isLocalOnly(command)) {
+         return invokeNextInterceptor(ctx, command);
+      }
+      CacheTopology beginTopology = stateTransferManager.getCacheTopology();
+      command.setConsistentHashAndAddress(beginTopology.getReadConsistentHash());
+      updateTopologyId(command);
+      try {
+         return invokeNextInterceptor(ctx, command);
+      } catch (CacheException e) {
+         Throwable ce = e;
+         while (ce instanceof RemoteException) {
+            ce = ce.getCause();
+         }
+         if (!(ce instanceof OutdatedTopologyException) && !(ce instanceof SuspectException))
+            throw e;
+
+         // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
+         // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
+         if (trace) log.tracef("Retrying command because of topology change, current topology is %d: %s", command);
+         int newTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
+         command.setTopologyId(newTopologyId);
+         waitForTopology(newTopologyId);
+
+         return visitReadOnlyManyCommand(ctx, command);
       }
    }
 

@@ -19,7 +19,6 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXEC
 public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
 
    final Params params;
-   final ListenerNotifier<K, V> notifier;
    final AdvancedCache<K, V> cache;
 
    public static <K, V> FunctionalMapImpl<K, V> create(Params params, AdvancedCache<K, V> cache) {
@@ -33,7 +32,6 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
    private FunctionalMapImpl(Params params, AdvancedCache<K, V> cache) {
       this.params = params;
       this.cache = cache;
-      this.notifier = new ListenersImpl<>();
    }
 
    InvocationContextFactory invCtxFactory() {

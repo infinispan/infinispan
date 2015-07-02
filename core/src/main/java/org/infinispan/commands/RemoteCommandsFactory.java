@@ -3,6 +3,14 @@ package org.infinispan.commands;
 import java.util.Map;
 
 import org.infinispan.commands.control.LockControlCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
+import org.infinispan.commands.functional.ReadWriteManyCommand;
+import org.infinispan.commands.functional.ReadWriteManyEntriesCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyCommand;
+import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
+import org.infinispan.commands.functional.WriteOnlyManyCommand;
+import org.infinispan.commands.functional.WriteOnlyManyEntriesCommand;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -140,6 +148,30 @@ public class RemoteCommandsFactory {
                break;
             case GetCacheEntryCommand.COMMAND_ID:
                command = new GetCacheEntryCommand();
+               break;
+            case ReadWriteKeyCommand.COMMAND_ID:
+               command = new ReadWriteKeyCommand<>();
+               break;
+            case ReadWriteKeyValueCommand.COMMAND_ID:
+               command = new ReadWriteKeyValueCommand<>();
+               break;
+            case WriteOnlyKeyCommand.COMMAND_ID:
+               command = new WriteOnlyKeyCommand<>();
+               break;
+            case WriteOnlyKeyValueCommand.COMMAND_ID:
+               command = new WriteOnlyKeyValueCommand<>();
+               break;
+            case WriteOnlyManyCommand.COMMAND_ID:
+               command = new WriteOnlyManyCommand<>();
+               break;
+            case WriteOnlyManyEntriesCommand.COMMAND_ID:
+               command = new WriteOnlyManyEntriesCommand<>();
+               break;
+            case ReadWriteManyCommand.COMMAND_ID:
+               command = new ReadWriteManyCommand<>();
+               break;
+            case ReadWriteManyEntriesCommand.COMMAND_ID:
+               command = new ReadWriteManyEntriesCommand<>();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

@@ -147,4 +147,22 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
 
    int COMMAND_INVOCATION_ID = 149;
    int CACHE_FILTERS = 150;
+
+   int OPTIONAL = 151;
+
+   // Functional
+   int META_PARAMS_INTERNAL_METADATA = 152;
+   int META_PARAMS = 153;
+
+   // TODO: Add other meta params
+   int META_LIFESPAN = 154;
+   int META_ENTRY_VERSION = 155;
+   int NUMERIC_ENTRY_VERSION = 156;
+
+   // TODO: Add other entry views
+   int READ_WRITE_VIEW_IMPL = 157;
+   int READ_COMMITTED_ENTRY = 158;
+
 }
+
+

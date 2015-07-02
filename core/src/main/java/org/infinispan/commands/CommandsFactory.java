@@ -508,20 +508,20 @@ public interface CommandsFactory {
 
    <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f);
 
-   <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(ListenerNotifier<K, V> notifier, K key, Consumer<WriteEntryView<V>> f);
+   <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f);
 
-   <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f);
+   <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f);
 
-   <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(ListenerNotifier<K, V> notifier, K key, Function<ReadWriteEntryView<K, V>, R> f);
+   <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f);
 
-   <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(ListenerNotifier<K, V> notifier, Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f);
+   <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f);
 
-   <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value, BiConsumer<V, WriteEntryView<V>> f);
+   <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f);
 
-   <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(ListenerNotifier<K, V> notifier, Set<? extends K> keys, Consumer<WriteEntryView<V>> f);
+   <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f);
 
-   <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(ListenerNotifier<K, V> notifier, Set<? extends K> keys, Function<ReadWriteEntryView<K,V>, R> f);
+   <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K,V>, R> f);
 
-   <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(ListenerNotifier<K, V> notifier, Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K,V>, R> f);
+   <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K,V>, R> f);
 
 }

@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
 
 /**
@@ -458,6 +459,11 @@ public abstract class MultipleCacheManagersTest extends AbstractCacheTest {
    protected Object getKeyForCache(int nodeIndex, String cacheName) {
       final Cache<Object, Object> cache = cache(nodeIndex, cacheName);
       return getKeyForCache(cache);
+   }
+
+   @SuppressWarnings("unchecked")
+   protected <K> Supplier<K> supplyKeyForCache(int nodeIndex, String cacheName) {
+      return () -> (K) getKeyForCache(nodeIndex, cacheName);
    }
 
    protected Object getKeyForCache(Cache<?, ?> cache) {

@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 /**
  * @since 8.0
  */
-final class ListenersImpl<K, V> implements ListenerNotifier<K, V> {
+public final class ListenersImpl<K, V> implements ListenerNotifier<K, V> {
 
    final List<Consumer<ReadEntryView<K, V>>> onCreates = new CopyOnWriteArrayList<>();
    final List<BiConsumer<ReadEntryView<K, V>, ReadEntryView<K, V>>> onModifies = new CopyOnWriteArrayList<>();

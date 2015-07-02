@@ -1,46 +1,30 @@
 package org.infinispan.commands.functional;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.ListenerNotifier;
 
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
-public class WriteOnlyKeyValueCommand<K, V> extends AbstractDataWriteCommand {
+public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
-   // TODO: Sort out when all commands have been developed
-   public static final byte COMMAND_ID = 48;
+   public static final byte COMMAND_ID = 52;
 
    private BiConsumer<V, WriteEntryView<V>> f;
    private V value;
-   private ValueMatcher valueMatcher;
-   private ListenerNotifier<K, V> notifier;
 
-   public WriteOnlyKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      super(key, null);
+   public WriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
+      super(key, f.getClass().getAnnotation(SerializeWith.class));
       this.f = f;
       this.value = value;
-      this.valueMatcher = ValueMatcher.MATCH_ALWAYS;
-      this.notifier = notifier;
    }
 
-   @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry<K, V> e = (MVCCEntry<K, V>) ctx.lookupEntry(key);
-      f.accept(value, EntryViews.writeOnly(e, notifier));
-      return null;
+   public WriteOnlyKeyValueCommand() {
+      // No-op, for marshalling
    }
 
    @Override
@@ -49,28 +33,33 @@ public class WriteOnlyKeyValueCommand<K, V> extends AbstractDataWriteCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[0];  // TODO: Customise this generated block
+   public void setParameters(int commandId, Object[] parameters) {
+      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
+      key = parameters[0];
+      value = (V) parameters[1];
+      f = (BiConsumer<V, WriteEntryView<V>>) parameters[2];
+      valueMatcher = (ValueMatcher) parameters[3];
    }
 
    @Override
-   public boolean isSuccessful() {
-      return false;  // TODO: Customise this generated block
+   public Object[] getParameters() {
+      return new Object[]{key, value, f, valueMatcher};
    }
 
    @Override
    public boolean isConditional() {
-      return false;  // TODO: Customise this generated block
+      return false;
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return valueMatcher;
-   }
+   public Object perform(InvocationContext ctx) throws Throwable {
+      CacheEntry<K, V> e = ctx.lookupEntry(key);
 
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      this.valueMatcher = valueMatcher;
+      // Could be that the key is not local
+      if (e == null) return null;
+
+      f.accept(value, EntryViews.writeOnly(e, null));
+      return null;
    }
 
    @Override

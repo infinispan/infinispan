@@ -1,60 +1,45 @@
 package org.infinispan.commands.functional;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.ListenerNotifier;
 
 import java.util.function.Consumer;
 
-public class WriteOnlyKeyCommand<K, V> extends AbstractDataWriteCommand {
+public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
-   // TODO: Sort out when all commands have been developed
-   public static final byte COMMAND_ID = 48;
+   public static final byte COMMAND_ID = 51;
 
    private Consumer<WriteEntryView<V>> f;
-   private ValueMatcher valueMatcher;
-   private ListenerNotifier<K, V> notifier;
 
-   public WriteOnlyKeyCommand(ListenerNotifier<K, V> notifier, K key, Consumer<WriteEntryView<V>> f) {
-      super(key, null);
+   public WriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f) {
+      super(key, f.getClass().getAnnotation(SerializeWith.class));
       this.f = f;
-      this.valueMatcher = ValueMatcher.MATCH_ALWAYS;
-      this.notifier = notifier;
    }
 
    public WriteOnlyKeyCommand() {
    }
 
    @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry<K, V> e = (MVCCEntry<K, V>) ctx.lookupEntry(key);
-      f.accept(EntryViews.writeOnly(e, notifier));
-      return null;
-   }
-
-   @Override
    public byte getCommandId() {
-      return 0;  // TODO: Customise this generated block
+      return COMMAND_ID;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public void setParameters(int commandId, Object[] parameters) {
+      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
+      key = parameters[0];
+      f = (Consumer<WriteEntryView<V>>) parameters[1];
+      valueMatcher = (ValueMatcher) parameters[2];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[0];  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean isSuccessful() {
-      return true;
+      return new Object[]{key, f, valueMatcher};
    }
 
    @Override
@@ -63,23 +48,24 @@ public class WriteOnlyKeyCommand<K, V> extends AbstractDataWriteCommand {
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return valueMatcher;
+   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
+      return visitor.visitWriteOnlyKeyCommand(ctx, this);
    }
 
    @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      this.valueMatcher = valueMatcher;
+   public Object perform(InvocationContext ctx) throws Throwable {
+      CacheEntry<K, V> e = ctx.lookupEntry(key);
+
+      // Could be that the key is not local
+      if (e == null) return null;
+
+      f.accept(EntryViews.writeOnly(e, null));
+      return null;
    }
 
    @Override
    public void updateStatusFromRemoteResponse(Object remoteResponse) {
       // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
-      return visitor.visitWriteOnlyKeyCommand(ctx, this);
    }
 
 }

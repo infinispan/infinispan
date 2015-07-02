@@ -44,53 +44,53 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
 
    @Override
    public CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<V>> f) {
-      log.tracef("Invoked eval(k=%s, %s)%n", key, params);
+      log.tracef("Invoked eval(k=%s, %s)", key, params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
-      WriteOnlyKeyCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyCommand(fmap.notifier, key, f);
+      WriteOnlyKeyCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyCommand(key, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       return withWaitFuture(waitMode, fmap.asyncExec(), () -> (Void) fmap.chain().invoke(ctx, cmd));
    }
 
    @Override
    public CompletableFuture<Void> eval(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      log.tracef("Invoked eval(k=%s, v=%s, %s)%n", key, value, params);
+      log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
-      WriteOnlyKeyValueCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyValueCommand(fmap.notifier, key, value, f);
+      WriteOnlyKeyValueCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyValueCommand(key, value, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       return withWaitFuture(waitMode, fmap.asyncExec(), () -> (Void) fmap.chain().invoke(ctx, cmd));
    }
 
    @Override
    public CloseableIterator<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
-      log.tracef("Invoked evalMany(entries=%s, %s)%n", entries, params);
+      log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
-      WriteOnlyManyEntriesCommand cmd = fmap.cmdFactory().buildWriteOnlyManyEntriesCommand(fmap.notifier, entries, f);
+      WriteOnlyManyEntriesCommand cmd = fmap.cmdFactory().buildWriteOnlyManyEntriesCommand(entries, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, entries.size());
       return withWaitIterator(waitMode, () -> (Stream<Void>) fmap.chain().invoke(ctx, cmd));
    }
 
    @Override
    public CloseableIterator<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
-      log.tracef("Invoked evalMany(keys=%s, %s)%n", keys, params);
+      log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
-      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(fmap.notifier, keys, f);
+      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
       return withWaitIterator(waitMode, () -> (Stream<Void>) fmap.chain().invoke(ctx, cmd));
    }
 
    @Override
    public CloseableIterator<Void> evalAll(Consumer<WriteEntryView<V>> f) {
-      log.tracef("Invoked evalAll(%s)%n", params);
+      log.tracef("Invoked evalAll(%s)", params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       CloseableIteratorSet<K> keys = fmap.cache.keySet();
-      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(fmap.notifier, keys, f);
+      WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
       return withWaitIterator(waitMode, () -> (Stream<Void>) fmap.chain().invoke(ctx, cmd));
    }
 
    @Override
    public CompletableFuture<Void> truncate() {
-      log.tracef("Invoked truncate(%s)%n", params);
+      log.tracef("Invoked truncate(%s)", params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       return withWaitFuture(waitMode, fmap.asyncExec(), () -> {
          fmap.cache.clear();
@@ -111,7 +111,8 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
 
    @Override
    public WriteListeners<K, V> listeners() {
-      return fmap.notifier;
+      //return fmap.notifier;
+      return null;
    }
 
 }

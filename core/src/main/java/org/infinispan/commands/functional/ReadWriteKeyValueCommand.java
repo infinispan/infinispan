@@ -1,42 +1,30 @@
 package org.infinispan.commands.functional;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.ListenerNotifier;
 
 import java.util.function.BiFunction;
 
-public class ReadWriteKeyValueCommand<K, V, R> extends AbstractDataWriteCommand {
+public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
 
-   // TODO: Sort out when all commands have been developed
-   public static final byte COMMAND_ID = 49;
+   public static final byte COMMAND_ID = 48;
 
-   private BiFunction<V, ReadWriteEntryView<K, V>, R> f;
    private V value;
-   private ListenerNotifier<K, V> notifier;
+   private BiFunction<V, ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteKeyValueCommand(ListenerNotifier<K, V> notifier, K key, V value,
-         BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      super(key, null);
+   public ReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
+      super(key, f.getClass().getAnnotation(SerializeWith.class));
       this.value = value;
       this.f = f;
-      this.notifier = notifier;
    }
 
-   @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry<K, V> e = (MVCCEntry<K, V>) ctx.lookupEntry(key);
-      return f.apply(value, EntryViews.readWrite(e, notifier));
+   public ReadWriteKeyValueCommand() {
+      // No-op, for marshalling
    }
 
    @Override
@@ -45,28 +33,38 @@ public class ReadWriteKeyValueCommand<K, V, R> extends AbstractDataWriteCommand 
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[0];  // TODO: Customise this generated block
+   public void setParameters(int commandId, Object[] parameters) {
+      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
+      key = parameters[0];
+      value = (V) parameters[1];
+      f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) parameters[2];
+      valueMatcher = (ValueMatcher) parameters[3];
    }
 
    @Override
-   public boolean isSuccessful() {
-      return false;  // TODO: Customise this generated block
+   public Object[] getParameters() {
+      return new Object[]{key, value, f, valueMatcher};
    }
 
    @Override
    public boolean isConditional() {
-      return false;  // TODO: Customise this generated block
+      return true;
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return null;  // TODO: Customise this generated block
-   }
+   public Object perform(InvocationContext ctx) throws Throwable {
+      // It's not worth looking up the entry if we're never going to apply the change.
+      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
+         successful = false;
+         return null;
+      }
 
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // TODO: Customise this generated block
+      CacheEntry<K, V> e = ctx.lookupEntry(key);
+
+      // Could be that the key is not local
+      if (e == null) return null;
+
+      return f.apply(value, EntryViews.readWrite(e, notifier));
    }
 
    @Override

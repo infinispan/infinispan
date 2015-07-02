@@ -1,6 +1,7 @@
 package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.FlagAffectedCommand;
+import org.infinispan.commands.functional.*;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -11,14 +12,15 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
-import org.infinispan.commons.util.concurrent.CompositeNotifyingFuture;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.util.ReadOnlySegmentAwareMap;
+import org.infinispan.distribution.util.ReadOnlySegmentAwareSet;
 import org.infinispan.remoting.RemoteException;
 import org.infinispan.remoting.responses.Response;
+import org.infinispan.remoting.responses.SuccessfulResponse;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
@@ -201,6 +203,467 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+      return handleNonTxWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitReadWriteKeyValueCommand(InvocationContext ctx, ReadWriteKeyValueCommand command) throws Throwable {
+      return handleNonTxWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitReadWriteKeyCommand(InvocationContext ctx, ReadWriteKeyCommand command) throws Throwable {
+      return handleNonTxWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
+      Object returnValue = invokeNextInterceptor(ctx, command);
+      if (returnValue == null) {
+         Object key = command.getKey();
+         if (needsRemoteGet(ctx, command)) {
+            // Contrary to 'visitRemoteFetchingCommand', it avoids guessing what the
+            // command does with remote entries (e.g. call computeGetReturn).
+            // Instead, it calls perform on the command which uses the function
+            // to decide what do do.
+            if (trace) log.tracef("Doing a remote get for key %s", key);
+            InternalCacheEntry remoteEntry = retrieveFromRemoteSource(key, ctx, false, command, false);
+            returnValue = command.perform(remoteEntry);
+         }
+         if (returnValue == null) {
+            InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
+            if (localEntry != null) {
+               wrapInternalCacheEntry(localEntry, ctx, key, false, command);
+            }
+            returnValue = computeGetReturn(localEntry, false);
+         }
+      }
+      return returnValue;
+   }
+
+   @Override
+   public Object visitReadOnlyManyCommand(InvocationContext ctx, ReadOnlyManyCommand command) throws Throwable {
+      return super.visitReadOnlyManyCommand(ctx, command);    // TODO: Customise this generated block
+   }
+
+   @Override
+   public Object visitWriteOnlyManyEntriesCommand(InvocationContext ctx, WriteOnlyManyEntriesCommand command) throws Throwable {
+      // TODO: Refactor this and visitPutMapCommand...
+      // TODO: Could PutMap be reimplemented based on WriteOnlyManyEntriesCommand?
+      Map<Object, Object> originalMap = command.getEntries();
+      ConsistentHash ch = dm.getConsistentHash();
+      Address localAddress = rpcManager.getAddress();
+      if (ctx.isOriginLocal()) {
+         List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(
+            rpcManager.getMembers().size() - 1);
+         // TODO: if async we don't need to do futures...
+         RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
+         for (Address member : rpcManager.getMembers()) {
+            if (member.equals(rpcManager.getAddress())) {
+               continue;
+            }
+            Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
+            if (!segments.isEmpty()) {
+               Map<Object, Object> segmentEntriesMap =
+                  new ReadOnlySegmentAwareMap<>(originalMap, ch, segments);
+               if (!segmentEntriesMap.isEmpty()) {
+                  WriteOnlyManyEntriesCommand copy = new WriteOnlyManyEntriesCommand(command);
+                  copy.setEntries(segmentEntriesMap);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                     Collections.singletonList(member), copy, options);
+                  futures.add(future);
+               }
+            }
+         }
+         if (futures.size() > 0) {
+            CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+            CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
+            try {
+               compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+            } catch (ExecutionException e) {
+               throw new RemoteException("Exception while processing put on primary owner", e.getCause());
+            } catch (TimeoutException e) {
+               throw new CacheException(e);
+            }
+         }
+      }
+
+      if (!command.isForwarded() && ch.getNumOwners() > 1) {
+         // Now we find all the segments that we own and map our backups to those
+         Map<Address, Set<Integer>> backupOwnerSegments = new HashMap<>();
+         int segmentCount = ch.getNumSegments();
+         for (int i = 0; i < segmentCount; ++i) {
+            Iterator<Address> iter = ch.locateOwnersForSegment(i).iterator();
+
+            if (iter.next().equals(localAddress)) {
+               while (iter.hasNext()) {
+                  Address backupOwner = iter.next();
+                  Set<Integer> segments = backupOwnerSegments.get(backupOwner);
+                  if (segments == null) {
+                     backupOwnerSegments.put(backupOwner, (segments = new HashSet<>()));
+                  }
+                  segments.add(i);
+               }
+            }
+         }
+
+         int backupOwnerSize = backupOwnerSegments.size();
+         if (backupOwnerSize > 0) {
+            List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
+            RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
+            command.setFlags(Flag.SKIP_LOCKING);
+            command.setForwarded(true);
+
+            for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
+               Set<Integer> segments = entry.getValue();
+               Map<Object, Object> segmentEntriesMap =
+                  new ReadOnlySegmentAwareMap<>(originalMap, ch, segments);
+               if (!segmentEntriesMap.isEmpty()) {
+                  WriteOnlyManyEntriesCommand copy = new WriteOnlyManyEntriesCommand(command);
+                  copy.setEntries(segmentEntriesMap);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                     Collections.singletonList(entry.getKey()), copy, options);
+                  futures.add(future);
+               }
+            }
+            command.setForwarded(false);
+            if (futures.size() > 0) {
+               CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+               CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
+               try {
+                  compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+               } catch (ExecutionException e) {
+                  throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+               } catch (TimeoutException e) {
+                  throw new CacheException(e);
+               }
+            }
+         }
+      }
+
+      return invokeNextInterceptor(ctx, command);
+   }
+
+   @Override
+   public Object visitWriteOnlyManyCommand(InvocationContext ctx, WriteOnlyManyCommand command) throws Throwable {
+      // TODO: Refactor this, visitWriteOnlyManyCommand and visitPutMapCommand...
+      Set<Object> originalMap = command.getKeys();
+      ConsistentHash ch = dm.getConsistentHash();
+      Address localAddress = rpcManager.getAddress();
+      if (ctx.isOriginLocal()) {
+         List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(
+            rpcManager.getMembers().size() - 1);
+         // TODO: if async we don't need to do futures...
+         RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
+         for (Address member : rpcManager.getMembers()) {
+            if (member.equals(rpcManager.getAddress())) {
+               continue;
+            }
+            Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
+            if (!segments.isEmpty()) {
+               Set<Object> segmentKeysSet =
+                  new ReadOnlySegmentAwareSet<>(originalMap, ch, segments);
+               if (!segmentKeysSet.isEmpty()) {
+                  WriteOnlyManyCommand copy = new WriteOnlyManyCommand(command);
+                  copy.setKeys(segmentKeysSet);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                     Collections.singletonList(member), copy, options);
+                  futures.add(future);
+               }
+            }
+         }
+         if (futures.size() > 0) {
+            CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+            CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
+            try {
+               compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+            } catch (ExecutionException e) {
+               throw new RemoteException("Exception while processing put on primary owner", e.getCause());
+            } catch (TimeoutException e) {
+               throw new CacheException(e);
+            }
+         }
+      }
+
+      if (!command.isForwarded() && ch.getNumOwners() > 1) {
+         // Now we find all the segments that we own and map our backups to those
+         Map<Address, Set<Integer>> backupOwnerSegments = new HashMap<>();
+         int segmentCount = ch.getNumSegments();
+         for (int i = 0; i < segmentCount; ++i) {
+            Iterator<Address> iter = ch.locateOwnersForSegment(i).iterator();
+
+            if (iter.next().equals(localAddress)) {
+               while (iter.hasNext()) {
+                  Address backupOwner = iter.next();
+                  Set<Integer> segments = backupOwnerSegments.get(backupOwner);
+                  if (segments == null) {
+                     backupOwnerSegments.put(backupOwner, (segments = new HashSet<>()));
+                  }
+                  segments.add(i);
+               }
+            }
+         }
+
+         int backupOwnerSize = backupOwnerSegments.size();
+         if (backupOwnerSize > 0) {
+            List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
+            RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
+            command.setFlags(Flag.SKIP_LOCKING);
+            command.setForwarded(true);
+
+            for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
+               Set<Integer> segments = entry.getValue();
+               Set<Object> segmentKeysSet =
+                  new ReadOnlySegmentAwareSet<>(originalMap, ch, segments);
+               if (!segmentKeysSet.isEmpty()) {
+                  WriteOnlyManyCommand copy = new WriteOnlyManyCommand(command);
+                  copy.setKeys(segmentKeysSet);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                     Collections.singletonList(entry.getKey()), copy, options);
+                  futures.add(future);
+               }
+            }
+            command.setForwarded(false);
+            if (futures.size() > 0) {
+               CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+               CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
+               try {
+                  compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+               } catch (ExecutionException e) {
+                  throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+               } catch (TimeoutException e) {
+                  throw new CacheException(e);
+               }
+            }
+         }
+      }
+
+      return invokeNextInterceptor(ctx, command);
+   }
+
+   @Override
+   public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
+      // TODO: Refactor to avoid code duplication
+      Set<Object> originalMap = command.getKeys();
+      ConsistentHash ch = dm.getConsistentHash();
+      Address localAddress = rpcManager.getAddress();
+      if (ctx.isOriginLocal()) {
+         List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(
+            rpcManager.getMembers().size() - 1);
+         // TODO: if async we don't need to do futures...
+         RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
+         for (Address member : rpcManager.getMembers()) {
+            if (member.equals(rpcManager.getAddress())) {
+               continue;
+            }
+            Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
+            if (!segments.isEmpty()) {
+               Set<Object> segmentKeysSet =
+                  new ReadOnlySegmentAwareSet<>(originalMap, ch, segments);
+               if (!segmentKeysSet.isEmpty()) {
+                  ReadWriteManyCommand copy = new ReadWriteManyCommand(command);
+                  copy.setKeys(segmentKeysSet);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                     Collections.singletonList(member), copy, options);
+                  futures.add(future);
+               }
+            }
+         }
+         if (futures.size() > 0) {
+            CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+            CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
+            try {
+               compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+               // NOTE: Variation from WriteOnlyManyCommand, we care about returns!
+               // TODO: Take into account when refactoring
+               for (CompletableFuture<Map<Address,Response>> future : futures) {
+                  Map<Address, Response> responses = future.get();
+                  for (Response response : responses.values()) {
+                     if (response.isSuccessful()) {
+                        SuccessfulResponse success = (SuccessfulResponse) response;
+                        command.addAllRemoteReturns((List<?>) success.getResponseValue());
+                     }
+                  }
+               }
+            } catch (ExecutionException e) {
+               throw new RemoteException("Exception while processing put on primary owner", e.getCause());
+            } catch (TimeoutException e) {
+               throw new CacheException(e);
+            }
+         }
+      }
+
+      if (!command.isForwarded() && ch.getNumOwners() > 1) {
+         // Now we find all the segments that we own and map our backups to those
+         Map<Address, Set<Integer>> backupOwnerSegments = new HashMap<>();
+         int segmentCount = ch.getNumSegments();
+         for (int i = 0; i < segmentCount; ++i) {
+            Iterator<Address> iter = ch.locateOwnersForSegment(i).iterator();
+
+            if (iter.next().equals(localAddress)) {
+               while (iter.hasNext()) {
+                  Address backupOwner = iter.next();
+                  Set<Integer> segments = backupOwnerSegments.get(backupOwner);
+                  if (segments == null) {
+                     backupOwnerSegments.put(backupOwner, (segments = new HashSet<>()));
+                  }
+                  segments.add(i);
+               }
+            }
+         }
+
+         int backupOwnerSize = backupOwnerSegments.size();
+         if (backupOwnerSize > 0) {
+            List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
+            RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
+            command.setFlags(Flag.SKIP_LOCKING);
+            command.setForwarded(true);
+
+            for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
+               Set<Integer> segments = entry.getValue();
+               Set<Object> segmentKeysSet =
+                  new ReadOnlySegmentAwareSet<>(originalMap, ch, segments);
+               if (!segmentKeysSet.isEmpty()) {
+                  ReadWriteManyCommand copy = new ReadWriteManyCommand(command);
+                  copy.setKeys(segmentKeysSet);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                     Collections.singletonList(entry.getKey()), copy, options);
+                  futures.add(future);
+               }
+            }
+            command.setForwarded(false);
+            if (futures.size() > 0) {
+               CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+               CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
+               try {
+                  compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+               } catch (ExecutionException e) {
+                  throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+               } catch (TimeoutException e) {
+                  throw new CacheException(e);
+               }
+            }
+         }
+      }
+
+      return invokeNextInterceptor(ctx, command);
+   }
+
+   @Override
+   public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
+      // TODO: Refactor to avoid code duplication
+      Map<Object, Object> originalMap = command.getEntries();
+      ConsistentHash ch = dm.getConsistentHash();
+      Address localAddress = rpcManager.getAddress();
+      if (ctx.isOriginLocal()) {
+         List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(
+            rpcManager.getMembers().size() - 1);
+         // TODO: if async we don't need to do futures...
+         RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
+         for (Address member : rpcManager.getMembers()) {
+            if (member.equals(rpcManager.getAddress())) {
+               continue;
+            }
+            Set<Integer> segments = ch.getPrimarySegmentsForOwner(member);
+            if (!segments.isEmpty()) {
+               Map<Object, Object> segmentEntriesMap =
+                  new ReadOnlySegmentAwareMap<>(originalMap, ch, segments);
+               if (!segmentEntriesMap.isEmpty()) {
+                  ReadWriteManyEntriesCommand copy = new ReadWriteManyEntriesCommand(command);
+                  copy.setEntries(segmentEntriesMap);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                     Collections.singletonList(member), copy, options);
+                  futures.add(future);
+               }
+            }
+         }
+         if (futures.size() > 0) {
+            CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+            CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
+            try {
+               compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+               // NOTE: Variation from WriteOnlyManyCommand, we care about returns!
+               // TODO: Take into account when refactoring
+               for (CompletableFuture<Map<Address,Response>> future : futures) {
+                  Map<Address, Response> responses = future.get();
+                  for (Response response : responses.values()) {
+                     if (response.isSuccessful()) {
+                        SuccessfulResponse success = (SuccessfulResponse) response;
+                        command.addAllRemoteReturns((List<?>) success.getResponseValue());
+                     }
+                  }
+               }
+            } catch (ExecutionException e) {
+               throw new RemoteException("Exception while processing put on primary owner", e.getCause());
+            } catch (TimeoutException e) {
+               throw new CacheException(e);
+            }
+         }
+      }
+
+      if (!command.isForwarded() && ch.getNumOwners() > 1) {
+         // Now we find all the segments that we own and map our backups to those
+         Map<Address, Set<Integer>> backupOwnerSegments = new HashMap<>();
+         int segmentCount = ch.getNumSegments();
+         for (int i = 0; i < segmentCount; ++i) {
+            Iterator<Address> iter = ch.locateOwnersForSegment(i).iterator();
+
+            if (iter.next().equals(localAddress)) {
+               while (iter.hasNext()) {
+                  Address backupOwner = iter.next();
+                  Set<Integer> segments = backupOwnerSegments.get(backupOwner);
+                  if (segments == null) {
+                     backupOwnerSegments.put(backupOwner, (segments = new HashSet<>()));
+                  }
+                  segments.add(i);
+               }
+            }
+         }
+
+         int backupOwnerSize = backupOwnerSegments.size();
+         if (backupOwnerSize > 0) {
+            List<CompletableFuture<Map<Address, Response>>> futures = new ArrayList<>(backupOwnerSize);
+            RpcOptions options = rpcManager.getDefaultRpcOptions(isSynchronous(command));
+            command.setFlags(Flag.SKIP_LOCKING);
+            command.setForwarded(true);
+
+            for (Entry<Address, Set<Integer>> entry : backupOwnerSegments.entrySet()) {
+               Set<Integer> segments = entry.getValue();
+               Map<Object, Object> segmentEntriesMap =
+                  new ReadOnlySegmentAwareMap<>(originalMap, ch, segments);
+               if (!segmentEntriesMap.isEmpty()) {
+                  ReadWriteManyEntriesCommand copy = new ReadWriteManyEntriesCommand(command);
+                  copy.setEntries(segmentEntriesMap);
+                  CompletableFuture<Map<Address, Response>> future = rpcManager.invokeRemotelyAsync(
+                     Collections.singletonList(entry.getKey()), copy, options);
+                  futures.add(future);
+               }
+            }
+            command.setForwarded(false);
+            if (futures.size() > 0) {
+               CompletableFuture[] futuresArray = new CompletableFuture[futures.size()];
+               CompletableFuture<Void> compFuture = CompletableFuture.allOf(futures.toArray(futuresArray));
+               try {
+                  compFuture.get(options.timeout(), TimeUnit.MILLISECONDS);
+               } catch (ExecutionException e) {
+                  throw new RemoteException("Exception while processing put on backup owner", e.getCause());
+               } catch (TimeoutException e) {
+                  throw new CacheException(e);
+               }
+            }
+         }
+      }
+
+      return invokeNextInterceptor(ctx, command);
+   }
+
+   @Override
+   public Object visitWriteOnlyKeyValueCommand(InvocationContext ctx, WriteOnlyKeyValueCommand command) throws Throwable {
+      return handleNonTxWriteCommand(ctx, command);
+   }
+
+   @Override
+   public Object visitWriteOnlyKeyCommand(InvocationContext ctx, WriteOnlyKeyCommand command) throws Throwable {
       return handleNonTxWriteCommand(ctx, command);
    }
 

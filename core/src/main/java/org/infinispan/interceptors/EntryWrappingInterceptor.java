@@ -23,6 +23,7 @@ import org.infinispan.commands.write.*;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.NullCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.SingleKeyNonTxInvocationContext;
@@ -316,7 +317,27 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
-      return visitDataReadCommand(ctx, command);
+      try {
+         CacheEntry entry = entryFactory.wrapEntryForReading(ctx, command.getKey(), null);
+         // Null entry is often considered to mean that entry is not available
+         // locally, but if there's no need to get remote, the read-only
+         // function needs to be executed, so force a non-null entry in
+         // context with null content
+         if (entry == null && cdl.localNodeIsOwner(command.getKey()))
+            ctx.putLookedUpEntry(command.getKey(), NullCacheEntry.getInstance());
+
+         return invokeNextInterceptor(ctx, command);
+      } finally {
+         //needed because entries might be added in L1
+         if (!ctx.isInTxScope())
+            commitContextEntries(ctx, command, null);
+         else {
+            CacheEntry entry = ctx.lookupEntry(command.getKey());
+            if (entry != null) {
+               entry.setSkipLookup(true);
+            }
+         }
+      }
    }
 
    @Override

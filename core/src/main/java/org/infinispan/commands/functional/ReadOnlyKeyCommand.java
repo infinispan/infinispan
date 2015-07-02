@@ -4,18 +4,14 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 
 import java.util.function.Function;
 
-public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
-
-   public static final byte COMMAND_ID = 47;
+public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
 
    private Function<ReadEntryView<K, V>, R> f;
-   private InternalCacheEntry remotelyFetchedValue;
 
    public ReadOnlyKeyCommand(Object key, Function<ReadEntryView<K, V>, R> f) {
       super(key, null);
@@ -26,29 +22,33 @@ public class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
    }
 
    @Override
+   public byte getCommandId() {
+      return -1;
+   }
+
+   @Override
    public void setParameters(int commandId, Object[] parameters) {
-      // No-op
+      // Not really replicated
+   }
+
+   @Override
+   public Object[] getParameters() {
+      return new Object[0];
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry<K, V> entry = ctx.lookupEntry(key);
+
+      // Could be that the key is not local, 'null' is how this is signalled
+      if (entry == null) return null;
+
       return perform(entry);
    }
 
    public Object perform(CacheEntry<K, V> entry) {
       ReadEntryView<K, V> ro = EntryViews.readOnly(entry);
       return f.apply(ro);
-   }
-
-   @Override
-   public byte getCommandId() {
-      return COMMAND_ID;
-   }
-
-   @Override
-   public Object[] getParameters() {
-      return new Object[0];
    }
 
    @Override

@@ -33,4 +33,10 @@ public @interface SerializeWith {
     */
    Class<? extends Externalizer<?>> value();
 
+   /**
+    * TODO
+    * @return
+    */
+   SerializeValueMatcher valueMatcher() default SerializeValueMatcher.MATCH_ALWAYS;
+
 }

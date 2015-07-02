@@ -1,41 +1,28 @@
 package org.infinispan.commands.functional;
 
 import org.infinispan.commands.Visitor;
-import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.container.entries.MVCCEntry;
+import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.ListenerNotifier;
 
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class ReadWriteKeyCommand<K, V, R> extends AbstractDataWriteCommand {
+public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
 
-   // TODO: Sort out when all commands have been developed
-   public static final byte COMMAND_ID = 50;
+   public static final byte COMMAND_ID = 47;
 
    private Function<ReadWriteEntryView<K, V>, R> f;
-   private ListenerNotifier<K, V> notifier;
 
-   public ReadWriteKeyCommand(ListenerNotifier<K, V> notifier, K key,
-         Function<ReadWriteEntryView<K, V>, R> f) {
-      super(key, null);
+   public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f) {
+      super(key, f.getClass().getAnnotation(SerializeWith.class));
       this.f = f;
-      this.notifier = notifier;
    }
 
-   @Override
-   public void setParameters(int commandId, Object[] parameters) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public Object perform(InvocationContext ctx) throws Throwable {
-      MVCCEntry<K, V> e = (MVCCEntry<K, V>) ctx.lookupEntry(key);
-      return f.apply(EntryViews.readWrite(e, notifier));
+   public ReadWriteKeyCommand() {
+      // No-op, for marshalling
    }
 
    @Override
@@ -44,28 +31,37 @@ public class ReadWriteKeyCommand<K, V, R> extends AbstractDataWriteCommand {
    }
 
    @Override
-   public Object[] getParameters() {
-      return new Object[0];  // TODO: Customise this generated block
+   public void setParameters(int commandId, Object[] parameters) {
+      if (commandId != COMMAND_ID) throw new IllegalStateException("Invalid method id");
+      key = parameters[0];
+      f = (Function<ReadWriteEntryView<K, V>, R>) parameters[1];
+      valueMatcher = (ValueMatcher) parameters[2];
    }
 
    @Override
-   public boolean isSuccessful() {
-      return false;  // TODO: Customise this generated block
+   public Object[] getParameters() {
+      return new Object[]{key, f, valueMatcher};
    }
 
    @Override
    public boolean isConditional() {
-      return false;  // TODO: Customise this generated block
+      return true;
    }
 
    @Override
-   public ValueMatcher getValueMatcher() {
-      return null;  // TODO: Customise this generated block
-   }
+   public Object perform(InvocationContext ctx) throws Throwable {
+      // It's not worth looking up the entry if we're never going to apply the change.
+      if (valueMatcher == ValueMatcher.MATCH_NEVER) {
+         successful = false;
+         return null;
+      }
 
-   @Override
-   public void setValueMatcher(ValueMatcher valueMatcher) {
-      // TODO: Customise this generated block
+      CacheEntry<K, V> e = ctx.lookupEntry(key);
+
+      // Could be that the key is not local, 'null' is how this is signalled
+      if (e == null) return null;
+
+      return f.apply(EntryViews.readWrite(e, notifier));
    }
 
    @Override

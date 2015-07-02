@@ -3,12 +3,15 @@ package org.infinispan.functional.impl;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
+import org.infinispan.factories.scopes.Scope;
+import org.infinispan.factories.scopes.Scopes;
 
 /**
  * Listener notifier
  *
  * @since 8.0
  */
+@Scope(Scopes.NAMED_CACHE)
 public interface ListenerNotifier<K, V> extends ReadWriteListeners<K, V>, WriteListeners<K, V> {
 
    /**
