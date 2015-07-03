@@ -8,6 +8,7 @@ import org.infinispan.commons.io.ExposedByteArrayOutputStream;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.jgroups.JGroupsAddress;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.jgroups.stack.IpAddress;
 import org.testng.annotations.Test;
@@ -30,7 +31,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 5.1
  */
 @Test(groups = "functional", testName = "marshall.SharedStreamMultiMarshallerTest")
-public class SharedStreamMultiMarshallerTest {
+public class SharedStreamMultiMarshallerTest extends AbstractInfinispanTest {
 
    public void testSharingStream() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createClusteredCacheManager();

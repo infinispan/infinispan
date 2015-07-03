@@ -4,6 +4,7 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.security.Security;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -24,6 +25,11 @@ public class TestResourceTracker {
    private static final Log log = LogFactory.getLog(TestResourceTracker.class);
    private static final EquivalentConcurrentHashMapV8<String, TestResources> testResources = new EquivalentConcurrentHashMapV8<>(AnyEquivalence.getInstance(), AnyEquivalence.getInstance());
    private static final ThreadLocal<String> threadTestName = new ThreadLocal<>();
+
+   public static void addResource(AbstractInfinispanTest testInstance, final Cleaner<?> cleaner) {
+      TestResources resources = getTestResources(getTestName(testInstance));
+      resources.addResource(cleaner);
+   }
 
    public static void addResource(String testName, final Cleaner<?> cleaner) {
       TestResources resources = getTestResources(testName);
@@ -61,16 +67,14 @@ public class TestResourceTracker {
          // other alternative. It does not offer any callbacks within the
          // thread that runs the test that can timeout.
          String threadName = Thread.currentThread().getName();
-         String pattern = "TestNGInvoker-";
-         if (threadName.startsWith(pattern)) {
+         if (threadName.equals("main") || threadName.equals("TestNG")) {
+            // Regular test, force the user to extend AbstractInfinispanTest
+            throw new IllegalStateException("Test name is not set! Please extend AbstractInfinispanTest!");
+         } else if (threadName.startsWith("TestNGInvoker-")) {
             // This is a timeout test, so force the user to call our marking method
-            throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testStarted(this) in your test method!");
-         } else if (Thread.currentThread().getName().equals("main")) {
-            // Test is being run from an IDE
-            testName = "main";
+            throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testThreadStarted(this) in your test method!");
          } else {
-            log.warnf("Test name not set in unknown thread %s. Consider using TestResourceTracker.backgroundTestStarted(this) in your test method.", Thread.currentThread().getName());
-            testName = "unknown";
+            throw new IllegalStateException("Test name is not set! Please call TestResourceTracker.testThreadStarted(this) in thread " + threadName + " !");
          }
       }
       return testName;
@@ -104,13 +108,23 @@ public class TestResourceTracker {
     * Should be called by the user on any "background" test thread that creates resources, e.g. at the beginning of a
     * test with a {@code @Test(timeout=n)} annotation.
     */
-   public static void backgroundTestStarted(Object testInstance) {
-      setThreadTestName(testInstance.getClass().getName());
+   public static void testThreadStarted(AbstractInfinispanTest testInstance) {
+      setThreadTestName(getTestName(testInstance));
       Thread.currentThread().setName(getNextTestThreadName());
+   }
+
+   protected static String getTestName(AbstractInfinispanTest testInstance) {
+      return testInstance.getClass().getName();
    }
 
    public static void setThreadTestName(String testName) {
       threadTestName.set(testName);
+   }
+
+   public static void setThreadTestNameIfMissing(String testName) {
+      if (threadTestName.get() == null) {
+         threadTestName.set(testName);
+      }
    }
 
    public static String getNextNodeName() {

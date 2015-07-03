@@ -1,5 +1,6 @@
 package org.infinispan.test.fwk;
 
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.*;
@@ -45,7 +46,8 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
       Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
          public void uncaughtException(final Thread t, final Throwable e) {
             try {
-               // we need to ensure we only handle first OOM occurrence (multiple threads could see one) to avoid duplicated thread dumps
+               // we need to ensure we only handle first OOM occurrence (multiple threads could see one) to
+               // avoid duplicated thread dumps
                if (e instanceof OutOfMemoryError && oomHandled.compareAndSet(false, true)) {
                   printAllTheThreadsInTheJvm();
                }
@@ -61,7 +63,7 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
    synchronized public void onTestSuccess(ITestResult arg0) {
       String message = "Test " + getTestDesc(arg0) + " succeeded.";
-      System.out.println(getThreadId() + ' ' + message);
+      consoleLog(message);
       log.info(message);
       succeeded.incrementAndGet();
       printStatus();
@@ -69,7 +71,7 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
    synchronized public void onTestFailure(ITestResult arg0) {
       String message = "Test " + getTestDesc(arg0) + " failed.";
-      System.out.println(getThreadId() + ' ' + message);
+      consoleLog(message);
       log.error(message, arg0.getThrowable());
       failed.incrementAndGet();
       printStatus();
@@ -77,14 +79,17 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
    synchronized public void onTestSkipped(ITestResult arg0) {
       String message = "Test " + getTestDesc(arg0) + " skipped.";
-      System.out.println(getThreadId() + ' ' + message);
+      consoleLog(message);
       log.error(message, arg0.getThrowable());
       skipped.incrementAndGet();
       printStatus();
    }
 
-
    public void onTestFailedButWithinSuccessPercentage(ITestResult arg0) {
+   }
+
+   protected void consoleLog(String message) {
+      System.out.println("[" + getClass().getSimpleName() + "]" + ' ' + message);
    }
 
    public void onStart(ITestContext arg0) {
@@ -94,16 +99,16 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
       if (!simpleName.equals(testClass.getSimpleName())) {
          log.warnf("Wrong test name %s for class %s", simpleName, testClass.getSimpleName());
       }
-      TestResourceTracker.testStarted(testClass.getName());
+      if (!AbstractInfinispanTest.class.isAssignableFrom(testClass)) {
+         TestResourceTracker.testStarted(testClass.getName());
+      }
    }
 
    public void onFinish(ITestContext arg0) {
       Class testClass = arg0.getCurrentXmlTest().getXmlClasses().get(0).getSupportClass();
-      TestResourceTracker.testFinished(testClass.getName());
-   }
-
-   private String getThreadId() {
-      return "[" + Thread.currentThread().getName() + "]";
+      if (!AbstractInfinispanTest.class.isAssignableFrom(testClass)) {
+         TestResourceTracker.testFinished(testClass.getName());
+      }
    }
 
    private String getTestDesc(ITestResult res) {
@@ -112,7 +117,7 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
    private void printStatus() {
       String message = "Test suite progress: tests succeeded: " + succeeded.get() + ", failed: " + failed.get() + ", skipped: " + skipped.get() + ".";
-      System.out.println(message);
+      consoleLog(message);
       log.info(message);
    }
 

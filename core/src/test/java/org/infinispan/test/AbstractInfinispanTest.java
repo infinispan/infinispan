@@ -1,16 +1,16 @@
 package org.infinispan.test;
 
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 
 import javax.transaction.TransactionManager;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,9 +28,7 @@ public class AbstractInfinispanTest {
 
    protected final Log log = LogFactory.getLog(getClass());
 
-   private final Set<TrackingThreadFactory> requestedThreadFactories = new ConcurrentHashSet<>();
-
-   private final TrackingThreadFactory defaultThreadFactory = (TrackingThreadFactory)getTestThreadFactory("ForkThread");
+   private final ThreadFactory defaultThreadFactory = getTestThreadFactory("ForkThread");
    private final ThreadPoolExecutor defaultExecutorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
                                                                                  60L, TimeUnit.SECONDS,
                                                                                  new SynchronousQueue<Runnable>(),
@@ -38,15 +36,21 @@ public class AbstractInfinispanTest {
 
    public static final TimeService TIME_SERVICE = new DefaultTimeService();
 
+   @BeforeTest(alwaysRun = true)
+   protected void testClassStarted() {
+      TestResourceTracker.testStarted(getClass().getName());
+   }
+
    @AfterTest(alwaysRun = true)
+   protected void testClassFinished() {
+      killSpawnedThreads();
+      TestResourceTracker.testFinished(getClass().getName());
+   }
+
    protected void killSpawnedThreads() {
       List<Runnable> runnables = defaultExecutorService.shutdownNow();
       if (!runnables.isEmpty()) {
          log.errorf("There were runnables %s left uncompleted in test %s", runnables, getClass().getSimpleName());
-      }
-
-      for (TrackingThreadFactory factory : requestedThreadFactories) {
-         checkFactoryForLeaks(factory);
       }
    }
 
@@ -56,16 +60,6 @@ public class AbstractInfinispanTest {
       if (activeTasks != 0) {
          log.errorf("There were %i active tasks found in the test executor service for class %s", activeTasks,
                     getClass().getSimpleName());
-      }
-   }
-
-   private void checkFactoryForLeaks(TrackingThreadFactory factory) {
-      Set<Thread> threads = factory.getCreatedThreads();
-      for (Thread t : threads) {
-         if (t.isAlive() && !t.isInterrupted()) {
-            log.warnf("There was a thread % still alive after test completion - interrupted it", t);
-            t.interrupt();
-         }
       }
    }
 
@@ -163,23 +157,20 @@ public class AbstractInfinispanTest {
     * @return A thread factory that will use the same naming schema as the other methods
     */
    protected ThreadFactory getTestThreadFactory(final String prefix) {
-      TrackingThreadFactory ttf = new TrackingThreadFactory(getRealThreadFactory(prefix));
-      requestedThreadFactories.add(ttf);
-      return ttf;
-   }
-
-   private ThreadFactory getRealThreadFactory(final String prefix) {
       final String className = getClass().getSimpleName();
 
-      return new ThreadFactory() {
+      ThreadFactory threadFactory = new ThreadFactory() {
          private final AtomicInteger counter = new AtomicInteger(0);
 
          @Override
          public Thread newThread(Runnable r) {
             String threadName = prefix + "-" + counter.incrementAndGet() + "," + className;
-            return new Thread(r, threadName);
+            Thread thread = new Thread(r, threadName);
+            TestResourceTracker.addResource(AbstractInfinispanTest.this, new ThreadCleaner(thread));
+            return thread;
          }
       };
+      return threadFactory;
    }
 
    /**
@@ -356,26 +347,6 @@ public class AbstractInfinispanTest {
       waitForCompletionServiceTasks(completionService, invocationCount);
    }
 
-   private final class TrackingThreadFactory implements ThreadFactory {
-      private final ThreadFactory realFactory;
-      private final Set<Thread> createdThreads = new ConcurrentHashSet<>();
-
-      public TrackingThreadFactory(ThreadFactory factory) {
-         this.realFactory = factory;
-      }
-
-      @Override
-      public Thread newThread(Runnable r) {
-         Thread thread = realFactory.newThread(r);
-         createdThreads.add(thread);
-         return thread;
-      }
-
-      public Set<Thread> getCreatedThreads() {
-         return createdThreads;
-      }
-   }
-
    /**
     * A callable that will first await on the provided barrier before calling the provided callable.
     * This is useful to have a better attempt at multiple threads ran at the same time, but still is
@@ -463,6 +434,21 @@ public class AbstractInfinispanTest {
          transactionManager.rollback();
       } catch (Exception e) {
          //ignored
+      }
+   }
+
+   private class ThreadCleaner extends TestResourceTracker.Cleaner<Thread> {
+      public ThreadCleaner(Thread thread) {
+         super(thread);
+      }
+
+      @Override
+      public void close() {
+         if (ref.isAlive() && !ref.isInterrupted()) {
+            log.warnf("There was a thread % still alive after test completion - interrupted it",
+                      ref);
+            ref.interrupt();
+         }
       }
    }
 }

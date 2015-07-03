@@ -27,7 +27,7 @@ public class JpaStoreFunctionalTest extends org.infinispan.persistence.jpa.JpaSt
    @Before
    @Override
    public void setup() throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       super.setup();
    }
 

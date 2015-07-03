@@ -8,6 +8,7 @@ import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.mockito.Mockito;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
 @Test(testName = "config.DataContainerTest", groups = "functional")
-public class DataContainerTest {
+public class DataContainerTest extends AbstractInfinispanTest {
 
    @Test
    public void testDefault() throws IOException {

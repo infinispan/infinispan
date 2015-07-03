@@ -18,6 +18,8 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -88,7 +90,8 @@ public class LocalDistributedExecutorTest extends MultipleCacheManagersTest {
    }
    
    protected DistributedExecutorService createDES(Cache<?,?> cache){
-      DistributedExecutorService des = new DefaultExecutorService(cache);
+      ExecutorService executorService = Executors.newCachedThreadPool(getTestThreadFactory("DistributedExecutorZ"));
+      DistributedExecutorService des = new DefaultExecutorService(cache, executorService);
       cleanupService = des;
       return des;
    }

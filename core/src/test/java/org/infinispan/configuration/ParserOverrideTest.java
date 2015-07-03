@@ -9,6 +9,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.TestingUtil.InfinispanStartTag;
@@ -18,7 +19,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @Test(groups = "functional", testName = "configuration.ParserOverrideTest")
-public class ParserOverrideTest {
+public class ParserOverrideTest extends AbstractInfinispanTest {
 
    /**
     * This test makes sure that some named cached values are overridden properly

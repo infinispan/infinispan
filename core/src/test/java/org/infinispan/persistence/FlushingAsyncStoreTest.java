@@ -38,7 +38,7 @@ public class FlushingAsyncStoreTest extends SingleCacheManagerTest {
 
    @Test(timeOut = 10000)
    public void writeOnStorage() {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       cache = cacheManager.getCache("AsyncStoreInMemory");
       cache.put("key1", "value");
       cache.stop();

@@ -28,7 +28,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
-import org.infinispan.transaction.TransactionMode;
 import org.testng.annotations.Test;
 
 /**
@@ -138,8 +137,7 @@ public class GetAllCommandStressTest extends MultipleCacheManagersTest {
       futures[futures.length - 1] = fork(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-//            TestResourceTracker.setThreadTestName("main");
-            TestResourceTracker.backgroundTestStarted(GetAllCommandStressTest.this);
+            TestResourceTracker.testThreadStarted(GetAllCommandStressTest.this);
             try {
                Cache<?, ?> cacheToKill = cache(CACHE_COUNT - 1);
                while (!complete.get()) {

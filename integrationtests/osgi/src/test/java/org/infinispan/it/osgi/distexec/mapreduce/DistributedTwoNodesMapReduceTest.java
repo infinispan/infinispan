@@ -27,7 +27,7 @@ public class DistributedTwoNodesMapReduceTest extends BaseWordCountMapReduceTest
 
    @Before
    public void setUp() {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), true);
       builder.clustering().stateTransfer().chunkSize(2);
       createClusteredCaches(2, cacheName(), builder);

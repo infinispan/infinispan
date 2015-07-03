@@ -36,7 +36,7 @@ public class UnknownCacheStartTest extends AbstractInfinispanTest {
 
    @Test (expectedExceptions = {CacheException.class, TestException.class}, timeOut = 60000)
    public void testStartingUnknownCaches() throws Throwable {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
 
       cm1 = createCacheManager(configuration);
 

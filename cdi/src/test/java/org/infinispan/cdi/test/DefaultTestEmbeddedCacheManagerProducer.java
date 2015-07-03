@@ -6,6 +6,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Disposes;
@@ -27,6 +28,10 @@ public class DefaultTestEmbeddedCacheManagerProducer {
    @Produces
    @ApplicationScoped
    public EmbeddedCacheManager getDefaultEmbeddedCacheManager(Configuration defaultConfiguration) {
+      // Sometimes we're called from a remote thread that doesn't have the test name set
+      // We don't have the test name here, either, but we can use a dummy one
+      TestResourceTracker.setThreadTestNameIfMissing("DefaultTestEmbeddedCacheManagerProducer");
+
       ConfigurationBuilder builder = new ConfigurationBuilder();
       GlobalConfigurationBuilder globalConfigurationBuilder = new GlobalConfigurationBuilder();
       globalConfigurationBuilder.globalJmxStatistics().allowDuplicateDomains(true);

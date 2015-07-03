@@ -5,6 +5,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.spi.LoggingEvent;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
@@ -23,7 +24,7 @@ import java.util.Arrays;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "config.SampleConfigFilesCorrectnessTest")
-public class SampleConfigFilesCorrectnessTest {
+public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
    private static final Log log = LogFactory.getLog(SampleConfigFilesCorrectnessTest.class);
 
    public String configRoot;
