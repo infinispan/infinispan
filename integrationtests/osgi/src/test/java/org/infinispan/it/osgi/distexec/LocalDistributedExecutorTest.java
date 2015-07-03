@@ -35,7 +35,7 @@ public class LocalDistributedExecutorTest extends org.infinispan.distexec.LocalD
 
    @Before
    public void setUp() {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(getCacheMode(), false);
       createClusteredCaches(1, cacheName(), builder);
    }

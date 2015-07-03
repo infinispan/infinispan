@@ -50,7 +50,7 @@ public class CustomObjectsReplicatedCacheTest extends MultipleCacheManagersTest 
 
    @Before
    public void setUp() {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       ConfigurationBuilder c = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, true);
       createCluster(c, 2);
    }

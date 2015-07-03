@@ -152,8 +152,7 @@ public class PutMapCommandStressTest extends MultipleCacheManagersTest {
       futures[futures.length - 1] = fork(new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-//            TestResourceTracker.setThreadTestName("main");
-            TestResourceTracker.backgroundTestStarted(PutMapCommandStressTest.this);
+            TestResourceTracker.testThreadStarted(PutMapCommandStressTest.this);
             try {
                Cache<?, ?> cacheToKill = cache(CACHE_COUNT - 1);
                while (!complete.get()) {

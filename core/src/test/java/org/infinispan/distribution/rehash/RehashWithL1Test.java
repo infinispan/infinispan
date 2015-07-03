@@ -5,6 +5,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.testng.annotations.Test;
 
@@ -43,6 +44,7 @@ public class RehashWithL1Test extends MultipleCacheManagersTest {
             node3Join = fork(new Callable<Void>() {
                @Override
                public Void call() throws Exception {
+                  TestResourceTracker.testThreadStarted(RehashWithL1Test.this);
                   EmbeddedCacheManager cm = addClusterEnabledCacheManager(builder,
                         new TransportFlags().withMerge(true));
                   cm.getCache();

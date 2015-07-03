@@ -250,7 +250,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    public void testSTWithWritingNonTxThread(Method m) throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       testCount++;
       logTestStart(m);
       writingThreadTest(false);
@@ -258,7 +258,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
    }
 
    public void testSTWithWritingTxThread(Method m) throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       testCount++;
       logTestStart(m);
       writingThreadTest(true);

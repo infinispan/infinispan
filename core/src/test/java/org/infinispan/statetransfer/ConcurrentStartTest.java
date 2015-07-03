@@ -23,8 +23,6 @@ import org.infinispan.test.fwk.JGroupsConfigBuilder;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.test.fwk.TransportFlags;
 import org.infinispan.topology.CacheTopologyControlCommand;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
 import org.infinispan.xsite.XSiteReplicateCommand;
 import org.jgroups.Channel;
 import org.jgroups.JChannel;
@@ -58,7 +56,7 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
 
    @Test(timeOut = 60000)
    public void testConcurrentStart() throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       final CheckPoint checkPoint = new CheckPoint();
 
       // Create and connect both channels beforehand

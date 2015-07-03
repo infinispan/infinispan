@@ -2,6 +2,7 @@ package org.infinispan.configuration;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.lookup.TransactionManagerLookup;
@@ -19,7 +20,7 @@ import static org.infinispan.test.TestingUtil.withCacheManager;
  * @author Mircea.Markus@jboss.com
  */
 @Test(groups = "functional", testName = "config.TxManagerLookupConfigTest")
-public class TxManagerLookupConfigTest {
+public class TxManagerLookupConfigTest extends AbstractInfinispanTest {
 
    static TmA tma = new TmA();
    static TmB tmb = new TmB();

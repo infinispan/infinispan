@@ -28,7 +28,7 @@ public class JpaStoreUserEntityTest extends org.infinispan.persistence.jpa.JpaSt
    @Before
    @Override
    public void setUp() throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       super.setUp();
    }
 

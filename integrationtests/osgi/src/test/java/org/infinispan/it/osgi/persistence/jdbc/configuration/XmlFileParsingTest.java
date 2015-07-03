@@ -34,19 +34,19 @@ public class XmlFileParsingTest extends org.infinispan.persistence.jdbc.configur
 
    @Test
    public void testStringKeyedJdbcStore() throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       super.testStringKeyedJdbcStore();
    }
 
    @Test
    public void testBinaryKeyedJdbcStore() throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       super.testBinaryKeyedJdbcStore();
    }
 
    @Test
    public void testMixedKeyedJdbcStore() throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       super.testMixedKeyedJdbcStore();
    }
 }

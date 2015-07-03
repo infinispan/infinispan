@@ -31,11 +31,15 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest {
    private static final ClassPathResource NAMED_ASYNC_CACHE_CONFIG_LOCATION = new ClassPathResource(
          "named-async-cache.xml", InfinispanNamedEmbeddedCacheFactoryBeanTest.class);
 
-   private static final EmbeddedCacheManager DEFAULT_CACHE_MANAGER = TestCacheManagerFactory.createCacheManager();
+   private EmbeddedCacheManager DEFAULT_CACHE_MANAGER;
 
-   private static final EmbeddedCacheManager PRECONFIGURED_DEFAULT_CACHE_MANAGER;
+   private EmbeddedCacheManager PRECONFIGURED_DEFAULT_CACHE_MANAGER;
 
-   static {
+   @BeforeClass
+   public void startCacheManagers() {
+      DEFAULT_CACHE_MANAGER = TestCacheManagerFactory.createCacheManager();
+      DEFAULT_CACHE_MANAGER.start();
+
       InputStream configStream = null;
       try {
          configStream = NAMED_ASYNC_CACHE_CONFIG_LOCATION.getInputStream();
@@ -53,14 +57,8 @@ public class InfinispanNamedEmbeddedCacheFactoryBeanTest {
       }
    }
 
-   @BeforeClass
-   public static void startCacheManagers() {
-      DEFAULT_CACHE_MANAGER.start();
-      PRECONFIGURED_DEFAULT_CACHE_MANAGER.start();
-   }
-
    @AfterClass
-   public static void stopCacheManagers() {
+   public void stopCacheManagers() {
       PRECONFIGURED_DEFAULT_CACHE_MANAGER.stop();
       DEFAULT_CACHE_MANAGER.stop();
    }

@@ -8,6 +8,7 @@ import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -68,6 +69,7 @@ public class ThreadLocalLeakTest extends AbstractInfinispanTest {
             new Callable<Map<String, Map<ThreadLocal<?>, Object>>>() {
          @Override
          public Map<String, Map<ThreadLocal<?>, Object>> call() throws Exception {
+            TestResourceTracker.testThreadStarted(ThreadLocalLeakTest.this);
             Thread forkedThread = doStuffWithCache(builder);
 
             beforeGC();

@@ -36,7 +36,7 @@ public class TransactionsSpanningReplicatedCachesTest extends org.infinispan.tx.
 
    @Before
    public void setUp() {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       ConfigurationBuilder c = getConfiguration();
       addClusterEnabledCacheManager(c);
       addClusterEnabledCacheManager(c);

@@ -47,7 +47,7 @@ public class JdbcStringBasedStoreFunctionalTest extends BaseStoreFunctionalTest 
    @Before
    @Override
    public void setup() throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       super.setup();
    }
 

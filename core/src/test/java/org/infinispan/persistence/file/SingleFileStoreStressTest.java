@@ -12,6 +12,7 @@ import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
@@ -334,6 +335,7 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
 
       @Override
       public Object call() throws Exception {
+         TestResourceTracker.testThreadStarted(SingleFileStoreStressTest.this);
          Random random = new Random();
          int i = 0;
          while (stopLatch.getCount() != 0) {

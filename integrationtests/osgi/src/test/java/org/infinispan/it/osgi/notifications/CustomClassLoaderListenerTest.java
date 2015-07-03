@@ -37,7 +37,7 @@ public class CustomClassLoaderListenerTest extends org.infinispan.notifications.
 
    @Before
    public void setUp() throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class);
       cacheManager = TestCacheManagerFactory.createCacheManager(builder);

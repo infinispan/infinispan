@@ -28,7 +28,7 @@ public class JpaStoreTest extends org.infinispan.persistence.jpa.JpaStoreTest {
    @Before
    @Override
    public void setUp() throws Exception {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       super.setUp();
    }
 

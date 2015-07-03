@@ -40,7 +40,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence1() throws ExecutionException, InterruptedException {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       /*
 
       Sequence 1:
@@ -60,7 +60,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence2() throws ExecutionException, InterruptedException {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       /*
 
       Sequence 2:
@@ -79,7 +79,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence3() throws ExecutionException, InterruptedException {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       /*
 
       Sequence 3:
@@ -97,7 +97,7 @@ public class ConcurrentStartWithReplTest extends AbstractInfinispanTest {
 
    @Test(timeOut = 60000)
    public void testSequence4() throws ExecutionException, InterruptedException {
-      TestResourceTracker.backgroundTestStarted(this);
+      TestResourceTracker.testThreadStarted(this);
       /*
 
       Sequence 4:

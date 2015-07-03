@@ -9,6 +9,7 @@ import java.io.InputStream;
 
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil.InfinispanStartTag;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -22,7 +23,7 @@ import org.testng.annotations.Test;
  * @since 5.2
  */
 @Test(groups = "unit", testName = "configuration.module.ExtendedParserTest")
-public class ExtendedParserTest {
+public class ExtendedParserTest extends AbstractInfinispanTest {
 
    public void testExtendedParser() throws IOException {
       String config = InfinispanStartTag.LATEST +
