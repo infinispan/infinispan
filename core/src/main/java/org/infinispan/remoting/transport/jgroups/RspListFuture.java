@@ -18,6 +18,7 @@ import java.util.concurrent.Future;
  */
 class RspListFuture extends CompletableFuture<RspList<Response>> implements FutureListener<RspList<Response>> {
    private final GroupRequest<Response> request;
+   private Future<?> timeoutFuture = null;
 
    RspListFuture(GroupRequest<Response> request) {
       this.request = request;
@@ -30,10 +31,20 @@ class RspListFuture extends CompletableFuture<RspList<Response>> implements Futu
    public void futureDone(Future<RspList<Response>> future) {
       RspList<Response> responses = request.getResults();
       complete(responses);
+      if (timeoutFuture != null) {
+         timeoutFuture.cancel(false);
+      }
    }
 
    public void timeout() {
-      futureDone(null);
+      complete(request.getResults());
       request.cancel(true);
+   }
+
+   public void setTimeoutFuture(Future<?> timeoutFuture) {
+      this.timeoutFuture = timeoutFuture;
+      if (isDone()) {
+         timeoutFuture.cancel(false);
+      }
    }
 }
