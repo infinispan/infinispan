@@ -239,8 +239,8 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
                      assertNull(r);
                      assertEquals(Optional.of("one"), ro.find());
                      assertEquals("one", ro.get());
-                     assertEquals(Optional.of(new Lifespan(100000)), ro.findMetaParam(Lifespan.ID));
-                     assertEquals(new Lifespan(100000), ro.getMetaParam(Lifespan.ID));
+                     assertEquals(Optional.of(new Lifespan(100000)), ro.findMetaParam(Lifespan.class));
+                     assertEquals(new Lifespan(100000), ro.getMetaParam(Lifespan.class));
                   }
                )
          )
@@ -374,13 +374,13 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
       replaceWithVersion(keySupplier, map1, map2, 100, rw -> {
             assertEquals("uno", rw.get());
             assertEquals(new EntryVersionParam<>(new NumericEntryVersion(200)),
-               rw.getMetaParam(EntryVersionParam.ID()));
+               rw.getMetaParam(EntryVersionParam.getType()));
          }
       );
       replaceWithVersion(keySupplier, map1, map2, 900, rw -> {
          assertEquals(Optional.of("one"), rw.find());
          assertEquals(Optional.of(new EntryVersionParam<>(new NumericEntryVersion(100))),
-            rw.findMetaParam(EntryVersionParam.ID()));
+            rw.findMetaParam(EntryVersionParam.getType()));
       });
    }
 
@@ -432,7 +432,7 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
 
       @Override
       public ReadWriteEntryView<K, String> apply(ReadWriteEntryView<K, String> rw) {
-         EntryVersionParam<Long> versionParam = rw.getMetaParam(EntryVersionParam.ID());
+         EntryVersionParam<Long> versionParam = rw.getMetaParam(EntryVersionParam.getType());
          if (versionParam.get().compareTo(new NumericEntryVersion(version)) == EQUAL)
             rw.set("uno", new EntryVersionParam<>(new NumericEntryVersion(200)));
          return rw;

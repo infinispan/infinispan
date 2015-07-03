@@ -52,13 +52,13 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    @Override
    public long lifespan() {
-      return params.find(Lifespan.ID)
+      return params.find(Lifespan.class)
             .orElse(Lifespan.defaultValue()).get();
    }
 
    @Override
    public long maxIdle() {
-      return params.find(MaxIdle.ID)
+      return params.find(MaxIdle.class)
             .orElse(MaxIdle.defaultValue()).get();
    }
 
@@ -73,13 +73,13 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    }
 
    @Override
-   public <T> T getMetaParam(MetaParam.Id<T> id) throws NoSuchElementException {
-      return params.get(id);
+   public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
+      return params.get(type);
    }
 
    @Override
-   public <T> Optional<T> findMetaParam(MetaParam.Id<T> id) {
-      return params.find(id);
+   public <T> Optional<T> findMetaParam(Class<T> type) {
+      return params.find(type);
    }
 
    public static final class Externalizer extends AbstractExternalizer<MetaParamsInternalMetadata> {

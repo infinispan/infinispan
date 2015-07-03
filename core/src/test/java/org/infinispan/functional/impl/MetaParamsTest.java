@@ -26,9 +26,9 @@ public class MetaParamsTest {
       MetaParams metas = MetaParams.empty();
       assertTrue(metas.isEmpty());
       assertEquals(0, metas.size());
-      assertFalse(metas.find(new MetaParam.Id(0)).isPresent());
-      assertFalse(metas.find(new MetaParam.Id(1)).isPresent());
-      assertFalse(metas.find(new MetaParam.Id(2)).isPresent());
+      assertFalse(metas.find(Lifespan.class).isPresent());
+      assertFalse(metas.find(EntryVersionParam.class).isPresent());
+      assertFalse(metas.find(MaxIdle.class).isPresent());
    }
 
    @Test(expectedExceptions = NoSuchElementException.class)
@@ -36,7 +36,7 @@ public class MetaParamsTest {
       MetaParams metas = MetaParams.empty();
       assertTrue(metas.isEmpty());
       assertEquals(0, metas.size());
-      metas.get(new MetaParam.Id(0));
+      metas.get(Lifespan.class);
    }
 
    @Test
@@ -46,14 +46,14 @@ public class MetaParamsTest {
       metas.add(lifespan);
       assertFalse(metas.isEmpty());
       assertEquals(1, metas.size());
-      Lifespan lifespanFound = metas.get(Lifespan.ID);
+      Lifespan lifespanFound = metas.get(Lifespan.class);
       assertEquals(new Lifespan(1000), lifespanFound);
-      assertEquals(1000, metas.get(Lifespan.ID).get().longValue());
+      assertEquals(1000, metas.get(Lifespan.class).get().longValue());
       assertFalse(new Lifespan(900).equals(lifespanFound));
       metas.add(new Lifespan(900));
       assertFalse(metas.isEmpty());
       assertEquals(1, metas.size());
-      assertEquals(new Lifespan(900), metas.get(lifespan.id()));
+      assertEquals(new Lifespan(900), metas.get(lifespan.getClass()));
    }
 
    @Test
@@ -62,8 +62,8 @@ public class MetaParamsTest {
       metas.addMany(new Lifespan(1000), new MaxIdle(1000), new EntryVersionParam<>(new NumericEntryVersion(12345)));
       assertFalse(metas.isEmpty());
       assertEquals(3, metas.size());
-      MaxIdle maxIdle = metas.get(MaxIdle.ID);
-      EntryVersionParam<Long> entryVersion = metas.get(EntryVersionParam.ID());
+      MaxIdle maxIdle = metas.get(MaxIdle.class);
+      EntryVersionParam<Long> entryVersion = metas.get(EntryVersionParam.getType());
       assertEquals(new MaxIdle(1000), maxIdle);
       assertFalse(900 == maxIdle.get().longValue());
       assertEquals(new EntryVersionParam<>(new NumericEntryVersion(12345)), entryVersion);
@@ -79,10 +79,10 @@ public class MetaParamsTest {
       metas.addMany(new Lifespan(2000), new MaxIdle(2000));
       assertFalse(metas.isEmpty());
       assertEquals(3, metas.size());
-      assertEquals(Optional.of(new MaxIdle(2000)), metas.find(MaxIdle.ID));
-      assertEquals(Optional.of(new Lifespan(2000)), metas.find(Lifespan.ID));
+      assertEquals(Optional.of(new MaxIdle(2000)), metas.find(MaxIdle.class));
+      assertEquals(Optional.of(new Lifespan(2000)), metas.find(Lifespan.class));
       assertEquals(Optional.of(new EntryVersionParam<>(new NumericEntryVersion(12345))),
-         metas.find(EntryVersionParam.ID()));
+         metas.find(EntryVersionParam.class));
    }
 
    @Test
@@ -113,18 +113,18 @@ public class MetaParamsTest {
       EntryVersionParam<Long> versionParam1 = new EntryVersionParam<>(new NumericEntryVersion(100));
       MetaParams metas = MetaParams.of(versionParam1);
       assertEquals(1, metas.size());
-      assertEquals(new EntryVersionParam<>(new NumericEntryVersion(100)), metas.get(EntryVersionParam.ID()));
+      assertEquals(new EntryVersionParam<>(new NumericEntryVersion(100)), metas.get(EntryVersionParam.getType()));
 
       EntryVersionParam<Long> versionParam2 = new EntryVersionParam<>(new NumericEntryVersion(200));
       metas.add(versionParam2);
       assertEquals(1, metas.size());
-      assertEquals(new EntryVersionParam<>(new NumericEntryVersion(200)), metas.get(EntryVersionParam.ID()));
+      assertEquals(new EntryVersionParam<>(new NumericEntryVersion(200)), metas.get(EntryVersionParam.getType()));
 
       EntryVersionParam<Long> versionParam3 = new EntryVersionParam<>(new NumericEntryVersion(300));
       EntryVersionParam<Long> versionParam4 = new EntryVersionParam<>(new NumericEntryVersion(400));
       metas.addMany(versionParam3, versionParam4);
       assertEquals(1, metas.size());
-      assertEquals(new EntryVersionParam<>(new NumericEntryVersion(400)), metas.get(EntryVersionParam.ID()));
+      assertEquals(new EntryVersionParam<>(new NumericEntryVersion(400)), metas.get(EntryVersionParam.getType()));
    }
 
 

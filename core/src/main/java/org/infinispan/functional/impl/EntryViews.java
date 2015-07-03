@@ -66,24 +66,24 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> T getMetaParam(MetaParam.Id<T> id) {
+      public <T> T getMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.getMetaParam(id);
+            return metaParamsMetadata.getMetaParam(type);
          }
 
          // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
 
-         throw new NoSuchElementException("Metadata with id=" + id + " not found");
+         throw new NoSuchElementException("Metadata with type=" + type + " not found");
       }
 
       @Override
-      public <T> Optional<T> findMetaParam(MetaParam.Id<T> id) {
+      public <T> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.findMetaParam(id);
+            return metaParamsMetadata.findMetaParam(type);
          }
 
          // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
@@ -168,24 +168,24 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> T getMetaParam(MetaParam.Id<T> id) {
+      public <T> T getMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.getMetaParam(id);
+            return metaParamsMetadata.getMetaParam(type);
          }
 
          // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
 
-         throw new NoSuchElementException("Metadata with id=" + id + " not found");
+         throw new NoSuchElementException("Metadata with type=" + type + " not found");
       }
 
       @Override
-      public <T> Optional<T> findMetaParam(MetaParam.Id<T> id) {
+      public <T> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
          if (metadata instanceof MetaParamsInternalMetadata) {
             MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.findMetaParam(id);
+            return metaParamsMetadata.findMetaParam(type);
          }
 
          // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
@@ -248,12 +248,12 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> T getMetaParam(MetaParam.Id<T> id) throws NoSuchElementException {
-         throw new NoSuchElementException("No metadata available");
+      public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
+         throw new NoSuchElementException("No metadata available for type=" + type);
       }
 
       @Override
-      public <T> Optional<T> findMetaParam(MetaParam.Id<T> id) {
+      public <T> Optional<T> findMetaParam(Class<T> type) {
          return Optional.empty();
       }
    }

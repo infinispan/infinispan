@@ -2,7 +2,6 @@ package org.infinispan.functional.impl;
 
 import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.commons.api.functional.MetaParam;
-import org.infinispan.commons.api.functional.MetaParam.Id;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -71,22 +70,22 @@ public final class MetaParams {
       return metas.length;
    }
 
-   public <T> Optional<T> find(Id<T> id) {
-      return Optional.ofNullable(findNullable(id));
+   public <T> Optional<T> find(Class<T> type) {
+      return Optional.ofNullable(findNullable(type));
    }
 
-   public <T> T get(Id<T> id) throws NoSuchElementException {
-      T param = findNullable(id);
+   public <T> T get(Class<T> type) throws NoSuchElementException {
+      T param = findNullable(type);
       if (param == null)
-         throw new NoSuchElementException("Metadata with id=" + id + " not found");
+         throw new NoSuchElementException("Metadata with type=" + type + " not found");
 
       return param;
    }
 
    @SuppressWarnings("unchecked")
-   private <T> T findNullable(Id<T> id) {
+   private <T> T findNullable(Class<T> type) {
       for (MetaParam<?> meta : metas) {
-         if (meta.id().equals(id))
+         if (meta.getClass().isAssignableFrom(type))
             return (T) meta;
       }
 
@@ -99,7 +98,7 @@ public final class MetaParams {
       else {
          boolean found = false;
          for (int i = 0; i < metas.length; i++) {
-            if (metas[i].id().equals(meta.id())) {
+            if (metas[i].getClass().isAssignableFrom(meta.getClass())) {
                metas[i] = meta;
                found = true;
             }
@@ -120,7 +119,7 @@ public final class MetaParams {
          for (MetaParam.Writable newMeta : metaParams) {
             boolean found = false;
             for (int i = 0; i < metas.length; i++) {
-               if (metas[i].id().equals(newMeta.id())) {
+               if (metas[i].getClass().isAssignableFrom(newMeta.getClass())) {
                   metas[i] = newMeta;
                   found = true;
                }
