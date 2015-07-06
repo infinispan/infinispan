@@ -5,4 +5,6 @@ package org.infinispan.objectfilter.impl.syntax;
  * @since 7.0
  */
 public interface ValueExpr extends Visitable<ValueExpr> {
+
+   String toJpaString();
 }

@@ -1,8 +1,6 @@
 package org.infinispan.all.embeddedquery;
 
 import org.hibernate.hql.ParsingException;
-import org.hibernate.search.spi.SearchIntegrator;
-import org.infinispan.Cache;
 import org.infinispan.all.embeddedquery.testdomain.Account;
 import org.infinispan.all.embeddedquery.testdomain.Address;
 import org.infinispan.all.embeddedquery.testdomain.ModelFactory;
@@ -188,19 +186,10 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
    @Test
    public void testIndexPresence() {
-      SearchIntegrator searchFactory = Search.getSearchManager((Cache) getCacheForQuery()).unwrap(SearchIntegrator.class);
-
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getUserImplClass()));
-      assertNotNull(searchFactory.getIndexManager(getModelFactory().getUserImplClass().getName()));
-
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getAccountImplClass()));
-      assertNotNull(searchFactory.getIndexManager(getModelFactory().getAccountImplClass().getName()));
-
-      assertTrue(searchFactory.getIndexedTypes().contains(getModelFactory().getTransactionImplClass()));
-      assertNotNull(searchFactory.getIndexManager(getModelFactory().getTransactionImplClass().getName()));
-
-      assertFalse(searchFactory.getIndexedTypes().contains(getModelFactory().getAddressImplClass()));
-      assertNull(searchFactory.getIndexManager(getModelFactory().getAddressImplClass().getName()));
+      assertIndexingKnows(getCacheForQuery(),
+                          getModelFactory().getUserImplClass(),
+                          getModelFactory().getAccountImplClass(),
+                          getModelFactory().getTransactionImplClass());
    }
 
    @Test
@@ -277,6 +266,20 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
+   }
+
+   @Test
+   public void testEqHybridQuery() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("notes").eq("Lorem ipsum dolor sit amet")
+               .and().having("surname").eq("Doe")
             .toBuilder().build();
 
       List<User> list = q.list();
@@ -749,6 +752,30 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
       List<User> list = q.list();
       assertEquals(3, list.size());
+   }
+
+   @Test
+   public void testTautology() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").gt("A").or().having("name").lte("A")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   @Test
+   public void testContradiction() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").gt("A").and().having("name").lte("A")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertTrue(list.isEmpty());
    }
 
    @Test(expected = ParsingException.class)

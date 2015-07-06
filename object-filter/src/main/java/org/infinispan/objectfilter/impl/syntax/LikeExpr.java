@@ -45,4 +45,9 @@ public final class LikeExpr implements PrimaryPredicateExpr {
    public String toString() {
       return "LIKE(" + child + ", " + pattern + ')';
    }
+
+   @Override
+   public String toJpaString() {
+      return child.toJpaString() + " LIKE " + pattern;
+   }
 }

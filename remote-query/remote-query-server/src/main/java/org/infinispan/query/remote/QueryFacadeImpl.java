@@ -3,9 +3,7 @@ package org.infinispan.query.remote;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.hibernate.hql.ParsingException;
 import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
@@ -20,7 +18,16 @@ import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.objectfilter.Matcher;
+import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.impl.BaseMatcher;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
+import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
+import org.infinispan.objectfilter.impl.syntax.BooleShannonExpansion;
+import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
+import org.infinispan.objectfilter.impl.syntax.BooleanFilterNormalizer;
+import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
+import org.infinispan.objectfilter.impl.syntax.JPATreePrinter;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.WrappedMessage;
@@ -29,14 +36,21 @@ import org.infinispan.protostream.descriptors.FieldDescriptor;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.SearchManager;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQuery;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQuery;
+import org.infinispan.query.dsl.embedded.impl.EmptyResultQuery;
+import org.infinispan.query.dsl.embedded.impl.HibernateSearchIndexedFieldProvider;
+import org.infinispan.query.dsl.embedded.impl.HybridQuery;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.dsl.embedded.impl.QueryCache;
+import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.query.remote.client.QueryRequest;
 import org.infinispan.query.remote.client.QueryResponse;
 import org.infinispan.query.remote.filter.JPAProtobufFilterAndConverter;
 import org.infinispan.query.remote.indexing.IndexingMetadata;
+import org.infinispan.query.remote.indexing.ProtobufIndexedFieldProvider;
 import org.infinispan.query.remote.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.logging.Log;
 import org.infinispan.server.core.QueryFacade;
@@ -72,6 +86,8 @@ public final class QueryFacadeImpl implements QueryFacade {
 
    private final QueryParser queryParser = new QueryParser();
 
+   private final BooleanFilterNormalizer booleanFilterNormalizer = new BooleanFilterNormalizer();
+
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
       try {
@@ -79,43 +95,56 @@ public final class QueryFacadeImpl implements QueryFacade {
          QueryRequest request = ProtobufUtil.fromByteArray(serCtx, query, 0, query.length, QueryRequest.class);
 
          Configuration cacheConfiguration = SecurityActions.getCacheConfiguration(cache);
-         QueryResponse response;
-         if (cacheConfiguration.indexing().index().isEnabled()) {
-            try {
-               response = executeIndexedQuery(cache, cacheConfiguration, serCtx, request);
-            } catch (IllegalArgumentException e) {
-               if (e.getMessage().contains("ISPN018002:") || e.getMessage().contains("HQL100001:")) {
-                  response = executeNonIndexedQuery(cache, cacheConfiguration, serCtx, request);
-               } else {
-                  throw e;
-               }
-            } catch (ParsingException e) {
-               if (e.getMessage().contains("HQL100002:")) {
-                  response = executeNonIndexedQuery(cache, cacheConfiguration, serCtx, request);
-               } else {
-                  throw e;
-               }
-            }
-         } else {
-            response = executeNonIndexedQuery(cache, cacheConfiguration, serCtx, request);
-         }
-
+         boolean isIndexed = cacheConfiguration.indexing().index().isEnabled();
+         boolean isCompatMode = cacheConfiguration.compatibility().enabled();
+         Query q = buildQuery(cache, serCtx, request, isIndexed, isCompatMode);
+         QueryResponse response = makeResponse(isCompatMode, serCtx, q);
          return ProtobufUtil.toByteArray(serCtx, response);
       } catch (IOException e) {
          throw log.errorExecutingQuery(e);
       }
    }
 
-   private QueryResponse executeNonIndexedQuery(AdvancedCache<byte[], byte[]> cache, Configuration cacheConfiguration, SerializationContext serCtx, QueryRequest request) throws IOException {
-      final boolean isIndexed = cacheConfiguration.indexing().index().isEnabled();
-      final boolean isCompatMode = cacheConfiguration.compatibility().enabled();
+   private Query buildQuery(AdvancedCache<?, ?> cache, SerializationContext serCtx, QueryRequest request, boolean isIndexed, boolean isCompatMode) {
+      if (isIndexed) {
+         SearchManager searchManager = Search.getSearchManager(cache);     // this also checks access permissions
+         SearchIntegrator searchFactory = searchManager.unwrap(SearchIntegrator.class);
 
-      EmbeddedQuery eq = new EmbeddedQuery(null, cache, makeFilter(cache, isIndexed, isCompatMode, request.getJpqlString()), request.getStartOffset(), request.getMaxResults());
-      List<?> list = eq.list();
+         Class<? extends Matcher> matcherImplClass = isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class;
+         BaseMatcher matcher = (BaseMatcher) SecurityActions.getCacheComponentRegistry(cache).getComponent(matcherImplClass);
+         FilterParsingResult<?> parsingResult = matcher.parse(request.getJpqlString(), null);
+         BooleanExpr normalizedExpr = booleanFilterNormalizer.normalize(parsingResult.getQuery());
 
-      int projSize = eq.getProjection() != null && eq.getProjection().length > 0 ? eq.getProjection().length : 0;
+         if (normalizedExpr == ConstantBooleanExpr.FALSE) {
+            return new EmptyResultQuery(null, cache, request.getJpqlString(), request.getStartOffset(), request.getMaxResults());
+         }
 
-      return makeResponse(isCompatMode, serCtx, list, projSize, eq.getResultSize(), list.size());
+         BooleShannonExpansion.IndexedFieldProvider indexedFieldProvider = isCompatMode ?
+               new HibernateSearchIndexedFieldProvider(searchFactory, (Class) parsingResult.getTargetEntityMetadata())
+               : new ProtobufIndexedFieldProvider((Descriptor) parsingResult.getTargetEntityMetadata());
+         BooleShannonExpansion bse = new BooleShannonExpansion(indexedFieldProvider);
+         BooleanExpr expansion = bse.expand(normalizedExpr);
+
+         if (expansion == normalizedExpr) {  // identity comparison is intended here!
+            // everything is indexed, so go the Lucene way
+            //todo [anistor] we should be able to generate the lucene query ourselves rather than depend on hibernate-hql-lucene to do it
+            return buildLuceneQuery(cache, isCompatMode, serCtx, request.getJpqlString(), request.getStartOffset(), request.getMaxResults());
+         }
+
+         if (expansion == ConstantBooleanExpr.TRUE) {
+            // expansion leads to a full non-indexed query
+            return new EmbeddedQuery(null, cache, makeFilter(cache, true, isCompatMode, request.getJpqlString()), request.getStartOffset(), request.getMaxResults());
+         }
+
+         String expandedJpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), expansion, null);
+         Query expandedQuery = buildLuceneQuery(cache, isCompatMode, serCtx, expandedJpaOut, -1, -1);
+         // results are already in protobuf format due to type converter interceptor even if we are in compat mode ...
+         ProtobufMatcher protobufMatcher = SecurityActions.getCacheComponentRegistry(cache).getComponent(ProtobufMatcher.class);
+         ObjectFilter objectFilter = protobufMatcher.getObjectFilter(request.getJpqlString());
+         return new HybridQuery(null, cache, request.getJpqlString(), objectFilter, request.getStartOffset(), request.getMaxResults(), expandedQuery);
+      } else {
+         return new EmbeddedQuery(null, cache, makeFilter(cache, false, isCompatMode, request.getJpqlString()), request.getStartOffset(), request.getMaxResults());
+      }
    }
 
    private JPAFilterAndConverter makeFilter(final AdvancedCache<?, ?> cache, final boolean isIndexed, final boolean isCompatMode, final String jpaQuery) {
@@ -134,30 +163,28 @@ public final class QueryFacadeImpl implements QueryFacade {
    }
 
    /**
-    * Execute Lucene index query.
+    * Build a Lucene index query.
     */
-   private QueryResponse executeIndexedQuery(AdvancedCache<byte[], byte[]> cache, Configuration cacheConfiguration, SerializationContext serCtx, QueryRequest request) throws IOException {
-      final SearchManager searchManager = Search.getSearchManager(cache);
+   private Query buildLuceneQuery(AdvancedCache<?, ?> cache, boolean isCompatMode, SerializationContext serCtx, String jpqlString, long startOffset, int maxResults) {
+      final SearchManager searchManager = Search.getSearchManager(cache);     // this also checks access permissions
       final SearchIntegrator searchFactory = searchManager.unwrap(SearchIntegrator.class);
       final QueryCache queryCache = ComponentRegistryUtils.getQueryCache(cache);  // optional component
 
       LuceneQueryParsingResult parsingResult;
-      Query luceneQuery;
 
       if (queryCache != null) {
-         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(request.getJpqlString(), LuceneQueryParsingResult.class);
+         KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, LuceneQueryParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
          if (parsingResult == null) {
-            parsingResult = parseQuery(cacheConfiguration, serCtx, request.getJpqlString(), searchFactory);
+            parsingResult = transformJpaToLucene(isCompatMode, serCtx, jpqlString, searchFactory);
             queryCache.put(queryCacheKey, parsingResult);
          }
       } else {
-         parsingResult = parseQuery(cacheConfiguration, serCtx, request.getJpqlString(), searchFactory);
+         parsingResult = transformJpaToLucene(isCompatMode, serCtx, jpqlString, searchFactory);
       }
 
-      luceneQuery = parsingResult.getQuery();
+      org.apache.lucene.search.Query luceneQuery = parsingResult.getQuery();
 
-      boolean isCompatMode = cacheConfiguration.compatibility().enabled();
       if (!isCompatMode) {
          // restrict on entity type
          BooleanQuery booleanQuery = new BooleanQuery();
@@ -172,26 +199,25 @@ public final class QueryFacadeImpl implements QueryFacade {
          cacheQuery = cacheQuery.sort(parsingResult.getSort());
       }
 
-      int projSize = 0;
+      String[] projection = null;
       if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
-         projSize = parsingResult.getProjections().size();
-         cacheQuery = cacheQuery.projection(parsingResult.getProjections().toArray(new String[projSize]));
+         int projSize = parsingResult.getProjections().size();
+         projection = parsingResult.getProjections().toArray(new String[projSize]);
+         cacheQuery = cacheQuery.projection(projection);
       }
-      if (request.getStartOffset() > 0) {
-         cacheQuery = cacheQuery.firstResult((int) request.getStartOffset());
+      if (startOffset >= 0) {
+         cacheQuery = cacheQuery.firstResult((int) startOffset);
       }
-      if (request.getMaxResults() > 0) {
-         cacheQuery = cacheQuery.maxResults(request.getMaxResults());
+      if (maxResults > 0) {
+         cacheQuery = cacheQuery.maxResults(maxResults);
       }
 
-      List<?> list = cacheQuery.list();
-
-      return makeResponse(false, serCtx, list, projSize, cacheQuery.getResultSize(), list.size());
+      return new EmbeddedLuceneQuery(null, jpqlString, projection, cacheQuery);
    }
 
-   private LuceneQueryParsingResult parseQuery(Configuration cacheConfiguration, final SerializationContext serCtx, String queryString, SearchIntegrator searchFactory) {
+   private LuceneQueryParsingResult transformJpaToLucene(boolean isCompatMode, final SerializationContext serCtx, String jpqlString, SearchIntegrator searchFactory) {
       LuceneProcessingChain processingChain;
-      if (cacheConfiguration.compatibility().enabled()) {
+      if (isCompatMode) {
          EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
             @Override
             public Class<?> getClassFromName(String entityName) {
@@ -212,8 +238,7 @@ public final class QueryFacadeImpl implements QueryFacade {
          FieldBridgeProvider fieldBridgeProvider = new FieldBridgeProvider() {
             @Override
             public FieldBridge getFieldBridge(String type, String propertyPath) {
-               Descriptor md = serCtx.getMessageDescriptor(type);
-               FieldDescriptor fd = getFieldDescriptor(md, propertyPath);
+               FieldDescriptor fd = getFieldDescriptor(serCtx, type, propertyPath);
                switch (fd.getType()) {
                   case DOUBLE:
                      return NumericFieldBridge.DOUBLE_FIELD_BRIDGE;
@@ -247,10 +272,11 @@ public final class QueryFacadeImpl implements QueryFacade {
                .buildProcessingChainForDynamicEntities(fieldBridgeProvider);
       }
 
-      return queryParser.parseQuery(queryString, processingChain);
+      return queryParser.parseQuery(jpqlString, processingChain);
    }
 
-   private FieldDescriptor getFieldDescriptor(Descriptor messageDescriptor, String attributePath) {
+   private FieldDescriptor getFieldDescriptor(SerializationContext serCtx, String type, String attributePath) {
+      Descriptor messageDescriptor = serCtx.getMessageDescriptor(type);
       FieldDescriptor fd = null;
       String[] split = attributePath.split("[.]");
       for (int i = 0; i < split.length; i++) {
@@ -270,8 +296,17 @@ public final class QueryFacadeImpl implements QueryFacade {
       return fd;
    }
 
-   private QueryResponse makeResponse(boolean isCompatMode, SerializationContext serCtx, List<?> list, int projSize, long totalResults, int numResults) throws IOException {
+   private QueryResponse makeResponse(boolean isCompatMode, SerializationContext serCtx, org.infinispan.query.dsl.Query q) throws IOException {
+      if (!(q instanceof EmbeddedQuery)) {
+         isCompatMode = false; // compat mode is relevant only for fully non-indexed queries
+      }
+
+      List<?> list = q.list();
+      int numResults = list.size();
+      String[] projection = ((BaseQuery) q).getProjection();
+      int projSize = projection != null ? projection.length : 0;
       List<WrappedMessage> results = new ArrayList<WrappedMessage>(projSize == 0 ? numResults : numResults * projSize);
+
       for (Object o : list) {
          if (projSize == 0) {
             if (isCompatMode) {
@@ -288,7 +323,7 @@ public final class QueryFacadeImpl implements QueryFacade {
       }
 
       QueryResponse response = new QueryResponse();
-      response.setTotalResults(totalResults);
+      response.setTotalResults(q.getResultSize());
       response.setNumResults(numResults);
       response.setProjectionSize(projSize);
       response.setResults(results);

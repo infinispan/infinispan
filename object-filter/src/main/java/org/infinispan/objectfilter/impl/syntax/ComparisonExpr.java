@@ -101,4 +101,32 @@ public final class ComparisonExpr implements PrimaryPredicateExpr {
    public String toString() {
       return type + "(" + leftChild + ", " + rightChild + ')';
    }
+
+   @Override
+   public String toJpaString() {
+      StringBuilder sb = new StringBuilder();
+      sb.append(leftChild.toJpaString()).append(' ');
+      switch (type) {
+         case LESS:
+            sb.append('<');
+            break;
+         case LESS_OR_EQUAL:
+            sb.append("<=");
+            break;
+         case EQUAL:
+            sb.append('=');
+            break;
+         case NOT_EQUAL:
+            sb.append("!=");
+            break;
+         case GREATER_OR_EQUAL:
+            sb.append(">=");
+            break;
+         case GREATER:
+            sb.append('>');
+            break;
+      }
+      sb.append(' ').append(rightChild.toJpaString());
+      return sb.toString();
+   }
 }

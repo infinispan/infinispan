@@ -8,26 +8,27 @@ import org.hibernate.hql.ast.spi.EntityNamesResolver;
  */
 public final class ReflectionEntityNamesResolver implements EntityNamesResolver {
 
-   private final ClassLoader classLoader;
+   private final ClassLoader[] classLoaders;
 
-   public ReflectionEntityNamesResolver(ClassLoader classLoader) {
-      this.classLoader = classLoader;
+   public ReflectionEntityNamesResolver(ClassLoader userClassLoader) {
+      this.classLoaders = new ClassLoader[]{userClassLoader, ClassLoader.getSystemClassLoader(), Thread.currentThread().getContextClassLoader()};
    }
 
    @Override
    public Class<?> getClassFromName(String entityName) {
-      if (classLoader != null) {
+      for (ClassLoader cl : classLoaders) {
          try {
-            return classLoader.loadClass(entityName);
-         } catch (ClassNotFoundException e) {
-            return null;
+            if (cl != null) {
+               return Class.forName(entityName, true, cl);
+            } else {
+               return Class.forName(entityName);
+            }
+         } catch (ClassNotFoundException ex) {
+            // ignore
+         } catch (NoClassDefFoundError er) {
+            // ignore
          }
       }
-
-      try {
-         return Class.forName(entityName);
-      } catch (ClassNotFoundException e) {
-         return null;
-      }
+      return null;
    }
 }

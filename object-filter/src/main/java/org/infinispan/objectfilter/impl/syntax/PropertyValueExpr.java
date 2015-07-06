@@ -65,7 +65,22 @@ public final class PropertyValueExpr implements ValueExpr {
       if (isRepeated) {
          sb.append('*');
       }
-      sb.append(")");
+      sb.append(')');
+      return sb.toString();
+   }
+
+   @Override
+   public String toJpaString() {
+      StringBuilder sb = new StringBuilder();
+      boolean isFirst = true;
+      for (String p : propertyPath) {
+         if (isFirst) {
+            isFirst = false;
+         } else {
+            sb.append('.');
+         }
+         sb.append(p);
+      }
       return sb.toString();
    }
 }

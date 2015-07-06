@@ -262,6 +262,19 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
+   public void testEqHybridQuery() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("notes").eq("Lorem ipsum dolor sit amet")
+               .and().having("surname").eq("Doe")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
+   }
+
    public void testEqInNested1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -698,7 +711,29 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
-   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL100005:.*")
+   public void testTautology() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").gt("A").or().having("name").lte("A")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   public void testContradiction() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").gt("A").and().having("name").lte("A")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertTrue(list.isEmpty());
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "ISPN000405:.*")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = getQueryFactory();
 
