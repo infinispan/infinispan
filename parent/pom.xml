@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-bom</artifactId>
-      <version>8.0.0-SNAPSHOT</version>
+      <version>8.0.0.Beta1</version>
       <relativePath>../bom/pom.xml</relativePath>
    </parent>
    <artifactId>infinispan-parent</artifactId>
@@ -170,7 +170,7 @@
       <version.testng.arquillian>6.5.2</version.testng.arquillian>
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.13.Final</version.weld>
-      <!-- When updating WildFly version, keep the property version.h2.driver-within-wildfly in synch -->
+      
       <version.wildfly>9.0.0.CR2</version.wildfly>
       <version.wildfly.arquillian>1.0.0.Final</version.wildfly.arquillian>
       <version.wildfly.core>1.0.0.CR6</version.wildfly.core>
