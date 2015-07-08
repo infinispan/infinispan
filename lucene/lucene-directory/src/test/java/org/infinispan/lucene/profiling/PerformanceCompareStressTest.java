@@ -25,7 +25,9 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestResourceTracker;
 import org.testng.AssertJUnit;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -45,7 +47,7 @@ import org.testng.annotations.Test;
  * @since 4.0
  */
 @Test(groups = "profiling", testName = "lucene.profiling.PerformanceCompareStressTest", sequential = true)
-public class PerformanceCompareStressTest {
+public class PerformanceCompareStressTest extends AbstractInfinispanTest {
 
    private static final int NUM_NODES = 4;
    private static final String CONFIGURATION = "perf-udp.xml";
@@ -273,6 +275,7 @@ public class PerformanceCompareStressTest {
       String[] testMethods = System.getProperty("lucene.profiling.tests",
             "profileTestRAMDirectory,profileTestFSDirectory,profileInfinispanLocalDirectory,profileTestInfinispanDirectoryWithNetworkDelayZero").split(",");
       PerformanceCompareStressTest test = new PerformanceCompareStressTest();
+      TestResourceTracker.testThreadStarted(test);
       test.durationMs = new Long(System.getProperty("lucene.profiling.duration", String.valueOf(DEFAULT_DURATION_MS)));
       String outputFile = System.getProperty("lucene.profiling.output");
       test.results = outputFile == null ? null : new Properties();
