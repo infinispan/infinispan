@@ -6,13 +6,21 @@ import org.infinispan.commons.api.functional.Listeners.WriteListeners;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
+import java.util.function.Supplier;
+
 /**
- * Listener notifier
+ * Listener notifier.
  *
  * @since 8.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public interface ListenerNotifier<K, V> extends ReadWriteListeners<K, V>, WriteListeners<K, V> {
+public interface FunctionalNotifier<K, V> extends ReadWriteListeners<K, V>, WriteListeners<K, V> {
+
+   boolean hasCreateListeners();
+
+   boolean hasModifyListeners();
+
+   boolean hasRemoveListeners();
 
    /**
     * Notify registered {@link ReadWriteListener} instances of the created entry.
@@ -33,7 +41,10 @@ public interface ListenerNotifier<K, V> extends ReadWriteListeners<K, V>, WriteL
 
    /**
     * Notify registered {@link WriteListener} instances of the written entry.
+    *
+    * @apiNote By using a {@link Supplier} the entry view can be computed lazily
+    * only if any listeners has been registered.
     */
-   void notifyOnWrite(ReadEntryView<K, V> write);
+   void notifyOnWrite(Supplier<ReadEntryView<K, V>> write);
 
 }

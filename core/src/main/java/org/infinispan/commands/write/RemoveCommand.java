@@ -109,7 +109,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
          return false;
       }
 
-      RemoveCommand that = (RemoveCommand) o;
+   RemoveCommand that = (RemoveCommand) o;
 
       if (value != null ? !value.equals(that.value) : that.value != null) {
          return false;

@@ -13,17 +13,12 @@ import org.infinispan.commons.api.functional.MetaParam.Lifespan;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -36,16 +31,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
+import static org.infinispan.functional.FunctionalTestUtils.*;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.*;
 import static org.testng.AssertJUnit.*;
@@ -58,122 +51,26 @@ import static org.testng.AssertJUnit.*;
  * are required by Hot Rod.
  */
 @Test(groups = "functional", testName = "functional.FunctionalMapTest")
-public class FunctionalMapTest extends MultipleCacheManagersTest {
-
-   private static final String DIST = "dist";
-   private static final String REPL = "repl";
-   private static final Random R = new Random();
-
-   FunctionalMapImpl<Integer, String> local1;
-   FunctionalMapImpl<Integer, String> local2;
-
-   FunctionalMapImpl<Object, String> dist1;
-   FunctionalMapImpl<Object, String> dist2;
-
-   FunctionalMapImpl<Object, String> repl1;
-   FunctionalMapImpl<Object, String> repl2;
-
-//   private ReadOnlyMap<Integer, String> readOnlyMap;
-//   private WriteOnlyMap<Integer, String> writeOnlyMap;
-//   private ReadWriteMap<Integer, String> readWriteMap;
-
-   <K> ReadOnlyMap<K, String> ro(FunctionalMapImpl<K, String> fmap) {
-      return ReadOnlyMapImpl.create(fmap);
-   }
-
-   <K> WriteOnlyMap<K, String> wo(FunctionalMapImpl<K, String> fmap) {
-      return WriteOnlyMapImpl.create(fmap);
-   }
-
-   <K> ReadWriteMap<K, String> rw(FunctionalMapImpl<K, String> fmap) {
-      return ReadWriteMapImpl.create(fmap);
-   }
-
-   Supplier<Integer> supplyIntKey() {
-      return () -> R.nextInt(Integer.MAX_VALUE);
-   }
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      // Create local caches as default in a cluster of 2
-      createClusteredCaches(2, new ConfigurationBuilder());
-      // Create distributed caches
-      ConfigurationBuilder distBuilder = new ConfigurationBuilder();
-      distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1);
-      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(DIST, distBuilder.build()));
-      // Create replicated caches
-      ConfigurationBuilder replBuilder = new ConfigurationBuilder();
-      replBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
-      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
-      // Wait for cluster to form
-      waitForClusterToForm(DIST, REPL);
-   }
-
-   @BeforeClass
-   @Override
-   public void createBeforeClass() throws Throwable {
-      super.createBeforeClass();
-      local1 = FunctionalMapImpl.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
-      local2 = FunctionalMapImpl.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
-      dist1 = FunctionalMapImpl.create(cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache());
-      dist2 = FunctionalMapImpl.create(cacheManagers.get(1).<Object, String>getCache(DIST).getAdvancedCache());
-      repl1 = FunctionalMapImpl.create(cacheManagers.get(0).<Object, String>getCache(REPL).getAdvancedCache());
-      repl2 = FunctionalMapImpl.create(cacheManagers.get(1).<Object, String>getCache(REPL).getAdvancedCache());
-   }
-
-//   @Override
-//   protected EmbeddedCacheManager createCacheManager() throws Exception {
-//      return TestCacheManagerFactory.createCacheManager();
-//   }
-
-//   @Override
-//   protected void setup() throws Exception {
-//      super.setup();
-//      AdvancedCache<Integer, String> advCache = cacheManager.<Integer, String>getCache().getAdvancedCache();
-//      FunctionalMapImpl<Integer, String> functionalMap = FunctionalMapImpl.create(advCache);
-//      readOnlyMap = ReadOnlyMapImpl.create(functionalMap);
-//      writeOnlyMap = WriteOnlyMapImpl.create(functionalMap);
-//      readWriteMap = ReadWriteMapImpl.create(functionalMap);
-//   }
-
-   public void testLocalReadOnlyGetsEmpty() {
-      doReadOnlyGetsEmpty(supplyIntKey(), ro(local1));
-   }
-
-   public void testReplReadOnlyGetsEmpty() {
-      doReadOnlyGetsEmpty(supplyKeyForCache(0, REPL), ro(repl1));
-      doReadOnlyGetsEmpty(supplyKeyForCache(1, REPL), ro(repl1));
-   }
-
-   public void testDistReadOnlyGetsEmpty() {
-      doReadOnlyGetsEmpty(supplyKeyForCache(0, DIST), ro(dist1));
-      doReadOnlyGetsEmpty(supplyKeyForCache(1, DIST), ro(dist1));
-   }
-
-   /**
-    * Read-only allows to retrieve an empty cache entry.
-    */
-   private <K> void doReadOnlyGetsEmpty(Supplier<K> keySupplier, ReadOnlyMap<K, String> map) {
-      K key = keySupplier.get();
-      await(map.eval(key, ReadEntryView::find).thenAccept(v -> assertEquals(Optional.empty(), v)));
-   }
+public class FunctionalMapTest extends AbstractFunctionalTest {
 
    public void testLocalWriteConstantAndReadGetsValue() {
-      doWriteConstantAndReadGetsValue(supplyIntKey(), ro(local1), wo(local2));
+      doWriteConstantAndReadGetsValue(supplyIntKey(), ro(fmapL1), wo(fmapL2));
    }
 
-   public void testReplWriteConstantAndReadGetsValue() {
-      ReadOnlyMap<Object, String> ro1 = ro(repl1);
-      WriteOnlyMap<Object, String> wo2 = wo(repl2);
-      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, REPL), ro1, wo2);
-      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, REPL), ro1, wo2);
+   public void testReplWriteConstantAndReadGetsValueOnNonOwner() {
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, REPL), ro(fmapR1), wo(fmapR2));
    }
 
-   public void testDistWriteConstantAndReadGetsValue() {
-      ReadOnlyMap<Object, String> ro1 = ro(dist1);
-      WriteOnlyMap<Object, String> wo2 = wo(dist2);
-      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, DIST), ro1, wo2);
-      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, DIST), ro1, wo2);
+   public void testReplWriteConstantAndReadGetsValueOnOwner() {
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, REPL), ro(fmapR1), wo(fmapR2));
+   }
+
+   public void testDistWriteConstantAndReadGetsValueOnNonOwner() {
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(0, DIST), ro(fmapD1), wo(fmapD2));
+   }
+
+   public void testDistWriteConstantAndReadGetsValueOnOwner() {
+      doWriteConstantAndReadGetsValue(supplyKeyForCache(1, DIST), ro(fmapD1), wo(fmapD2));
    }
 
    /**
@@ -209,21 +106,23 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
    }
 
    public void testLocalWriteValueAndReadValueAndMetadata() {
-      doWriteValueAndReadValueAndMetadata(supplyIntKey(), ro(local1), wo(local2));
+      doWriteValueAndReadValueAndMetadata(supplyIntKey(), ro(fmapL1), wo(fmapL2));
    }
 
-   public void testReplWriteValueAndReadValueAndMetadata() {
-      ReadOnlyMap<Object, String> ro1 = ro(repl1);
-      WriteOnlyMap<Object, String> wo2 = wo(repl2);
-      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, REPL), ro1, wo2);
-      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, REPL), ro1, wo2);
+   public void testReplWriteValueAndReadValueAndMetadataOnNonOwner() {
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, REPL), ro(fmapR1), wo(fmapR2));
    }
 
-   public void testDistWriteValueAndReadValueAndMetadata() {
-      ReadOnlyMap<Object, String> ro1 = ro(dist1);
-      WriteOnlyMap<Object, String> wo2 = wo(dist2);
-      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, DIST), ro1, wo2);
-      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, DIST), ro1, wo2);
+   public void testReplWriteValueAndReadValueAndMetadataOnOwner() {
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, REPL), ro(fmapR1), wo(fmapR2));
+   }
+
+   public void testDistWriteValueAndReadValueAndMetadataOnNonOwner() {
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(0, DIST), ro(fmapD1), wo(fmapD2));
+   }
+
+   public void testDistWriteValueAndReadValueAndMetadataOnOwner() {
+      doWriteValueAndReadValueAndMetadata(supplyKeyForCache(1, DIST), ro(fmapD1), wo(fmapD2));
    }
 
    /**
@@ -269,17 +168,23 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
    }
 
    public void testLocalReadWriteGetsEmpty() {
-      doReadWriteGetsEmpty(supplyIntKey(), rw(local1));
+      doReadWriteGetsEmpty(supplyIntKey(), rw(fmapL1));
    }
 
-   public void testReplReadWriteGetsEmpty() {
-      doReadWriteGetsEmpty(supplyKeyForCache(0, REPL), rw(repl1));
-      doReadWriteGetsEmpty(supplyKeyForCache(1, REPL), rw(repl1));
+   public void testReplReadWriteGetsEmptyOnNonOwner() {
+      doReadWriteGetsEmpty(supplyKeyForCache(0, REPL), rw(fmapR1));
    }
 
-   public void testDistReadWriteGetsEmpty() {
-      doReadWriteGetsEmpty(supplyKeyForCache(0, DIST), rw(dist1));
-      doReadWriteGetsEmpty(supplyKeyForCache(1, DIST), rw(dist1));
+   public void testReplReadWriteGetsEmptyOnOwner() {
+      doReadWriteGetsEmpty(supplyKeyForCache(1, REPL), rw(fmapR1));
+   }
+
+   public void testDistReadWriteGetsEmptyOnNonOwner() {
+      doReadWriteGetsEmpty(supplyKeyForCache(0, DIST), rw(fmapD1));
+   }
+
+   public void testDistReadWriteGetsEmptyOnOwner() {
+      doReadWriteGetsEmpty(supplyKeyForCache(1, DIST), rw(fmapD1));
    }
 
    /**
@@ -291,17 +196,23 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
    }
 
    public void testLocalReadWriteValuesReturnPrevious() {
-      doReadWriteConstantReturnPrev(supplyIntKey(), rw(local1), rw(local2));
+      doReadWriteConstantReturnPrev(supplyIntKey(), rw(fmapL1), rw(fmapL2));
    }
 
-   public void testReplReadWriteValuesReturnPrevious() {
-      doReadWriteConstantReturnPrev(supplyKeyForCache(0, REPL), rw(repl1), rw(repl2));
-      doReadWriteConstantReturnPrev(supplyKeyForCache(1, REPL), rw(repl1), rw(repl2));
+   public void testReplReadWriteValuesReturnPreviousOnNonOwner() {
+      doReadWriteConstantReturnPrev(supplyKeyForCache(0, REPL), rw(fmapR1), rw(fmapR2));
    }
 
-   public void testDistReadWriteValuesReturnPrevious() {
-      doReadWriteConstantReturnPrev(supplyKeyForCache(0, DIST), rw(dist1), rw(dist2));
-      doReadWriteConstantReturnPrev(supplyKeyForCache(1, DIST), rw(dist1), rw(dist2));
+   public void testReplReadWriteValuesReturnPreviousOnOwner() {
+      doReadWriteConstantReturnPrev(supplyKeyForCache(1, REPL), rw(fmapR1), rw(fmapR2));
+   }
+
+   public void testDistReadWriteValuesReturnPreviousOnNonOwner() {
+      doReadWriteConstantReturnPrev(supplyKeyForCache(0, DIST), rw(fmapD1), rw(fmapD2));
+   }
+
+   public void testDistReadWriteValuesReturnPreviousOnOwner() {
+      doReadWriteConstantReturnPrev(supplyKeyForCache(1, DIST), rw(fmapD1), rw(fmapD2));
    }
 
    /**
@@ -346,17 +257,23 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
    }
 
    public void testLocalReadWriteForConditionalParamBasedReplace() {
-      doReadWriteForConditionalParamBasedReplace(supplyIntKey(), rw(local1), rw(local2));
+      doReadWriteForConditionalParamBasedReplace(supplyIntKey(), rw(fmapL1), rw(fmapL2));
    }
 
-   public void testReplReadWriteForConditionalParamBasedReplace() {
-      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, REPL), rw(repl1), rw(repl2));
-      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, REPL), rw(repl1), rw(repl2));
+   public void testReplReadWriteForConditionalParamBasedReplaceOnNonOwner() {
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, REPL), rw(fmapR1), rw(fmapR2));
    }
 
-   public void testDistReadWriteForConditionalParamBasedReplace() {
-      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, DIST), rw(dist1), rw(dist2));
-      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, DIST), rw(dist1), rw(dist2));
+   public void testReplReadWriteForConditionalParamBasedReplaceOnOwner() {
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, REPL), rw(fmapR1), rw(fmapR2));
+   }
+
+   public void testDistReadWriteForConditionalParamBasedReplaceOnNonOwner() {
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(0, DIST), rw(fmapD1), rw(fmapD2));
+   }
+
+   public void testDistReadWriteForConditionalParamBasedReplaceOnOwner() {
+      doReadWriteForConditionalParamBasedReplace(supplyKeyForCache(1, DIST), rw(fmapD1), rw(fmapD2));
    }
 
    /**
@@ -478,17 +395,23 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
    }
 
    public void testLocalReadOnlyEvalManyEmpty() {
-      doReadOnlyEvalManyEmpty(supplyIntKey(), ro(local1));
+      doReadOnlyEvalManyEmpty(supplyIntKey(), ro(fmapL1));
    }
 
-   public void testReplReadOnlyEvalManyEmpty() {
-      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, REPL), ro(repl1));
-      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, REPL), ro(repl1));
+   public void testReplReadOnlyEvalManyEmptyOnNonOwner() {
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, REPL), ro(fmapR1));
    }
 
-   public void testDistReadOnlyEvalManyEmpty() {
-      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, DIST), ro(dist1));
-      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, DIST), ro(dist1));
+   public void testReplReadOnlyEvalManyEmptyOnOwner() {
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, REPL), ro(fmapR1));
+   }
+
+   public void testDistReadOnlyEvalManyEmptyOnNonOwner() {
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(0, DIST), ro(fmapD1));
+   }
+
+   public void testDistReadOnlyEvalManyEmptyOnOwner() {
+      doReadOnlyEvalManyEmpty(supplyKeyForCache(1, DIST), ro(fmapD1));
    }
 
    private <K> void doReadOnlyEvalManyEmpty(Supplier<K> keySupplier, ReadOnlyMap<K, String> map) {
@@ -499,17 +422,23 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
    }
 
    public void testLocalUpdateSubsetAndReturnPrevs() {
-      doUpdateSubsetAndReturnPrevs(supplyIntKey(), ro(local1), wo(local2), rw(local2));
+      doUpdateSubsetAndReturnPrevs(supplyIntKey(), ro(fmapL1), wo(fmapL2), rw(fmapL2));
    }
 
-   public void testReplUpdateSubsetAndReturnPrevs() {
-      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, REPL), ro(repl1), wo(repl2), rw(repl2));
-      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, REPL), ro(repl1), wo(repl2), rw(repl2));
+   public void testReplUpdateSubsetAndReturnPrevsOnNonOwner() {
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, REPL), ro(fmapR1), wo(fmapR2), rw(fmapR2));
    }
 
-   public void testDistUpdateSubsetAndReturnPrevs() {
-      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, DIST), ro(dist1), wo(dist2), rw(dist2));
-      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, DIST), ro(dist1), wo(dist2), rw(dist2));
+   public void testReplUpdateSubsetAndReturnPrevsOnOwner() {
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, REPL), ro(fmapR1), wo(fmapR2), rw(fmapR2));
+   }
+
+   public void testDistUpdateSubsetAndReturnPrevsOnNonOwner() {
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(0, DIST), ro(fmapD1), wo(fmapD2), rw(fmapD2));
+   }
+
+   public void testDistUpdateSubsetAndReturnPrevsOnOwner() {
+      doUpdateSubsetAndReturnPrevs(supplyKeyForCache(1, DIST), ro(fmapD1), wo(fmapD2), rw(fmapD2));
    }
 
    private <K> void doUpdateSubsetAndReturnPrevs(Supplier<K> keySupplier,
@@ -538,17 +467,23 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
    }
 
    public void testLocalReadWriteToRemoveAllAndReturnPrevs() {
-      doReadWriteToRemoveAllAndReturnPrevs(supplyIntKey(), wo(local1), rw(local2));
+      doReadWriteToRemoveAllAndReturnPrevs(supplyIntKey(), wo(fmapL1), rw(fmapL2));
    }
 
-   public void testReplReadWriteToRemoveAllAndReturnPrevs() {
-      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, REPL), wo(repl1), rw(repl2));
-      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, REPL), wo(repl1), rw(repl2));
+   public void testReplReadWriteToRemoveAllAndReturnPrevsOnNonOwner() {
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, REPL), wo(fmapR1), rw(fmapR2));
    }
 
-   public void testDistReadWriteToRemoveAllAndReturnPrevs() {
-      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, DIST), wo(dist1), rw(dist2));
-      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, DIST), wo(dist1), rw(dist2));
+   public void testReplReadWriteToRemoveAllAndReturnPrevsOnOwner() {
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, REPL), wo(fmapR1), rw(fmapR2));
+   }
+
+   public void testDistReadWriteToRemoveAllAndReturnPrevsOnNonOwner() {
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(0, DIST), wo(fmapD1), rw(fmapD2));
+   }
+
+   public void testDistReadWriteToRemoveAllAndReturnPrevsOnOwner() {
+      doReadWriteToRemoveAllAndReturnPrevs(supplyKeyForCache(1, DIST), wo(fmapD1), rw(fmapD2));
    }
 
    private <K> void doReadWriteToRemoveAllAndReturnPrevs(Supplier<K> keySupplier,
@@ -562,19 +497,6 @@ public class FunctionalMapTest extends MultipleCacheManagersTest {
       Traversable<String> prevTraversable = map2.evalAll(removeReturnPrevOrNull());
       Set<String> prevValues = prevTraversable.collect(HashSet::new, HashSet::add, HashSet::addAll);
       assertEquals(new HashSet<>(data.values()), prevValues);
-   }
-
-   private static void consume(CloseableIterator<Void> it) {
-      while (it.hasNext())
-         it.next();
-   }
-
-   private static <T> T await(CompletableFuture<T> cf) {
-      try {
-         return cf.get();
-      } catch (InterruptedException | ExecutionException e) {
-         throw new Error(e);
-      }
    }
 
 }

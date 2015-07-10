@@ -12,7 +12,7 @@ import java.util.function.Function;
 
 public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 47;
+   public static final byte COMMAND_ID = 50;
 
    private Function<ReadWriteEntryView<K, V>, R> f;
 

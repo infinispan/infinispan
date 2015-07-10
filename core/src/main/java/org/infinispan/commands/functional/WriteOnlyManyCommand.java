@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand {
+public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 53;
+   public static final byte COMMAND_ID = 56;
 
    private Set<? extends K> keys;
    private Consumer<WriteEntryView<V>> f;
@@ -76,7 +76,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand {
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (cacheEntry != null) {
-            f.accept(EntryViews.writeOnly(cacheEntry, null));
+            f.accept(EntryViews.writeOnly(cacheEntry, notifier));
             returns.add(null);
          }
       });

@@ -3,11 +3,8 @@ package org.infinispan.functional;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.decorators.FunctionalJCache;
 import org.infinispan.test.CacheManagerCallable;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -23,9 +20,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.function.Supplier;
 
+import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.*;
 
@@ -34,11 +31,7 @@ import static org.testng.AssertJUnit.*;
  * based on functional map behaves in the correct way.
  */
 @Test(groups = "functional", testName = "functional.FunctionalJCacheTest")
-public class FunctionalJCacheTest extends MultipleCacheManagersTest {
-
-   private static final String DIST = "dist";
-   private static final String REPL = "repl";
-   private static final Random R = new Random();
+public class FunctionalJCacheTest extends AbstractFunctionalTest {
 
    Cache<Integer, String> local1;
    Cache<Integer, String> local2;
@@ -49,164 +42,181 @@ public class FunctionalJCacheTest extends MultipleCacheManagersTest {
    Cache<Object, String> repl1;
    Cache<Object, String> repl2;
 
-   Supplier<Integer> supplyIntKey() {
-      return () -> R.nextInt(Integer.MAX_VALUE);
-   }
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      // Create local caches as default in a cluster of 2
-      createClusteredCaches(2, new ConfigurationBuilder());
-      // Create distributed caches
-      ConfigurationBuilder distBuilder = new ConfigurationBuilder();
-      distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1);
-      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(DIST, distBuilder.build()));
-      // Create replicated caches
-      ConfigurationBuilder replBuilder = new ConfigurationBuilder();
-      replBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
-      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
-      // Wait for cluster to form
-      waitForClusterToForm(DIST, REPL);
-   }
-
    @BeforeClass
    @Override
    public void createBeforeClass() throws Throwable {
       super.createBeforeClass();
-      local1 = FunctionalJCache.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
-      local2 = FunctionalJCache.create(cacheManagers.get(0).<Integer, String>getCache().getAdvancedCache());
-      dist1 = FunctionalJCache.create(cacheManagers.get(0).<Object, String>getCache(DIST).getAdvancedCache());
-      dist2 = FunctionalJCache.create(cacheManagers.get(1).<Object, String>getCache(DIST).getAdvancedCache());
-      repl1 = FunctionalJCache.create(cacheManagers.get(0).<Object, String>getCache(REPL).getAdvancedCache());
-      repl2 = FunctionalJCache.create(cacheManagers.get(1).<Object, String>getCache(REPL).getAdvancedCache());
+      local1 = FunctionalJCache.create(fmapL1);
+      local2 = FunctionalJCache.create(fmapL2);
+      dist1 = FunctionalJCache.create(fmapD1);
+      dist2 = FunctionalJCache.create(fmapD2);
+      repl1 = FunctionalJCache.create(fmapR1);
+      repl2 = FunctionalJCache.create(fmapR2);
    }
 
    public void testLocalEmptyGetThenPut() {
       doEmptyGetThenPut(supplyIntKey(), local1, local2);
    }
 
-   public void testReplEmptyGetThenPut() {
+   public void testReplEmptyGetThenPutOnNonOwner() {
       doEmptyGetThenPut(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplEmptyGetThenPutOnOwner() {
       doEmptyGetThenPut(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistEmptyGetThenPut() {
+   public void testDistEmptyGetThenPutOnNonOwner() {
       doEmptyGetThenPut(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistEmptyGetThenPutOnOwner() {
       doEmptyGetThenPut(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doEmptyGetThenPut(Supplier<K> keySupplier,
-         Cache<K, String> map1, Cache<K, String> map2) {
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      map2.put(key, "one");
-      assertEquals("one", map1.get(key));
+      assertEquals(null, readCache.get(key));
+      writeCache.put(key, "one");
+      assertEquals("one", readCache.get(key));
    }
 
    public void testLocalPutGet() {
       doPutGet(supplyIntKey(), local1, local2);
    }
 
-   public void testReplPutGet() {
+   public void testReplPutGetOnNonOwner() {
       doPutGet(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplPutGetOnOwner() {
       doPutGet(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistPutGet() {
+   public void testDistPutGetOnNonOwner() {
       doPutGet(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistPutGetOnOwner() {
       doPutGet(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doPutGet(Supplier<K> keySupplier,
-         Cache<K, String> map1, Cache<K, String> map2) {
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key = keySupplier.get();
-      assertEquals(null, map2.getAndPut(key, "one"));
-      assertEquals("one", map1.get(key));
+      assertEquals(null, writeCache.getAndPut(key, "one"));
+      assertEquals("one", readCache.get(key));
    }
 
    public void testLocalGetAndPut() {
       doGetAndPut(supplyIntKey(), local1, local2);
    }
 
-   public void testReplGetAndPut() {
+   public void testReplGetAndPutOnNonOwner() {
       doGetAndPut(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplGetAndPutOnOwner() {
       doGetAndPut(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistGetAndPut() {
+   public void testDistGetAndPutOnNonOwner() {
       doGetAndPut(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistGetAndPutOnOwner() {
       doGetAndPut(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doGetAndPut(Supplier<K> keySupplier,
-         Cache<K, String> map1, Cache<K, String> map2) {
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key = keySupplier.get();
-      assertEquals(null, map2.getAndPut(key, "one"));
-      assertEquals("one", map2.getAndPut(key, "uno"));
-      assertEquals("uno", map1.get(key));
+      assertEquals(null, writeCache.getAndPut(key, "one"));
+      assertEquals("one", writeCache.getAndPut(key, "uno"));
+      assertEquals("uno", readCache.get(key));
    }
 
    public void testLocalGetAndRemove() {
       doGetAndRemove(supplyIntKey(), local1, local2);
    }
 
-   public void testReplGetAndRemove() {
+   public void testReplGetAndRemoveOnNonOwner() {
       doGetAndRemove(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplGetAndRemoveOnOwner() {
       doGetAndRemove(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistGetAndRemove() {
+   public void testDistGetAndRemoveOnNonOwner() {
       doGetAndRemove(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistGetAndRemoveOnOwner() {
       doGetAndRemove(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doGetAndRemove(Supplier<K> keySupplier,
-         Cache<K, String> map1, Cache<K, String> map2) {
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key1 = keySupplier.get(), key2 = keySupplier.get();
-      assertFalse(map2.remove(key1));
-      assertEquals(null, map2.getAndRemove(key1));
-      assertEquals(null, map2.getAndPut(key1, "one"));
-      assertEquals("one", map1.get(key1));
-      assertTrue(map2.remove(key1));
-      assertEquals(null, map1.get(key1));
-      assertEquals(null, map2.getAndPut(key2, "two"));
-      assertEquals("two", map1.get(key2));
-      assertEquals("two", map2.getAndRemove(key2));
-      assertEquals(null, map1.get(key2));
+      assertFalse(writeCache.remove(key1));
+      assertEquals(null, writeCache.getAndRemove(key1));
+      assertEquals(null, writeCache.getAndPut(key1, "one"));
+      assertEquals("one", readCache.get(key1));
+      assertTrue(writeCache.remove(key1));
+      assertEquals(null, readCache.get(key1));
+      assertEquals(null, writeCache.getAndPut(key2, "two"));
+      assertEquals("two", readCache.get(key2));
+      assertEquals("two", writeCache.getAndRemove(key2));
+      assertEquals(null, readCache.get(key2));
    }
 
    public void testLocalContainsKey() {
       doContainsKey(supplyIntKey(), local1, local2);
    }
 
-   public void testReplContainsKey() {
+   public void testReplContainsKeyOnNonOwner() {
       doContainsKey(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplContainsKeyOnOwner() {
       doContainsKey(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistContainsKey() {
+   public void testDistContainsKeyOnNonOwner() {
       doContainsKey(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistContainsKeyOnOwner() {
       doContainsKey(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
-   private <K> void doContainsKey(Supplier<K> keySupplier, Cache<K, String> map1, Cache<K, String> map2) {
+   private <K> void doContainsKey(Supplier<K> keySupplier,
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key = keySupplier.get();
-      assertEquals(false, map1.containsKey(key));
-      assertEquals(null, map2.getAndPut(key, "one"));
-      assertEquals(true, map1.containsKey(key));
+      assertEquals(false, readCache.containsKey(key));
+      assertEquals(null, writeCache.getAndPut(key, "one"));
+      assertEquals(true, readCache.containsKey(key));
    }
 
    public void testLocalClear() {
       doClear(supplyIntKey(), local1, local2);
    }
 
-   public void testReplClear() {
+   public void testReplClearOnNonOwner() {
       doClear(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplClearOnOwner() {
       doClear(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistClear() {
+   public void testDistClearOnNonOwner() {
       doClear(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistClearOnOwner() {
       doClear(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
@@ -227,149 +237,185 @@ public class FunctionalJCacheTest extends MultipleCacheManagersTest {
       doPutIfAbsent(supplyIntKey(), local1, local2);
    }
 
-   public void testReplPutIfAbsent() {
+   public void testReplPutIfAbsentOnNonOwner() {
       doPutIfAbsent(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplPutIfAbsentOnOwner() {
       doPutIfAbsent(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistPutIfAbsent() {
+   public void testDistPutIfAbsentOnNonOwner() {
       doPutIfAbsent(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistPutIfAbsentOnOwner() {
       doPutIfAbsent(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doPutIfAbsent(Supplier<K> keySupplier,
-         Cache<K, String> map1, Cache<K, String> map2) {
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertTrue(map2.putIfAbsent(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertFalse(map2.putIfAbsent(key, "uno"));
-      assertEquals("one", map1.get(key));
-      assertTrue(map2.remove(key));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, readCache.get(key));
+      assertTrue(writeCache.putIfAbsent(key, "one"));
+      assertEquals("one", readCache.get(key));
+      assertFalse(writeCache.putIfAbsent(key, "uno"));
+      assertEquals("one", readCache.get(key));
+      assertTrue(writeCache.remove(key));
+      assertEquals(null, readCache.get(key));
    }
 
    public void testLocalConditionalRemove() {
       doConditionalRemove(supplyIntKey(), local1, local2);
    }
 
-   public void testReplConditionalRemove() {
+   public void testReplConditionalRemoveOnNonOwner() {
       doConditionalRemove(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplConditionalRemoveOnOwner() {
       doConditionalRemove(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistConditionalRemove() {
+   public void testDistConditionalRemoveOnNonOwner() {
       doConditionalRemove(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistConditionalRemoveOnOwner() {
       doConditionalRemove(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doConditionalRemove(Supplier<K> keySupplier,
-         Cache<K, String> map1, Cache<K, String> map2) {
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertFalse(map2.remove(key, "xxx"));
-      assertEquals(null, map2.getAndPut(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertFalse(map2.remove(key, "xxx"));
-      assertEquals("one", map1.get(key));
-      assertTrue(map2.remove(key, "one"));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, readCache.get(key));
+      assertFalse(writeCache.remove(key, "xxx"));
+      assertEquals(null, writeCache.getAndPut(key, "one"));
+      assertEquals("one", readCache.get(key));
+      assertFalse(writeCache.remove(key, "xxx"));
+      assertEquals("one", readCache.get(key));
+      assertTrue(writeCache.remove(key, "one"));
+      assertEquals(null, readCache.get(key));
    }
 
    public void testLocalReplace() {
       doReplace(supplyIntKey(), local1, local2);
    }
 
-   public void testReplReplace() {
+   public void testReplReplaceOnNonOwner() {
       doReplace(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplReplaceOnOwner() {
       doReplace(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistReplace() {
+   public void testDistReplaceOnNonOwner() {
       doReplace(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistReplaceOnOwner() {
       doReplace(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doReplace(Supplier<K> keySupplier,
-         Cache<K, String> map1, Cache<K, String> map2) {
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertFalse(map2.replace(key, "xxx"));
-      assertEquals(null, map2.getAndPut(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertTrue(map2.replace(key, "uno"));
-      assertEquals("uno", map1.get(key));
-      assertTrue(map2.remove(key));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, readCache.get(key));
+      assertFalse(writeCache.replace(key, "xxx"));
+      assertEquals(null, writeCache.getAndPut(key, "one"));
+      assertEquals("one", readCache.get(key));
+      assertTrue(writeCache.replace(key, "uno"));
+      assertEquals("uno", readCache.get(key));
+      assertTrue(writeCache.remove(key));
+      assertEquals(null, readCache.get(key));
    }
 
    public void testLocalGetAndReplace() {
       doGetAndReplace(supplyIntKey(), local1, local2);
    }
 
-   public void testReplGetAndReplace() {
+   public void testReplGetAndReplaceOnNonOwner() {
       doGetAndReplace(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplGetAndReplaceOnOwner() {
       doGetAndReplace(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistGetAndReplace() {
+   public void testDistGetAndReplaceOnNonOwner() {
       doGetAndReplace(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistGetAndReplaceOnOwner() {
       doGetAndReplace(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doGetAndReplace(Supplier<K> keySupplier,
-         Cache<K, String> map1, Cache<K, String> map2) {
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertEquals(null, map2.getAndReplace(key, "xxx"));
-      assertEquals(null, map2.getAndPut(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertEquals("one", map2.getAndReplace(key, "uno"));
-      assertEquals("uno", map1.get(key));
-      assertTrue(map2.remove(key));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, readCache.get(key));
+      assertEquals(null, writeCache.getAndReplace(key, "xxx"));
+      assertEquals(null, writeCache.getAndPut(key, "one"));
+      assertEquals("one", readCache.get(key));
+      assertEquals("one", writeCache.getAndReplace(key, "uno"));
+      assertEquals("uno", readCache.get(key));
+      assertTrue(writeCache.remove(key));
+      assertEquals(null, readCache.get(key));
    }
 
    public void testLocalReplaceWithValue() {
       doReplaceWithValue(supplyIntKey(), local1, local2);
    }
 
-   public void testReplReplaceWithValue() {
+   public void testReplReplaceWithValueOnNonOwner() {
       doReplaceWithValue(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplReplaceWithValueOnOwner() {
       doReplaceWithValue(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistReplaceWithValue() {
+   public void testDistReplaceWithValueOnNonOwner() {
       doReplaceWithValue(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistReplaceWithValueOnOwner() {
       doReplaceWithValue(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doReplaceWithValue(Supplier<K> keySupplier,
-         Cache<K, String> map1, Cache<K, String> map2) {
+         Cache<K, String> readCache, Cache<K, String> writeCache) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertFalse(map2.replace(key, "xxx", "uno"));
-      assertEquals(null, map2.getAndPut(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertFalse(map2.replace(key, "xxx", "uno"));
-      assertEquals("one", map1.get(key));
-      assertTrue(map2.replace(key, "one", "uno"));
-      assertEquals("uno", map1.get(key));
-      assertTrue(map2.remove(key));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, readCache.get(key));
+      assertFalse(writeCache.replace(key, "xxx", "uno"));
+      assertEquals(null, writeCache.getAndPut(key, "one"));
+      assertEquals("one", readCache.get(key));
+      assertFalse(writeCache.replace(key, "xxx", "uno"));
+      assertEquals("one", readCache.get(key));
+      assertTrue(writeCache.replace(key, "one", "uno"));
+      assertEquals("uno", readCache.get(key));
+      assertTrue(writeCache.remove(key));
+      assertEquals(null, readCache.get(key));
    }
 
    public void testLocalPutAll() {
       doPutAllGetAllRemoveAll(supplyIntKey(), local1, local2);
    }
 
-   public void testReplPutAll() {
+   public void testReplPutAllOnNonOwner() {
       doPutAllGetAllRemoveAll(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplPutAllOnOwner() {
       doPutAllGetAllRemoveAll(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistPutAll() {
+   public void testDistPutAllOnNonOwner() {
       doPutAllGetAllRemoveAll(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistPutAllOnOwner() {
       doPutAllGetAllRemoveAll(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
@@ -451,13 +497,19 @@ public class FunctionalJCacheTest extends MultipleCacheManagersTest {
       doIterator(supplyIntKey(), local1, local2);
    }
 
-   public void testReplIterator() {
+   public void testReplIteratorOnNonOwner() {
       doIterator(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplIteratorOnOwner() {
       doIterator(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistIterator() {
+   public void testDistIteratorOnNonOwner() {
       doIterator(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistIteratorOnOwner() {
       doIterator(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
@@ -487,13 +539,19 @@ public class FunctionalJCacheTest extends MultipleCacheManagersTest {
       doInvoke(supplyIntKey(), local1, local2);
    }
 
-   public void testReplInvoke() {
+   public void testReplInvokeOnNonOwner() {
       doInvoke(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplInvokeOnOwner() {
       doInvoke(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistInvoke() {
+   public void testDistInvokeOnNonOwner() {
       doInvoke(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistInvokeOnOwner() {
       doInvoke(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
@@ -585,13 +643,19 @@ public class FunctionalJCacheTest extends MultipleCacheManagersTest {
       doInvokeAll(supplyIntKey(), local1, local2);
    }
 
-   public void testReplInvokeAll() {
+   public void testReplInvokeAllOnNonOwner() {
       doInvokeAll(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplInvokeAllOnOwner() {
       doInvokeAll(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistInvokeAll() {
+   public void testDistInvokeAllOnNonOwner() {
       doInvokeAll(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistInvokeAllOnOwner() {
       doInvokeAll(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 

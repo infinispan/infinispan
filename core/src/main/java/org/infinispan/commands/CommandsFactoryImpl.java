@@ -2,17 +2,14 @@ package org.infinispan.commands;
 
 import org.infinispan.Cache;
 import org.infinispan.commands.functional.*;
-import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.functional.impl.ListenerNotifier;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.iteration.impl.EntryRetriever;
@@ -30,7 +27,10 @@ import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.read.*;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
+import org.infinispan.commands.remote.ClusteredGetCommand;
+import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
@@ -40,47 +40,46 @@ import org.infinispan.commands.remote.recovery.TxCompletionNotificationCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
-import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareCommand;
 import org.infinispan.commands.tx.VersionedCommitCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
+import org.infinispan.commands.tx.totalorder.TotalOrderNonVersionedPrepareCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderRollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
-import org.infinispan.commands.write.ApplyDeltaCommand;
-import org.infinispan.commands.write.ClearCommand;
-import org.infinispan.commands.write.EvictCommand;
-import org.infinispan.commands.write.InvalidateCommand;
-import org.infinispan.commands.write.InvalidateL1Command;
-import org.infinispan.commands.write.PutKeyValueCommand;
-import org.infinispan.commands.write.PutMapCommand;
-import org.infinispan.commands.write.RemoveCommand;
-import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commands.write.*;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.DistributionManager;
+import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.functional.impl.FunctionalNotifier;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.iteration.impl.EntryRequestCommand;
+import org.infinispan.iteration.impl.EntryResponseCommand;
+import org.infinispan.iteration.impl.EntryRetriever;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
-import org.infinispan.statetransfer.StateProvider;
+import org.infinispan.remoting.transport.Address;
+import org.infinispan.statetransfer.StateChunk;
 import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.statetransfer.StateProvider;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.statetransfer.StateResponseCommand;
-import org.infinispan.statetransfer.StateChunk;
-import org.infinispan.notifications.cachelistener.CacheNotifier;
-import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.LocalStreamManager;
@@ -107,7 +106,6 @@ import org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand;
 import org.infinispan.xsite.statetransfer.XSiteStateTransferManager;
 
 import javax.transaction.xa.Xid;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -119,8 +117,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static org.infinispan.xsite.XSiteAdminCommand.*;
-import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.*;
+import static org.infinispan.xsite.XSiteAdminCommand.AdminOperation;
+import static org.infinispan.xsite.statetransfer.XSiteStateTransferControlCommand.StateTransferControl;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -166,7 +164,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
    // Functional
-   private ListenerNotifier functionalNotifier;
+   private FunctionalNotifier functionalNotifier;
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier<Object, Object> notifier, Cache<Object, Object> cache,
@@ -180,7 +178,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 ClusteringDependentLogic clusteringDependentLogic, ListenerNotifier functionalNotifier) {
+                                 ClusteringDependentLogic clusteringDependentLogic, FunctionalNotifier functionalNotifier) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -521,6 +519,37 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case StreamSegmentResponseCommand.COMMAND_ID:
             StreamSegmentResponseCommand streamSegmentResponseCommand = (StreamSegmentResponseCommand) c;
             streamSegmentResponseCommand.inject(clusterStreamManager);
+         case ReadWriteKeyCommand.COMMAND_ID:
+            ReadWriteKeyCommand rwKeyCmd = (ReadWriteKeyCommand) c;
+            rwKeyCmd.init(functionalNotifier);
+            break;
+         case ReadWriteKeyValueCommand.COMMAND_ID:
+            ReadWriteKeyValueCommand rwKeyValueCmd = (ReadWriteKeyValueCommand) c;
+            rwKeyValueCmd.init(functionalNotifier);
+            break;
+         case ReadWriteManyCommand.COMMAND_ID:
+            ReadWriteManyCommand rwManyCmd = (ReadWriteManyCommand) c;
+            rwManyCmd.init(functionalNotifier);
+            break;
+         case ReadWriteManyEntriesCommand.COMMAND_ID:
+            ReadWriteManyEntriesCommand rwManyEntriesCmd = (ReadWriteManyEntriesCommand) c;
+            rwManyEntriesCmd.init(functionalNotifier);
+            break;
+         case WriteOnlyKeyCommand.COMMAND_ID:
+            WriteOnlyKeyCommand woKeyCmd = (WriteOnlyKeyCommand) c;
+            woKeyCmd.init(functionalNotifier);
+            break;
+         case WriteOnlyKeyValueCommand.COMMAND_ID:
+            WriteOnlyKeyValueCommand woKeyValueCmd = (WriteOnlyKeyValueCommand) c;
+            woKeyValueCmd.init(functionalNotifier);
+            break;
+         case WriteOnlyManyCommand.COMMAND_ID:
+            WriteOnlyManyCommand woManyCmd = (WriteOnlyManyCommand) c;
+            woManyCmd.init(functionalNotifier);
+            break;
+         case WriteOnlyManyEntriesCommand.COMMAND_ID:
+            WriteOnlyManyEntriesCommand woManyEntriesCmd = (WriteOnlyManyEntriesCommand) c;
+            woManyEntriesCmd.init(functionalNotifier);
             break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
@@ -715,43 +744,59 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f) {
-      return new WriteOnlyKeyCommand<>(key, f);
-   }
-
-   @Override
    public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteKeyValueCommand<>(key, value, f);
+      ReadWriteKeyValueCommand<K, V, R> cmd = new ReadWriteKeyValueCommand<>(key, value, f);
+      cmd.init(functionalNotifier);
+      return cmd;
    }
 
    @Override
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteKeyCommand<>(key, f);
-   }
-
-   @Override
-   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
-      return new WriteOnlyManyEntriesCommand<>(entries, f);
-   }
-
-   @Override
-   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      return new WriteOnlyKeyValueCommand<>(key, value, f);
-   }
-
-   @Override
-   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
-      return new WriteOnlyManyCommand<>(keys, f);
+      ReadWriteKeyCommand<K, V, R> cmd = new ReadWriteKeyCommand<>(key, f);
+      cmd.init(functionalNotifier);
+      return cmd;
    }
 
    @Override
    public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteManyCommand<>(keys, f);
+      ReadWriteManyCommand<K, V, R> cmd = new ReadWriteManyCommand<>(keys, f);
+      cmd.init(functionalNotifier);
+      return cmd;
    }
 
    @Override
    public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteManyEntriesCommand<>(entries, f);
+      ReadWriteManyEntriesCommand<K, V, R> cmd = new ReadWriteManyEntriesCommand<>(entries, f);
+      cmd.init(functionalNotifier);
+      return cmd;
+   }
+
+   @Override
+   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f) {
+      WriteOnlyKeyCommand<K, V> cmd = new WriteOnlyKeyCommand<>(key, f);
+      cmd.init(functionalNotifier);
+      return cmd;
+   }
+
+   @Override
+   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
+      WriteOnlyKeyValueCommand<K, V> cmd = new WriteOnlyKeyValueCommand<>(key, value, f);
+      cmd.init(functionalNotifier);
+      return cmd;
+   }
+
+   @Override
+   public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
+      WriteOnlyManyCommand<K, V> cmd = new WriteOnlyManyCommand<>(keys, f);
+      cmd.init(functionalNotifier);
+      return cmd;
+   }
+
+   @Override
+   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
+      WriteOnlyManyEntriesCommand<K, V> cmd = new WriteOnlyManyEntriesCommand<>(entries, f);
+      cmd.init(functionalNotifier);
+      return cmd;
    }
 
 }

@@ -3,29 +3,23 @@ package org.infinispan.commands.functional;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.ListenerNotifier;
+import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
 
-   public static final byte COMMAND_ID = 49;
+   public static final byte COMMAND_ID = 52;
 
    private Set<? extends K> keys;
    private Function<ReadWriteEntryView<K, V>, R> f;
@@ -33,6 +27,7 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    private int topologyId = -1;
    boolean isForwarded = false;
    private List<R> remoteReturns = new ArrayList<>();
+   private FunctionalNotifier<K, V> notifier;
 
    public ReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
       this.keys = keys;
@@ -45,6 +40,10 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    }
 
    public ReadWriteManyCommand() {
+   }
+
+   public void init(FunctionalNotifier<K, V> notifier) {
+      this.notifier = notifier;
    }
 
    public Set<? extends K> getKeys() {
@@ -131,7 +130,7 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (entry != null) {
-            R r = f.apply(EntryViews.readWrite(entry, null));
+            R r = f.apply(EntryViews.readWrite(entry, notifier));
             returns.add(r);
          }
       });

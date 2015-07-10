@@ -12,7 +12,7 @@ import java.util.function.BiFunction;
 
 public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 48;
+   public static final byte COMMAND_ID = 51;
 
    private V value;
    private BiFunction<V, ReadWriteEntryView<K, V>, R> f;

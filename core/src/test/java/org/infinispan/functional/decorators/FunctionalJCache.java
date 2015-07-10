@@ -6,6 +6,9 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
+import org.infinispan.commons.api.functional.Listeners;
+import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
+import org.infinispan.commons.api.functional.Listeners.WriteListeners;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.marshall.Externalizer;
@@ -43,7 +46,7 @@ import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.re
  * {@link ReadOnlyMap}, {@link WriteOnlyMap} and {@link ReadWriteMap}, and
  * validates their usefulness.
  */
-public class FunctionalJCache<K, V> implements Cache<K, V> {
+public class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalListeners<K, V> {
 
    final ReadOnlyMap<K, V> readOnly;
    final WriteOnlyMap<K, V> writeOnly;
@@ -60,6 +63,20 @@ public class FunctionalJCache<K, V> implements Cache<K, V> {
 
    public static <K, V> Cache<K, V> create(AdvancedCache<K, V> cache) {
       return new FunctionalJCache<>(FunctionalMapImpl.create(cache));
+   }
+
+   public static <K, V> Cache<K, V> create(FunctionalMapImpl<K, V> map) {
+      return new FunctionalJCache<>(map);
+   }
+
+   @Override
+   public WriteListeners<K, V> writeOnlyListeners() {
+      return writeOnly.listeners();
+   }
+
+   @Override
+   public ReadWriteListeners<K, V> readWriteListeners() {
+      return readWrite.listeners();
    }
 
    @Override

@@ -6,11 +6,12 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * @since 8.0
  */
-public final class ListenersImpl<K, V> implements ListenerNotifier<K, V> {
+public final class FunctionalNotifierImpl<K, V> implements FunctionalNotifier<K, V> {
 
    final List<Consumer<ReadEntryView<K, V>>> onCreates = new CopyOnWriteArrayList<>();
    final List<BiConsumer<ReadEntryView<K, V>, ReadEntryView<K, V>>> onModifies = new CopyOnWriteArrayList<>();
@@ -57,6 +58,21 @@ public final class ListenersImpl<K, V> implements ListenerNotifier<K, V> {
    }
 
    @Override
+   public boolean hasCreateListeners() {
+      return !onCreates.isEmpty();
+   }
+
+   @Override
+   public boolean hasModifyListeners() {
+      return !onModifies.isEmpty();
+   }
+
+   @Override
+   public boolean hasRemoveListeners() {
+      return !onRemoves.isEmpty();
+   }
+
+   @Override
    public void notifyOnCreate(ReadEntryView<K, V> created) {
       onCreates.forEach(c -> c.accept(created));
       rwListeners.forEach(rwl -> rwl.onCreate(created));
@@ -75,9 +91,9 @@ public final class ListenersImpl<K, V> implements ListenerNotifier<K, V> {
    }
 
    @Override
-   public void notifyOnWrite(ReadEntryView<K, V> write) {
-      onWrites.forEach(c -> c.accept(write));
-      writeListeners.forEach(wl -> wl.onWrite(write));
+   public void notifyOnWrite(Supplier<ReadEntryView<K, V>> write) {
+      if (!onWrites.isEmpty()) onWrites.forEach(c -> c.accept(write.get()));
+      if (!writeListeners.isEmpty()) writeListeners.forEach(wl -> wl.onWrite(write.get()));
    }
 
    private static final class ListenerCloseable<T> implements AutoCloseable {

@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 
 public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 51;
+   public static final byte COMMAND_ID = 54;
 
    private Consumer<WriteEntryView<V>> f;
 
@@ -59,7 +59,7 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
       // Could be that the key is not local
       if (e == null) return null;
 
-      f.accept(EntryViews.writeOnly(e, null));
+      f.accept(EntryViews.writeOnly(e, notifier));
       return null;
    }
 

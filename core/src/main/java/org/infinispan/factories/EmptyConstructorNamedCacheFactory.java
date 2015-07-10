@@ -25,8 +25,8 @@ import org.infinispan.eviction.impl.PassivationManagerImpl;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.expiration.impl.ExpirationManagerImpl;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
-import org.infinispan.functional.impl.ListenerNotifier;
-import org.infinispan.functional.impl.ListenersImpl;
+import org.infinispan.functional.impl.FunctionalNotifier;
+import org.infinispan.functional.impl.FunctionalNotifierImpl;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.marshall.core.MarshalledEntryFactoryImpl;
@@ -69,7 +69,7 @@ import static org.infinispan.commons.util.Util.getInstance;
                               TotalOrderManager.class, ByteBufferFactory.class, MarshalledEntryFactory.class,
                               RemoteValueRetrievedListener.class, InvocationContextFactory.class, CommitManager.class,
                               XSiteStateTransferManager.class, XSiteStateConsumer.class, XSiteStateProvider.class,
-                              ListenerNotifier.class})
+                              FunctionalNotifier.class})
 public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    @Override
@@ -143,8 +143,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new XSiteStateConsumerImpl();
          } else if (componentType.equals(XSiteStateProvider.class)) {
             return (T) new XSiteStateProviderImpl();
-         } else if (componentType.equals(ListenerNotifier.class)) {
-            return (T) new ListenersImpl<>();
+         } else if (componentType.equals(FunctionalNotifier.class)) {
+            return (T) new FunctionalNotifierImpl<>();
          }
       }
 

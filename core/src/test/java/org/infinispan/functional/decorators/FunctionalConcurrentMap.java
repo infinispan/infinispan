@@ -4,6 +4,9 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
+import org.infinispan.commons.api.functional.Listeners;
+import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
+import org.infinispan.commons.api.functional.Listeners.WriteListeners;
 import org.infinispan.commons.api.functional.Param.WaitMode;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
@@ -27,7 +30,7 @@ import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.*;
  * {@link ReadOnlyMap}, {@link WriteOnlyMap} and {@link ReadWriteMap}, and
  * validates their usefulness.
  */
-public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>  {
+public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>, FunctionalListeners<K, V> {
 
    final ReadOnlyMap<K, V> readOnly;
    final WriteOnlyMap<K, V> writeOnly;
@@ -42,8 +45,18 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V> 
       this.readWrite = ReadWriteMapImpl.create(blockingMap);
    }
 
-   public static <K, V> ConcurrentMap<K, V> create(AdvancedCache<K, V> cache) {
+   public static <K, V> FunctionalConcurrentMap<K, V> create(AdvancedCache<K, V> cache) {
       return new FunctionalConcurrentMap<>(FunctionalMapImpl.create(cache));
+   }
+
+   @Override
+   public ReadWriteListeners<K, V> readWriteListeners() {
+      return readWrite.listeners();
+   }
+
+   @Override
+   public WriteListeners<K, V> writeOnlyListeners() {
+      return writeOnly.listeners();
    }
 
    @Override
@@ -131,7 +144,7 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V> 
          @Override
          public V setValue(V value) {
             V prev = ro.get();
-            writeOnly.eval(ro.key(), value, (v, wo) -> wo.set(v));
+            writeOnly.eval(ro.key(), value, setValueConsumer());
             return prev;
          }
 

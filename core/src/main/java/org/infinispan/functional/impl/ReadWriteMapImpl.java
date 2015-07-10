@@ -90,8 +90,7 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
 
    @Override
    public ReadWriteListeners<K, V> listeners() {
-      //return fmap.notifier;
-      return null;
+      return fmap.notifier();
    }
 
    @Override

@@ -155,6 +155,12 @@ public class RemoteCommandsFactory {
             case ReadWriteKeyValueCommand.COMMAND_ID:
                command = new ReadWriteKeyValueCommand<>();
                break;
+            case ReadWriteManyCommand.COMMAND_ID:
+               command = new ReadWriteManyCommand<>();
+               break;
+            case ReadWriteManyEntriesCommand.COMMAND_ID:
+               command = new ReadWriteManyEntriesCommand<>();
+               break;
             case WriteOnlyKeyCommand.COMMAND_ID:
                command = new WriteOnlyKeyCommand<>();
                break;
@@ -166,12 +172,6 @@ public class RemoteCommandsFactory {
                break;
             case WriteOnlyManyEntriesCommand.COMMAND_ID:
                command = new WriteOnlyManyEntriesCommand<>();
-               break;
-            case ReadWriteManyCommand.COMMAND_ID:
-               command = new ReadWriteManyCommand<>();
-               break;
-            case ReadWriteManyEntriesCommand.COMMAND_ID:
-               command = new ReadWriteManyEntriesCommand<>();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

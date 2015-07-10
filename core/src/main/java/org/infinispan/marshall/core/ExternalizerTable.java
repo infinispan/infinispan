@@ -68,7 +68,7 @@ import org.infinispan.functional.impl.MetaParams;
 import org.infinispan.marshall.exts.*;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.impl.InternalMetadataImpl;
-import org.infinispan.metadata.impl.MetaParamsInternalMetadata;
+import org.infinispan.functional.impl.MetaParamsInternalMetadata;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEvent;
 import org.infinispan.notifications.cachelistener.cluster.ClusterEventCallable;
 import org.infinispan.notifications.cachelistener.cluster.ClusterListenerRemoveCallable;

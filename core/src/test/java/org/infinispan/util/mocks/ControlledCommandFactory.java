@@ -6,7 +6,6 @@ import org.infinispan.commands.functional.*;
 import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
-import org.infinispan.functional.impl.ListenerNotifier;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.metadata.Metadata;

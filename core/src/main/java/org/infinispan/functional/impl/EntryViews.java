@@ -9,7 +9,6 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.impl.MetaParamsInternalMetadata;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -25,25 +24,29 @@ public final class EntryViews {
    }
 
    public static <K, V> ReadEntryView<K, V> readOnly(CacheEntry<K, V> entry) {
-      return new ReadViewImpl<>(entry);
+      return new CacheEntryReadEntryView<>(entry);
    }
 
-   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry, ListenerNotifier<K, V> notifier) {
-      return new WriteViewImpl<>(entry, notifier);
+   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry, FunctionalNotifier<K, V> notifier) {
+      return new CacheEntryWriteEntryView<>(entry, notifier);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, ListenerNotifier<K, V> notifier) {
-      return new ReadWriteViewImpl<>(entry, notifier);
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, FunctionalNotifier<K, V> notifier) {
+      return new CacheEntryReadWriteEntryView<>(entry, notifier);
    }
 
    public static <K, V> ReadEntryView<K, V> noValue(K key) {
       return new NoValueView<>(key);
    }
 
-   private static final class ReadViewImpl<K, V> implements ReadEntryView<K, V> {
+   private static <K, V> ReadEntryView<K, V> readOnly(K key, V value, MetaParams metas) {
+      return new ReadViewImpl<>(key, value, metas);
+   }
+
+   private static final class CacheEntryReadEntryView<K, V> implements ReadEntryView<K, V> {
       final CacheEntry<K, V> entry;
 
-      private ReadViewImpl(CacheEntry<K, V> entry) {
+      private CacheEntryReadEntryView(CacheEntry<K, V> entry) {
          this.entry = entry;
       }
 
@@ -92,11 +95,49 @@ public final class EntryViews {
       }
    }
 
-   private static final class WriteViewImpl<K, V> implements WriteEntryView<V> {
-      final ListenerNotifier<K, V> notifier;
+   private static final class ReadViewImpl<K, V> implements ReadEntryView<K, V> {
+      final K key;
+      final V value;
+      final MetaParams metas;
+
+      private ReadViewImpl(K key, V value, MetaParams metas) {
+         this.key = key;
+         this.value = value;
+         this.metas = metas;
+      }
+
+      @Override
+      public K key() {
+         return key;
+      }
+
+      @Override
+      public V get() throws NoSuchElementException {
+         if (value == null) throw new NoSuchElementException("No value");
+         return value;
+      }
+
+      @Override
+      public Optional<V> find() {
+         return value == null ? Optional.empty() : Optional.ofNullable(value);
+      }
+
+      @Override
+      public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
+         return metas.get(type);
+      }
+
+      @Override
+      public <T> Optional<T> findMetaParam(Class<T> type) {
+         return metas.find(type);
+      }
+   }
+
+   private static final class CacheEntryWriteEntryView<K, V> implements WriteEntryView<V> {
+      final FunctionalNotifier<K, V> notifier;
       final CacheEntry<K, V> entry;
 
-      private WriteViewImpl(CacheEntry<K, V> entry, ListenerNotifier<K, V> notifier) {
+      private CacheEntryWriteEntryView(CacheEntry<K, V> entry, FunctionalNotifier<K, V> notifier) {
          this.entry = entry;
          this.notifier = notifier;
       }
@@ -105,11 +146,10 @@ public final class EntryViews {
       public Void set(V value, MetaParam.Writable... metas) {
          entry.setValue(value);
          entry.setChanged(true);
-         updateEntryMetaParamsIfPresent(entry, metas);
-
+         updateMetaParams(entry, metas);
          // Data written, no assumptions about previous value can be made,
          // hence we cannot distinguish between create or update.
-         //notifier.notifyOnWrite(EntryViews.readOnly(entry));
+         notifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
          return null;
       }
 
@@ -118,16 +158,16 @@ public final class EntryViews {
          entry.setRemoved(true);
          entry.setChanged(true);
          // For remove write-only listener events, create a value-less read entry view
-         //notifier.notifyOnWrite(EntryViews.noValue(entry.getKey()));
+         notifier.notifyOnWrite(() -> EntryViews.noValue(entry.getKey()));
          return null;
       }
    }
 
-   private static final class ReadWriteViewImpl<K, V> implements ReadWriteEntryView<K, V> {
-      final ListenerNotifier<K, V> notifier;
+   private static final class CacheEntryReadWriteEntryView<K, V> implements ReadWriteEntryView<K, V> {
+      final FunctionalNotifier<K, V> notifier;
       final CacheEntry<K, V> entry;
 
-      private ReadWriteViewImpl(CacheEntry<K, V> entry, ListenerNotifier<K, V> notifier) {
+      private CacheEntryReadWriteEntryView(CacheEntry<K, V> entry, FunctionalNotifier<K, V> notifier) {
          this.entry = entry;
          this.notifier = notifier;
       }
@@ -144,26 +184,55 @@ public final class EntryViews {
 
       @Override
       public Void set(V value, MetaParam.Writable... metas) {
-         if (!entry.isCreated()) {
-            // TODO: Modify listeners
-            //notifier.notifyOnModify(EntryViews.readOnly(key, prev), EntryViews.readOnly(key, iv));
-         } else {
-            // TODO: Created listeners
-            // notifier.notifyOnCreate(EntryViews.readOnly(key, iv));
-         }
+         boolean hasModified = notifier.hasModifyListeners();
+         boolean hasCreated = notifier.hasCreateListeners();
+         if (hasModified && !entry.isCreated()) setAndNotifyModified(value, metas);
+         else if (hasCreated && entry.isCreated()) setAndNotifyCreated(value, metas);
+         else setOnly(value, metas);
+         return null;
+      }
 
+      private void setOnly(V value, MetaParam.Writable[] metas) {
          entry.setValue(value);
          entry.setChanged(true);
-         updateEntryMetaParamsIfPresent(entry, metas);
-         return null;
+         updateMetaParams(entry, metas);
+      }
+
+      private void setAndNotifyModified(V value, MetaParam.Writable[] metas) {
+         // Calculate previous values
+         K key = entry.getKey();
+         V prev = entry.getValue();
+         MetaParams prevMetas = extractMetaParams(entry);
+         // Update entry
+         entry.setValue(value);
+         entry.setChanged(true);
+         MetaParams newMetas = updateMetaParams(entry, metas);
+         // Notify
+         notifier.notifyOnModify(
+            EntryViews.readOnly(key, prev, prevMetas),
+            EntryViews.readOnly(key, value, newMetas));
+      }
+
+      private void setAndNotifyCreated(V value, MetaParam.Writable[] metas) {
+         entry.setValue(value);
+         entry.setChanged(true);
+         MetaParams newMetas = updateMetaParams(entry, metas);
+         notifier.notifyOnCreate(EntryViews.readOnly(entry.getKey(), value, newMetas));
       }
 
       @Override
       public Void remove() {
-         entry.setRemoved(true);
-         entry.setChanged(true);
-         // For remove write-only listener events, create a value-less read entry view
-         //notifier.notifyOnWrite(EntryViews.noValue(entry.getKey()));
+         if (!entry.isNull()) {
+            if (notifier.hasRemoveListeners()) {
+               V prev = entry.getValue();
+               MetaParams prevMetas = extractMetaParams(entry);
+               notifier.notifyOnRemove(EntryViews.readOnly(entry.getKey(), prev, prevMetas));
+            }
+
+            entry.setRemoved(true);
+            entry.setChanged(true);
+         }
+
          return null;
       }
 
@@ -202,21 +271,21 @@ public final class EntryViews {
       }
    }
 
-   public static final class ReadWriteViewImplExternalizer extends AbstractExternalizer<ReadWriteViewImpl> {
+   public static final class ReadWriteViewImplExternalizer extends AbstractExternalizer<CacheEntryReadWriteEntryView> {
       @Override
-      public void writeObject(ObjectOutput output, ReadWriteViewImpl object) throws IOException {
+      public void writeObject(ObjectOutput output, CacheEntryReadWriteEntryView object) throws IOException {
          output.writeObject(object.entry);
       }
 
       @Override
-      public ReadWriteViewImpl<?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CacheEntryReadWriteEntryView<?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          CacheEntry entry = (CacheEntry) input.readObject();
-         return new ReadWriteViewImpl<>(entry, null);
+         return new CacheEntryReadWriteEntryView<>(entry, null);
       }
 
       @Override
-      public Set<Class<? extends ReadWriteViewImpl>> getTypeClasses() {
-         return Util.<Class<? extends ReadWriteViewImpl>>asSet(ReadWriteViewImpl.class);
+      public Set<Class<? extends CacheEntryReadWriteEntryView>> getTypeClasses() {
+         return Util.<Class<? extends CacheEntryReadWriteEntryView>>asSet(CacheEntryReadWriteEntryView.class);
       }
 
       @Override
@@ -258,7 +327,7 @@ public final class EntryViews {
       }
    }
 
-   private static <K, V> void updateEntryMetaParamsIfPresent(CacheEntry<K, V> entry, MetaParam.Writable... metas) {
+   private static <K, V> MetaParams updateMetaParams(CacheEntry<K, V> entry, MetaParam.Writable[] metas) {
       // TODO: Deal with entry instances that are MetaParamsCacheEntry and merge meta params
       // e.g. check if meta params exist and if so, merge, but also check for old metadata
       // information and merge it individually
@@ -267,7 +336,25 @@ public final class EntryViews {
          MetaParams metaParams = MetaParams.empty();
          metaParams.addMany(metas);
          entry.setMetadata(MetaParamsInternalMetadata.from(metaParams));
+         return metaParams;
       }
+
+      return MetaParams.empty();
    }
+
+   private static <K, V> MetaParams extractMetaParams(CacheEntry<K, V> entry) {
+      // TODO: Deal with entry instances that are MetaParamsCacheEntry and merge meta params
+      // e.g. check if meta params exist and if so, merge, but also check for old metadata
+      // information and merge it individually
+
+      Metadata metadata = entry.getMetadata();
+      if (metadata instanceof MetaParamsInternalMetadata) {
+         MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+         return metaParamsMetadata.params;
+      }
+
+      return MetaParams.empty();
+   }
+
 
 }

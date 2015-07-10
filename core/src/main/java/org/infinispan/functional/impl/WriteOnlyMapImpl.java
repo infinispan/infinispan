@@ -111,8 +111,7 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
 
    @Override
    public WriteListeners<K, V> listeners() {
-      //return fmap.notifier;
-      return null;
+      return fmap.notifier();
    }
 
 }

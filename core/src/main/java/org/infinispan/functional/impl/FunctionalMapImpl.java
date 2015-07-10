@@ -50,6 +50,10 @@ public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
       return cache.getComponentRegistry().getComponent(ExecutorService.class, ASYNC_OPERATIONS_EXECUTOR);
    }
 
+   FunctionalNotifier<K, V> notifier() {
+      return cache.getComponentRegistry().getComponent(FunctionalNotifier.class);
+   }
+
    @Override
    public FunctionalMapImpl<K, V> withParams(Param<?>... ps) {
       if (ps == null || ps.length == 0)

@@ -1,4 +1,4 @@
-package org.infinispan.metadata.impl;
+package org.infinispan.functional.impl;
 
 import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.api.functional.MetaParam.Lifespan;
@@ -6,7 +6,6 @@ import org.infinispan.commons.api.functional.MetaParam.MaxIdle;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
-import org.infinispan.functional.impl.MetaParams;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.metadata.Metadata;

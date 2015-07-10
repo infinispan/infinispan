@@ -13,9 +13,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
-public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCommand {
+public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 54;
+   public static final byte COMMAND_ID = 57;
 
    private Map<? extends K, ? extends V> entries;
    private BiConsumer<V, WriteEntryView<V>> f;
@@ -70,7 +70,7 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (cacheEntry != null) {
-            f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry, null));
+            f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry, notifier));
             returns.add(null);
          }
       }

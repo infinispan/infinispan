@@ -1,9 +1,6 @@
 package org.infinispan.functional;
 
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.functional.decorators.FunctionalConcurrentMap;
-import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -12,11 +9,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Supplier;
 
+import static org.infinispan.functional.FunctionalTestUtils.supplyIntKey;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -24,11 +21,7 @@ import static org.testng.AssertJUnit.*;
  * based on functional map behaves in the correct way.
  */
 @Test(groups = "functional", testName = "functional.FunctionalConcurrentMapTest")
-public class FunctionalConcurrentMapTest extends MultipleCacheManagersTest {
-
-   private static final String DIST = "dist";
-   private static final String REPL = "repl";
-   private static final Random R = new Random();
+public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
 
    ConcurrentMap<Integer, String> local1;
    ConcurrentMap<Integer, String> local2;
@@ -38,26 +31,6 @@ public class FunctionalConcurrentMapTest extends MultipleCacheManagersTest {
 
    ConcurrentMap<Object, String> repl1;
    ConcurrentMap<Object, String> repl2;
-
-   Supplier<Integer> supplyIntKey() {
-      return () -> R.nextInt(Integer.MAX_VALUE);
-   }
-
-   @Override
-   protected void createCacheManagers() throws Throwable {
-      // Create local caches as default in a cluster of 2
-      createClusteredCaches(2, new ConfigurationBuilder());
-      // Create distributed caches
-      ConfigurationBuilder distBuilder = new ConfigurationBuilder();
-      distBuilder.clustering().cacheMode(CacheMode.DIST_SYNC).hash().numOwners(1);
-      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(DIST, distBuilder.build()));
-      // Create replicated caches
-      ConfigurationBuilder replBuilder = new ConfigurationBuilder();
-      replBuilder.clustering().cacheMode(CacheMode.REPL_SYNC);
-      cacheManagers.stream().forEach(cm -> cm.defineConfiguration(REPL, replBuilder.build()));
-      // Wait for cluster to form
-      waitForClusterToForm(DIST, REPL);
-   }
 
    @BeforeClass
    @Override
@@ -75,105 +48,135 @@ public class FunctionalConcurrentMapTest extends MultipleCacheManagersTest {
       doEmptyGetThenPut(supplyIntKey(), local1, local2);
    }
 
-   public void testReplEmptyGetThenPut() {
+   public void testReplEmptyGetThenPutOnNonOwner() {
       doEmptyGetThenPut(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplEmptyGetThenPutOnOwner() {
       doEmptyGetThenPut(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistEmptyGetThenPut() {
+   public void testDistEmptyGetThenPutOnNonOwner() {
       doEmptyGetThenPut(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistEmptyGetThenPutOnOwner() {
       doEmptyGetThenPut(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doEmptyGetThenPut(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertEquals(null, map2.put(key, "one"));
-      assertEquals("one", map1.get(key));
+      assertEquals(null, readMap.get(key));
+      assertEquals(null, writeMap.put(key, "one"));
+      assertEquals("one", readMap.get(key));
    }
 
    public void testLocalPutGet() {
       doPutGet(supplyIntKey(), local1, local2);
    }
 
-   public void testReplPutGet() {
-      doPutGet(supplyKeyForCache(0, REPL), repl1, repl2);
+   public void testReplPutGetOnNonOwner() {
       doPutGet(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistPutGet() {
+   public void testReplPutGetOnOwner() {
+      doPutGet(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testDistPutGetOnNonOwner() {
       doPutGet(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistPutGetOnOwner() {
       doPutGet(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doPutGet(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, map1.put(key, "one"));
-      assertEquals("one", map2.get(key));
+      assertEquals(null, writeMap.put(key, "one"));
+      assertEquals("one", readMap.get(key));
    }
 
-   public void testLocalGetAndPut() {
-      doGetAndPut(supplyIntKey(), local1, local2);
+   public void testLocalPutUpdate() {
+      doPutUpdate(supplyIntKey(), local1, local2);
    }
 
-   public void testReplGetAndPut() {
-      doGetAndPut(supplyKeyForCache(0, REPL), repl1, repl2);
-      doGetAndPut(supplyKeyForCache(1, REPL), repl1, repl2);
+   public void testReplPutUpdateOnNonOwner() {
+      doPutUpdate(supplyKeyForCache(0, REPL), repl1, repl2);
    }
 
-   public void testDistGetAndPut() {
-      doGetAndPut(supplyKeyForCache(0, DIST), dist1, dist2);
-      doGetAndPut(supplyKeyForCache(1, DIST), dist1, dist2);
+   public void testReplPutUpdateOnOwner() {
+      doPutUpdate(supplyKeyForCache(0, REPL), repl1, repl2);
    }
 
-   private <K> void doGetAndPut(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+   public void testDistPutUpdateOnNonOwner() {
+      doPutUpdate(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistPutUpdateOnOwner() {
+      doPutUpdate(supplyKeyForCache(1, DIST), dist1, dist2);
+   }
+
+   private <K> void doPutUpdate(Supplier<K> keySupplier,
+      ConcurrentMap<K, String> readMap,
+      ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, map1.put(key, "one"));
-      assertEquals("one", map2.put(key, "uno"));
-      assertEquals("uno", map1.get(key));
+      assertEquals(null, writeMap.put(key, "one"));
+      assertEquals("one", writeMap.put(key, "uno"));
+      assertEquals("uno", readMap.get(key));
    }
 
    public void testLocalGetAndRemove() {
       doGetAndRemove(supplyIntKey(), local1, local2);
    }
 
-   public void testReplGetAndRemove() {
+   public void testReplGetAndRemoveOnNonOwner() {
       doGetAndRemove(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplGetAndRemoveOnOwner() {
       doGetAndRemove(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistGetAndRemove() {
+   public void testDistGetAndRemoveOnNonOwner() {
       doGetAndRemove(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistGetAndRemoveOnOwner() {
       doGetAndRemove(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doGetAndRemove(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, map1.put(key, "one"));
-      assertEquals("one", map2.get(key));
-      assertEquals("one", map2.remove(key));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, writeMap.put(key, "one"));
+      assertEquals("one", readMap.get(key));
+      assertEquals("one", writeMap.remove(key));
+      assertEquals(null, readMap.get(key));
    }
 
    public void testLocalContainsKey() {
       doContainsKey(supplyIntKey(), local1, local2);
    }
 
-   public void testReplContainsKey() {
+   public void testReplContainsKeyOnNonOwner() {
       doContainsKey(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplContainsKeyOnOwner() {
       doContainsKey(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistContainsKey() {
+   public void testDistContainsKeyOnNonOwner() {
       doContainsKey(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistContainsKeyOnOwner() {
       doContainsKey(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
@@ -190,14 +193,20 @@ public class FunctionalConcurrentMapTest extends MultipleCacheManagersTest {
       doContainsValue(supplyIntKey(), "one", local1, local2);
    }
 
-   public void testReplContainsValue() {
+   public void testReplContainsValueOnNonOwner() {
       doContainsValue(supplyKeyForCache(0, REPL), "one", repl1, repl2);
-      doContainsValue(supplyKeyForCache(1, REPL), "two", repl1, repl2);
    }
 
-   public void testDistContainsValue() {
+   public void testReplContainsValueOnOwner() {
+      doContainsValue(supplyKeyForCache(1, REPL), "one", repl1, repl2);
+   }
+
+   public void testDistContainsValueOnNonOwner() {
       doContainsValue(supplyKeyForCache(0, DIST), "one", dist1, dist2);
-      doContainsValue(supplyKeyForCache(1, DIST), "two", dist1, dist2);
+   }
+
+   public void testDistContainsValueOnOwner() {
+      doContainsValue(supplyKeyForCache(1, DIST), "one", dist1, dist2);
    }
 
    private <K> void doContainsValue(Supplier<K> keySupplier, String value,
@@ -214,281 +223,336 @@ public class FunctionalConcurrentMapTest extends MultipleCacheManagersTest {
       doSize(supplyIntKey(), local1, local2);
    }
 
-   public void testReplSize() {
+   public void testReplSizeOnNonOwner() {
       doSize(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplSizeOnOwner() {
       doSize(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistSize() {
+   public void testDistSizeOnNonOwner() {
       doSize(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistSizeOnOwner() {
       doSize(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doSize(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key1 = keySupplier.get(), key2 = keySupplier.get();
-      assertEquals(0, map1.size());
-      assertEquals(null, map2.put(key1, "one"));
-      assertEquals(1, map1.size());
-      assertEquals(null, map2.put(key2, "two"));
-      assertEquals(2, map1.size());
-      assertEquals("two", map2.remove(key2));
-      assertEquals(1, map2.size());
-      assertEquals("one", map2.remove(key1));
-      assertEquals(0, map2.size());
+      assertEquals(0, readMap.size());
+      assertEquals(null, writeMap.put(key1, "one"));
+      assertEquals(1, readMap.size());
+      assertEquals(null, writeMap.put(key2, "two"));
+      assertEquals(2, readMap.size());
+      assertEquals("one", writeMap.remove(key1));
+      assertEquals(1, writeMap.size());
+      assertEquals("two", writeMap.remove(key2));
+      assertEquals(0, writeMap.size());
    }
 
    public void testLocalEmpty() {
       doEmpty(supplyIntKey(), local1, local2);
    }
 
-   public void testReplEmpty() {
+   public void testReplEmptyOnNonOwner() {
       doEmpty(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplEmptyOnOwner() {
       doEmpty(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistEmpty() {
+   public void testDistEmptyOnNonOwner() {
       doEmpty(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistEmptyOnOwner() {
       doEmpty(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doEmpty(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(true, map1.isEmpty());
-      assertEquals(null, map2.put(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertEquals(false, map1.isEmpty());
-      assertEquals("one", map2.remove(key));
-      assertEquals(true, map1.isEmpty());
+      assertEquals(true, readMap.isEmpty());
+      assertEquals(null, writeMap.put(key, "one"));
+      assertEquals("one", readMap.get(key));
+      assertEquals(false, readMap.isEmpty());
+      assertEquals("one", writeMap.remove(key));
+      assertEquals(true, readMap.isEmpty());
    }
 
    public void testLocalPutAll() {
       doPutAll(supplyIntKey(), local1, local2);
    }
 
-   public void testReplPutAll() {
+   public void testReplPutAllOnNonOwner() {
       doPutAll(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplPutAllOnOwner() {
       doPutAll(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistPutAll() {
+   public void testDistPutAllOnNonOwner() {
       doPutAll(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistPutAllOnOwner() {
       doPutAll(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doPutAll(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
-      assertEquals(true, map1.isEmpty());
+      assertEquals(true, readMap.isEmpty());
       Map<K, String> data = new HashMap<>();
       data.put(key1, "one");
       data.put(key2, "two");
       data.put(key3, "two");
-      map2.putAll(data);
-      assertEquals("one", map1.get(key1));
-      assertEquals("two", map1.get(key2));
-      assertEquals("two", map1.get(key3));
-      assertEquals("one", map2.remove(key1));
-      assertEquals("two", map2.remove(key2));
-      assertEquals("two", map2.remove(key3));
+      writeMap.putAll(data);
+      assertEquals("one", readMap.get(key1));
+      assertEquals("two", readMap.get(key2));
+      assertEquals("two", readMap.get(key3));
+      assertEquals("one", writeMap.remove(key1));
+      assertEquals("two", writeMap.remove(key2));
+      assertEquals("two", writeMap.remove(key3));
    }
 
    public void testLocalClear() {
       doClear(supplyIntKey(), local1, local2);
    }
 
-   public void testReplClear() {
+   public void testReplClearOnNonOwner() {
       doClear(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplClearOnOwner() {
       doClear(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistClear() {
+   public void testDistClearOnNonOwner() {
       doClear(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistClearOnOwner() {
       doClear(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doClear(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
-      assertEquals(true, map1.isEmpty());
+      assertEquals(true, readMap.isEmpty());
       Map<K, String> data = new HashMap<>();
       data.put(key1, "one");
       data.put(key2, "two");
       data.put(key3, "two");
-      map2.putAll(data);
-      assertEquals("one", map1.get(key1));
-      assertEquals("two", map1.get(key2));
-      assertEquals("two", map1.get(key3));
-      map2.clear();
-      assertEquals(null, map1.get(key1));
-      assertEquals(null, map1.get(key2));
-      assertEquals(null, map1.get(key3));
+      writeMap.putAll(data);
+      assertEquals("one", readMap.get(key1));
+      assertEquals("two", readMap.get(key2));
+      assertEquals("two", readMap.get(key3));
+      writeMap.clear();
+      assertEquals(null, readMap.get(key1));
+      assertEquals(null, readMap.get(key2));
+      assertEquals(null, readMap.get(key3));
    }
 
    public void testLocalKeyValueAndEntrySets() {
       doKeyValueAndEntrySets(supplyIntKey(), local1, local2);
    }
 
-   public void testReplKeyValueAndEntrySets() {
+   public void testReplKeyValueAndEntrySetsOnNonOwner() {
       doKeyValueAndEntrySets(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplKeyValueAndEntrySetsOnOwner() {
       doKeyValueAndEntrySets(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistKeyValueAndEntrySets() {
+   public void testDistKeyValueAndEntrySetsOnNonOwner() {
       doKeyValueAndEntrySets(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistKeyValueAndEntrySetsOnOwner() {
       doKeyValueAndEntrySets(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doKeyValueAndEntrySets(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key1 = keySupplier.get(), key2 = keySupplier.get(), key3 = keySupplier.get();
-      assertEquals(true, map1.isEmpty());
-      Map<K, String> data = new HashMap<>();
-      data.put(key1, "one");
-      data.put(key2, "two");
-      data.put(key3, "two");
-      map2.putAll(data);
+      assertEquals(true, readMap.isEmpty());
+      writeMap.put(key1, "one");
+      writeMap.put(key2, "two");
+      writeMap.put(key3, "two");
 
-      Set<K> keys = map1.keySet();
+      Set<K> keys = readMap.keySet();
       assertEquals(3, keys.size());
-      Set<K> expectedKeys = new HashSet<>(Arrays.asList(key1, key2));
+      Set<K> expectedKeys = new HashSet<>(Arrays.asList(key1, key2, key3));
       keys.forEach(expectedKeys::remove);
       assertEquals(true, expectedKeys.isEmpty());
 
-      assertEquals(false, map1.isEmpty());
-      Collection<String> values = map1.values();
+      assertEquals(false, readMap.isEmpty());
+      Collection<String> values = readMap.values();
       assertEquals(3, values.size());
       Set<String> expectedValues = new HashSet<>(Arrays.asList("one", "two"));
       values.forEach(expectedValues::remove);
       assertEquals(true, expectedValues.isEmpty());
 
-      Set<Map.Entry<K, String>> entries = map1.entrySet();
+      Set<Map.Entry<K, String>> entries = readMap.entrySet();
       assertEquals(3, entries.size());
-      entries.removeAll(data.entrySet());
-      assertEquals(true, entries.isEmpty());
+      entries.forEach(e -> {
+         if (e.getKey().equals(key1)) e.setValue("uno");
+         else if (e.getKey().equals(key2)) e.setValue("dos");
+         else e.setValue("dos");
+      });
 
-      assertEquals("one", map2.remove(key1));
-      assertEquals("two", map2.remove(key2));
-      assertEquals("two", map2.remove(key3));
+      assertEquals("uno", writeMap.remove(key1));
+      assertEquals("dos", writeMap.remove(key2));
+      assertEquals("dos", writeMap.remove(key3));
    }
 
    public void testLocalPutIfAbsent() {
       doPutIfAbsent(supplyIntKey(), local1, local2);
    }
 
-   public void testReplPutIfAbsent() {
+   public void testReplPutIfAbsentOnNonOwner() {
       doPutIfAbsent(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplPutIfAbsentOnOwner() {
       doPutIfAbsent(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistPutIfAbsent() {
+   public void testDistPutIfAbsentOnNonOwner() {
       doPutIfAbsent(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistPutIfAbsentOnOwner() {
       doPutIfAbsent(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doPutIfAbsent(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertEquals(null, map2.putIfAbsent(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertEquals("one", map2.putIfAbsent(key, "uno"));
-      assertEquals("one", map1.get(key));
-      assertEquals("one", map2.remove(key));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, readMap.get(key));
+      assertEquals(null, writeMap.putIfAbsent(key, "one"));
+      assertEquals("one", readMap.get(key));
+      assertEquals("one", writeMap.putIfAbsent(key, "uno"));
+      assertEquals("one", readMap.get(key));
+      assertEquals("one", writeMap.remove(key));
+      assertEquals(null, readMap.get(key));
    }
 
    public void testLocalConditionalRemove() {
       doConditionalRemove(supplyIntKey(), local1, local2);
    }
 
-   public void testReplConditionalRemove() {
+   public void testReplConditionalRemoveOnNonOwner() {
       doConditionalRemove(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplConditionalRemoveOnOwner() {
       doConditionalRemove(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistConditionalRemove() {
+   public void testDistConditionalRemoveOnNonOwner() {
       doConditionalRemove(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistConditionalRemoveOnOwner() {
       doConditionalRemove(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doConditionalRemove(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertFalse(map2.remove(key, "xxx"));
-      assertEquals(null, map2.put(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertFalse(map2.remove(key, "xxx"));
-      assertEquals("one", map1.get(key));
-      assertTrue(map2.remove(key, "one"));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, readMap.get(key));
+      assertFalse(writeMap.remove(key, "xxx"));
+      assertEquals(null, writeMap.put(key, "one"));
+      assertEquals("one", readMap.get(key));
+      assertFalse(writeMap.remove(key, "xxx"));
+      assertEquals("one", readMap.get(key));
+      assertTrue(writeMap.remove(key, "one"));
+      assertEquals(null, readMap.get(key));
    }
 
    public void testLocalReplace() {
       doReplace(supplyIntKey(), local1, local2);
    }
 
-   public void testReplReplace() {
+   public void testReplReplaceOnNonOwner() {
       doReplace(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplReplaceOnOwner() {
       doReplace(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistReplace() {
+   public void testDistReplaceOnNonOwner() {
       doReplace(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistReplaceOnOwner() {
       doReplace(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doReplace(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertEquals(null, map2.replace(key, "xxx"));
-      assertEquals(null, map2.put(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertEquals("one", map2.replace(key, "uno"));
-      assertEquals("uno", map1.get(key));
-      assertEquals("uno", map2.remove(key));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, readMap.get(key));
+      assertEquals(null, writeMap.replace(key, "xxx"));
+      assertEquals(null, writeMap.put(key, "one"));
+      assertEquals("one", readMap.get(key));
+      assertEquals("one", writeMap.replace(key, "uno"));
+      assertEquals("uno", readMap.get(key));
+      assertEquals("uno", writeMap.remove(key));
+      assertEquals(null, readMap.get(key));
    }
 
    public void testLocalReplaceWithValue() {
       doReplaceWithValue(supplyIntKey(), local1, local2);
    }
 
-   public void testReplReplaceWithValue() {
+   public void testReplReplaceWithValueOnNonOwner() {
       doReplaceWithValue(supplyKeyForCache(0, REPL), repl1, repl2);
+   }
+
+   public void testReplReplaceWithValueOnOwner() {
       doReplaceWithValue(supplyKeyForCache(1, REPL), repl1, repl2);
    }
 
-   public void testDistReplaceWithValue() {
+   public void testDistReplaceWithValueOnNonOwner() {
       doReplaceWithValue(supplyKeyForCache(0, DIST), dist1, dist2);
+   }
+
+   public void testDistReplaceWithValueOnOwner() {
       doReplaceWithValue(supplyKeyForCache(1, DIST), dist1, dist2);
    }
 
    private <K> void doReplaceWithValue(Supplier<K> keySupplier,
-         ConcurrentMap<K, String> map1,
-         ConcurrentMap<K, String> map2) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
-      assertEquals(null, map1.get(key));
-      assertFalse(map2.replace(key, "xxx", "uno"));
-      assertEquals(null, map2.put(key, "one"));
-      assertEquals("one", map1.get(key));
-      assertFalse(map2.replace(key, "xxx", "uno"));
-      assertEquals("one", map1.get(key));
-      assertTrue(map2.replace(key, "one", "uno"));
-      assertEquals("uno", map1.get(key));
-      assertEquals("uno", map2.remove(key));
-      assertEquals(null, map1.get(key));
+      assertEquals(null, readMap.get(key));
+      assertFalse(writeMap.replace(key, "xxx", "uno"));
+      assertEquals(null, writeMap.put(key, "one"));
+      assertEquals("one", readMap.get(key));
+      assertFalse(writeMap.replace(key, "xxx", "uno"));
+      assertEquals("one", readMap.get(key));
+      assertTrue(writeMap.replace(key, "one", "uno"));
+      assertEquals("uno", readMap.get(key));
+      assertEquals("uno", writeMap.remove(key));
+      assertEquals(null, readMap.get(key));
    }
 
 }

@@ -4,14 +4,20 @@ import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.metadata.Metadata;
 
 import java.util.Set;
 
-abstract class AbstractWriteManyCommand implements WriteCommand {
+abstract class AbstractWriteManyCommand<K, V> implements WriteCommand {
 
+   FunctionalNotifier<K, V> notifier;
    boolean isForwarded = false;
    private int topologyId = -1;
+
+   public void init(FunctionalNotifier<K, V> notifier) {
+      this.notifier = notifier;
+   }
 
    @Override
    public int getTopologyId() {

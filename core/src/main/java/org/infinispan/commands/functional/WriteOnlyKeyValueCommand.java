@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
 
 public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
 
-   public static final byte COMMAND_ID = 52;
+   public static final byte COMMAND_ID = 55;
 
    private BiConsumer<V, WriteEntryView<V>> f;
    private V value;
@@ -58,7 +58,7 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       // Could be that the key is not local
       if (e == null) return null;
 
-      f.accept(value, EntryViews.writeOnly(e, null));
+      f.accept(value, EntryViews.writeOnly(e, notifier));
       return null;
    }
 
