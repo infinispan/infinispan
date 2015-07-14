@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
  * @author anistor@redhat.com
  * @since 6.0
  */
-@Test(groups = "functional", testName = "query.dsl.QueryDslIterationTest")
+@Test(groups = "functional", testName = "query.dsl.embedded.QueryDslIterationTest")
 public class QueryDslIterationTest extends AbstractQueryDslTest {
 
    @BeforeClass(alwaysRun = true)

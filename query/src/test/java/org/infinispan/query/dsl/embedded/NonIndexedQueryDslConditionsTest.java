@@ -24,7 +24,7 @@ import static org.junit.Assert.assertEquals;
  * @author anistor@redhat.com
  * @since 7.0
  */
-@Test(groups = "functional", testName = "query.dsl.NonIndexedQueryDslConditionsTest")
+@Test(groups = "functional", testName = "query.dsl.embedded.NonIndexedQueryDslConditionsTest")
 public class NonIndexedQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
