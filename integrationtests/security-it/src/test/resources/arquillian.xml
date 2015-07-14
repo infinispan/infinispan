@@ -4,6 +4,8 @@
    <engine>
       <property name="deploymentExportPath">target/</property>
    </engine>
+   
+   <defaultProtocol type="Servlet 3.0" />
 
    <group qualifier="authTests" default="true">
       <container qualifier="testnode" mode="suite" default="true">
