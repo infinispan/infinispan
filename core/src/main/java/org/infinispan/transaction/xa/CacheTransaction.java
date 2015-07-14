@@ -4,6 +4,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
+import org.infinispan.context.InvocationContext;
 
 import java.util.List;
 import java.util.Map;
@@ -67,7 +68,7 @@ public interface CacheTransaction {
    void addBackupLockForKey(Object key);
 
    /**
-    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(org.infinispan.context.InvocationContext, Object)
+    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(InvocationContext, Object, long, boolean)
     */
    void notifyOnTransactionFinished();
 
@@ -80,7 +81,7 @@ public interface CacheTransaction {
     * before the specified time has elapsed and without guaranteeing that this transaction is complete. The caller is
     * responsible to call the method again if transaction completion was not reached and the time budget was not spent.
     *
-    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(org.infinispan.context.InvocationContext, Object)
+    * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(InvocationContext, Object, long, boolean)
     */
    boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException;
 
@@ -125,4 +126,10 @@ public interface CacheTransaction {
    EntryVersionsMap getVersionsRead();
 
    long getCreationTime();
+
+   void addListener(TransactionCompletedListener listener);
+
+   interface TransactionCompletedListener {
+      void onCompletion();
+   }
 }
