@@ -13,7 +13,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 7.0
  */
-@Test(groups = "functional", testName = "query.dsl.NonIndexedSingleFileStoreQueryDslConditionsTest")
+@Test(groups = "functional", testName = "query.dsl.embedded.NonIndexedSingleFileStoreQueryDslConditionsTest")
 public class NonIndexedSingleFileStoreQueryDslConditionsTest extends NonIndexedQueryDslConditionsTest {
 
    private final String tmpDirectory = TestingUtil.tmpDirectory(getClass());

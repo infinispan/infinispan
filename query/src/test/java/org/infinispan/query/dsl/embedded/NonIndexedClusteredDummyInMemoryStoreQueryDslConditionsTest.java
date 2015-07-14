@@ -9,7 +9,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 7.0
  */
-@Test(groups = "functional", testName = "query.dsl.NonIndexedClusteredDummyInMemoryStoreQueryDslConditionsTest")
+@Test(groups = "functional", testName = "query.dsl.embedded.NonIndexedClusteredDummyInMemoryStoreQueryDslConditionsTest")
 public class NonIndexedClusteredDummyInMemoryStoreQueryDslConditionsTest extends NonIndexedQueryDslConditionsTest {
 
    @Override
