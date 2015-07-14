@@ -22,7 +22,9 @@ public interface BlockingTaskAwareExecutorService extends ExecutorService {
    void execute(BlockingRunnable runnable);
 
    /**
-    * It checks for tasks ready to be processed in the thread.
+    * It checks for tasks ready to be processed in this {@link ExecutorService}.
+    *
+    * The invocation is done asynchronously, so the invoker is never blocked.
     */
    void checkForReadyTasks();
 

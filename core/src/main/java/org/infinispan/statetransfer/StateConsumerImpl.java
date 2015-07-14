@@ -7,7 +7,6 @@ import org.infinispan.commands.write.InvalidateCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.commons.util.concurrent.ParallelIterableMap;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -17,7 +16,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distexec.DistributedCallable;
-import org.infinispan.distribution.L1Manager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.executors.SemaphoreCompletionService;
 import org.infinispan.factories.KnownComponentNames;
@@ -80,7 +78,6 @@ import static org.infinispan.context.Flag.SKIP_OWNERSHIP_CHECK;
 import static org.infinispan.context.Flag.SKIP_REMOTE_LOOKUP;
 import static org.infinispan.context.Flag.SKIP_SHARED_CACHE_STORE;
 import static org.infinispan.context.Flag.SKIP_XSITE_BACKUP;
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.PRIVATE;
 
@@ -97,7 +94,6 @@ public class StateConsumerImpl implements StateConsumer {
    public static final int NO_REBALANCE_IN_PROGRESS = -1;
 
    private Cache cache;
-   private ExecutorService asyncTransportExecutor;
    private StateTransferManager stateTransferManager;
    private String cacheName;
    private Configuration configuration;
@@ -113,7 +109,6 @@ public class StateConsumerImpl implements StateConsumer {
    private CacheNotifier cacheNotifier;
    private TotalOrderManager totalOrderManager;
    private BlockingTaskAwareExecutorService remoteCommandsExecutor;
-   private L1Manager l1Manager;
    private long timeout;
    private boolean isFetchEnabled;
    private boolean isTransactional;
@@ -181,7 +176,6 @@ public class StateConsumerImpl implements StateConsumer {
 
    @Inject
    public void init(Cache cache,
-                    @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService asyncTransportExecutor,
                     @ComponentName(STATE_TRANSFER_EXECUTOR) ExecutorService stateTransferExecutor,
                     StateTransferManager stateTransferManager,
                     InterceptorChain interceptorChain,
@@ -191,15 +185,14 @@ public class StateConsumerImpl implements StateConsumer {
                     TransactionManager transactionManager,
                     CommandsFactory commandsFactory,
                     PersistenceManager persistenceManager,
-                    DataContainer dataContainer,
+                    DataContainer<Object, Object> dataContainer,
                     TransactionTable transactionTable,
                     StateTransferLock stateTransferLock,
                     CacheNotifier cacheNotifier,
                     TotalOrderManager totalOrderManager,
                     @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) BlockingTaskAwareExecutorService remoteCommandsExecutor,
-                    L1Manager l1Manager, CommitManager commitManager) {
+                    CommitManager commitManager) {
       this.cache = cache;
-      this.asyncTransportExecutor = asyncTransportExecutor;
       this.cacheName = cache.getName();
       this.stateTransferExecutor = stateTransferExecutor;
       this.stateTransferManager = stateTransferManager;
@@ -216,7 +209,6 @@ public class StateConsumerImpl implements StateConsumer {
       this.cacheNotifier = cacheNotifier;
       this.totalOrderManager = totalOrderManager;
       this.remoteCommandsExecutor = remoteCommandsExecutor;
-      this.l1Manager = l1Manager;
       this.commitManager = commitManager;
 
       isInvalidationMode = configuration.clustering().cacheMode().isInvalidation();
@@ -304,12 +296,7 @@ public class StateConsumerImpl implements StateConsumer {
       }
       stateTransferLock.releaseExclusiveTopologyLock();
       stateTransferLock.notifyTopologyInstalled(cacheTopology.getTopologyId());
-      remoteCommandsExecutor.submit(new Runnable() {
-         @Override
-         public void run() {
-            remoteCommandsExecutor.checkForReadyTasks();
-         }
-      });
+      remoteCommandsExecutor.checkForReadyTasks();
 
       try {
          // fetch transactions and data segments from other owners if this is enabled
@@ -395,12 +382,7 @@ public class StateConsumerImpl implements StateConsumer {
          }
       } finally {
          stateTransferLock.notifyTransactionDataReceived(cacheTopology.getTopologyId());
-         remoteCommandsExecutor.submit(new Runnable() {
-            @Override
-            public void run() {
-               remoteCommandsExecutor.checkForReadyTasks();
-            }
-         });
+         remoteCommandsExecutor.checkForReadyTasks();
 
          // Only set the flag here, after all the transfers have been added to the transfersBySource map
          if (stateTransferTopologyId.get() != NO_REBALANCE_IN_PROGRESS && isMember) {

@@ -201,8 +201,11 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
          case SCHEDULED:
             return (T) new LazyInitializingScheduledExecutorService(executorFactory, threadFactory);
          case BLOCKING:
-            return (T) new LazyInitializingBlockingTaskAwareExecutorService(
-                  executorFactory, threadFactory, globalComponentRegistry.getTimeService());
+            final String controllerName = "Controller-" + shortened(componentName) + "-" +
+                  globalConfiguration.transport().nodeName();
+            return (T) new LazyInitializingBlockingTaskAwareExecutorService(executorFactory, threadFactory,
+                                                                            globalComponentRegistry.getTimeService(),
+                                                                            controllerName);
          default:
             return (T) new LazyInitializingExecutorService(executorFactory, threadFactory);
       }
