@@ -3,22 +3,19 @@ package org.infinispan.remoting;
 import org.infinispan.Cache;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
-import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.remoting.transport.Transport;
 import org.infinispan.remoting.transport.jgroups.CommandAwareRpcDispatcher;
 import org.infinispan.remoting.transport.jgroups.JGroupsTransport;
@@ -28,8 +25,10 @@ import org.infinispan.util.concurrent.BlockingTaskAwareExecutorService;
 import org.infinispan.util.concurrent.BlockingTaskAwareExecutorServiceImpl;
 import org.jgroups.Address;
 import org.jgroups.Message;
+import org.jgroups.blocks.Response;
 import org.jgroups.blocks.RpcDispatcher;
 import org.jgroups.util.Buffer;
+import org.mockito.Matchers;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -38,12 +37,17 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.extractCommandsFactory;
 import static org.infinispan.test.TestingUtil.extractGlobalComponent;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.infinispan.test.fwk.TestCacheManagerFactory.getDefaultCacheConfiguration;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests the Asynchronous Invocation API and checks if the commands are correctly processed (or JGroups or Infinispan
@@ -71,10 +75,17 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
    private ReplicableCommand blockingMultipleRpcCommand2;
    private ReplicableCommand nonBlockingMultipleRpcCommand;
 
+   private static ReplicableCommand mockReplicableCommand(boolean blocking) throws Throwable {
+      ReplicableCommand mock = mock(ReplicableCommand.class);
+      when(mock.canBlock()).thenReturn(blocking);
+      doReturn(null).when(mock).perform(Matchers.any(InvocationContext.class));
+      return mock;
+   }
+
    @BeforeClass
-   public void setUp() {
+   public void setUp() throws Throwable {
       executorService = new DummyTaskCountExecutorService();
-      final BlockingTaskAwareExecutorService remoteExecutorService = new BlockingTaskAwareExecutorServiceImpl(executorService,
+      final BlockingTaskAwareExecutorService remoteExecutorService = new BlockingTaskAwareExecutorServiceImpl("AsynchronousInvocationTest-Controller", executorService,
                                                                                                               TIME_SERVICE);
       ConfigurationBuilder builder = getDefaultCacheConfiguration(false);
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);
@@ -98,11 +109,8 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
 
       commandsFactory = extractCommandsFactory(cache);
 
-      GetKeyValueCommand getKeyValueCommand =
-            new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet());
-      PutKeyValueCommand putKeyValueCommand =
-            new PutKeyValueCommand("key", "value", false, null,
-                                   new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet(), AnyEquivalence.getInstance(), null);
+      ReplicableCommand nonBlockingReplicableCommand = mockReplicableCommand(false);
+      ReplicableCommand blockingReplicableCommand = mockReplicableCommand(true);
 
       //populate commands
       blockingCacheRpcCommand = new ReduceCommand<>("task", null, cacheName, null);
@@ -110,16 +118,17 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       blockingNonCacheRpcCommand = new CacheTopologyControlCommand(null, CacheTopologyControlCommand.Type.POLICY_GET_STATUS, null, 0);
       //the GetKeyValueCommand is not replicated, but I only need a command that returns false in canBlock()
       nonBlockingNonCacheRpcCommand = new ClusteredGetCommand("key", cacheName, null, false, null, AnyEquivalence.STRING);
-      blockingSingleRpcCommand = new SingleRpcCommand(cacheName, putKeyValueCommand);
-      nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, getKeyValueCommand);
-      blockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(putKeyValueCommand, putKeyValueCommand), cacheName);
-      blockingMultipleRpcCommand2 = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(putKeyValueCommand, getKeyValueCommand), cacheName);
-      nonBlockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.<ReplicableCommand>asList(getKeyValueCommand, getKeyValueCommand), cacheName);
+      blockingSingleRpcCommand = new SingleRpcCommand(cacheName, blockingReplicableCommand);
+      nonBlockingSingleRpcCommand = new SingleRpcCommand(cacheName, nonBlockingReplicableCommand);
+      blockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.asList(blockingReplicableCommand, blockingReplicableCommand), cacheName);
+      blockingMultipleRpcCommand2 = new MultipleRpcCommand(Arrays.asList(blockingReplicableCommand, nonBlockingReplicableCommand), cacheName);
+      nonBlockingMultipleRpcCommand = new MultipleRpcCommand(Arrays.asList(nonBlockingReplicableCommand, nonBlockingReplicableCommand), cacheName);
    }
 
    @AfterClass
    public void tearDown() {
       if (cacheManager != null) {
+         cacheManager.getGlobalComponentRegistry().getComponent(ExecutorService.class, KnownComponentNames.REMOTE_COMMAND_EXECUTOR).shutdownNow();
          cacheManager.stop();
       }
    }
@@ -168,7 +177,9 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
          return;
       }
       executorService.reset();
-      commandAwareRpcDispatcher.handle(oobRequest, null);
+      CountDownLatchResponse response = new CountDownLatchResponse();
+      commandAwareRpcDispatcher.handle(oobRequest, response);
+      response.await(30, TimeUnit.SECONDS);
       Assert.assertEquals(executorService.hasExecutedCommand, expected,
                           "Command " + command.getClass() + " dispatched wrongly.");
 
@@ -178,7 +189,9 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
          return;
       }
       executorService.reset();
-      commandAwareRpcDispatcher.handle(nonOobRequest, null);
+      response = new CountDownLatchResponse();
+      commandAwareRpcDispatcher.handle(nonOobRequest, response);
+      response.await(30, TimeUnit.SECONDS);
       Assert.assertFalse(executorService.hasExecutedCommand, "Command " + command.getClass() + " dispatched wrongly.");
    }
 
@@ -205,6 +218,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       @Override
       public void execute(Runnable command) {
          hasExecutedCommand = true;
+         command.run();
       }
 
       public void reset() {
@@ -234,6 +248,29 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
       @Override
       public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
          return false; //no-op
+      }
+   }
+
+   private static class CountDownLatchResponse implements Response {
+
+      private final CountDownLatch countDownLatch;
+
+      private CountDownLatchResponse() {
+         countDownLatch = new CountDownLatch(1);
+      }
+
+      @Override
+      public void send(Object reply, boolean is_exception) {
+         countDownLatch.countDown();
+      }
+
+      @Override
+      public void send(Message reply, boolean is_exception) {
+         countDownLatch.countDown();
+      }
+
+      public boolean await(long time, TimeUnit unit) throws InterruptedException {
+         return countDownLatch.await(time, unit);
       }
    }
 }

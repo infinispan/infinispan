@@ -28,14 +28,16 @@ public final class LazyInitializingBlockingTaskAwareExecutorService implements B
    private final ThreadPoolExecutorFactory<ExecutorService> executorFactory;
    private final ThreadFactory threadFactory;
    private final TimeService timeService;
+   private final String controllerThreadName;
    private volatile BlockingTaskAwareExecutorService delegate;
 
-   public LazyInitializingBlockingTaskAwareExecutorService(
-         ThreadPoolExecutorFactory<ExecutorService> executorFactory, ThreadFactory threadFactory,
-         TimeService timeService) {
+   public LazyInitializingBlockingTaskAwareExecutorService(ThreadPoolExecutorFactory<ExecutorService> executorFactory,
+                                                           ThreadFactory threadFactory,
+                                                           TimeService timeService, String controllerThreadName) {
       this.executorFactory = executorFactory;
       this.threadFactory = threadFactory;
       this.timeService = timeService;
+      this.controllerThreadName = controllerThreadName;
    }
 
    @Override
@@ -134,8 +136,9 @@ public final class LazyInitializingBlockingTaskAwareExecutorService implements B
       if (delegate == null) {
          synchronized (this) {
             if (delegate == null) {
-               delegate = new BlockingTaskAwareExecutorServiceImpl(
-                     executorFactory.createExecutor(threadFactory), timeService);
+               delegate = new BlockingTaskAwareExecutorServiceImpl(controllerThreadName ,
+                                                                   executorFactory.createExecutor(threadFactory),
+                                                                   timeService);
             }
          }
       }
