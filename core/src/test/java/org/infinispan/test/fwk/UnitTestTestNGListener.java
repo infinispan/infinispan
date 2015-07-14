@@ -162,18 +162,19 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
 
    @Override
    public void onFinish(ISuite isuite) {
-      if (log.isTraceEnabled()) {
-         log.trace("Possible leaked threads at the end of the test suite:");
-         for (Map.Entry<Thread, StackTraceElement[]> s : Thread.getAllStackTraces().entrySet()) {
-            Thread thread = s.getKey();
-            if (thread.getName().startsWith("testng-")
-                  || seenThreads != null && seenThreads.contains(thread.getName() + "-" + thread.getId() + "-" + thread.hashCode())) {
-               continue;
-            }
-
+      log.warn("Possible leaked threads at the end of the test suite:");
+      int count = 0;
+      for (Map.Entry<Thread, StackTraceElement[]> s : Thread.getAllStackTraces().entrySet()) {
+         Thread thread = s.getKey();
+         if (thread.getName().startsWith("testng-")
+               || seenThreads != null && seenThreads.contains(thread.getName() + "-" + thread.getId() + "-" + thread.hashCode())) {
+            continue;
+         }
+         count++;
+         if (log.isTraceEnabled()) {
             StringBuilder sb = new StringBuilder();
             sb.append("Thread: name=").append(thread.getName())
-                  .append(", group=").append(thread.getThreadGroup() == null? null : thread.getThreadGroup().getName())
+                  .append(", group=").append(thread.getThreadGroup() == null ? null : thread.getThreadGroup().getName())
                   .append(", isDaemon=").append(thread.isDaemon())
                   .append(", isInterrupted=").append(thread.isInterrupted())
                   .append(", Stack trace:\n");
@@ -181,8 +182,11 @@ public class UnitTestTestNGListener implements ITestListener, IInvokedMethodList
                sb.append("      ").append(ste.toString()).append("\n");
             }
             log.trace(sb.toString());
+         } else {
+            log.warnf("Thread Name: %s", thread.getName());
          }
-         seenThreads = null;
       }
+      seenThreads = null;
+      log.warnf("Number of threads: %s", count);
    }
 }

@@ -27,7 +27,9 @@ import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_
 import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR;
 import static org.infinispan.factories.KnownComponentNames.TOTAL_ORDER_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.getDefaultThreadPrio;
 import static org.infinispan.factories.KnownComponentNames.shortened;
 
 /**
@@ -50,6 +52,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
    private BlockingTaskAwareExecutorService totalOrderExecutor;
    private ExecutorService stateTransferExecutor;
    private ExecutorService asyncOperationsExecutor;
+   private ScheduledExecutorService timeoutExecutor;
 
    @Override
    @SuppressWarnings("unchecked")
@@ -62,7 +65,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (notificationExecutor == null) {
                   notificationExecutor = createExecutorService(
                         globalConfiguration.listenerThreadPool(),
-                        globalConfiguration, ASYNC_NOTIFICATION_EXECUTOR,
+                        ASYNC_NOTIFICATION_EXECUTOR,
                         ExecutorServiceType.DEFAULT);
                }
             }
@@ -72,7 +75,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (persistenceExecutor == null) {
                   persistenceExecutor = createExecutorService(
                         globalConfiguration.persistenceThreadPool(),
-                        globalConfiguration, PERSISTENCE_EXECUTOR,
+                        PERSISTENCE_EXECUTOR,
                         ExecutorServiceType.DEFAULT);
                }
             }
@@ -82,7 +85,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (asyncTransportExecutor == null) {
                   asyncTransportExecutor = createExecutorService(
                         globalConfiguration.transport().transportThreadPool(),
-                        globalConfiguration, ASYNC_TRANSPORT_EXECUTOR,
+                        ASYNC_TRANSPORT_EXECUTOR,
                         ExecutorServiceType.DEFAULT);
                }
             }
@@ -92,7 +95,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (expirationExecutor == null) {
                   expirationExecutor = createExecutorService(
                         globalConfiguration.evictionThreadPool(),
-                        globalConfiguration, EXPIRATION_SCHEDULED_EXECUTOR,
+                        EXPIRATION_SCHEDULED_EXECUTOR,
                         ExecutorServiceType.SCHEDULED);
                }
             }
@@ -102,7 +105,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (asyncReplicationExecutor == null) {
                   asyncReplicationExecutor = createExecutorService(
                         globalConfiguration.replicationQueueThreadPool(),
-                        globalConfiguration, ASYNC_REPLICATION_QUEUE_EXECUTOR,
+                        ASYNC_REPLICATION_QUEUE_EXECUTOR,
                         ExecutorServiceType.SCHEDULED);
                }
             }
@@ -112,7 +115,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (remoteCommandsExecutor == null) {
                   remoteCommandsExecutor = createExecutorService(
                         globalConfiguration.transport().remoteCommandThreadPool(),
-                        globalConfiguration, REMOTE_COMMAND_EXECUTOR,
+                        REMOTE_COMMAND_EXECUTOR,
                         ExecutorServiceType.BLOCKING);
                }
             }
@@ -122,7 +125,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (totalOrderExecutor == null) {
                   totalOrderExecutor = createExecutorService(
                         globalConfiguration.transport().totalOrderThreadPool(),
-                        globalConfiguration, TOTAL_ORDER_EXECUTOR,
+                        TOTAL_ORDER_EXECUTOR,
                         ExecutorServiceType.BLOCKING);
                }
             }
@@ -132,7 +135,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
                if (stateTransferExecutor == null) {
                   stateTransferExecutor = createExecutorService(
                         globalConfiguration.stateTransferThreadPool(),
-                        globalConfiguration, STATE_TRANSFER_EXECUTOR,
+                        STATE_TRANSFER_EXECUTOR,
                         ExecutorServiceType.DEFAULT);
                }
             }
@@ -141,11 +144,18 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
             synchronized (this) {
                if (asyncOperationsExecutor == null) {
                   asyncOperationsExecutor = createExecutorService(
-                        globalConfiguration.asyncThreadPool(), globalConfiguration,
+                        globalConfiguration.asyncThreadPool(),
                         ASYNC_OPERATIONS_EXECUTOR, ExecutorServiceType.DEFAULT);
                }
             }
             return (T) asyncOperationsExecutor;
+         } else if (componentName.endsWith(TIMEOUT_SCHEDULE_EXECUTOR)) {
+            synchronized (this) {
+               if (timeoutExecutor == null) {
+                  timeoutExecutor = createExecutorService(null, TIMEOUT_SCHEDULE_EXECUTOR, ExecutorServiceType.SCHEDULED);
+               }
+            }
+            return (T) timeoutExecutor;
          } else {
             throw new CacheConfigurationException("Unknown named executor " + componentName);
          }
@@ -166,21 +176,24 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
       if (expirationExecutor != null) expirationExecutor.shutdownNow();
       if (totalOrderExecutor != null) totalOrderExecutor.shutdownNow();
       if (stateTransferExecutor != null) stateTransferExecutor.shutdownNow();
+      if (timeoutExecutor != null) timeoutExecutor.shutdownNow();
+      if (asyncOperationsExecutor != null) asyncOperationsExecutor.shutdownNow();
    }
 
+   @SuppressWarnings("unchecked")
    private <T extends ExecutorService> T createExecutorService(ThreadPoolConfiguration threadPoolConfiguration,
-         GlobalConfiguration globalCfg, String componentName, ExecutorServiceType type) {
+                                                               String componentName, ExecutorServiceType type) {
       ThreadFactory threadFactory;
       ThreadPoolExecutorFactory executorFactory;
       if (threadPoolConfiguration != null) {
          threadFactory = threadPoolConfiguration.threadFactory() != null
                ? threadPoolConfiguration.threadFactory()
-               : createThreadFactoryWithDefaults(globalCfg, componentName);
+               : createThreadFactoryWithDefaults(globalConfiguration, componentName);
          executorFactory = threadPoolConfiguration.threadPoolFactory() != null
                ? threadPoolConfiguration.threadPoolFactory()
                : createThreadPoolFactoryWithDefaults(componentName, type);
       } else {
-         threadFactory = createThreadFactoryWithDefaults(globalCfg, componentName);
+         threadFactory = createThreadFactoryWithDefaults(globalConfiguration, componentName);
          executorFactory = createThreadPoolFactoryWithDefaults(componentName, type);
       }
 
@@ -197,8 +210,7 @@ public class NamedExecutorsFactory extends NamedComponentFactory implements Auto
 
    private ThreadFactory createThreadFactoryWithDefaults(GlobalConfiguration globalCfg, final String componentName) {
       // Use defaults
-      return new DefaultThreadFactory(null,
-            KnownComponentNames.getDefaultThreadPrio(componentName), DefaultThreadFactory.DEFAULT_PATTERN,
+      return new DefaultThreadFactory(null, getDefaultThreadPrio(componentName), DefaultThreadFactory.DEFAULT_PATTERN,
             globalCfg.transport().nodeName(), shortened(componentName));
    }
 
