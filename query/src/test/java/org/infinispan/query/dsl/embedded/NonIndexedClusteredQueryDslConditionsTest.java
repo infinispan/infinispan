@@ -8,7 +8,7 @@ import org.testng.annotations.Test;
  * @author anistor@redhat.com
  * @since 7.0
  */
-@Test(groups = "functional", testName = "query.dsl.NonIndexedClusteredQueryDslConditionsTest")
+@Test(groups = "functional", testName = "query.dsl.embedded.NonIndexedClusteredQueryDslConditionsTest")
 public class NonIndexedClusteredQueryDslConditionsTest extends NonIndexedQueryDslConditionsTest {
 
    @Override
