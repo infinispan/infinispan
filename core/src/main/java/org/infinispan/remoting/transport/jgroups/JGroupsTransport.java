@@ -169,8 +169,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
    public void initialize(@ComponentName(GLOBAL_MARSHALLER) StreamingMarshaller marshaller,
                           CacheManagerNotifier notifier, GlobalComponentRegistry gcr,
                           TimeService timeService, InboundInvocationHandler globalHandler,
-                          // TODO define a new scheduled executor for the replication timeouts
-                          @ComponentName(KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR) ScheduledExecutorService timeoutExecutor) {
+                          @ComponentName(KnownComponentNames.TIMEOUT_SCHEDULE_EXECUTOR) ScheduledExecutorService timeoutExecutor) {
       this.marshaller = marshaller;
       this.notifier = notifier;
       this.gcr = gcr;
@@ -389,7 +388,7 @@ public class JGroupsTransport extends AbstractTransport implements MembershipLis
 
          if (channel == null && props.containsKey(CONFIGURATION_FILE)) {
             cfg = props.getProperty(CONFIGURATION_FILE);
-            Collection<URL> confs = null;
+            Collection<URL> confs = Collections.emptyList();
             try {
                confs = fileLookup.lookupFileLocations(cfg, configuration.classLoader());
             } catch (IOException io) {
