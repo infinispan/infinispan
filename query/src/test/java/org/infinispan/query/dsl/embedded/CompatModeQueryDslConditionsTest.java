@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  * @author Martin Gencur
  * @since 6.0
  */
-@Test(groups = "functional", testName = "query.dsl.CompatModeQueryDslConditionsTest")
+@Test(groups = "functional", testName = "query.dsl.embedded.CompatModeQueryDslConditionsTest")
 public class CompatModeQueryDslConditionsTest extends QueryDslConditionsTest {
 
    @Override
