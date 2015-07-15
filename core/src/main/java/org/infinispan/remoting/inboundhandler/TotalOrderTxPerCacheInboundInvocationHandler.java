@@ -1,9 +1,6 @@
 package org.infinispan.remoting.inboundhandler;
 
-import org.infinispan.commands.TopologyAffectedCommand;
 import org.infinispan.commands.remote.CacheRpcCommand;
-import org.infinispan.commands.remote.MultipleRpcCommand;
-import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderCommitCommand;
@@ -13,6 +10,7 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
+import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
@@ -43,22 +41,11 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
    @Override
    public void handle(CacheRpcCommand command, Reply reply, DeliverOrder order) {
       try {
-         int commandTopologyId = NO_TOPOLOGY_COMMAND;
-         boolean onExecutorService = !order.preserveOrder() && command.canBlock();
-         BlockingRunnable runnable;
+         final int commandTopologyId = extractCommandTopologyId(command);
+         final boolean onExecutorService;
+         final BlockingRunnable runnable;
 
          switch (command.getCommandId()) {
-            case MultipleRpcCommand.COMMAND_ID:
-               commandTopologyId = extractCommandTopologyId((MultipleRpcCommand) command);
-               runnable = createDefaultRunnable(command, reply, commandTopologyId, true, onExecutorService);
-               break;
-            case SingleRpcCommand.COMMAND_ID:
-               commandTopologyId = extractCommandTopologyId((SingleRpcCommand) command);
-               runnable = createDefaultRunnable(command, reply, commandTopologyId, true, onExecutorService);
-               break;
-            case StateRequestCommand.COMMAND_ID:
-               runnable = createDefaultRunnable(command, reply, commandTopologyId, false, onExecutorService);
-               break;
             case TotalOrderVersionedPrepareCommand.COMMAND_ID:
             case TotalOrderNonVersionedPrepareCommand.COMMAND_ID:
                if (!stateTransferManager.ownsData()) {
@@ -74,13 +61,13 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
             case TotalOrderCommitCommand.COMMAND_ID:
             case TotalOrderVersionedCommitCommand.COMMAND_ID:
             case RollbackCommand.COMMAND_ID:
+               onExecutorService = true;
                runnable = createRunnableForCommitOrRollback(command, reply);
                break;
             default:
-               if (command instanceof TopologyAffectedCommand) {
-                  commandTopologyId = extractCommandTopologyId((TopologyAffectedCommand) command);
-               }
-               runnable = createDefaultRunnable(command, reply, commandTopologyId, true, onExecutorService);
+               onExecutorService = executeOnExecutorService(order, command);
+               runnable = createDefaultRunnable(command, reply, commandTopologyId,
+                                                command.getCommandId() != StateRequestCommand.COMMAND_ID, onExecutorService);
                break;
          }
          handleRunnable(runnable, onExecutorService);
