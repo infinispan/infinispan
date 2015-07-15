@@ -35,6 +35,7 @@
       <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
       <version.junit>4.11</version.junit>
       <version.org.infinispan>${project.version}</version.org.infinispan>
+      <version.org.infinispan.infinispan-management-console>8.0.0.Alpha1</version.org.infinispan.infinispan-management-console>
       <version.org.infinispan.arquillian.container>1.2.0.Alpha3</version.org.infinispan.arquillian.container>
       <version.org.slf4j>1.7.2</version.org.slf4j>
 
@@ -332,6 +333,12 @@
             <groupId>org.infinispan</groupId>
             <artifactId>infinispan-cli-interpreter</artifactId>
             <version>${version.org.infinispan}</version>
+         </dependency>
+         
+         <dependency>
+            <groupId>org.infinispan</groupId>
+            <artifactId>infinispan-management-console</artifactId>
+            <version>${version.org.infinispan.infinispan-management-console}</version>
          </dependency>
 
          <dependency>
