@@ -6,6 +6,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.iteration.impl.EntryRetriever;
@@ -150,6 +151,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private GroupManager groupManager;
    private LocalStreamManager localStreamManager;
    private ClusterStreamManager clusterStreamManager;
+   private ClusteringDependentLogic clusteringDependentLogic;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -164,7 +166,8 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  TimeService timeService, XSiteStateProvider xSiteStateProvider, XSiteStateConsumer xSiteStateConsumer,
                                  XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
-                                 LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager) {
+                                 LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
+                                 ClusteringDependentLogic clusteringDependentLogic) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -190,6 +193,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.groupManager = groupManager;
       this.localStreamManager = localStreamManager;
       this.clusterStreamManager = clusterStreamManager;
+      this.clusteringDependentLogic = clusteringDependentLogic;
    }
 
    @Start(priority = 1)
@@ -202,32 +206,32 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public PutKeyValueCommand buildPutKeyValueCommand(Object key, Object value, Metadata metadata, Set<Flag> flags) {
       return new PutKeyValueCommand(key, value, false, notifier, metadata, flags,
-            configuration.dataContainer().valueEquivalence());
+            configuration.dataContainer().valueEquivalence(), generateUUID());
    }
 
    @Override
    public RemoveCommand buildRemoveCommand(Object key, Object value, Set<Flag> flags) {
-      return new RemoveCommand(key, value, notifier, flags, configuration.dataContainer().valueEquivalence());
+      return new RemoveCommand(key, value, notifier, flags, configuration.dataContainer().valueEquivalence(), generateUUID());
    }
 
    @Override
    public InvalidateCommand buildInvalidateCommand(Set<Flag> flags, Object... keys) {
-      return new InvalidateCommand(notifier, flags, keys);
+      return new InvalidateCommand(notifier, flags, generateUUID(), keys);
    }
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(Set<Flag> flags, Collection<Object> keys) {
-      return new InvalidateL1Command(dataContainer, configuration, distributionManager, notifier, flags, keys);
+      return new InvalidateL1Command(dataContainer, distributionManager, notifier, flags, keys, generateUUID());
    }
 
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(Address origin, Set<Flag> flags, Collection<Object> keys) {
-      return new InvalidateL1Command(origin, dataContainer, configuration, distributionManager, notifier, flags, keys);
+      return new InvalidateL1Command(origin, dataContainer, distributionManager, notifier, flags, keys, generateUUID());
    }
 
    @Override
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags) {
-      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flags, configuration.dataContainer().valueEquivalence());
+      return new ReplaceCommand(key, oldValue, newValue, notifier, metadata, flags, configuration.dataContainer().valueEquivalence(), generateUUID());
    }
 
    @Override
@@ -263,7 +267,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public PutMapCommand buildPutMapCommand(Map<?, ?> map, Metadata metadata, Set<Flag> flags) {
-      return new PutMapCommand(map, notifier, metadata, flags);
+      return new PutMapCommand(map, notifier, metadata, flags, generateUUID());
    }
 
    @Override
@@ -273,7 +277,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public EvictCommand buildEvictCommand(Object key, Set<Flag> flags) {
-      return new EvictCommand(key, notifier, flags);
+      return new EvictCommand(key, notifier, flags, generateUUID());
    }
 
    @Override
@@ -588,7 +592,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public ApplyDeltaCommand buildApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection keys) {
-      return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys);
+      return new ApplyDeltaCommand(deltaAwareValueKey, delta, keys, generateUUID());
    }
 
    @Override
@@ -685,5 +689,9 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public ClusteredGetAllCommand buildClusteredGetAllCommand(List<?> keys, Set<Flag> flags, GlobalTransaction gtx) {
       return new ClusteredGetAllCommand(cacheName, keys, flags, gtx, configuration.dataContainer().keyEquivalence());
+   }
+
+   private CommandInvocationId generateUUID() {
+      return CommandInvocationId.generateId(clusteringDependentLogic.getAddress());
    }
 }

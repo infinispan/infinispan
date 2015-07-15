@@ -1,6 +1,7 @@
 package org.infinispan.commands.write;
 
 import org.infinispan.atomic.CopyableDeltaAware;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.metadata.Metadata;
@@ -40,8 +41,8 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    public PutKeyValueCommand(Object key, Object value, boolean putIfAbsent,
                              CacheNotifier notifier, Metadata metadata, Set<Flag> flags,
-                             Equivalence valueEquivalence) {
-      super(key, flags);
+                             Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
+      super(key, flags, commandInvocationId);
       setValue(value);
       this.putIfAbsent = putIfAbsent;
       this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
@@ -102,7 +103,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, metadata, putIfAbsent, valueMatcher, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, value, metadata, putIfAbsent, valueMatcher, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
    }
 
    @Override
@@ -115,6 +116,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       putIfAbsent = (Boolean) parameters[3];
       valueMatcher = (ValueMatcher) parameters[4];
       flags = (Set<Flag>) parameters[5];
+      commandInvocationId = (CommandInvocationId) parameters[6];
    }
 
    @Override

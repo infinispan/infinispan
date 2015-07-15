@@ -1,5 +1,6 @@
 package org.infinispan.commands.write;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.Flag;
@@ -19,8 +20,8 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    private static final Log log = LogFactory.getLog(EvictCommand.class);
 
-   public EvictCommand(Object key, CacheNotifier notifier, Set<Flag> flags) {
-      super(key, null, notifier, flags, null);
+   public EvictCommand(Object key, CacheNotifier notifier, Set<Flag> flags, CommandInvocationId commandInvocationId) {
+      super(key, null, notifier, flags, null, commandInvocationId);
    }
 
    @Override

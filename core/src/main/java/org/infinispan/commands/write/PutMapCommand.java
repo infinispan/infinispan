@@ -1,5 +1,6 @@
 package org.infinispan.commands.write;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.commands.AbstractFlagAffectedCommand;
 import org.infinispan.commands.MetadataAwareCommand;
@@ -27,15 +28,17 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    CacheNotifier notifier;
    Metadata metadata;
    boolean isForwarded = false;
+   private CommandInvocationId commandInvocationId;
 
    public PutMapCommand() {
    }
 
-   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, Metadata metadata, Set<Flag> flags) {
+   public PutMapCommand(Map<?, ?> map, CacheNotifier notifier, Metadata metadata, Set<Flag> flags, CommandInvocationId commandInvocationId) {
       this.map = (Map<Object, Object>) map;
       this.notifier = notifier;
       this.metadata = metadata;
       this.flags = flags;
+      this.commandInvocationId = commandInvocationId;
    }
 
    public PutMapCommand(PutMapCommand command) {
@@ -44,6 +47,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       this.metadata = command.metadata;
       this.flags = command.flags;
       this.isForwarded = command.isForwarded;
+      this.commandInvocationId = CommandInvocationId.generateIdFrom(command.commandInvocationId);
    }
 
    public void init(CacheNotifier notifier) {
@@ -91,17 +95,17 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{map, metadata, isForwarded, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{map, metadata, isForwarded, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
    }
 
+   @SuppressWarnings("unchecked")
    @Override
    public void setParameters(int commandId, Object[] parameters) {
       map = (Map<Object, Object>) parameters[0];
       metadata = (Metadata) parameters[1];
       isForwarded = (Boolean) parameters[2];
-      if (parameters.length > 3) {
-         this.flags = (Set<Flag>) parameters[3];
-      }
+      flags = (Set<Flag>) parameters[3];
+      commandInvocationId = (CommandInvocationId) parameters[4];
    }
 
    @Override

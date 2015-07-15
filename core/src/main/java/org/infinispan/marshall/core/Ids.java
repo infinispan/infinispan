@@ -144,4 +144,6 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int INTERMEDIATE_OPERATIONS = 146;
    int TERMINAL_OPERATIONS = 147;
    int STREAM_MARSHALLING = 148;
+
+   int COMMAND_INVOCATION_ID = 149;
 }
