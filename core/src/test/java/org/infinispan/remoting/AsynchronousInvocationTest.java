@@ -13,7 +13,6 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.context.Flag;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -103,7 +102,7 @@ public class AsynchronousInvocationTest extends AbstractInfinispanTest {
             new GetKeyValueCommand("key", InfinispanCollections.<Flag>emptySet());
       PutKeyValueCommand putKeyValueCommand =
             new PutKeyValueCommand("key", "value", false, null,
-                                   new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet(), AnyEquivalence.getInstance());
+                                   new EmbeddedMetadata.Builder().build(), InfinispanCollections.<Flag>emptySet(), AnyEquivalence.getInstance(), null);
 
       //populate commands
       blockingCacheRpcCommand = new ReduceCommand<>("task", null, cacheName, null);

@@ -1,5 +1,6 @@
 package org.infinispan.commands.write;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.context.Flag;
 
@@ -14,11 +15,14 @@ import java.util.Set;
  */
 public abstract class AbstractDataWriteCommand extends AbstractDataCommand implements DataWriteCommand {
 
+   protected CommandInvocationId commandInvocationId;
+
    protected AbstractDataWriteCommand() {
    }
 
-   protected AbstractDataWriteCommand(Object key, Set<Flag> flags) {
+   protected AbstractDataWriteCommand(Object key, Set<Flag> flags, CommandInvocationId commandInvocationId) {
       super(key, flags);
+      this.commandInvocationId = commandInvocationId;
    }
 
    @Override

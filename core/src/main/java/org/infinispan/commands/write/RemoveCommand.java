@@ -1,5 +1,6 @@
 package org.infinispan.commands.write;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
@@ -37,8 +38,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
     */
    protected Object value;
 
-   public RemoveCommand(Object key, Object value, CacheNotifier notifier, Set<Flag> flags, Equivalence valueEquivalence) {
-      super(key, flags);
+   public RemoveCommand(Object key, Object value, CacheNotifier notifier, Set<Flag> flags, Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
+      super(key, flags, commandInvocationId);
       this.value = value;
       this.notifier = notifier;
       this.valueEquivalence = valueEquivalence;
@@ -159,11 +160,12 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       value = parameters[1];
       flags = (Set<Flag>) parameters[2];
       valueMatcher = (ValueMatcher) parameters[3];
+      commandInvocationId = (CommandInvocationId) parameters[4];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), valueMatcher};
+      return new Object[]{key, value, Flag.copyWithoutRemotableFlags(flags), valueMatcher, commandInvocationId};
    }
 
    @Override

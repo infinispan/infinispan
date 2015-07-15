@@ -3,12 +3,11 @@ package org.infinispan.commands.write;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.locks.LockSupport;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -18,8 +17,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Invalidates an entry in a L1 cache (used with DIST mode)
@@ -33,34 +30,31 @@ public class InvalidateL1Command extends InvalidateCommand {
    private static final Log log = LogFactory.getLog(InvalidateL1Command.class);
    private DistributionManager dm;
    private DataContainer dataContainer;
-   private Configuration config;
    private Address writeOrigin;
 
    public InvalidateL1Command() {
       writeOrigin = null;
    }
 
-   public InvalidateL1Command(DataContainer dc, Configuration config, DistributionManager dm,
-                              CacheNotifier notifier, Set<Flag> flags, Object... keys) {
-      super(notifier, flags, keys);
+   public InvalidateL1Command(DataContainer dc, DistributionManager dm, CacheNotifier notifier, Set<Flag> flags,
+                              CommandInvocationId commandInvocationId, Object... keys) {
+      super(notifier, flags, commandInvocationId, keys);
       writeOrigin = null;
       this.dm = dm;
       this.dataContainer = dc;
-      this.config = config;
    }
 
-   public InvalidateL1Command(DataContainer dc, Configuration config, DistributionManager dm,
-                              CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
-      this(null, dc, config, dm, notifier, flags, keys);
+   public InvalidateL1Command(DataContainer dc, DistributionManager dm, CacheNotifier notifier, Set<Flag> flags,
+                              Collection<Object> keys, CommandInvocationId commandInvocationId) {
+      this(null, dc, dm, notifier, flags, keys, commandInvocationId);
    }
 
-   public InvalidateL1Command(Address writeOrigin, DataContainer dc, Configuration config,
-                              DistributionManager dm, CacheNotifier notifier, Set<Flag> flags, Collection<Object> keys) {
-      super(notifier, flags, keys);
+   public InvalidateL1Command(Address writeOrigin, DataContainer dc, DistributionManager dm, CacheNotifier notifier,
+                              Set<Flag> flags, Collection<Object> keys, CommandInvocationId commandInvocationId) {
+      super(notifier, flags, keys, commandInvocationId);
       this.writeOrigin = writeOrigin;
       this.dm = dm;
       this.dataContainer = dc;
-      this.config = config;
    }
 
    @Override
@@ -71,7 +65,6 @@ public class InvalidateL1Command extends InvalidateCommand {
    public void init(Configuration config, DistributionManager dm, CacheNotifier n, DataContainer dc) {
       super.init(n, config);
       this.dm = dm;
-      this.config = config;
       this.dataContainer = dc;
    }
 
@@ -114,27 +107,31 @@ public class InvalidateL1Command extends InvalidateCommand {
    @Override
    public Object[] getParameters() {
       if (keys == null || keys.length == 0) {
-         return new Object[]{writeOrigin, 0};
+         return new Object[]{commandInvocationId, writeOrigin, 0};
       } else if (keys.length == 1) {
-         return new Object[]{writeOrigin, 1,  keys[0]};
+         return new Object[]{commandInvocationId, writeOrigin, 1,  keys[0]};
       } else {
-         Object[] retval = new Object[keys.length + 2];
-         retval[0] = writeOrigin;
-         retval[1] = keys.length;
-         System.arraycopy(keys, 0, retval, 2, keys.length);
+         Object[] retval = new Object[keys.length + 3];
+         int i = 0;
+         retval[i++] = commandInvocationId;
+         retval[i++] = writeOrigin;
+         retval[i++] = keys.length;
+         System.arraycopy(keys, 0, retval, i, keys.length);
          return retval;
       }
    }
 
    @Override
    public void setParameters(int commandId, Object[] args) {
-      writeOrigin = (Address) args[0];
-      int size = (Integer) args[1];
+      int i = 0;
+      commandInvocationId = (CommandInvocationId) args[i++];
+      writeOrigin = (Address) args[i++];
+      int size = (Integer) args[i++];
       keys = new Object[size];
       if (size == 1) {
-         keys[0] = args[2];
+         keys[0] = args[i];
       } else if (size > 0) {
-         System.arraycopy(args, 2, keys, 0, size);
+         System.arraycopy(args, i, keys, 0, size);
       }
    }
 

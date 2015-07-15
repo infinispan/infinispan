@@ -1,5 +1,6 @@
 package org.infinispan.commands.write;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.MetadataAwareCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -35,8 +36,9 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    public ReplaceCommand(Object key, Object oldValue, Object newValue,
-         CacheNotifier notifier, Metadata metadata, Set<Flag> flags, Equivalence valueEquivalence) {
-      super(key, flags);
+                         CacheNotifier notifier, Metadata metadata, Set<Flag> flags, Equivalence valueEquivalence,
+                         CommandInvocationId commandInvocationId) {
+      super(key, flags, commandInvocationId);
       this.oldValue = oldValue;
       this.newValue = newValue;
       this.notifier = notifier;
@@ -110,8 +112,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, oldValue, newValue, metadata, valueMatcher,
-                          Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, oldValue, newValue, metadata, valueMatcher, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
    }
 
    @Override
@@ -124,6 +125,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       metadata = (Metadata) parameters[3];
       valueMatcher = (ValueMatcher) parameters[4];
       flags = (Set<Flag>) parameters[5];
+      commandInvocationId = (CommandInvocationId) parameters[6];
    }
 
    @Override

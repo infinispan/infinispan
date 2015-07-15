@@ -2,6 +2,7 @@ package org.infinispan.commands.write;
 
 import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaCompositeKey;
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -27,8 +28,8 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    public ApplyDeltaCommand() {
    }
 
-   public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys) {
-      super(deltaAwareValueKey, EnumSet.of(Flag.DELTA_WRITE));
+   public ApplyDeltaCommand(Object deltaAwareValueKey, Delta delta, Collection<Object> keys, CommandInvocationId commandInvocationId) {
+      super(deltaAwareValueKey, EnumSet.of(Flag.DELTA_WRITE), commandInvocationId);
 
       if (keys == null || keys.isEmpty())
          throw new IllegalArgumentException("At least one key to be locked needs to be specified");
@@ -65,7 +66,7 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, delta, keys, Flag.copyWithoutRemotableFlags(flags)};
+      return new Object[]{key, delta, keys, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
    }
 
    @Override
@@ -78,7 +79,8 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
       key = args[i++];
       delta = (Delta)args[i++];
       keys = (List<Object>) args[i++];
-      flags = (Set<Flag>) args[i];
+      flags = (Set<Flag>) args[i++];
+      commandInvocationId = (CommandInvocationId) args[i];
    }
 
    @Override
