@@ -25,7 +25,7 @@
 <module xmlns="urn:jboss:module:1.3" name="org.jboss.as.console" slot="ispn">
 
     <resources>
-        <resource-root path="dir" />
+        <artifact name="${org.infinispan:infinispan-management-console}" />
     </resources>
 
     <dependencies>
