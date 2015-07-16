@@ -2,9 +2,16 @@ package org.infinispan.util.logging.log4j;
 
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.spi.Filter;
-import org.apache.log4j.spi.LoggingEvent;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.config.plugins.Plugin;
+import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
+import org.apache.logging.log4j.core.config.plugins.PluginFactory;
+import org.apache.logging.log4j.core.filter.AbstractFilter;
+import org.apache.logging.log4j.message.Message;
 
 /**
  * Log4j {@link Filter} that only allow events from threads matching a regular expression.
@@ -13,34 +20,69 @@ import org.apache.log4j.spi.LoggingEvent;
  * @author Dan Berindei
  * @since 5.2
  */
-public class ThreadNameFilter extends Filter {
-   private Level threshold = Level.DEBUG;
-   private Pattern includePattern;
+@Plugin(name = "ThreadNameFilter", category = "Core", elementType = Filter.ELEMENT_TYPE, printObject = true)
+public final class ThreadNameFilter extends AbstractFilter {
+   /** The serialVersionUID */
+   private static final long serialVersionUID = 1L;
+   private final Level level;
+   private final Pattern includePattern;
 
-   public Level getThreshold() {
-      return threshold;
-   }
-
-   public void setThreshold(Level threshold) {
-      this.threshold = threshold;
-   }
-
-   public String getInclude() {
-      return includePattern != null ? includePattern.pattern() : null;
-   }
-
-   public void setInclude(String include) {
-      this.includePattern = Pattern.compile(include);
+   public ThreadNameFilter(Level actualLevel, String includeRegex) {
+      this.level = actualLevel;
+      this.includePattern = Pattern.compile(includeRegex);
    }
 
    @Override
-   public int decide(LoggingEvent event) {
-      if (event.getLevel().isGreaterOrEqual(threshold)) {
-         return Filter.NEUTRAL;
-      } else if (includePattern == null || includePattern.matcher(event.getThreadName()).find()) {
-         return Filter.NEUTRAL;
+   public Result filter(final Logger logger, final Level level, final Marker marker, final String msg,
+                        final Object... params) {
+       return filter(level, Thread.currentThread().getName());
+   }
+
+   @Override
+   public Result filter(final Logger logger, final Level level, final Marker marker, final Object msg,
+                        final Throwable t) {
+       return filter(level, Thread.currentThread().getName());
+   }
+
+   @Override
+   public Result filter(final Logger logger, final Level level, final Marker marker, final Message msg,
+                        final Throwable t) {
+       return filter(level, Thread.currentThread().getName());
+   }
+
+   @Override
+   public Result filter(final LogEvent event) {
+      return filter(event.getLevel(), event.getThreadName());
+   }
+
+   private Result filter(final Level level, String threadName) {
+      if (level.isMoreSpecificThan(this.level)) {
+         return Result.NEUTRAL;
+      } else if (includePattern == null || includePattern.matcher(threadName).find()) {
+         return Result.NEUTRAL;
       } else {
-         return Filter.DENY;
+         return Result.DENY;
       }
+   }
+
+   @Override
+   public String toString() {
+       return level.toString();
+   }
+
+   /**
+    * Create a ThresholdFilter.
+    * @param level The log Level.
+    * @param match The action to take on a match.
+    * @param mismatch The action to take on a mismatch.
+    * @return The created ThresholdFilter.
+    */
+   @PluginFactory
+   public static ThreadNameFilter createFilter(
+           @PluginAttribute("level") final Level level,
+           @PluginAttribute("include") final String include) {
+       final Level actualLevel = level == null ? Level.DEBUG : level;
+       final String includeRegex = include == null ? ".*" : include;
+       return new ThreadNameFilter(actualLevel, includeRegex);
    }
 }

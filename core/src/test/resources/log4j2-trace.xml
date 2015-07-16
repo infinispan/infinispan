@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Configuration verbose="false" status="warn" packages="org.infinispan.util.logging.log4j">
+
+   <Appenders>
+      <CompressedFile name="CompressedFileAppender" fileName="${sys:java.io.tmpdir}/infinispan.log.gz" append="false" bufferedIO="true" bufferSize="262144">
+         <PatternLayout pattern="%d %-5p (%t) [%c] %m%n"/>
+         <ThresholdFilter level="trace"/>
+         <!--
+          Replace the filter above with the definition below to only allow TRACE and DEBUG messages from threads
+          whose names include the log4j.thread.filter system property. Useful to get TRACE logs
+          only for a test that we know is failing, instead of all the tests (although not all threads
+          follow the convention).
+          -->
+         <!--  Filters>
+            <ThresholdFilter level="TRACE"/>
+            <ThreadNameFilter include="${sys:log4j.thread.filter}" level="INFO" />
+         </Filters -->
+      </CompressedFile>
+   </Appenders>
+
+   <Loggers>
+       <Logger name="org.infinispan" level="trace" />
+       <Logger name="com.mchange" level="warn" />
+       <Logger name="org.jgroups" levle="info"/>
+       <Root level="info">
+          <AppenderRef ref="CompressedFileAppender"/>
+       </Root>
+   </Loggers>
+
+</Configuration>

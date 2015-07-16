@@ -1,9 +1,15 @@
 package org.infinispan.configuration;
 
-import org.apache.log4j.AppenderSkeleton;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.spi.LoggingEvent;
+import java.io.File;
+import java.io.FilenameFilter;
+
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -11,12 +17,9 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.Arrays;
 
 /**
  * Tests the correctness of the supplied configuration files.
@@ -29,24 +32,28 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
 
    public String configRoot;
    private InMemoryAppender appender;
-   private Level oldLevel;
+
+   @BeforeClass
+   public void installInMemoryAppender() {
+      final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+      final Configuration config = ctx.getConfiguration();
+      config.addAppender(new InMemoryAppender());
+   }
 
    @BeforeMethod
    public void setUpTest() {
-      Logger log4jLogger = Logger.getRootLogger();
-      oldLevel = log4jLogger.getLevel();
-      log4jLogger.setLevel(Level.WARN);
-      appender = new InMemoryAppender();
-      log4jLogger.addAppender(appender);
+      final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+      final Configuration config = ctx.getConfiguration();
+      appender = (InMemoryAppender) config.getAppender("InMemory");
+      appender.enable(Thread.currentThread());
+      ctx.updateLoggers();
       configRoot = "../distribution/src/main/release/common/configs/config-samples".replace('/', File.separatorChar);
    }
 
    @AfterMethod
    public void tearDownTest() {
-      Logger log4jLogger = Logger.getRootLogger();
-      log4jLogger.setLevel(oldLevel);
-      log4jLogger.removeAppender(appender);
-      appender.close();
+      appender.disable();
+
    }
 
 
@@ -96,7 +103,15 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
       return file;
    }
 
-   private static class InMemoryAppender extends AppenderSkeleton {
+   private static class InMemoryAppender extends AbstractAppender {
+
+      /** The serialVersionUID */
+      private static final long serialVersionUID = 1L;
+
+      protected InMemoryAppender() {
+         super("InMemory", null, PatternLayout.createDefaultLayout());
+      }
+
       String[] TOLERABLE_WARNINGS =
             {
                   "Falling back to DummyTransactionManager from Infinispan",
@@ -111,41 +126,22 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
                   "unable to find an address other than loopback for IP version IPv4",
                   "Partition handling doesn't work for replicated caches, it will be ignored"
             };
-      String unknownWarning;
+      String unknownWarning = null;
 
       /**
-       * As this test runs in parallel with other tests tha also log information, we should disregard other possible
+       * As this test runs in parallel with other tests that also log information, we should disregard other possible
        * warnings from other threads and only consider warnings issues within this test class's test.
        *
        * @see #isExpectedThread()
        */
-      private Thread loggerThread = Thread.currentThread();
+      private Thread loggerThread = null;
 
-      @Override
-      protected void append(LoggingEvent event) {
-         if (event.getLevel().equals(Level.WARN) && isExpectedThread()) {
-            boolean skipPrinting = false;
-            for (String knownWarn : TOLERABLE_WARNINGS) {
-               if (event.getMessage().toString().indexOf(knownWarn) >= 0)
-                  skipPrinting = true;
-            }
-
-            if (!skipPrinting) {
-               unknownWarning = event.getMessage().toString();
-               log.tracef("InMemoryAppender: %s", event.getMessage().toString());
-               log.tracef("TOLERABLE_WARNINGS: %s", Arrays.toString(TOLERABLE_WARNINGS));
-            }
-         }
+      public void disable() {
+         loggerThread = null;
       }
 
-      @Override
-      public boolean requiresLayout() {
-         return false;
-      }
-
-      @Override
-      public void close() {
-         //do nothing
+      public void enable(Thread thread) {
+         loggerThread = thread;
       }
 
       public boolean isFoundUnknownWarning() {
@@ -157,7 +153,22 @@ public class SampleConfigFilesCorrectnessTest extends AbstractInfinispanTest {
       }
 
       public boolean isExpectedThread() {
-         return loggerThread.equals(Thread.currentThread());
+         return loggerThread != null && loggerThread.equals(Thread.currentThread());
+      }
+
+      @Override
+      public void append(LogEvent event) {
+         if (event.getLevel().equals(Level.WARN) && isExpectedThread()) {
+            boolean skipPrinting = false;
+            for (String knownWarn : TOLERABLE_WARNINGS) {
+               if (event.getMessage().toString().indexOf(knownWarn) >= 0)
+                  skipPrinting = true;
+            }
+
+            if (!skipPrinting) {
+               unknownWarning = event.getMessage().toString();
+            }
+         }
       }
    }
 }

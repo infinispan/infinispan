@@ -1,6 +1,5 @@
 package org.infinispan.distribution.rehash;
 
-import org.apache.log4j.Logger;
 import org.infinispan.Cache;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.distexec.DistributedCallable;
@@ -9,6 +8,7 @@ import org.infinispan.distribution.group.Group;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.jboss.logging.Logger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 

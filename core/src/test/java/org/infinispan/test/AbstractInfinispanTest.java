@@ -58,7 +58,7 @@ public class AbstractInfinispanTest {
    protected void checkThreads() {
       int activeTasks = defaultExecutorService.getActiveCount();
       if (activeTasks != 0) {
-         log.errorf("There were %i active tasks found in the test executor service for class %s", activeTasks,
+         log.errorf("There were %d active tasks found in the test executor service for class %s", activeTasks,
                     getClass().getSimpleName());
       }
    }
@@ -445,7 +445,7 @@ public class AbstractInfinispanTest {
       @Override
       public void close() {
          if (ref.isAlive() && !ref.isInterrupted()) {
-            log.warnf("There was a thread % still alive after test completion - interrupted it",
+            log.warnf("There was a thread %s still alive after test completion - interrupted it",
                       ref);
             ref.interrupt();
          }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Configuration verbose="false" status="warn" packages="org.infinispan.util.logging.log4j">
+
+   <Appenders>
+      <File name="FileAppender" fileName="${sys:java.io.tmpdir}/infinispan.log" append="false">
+         <ThresholdFilter level="trace"/>
+         <PatternLayout pattern="%d %-5p (%t) [%c] %m%n"/>
+      </File>
+   </Appenders>
+
+   <Loggers>
+       <Logger name="org.infinispan" level="debug" />
+       <Logger name="org.infinispan.distribution" level="debug" />
+       <Logger name="org.infinispan.marshall" level="warn" />
+       <Logger name="org.infinispan.profiling" level="warn" />
+       <Logger name="org.infinispan.jmx" level="warn" />
+       <Logger name="org.infinispan.factories" level="warn" />
+       <Logger name="org.infinispan.client.hotrod" level="warn" />
+       <Logger name="org.infinispan.lucene" level="warn" />
+       <Logger name="com.mchange" level="warn"/>
+       <Logger name="org.jgroups" level="debug"/>
+       <Root level="info">
+          <AppenderRef ref="FileAppender"/>
+       </Root>
+   </Loggers>
+
+</Configuration>
