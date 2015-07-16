@@ -7,13 +7,11 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
+
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -176,7 +174,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
    @Test
    public void testSpawnedThreadBlockingException() throws InterruptedException, ExecutionException, TimeoutException {
-      Throwable t = mock(Throwable.class);
+      Throwable t = new Exception();
 
       Future future = fork(() -> sync.get());
 
@@ -200,7 +198,7 @@ public class L1WriteSynchronizerTest extends AbstractInfinispanTest {
 
    @Test
    public void testSpawnedThreadBlockingExceptionTimeWait() throws InterruptedException, ExecutionException, TimeoutException {
-      Throwable t = mock(Throwable.class);
+      Throwable t = new Exception();
 
       Future future = fork(() -> sync.get(5, TimeUnit.SECONDS));
 

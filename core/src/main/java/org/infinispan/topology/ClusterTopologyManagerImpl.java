@@ -269,7 +269,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          boolean becameCoordinator = !isCoordinator && transport.isCoordinator();
          isCoordinator = transport.isCoordinator();
          if (trace) {
-            log.tracef("Received new cluster view: %d, isCoordinator = %s, becameCoordinator = %s", newViewId,
+            log.tracef("Received new cluster view: %d, isCoordinator = %s, becameCoordinator = %s", (Object)newViewId,
                   isCoordinator, becameCoordinator);
          }
          mustRecoverClusterStatus |= mergeView || becameCoordinator;

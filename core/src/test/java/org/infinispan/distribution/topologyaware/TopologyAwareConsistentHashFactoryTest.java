@@ -424,7 +424,7 @@ public class TopologyAwareConsistentHashFactoryTest extends AbstractInfinispanTe
       assertDistribution(numOwners, chMembers);
 
       for (Address addr : chMembers) {
-         log.debugf("Removing node %s" + addr);
+         log.debugf("Removing node %s", addr);
          List<Address> addressCopy = new ArrayList<Address>(chMembers);
          addressCopy.remove(addr);
          DefaultConsistentHash newCH = chf.updateMembers(ch, addressCopy, null);
