@@ -42,25 +42,7 @@ public class IterationStartOperation extends RetryOnFailureOperation<IterationSt
 
    @Override
    protected Transport getTransport(int retryCount, Set<SocketAddress> failedServers) {
-      ConsistentHash consistentHash = transportFactory.getConsistentHash(cacheName);
-      if(log.isDebugEnabled() && consistentHash == null) {
-         log.noConsistentHashAvailable();
-      }
-      if (segments == null || segments.isEmpty() || consistentHash == null) {
-         return transportFactory.getTransport(failedServers, cacheName);
-      }
-      SegmentConsistentHash segmentConsistentHash = (SegmentConsistentHash) consistentHash;
-      SocketAddress[][] owners = segmentConsistentHash.getSegmentOwners();
-      Set<SocketAddress> bestServers = new HashSet<>();
-
-      segments.forEach(s -> Collections.addAll(bestServers, owners[s][0]));
-      if (failedServers != null) {
-         failedServers.forEach(bestServers::remove);
-      }
-      if (bestServers.isEmpty()) {
-         return transportFactory.getTransport(failedServers, cacheName);
-      }
-      return transportFactory.getAddressTransport(bestServers.iterator().next());
+      return transportFactory.getTransport(failedServers, cacheName);
    }
 
    @Override

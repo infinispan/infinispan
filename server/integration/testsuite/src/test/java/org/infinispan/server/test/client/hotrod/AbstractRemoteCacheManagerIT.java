@@ -32,6 +32,7 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -333,7 +334,8 @@ public abstract class AbstractRemoteCacheManagerIT {
     }
 
     private void assertEqualConfiguration(Configuration config, RemoteCache rc) throws Exception {
-        assertEquals(config.balancingStrategy().getName(), getRequestBalancingStrategyProperty(rc));
+        assertEquals(config.balancingStrategyClass().getName(), getRequestBalancingStrategyProperty(rc));
+        assertNull(config.balancingStrategy());
 
         // Configuration stores servers as List<ServerConfiguration>, getServerListProperty returns string "host1:port1;host2:port2..."
         String servers = getServerListProperty(rc);

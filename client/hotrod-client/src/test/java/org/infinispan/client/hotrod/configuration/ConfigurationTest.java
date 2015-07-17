@@ -121,7 +121,7 @@ public class ConfigurationTest {
    private void validateConfiguration(Configuration configuration) {
       assertEquals(2, configuration.servers().size());
       assertEquals(SomeAsyncExecutorFactory.class, configuration.asyncExecutorFactory().factoryClass());
-      assertEquals(SomeRequestBalancingStrategy.class, configuration.balancingStrategy());
+      assertEquals(SomeRequestBalancingStrategy.class, configuration.balancingStrategyClass());
       assertEquals(SomeTransportfactory.class, configuration.transportFactory());
       assertEquals(SomeCustomConsistentHashV1.class, configuration.consistentHashImpl(1));
       assertEquals(100, configuration.connectionPool().maxActive());
