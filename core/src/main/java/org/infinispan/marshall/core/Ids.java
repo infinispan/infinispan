@@ -146,4 +146,5 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int STREAM_MARSHALLING = 148;
 
    int COMMAND_INVOCATION_ID = 149;
+   int CACHE_FILTERS = 150;
 }

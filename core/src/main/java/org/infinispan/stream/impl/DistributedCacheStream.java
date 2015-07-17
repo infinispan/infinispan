@@ -9,6 +9,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.object.*;
 import org.infinispan.stream.impl.termop.SingleRunOperation;
@@ -66,9 +67,9 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
     */
    public <K, V> DistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
            Supplier<CacheStream<CacheEntry<K, V>>> supplier, ClusterStreamManager csm, boolean includeLoader,
-           int distributedBatchSize, Executor executor) {
+           int distributedBatchSize, Executor executor, ComponentRegistry registry) {
       super(localAddress, parallel, dm, supplierStreamCast(supplier), csm, includeLoader, distributedBatchSize,
-              executor);
+              executor, registry);
    }
 
    /**
@@ -87,8 +88,10 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
     */
    public <K, V> DistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
            Supplier<CacheStream<CacheEntry<K, V>>> supplier, ClusterStreamManager csm, boolean includeLoader,
-           int distributedBatchSize, Executor executor, Function<? super CacheEntry<K, V>, R> function) {
-      super(localAddress, parallel, dm, supplierStreamCast(supplier), csm, includeLoader, distributedBatchSize, executor);
+           int distributedBatchSize, Executor executor, ComponentRegistry registry,
+           Function<? super CacheEntry<K, V>, R> function) {
+      super(localAddress, parallel, dm, supplierStreamCast(supplier), csm, includeLoader, distributedBatchSize, executor,
+              registry);
       intermediateOperations.add(new MapOperation(function));
       iteratorOperation = IteratorOperation.MAP;
    }
@@ -430,8 +433,17 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
       if (rehashAware) {
          ConsistentHash segmentInfoCH = dm.getReadConsistentHash();
+         SegmentListenerNotifier<R> listenerNotifier;
+         if (segmentCompletionListener != null) {
+             listenerNotifier = new SegmentListenerNotifier<>(
+                    segmentCompletionListener);
+            supplier.setConsumer(listenerNotifier);
+         } else {
+            listenerNotifier = null;
+         }
          KeyTrackingConsumer<Object, R> results = new KeyTrackingConsumer<>(segmentInfoCH,
-                 iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction());
+                 iteratorOperation.wrapConsumer(consumer), iteratorOperation.getFunction(),
+                 listenerNotifier);
          Thread thread = Thread.currentThread();
          executor.execute(() -> {
             try {
@@ -457,7 +469,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                      // TODO: we can do this more efficiently - this hampers performance during rehash
                      if (dm.getReadConsistentHash().equals(ch)) {
                         log.tracef("Found local values %s for id %s", localValue.size(), id);
-                        results.onCompletion(null, ch.getPrimarySegmentsForOwner(localAddress), localValue);
+                        results.onCompletion(null, segments, localValue);
                      } else {
                         Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
                         ourSegments.retainAll(segmentsToProcess);
@@ -550,6 +562,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
       @Override
       public void accept(R rs) {
+         // TODO: we don't awake people if they are waiting until we fill up the queue or process retrieves all values
+         // is this the reason for slowdown?
          if (!queue.offer(rs)) {
             if (!completed.get()) {
                // Signal anyone waiting for values to consume from the queue
@@ -560,8 +574,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                   nextLock.unlock();
                }
                while (!completed.get()) {
-                  // If we were able to offer a value this means someone took from the queue so let us come back around
-                  // main loop to offer all values we can
+                  // We keep trying to offer the value until it takes it.  In this case we check the completed after
+                  // each time to make sure the iterator wasn't closed early
                   try {
                      if (queue.offer(rs, 100, TimeUnit.MILLISECONDS)) {
                         break;
@@ -575,6 +589,32 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       }
    }
 
+   static class SegmentListenerNotifier<T> implements Consumer<T> {
+      private final SegmentCompletionListener listener;
+      // we know the objects will always be ==
+      private final Map<T, Set<Integer>> segmentsByObject = new IdentityHashMap<>();
+
+      SegmentListenerNotifier(SegmentCompletionListener listener) {
+         this.listener = listener;
+      }
+
+      @Override
+      public void accept(T t) {
+         Set<Integer> segments = segmentsByObject.remove(t);
+         if (segments != null) {
+            listener.segmentCompleted(segments);
+         }
+      }
+
+      public void addSegmentsForObject(T object, Set<Integer> segments) {
+         segmentsByObject.put(object, segments);
+      }
+
+      public void completeSegmentsNoResults(Set<Integer> segments) {
+         listener.segmentCompleted(segments);
+      }
+   }
+
    static class IteratorSupplier<R> implements CloseableSupplier<R> {
       private final BlockingQueue<R> queue;
       private final AtomicBoolean completed;
@@ -584,6 +624,8 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
       CacheException exception;
       volatile UUID pending;
+
+      private Consumer<R> consumer;
 
       IteratorSupplier(BlockingQueue<R> queue, AtomicBoolean completed, Lock nextLock, Condition nextCondition,
               ClusterStreamManager<?> clusterStreamManager) {
@@ -651,7 +693,14 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                nextLock.unlock();
             }
          }
+         if (consumer != null && entry != null) {
+            consumer.accept(entry);
+         }
          return entry;
+      }
+
+      public void setConsumer(Consumer<R> consumer) {
+         this.consumer = consumer;
       }
    }
 
@@ -746,14 +795,12 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
 
    @Override
    public CacheStream<R> segmentCompletionListener(SegmentCompletionListener listener) {
-      // TODO: need to add segment completion properly
-      throw new UnsupportedOperationException();
-//      if (segmentCompletionListener == null) {
-//         segmentCompletionListener = listener;
-//      } else {
-//         segmentCompletionListener = composeWithExceptions(segmentCompletionListener, listener);
-//      }
-//      return this;
+      if (segmentCompletionListener == null) {
+         segmentCompletionListener = listener;
+      } else {
+         segmentCompletionListener = composeWithExceptions(segmentCompletionListener, listener);
+      }
+      return this;
    }
 
    @Override

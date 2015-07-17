@@ -1,5 +1,7 @@
 package org.infinispan.stream.impl;
 
+import org.infinispan.factories.ComponentRegistry;
+
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -20,4 +22,10 @@ public interface TerminalOperation<R> extends SegmentAwareOperation {
     * @param supplier the supplier that will return the stream that the operations are performed on
     */
    void setSupplier(Supplier<? extends Stream<?>> supplier);
+
+   /**
+    * Handles injection of components for various intermediate and this operation.
+    * @param registry component registry to use
+    */
+   void handleInjection(ComponentRegistry registry);
 }

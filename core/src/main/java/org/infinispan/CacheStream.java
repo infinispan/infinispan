@@ -138,9 +138,9 @@ public interface CacheStream<R> extends Stream<R> {
    interface SegmentCompletionListener {
       /**
        * Method invoked when the segment has been found to be consumed properly by the terminal operation.
-       * @param segment The segments that were completed
+       * @param segments The segments that were completed
        */
-      void segmentCompleted(Set<Integer> segment);
+      void segmentCompleted(Set<Integer> segments);
    }
 
    /**

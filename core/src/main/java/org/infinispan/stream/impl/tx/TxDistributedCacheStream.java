@@ -5,6 +5,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.AbstractCacheStream;
 import org.infinispan.stream.impl.DistributedCacheStream;
@@ -33,8 +34,8 @@ public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
 
    public <K, V> TxDistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
            Supplier<CacheStream<CacheEntry<K, V>>> supplier, TxClusterStreamManager<?> csm, boolean includeLoader,
-           int distributedBatchSize, Executor executor, LocalTxInvocationContext ctx) {
-      super(localAddress, parallel, dm, supplier, csm, includeLoader, distributedBatchSize, executor);
+           int distributedBatchSize, Executor executor, ComponentRegistry registry, LocalTxInvocationContext ctx) {
+      super(localAddress, parallel, dm, supplier, csm, includeLoader, distributedBatchSize, executor, registry);
       this.localAddress = localAddress;
       this.hash = dm.getConsistentHash();
       this.ctx = ctx;
@@ -42,9 +43,9 @@ public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
 
    public <K, V> TxDistributedCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
            Supplier<CacheStream<CacheEntry<K, V>>> supplier, TxClusterStreamManager<?> csm, boolean includeLoader,
-           int distributedBatchSize, Executor executor, Function<? super CacheEntry<K, V>, R> function,
-           LocalTxInvocationContext ctx) {
-      super(localAddress, parallel, dm, supplier, csm, includeLoader, distributedBatchSize, executor, function);
+           int distributedBatchSize, Executor executor, ComponentRegistry registry,
+           Function<? super CacheEntry<K, V>, R> function, LocalTxInvocationContext ctx) {
+      super(localAddress, parallel, dm, supplier, csm, includeLoader, distributedBatchSize, executor, registry, function);
       this.localAddress = localAddress;
       this.hash = dm.getConsistentHash();
       this.ctx = ctx;

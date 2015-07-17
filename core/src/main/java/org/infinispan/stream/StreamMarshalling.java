@@ -25,11 +25,14 @@ public class StreamMarshalling {
    /**
     * Provides a predicate that returns true when the object is equal.
     * @param object the instance to test equality on
-    * @param <T> type of the object
     * @return the predicate
     */
-   public static <T> Predicate<T> equalityPredicate(T object) {
+   public static Predicate<Object> equalityPredicate(Object object) {
       return new EqualityPredicate(object);
+   }
+
+   public static Predicate<Object> nonNullPredicate() {
+      return NonNullPredicate.getInstance();
    }
 
    /**
@@ -52,17 +55,29 @@ public class StreamMarshalling {
       return EntryToValueFunction.getInstance();
    }
 
-   private static final class EqualityPredicate<T> implements Predicate<T> {
-      private final T object;
+   private static final class EqualityPredicate implements Predicate<Object> {
+      private final Object object;
 
-      private EqualityPredicate(T object) {
+      private EqualityPredicate(Object object) {
          Objects.nonNull(object);
          this.object = object;
       }
 
       @Override
-      public boolean test(T t) {
+      public boolean test(Object t) {
          return object.equals(t);
+      }
+   }
+
+   private static final class NonNullPredicate implements Predicate<Object> {
+      private static final NonNullPredicate INSTANCE = new NonNullPredicate();
+
+      public static NonNullPredicate getInstance() {
+         return INSTANCE;
+      }
+      @Override
+      public boolean test(Object t) {
+         return t != null;
       }
    }
 
@@ -97,6 +112,7 @@ public class StreamMarshalling {
       private static final int EQUALITY_PREDICATE = 0;
       private static final int ENTRY_KEY_FUNCTION = 1;
       private static final int ENTRY_VALUE_FUNCTION = 2;
+      private static final int NON_NULL_PREDICATE = 3;
 
       private final IdentityIntMap<Class<? extends Object>> objects = new IdentityIntMap<>();
 
@@ -104,12 +120,13 @@ public class StreamMarshalling {
          objects.put(EqualityPredicate.class, EQUALITY_PREDICATE);
          objects.put(EntryToKeyFunction.class, ENTRY_KEY_FUNCTION);
          objects.put(EntryToValueFunction.class, ENTRY_VALUE_FUNCTION);
+         objects.put(NonNullPredicate.class, NON_NULL_PREDICATE);
       }
 
       @Override
       public Set<Class<?>> getTypeClasses() {
          return Util.<Class<? extends Object>>asSet(EqualityPredicate.class, EntryToKeyFunction.class,
-                 EntryToValueFunction.class);
+                 EntryToValueFunction.class, NonNullPredicate.class);
       }
 
       @Override
@@ -133,11 +150,13 @@ public class StreamMarshalling {
          int number = input.readUnsignedByte();
          switch (number) {
             case EQUALITY_PREDICATE:
-               return new EqualityPredicate<>(input.readObject());
+               return new EqualityPredicate(input.readObject());
             case ENTRY_KEY_FUNCTION:
                return EntryToKeyFunction.getInstance();
             case ENTRY_VALUE_FUNCTION:
                return EntryToValueFunction.getInstance();
+            case NON_NULL_PREDICATE:
+               return NonNullPredicate.getInstance();
             default:
                throw new IllegalArgumentException("Found invalid number " + number);
          }

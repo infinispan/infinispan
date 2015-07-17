@@ -1,6 +1,7 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheStream;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commons.CacheListenerException;
@@ -23,6 +24,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
@@ -54,21 +56,14 @@ import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Stream;
 
 import static org.infinispan.commons.util.InfinispanCollections.transformCollectionToMap;
 import static org.infinispan.notifications.cachelistener.event.Event.Type.*;
@@ -139,7 +134,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    private DistributedExecutorService distExecutorService;
    private Configuration config;
    private DistributionManager distributionManager;
-   private EntryRetriever<K, V> entryRetriever;
    private InternalEntryFactory entryFactory;
    private ClusterEventManager<K, V> eventManager;
    private ComponentRegistry componentRegistry;
@@ -188,14 +182,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Inject
    void injectDependencies(Cache<K, V> cache, ClusteringDependentLogic clusteringDependentLogic,
                            TransactionManager transactionManager, Configuration config,
-                           DistributionManager distributionManager, EntryRetriever<K ,V> entryRetriever,
-                           InternalEntryFactory entryFactory, ClusterEventManager<K, V> eventManager) {
+                           DistributionManager distributionManager, InternalEntryFactory entryFactory,
+           ClusterEventManager<K, V> eventManager) {
       this.cache = cache;
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.transactionManager = transactionManager;
       this.config = config;
       this.distributionManager = distributionManager;
-      this.entryRetriever = entryRetriever;
       this.entryFactory = entryFactory;
       this.eventManager = eventManager;
    }
@@ -823,18 +816,24 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          if (log.isTraceEnabled()) {
             log.tracef("Listener %s requests initial state for cache", generatedId);
          }
-         final KeyValueFilter usedFilter;
-         final Converter usedConverter;
-         if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
-            usedFilter = new CacheEventFilterConverterAsKeyValueFilterConverter((CacheEventFilterConverter) filter);
-            usedConverter = null;
-         } else {
-            usedFilter = filter == null ? null : new CacheEventFilterAsKeyValueFilter(filter);
-            usedConverter = converter == null ? null : new CacheEventConverterAsConverter(converter);
-         }
-         try (CloseableIterator<CacheEntry<K, C>> iterator = entryRetriever.retrieveEntries(usedFilter, usedConverter, null, handler)) {
+
+         try (CacheStream<CacheEntry<K, V>> entryStream = cache.getAdvancedCache().cacheEntrySet().stream()) {
+            Stream<CacheEntry<K, V>> usedStream = entryStream.segmentCompletionListener(handler);
+
+            if (filter instanceof CacheEventFilterConverter && (filter == converter || converter == null)) {
+               // Hacky cast to prevent other casts
+               usedStream = CacheFilters.filterAndConvert(usedStream,
+                       new CacheEventFilterConverterAsKeyValueFilterConverter<>((CacheEventFilterConverter<K, V, V>) filter));
+            } else {
+               usedStream = filter == null ? usedStream : usedStream.filter(CacheFilters.predicate(
+                       new CacheEventFilterAsKeyValueFilter<>(filter)));
+               usedStream = converter == null ? usedStream : usedStream.map(CacheFilters.function(
+                       new CacheEventConverterAsConverter(converter)));
+            }
+
+            Iterator<CacheEntry<K, V>> iterator = usedStream.iterator();
             while (iterator.hasNext()) {
-               CacheEntry<K, C> entry = iterator.next();
+               CacheEntry<K, V> entry = iterator.next();
                // Mark the key as processed and see if we had a concurrent update
                Object value = handler.markKeyAsProcessing(entry.getKey());
                if (value == BaseQueueingSegmentListener.REMOVED) {

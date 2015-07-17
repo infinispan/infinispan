@@ -3,6 +3,7 @@ package org.infinispan.stream.impl.local;
 import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -21,8 +22,8 @@ public class LocalKeyCacheStream<K, V> extends AbstractLocalCacheStream<K, K, V>
     * @param supplier This must be a supplier that provides
     */
    public LocalKeyCacheStream(Cache<K, V> cache, boolean parallel, ConsistentHash hash,
-                              Supplier<Stream<CacheEntry<K, V>>> supplier) {
-      super(parallel, hash, supplier);
+                              Supplier<Stream<CacheEntry<K, V>>> supplier, ComponentRegistry registry) {
+      super(parallel, hash, supplier, registry);
       this.cache = cache;
    }
 

@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.infinispan.CacheStream;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -15,7 +16,7 @@ import java.util.Set;
  * @author wburns
  * @since 7.0
  */
-public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends EntryRetriever.SegmentListener {
+public interface QueueingSegmentListener<K, V, E extends Event<K, V>> extends CacheStream.SegmentCompletionListener {
    // This is to be used as a placeholder when a value has been iterated and now is being processed by the caller
    // This is considered to be the completed state for the key and should never change from this
    static final Object NOTIFIED = new Object();

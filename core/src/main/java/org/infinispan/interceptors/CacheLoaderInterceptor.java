@@ -242,7 +242,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
             CacheStream<CacheEntry<K, V>> cacheStream = new LocalEntryCacheStream<>(cache, false,
                     dm != null ? dm.getConsistentHash() : null,
-                    () -> StreamSupport.stream(spliteratorFromIterator(iterator), false));
+                    () -> StreamSupport.stream(spliteratorFromIterator(iterator), false),
+                    cache.getAdvancedCache().getComponentRegistry());
 
             // Since our iterator will require closing if we short circuit we need to make sure to do that
             cacheStream.onClose(() -> iterator.close());
@@ -256,7 +257,8 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
 
             CacheStream<CacheEntry<K, V>> cacheStream = new LocalEntryCacheStream<>(cache, true,
-                    dm != null ? dm.getConsistentHash() : null, () -> StreamSupport.stream(spliterator, true));
+                    dm != null ? dm.getConsistentHash() : null, () -> StreamSupport.stream(spliterator, true),
+                    cache.getAdvancedCache().getComponentRegistry());
 
             cacheStream.onClose(() -> iterator.close());
             return cacheStream;

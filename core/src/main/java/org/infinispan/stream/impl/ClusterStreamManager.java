@@ -26,8 +26,9 @@ public interface ClusterStreamManager<K> {
        * Called back for intermediate data returned from an operation.  This is useful
        * @param address Which node this data came from
        * @param results The results obtained so far.
+       * @return the segments that completed with some value
        */
-      void onIntermediateResult(Address address, R results);
+      Set<Integer> onIntermediateResult(Address address, R results);
 
       /**
        * Essentially the same as {@link ClusterStreamManager.ResultsCallback#onIntermediateResult(Address address, Object)}

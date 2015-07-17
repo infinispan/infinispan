@@ -9,8 +9,11 @@ import org.infinispan.notifications.impl.ListenerInvocation;
 import org.infinispan.util.KeyValuePair;
 
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This handler is to be used with a clustered distributed cache.  This handler does special optimizations to
@@ -26,7 +29,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    private final DistributionManager distributionManager;
    protected final InternalEntryFactory entryFactory;
 
-   private int justCompletedSegment = -1;
+   private Stream<Integer> justCompletedSegments = Stream.empty();
 
    public DistributedQueueingSegmentListener(InternalEntryFactory entryFactory, DistributionManager distributionManager) {
       this.entryFactory = entryFactory;
@@ -71,6 +74,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
 
    @Override
    public void transferComplete() {
+      justCompletedSegments.forEach(this::completeSegment);
       completed.set(true);
       notifiedKeys.clear();
       for (int i = 0; i < queues.length(); ++i) {
@@ -87,15 +91,16 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
    @Override
    public void notifiedKey(K key) {
       // This relies on the fact that notifiedKey is immediately called after the entry has finished being iterated on
-      if (justCompletedSegment != -1) {
-         completeSegment(justCompletedSegment);
-      }
-      justCompletedSegment = -1;
+      justCompletedSegments.forEach(this::completeSegment);
+      justCompletedSegments = Stream.empty();
    }
 
    private void completeSegment(int segment) {
       Queue<KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>>> queue = queues.get(segment);
       if (queue != null) {
+         if (log.isTraceEnabled()) {
+            log.tracef("Completed segment %s", segment);
+         }
          for (KeyValuePair<CacheEntryEvent<K, V>, ListenerInvocation<Event<K, V>>> event : queue) {
             // The InitialTransferInvocation already did the converter if needed
             event.getValue().invoke(event.getKey());
@@ -104,16 +109,7 @@ class DistributedQueueingSegmentListener<K, V> extends BaseQueueingSegmentListen
       }
    }
 
-   public void segmentTransferred(int segment, boolean sentLastEntry) {
-      if (queues.get(segment) != null) {
-         if (log.isTraceEnabled()) {
-            log.tracef("Completed segment %s", segment);
-         }
-         if (sentLastEntry) {
-            justCompletedSegment = segment;
-         } else {
-            completeSegment(segment);
-         }
-      }
+   public void segmentCompleted(Set<Integer> segments) {
+      justCompletedSegments = segments.stream().filter(s -> queues.get(s) != null);
    }
 }

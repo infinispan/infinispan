@@ -1,5 +1,7 @@
 package org.infinispan.stream.impl.termop;
 
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import java.io.Serializable;
@@ -28,5 +30,9 @@ public abstract class BaseTerminalOperation {
 
    public void setSupplier(Supplier<? extends Stream<?>> supplier) {
       this.supplier = supplier;
+   }
+
+   public void handleInjection(ComponentRegistry registry) {
+      intermediateOperations.forEach(i -> i.handleInjection(registry));
    }
 }

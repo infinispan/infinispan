@@ -103,7 +103,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
                             new DataContainerRemoveIterator<>(cache, dataContainer), dataContainer.size(),
                             Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
                     return StreamSupport.stream(spliterator, false);
-                 });
+                 }, cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override
@@ -117,7 +117,7 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
                             new DataContainerRemoveIterator<>(cache, dataContainer), dataContainer.size(),
                             Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
                     return StreamSupport.stream(spliterator, true);
-                 });
+                 }, cache.getAdvancedCache().getComponentRegistry());
       }
    }
 

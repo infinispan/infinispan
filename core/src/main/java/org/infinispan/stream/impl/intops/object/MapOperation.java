@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl.intops.object;
 
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 
 import java.util.function.Function;
@@ -20,6 +21,11 @@ public class MapOperation<I, O> implements IntermediateOperation<I, Stream<I>, O
    @Override
    public Stream<O> perform(Stream<I> stream) {
       return stream.map(function);
+   }
+
+   @Override
+   public void handleInjection(ComponentRegistry registry) {
+      registry.wireDependencies(function);
    }
 
    public Function<? super I, ? extends O> getFunction() {
