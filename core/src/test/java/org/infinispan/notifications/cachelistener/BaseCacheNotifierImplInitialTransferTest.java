@@ -1,6 +1,12 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.hamcrest.core.IsInstanceOf;
+import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
@@ -18,6 +24,7 @@ import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -33,6 +40,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.test.AbstractInfinispanTest;
+import org.infinispan.test.TestingUtil;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
@@ -49,6 +57,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -62,7 +71,6 @@ import static org.testng.Assert.assertNull;
 public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractInfinispanTest {
    CacheNotifierImpl n;
    Cache mockCache;
-   EntryRetriever retriever;
    InvocationContext ctx;
 
    protected CacheMode cacheMode;
@@ -118,18 +126,13 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
       mockCache = mock(Cache.class, RETURNS_DEEP_STUBS);
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(cacheMode);
-      retriever = mock(EntryRetriever.class);
       when(mockCache.getAdvancedCache().getStatus()).thenReturn(ComponentStatus.INITIALIZING);
-      Answer answer = new Answer<Object>() {
-         @Override
-         public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-            return Mockito.mock((Class) invocationOnMock.getArguments()[0]);
-         }
-      };
+
+      Answer answer = i -> Mockito.mock((Class) i.getArguments()[0]);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
       n.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
-                           mock(DistributionManager.class), retriever, new InternalEntryFactoryImpl(), 
+                           mock(DistributionManager.class), new InternalEntryFactoryImpl(),
                            mock(ClusterEventManager.class));
       n.start();
       ctx = new NonTxInvocationContext(AnyEquivalence.getInstance());
@@ -152,14 +155,11 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          initialValues.add(new ImmortalCacheEntry(key, value));
       }
 
+      CacheStream mockStream = mockStream();
 
-      when(retriever.retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
-                                     any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
-         @Override
-         public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
-            return Closeables.iterator(initialValues.iterator());
-         }
-      });
+      doReturn(initialValues.iterator()).when(mockStream).iterator();
+
+      when(mockCache.getAdvancedCache().cacheEntrySet().stream()).thenReturn(mockStream);
 
       n.addListener(listener);
       verifyEvents(isClustered(listener), listener, initialValues);
@@ -179,13 +179,12 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       // Note we don't actually use the filter/converter to retrieve values since it is being mocked, thus we can assert
       // the filter/converter are not used by us
-      when(retriever.retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
-                                     any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
-         @Override
-         public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
-            return Closeables.iterator(initialValues.iterator());
-         }
-      });
+
+      CacheStream mockStream = mockStream();
+
+      doReturn(initialValues.iterator()).when(mockStream).iterator();
+
+      when(mockCache.getAdvancedCache().cacheEntrySet().stream()).thenReturn(mockStream);
 
       CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
       CacheEventConverter converter = mock(CacheEventConverter.class, withSettings().serializable());
@@ -208,13 +207,11 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       // Note we don't actually use the filter/converter to retrieve values since it is being mocked, thus we can assert
       // the filter/converter are not used by us
-      when(retriever.retrieveEntries(any(KeyValueFilter.class), any(Converter.class),anySetOf(Flag.class),
-                                     any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
-         @Override
-         public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
-            return Closeables.iterator(initialValues.iterator());
-         }
-      });
+      CacheStream mockStream = mockStream();
+
+      doReturn(initialValues.iterator()).when(mockStream).iterator();
+
+      when(mockCache.getAdvancedCache().cacheEntrySet().stream()).thenReturn(mockStream);
 
       CacheEventFilter filter = mock(CacheEventFilter.class, withSettings().serializable());
       CacheEventConverter converter = mock(CacheEventConverter.class, withSettings().serializable());
@@ -308,23 +305,19 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
 
-      when(retriever.retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
-                                     any(EntryRetriever.SegmentListener.class))).thenAnswer(new Answer<CloseableIterator<CacheEntry<String, String>>>() {
-         @Override
-         public CloseableIterator<CacheEntry<String, String>> answer(InvocationOnMock invocationOnMock) throws Throwable {
-            barrier.await(10, TimeUnit.SECONDS);
-            barrier.await(10, TimeUnit.SECONDS);
-            return Closeables.iterator(initialValues.iterator());
-         }
-      });
+      CacheStream mockStream = mockStream();EntryRetriever
 
-      Future<Void> future = fork(new Callable<Void>() {
+      doAnswer(i -> {
+         barrier.await(10, TimeUnit.SECONDS);
+         barrier.await(10, TimeUnit.SECONDS);
+         return initialValues.iterator();
+      }).when(mockStream).iterator();
 
-         @Override
-         public Void call() throws Exception {
-            n.addListener(listener);
-            return null;
-         }
+      when(mockCache.getAdvancedCache().cacheEntrySet().stream()).thenReturn(mockStream);
+
+      Future<Void> future = fork(() -> {
+         n.addListener(listener);
+         return null;
       });
 
       barrier.await(10, TimeUnit.SECONDS);
@@ -416,29 +409,21 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
 
-      final CloseableIterator closeable = mock(CloseableIterator.class, withSettings().defaultAnswer(
-            AdditionalAnswers.delegatesTo(initialValues.iterator())));
+      CacheStream mockStream = mockStream();
 
-      // Now we block the close from occurring, which happens after iteration before completing the iteration
-      doAnswer(new Answer<Void>() {
-         @Override
-         public Void answer(InvocationOnMock invocationOnMock) throws Throwable {
-            barrier.await(10, TimeUnit.SECONDS);
-            barrier.await(10, TimeUnit.SECONDS);
-            return null;
-         }
-      }).when(closeable).close();
+      doReturn(initialValues.iterator()).when(mockStream).iterator();
 
-      when(retriever.retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
-                                     any(EntryRetriever.SegmentListener.class))).thenReturn(closeable);
+      doAnswer(i -> {
+         barrier.await(10, TimeUnit.SECONDS);
+         barrier.await(10, TimeUnit.SECONDS);
+         return null;
+      }).when(mockStream).close();
 
-      Future<Void> future = fork(new Callable<Void>() {
+      when(mockCache.getAdvancedCache().cacheEntrySet().stream()).thenReturn(mockStream);
 
-         @Override
-         public Void call() throws Exception {
-            n.addListener(listener);
-            return null;
-         }
+      Future<Void> future = fork(() -> {
+         n.addListener(listener);
+         return null;
       });
 
       barrier.await(10, TimeUnit.SECONDS);
@@ -547,5 +532,13 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
    @Listener(includeCurrentState = true, clustered = true)
    private static class StateListenerClustered extends StateListener {
 
+   }
+
+   // This is a helper method so that subsequent calls to the stream will return a mocked instance so we
+   // can keep track of invocations properly.
+   protected CacheStream mockStream() {
+      CacheStream mockStream = mock(CacheStream.class, withSettings().defaultAnswer(i -> i.getMock()));
+      doNothing().when(mockStream).close();
+      return mockStream;
    }
 }

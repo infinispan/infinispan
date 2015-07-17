@@ -126,12 +126,14 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
 
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
-         return new LocalEntryCacheStream<>(cache, false, getConsistentHash(cache), () -> super.stream());
+         return new LocalEntryCacheStream<>(cache, false, getConsistentHash(cache), () -> super.stream(),
+                 cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new LocalEntryCacheStream<>(cache, true, getConsistentHash(cache), () -> super.parallelStream());
+         return new LocalEntryCacheStream<>(cache, true, getConsistentHash(cache), () -> super.parallelStream(),
+                 cache.getAdvancedCache().getComponentRegistry());
       }
    }
 

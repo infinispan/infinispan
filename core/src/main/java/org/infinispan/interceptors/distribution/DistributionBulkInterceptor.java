@@ -126,23 +126,23 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
+         ComponentRegistry registry = advancedCache.getComponentRegistry();
          return new DistributedCacheStream<>(cache.getCacheManager().getAddress(), false,
                  advancedCache.getDistributionManager(), () -> entrySet.stream(),
-                 advancedCache.getComponentRegistry().getComponent(ClusterStreamManager.class),
-                 !command.hasFlag(Flag.SKIP_CACHE_LOAD),
+                 registry.getComponent(ClusterStreamManager.class), !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                 advancedCache.getComponentRegistry().getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR));
+                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry);
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
+         ComponentRegistry registry = advancedCache.getComponentRegistry();
          return new DistributedCacheStream<>(cache.getCacheManager().getAddress(), true,
                  advancedCache.getDistributionManager(), () -> entrySet.stream(),
-                 advancedCache.getComponentRegistry().getComponent(ClusterStreamManager.class),
-                 !command.hasFlag(Flag.SKIP_CACHE_LOAD),
+                 registry.getComponent(ClusterStreamManager.class), !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                 advancedCache.getComponentRegistry().getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR));
+                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry);
       }
    }
 
@@ -166,7 +166,7 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
          return new TxDistributedCacheStream<>(cache.getCacheManager().getAddress(), false,
                  dm, () -> entrySet.stream(), txManager, !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), ctx);
+                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry, ctx);
       }
 
       @Override
@@ -180,7 +180,7 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
          return new TxDistributedCacheStream<>(cache.getCacheManager().getAddress(), true,
                  dm, () -> entrySet.stream(), txManager, !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), ctx);
+                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry, ctx);
       }
    }
 
@@ -259,24 +259,24 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
       @Override
       public CacheStream<K> stream() {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
+         ComponentRegistry registry = advancedCache.getComponentRegistry();
          return new DistributedCacheStream<>(cache.getCacheManager().getAddress(), false,
                  advancedCache.getDistributionManager(), () -> entrySet.stream(),
-                 advancedCache.getComponentRegistry().getComponent(ClusterStreamManager.class),
-                 !command.hasFlag(Flag.SKIP_CACHE_LOAD),
+                 registry.getComponent(ClusterStreamManager.class), !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                 advancedCache.getComponentRegistry().getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR),
+                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry,
                  StreamMarshalling.entryToKeyFunction());
       }
 
       @Override
       public CacheStream<K> parallelStream() {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
+         ComponentRegistry registry = advancedCache.getComponentRegistry();
          return new DistributedCacheStream<>(cache.getCacheManager().getAddress(), true,
                  advancedCache.getDistributionManager(), () -> entrySet.stream(),
-                 advancedCache.getComponentRegistry().getComponent(ClusterStreamManager.class),
-                 !command.hasFlag(Flag.SKIP_CACHE_LOAD),
+                 registry.getComponent(ClusterStreamManager.class), !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                 advancedCache.getComponentRegistry().getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR),
+                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry,
                  StreamMarshalling.entryToKeyFunction());
       }
    }
@@ -301,7 +301,7 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
          return new TxDistributedCacheStream<>(cache.getCacheManager().getAddress(), false,
                  dm, () -> entrySet.stream(), txManager, !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR),
+                registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry,
                  StreamMarshalling.entryToKeyFunction(), ctx);
       }
 
@@ -316,7 +316,7 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
          return new TxDistributedCacheStream<>(cache.getCacheManager().getAddress(), true,
                  dm, () -> entrySet.stream(), txManager, !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR),
+                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry,
                  StreamMarshalling.entryToKeyFunction(), ctx);
       }
    }

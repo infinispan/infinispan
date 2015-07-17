@@ -59,7 +59,7 @@ public class OnlyPrimaryOwnerTest {
       };
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class))).then(answer);
       when(mockCache.getAdvancedCache().getComponentRegistry().getComponent(any(Class.class), anyString())).then(answer);
-      n.injectDependencies(mockCache, cdl, null, config, mock(DistributionManager.class), mock(EntryRetriever.class),
+      n.injectDependencies(mockCache, cdl, null, config, mock(DistributionManager.class),
                            mock(InternalEntryFactory.class), mock(ClusterEventManager.class));
       cl = new PrimaryOwnerCacheListener();
       n.start();

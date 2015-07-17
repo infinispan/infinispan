@@ -33,7 +33,8 @@ public abstract class AbstractDelegatingKeyCacheSet<K, V> extends AbstractDelega
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       // TODO: add custom local key cache stream that doesn't use entries - this way it doesn't need to use entry set
       return new LocalKeyCacheStream<>(cache, false, dm != null ? dm.getConsistentHash() : null,
-              () -> StreamSupport.stream(cache.getAdvancedCache().cacheEntrySet().spliterator(), false));
+              () -> StreamSupport.stream(cache.getAdvancedCache().cacheEntrySet().spliterator(), false),
+              cache.getAdvancedCache().getComponentRegistry());
    }
 
    @Override
@@ -41,6 +42,7 @@ public abstract class AbstractDelegatingKeyCacheSet<K, V> extends AbstractDelega
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       // TODO: add custom local key cache stream that doesn't use entries - this way it doesn't need to use entry set
       return new LocalKeyCacheStream<>(cache, true, dm != null ? dm.getConsistentHash() : null,
-              () -> StreamSupport.stream(cache.getAdvancedCache().cacheEntrySet().spliterator(), true));
+              () -> StreamSupport.stream(cache.getAdvancedCache().cacheEntrySet().spliterator(), true),
+              cache.getAdvancedCache().getComponentRegistry());
    }
 }

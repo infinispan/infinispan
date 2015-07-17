@@ -7,6 +7,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.termop.SegmentRetryingOperation;
@@ -20,6 +21,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -52,6 +54,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    protected final ClusterStreamManager csm;
    protected final boolean includeLoader;
    protected final Executor executor;
+   protected final ComponentRegistry registry;
 
    protected Runnable closeRunnable = null;
 
@@ -75,7 +78,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
 
    protected AbstractCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
            Supplier<CacheStream<CacheEntry>> supplier, ClusterStreamManager<Object> csm,
-           boolean includeLoader, int distributedBatchSize, Executor executor) {
+           boolean includeLoader, int distributedBatchSize, Executor executor, ComponentRegistry registry) {
       this.localAddress = localAddress;
       this.parallel = parallel;
       this.dm = dm;
@@ -84,6 +87,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       this.includeLoader = includeLoader;
       this.distributedBatchSize = distributedBatchSize;
       this.executor = executor;
+      this.registry = registry;
       intermediateOperations = new ArrayDeque<>();
    }
 
@@ -96,6 +100,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       this.csm = other.csm;
       this.includeLoader = other.includeLoader;
       this.executor = other.executor;
+      this.registry = other.registry;
 
       this.closeRunnable = other.closeRunnable;
 
@@ -129,6 +134,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    }
 
    protected void markDistinct(IntermediateOperation<T, S, T, S> intermediateOperation, IntermediateType type) {
+      intermediateOperation.handleInjection(registry);
       if (intermediateType == IntermediateType.NONE) {
          intermediateType = type;
          if (localIntermediateOperations == null) {
@@ -150,6 +156,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    }
 
    protected S addIntermediateOperation(IntermediateOperation<T, S, T, S> intermediateOperation) {
+      intermediateOperation.handleInjection(registry);
       if (localIntermediateOperations == null) {
          intermediateOperations.add(intermediateOperation);
       } else {
@@ -159,6 +166,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    }
 
    protected void addIntermediateOperationMap(IntermediateOperation<T, S, ?, ?> intermediateOperation) {
+      intermediateOperation.handleInjection(registry);
       if (localIntermediateOperations == null) {
          intermediateOperations.add(intermediateOperation);
       } else {
@@ -273,8 +281,8 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          remoteResults.lostSegments.clear();
          ConsistentHash ch = dm.getReadConsistentHash();
          if (retryOnRehash) {
-            op = new SegmentRetryingOperation<>(intermediateOperations, supplierForSegments(ch,
-                    segmentsToProcess, null), function);
+            op = new SegmentRetryingOperation<>(intermediateOperations, supplierForSegments(ch, segmentsToProcess,
+                    null), function);
          } else {
             op = new SingleRunOperation<>(intermediateOperations, supplierForSegments(ch, segmentsToProcess, null),
                     function);
@@ -325,7 +333,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
 
       ConsistentHash segmentInfoCH = dm.getReadConsistentHash();
       KeyTrackingConsumer<Object, Object> results = new KeyTrackingConsumer<>(segmentInfoCH, (c) -> {},
-              c -> c);
+              c -> c, null);
       Set<Integer> segmentsToProcess = segmentsToFilter == null ?
               new ReplicatedConsistentHash.RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
       do {
@@ -345,7 +353,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
             // TODO: we can do this more efficiently - this hampers performance during rehash
             if (dm.getReadConsistentHash().equals(ch)) {
                log.tracef("Found local values %s for id %s", localValue.size(), id);
-               results.onCompletion(null, ch.getPrimarySegmentsForOwner(localAddress), localValue);
+               results.onCompletion(null, segments, localValue);
             } else {
                Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
                ourSegments.retainAll(segmentsToProcess);
@@ -423,7 +431,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       }
    }
 
-   /*static*/ class KeyTrackingConsumer<K, V> implements ClusterStreamManager.ResultsCallback<Collection<CacheEntry<K, Object>>>,
+   class KeyTrackingConsumer<K, V> implements ClusterStreamManager.ResultsCallback<Collection<CacheEntry<K, Object>>>,
            KeyTrackingTerminalOperation.IntermediateCollector<Collection<CacheEntry<K, Object>>> {
       final ConsistentHash ch;
       final Consumer<V> consumer;
@@ -432,10 +440,15 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
 
       final AtomicReferenceArray<Set<K>> referenceArray;
 
-      KeyTrackingConsumer(ConsistentHash ch, Consumer<V> consumer, Function<CacheEntry<K, Object>, V> valueFunction) {
+      final DistributedCacheStream.SegmentListenerNotifier listenerNotifier;
+
+      KeyTrackingConsumer(ConsistentHash ch, Consumer<V> consumer, Function<CacheEntry<K, Object>, V> valueFunction,
+              DistributedCacheStream.SegmentListenerNotifier completedSegments) {
          this.ch = ch;
          this.consumer = consumer;
          this.valueFunction = valueFunction;
+
+         this.listenerNotifier = completedSegments;
 
          this.referenceArray = new AtomicReferenceArray<>(ch.getNumSegments());
          for (int i = 0; i < referenceArray.length(); ++i) {
@@ -445,9 +458,16 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       }
 
       @Override
-      public void onIntermediateResult(Address address, Collection<CacheEntry<K, Object>> results) {
+      public Set<Integer> onIntermediateResult(Address address, Collection<CacheEntry<K, Object>> results) {
          if (results != null) {
             log.tracef("Response from %s with results %s", address, results.size());
+            Set<Integer> segmentsCompleted;
+            CacheEntry<K, Object>[] lastCompleted = new CacheEntry[1];
+            if (listenerNotifier != null) {
+               segmentsCompleted = new HashSet<>();
+            } else {
+               segmentsCompleted = null;
+            }
             results.forEach(e -> {
                K key = e.getKey();
                int segment = ch.getSegment(key);
@@ -455,10 +475,18 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
                // On completion we null this out first - thus we don't need to add
                if (keys != null) {
                   keys.add(key);
+               } else if (segmentsCompleted != null) {
+                  segmentsCompleted.add(segment);
+                  lastCompleted[0] = e;
                }
                consumer.accept(valueFunction.apply(e));
             });
+            if (lastCompleted[0] != null) {
+               listenerNotifier.addSegmentsForObject(lastCompleted[0], segmentsCompleted);
+               return segmentsCompleted;
+            }
          }
+         return null;
       }
 
       @Override
@@ -470,7 +498,11 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          } else {
             log.tracef("No segments to complete from %s", address);
          }
-         onIntermediateResult(address, results);
+         Set<Integer> valueSegments = onIntermediateResult(address, results);
+         if (valueSegments != null) {
+            completedSegments.removeAll(valueSegments);
+            listenerNotifier.completeSegmentsNoResults(completedSegments);
+         }
       }
 
       @Override
@@ -497,7 +529,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       }
 
       @Override
-      public synchronized void onIntermediateResult(Address address, R results) {
+      public synchronized Set<Integer> onIntermediateResult(Address address, R results) {
          if (results != null) {
             if (currentValue != null) {
                currentValue = binaryOperator.apply(currentValue, results);
@@ -505,6 +537,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
                currentValue = results;
             }
          }
+         return null;
       }
 
       @Override
@@ -533,10 +566,11 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       }
 
       @Override
-      public void onIntermediateResult(Address address, Collection<R> results) {
+      public Set<Integer> onIntermediateResult(Address address, Collection<R> results) {
          if (results != null) {
             results.forEach(consumer);
          }
+         return null;
       }
 
       @Override

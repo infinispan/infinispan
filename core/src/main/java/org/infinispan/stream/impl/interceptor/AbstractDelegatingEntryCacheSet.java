@@ -33,13 +33,13 @@ public abstract class AbstractDelegatingEntryCacheSet<K, V> extends AbstractDele
    public CacheStream<CacheEntry<K, V>> stream() {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       return new LocalEntryCacheStream<>(cache, false, dm != null ? dm.getConsistentHash() : null,
-              () -> StreamSupport.stream(spliterator(), false));
+              () -> StreamSupport.stream(spliterator(), false), cache.getAdvancedCache().getComponentRegistry());
    }
 
    @Override
    public CacheStream<CacheEntry<K, V>> parallelStream() {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       return new LocalEntryCacheStream<>(cache, true, dm != null ? dm.getConsistentHash() : null,
-              () -> StreamSupport.stream(spliterator(), true));
+              () -> StreamSupport.stream(spliterator(), true), cache.getAdvancedCache().getComponentRegistry());
    }
 }

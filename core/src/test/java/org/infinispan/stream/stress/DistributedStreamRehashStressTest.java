@@ -39,12 +39,12 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 /**
- * Stress test designed to test to verify that distributed entry retrieval works properly.
+ * Stress test designed to test to verify that distributed stream works properly when constant rehashes occur
  *
  * @author wburns
- * @since 7.0
+ * @since 8.0
  */
-@Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest")
+//@Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest")
 public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected final static int CACHE_COUNT = 5;

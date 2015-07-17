@@ -6,6 +6,7 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -35,21 +36,25 @@ public abstract class AbstractLocalCacheStream<R, K, V> implements CacheStream<R
    protected final boolean parallel;
    protected final ConsistentHash hash;
    protected final Supplier<Stream<CacheEntry<K, V>>> supplier;
+   protected final ComponentRegistry registry;
 
    protected Set<Integer> segmentsToFilter;
    protected Set<?> keysToFilter;
 
+   protected Stream<R> stream;
+
    /**
-    *
-    * @param parallel
+    *  @param parallel
     * @param hash
     * @param supplier This must be a supplier that provides
+    * @param registry
     */
    public AbstractLocalCacheStream(boolean parallel, ConsistentHash hash,
-                                   Supplier<Stream<CacheEntry<K, V>>> supplier) {
+           Supplier<Stream<CacheEntry<K, V>>> supplier, ComponentRegistry registry) {
       this.parallel = parallel;
       this.hash = hash;
       this.supplier = supplier;
+      this.registry = registry;
    }
 
    ConsistentHash getHash() {
@@ -61,6 +66,13 @@ public abstract class AbstractLocalCacheStream<R, K, V> implements CacheStream<R
    }
 
    protected abstract Stream<R> getStream();
+
+   private final Stream<R> getOrCreateStream() {
+      if (stream == null) {
+         stream = getStream();
+      }
+      return stream;
+   }
 
    @Override
    public CacheStream<R> sequentialDistribution() {
@@ -104,201 +116,216 @@ public abstract class AbstractLocalCacheStream<R, K, V> implements CacheStream<R
 
    @Override
    public Stream<R> filter(Predicate<? super R> predicate) {
-      return getStream().filter(predicate);
+      registry.wireDependencies(predicate);
+      stream = getOrCreateStream().filter(predicate);
+      return this;
    }
 
    @Override
    public <R1> Stream<R1> map(Function<? super R, ? extends R1> mapper) {
-      return getStream().map(mapper);
+      registry.wireDependencies(mapper);
+      stream = (Stream<R>) getOrCreateStream().map(mapper);
+      return (Stream<R1>) this;
    }
 
    @Override
    public IntStream mapToInt(ToIntFunction<? super R> mapper) {
-      return getStream().mapToInt(mapper);
+      return getOrCreateStream().mapToInt(mapper);
    }
 
    @Override
    public LongStream mapToLong(ToLongFunction<? super R> mapper) {
-      return getStream().mapToLong(mapper);
+      return getOrCreateStream().mapToLong(mapper);
    }
 
    @Override
    public DoubleStream mapToDouble(ToDoubleFunction<? super R> mapper) {
-      return getStream().mapToDouble(mapper);
+      return getOrCreateStream().mapToDouble(mapper);
    }
 
    @Override
    public <R1> Stream<R1> flatMap(Function<? super R, ? extends Stream<? extends R1>> mapper) {
-      return getStream().flatMap(mapper);
+      stream = (Stream<R>) getOrCreateStream().flatMap(mapper);
+      return (Stream<R1>) this;
    }
 
    @Override
    public IntStream flatMapToInt(Function<? super R, ? extends IntStream> mapper) {
-      return getStream().flatMapToInt(mapper);
+      return getOrCreateStream().flatMapToInt(mapper);
    }
 
    @Override
    public LongStream flatMapToLong(Function<? super R, ? extends LongStream> mapper) {
-      return getStream().flatMapToLong(mapper);
+      return getOrCreateStream().flatMapToLong(mapper);
    }
 
    @Override
    public DoubleStream flatMapToDouble(Function<? super R, ? extends DoubleStream> mapper) {
-      return getStream().flatMapToDouble(mapper);
+      return getOrCreateStream().flatMapToDouble(mapper);
    }
 
    @Override
    public Stream<R> distinct() {
-      return getStream().distinct();
+      stream = getOrCreateStream().distinct();
+      return this;
    }
 
    @Override
    public Stream<R> sorted() {
-      return getStream().sorted();
+      stream = getOrCreateStream().sorted();
+      return this;
    }
 
    @Override
    public Stream<R> sorted(Comparator<? super R> comparator) {
-      return getStream().sorted(comparator);
+      stream = getOrCreateStream().sorted(comparator);
+      return this;
    }
 
    @Override
    public Stream<R> peek(Consumer<? super R> action) {
-      return getStream().peek(action);
+      stream = getOrCreateStream().peek(action);
+      return this;
    }
 
    @Override
    public Stream<R> limit(long maxSize) {
-      return getStream().limit(maxSize);
+      stream = getOrCreateStream().limit(maxSize);
+      return this;
    }
 
    @Override
    public Stream<R> skip(long n) {
-      return getStream().skip(n);
+      stream = getOrCreateStream().skip(n);
+      return this;
    }
 
    @Override
    public void forEach(Consumer<? super R> action) {
-      getStream().forEach(action);
+      getOrCreateStream().forEach(action);
    }
 
    @Override
    public void forEachOrdered(Consumer<? super R> action) {
-      getStream().forEachOrdered(action);
+      getOrCreateStream().forEachOrdered(action);
    }
 
    @Override
    public Object[] toArray() {
-      return getStream().toArray();
+      return getOrCreateStream().toArray();
    }
 
    @Override
    public <A> A[] toArray(IntFunction<A[]> generator) {
-      return getStream().toArray(generator);
+      return getOrCreateStream().toArray(generator);
    }
 
    @Override
    public R reduce(R identity, BinaryOperator<R> accumulator) {
-      return getStream().reduce(identity, accumulator);
+      return getOrCreateStream().reduce(identity, accumulator);
    }
 
    @Override
    public Optional<R> reduce(BinaryOperator<R> accumulator) {
-      return getStream().reduce(accumulator);
+      return getOrCreateStream().reduce(accumulator);
    }
 
    @Override
    public <U> U reduce(U identity, BiFunction<U, ? super R, U> accumulator, BinaryOperator<U> combiner) {
-      return getStream().reduce(identity, accumulator, combiner);
+      return getOrCreateStream().reduce(identity, accumulator, combiner);
    }
 
    @Override
    public <R1> R1 collect(Supplier<R1> supplier, BiConsumer<R1, ? super R> accumulator, BiConsumer<R1, R1> combiner) {
-      return getStream().collect(supplier, accumulator, combiner);
+      return getOrCreateStream().collect(supplier, accumulator, combiner);
    }
 
    @Override
    public <R1, A> R1 collect(Collector<? super R, A, R1> collector) {
-      return getStream().collect(collector);
+      return getOrCreateStream().collect(collector);
    }
 
    @Override
    public Optional<R> min(Comparator<? super R> comparator) {
-      return getStream().min(comparator);
+      return getOrCreateStream().min(comparator);
    }
 
    @Override
    public Optional<R> max(Comparator<? super R> comparator) {
-      return getStream().max(comparator);
+      return getOrCreateStream().max(comparator);
    }
 
    @Override
    public long count() {
-      return getStream().count();
+      return getOrCreateStream().count();
    }
 
    @Override
    public boolean anyMatch(Predicate<? super R> predicate) {
-      return getStream().anyMatch(predicate);
+      return getOrCreateStream().anyMatch(predicate);
    }
 
    @Override
    public boolean allMatch(Predicate<? super R> predicate) {
-      return getStream().allMatch(predicate);
+      return getOrCreateStream().allMatch(predicate);
    }
 
    @Override
    public boolean noneMatch(Predicate<? super R> predicate) {
-      return getStream().noneMatch(predicate);
+      return getOrCreateStream().noneMatch(predicate);
    }
 
    @Override
    public Optional<R> findFirst() {
-      return getStream().findFirst();
+      return getOrCreateStream().findFirst();
    }
 
    @Override
    public Optional<R> findAny() {
-      return getStream().findAny();
+      return getOrCreateStream().findAny();
    }
 
    @Override
    public CloseableIterator<R> iterator() {
-      return Closeables.iterator(getStream());
+      return Closeables.iterator(getOrCreateStream());
    }
 
    @Override
    public Spliterator<R> spliterator() {
-      return getStream().spliterator();
+      return getOrCreateStream().spliterator();
    }
 
    @Override
    public boolean isParallel() {
-      return getStream().isParallel();
+      return getOrCreateStream().isParallel();
    }
 
    @Override
    public Stream<R> sequential() {
-      return getStream().sequential();
+      stream = getOrCreateStream().sequential();
+      return this;
    }
 
    @Override
    public Stream<R> parallel() {
-      return getStream().parallel();
+      stream = getOrCreateStream().parallel();
+      return this;
    }
 
    @Override
    public Stream<R> unordered() {
-      return getStream().unordered();
+      stream = getOrCreateStream().unordered();
+      return this;
    }
 
    @Override
    public Stream<R> onClose(Runnable closeHandler) {
-      return getStream().onClose(closeHandler);
+      stream = getOrCreateStream().onClose(closeHandler);
+      return this;
    }
 
    @Override
    public void close() {
-      getStream().close();
+      getOrCreateStream().close();
    }
 }

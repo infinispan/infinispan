@@ -1,5 +1,7 @@
 package org.infinispan.stream.impl.intops;
 
+import org.infinispan.factories.ComponentRegistry;
+
 import java.util.stream.BaseStream;
 
 /**
@@ -17,4 +19,12 @@ public interface IntermediateOperation<InputType, InputStream extends BaseStream
     * @return the resulting stream after the operation was applied
     */
    OutputStream perform(InputStream stream);
+
+   /**
+    * Handles injection of components for various dependencies that the intermediate operation has
+    * @param registry the registry to use
+    */
+   default void handleInjection(ComponentRegistry registry) {
+      // Default is nothing is done
+   }
 }

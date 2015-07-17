@@ -355,6 +355,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new TerminalOperationExternalizer());
       addInternalExternalizer(new StreamMarshalling.StreamMarshallingExternalizer());
       addInternalExternalizer(new CommandInvocationId.Externalizer());
+      addInternalExternalizer(new CacheFilters.CacheFiltersExternalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

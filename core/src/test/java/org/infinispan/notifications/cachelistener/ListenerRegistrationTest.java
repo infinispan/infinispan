@@ -34,7 +34,7 @@ public class ListenerRegistrationTest extends AbstractInfinispanTest {
       Configuration config = mock(Configuration.class, RETURNS_DEEP_STUBS);
       when(config.clustering().cacheMode()).thenReturn(CacheMode.LOCAL);
       notifier.injectDependencies(mockCache, new ClusteringDependentLogic.LocalLogic(), null, config,
-                           mock(DistributionManager.class), mock(EntryRetriever.class), new InternalEntryFactoryImpl(),
+                           mock(DistributionManager.class), new InternalEntryFactoryImpl(),
                            mock(ClusterEventManager.class));
       return notifier;
    }

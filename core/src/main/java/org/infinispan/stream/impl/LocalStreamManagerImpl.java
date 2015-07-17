@@ -9,6 +9,7 @@ import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -45,6 +46,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    private final static Log log = LogFactory.getLog(LocalStreamManagerImpl.class);
 
    private AdvancedCache<K, V> cache;
+   private ComponentRegistry registry;
    private StateTransferManager stm;
    private RpcManager rpc;
    private CommandsFactory factory;
@@ -90,9 +92,10 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
    }
 
    @Inject
-   public void inject(Cache<K, V> cache, StateTransferManager stm, RpcManager rpc, PersistenceManager persistenceManager,
-                      CommandsFactory factory) {
+   public void inject(Cache<K, V> cache, ComponentRegistry registry, StateTransferManager stm, RpcManager rpc,
+           PersistenceManager persistenceManager, CommandsFactory factory) {
       this.cache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
+      this.registry = registry;
       this.stm = stm;
       this.rpc = rpc;
       this.factory = factory;
@@ -211,6 +214,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       log.tracef("Received operation request for id %s from %s for segments %s", requestId, origin, segments);
       CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
       operation.setSupplier(() -> getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude));
+      operation.handleInjection(registry);
       R value = operation.performOperation();
       rpc.invokeRemotely(Collections.singleton(origin), factory.buildStreamResponseCommand(requestId, true,
               Collections.emptySet(), value), rpc.getDefaultRpcOptions(true));
@@ -224,7 +228,8 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
       SegmentListener listener = new SegmentListener(segments, operation);
       R value;
-      Address localAddress = rpc.getAddress();
+
+      operation.handleInjection(registry);
       // We currently only allow 1 request per id (we may change this later)
       changeListener.put(requestId, listener);
       log.tracef("Registered change listener for %s", requestId);
@@ -259,6 +264,7 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       log.tracef("Received key aware operation request for id %s from %s for segments %s", requestId, origin, segments);
       CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
       operation.setSupplier(() -> getStream(cacheEntrySet, parallelStream, segments, keysToInclude, keysToExclude));
+      operation.handleInjection(registry);
       Collection<R> value = operation.performOperation(new NonRehashIntermediateCollector<>(origin, requestId,
               parallelStream));
       rpc.invokeRemotely(Collections.singleton(origin), factory.buildStreamResponseCommand(requestId, true,
@@ -273,7 +279,8 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
       CacheSet<CacheEntry<K, V>> cacheEntrySet = getCacheRespectingLoader(includeLoader).cacheEntrySet();
       SegmentListener listener = new SegmentListener(segments, operation);
       Collection<CacheEntry<K, R2>> results;
-      Address localAddress = rpc.getAddress();
+
+      operation.handleInjection(registry);
       // We currently only allow 1 request per id (we may change this later)
       changeListener.put(requestId, listener);
       log.tracef("Registered change listener for %s", requestId);

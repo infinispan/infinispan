@@ -1,12 +1,23 @@
 package org.infinispan.notifications.cachelistener;
 
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.core.IsInstanceOf;
 import org.infinispan.Cache;
+import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -30,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.Callable;
@@ -40,6 +52,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -209,18 +224,21 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       final CheckPoint checkPoint = new CheckPoint();
 
-      EntryRetriever retriever = waitUntilRetrievingIterator(cache, checkPoint);
+      InterceptorChain chain = mockStream(cache, (mock, real, additional) ->
+              doAnswer(i -> {
+                 // Wait for main thread to sync up
+                 checkPoint.trigger("pre_retrieve_entry_invoked");
+                 // Now wait until main thread lets us through
+                 checkPoint.awaitStrict("pre_retrieve_entry_released", 10, TimeUnit.SECONDS);
+                 return i.getMethod().invoke(real, i.getArguments());
+              }).when(mock).iterator());
       try {
-         Future<Void> future = fork(new Callable<Void>() {
-
-            @Override
-            public Void call() throws Exception {
-               cache.addListener(listener);
-               return null;
-            }
+         Future<Void> future = fork(() -> {
+            cache.addListener(listener);
+            return null;
          });
 
-         checkPoint.awaitStrict("pre_retrieve_entry_invoked", 10, TimeUnit.SECONDS);
+         checkPoint.awaitStrict("pre_retrieve_entry_invoked", 10000, TimeUnit.SECONDS);
 
          String value;
          String keyToChange = findKeyBasedOnOwnership(expectedValues.keySet(),
@@ -255,7 +273,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
          verifyEvents(isClustered(listener), listener, expectedValues);
       } finally {
-         TestingUtil.replaceComponent(cache, EntryRetriever.class, retriever, true);
+         TestingUtil.replaceComponent(cache, InterceptorChain.class, chain, true);
          cache.removeListener(listener);
       }
    }
@@ -278,16 +296,22 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
 
       CheckPoint checkPoint = new CheckPoint();
 
-      EntryRetriever retriever = waitUntilClosingIterator(cache, checkPoint);
+      InterceptorChain chain = mockStream(cache, (mock, real, additional) -> {
+         doAnswer(i -> {
+            // Wait for main thread to sync up
+            checkPoint.trigger("pre_close_iter_invoked");
+            // Now wait until main thread lets us through
+            checkPoint.awaitStrict("pre_close_iter_released", 10, TimeUnit.SECONDS);
+            return i.getMethod().invoke(real, i.getArguments());
+         }).when(mock).close();
+
+         doAnswer(i -> i.getMethod().invoke(real, i.getArguments())).when(mock).iterator();
+      });
 
       try {
-         Future<Void> future = fork(new Callable<Void>() {
-
-            @Override
-            public Void call() throws Exception {
-               cache.addListener(listener);
-               return null;
-            }
+         Future<Void> future = fork(() -> {
+            cache.addListener(listener);
+            return null;
          });
 
          checkPoint.awaitStrict("pre_close_iter_invoked", 10, TimeUnit.SECONDS);
@@ -370,7 +394,7 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             assertEquals(event.getValue(), value);
          }
       } finally {
-         TestingUtil.replaceComponent(cache, EntryRetriever.class, retriever, true);
+         TestingUtil.replaceComponent(cache, InterceptorChain.class, chain, true);
          cache.removeListener(listener);
       }
    }
@@ -697,37 +721,22 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
             QueueingSegmentListener mockListener = mock(QueueingSegmentListener.class,
                                                        withSettings().defaultAnswer(listenerAnswer));
 
-            doAnswer(new Answer() {
-               @Override
-               public Object answer(InvocationOnMock invocation) throws Throwable {
+            doAnswer(i -> {
+               Set<Integer> segments = (Set<Integer>) i.getArguments()[0];
+               if (segments.contains(segment)) {
                   wasLastSegment.set(true);
-                  return listenerAnswer.answer(invocation);
                }
-            }).when(mockListener).segmentTransferred(Mockito.eq(segment), Mockito.eq(true));
+               return listenerAnswer.answer(i);
+            }).when(mockListener).segmentCompleted(Mockito.anySet());
 
-            doAnswer(new Answer() {
-               @Override
-               public Object answer(InvocationOnMock invocation) throws Throwable {
+            doAnswer(i -> {
+               if (wasLastSegment.compareAndSet(true, false)) {
                   // Wait for main thread to sync up
                   checkPoint.trigger("pre_complete_segment_invoked");
                   // Now wait until main thread lets us through
                   checkPoint.awaitStrict("pre_complete_segment_released", 10, TimeUnit.SECONDS);
-                  return listenerAnswer.answer(invocation);
                }
-               // If this was false means we won't have the notifiedKey callback
-            }).when(mockListener).segmentTransferred(Mockito.eq(segment), Mockito.eq(false));
-
-            doAnswer(new Answer() {
-               @Override
-               public Object answer(InvocationOnMock invocation) throws Throwable {
-                  if (wasLastSegment.compareAndSet(true, false)) {
-                     // Wait for main thread to sync up
-                     checkPoint.trigger("pre_complete_segment_invoked");
-                     // Now wait until main thread lets us through
-                     checkPoint.awaitStrict("pre_complete_segment_released", 10, TimeUnit.SECONDS);
-                  }
-                  return listenerAnswer.answer(invocation);
-               }
+               return listenerAnswer.answer(i);
             }).when(mockListener).notifiedKey(Mockito.any());
             return super.putIfAbsent(key, mockListener);
          }
@@ -738,57 +747,76 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       return realNotifier;
    }
 
-   protected EntryRetriever waitUntilRetrievingIterator(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      EntryRetriever retriever = TestingUtil.extractComponent(cache, EntryRetriever.class);
-      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(retriever);
-      EntryRetriever mockRetriever = mock(EntryRetriever.class, withSettings().defaultAnswer(forwardedAnswer));
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            // Wait for main thread to sync up
-            checkPoint.trigger("pre_retrieve_entry_invoked");
-            // Now wait until main thread lets us through
-            checkPoint.awaitStrict("pre_retrieve_entry_released", 10, TimeUnit.SECONDS);
+   // This is a helper method so that subsequent calls to the stream will return a mocked instance so we
+   // can keep track of invocations properly.
+   protected Stream mockStream(Stream realStream, StreamMocking mocking) {
+      Answer<Stream> defaultAnswer = i -> {
+         Stream stream = (Stream) i.getMethod().invoke(realStream, i.getArguments());
+         return mockStream(stream, mocking);
+      };
+      CacheStream mockStream = mock(CacheStream.class, withSettings().defaultAnswer(defaultAnswer));
 
-            return forwardedAnswer.answer(invocation);
-         }
-      }).when(mockRetriever).retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
-                                             any(EntryRetriever.SegmentListener.class));
-      TestingUtil.replaceComponent(cache, EntryRetriever.class, mockRetriever, true);
-      return retriever;
+      mocking.additionalInformation(mockStream, realStream, mocking);
+
+      return mockStream;
    }
 
-   protected EntryRetriever waitUntilClosingIterator(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-      EntryRetriever retriever = TestingUtil.extractComponent(cache, EntryRetriever.class);
-      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(retriever);
-      EntryRetriever mockRetriever = mock(EntryRetriever.class, withSettings().defaultAnswer(forwardedAnswer));
-
-      doAnswer(new Answer() {
-         @Override
-         public Object answer(InvocationOnMock invocation) throws Throwable {
-            CloseableIterator realIter = (CloseableIterator)forwardedAnswer.answer(invocation);
-
-            final Answer<Object> forwardedIterAnswer = AdditionalAnswers.delegatesTo(realIter);
-
-            CloseableIterator iter = mock(CloseableIterator.class, withSettings().defaultAnswer(forwardedIterAnswer));
-
-            doAnswer(new Answer() {
-
-               @Override
-               public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                  // Wait for main thread to sync up
-                  checkPoint.trigger("pre_close_iter_invoked");
-                  // Now wait until main thread lets us through
-                  checkPoint.awaitStrict("pre_close_iter_released", 10, TimeUnit.SECONDS);
-                  return forwardedIterAnswer.answer(invocationOnMock);
-               }
-            }).when(iter).close();
-
-            return iter;
-         }
-      }).when(mockRetriever).retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
-                                             any(EntryRetriever.SegmentListener.class));
-      TestingUtil.replaceComponent(cache, EntryRetriever.class, mockRetriever, true);
-      return retriever;
+   private interface StreamMocking {
+      void additionalInformation(Stream mockStream, Stream realStream, StreamMocking ourselves);
    }
+
+   protected InterceptorChain mockStream(final Cache<?, ?> cache, StreamMocking mocking) {
+      InterceptorChain chain = TestingUtil.extractComponent(cache, InterceptorChain.class);
+      InterceptorChain mockChain = spy(chain);
+      doAnswer(i -> {
+         CacheSet cacheSet = (CacheSet) i.callRealMethod();
+
+         CacheSet mockSet = spy(cacheSet);
+
+         when(mockSet.stream()).then(j -> {
+            CacheStream stream = (CacheStream) j.callRealMethod();
+
+            return mockStream(stream, mocking);
+         });
+
+         return mockSet;
+      }).when(mockChain).invoke(Mockito.any(InvocationContext.class),
+              (VisitableCommand) argThat(new IsInstanceOf(EntrySetCommand.class)));
+      TestingUtil.replaceComponent(cache, InterceptorChain.class, mockChain, true);
+      return chain;
+   }
+
+//   protected EntryRetriever waitUntilClosingIterator(final Cache<?, ?> cache, final CheckPoint checkPoint) {
+//      EntryRetriever retriever = TestingUtil.extractComponent(cache, EntryRetriever.class);
+//      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(retriever);
+//      EntryRetriever mockRetriever = mock(EntryRetriever.class, withSettings().defaultAnswer(forwardedAnswer));
+//
+//      doAnswer(new Answer() {
+//         @Override
+//         public Object answer(InvocationOnMock invocation) throws Throwable {
+//            CloseableIterator realIter = (CloseableIterator)forwardedAnswer.answer(invocation);
+//
+//            final Answer<Object> forwardedIterAnswer = AdditionalAnswers.delegatesTo(realIter);
+//
+//            CloseableIterator iter = mock(CloseableIterator.class, withSettings().defaultAnswer(forwardedIterAnswer));
+//
+//            doAnswer(new Answer() {
+//
+//               @Override
+//               public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+//                  // Wait for main thread to sync up
+//                  checkPoint.trigger("pre_close_iter_invoked");
+//                  // Now wait until main thread lets us through
+//                  checkPoint.awaitStrict("pre_close_iter_released", 10, TimeUnit.SECONDS);
+//                  return forwardedIterAnswer.answer(invocationOnMock);
+//               }
+//            }).when(iter).close();
+//
+//            return iter;
+//         }
+//      }).when(mockRetriever).retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
+//                                             any(EntryRetriever.SegmentListener.class));
+//      TestingUtil.replaceComponent(cache, EntryRetriever.class, mockRetriever, true);
+//      return retriever;
+//   }
 }

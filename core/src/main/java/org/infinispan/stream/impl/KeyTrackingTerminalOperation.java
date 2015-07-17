@@ -1,6 +1,7 @@
 package org.infinispan.stream.impl;
 
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.factories.ComponentRegistry;
 
 import java.util.Collection;
 import java.util.Set;
@@ -46,4 +47,10 @@ public interface KeyTrackingTerminalOperation<K, R, R2> extends SegmentAwareOper
     * @param supplier the supplier to use
     */
    void setSupplier(Supplier<? extends Stream<?>> supplier);
+
+   /**
+    * Handles injection of components for various intermediate and this operation.
+    * @param registry component registry to use
+    */
+   void handleInjection(ComponentRegistry registry);
 }

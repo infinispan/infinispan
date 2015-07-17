@@ -73,7 +73,7 @@ abstract class BaseQueueingSegmentListener<K, V, E extends Event<K, V>> implemen
    }
 
    @Override
-   public void segmentTransferred(int segment, boolean sentLastEntry) {
+   public void segmentCompleted(Set<Integer> segments) {
    }
 
    protected boolean addEvent(K key, Object value) {
