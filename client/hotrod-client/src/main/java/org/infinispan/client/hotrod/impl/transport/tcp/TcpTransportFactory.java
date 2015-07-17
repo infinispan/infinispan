@@ -100,7 +100,7 @@ public class TcpTransportFactory implements TransportFactory {
 
          if (log.isDebugEnabled()) {
             log.debugf("Statically configured servers: %s", servers);
-            log.debugf("Load balancer class: %s", configuration.balancingStrategy().getName());
+            log.debugf("Load balancer class: %s", configuration.balancingStrategyClass().getName());
             log.debugf("Tcp no delay = %b; client socket timeout = %d ms; connect timeout = %d ms",
                        tcpNoDelay, soTimeout, connectTimeout);
          }
@@ -124,12 +124,18 @@ public class TcpTransportFactory implements TransportFactory {
    }
 
    private FailoverRequestBalancingStrategy addBalancer(byte[] cacheName) {
-      RequestBalancingStrategy cfgBalancer = Util.getInstance(configuration.balancingStrategy());
-      FailoverRequestBalancingStrategy balancer =
-         (cfgBalancer instanceof FailoverRequestBalancingStrategy)
-            ? (FailoverRequestBalancingStrategy) cfgBalancer
-            : new FailoverToRequestBalancingStrategyDelegate(cfgBalancer);
+      FailoverRequestBalancingStrategy balancer;
 
+      FailoverRequestBalancingStrategy cfgBalancerInstance = configuration.balancingStrategy();
+      if (cfgBalancerInstance != null) {
+         balancer = cfgBalancerInstance;
+      } else {
+         RequestBalancingStrategy cfgBalancer = Util.getInstance(configuration.balancingStrategyClass());
+         balancer =
+                 (cfgBalancer instanceof FailoverRequestBalancingStrategy)
+                         ? (FailoverRequestBalancingStrategy) cfgBalancer
+                         : new FailoverToRequestBalancingStrategyDelegate(cfgBalancer);
+      }
       balancers.put(cacheName, balancer);
       balancer.setServers(topologyInfo.getServers());
       return balancer;

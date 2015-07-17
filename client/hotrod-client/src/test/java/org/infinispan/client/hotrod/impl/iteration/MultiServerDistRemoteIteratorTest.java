@@ -1,22 +1,15 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
-import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
-import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.TestingUtil;
-import static org.testng.AssertJUnit.assertEquals;
 import org.testng.annotations.Test;
+
+import java.net.InetSocketAddress;
+import java.util.Map;
+
+import static org.testng.Assert.assertEquals;
 
 /**
  * @author gustavonalle
@@ -38,35 +31,37 @@ public class MultiServerDistRemoteIteratorTest extends BaseMultiServerRemoteIter
       return builder;
    }
 
+   @Override
+   protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder clientBuilder = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      clientBuilder.addServer()
+              .host("localhost")
+              .port(serverPort)
+              .maxRetries(maxRetries())
+              .balancingStrategy(new PreferredServerBalancingStrategy(new InetSocketAddress("localhost", serverPort)))
+              .pingOnStartup(false);
+      return clientBuilder;
+   }
+
    @Test
    public void testIterationRouting() throws Exception {
-      RemoteCacheManager cacheManager = clients.get(0);
-      RemoteCache<Object, Object> remoteCache = cacheManager.getCache();
-      TransportFactory transportFactory = TestingUtil.extractField(cacheManager, "transportFactory");
-      SegmentConsistentHash consistentHash = (SegmentConsistentHash) transportFactory.getConsistentHash(cacheManager.getCache().getName().getBytes());
-      SocketAddress[][] segmentOwners = consistentHash.getSegmentOwners();
-
-      for (HotRodServer server : servers) {
-         Set<Integer> segmentsOwned = getSegmentsOwned(server, segmentOwners);
-         try (CloseableIterator<Map.Entry<Object, Object>> ignored = remoteCache.retrieveEntries(null, segmentsOwned, 10)) {
-            assertEquals(1, server.iterationManager().activeIterations());
+      for (int i = 0; i < clients.size(); i++) {
+         RemoteCacheManager client = client(i);
+         try (CloseableIterator<Map.Entry<Object, Object>> ignored = client.getCache().retrieveEntries(null, 10)) {
+            assertIterationActiveOnlyOnServer(i);
          }
       }
    }
 
-
-   private Set<Integer> getSegmentsOwned(HotRodServer hotRodServer, SocketAddress[][] owners) {
-      Set<Integer> owned = new HashSet<>();
-      for (int seg = 0; seg < owners.length; seg++) {
-         SocketAddress primaryOwner = owners[seg][0];
-         InetSocketAddress inetSocketAddress = (InetSocketAddress) primaryOwner;
-         String hostname = inetSocketAddress.getAddress().getHostAddress();
-         int port = inetSocketAddress.getPort();
-         if (hostname.equals(hotRodServer.getHost()) && port == hotRodServer.getPort()) {
-            owned.add(seg);
+   private void assertIterationActiveOnlyOnServer(int index) {
+      for (int i = 0; i < servers.size(); i++) {
+         int activeIterations = server(i).iterationManager().activeIterations();
+         if (i == index) {
+            assertEquals(1L, activeIterations);
+         } else {
+            assertEquals(0L, activeIterations);
          }
       }
-      return owned;
    }
 
 }
