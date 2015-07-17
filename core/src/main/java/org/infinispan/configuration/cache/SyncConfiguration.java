@@ -32,7 +32,7 @@ public class SyncConfiguration {
     * the call is aborted and an exception is thrown.
     */
    public long replTimeout() {
-      return attributes.attribute(REPL_TIMEOUT).get();
+      return replTimeout.get();
    }
 
    /**
@@ -40,7 +40,7 @@ public class SyncConfiguration {
     * the call is aborted and an exception is thrown.
     */
    public SyncConfiguration replTimeout(long l) {
-      attributes.attribute(REPL_TIMEOUT).set(l);
+      replTimeout.set(l);
       return this;
    }
 
