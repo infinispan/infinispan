@@ -6,16 +6,16 @@ import org.jgroups.util.FutureListener;
 import org.jgroups.util.NotifyingFuture;
 import org.jgroups.util.Rsp;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Dan Berindei
  * @since 8.0
  */
-class SingleResponseFuture extends CompletableFuture<Rsp<Response>> implements FutureListener<Response> {
+class SingleResponseFuture extends CompletableFuture<Rsp<Response>>
+      implements FutureListener<Response>, Callable<Void> {
    private final UnicastRequest request;
    private volatile Future<?> timeoutFuture = null;
 
@@ -33,15 +33,18 @@ class SingleResponseFuture extends CompletableFuture<Rsp<Response>> implements F
       }
    }
 
-   public void timeout() {
-      complete(request.getResult());
-      request.cancel(false);
-   }
-
    public void setTimeoutFuture(Future<?> timeoutFuture) {
       this.timeoutFuture = timeoutFuture;
       if (isDone()) {
          timeoutFuture.cancel(false);
       }
+   }
+
+   @Override
+   public Void call() throws Exception {
+      // The request timed out
+      complete(request.getResult());
+      request.cancel(false);
+      return null;
    }
 }

@@ -260,8 +260,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
 
       SingleResponseFuture retval = new SingleResponseFuture(request);
       if (timeout > 0 && !retval.isDone()) {
-         ScheduledFuture<?> timeoutFuture =
-               timeoutExecutor.schedule(retval::timeout, timeout, TimeUnit.MILLISECONDS);
+         ScheduledFuture<?> timeoutFuture = timeoutExecutor.schedule(retval, timeout, TimeUnit.MILLISECONDS);
          retval.setTimeoutFuture(timeoutFuture);
       }
       return retval;
@@ -319,8 +318,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
          }
       }
       if (timeout > 0 && !retval.isDone()) {
-         ScheduledFuture<?> timeoutFuture =
-               timeoutExecutor.schedule(retval::timeout, timeout, TimeUnit.MILLISECONDS);
+         ScheduledFuture<?> timeoutFuture = timeoutExecutor.schedule(retval, timeout, TimeUnit.MILLISECONDS);
          retval.setTimeoutFuture(timeoutFuture);
       }
       return retval;
