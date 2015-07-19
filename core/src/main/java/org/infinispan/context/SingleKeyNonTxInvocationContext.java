@@ -21,7 +21,6 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
     * It is possible for the key to only be wrapped but not locked, e.g. when a get takes place.
     */
    private boolean isLocked;
-   private final boolean isOriginLocal;
 
    private Object key;
 
@@ -33,16 +32,16 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    private ClassLoader classLoader;
    //TODO move the Origin's address to the InvocationContextFactory when isOriginLocal=true -> all addresses are the same  (Memory allocation cost)
    //(verify if this is worth it by looking at object alignment - would need a different implementation as pointing to null wouldn't help)
-   private Address origin;
+   private final Address origin;
 
-   public SingleKeyNonTxInvocationContext(final boolean originLocal, final Equivalence keyEquivalence) {
-      this.isOriginLocal = originLocal;
+   public SingleKeyNonTxInvocationContext(final Address origin, final Equivalence<Object> keyEquivalence) {
+      this.origin = origin;
       this.keyEquivalence = keyEquivalence;
    }
 
    @Override
    public boolean isOriginLocal() {
-      return isOriginLocal;
+      return origin == null;
    }
 
    @Override
