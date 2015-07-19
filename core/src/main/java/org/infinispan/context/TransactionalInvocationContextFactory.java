@@ -1,6 +1,8 @@
 package org.infinispan.context;
 
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.LocalTxInvocationContext;
@@ -46,7 +48,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
 
    @Override
    public InvocationContext createSingleKeyNonTxInvocationContext() {
-      return new SingleKeyNonTxInvocationContext(true, keyEq);
+      return new SingleKeyNonTxInvocationContext(null, keyEq);
    }
 
    @Override

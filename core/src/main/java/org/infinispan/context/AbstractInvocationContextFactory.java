@@ -27,6 +27,7 @@ public abstract class AbstractInvocationContextFactory implements InvocationCont
    }
 
    @Override
+   public InvocationContext createRemoteInvocationContextForCommand(
    public final InvocationContext createRemoteInvocationContextForCommand(
          VisitableCommand cacheCommand, Address origin) {
       return cacheCommand instanceof ClearCommand ? createClearInvocationContext(false, origin) :
