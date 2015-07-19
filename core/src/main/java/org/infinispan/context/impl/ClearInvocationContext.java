@@ -3,6 +3,7 @@ package org.infinispan.context.impl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
 import java.util.Map;
@@ -18,6 +19,10 @@ import java.util.Set;
 public class ClearInvocationContext extends AbstractInvocationContext implements Cloneable {
 
    private static final Map<Object, CacheEntry> LOOKUP_ENTRIES = Collections.singletonMap((Object) "_clear_", (CacheEntry) ClearCacheEntry.getInstance());
+
+   public ClearInvocationContext(Address origin) {
+      super(origin);
+   }
 
    @Override
    public boolean isInTxScope() {

@@ -35,7 +35,7 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
       if (keyCount == 1) {
          return new SingleKeyNonTxInvocationContext(null, keyEq);
       } else if (keyCount > 0) {
-         return new NonTxInvocationContext(keyCount, true, keyEq);
+         return new NonTxInvocationContext(keyCount, null, keyEq);
       }
       return createInvocationContext(null, false);
    }
@@ -47,8 +47,7 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
 
    @Override
    public NonTxInvocationContext createNonTxInvocationContext() {
-      NonTxInvocationContext ctx = new NonTxInvocationContext(keyEq);
-      ctx.setOriginLocal(true);
+      NonTxInvocationContext ctx = new NonTxInvocationContext(null, keyEq);
       return ctx;
    }
 
@@ -59,8 +58,7 @@ public class NonTransactionalInvocationContextFactory extends AbstractInvocation
 
    @Override
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
-      NonTxInvocationContext ctx = new NonTxInvocationContext(keyEq);
-      ctx.setOrigin(origin);
+      NonTxInvocationContext ctx = new NonTxInvocationContext(origin, keyEq);
       return ctx;
    }
 

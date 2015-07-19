@@ -15,7 +15,7 @@ import javax.transaction.Transaction;
 public class RemoteTxInvocationContext extends AbstractTxInvocationContext<RemoteTransaction> {
 
    public RemoteTxInvocationContext(RemoteTransaction cacheTransaction) {
-      super(cacheTransaction);
+      super(cacheTransaction, cacheTransaction.getGlobalTransaction().getAddress());
    }
 
    @Override

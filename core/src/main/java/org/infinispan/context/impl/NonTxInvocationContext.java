@@ -5,6 +5,7 @@ import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.remoting.transport.Address;
 
 import java.util.Map;
 import java.util.Set;
@@ -25,13 +26,14 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
 
    private final Equivalence<Object> keyEq;
 
-   public NonTxInvocationContext(int numEntries, boolean local, Equivalence<Object> keyEq) {
+   public NonTxInvocationContext(int numEntries, Address origin, Equivalence<Object> keyEq) {
+      super(origin);
       lookedUpEntries = CollectionFactory.makeMap(numEntries, keyEq, AnyEquivalence.<CacheEntry>getInstance());
-      setOriginLocal(local);
       this.keyEq = keyEq;
    }
 
-   public NonTxInvocationContext(Equivalence<Object> keyEq) {
+   public NonTxInvocationContext(Address origin, Equivalence<Object> keyEq) {
+      super(origin);
       lookedUpEntries = CollectionFactory.makeMap(INITIAL_CAPACITY, keyEq, AnyEquivalence.<CacheEntry>getInstance());
       this.keyEq = keyEq;
    }
