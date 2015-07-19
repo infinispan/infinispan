@@ -47,7 +47,7 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
 
 
    public void testNoTransaction() throws Exception {
-      InvocationContext nonTx = new NonTxInvocationContext(AnyEquivalence.getInstance());
+      InvocationContext nonTx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
 
       Lock mockLock = mock(Lock.class);
       when(lc.acquireLock(nonTx.getLockOwner(), "k", config.locking().lockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).thenReturn(mockLock).thenReturn(null);

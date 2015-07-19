@@ -43,7 +43,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
 
    @Override
    public NonTxInvocationContext createNonTxInvocationContext() {
-      return newNonTxInvocationContext(true);
+      return newNonTxInvocationContext(null);
    }
 
    @Override
@@ -58,7 +58,7 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
          if (keyCount == 1)
             return createSingleKeyNonTxInvocationContext();
          else
-            return newNonTxInvocationContext(true);
+            return newNonTxInvocationContext(null);
       }
       return createInvocationContext(runningTx, false);
    }
@@ -81,15 +81,12 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
    public RemoteTxInvocationContext createRemoteTxInvocationContext(
          RemoteTransaction tx, Address origin) {
       RemoteTxInvocationContext ctx = new RemoteTxInvocationContext(tx);
-      ctx.setOrigin(origin);
       return ctx;
    }
 
    @Override
    public NonTxInvocationContext createRemoteInvocationContext(Address origin) {
-      final NonTxInvocationContext nonTxInvocationContext = newNonTxInvocationContext(false);
-      nonTxInvocationContext.setOrigin(origin);
-      return nonTxInvocationContext;
+      return newNonTxInvocationContext(origin);
    }
 
    private Transaction getRunningTx() {
@@ -107,9 +104,8 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
       }
    }
 
-   protected final NonTxInvocationContext newNonTxInvocationContext(boolean local) {
-      NonTxInvocationContext ctx = new NonTxInvocationContext(keyEq);
-      ctx.setOriginLocal(local);
+   protected final NonTxInvocationContext newNonTxInvocationContext(Address origin) {
+      NonTxInvocationContext ctx = new NonTxInvocationContext(origin, keyEq);
       return ctx;
    }
 }

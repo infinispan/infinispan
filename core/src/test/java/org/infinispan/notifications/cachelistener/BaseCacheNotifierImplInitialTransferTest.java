@@ -114,7 +114,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
                            mock(DistributionManager.class), new InternalEntryFactoryImpl(),
                            mock(ClusterEventManager.class));
       n.start();
-      ctx = new NonTxInvocationContext(AnyEquivalence.getInstance());
+      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
    }
 
 //   TODO: commented out until local listners support includeCurrentState

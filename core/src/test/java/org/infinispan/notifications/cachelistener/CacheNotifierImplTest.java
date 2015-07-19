@@ -56,7 +56,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       cl = new CacheListener();
       n.start();
       n.addListener(cl);
-      ctx = new NonTxInvocationContext(AnyEquivalence.getInstance());
+      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
    }
 
    public void testNotifyCacheEntryCreated() {
