@@ -39,7 +39,7 @@
       <version.org.slf4j>1.7.2</version.org.slf4j>
 
       <!-- WildFly dependencies -->
-      <version.org.wildfly>9.0.0.CR2</version.org.wildfly>
+      <version.org.wildfly>9.0.0.Final</version.org.wildfly>
       <version.org.wildfly.arquillian>1.0.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.build-tools>1.0.0.Final</version.org.wildfly.build-tools>
 
