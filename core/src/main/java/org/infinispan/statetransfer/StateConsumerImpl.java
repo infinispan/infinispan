@@ -626,9 +626,7 @@ public class StateConsumerImpl implements StateConsumer {
                   ((RemoteTransaction) tx).setLookedUpEntriesTopology(topologyId - 1);
                }
             }
-            for (Object key : transactionInfo.getLockedKeys()) {
-               tx.addBackupLockForKey(key);
-            }
+            transactionInfo.getLockedKeys().forEach(tx::addBackupLockForKey);
          }
       }
    }

@@ -53,19 +53,11 @@ public class NonTransactionalLockingInterceptor extends AbstractLockingIntercept
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       assertNonTransactional(ctx);
       try {
-         if (!command.isForwarded()) {
-            boolean skipLocking = hasSkipLocking(command);
-            long lockTimeout = getLockAcquisitionTimeout(command, skipLocking);
-            for (Object key : command.getMap().keySet()) {
-               if (shouldLock(key, command))
-                  lockKey(ctx, key, lockTimeout, skipLocking);
-            }
+         if (!command.isForwarded() && !hasSkipLocking(command)) {
+            lockAllAndRecord(ctx, command.getMap().keySet().stream().filter(this::shouldLockKey), getLockTimeoutMillis(command));
          }
          return invokeNextInterceptor(ctx, command);
-      } catch (Throwable te) {
-         throw cleanLocksAndRethrow(ctx, te);
-      }
-      finally {
+      } finally {
          lockManager.unlockAll(ctx);
       }
    }
