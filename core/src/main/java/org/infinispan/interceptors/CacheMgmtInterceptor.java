@@ -129,7 +129,7 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
       if (statisticsEnabled && ctx.isOriginLocal()) {
          long intervalMilliseconds = timeService.timeDuration(start, TimeUnit.MILLISECONDS);
          int requests = command.getKeys().size();
-         int hitCount = ((Map<Object, Object>) retval).size();
+         int hitCount = 0;
          for (Entry<Object, Object> entry : ((Map<Object, Object>) retval).entrySet()) {
             if (entry.getValue() != null) {
                hitCount++;

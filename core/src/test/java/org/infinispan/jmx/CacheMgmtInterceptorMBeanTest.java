@@ -4,7 +4,9 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
+
 import static org.infinispan.test.TestingUtil.*;
+import static org.testng.AssertJUnit.*;
 
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
@@ -12,8 +14,11 @@ import org.testng.annotations.Test;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
+
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Test functionality in {@link org.infinispan.interceptors.CacheMgmtInterceptor}.
@@ -150,6 +155,32 @@ public class CacheMgmtInterceptorMBeanTest extends SingleCacheManagerTest {
       cache.remove("key2");
       assertRemoveHits(3);
       assertRemoveMisses(1);
+   }
+   
+   public void testGetAll() throws Exception {
+      assertEquals(0, advanced.getStats().getMisses());
+      assertEquals(0, advanced.getStats().getHits());
+      String hitRatioString = server.getAttribute(mgmtInterceptor, "HitRatio").toString();
+      Float hitRatio = Float.parseFloat(hitRatioString);
+      assertEquals(0f, hitRatio);
+
+      cache.put("key", "value");
+
+      assertEquals(0, advanced.getStats().getMisses());
+      assertEquals(0, advanced.getStats().getHits());
+      hitRatioString = server.getAttribute(mgmtInterceptor, "HitRatio").toString();
+      hitRatio = Float.parseFloat(hitRatioString);
+      assertEquals(0f, hitRatio);
+
+      Set<String> keySet = new HashSet<>();
+      keySet.add("key");
+      keySet.add("key1");
+      advanced.getAll(keySet);
+      assertEquals(1, advanced.getStats().getMisses());
+      assertEquals(1, advanced.getStats().getHits());
+      hitRatioString = server.getAttribute(mgmtInterceptor, "HitRatio").toString();
+      hitRatio = Float.parseFloat(hitRatioString);
+      assertEquals(0.5f, hitRatio);
    }
 
    private void assertAttributeValue(String attrName, float expectedValue) throws Exception {
