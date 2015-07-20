@@ -4,7 +4,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.InfinispanCollections;
-import org.infinispan.commons.util.Notifier;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -23,7 +22,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static org.infinispan.commons.util.Util.toStr;
@@ -37,7 +39,7 @@ import static org.infinispan.commons.util.Util.toStr;
  * @author Galder Zamarreño
  * @since 4.2
  */
-public abstract class AbstractCacheTransaction implements CacheTransaction, Notifier.Invoker<CacheTransaction.TransactionCompletedListener> {
+public abstract class AbstractCacheTransaction implements CacheTransaction {
 
    protected final GlobalTransaction tx;
    private static Log log = LogFactory.getLog(AbstractCacheTransaction.class);
@@ -83,7 +85,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction, Noti
 
    private volatile Flag stateTransferFlag;
 
-   private final Notifier<TransactionCompletedListener> notifier;
+   private final CompletableFuture<Void> notifier;
 
    public final boolean isMarkedForRollback() {
       return isMarkedForRollback;
@@ -98,7 +100,7 @@ public abstract class AbstractCacheTransaction implements CacheTransaction, Noti
       this.topologyId = topologyId;
       this.keyEquivalence = keyEquivalence;
       this.txCreationTime = txCreationTime;
-      notifier = new Notifier<>(this);
+      notifier = new CompletableFuture<>();
    }
 
    @Override
@@ -178,20 +180,20 @@ public abstract class AbstractCacheTransaction implements CacheTransaction, Noti
       if (!txComplete) {
          //avoid invalidate CPU L1 cache is tx is already completed
          txComplete = true;
-         notifier.fireListener();
+         notifier.complete(null);
       }
    }
 
    @Override
-   public boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException {
-      if (txComplete) return true; //using an unsafe optimisation: if it's true, we for sure have the latest read of the value without needing memory barriers
-      final boolean potentiallyLocked = hasLockOrIsLockBackup(key);
-      if (trace) log.tracef("Transaction gtx=%s potentially locks key %s? %s", tx, key, potentiallyLocked);
-      if (potentiallyLocked) {
-         notifier.await(lockAcquisitionTimeout, TimeUnit.MILLISECONDS);
-         return txComplete;
+   public final boolean waitForLockRelease(long lockAcquisitionTimeout) throws InterruptedException {
+      try {
+         notifier.get(lockAcquisitionTimeout, TimeUnit.MILLISECONDS);
+      } catch (ExecutionException e) {
+         throw new IllegalStateException("Should never happen", e);
+      } catch (TimeoutException e) {
+         //ignored.
       }
-      return true;
+      return txComplete;
    }
 
    @Override
@@ -230,11 +232,26 @@ public abstract class AbstractCacheTransaction implements CacheTransaction, Noti
       lockedKeys = null;
    }
 
-   private boolean hasLockOrIsLockBackup(Object key) {
-      //stopgap fix for ISPN-2728. The real fix would be to synchronize this with the intrinsic lock.
-      Set<Object> lockedKeysCopy = lockedKeys;
-      Set<Object> backupKeyLocksCopy = backupKeyLocks;
-      return (lockedKeysCopy != null && lockedKeysCopy.contains(key)) || (backupKeyLocksCopy != null && backupKeyLocksCopy.contains(key));
+   @Override
+   public boolean containsLockOrBackupLock(Object key) {
+      return getLockedKeys().contains(key) || getBackupLockedKeys().contains(key);
+   }
+
+   @Override
+   public Object findAnyLockedOrBackupLocked(Collection<Object> keys) {
+      Set<Object> lockedKeysCopy = getLockedKeys();
+      Set<Object> backupKeyLocksCopy = getBackupLockedKeys();
+      for (Object key : keys) {
+         if (lockedKeysCopy.contains(key) || backupKeyLocksCopy.contains(key)) {
+            return key;
+         }
+      }
+      return null;
+   }
+
+   @Override
+   public boolean areLocksReleased() {
+      return txComplete;
    }
 
    public Set<Object> getAffectedKeys() {
@@ -345,11 +362,6 @@ public abstract class AbstractCacheTransaction implements CacheTransaction, Noti
 
    @Override
    public final void addListener(TransactionCompletedListener listener) {
-      notifier.add(listener);
-   }
-
-   @Override
-   public void invoke(TransactionCompletedListener listener) {
-      listener.onCompletion();
+      notifier.thenRun(listener::onCompletion);
    }
 }

@@ -6,6 +6,7 @@ import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.InvocationContext;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -83,7 +84,13 @@ public interface CacheTransaction {
     *
     * @see org.infinispan.interceptors.locking.AbstractTxLockingInterceptor#lockKeyAndCheckOwnership(InvocationContext, Object, long, boolean)
     */
-   boolean waitForLockRelease(Object key, long lockAcquisitionTimeout) throws InterruptedException;
+   boolean waitForLockRelease(long lockAcquisitionTimeout) throws InterruptedException;
+
+   boolean containsLockOrBackupLock(Object key);
+
+   Object findAnyLockedOrBackupLocked(Collection<Object> keys);
+
+   boolean areLocksReleased();
 
    EntryVersionsMap getUpdatedEntryVersions();
 

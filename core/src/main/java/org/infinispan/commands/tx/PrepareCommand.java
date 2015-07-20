@@ -11,6 +11,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.InfinispanCollections;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
@@ -230,6 +231,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       }
       Set<Object> set = new HashSet<>(modifications.length);
       for (WriteCommand wc : modifications) {
+         if (wc.hasFlag(Flag.SKIP_LOCKING)) {
+            continue;
+         }
          switch (wc.getCommandId()) {
             case PutKeyValueCommand.COMMAND_ID:
             case RemoveCommand.COMMAND_ID:
