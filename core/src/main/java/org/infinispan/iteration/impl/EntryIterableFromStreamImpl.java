@@ -16,14 +16,13 @@ import java.util.EnumSet;
  * @author wburns
  * @since 7.0
  */
-public class EntryIterableImpl<K, V> extends TrackingEntryIterable<K, V, V> implements EntryIterable<K, V> {
-   public EntryIterableImpl(EntryRetriever<K, V> entryRetriver, KeyValueFilter<? super K, ? super V> filter,
-                            EnumSet<Flag> flags, Cache<K, V> cache) {
-      super(entryRetriver, filter, null, flags, cache);
+public class EntryIterableFromStreamImpl<K, V> extends TrackingEntryIterableFromStream<K, V, V> implements EntryIterable<K, V> {
+   public EntryIterableFromStreamImpl(KeyValueFilter<? super K, ? super V> filter, EnumSet<Flag> flags, Cache<K, V> cache) {
+      super(filter, null, flags, cache);
    }
 
    @Override
    public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, C> converter) {
-      return new TrackingEntryIterable<>(entryRetriever, filter, converter, flags, cache);
+      return new TrackingEntryIterableFromStream<>(filter, converter, null, cache);
    }
 }

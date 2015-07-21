@@ -4,8 +4,6 @@ import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
 import static org.infinispan.persistence.PersistenceUtil.convert;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.ExecutorService;
@@ -13,7 +11,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
@@ -34,9 +31,10 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
+import org.infinispan.commons.equivalence.AnyServerEquivalence;
+import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -215,7 +213,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          @Override
          public CloseableIterator<CacheEntry<K, V>> iterator() {
             CloseableIterator<CacheEntry<K, V>> iterator = super.iterator();
-            Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().size());
+            // TODO: can we use data container equivalence?
+            Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
+                    new AnyServerEquivalence());
             // TODO: how to handle concurrent activation....
             return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                     // TODO: how to pass in key filter...
@@ -308,13 +308,15 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          @Override
          public CloseableIterator<K> iterator() {
             CloseableIterator<K> iterator = super.iterator();
-            Set<K> seenKeys = new HashSet<>(cache.getAdvancedCache().getDataContainer().size());
+            // TODO: can we use data container equivalence?
+            Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
+                    new AnyServerEquivalence());
             // TODO: how to handle concurrent activation....
             return new DistinctKeyDoubleEntryCloseableIterator<>(iterator, new CloseableSuppliedIterator<>(
                     new SupplierFunction<>(new PersistenceManagerCloseableSupplier<>(executorService, persistenceManager,
                             // TODO: how to pass in key filter...
-                            iceFactory, new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048))), Function.identity(),
-                    seenKeys);
+                            iceFactory, new CollectionKeyFilter<>(seenKeys), 10, TimeUnit.SECONDS, 2048))),
+                    Function.identity(), seenKeys);
          }
 
          @Override

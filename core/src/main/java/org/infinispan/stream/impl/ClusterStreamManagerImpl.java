@@ -5,15 +5,22 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
+import org.infinispan.notifications.Listener;
+import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
+import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
+import org.infinispan.partitionhandling.AvailabilityException;
+import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,14 +39,13 @@ import java.util.stream.Collectors;
  * @param <K> the cache key type
  */
 public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
-   private final Map<UUID, RequestTracker> currentlyRunning = new ConcurrentHashMap<>();
-   private RpcManager rpc;
-   private CommandsFactory factory;
+   protected final Map<UUID, RequestTracker> currentlyRunning = new ConcurrentHashMap<>();
+   protected RpcManager rpc;
+   protected CommandsFactory factory;
 
-   private Address localAddress;
+   protected Address localAddress;
 
-   private final static Log log = LogFactory.getLog(ClusterStreamManagerImpl.class);
-
+   protected final static Log log = LogFactory.getLog(ClusterStreamManagerImpl.class);
 
    @Inject
    public void inject(RpcManager rpc, CommandsFactory factory) {
@@ -219,23 +225,31 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
                   log.tracef(e, "Encounted exception for %s from %s", uuid, targetInfo.getKey());
                   RequestTracker tracker = currentlyRunning.get(uuid);
                   if (tracker != null) {
-                     log.tracef("Marking tracker to have exception");
-                     tracker.throwable = e;
-                     if (tracker.lastResult(dest, null)) {
-                        log.tracef("Tracker completed with exception, waking sleepers!", uuid);
-                        tracker.completionLock.lock();
-                        try {
-                           tracker.completionCondition.signalAll();
-                        } finally {
-                           tracker.completionLock.unlock();
-                        }
-                     }
+                     markTrackerWithException(tracker, dest, e, uuid);
                   } else {
                      log.warnf("Unhandled remote stream exception encountered", e);
                   }
                }
             }
          });
+      }
+   }
+
+   protected static void markTrackerWithException(RequestTracker<?> tracker, Address dest, Throwable e, UUID uuid) {
+      log.tracef("Marking tracker to have exception");
+      tracker.throwable = e;
+      if (dest == null || tracker.lastResult(dest, null)) {
+         if (uuid != null) {
+            log.tracef("Tracker %s completed with exception, waking sleepers!", uuid);
+         } else {
+            log.trace("Tracker completed due to outside cause, waking sleepers! ");
+         }
+         tracker.completionLock.lock();
+         try {
+            tracker.completionCondition.signalAll();
+         } finally {
+            tracker.completionLock.unlock();
+         }
       }
    }
 

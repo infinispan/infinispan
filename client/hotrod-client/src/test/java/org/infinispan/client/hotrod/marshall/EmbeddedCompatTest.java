@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.marshall;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.Search;
@@ -13,10 +14,8 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Index;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.FileDescriptorSource;
@@ -40,6 +39,7 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.Test;
 
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
@@ -396,8 +396,8 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       });
 
       // Embedded  iteration
-      EntryRetriever<Integer, Account> localRetriever = cache.getAdvancedCache().getComponentRegistry().getComponent(EntryRetriever.class);
-      CloseableIterator<CacheEntry<Integer, AccountHS>> localUnfilteredIterator = localRetriever.retrieveEntries(null, null, null, null);
+      Cache<Integer, AccountHS> ourCache = cache();
+      Iterator<Map.Entry<Integer, AccountHS>> localUnfilteredIterator = ourCache.entrySet().stream().iterator();
       localUnfilteredIterator.forEachRemaining(e -> {
          Integer key = e.getKey();
          AccountHS value = e.getValue();

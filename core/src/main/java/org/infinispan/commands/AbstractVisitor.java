@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
-import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -102,11 +101,6 @@ public abstract class AbstractVisitor implements Visitor {
 
    @Override
    public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
-      return handleDefault(ctx, command);
-   }
-
-   @Override
-   public Object visitEntryRetrievalCommand(InvocationContext ctx, EntryRetrievalCommand command) throws Throwable {
       return handleDefault(ctx, command);
    }
 

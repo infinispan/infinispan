@@ -1,7 +1,6 @@
 package org.infinispan.commands;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.context.InvocationContextFactory;
@@ -247,11 +246,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public EntrySetCommand buildEntrySetCommand(Set<Flag> flags) {
       return new EntrySetCommand(cache, flags);
-   }
-
-   @Override
-   public EntryRetrievalCommand buildEntryRetrievalCommand(Set<Flag> flags, KeyValueFilter filter) {
-      return new EntryRetrievalCommand(filter, entryRetriever, flags, cache);
    }
 
    @Override

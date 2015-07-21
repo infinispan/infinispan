@@ -9,7 +9,6 @@ import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -58,6 +57,7 @@ import org.infinispan.filter.NullValueConverter;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
+import org.infinispan.iteration.impl.EntryIterableFromStreamImpl;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
 import org.infinispan.jmx.annotations.MBean;
@@ -381,6 +381,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final boolean isEmpty(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      // TODO: replace with stream findAny isPresent instead
       try (CloseableIterable<CacheEntry<K, Void>> iterable = filterEntries(AcceptAllKeyValueFilter.getInstance(),
             explicitFlags, explicitClassLoader).converter(NullValueConverter.getInstance())) {
          return !iterable.iterator().hasNext();
@@ -478,10 +479,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    protected EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter, EnumSet<Flag> explicitFlags,
                                                ClassLoader explicitClassLoader) {
-      // We need a read invocation context as the remove is done with its own context
-      InvocationContext ctx = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
-      EntryRetrievalCommand<K, V> command = commandsFactory.buildEntryRetrievalCommand(explicitFlags, filter);
-      return (EntryIterable<K, V>) invoker.invoke(ctx, command);
+      return new EntryIterableFromStreamImpl<>(filter, explicitFlags, this);
    }
 
    @Override

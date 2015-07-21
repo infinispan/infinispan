@@ -2,11 +2,9 @@ package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.CacheStream;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.impl.ListenerInvocation;
 
-import java.util.Map;
 import java.util.Set;
 
 /**

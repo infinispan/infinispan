@@ -55,6 +55,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
+import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyFilter;
 import org.infinispan.filter.CompositeKeyValueFilter;

@@ -410,8 +410,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    @Override
    public Iterator<R> iterator() {
       if (intermediateType.shouldUseIntermediate(sorted, distinct)) {
-         Stream<R> stream = performIntermediateRemoteOperation(Function.identity());
-         return stream.iterator();
+         return performIntermediateRemoteOperation(s -> s.iterator());
       } else {
          return remoteIterator();
       }
@@ -452,29 +451,39 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                        new ReplicatedConsistentHash.RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
                do {
                   ConsistentHash ch = dm.getReadConsistentHash();
-                  Set<Integer> segments = ch.getPrimarySegmentsForOwner(localAddress);
-                  segments.retainAll(segmentsToProcess);
+                  boolean runLocal = ch.getMembers().contains(localAddress);
+                  Set<Integer> segments;
+                  Set<Object> excludedKeys;
+                  if (runLocal) {
+                     segments = ch.getPrimarySegmentsForOwner(localAddress);
+                     segments.retainAll(segmentsToProcess);
 
-                  Set<Object> keysToExclude = segments.stream().flatMap(s -> results.referenceArray.get(s).stream())
-                          .collect(Collectors.toSet());
+                     excludedKeys = segments.stream().flatMap(s -> results.referenceArray.get(s).stream())
+                             .collect(Collectors.toSet());
+                  } else {
+                     segments = null;
+                     excludedKeys = Collections.emptySet();
+                  }
                   KeyTrackingTerminalOperation<Object, R, Object> op = iteratorOperation.getOperation(
-                          intermediateOperations, supplierForSegments(ch, segmentsToProcess, keysToExclude),
+                          intermediateOperations, supplierForSegments(ch, segmentsToProcess, excludedKeys),
                           distributedBatchSize);
                   UUID id = csm.remoteStreamOperationRehashAware(iteratorParallelDistribute, parallel, ch,
                           segmentsToProcess, keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray),
                           includeLoader, op, results);
                   supplier.pending = id;
                   try {
-                     Collection<CacheEntry<Object, Object>> localValue = op.performOperationRehashAware(results);
-                     // TODO: we can do this more efficiently - this hampers performance during rehash
-                     if (dm.getReadConsistentHash().equals(ch)) {
-                        log.tracef("Found local values %s for id %s", localValue.size(), id);
-                        results.onCompletion(null, segments, localValue);
-                     } else {
-                        Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
-                        ourSegments.retainAll(segmentsToProcess);
-                        log.tracef("CH changed - making %s segments suspect for identifier %s", ourSegments, id);
-                        results.onSegmentsLost(ourSegments);
+                     if (runLocal) {
+                        Collection<CacheEntry<Object, Object>> localValue = op.performOperationRehashAware(results);
+                        // TODO: we can do this more efficiently - this hampers performance during rehash
+                        if (dm.getReadConsistentHash().equals(ch)) {
+                           log.tracef("Found local values %s for id %s", localValue.size(), id);
+                           results.onCompletion(null, segments, localValue);
+                        } else {
+                           Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
+                           ourSegments.retainAll(segmentsToProcess);
+                           log.tracef("CH changed - making %s segments suspect for identifier %s", ourSegments, id);
+                           results.onSegmentsLost(ourSegments);
+                        }
                      }
                      try {
                         if (!csm.awaitCompletion(id, 30, TimeUnit.SECONDS)) {
@@ -674,7 +683,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                boolean interrupted = false;
                while ((entry = queue.poll()) == null && !completed.get()) {
                   try {
-                     nextCondition.await();
+                     nextCondition.await(100, TimeUnit.MILLISECONDS);
                   } catch (InterruptedException e) {
                      // If interrupted, we just loop back around
                      interrupted = true;

@@ -2,8 +2,8 @@ package org.infinispan.interceptors.compat;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
 import org.infinispan.commands.MetadataAwareCommand;
-import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -20,9 +20,11 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.compat.TypeConverter;
 import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.Converter;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -30,8 +32,11 @@ import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
+import org.infinispan.stream.impl.local.LocalEntryCacheStream;
+import org.infinispan.stream.impl.local.LocalKeyCacheStream;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 
+import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -39,6 +44,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Base implementation for an interceptor that applies type conversion to the data stored in the cache. Subclasses need
@@ -249,38 +256,6 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
    }
 
    @Override
-   public EntryIterable visitEntryRetrievalCommand(InvocationContext ctx, EntryRetrievalCommand command) throws Throwable {
-      TypeConverter<Object, Object, Object, Object> converter =
-            determineTypeConverter(command.getFlags());
-      EntryIterable realIterable = (EntryIterable) super.visitEntryRetrievalCommand(ctx, command);
-      return new TypeConverterEntryIterable(realIterable, converter, entryFactory);
-   }
-
-   private static class TypeConverterCloseableIterable<K, V> implements CloseableIterable<CacheEntry<K, V>> {
-      protected final CloseableIterable iterable;
-      protected final TypeConverter<Object, Object, Object, Object> converter;
-      protected final InternalEntryFactory entryFactory;
-
-      private TypeConverterCloseableIterable(CloseableIterable iterable,
-                                             TypeConverter<Object, Object, Object, Object> converter,
-                                             InternalEntryFactory entryFactory) {
-         this.iterable = iterable;
-         this.converter = converter;
-         this.entryFactory = entryFactory;
-      }
-
-      @Override
-      public void close() {
-         iterable.close();
-      }
-
-      @Override
-      public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return new TypeConverterIterator(iterable.iterator(), converter, entryFactory);
-      }
-   }
-
-   @Override
    public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       TypeConverter<Object, Object, Object, Object> converter = determineTypeConverter(command.getFlags());
       CacheSet<K> set = (CacheSet<K>) super.visitKeySetCommand(ctx, command);
@@ -289,9 +264,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
 
          @Override
          public CloseableIterator<K> iterator() {
-            return new CloseableIteratorMapper<>(super.iterator(), k -> {
-               return (K) converter.unboxKey(k);
-            });
+            return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
          }
 
          @Override
@@ -300,6 +273,54 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
                     .setEstimateRemaining(super.spliterator().estimateSize())
                     .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
                     .get();
+         }
+
+         @Override
+         public CacheStream<K> stream() {
+            DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+            // TODO: add custom local key cache stream that doesn't use entries - this way it doesn't need to use entry set
+            return new LocalKeyCacheStream<K, V>(cache, false, dm != null ? dm.getConsistentHash() : null,
+                    // TODO: This is an ugly hack
+                    () -> StreamSupport.stream(super.spliterator(), false).map(k -> new ImmortalCacheEntry(k, null)),
+                    cache.getAdvancedCache().getComponentRegistry()) {
+               @Override
+               public CloseableIterator<K> iterator() {
+                  return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
+               }
+
+               @Override
+               public Spliterator<K> spliterator() {
+                  // TODO: we should really just wrap spliterator
+                  return new IteratorAsSpliterator.Builder<>(iterator())
+                          .setEstimateRemaining(super.spliterator().estimateSize())
+                          .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                          .get();
+               }
+            };
+         }
+
+         @Override
+         public CacheStream<K> parallelStream() {
+            DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+            // TODO: add custom local key cache stream that doesn't use entries - this way it doesn't need to use entry set
+            return new LocalKeyCacheStream<K, V>(cache, false, dm != null ? dm.getConsistentHash() : null,
+                    // TODO: This is an ugly hack
+                    () -> StreamSupport.stream(super.spliterator(), true).map(k -> new ImmortalCacheEntry(k, null)),
+                    cache.getAdvancedCache().getComponentRegistry()) {
+               @Override
+               public CloseableIterator<K> iterator() {
+                  return new CloseableIteratorMapper<>(super.iterator(), k -> (K) converter.unboxKey(k));
+               }
+
+               @Override
+               public Spliterator<K> spliterator() {
+                  // TODO: we should really just wrap spliterator
+                  return new IteratorAsSpliterator.Builder<>(iterator())
+                          .setEstimateRemaining(super.spliterator().estimateSize())
+                          .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                          .get();
+               }
+            };
          }
       };
    }
@@ -322,23 +343,50 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
                     .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
                     .get();
          }
+
+         @Override
+         public CacheStream<CacheEntry<K, V>> stream() {
+            DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+            return new LocalEntryCacheStream<K, V>(cache, false, dm != null ? dm.getConsistentHash() : null,
+                    () -> StreamSupport.stream(super.spliterator(), false),
+                    cache.getAdvancedCache().getComponentRegistry()) {
+               @Override
+               public CloseableIterator<CacheEntry<K, V>> iterator() {
+                  return new TypeConverterIterator(super.iterator(), converter, entryFactory);
+               }
+
+               @Override
+               public Spliterator<CacheEntry<K, V>> spliterator() {
+                  // TODO: we should really just wrap spliterator
+                  return new IteratorAsSpliterator.Builder<>(iterator())
+                          .setEstimateRemaining(super.spliterator().estimateSize())
+                          .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                          .get();
+               }
+            };
+         }
+
+         @Override
+         public CacheStream<CacheEntry<K, V>> parallelStream() {
+            DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+            return new LocalEntryCacheStream<K, V>(cache, true, dm != null ? dm.getConsistentHash() : null,
+                    () -> StreamSupport.stream(spliterator(), true), cache.getAdvancedCache().getComponentRegistry()) {
+               @Override
+               public CloseableIterator<CacheEntry<K, V>> iterator() {
+                  return new TypeConverterIterator(super.iterator(), converter, entryFactory);
+               }
+
+               @Override
+               public Spliterator<CacheEntry<K, V>> spliterator() {
+                  // TODO: we should really just wrap spliterator
+                  return new IteratorAsSpliterator.Builder<>(iterator())
+                          .setEstimateRemaining(super.spliterator().estimateSize())
+                          .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
+                          .get();
+               }
+            };
+         }
       };
-   }
-
-   private static class TypeConverterEntryIterable<K, V> extends TypeConverterCloseableIterable<K, V> implements EntryIterable<K, V> {
-      private final EntryIterable entryIterable;
-
-      private TypeConverterEntryIterable(EntryIterable iterable, TypeConverter<Object, Object, Object, Object> converter,
-                                         InternalEntryFactory entryFactory) {
-         super(iterable, converter, entryFactory);
-         this.entryIterable = iterable;
-      }
-
-
-      @Override
-      public CloseableIterable<CacheEntry> converter(Converter converter) {
-         return new TypeConverterCloseableIterable(entryIterable.converter(converter), this.converter, entryFactory);
-      }
    }
 
    private static class TypeConverterIterator<K, V> implements CloseableIterator<CacheEntry<K, V>> {

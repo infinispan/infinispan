@@ -2,7 +2,6 @@ package org.infinispan.commands;
 
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.DistributedExecuteCommand;
-import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetAllCommand;
@@ -61,8 +60,6 @@ public interface Visitor {
    Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable;
 
    Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable;
-
-   Object visitEntryRetrievalCommand(InvocationContext ctx, EntryRetrievalCommand command) throws Throwable;
 
    // tx commands
 

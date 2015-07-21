@@ -1,24 +1,15 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.hamcrest.BaseMatcher;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
 import org.hamcrest.core.IsInstanceOf;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.read.EntrySetCommand;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
@@ -32,7 +23,6 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
@@ -52,11 +42,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.*;
 
@@ -785,38 +772,4 @@ public class CacheNotifierImplInitialTransferDistTest extends MultipleCacheManag
       TestingUtil.replaceComponent(cache, InterceptorChain.class, mockChain, true);
       return chain;
    }
-
-//   protected EntryRetriever waitUntilClosingIterator(final Cache<?, ?> cache, final CheckPoint checkPoint) {
-//      EntryRetriever retriever = TestingUtil.extractComponent(cache, EntryRetriever.class);
-//      final Answer<Object> forwardedAnswer = AdditionalAnswers.delegatesTo(retriever);
-//      EntryRetriever mockRetriever = mock(EntryRetriever.class, withSettings().defaultAnswer(forwardedAnswer));
-//
-//      doAnswer(new Answer() {
-//         @Override
-//         public Object answer(InvocationOnMock invocation) throws Throwable {
-//            CloseableIterator realIter = (CloseableIterator)forwardedAnswer.answer(invocation);
-//
-//            final Answer<Object> forwardedIterAnswer = AdditionalAnswers.delegatesTo(realIter);
-//
-//            CloseableIterator iter = mock(CloseableIterator.class, withSettings().defaultAnswer(forwardedIterAnswer));
-//
-//            doAnswer(new Answer() {
-//
-//               @Override
-//               public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-//                  // Wait for main thread to sync up
-//                  checkPoint.trigger("pre_close_iter_invoked");
-//                  // Now wait until main thread lets us through
-//                  checkPoint.awaitStrict("pre_close_iter_released", 10, TimeUnit.SECONDS);
-//                  return forwardedIterAnswer.answer(invocationOnMock);
-//               }
-//            }).when(iter).close();
-//
-//            return iter;
-//         }
-//      }).when(mockRetriever).retrieveEntries(any(KeyValueFilter.class), any(Converter.class), anySetOf(Flag.class),
-//                                             any(EntryRetriever.SegmentListener.class));
-//      TestingUtil.replaceComponent(cache, EntryRetriever.class, mockRetriever, true);
-//      return retriever;
-//   }
 }
