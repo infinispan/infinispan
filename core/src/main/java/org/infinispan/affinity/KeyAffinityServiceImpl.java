@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -41,7 +42,7 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    public final static float THRESHOLD = 0.5f;
 
    //interval between key/queue poll
-   private static final int POOL_INTERVAL = 50;
+   private static final int POLL_INTERVAL_MILLIS = 50;
 
    private static final Log log = LogFactory.getLog(KeyAffinityServiceImpl.class);
 
@@ -71,7 +72,8 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
    private volatile ListenerRegistration listenerRegistration;
 
 
-   public KeyAffinityServiceImpl(Executor executor, Cache<? extends K, ?> cache, KeyGenerator<? extends K> keyGenerator,
+   public KeyAffinityServiceImpl(Executor executor, Cache<? extends K, ?> cache, KeyGenerator<? extends K>
+         keyGenerator,
                                  int bufferSize, Collection<Address> filter, boolean start) {
       this.executor = executor;
       this.cache = cache;
@@ -110,10 +112,11 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
             // obtain the read lock inside the loop, otherwise a topology change will never be able
             // to obtain the write lock
             maxNumberInvariant.readLock().lock();
-            queue = address2key.get(address);
-            if (queue == null)
-               throw new IllegalStateException("Address " + address + " is no longer in the cluster");
             try {
+               queue = address2key.get(address);
+               if (queue == null)
+                  throw new IllegalStateException("Address " + address + " is no longer in the cluster");
+
                // first try to take an element without waiting
                result = queue.poll();
                if (result == null) {
@@ -126,10 +129,16 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
             } finally {
                maxNumberInvariant.readLock().unlock();
             }
-            try {
-               Thread.currentThread().sleep(POOL_INTERVAL);
-            } catch (InterruptedException e) {
-               e.printStackTrace();
+
+            if (result == null) {
+               // Now wait for a new key. If there's a topology change, poll() will time out and we'll retry
+               // on the new queue.
+               try {
+                  result = queue.poll(POLL_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+               } catch (InterruptedException e) {
+                  // Ignore and restore interruption status
+                  Thread.currentThread().interrupt();
+               }
             }
          }
          existingKeyCount.decrementAndGet();
@@ -255,7 +264,8 @@ public class KeyAffinityServiceImpl<K> implements KeyAffinityService<K> {
                if (interestedInAddress(addressForKey)) {
                   added = tryAddKey(addressForKey, key);
                }
-               if (!added) missCount++;
+               if (!added)
+                  missCount++;
             }
 
             // if we had too many misses, just release the lock and try again
