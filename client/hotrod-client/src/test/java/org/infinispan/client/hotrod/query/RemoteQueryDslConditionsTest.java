@@ -140,7 +140,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       QueryFactory qf = getQueryFactory();
 
       QueryBuilder queryBuilder = qf.from(getModelFactory().getUserImplClass())
-            .setProjection("addresses");
+            .select("addresses");
 
       Query q = queryBuilder.build();
 
@@ -158,7 +158,7 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
       // all the transactions that happened in January 2013, projected by date field only
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .setProjection("date")
+            .select("date")
             .having("date").between(makeDate("2013-01-01"), makeDate("2013-01-31"))
             .toBuilder().build();
 

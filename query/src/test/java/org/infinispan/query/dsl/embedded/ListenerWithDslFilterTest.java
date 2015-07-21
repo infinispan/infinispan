@@ -78,7 +78,7 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       Query query = qf.from(Person.class)
             .having("age").lte(31)
             .toBuilder()
-            .setProjection("name", "age")
+            .select("name", "age")
             .build();
 
       EntryListener listener = new EntryListener();

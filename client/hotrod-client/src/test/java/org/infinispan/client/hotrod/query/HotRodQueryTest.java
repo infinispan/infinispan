@@ -173,7 +173,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query q = qf.from(UserPB.class)
-            .setProjection("addresses").build();
+            .select("addresses").build();
 
       //todo [anistor] it would be best if the problem would be detected early at build() instead at doing it at list()
       q.list();  // exception expected
@@ -187,7 +187,7 @@ public class HotRodQueryTest extends SingleCacheManagerTest {
       // get user back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(UserPB.class)
-            .setProjection("name", "surname")
+            .select("name", "surname")
             .having("name").eq("Tom").toBuilder()
             .build();
 

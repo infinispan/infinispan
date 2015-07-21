@@ -127,7 +127,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
       Query query = qf.from(UserPB.class)
             .having("age").lte(32)
-            .toBuilder().setProjection("age").build();
+            .toBuilder().select("age").build();
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
       ClientEvents.addClientQueryListener(remoteCache, listener, query);

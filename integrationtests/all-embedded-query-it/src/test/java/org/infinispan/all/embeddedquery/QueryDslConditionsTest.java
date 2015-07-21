@@ -784,7 +784,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       QueryBuilder queryBuilder = qf.from(getModelFactory().getUserImplClass())
-            .setProjection("addresses");
+            .select("addresses");
 
       queryBuilder.build();  // exception expected
    }
@@ -831,7 +831,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .setProjection("name", "surname", "age")
+            .select("name", "surname", "age")
             .orderBy("name", SortOrder.ASC)
             .orderBy("surname", SortOrder.ASC)
             .orderBy("age", SortOrder.ASC)
@@ -853,7 +853,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .setProjection("name", "age")
+            .select("name", "age")
             .not().having("age").isNull()
             .toBuilder().build();
 
@@ -1159,7 +1159,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       // name projection of all users ordered descendingly by name
       Query q = qf.from(getModelFactory().getUserImplClass())
             .orderBy("name", SortOrder.DESC)
-            .setProjection("name")
+            .select("name")
             .build();
 
       List<Object[]> list = q.list();
@@ -1228,7 +1228,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
       // all the transactions that happened in January 2013, projected by date field only
       Query q = qf.from(getModelFactory().getTransactionImplClass())
-            .setProjection("date")
+            .select("date")
             .having("date").between(makeDate("2013-01-01"), makeDate("2013-01-31"))
             .toBuilder().build();
 
@@ -1395,7 +1395,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .setProjection("id", "addresses.postCode")
+            .select("id", "addresses.postCode")
             .orderBy("id", SortOrder.ASC)
             .build();
 
@@ -1521,7 +1521,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
-            .having("creationDate").eq(makeDate("2013-01-20"))
+          .having("creationDate").eq(makeDate("2013-01-20"))
           .toBuilder().build();
 
       List<Account> list = q.list();

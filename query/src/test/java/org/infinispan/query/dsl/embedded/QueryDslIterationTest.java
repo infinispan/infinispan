@@ -109,7 +109,7 @@ public class QueryDslIterationTest extends AbstractQueryDslTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-            .setProjection("id", "name").maxResults(3).build();
+            .select("id", "name").maxResults(3).build();
 
       assertEquals(4, q.getResultSize());
 
