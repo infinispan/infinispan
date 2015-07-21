@@ -1,32 +1,18 @@
 package org.infinispan.notifications.cachelistener;
 
-import org.hamcrest.core.IsInstanceOf;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
-import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.Closeables;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
-import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
-import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.filter.Converter;
-import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
@@ -40,10 +26,7 @@ import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.test.TestingUtil;
-import org.mockito.AdditionalAnswers;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -51,20 +34,16 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
+import static org.testng.Assert.*;
 
 
 @Test(groups = "unit", testName = "notifications.cachelistener.BaseCacheNotifierImplInitialTransferTest")
@@ -305,7 +284,7 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
 
       final CyclicBarrier barrier = new CyclicBarrier(2);
 
-      CacheStream mockStream = mockStream();EntryRetriever
+      CacheStream mockStream = mockStream();
 
       doAnswer(i -> {
          barrier.await(10, TimeUnit.SECONDS);

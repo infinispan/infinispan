@@ -29,7 +29,7 @@ public abstract class AbstractDelegatingKeyCacheSet<K, V> extends AbstractDelega
    }
 
    @Override
-   public final CacheStream<K> stream() {
+   public CacheStream<K> stream() {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       // TODO: add custom local key cache stream that doesn't use entries - this way it doesn't need to use entry set
       return new LocalKeyCacheStream<>(cache, false, dm != null ? dm.getConsistentHash() : null,
@@ -38,7 +38,7 @@ public abstract class AbstractDelegatingKeyCacheSet<K, V> extends AbstractDelega
    }
 
    @Override
-   public final CacheStream<K> parallelStream() {
+   public CacheStream<K> parallelStream() {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
       // TODO: add custom local key cache stream that doesn't use entries - this way it doesn't need to use entry set
       return new LocalKeyCacheStream<>(cache, true, dm != null ? dm.getConsistentHash() : null,

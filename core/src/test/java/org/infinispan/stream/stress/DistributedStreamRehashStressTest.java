@@ -44,7 +44,7 @@ import static org.testng.Assert.fail;
  * @author wburns
  * @since 8.0
  */
-//@Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest")
+@Test(groups = "stress", testName = "stream.stress.DistributedStreamRehashStressTest")
 public class DistributedStreamRehashStressTest extends MultipleCacheManagersTest {
    protected final String CACHE_NAME = getClass().getName();
    protected final static int CACHE_COUNT = 5;

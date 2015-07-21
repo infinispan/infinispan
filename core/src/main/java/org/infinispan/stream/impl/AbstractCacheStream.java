@@ -8,6 +8,7 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.ch.impl.ReplicatedConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.termop.SegmentRetryingOperation;
@@ -55,6 +56,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    protected final boolean includeLoader;
    protected final Executor executor;
    protected final ComponentRegistry registry;
+   protected final PartitionHandlingManager partition;
 
    protected Runnable closeRunnable = null;
 
@@ -88,6 +90,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       this.distributedBatchSize = distributedBatchSize;
       this.executor = executor;
       this.registry = registry;
+      this.partition = registry.getComponent(PartitionHandlingManager.class);
       intermediateOperations = new ArrayDeque<>();
    }
 
@@ -101,6 +104,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       this.includeLoader = other.includeLoader;
       this.executor = other.executor;
       this.registry = other.registry;
+      this.partition = other.partition;
 
       this.closeRunnable = other.closeRunnable;
 
@@ -290,27 +294,35 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          UUID id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
                  keysToFilter, Collections.emptyMap(), includeLoader, op, remoteResults, earlyTerminatePredicate);
          try {
-            R localValue = op.performOperation();
-            // TODO: we can do this more efficiently
-            if (dm.getReadConsistentHash().equals(ch)) {
-               remoteResults.onCompletion(null, ch.getPrimarySegmentsForOwner(localAddress), localValue);
-            } else {
-               if (segmentsToProcess != null) {
-                  Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
-                  ourSegments.retainAll(segmentsToProcess);
-                  remoteResults.onSegmentsLost(ourSegments);
+            R localValue;
+            boolean localRun = ch.getMembers().contains(localAddress);
+            if (localRun) {
+               localValue = op.performOperation();
+               // TODO: we can do this more efficiently
+               if (dm.getReadConsistentHash().equals(ch)) {
+                  remoteResults.onCompletion(null, ch.getPrimarySegmentsForOwner(localAddress), localValue);
                } else {
-                  remoteResults.onSegmentsLost(ch.getPrimarySegmentsForOwner(localAddress));
+                  if (segmentsToProcess != null) {
+                     Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
+                     ourSegments.retainAll(segmentsToProcess);
+                     remoteResults.onSegmentsLost(ourSegments);
+                  } else {
+                     remoteResults.onSegmentsLost(ch.getPrimarySegmentsForOwner(localAddress));
+                  }
                }
+            } else {
+               // This isn't actually used because localRun short circuits first
+               localValue = null;
             }
             try {
-               if ((earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
+               if ((!localRun || earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
                        !csm.awaitCompletion(id, 30, TimeUnit.SECONDS)) {
                   throw new CacheException(new TimeoutException());
                }
             } catch (InterruptedException e) {
                throw new CacheException(e);
             }
+
             segmentsToProcess = new HashSet<>(remoteResults.lostSegments);
             if (!segmentsToProcess.isEmpty()) {
                log.tracef("Found %s lost segments for identifier %s", segmentsToProcess, id);
@@ -338,29 +350,40 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
               new ReplicatedConsistentHash.RangeSet(segmentInfoCH.getNumSegments()) : segmentsToFilter;
       do {
          ConsistentHash ch = dm.getReadConsistentHash();
-         Set<Integer> segments = ch.getPrimarySegmentsForOwner(localAddress);
-         segments.retainAll(segmentsToProcess);
+         boolean localRun = ch.getMembers().contains(localAddress);
+         Set<Integer> segments;
+         Set<Object> excludedKeys;
+         if (localRun) {
+            segments = ch.getPrimarySegmentsForOwner(localAddress);
+            segments.retainAll(segmentsToProcess);
 
-         Set<Object> excludedKeys = segments.stream().flatMap(s -> results.referenceArray.get(s).stream()).collect(
-                 Collectors.toSet());
+            excludedKeys = segments.stream().flatMap(s -> results.referenceArray.get(s).stream()).collect(
+                    Collectors.toSet());
+         } else {
+            // This null is okay as it is only referenced if it was a localRun
+            segments = null;
+            excludedKeys = Collections.emptySet();
+         }
          KeyTrackingTerminalOperation<Object, T, Object> op = getForEach(consumer, supplierForSegments(ch,
                  segmentsToProcess, excludedKeys));
          UUID id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
                  keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray), includeLoader, op,
                  results);
          try {
-            Collection<CacheEntry<Object, Object>> localValue = op.performOperationRehashAware(results);
-            // TODO: we can do this more efficiently - this hampers performance during rehash
-            if (dm.getReadConsistentHash().equals(ch)) {
-               log.tracef("Found local values %s for id %s", localValue.size(), id);
-               results.onCompletion(null, segments, localValue);
-            } else {
-               Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
-               ourSegments.retainAll(segmentsToProcess);
-               log.tracef("CH changed - making %s segments suspect for identifier %s", ourSegments, id);
-               results.onSegmentsLost(ourSegments);
-               // We keep track of those keys so we don't fire them again
-               results.onIntermediateResult(null, localValue);
+            if (localRun) {
+               Collection<CacheEntry<Object, Object>> localValue = op.performOperationRehashAware(results);
+               // TODO: we can do this more efficiently - this hampers performance during rehash
+               if (dm.getReadConsistentHash().equals(ch)) {
+                  log.tracef("Found local values %s for id %s", localValue.size(), id);
+                  results.onCompletion(null, segments, localValue);
+               } else {
+                  Set<Integer> ourSegments = ch.getPrimarySegmentsForOwner(localAddress);
+                  ourSegments.retainAll(segmentsToProcess);
+                  log.tracef("CH changed - making %s segments suspect for identifier %s", ourSegments, id);
+                  results.onSegmentsLost(ourSegments);
+                  // We keep track of those keys so we don't fire them again
+                  results.onIntermediateResult(null, localValue);
+               }
             }
             try {
                if (!csm.awaitCompletion(id, 30, TimeUnit.SECONDS)) {
@@ -594,6 +617,9 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
 
    protected Supplier<Stream<CacheEntry>> supplierForSegments(ConsistentHash ch, Set<Integer> targetSegments,
            Set<Object> excludedKeys) {
+      if (!ch.getMembers().contains(localAddress)) {
+         return () -> Stream.empty();
+      }
       Set<Integer> segments = ch.getPrimarySegmentsForOwner(localAddress);
       if (targetSegments != null) {
          segments.retainAll(targetSegments);

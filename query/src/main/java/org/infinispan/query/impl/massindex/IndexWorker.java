@@ -2,16 +2,15 @@ package org.infinispan.query.impl.massindex;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distexec.DistributedCallable;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
+import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
-import org.infinispan.iteration.impl.EntryRetriever;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.impl.externalizers.ExternalizerIds;
@@ -19,7 +18,9 @@ import org.infinispan.query.impl.externalizers.ExternalizerIds;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Iterator;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Base class for mass indexer tasks.
@@ -27,15 +28,14 @@ import java.util.Set;
  * @author gustavonalle
  * @since 7.1
  */
-public class IndexWorker implements DistributedCallable<Void, Void, Void> {
+public class IndexWorker implements DistributedCallable<Object, Object, Object> {
 
-   protected Cache<?, ?> cache;
+   protected Cache<Object, Object> cache;
    protected final Class<?> entity;
    private final boolean flush;
    protected IndexUpdater indexUpdater;
 
    private ClusteringDependentLogic clusteringDependentLogic;
-   private EntryRetriever entryRetriever;
 
    public IndexWorker(Class<?> entity, boolean flush) {
       this.entity = entity;
@@ -43,11 +43,10 @@ public class IndexWorker implements DistributedCallable<Void, Void, Void> {
    }
 
    @Override
-   public void setEnvironment(Cache<Void, Void> cache, Set<Void> inputKeys) {
+   public void setEnvironment(Cache<Object, Object> cache, Set<Object> inputKeys) {
       this.cache = cache;
       this.indexUpdater = new IndexUpdater(cache);
       ComponentRegistry componentRegistry = cache.getAdvancedCache().getComponentRegistry();
-      this.entryRetriever = componentRegistry.getComponent(EntryRetriever.class);
       this.clusteringDependentLogic = componentRegistry.getComponent(ClusteringDependentLogic.class);
    }
 
@@ -75,9 +74,11 @@ public class IndexWorker implements DistributedCallable<Void, Void, Void> {
    public Void call() throws Exception {
       preIndex();
       KeyValueFilter filter = getFilter();
-      try (CloseableIterator<CacheEntry<Object, String>> iterator = entryRetriever.retrieveEntries(filter, null, Util.asSet(Flag.CACHE_MODE_LOCAL), null)) {
+      try (Stream<CacheEntry<Object, Object>> stream = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL)
+              .cacheEntrySet().stream()) {
+         Iterator<CacheEntry<Object, Object>> iterator = stream.filter(CacheFilters.predicate(filter)).iterator();
          while (iterator.hasNext()) {
-            CacheEntry<Object, String> next = iterator.next();
+            CacheEntry<Object, Object> next = iterator.next();
             Object value = extractValue(next.getValue());
             if (value != null && value.getClass().equals(entity))
                indexUpdater.updateIndex(next.getKey(), value);

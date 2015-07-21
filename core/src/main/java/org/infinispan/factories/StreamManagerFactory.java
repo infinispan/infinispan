@@ -5,6 +5,7 @@ import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.LocalStreamManager;
 import org.infinispan.stream.impl.ClusterStreamManagerImpl;
 import org.infinispan.stream.impl.LocalStreamManagerImpl;
+import org.infinispan.stream.impl.PartitionAwareClusterStreamManager;
 
 /**
  * Factory that allows creation of a {@link LocalStreamManager} or {@link ClusterStreamManager} based on the provided
@@ -22,7 +23,11 @@ public class StreamManagerFactory extends AbstractNamedCacheComponentFactory imp
             return componentType.cast(new LocalStreamManagerImpl<>());
          }
          if (componentType.equals(ClusterStreamManager.class)) {
-            return componentType.cast(new ClusterStreamManagerImpl<>());
+            if (configuration.clustering().partitionHandling().enabled()) {
+               return componentType.cast(new PartitionAwareClusterStreamManager<>());
+            } else {
+               return componentType.cast(new ClusterStreamManagerImpl<>());
+            }
          }
       }
       return null;

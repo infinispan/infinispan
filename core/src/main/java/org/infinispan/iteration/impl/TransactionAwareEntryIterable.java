@@ -26,7 +26,7 @@ public class TransactionAwareEntryIterable<K, V> extends TransactionAwareCloseab
    }
 
    @Override
-   public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, ? extends C> converter) {
+   public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, C> converter) {
       return new TransactionAwareCloseableIterable<>(entryIterable.converter(converter),
             filter, converter, ctx, cache);
    }

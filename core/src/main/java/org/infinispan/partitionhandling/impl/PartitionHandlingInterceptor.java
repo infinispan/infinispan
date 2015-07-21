@@ -7,10 +7,11 @@ import java.util.Set;
 
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.AbstractDataCommand;
-import org.infinispan.commands.read.EntryRetrievalCommand;
+import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.commands.read.GetAllCommand;
+import org.infinispan.commands.read.KeySetCommand;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.write.ApplyDeltaCommand;
@@ -97,7 +98,15 @@ public class PartitionHandlingInterceptor extends CommandInterceptor {
    }
 
    @Override
-   public Object visitEntryRetrievalCommand(InvocationContext ctx, EntryRetrievalCommand command) throws Throwable {
+   public Object visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
+      if (performPartitionCheck(ctx, command)) {
+         partitionHandlingManager.checkBulkRead();
+      }
+      return handleDefault(ctx, command);
+   }
+
+   @Override
+   public Object visitEntrySetCommand(InvocationContext ctx, EntrySetCommand command) throws Throwable {
       if (performPartitionCheck(ctx, command)) {
          partitionHandlingManager.checkBulkRead();
       }

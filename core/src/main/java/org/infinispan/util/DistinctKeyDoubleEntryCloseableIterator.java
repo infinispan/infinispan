@@ -84,7 +84,8 @@ public class DistinctKeyDoubleEntryCloseableIterator<E, K> implements CloseableI
          iterator2Next = null;
          return e;
       }
-      while((e = iterator2.next()) != null) {
+      while(iterator2.hasNext()) {
+         e = iterator2.next();
          if (!keysSeenInFirst.remove(function.apply(e))) {
             return e;
          }

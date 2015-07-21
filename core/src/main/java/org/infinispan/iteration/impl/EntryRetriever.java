@@ -1,5 +1,6 @@
 package org.infinispan.iteration.impl;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
@@ -17,6 +18,9 @@ import java.util.UUID;
  *
  * @author wburns
  * @since 7.0
+ * @deprecated Please use {@link Collection#stream()} method on either {@link Cache#entrySet()},
+ * {@link Cache#keySet()} or {@link Cache#values()}.  The {@link org.infinispan.filter.CacheFilters} can be used to
+ * bridge between filter/converters and proper stream types
  */
 public interface EntryRetriever<K, V> {
    /**

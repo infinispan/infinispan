@@ -18,7 +18,6 @@ import org.infinispan.CacheSet;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.read.EntryRetrievalCommand;
 import org.infinispan.commands.read.EntrySetCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
@@ -338,19 +337,6 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
       return enlistReadAndInvokeNext(ctx, command);
    }
 
-   @Override
-   public EntryIterable visitEntryRetrievalCommand(InvocationContext ctx, EntryRetrievalCommand command) throws Throwable {
-      // Enlistment shouldn't be needed for this command.  The remove on the iterator will internally make a remove
-      // command and the iterator itself does not place read values into the context.
-      EntryIterable iterable = (EntryIterable) invokeNextInterceptor(ctx, command);
-      if (ctx.isInTxScope()) {
-         //noinspection unchecked
-         return new TransactionAwareEntryIterable(iterable, command.getFilter(), (LocalTxInvocationContext) ctx, cache);
-      } else {
-         return iterable;
-      }
-   }
-
    private Object enlistReadAndInvokeNext(InvocationContext ctx, VisitableCommand command) throws Throwable {
       enlistIfNeeded(ctx);
       return invokeNextInterceptor(ctx, command);
@@ -559,13 +545,13 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
       }
 
       @Override
-      protected CacheEntry<K, V> lookupEntry(TxInvocationContext<LocalTransaction> ctx, K iteratedValue) {
-         return ctx.lookupEntry(iteratedValue);
+      protected K fromEntry(CacheEntry<K, V> entry) {
+         return entry.getKey();
       }
 
       @Override
-      protected K fromEntry(CacheEntry<K, V> entry) {
-         return entry.getKey();
+      protected Object getKey(K value) {
+         return value;
       }
 
       @Override
@@ -589,14 +575,13 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
       }
 
       @Override
-      protected CacheEntry<K, V> lookupEntry(TxInvocationContext<LocalTransaction> ctx,
-                                             CacheEntry<K, V> iteratedValue) {
-         return ctx.lookupEntry(iteratedValue.getKey());
+      protected CacheEntry<K, V> fromEntry(CacheEntry<K, V> entry) {
+         return entry;
       }
 
       @Override
-      protected CacheEntry<K, V> fromEntry(CacheEntry<K, V> entry) {
-         return entry;
+      protected Object getKey(CacheEntry<K, V> value) {
+         return value.getKey();
       }
    }
 
@@ -649,9 +634,9 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
          realIterator.close();
       }
 
-      protected abstract CacheEntry<K, V> lookupEntry(TxInvocationContext<LocalTransaction> ctx, E iteratedValue);
-
       protected abstract E fromEntry(CacheEntry<K, V> entry);
+
+      protected abstract Object getKey(E value);
 
       protected E getNextFromIterator() {
          E returnedValue = null;
@@ -667,14 +652,17 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
          if (returnedValue == null) {
             while (realIterator.hasNext()) {
                E iteratedEntry = realIterator.next();
-               CacheEntry contextEntry;
+               Object key = getKey(iteratedEntry);
+               CacheEntry<K, V> contextEntry;
                // If the value was in the context then we ignore the stored value since we use the context value
-               if ((contextEntry = lookupEntry(ctx, iteratedEntry)) != null) {
+               if ((contextEntry = ctx.lookupEntry(key)) != null) {
                   if (seenContextKeys.add(contextEntry.getKey()) && !contextEntry.isRemoved() && !contextEntry.isNull()) {
                      break;
                   }
-
                } else {
+                  seenContextKeys.add(key);
+                  // We have to add any entry we read from the iterator as if it was read from the context
+                  // otherwise if the reader adds this entry to the context we will see it again
                   return iteratedEntry;
                }
             }

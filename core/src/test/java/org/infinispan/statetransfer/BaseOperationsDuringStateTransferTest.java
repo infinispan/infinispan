@@ -119,7 +119,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertFalse(cacheTopology.getCurrentCH().getMembers().contains(address(1)));
 
       // no keys should be present on node B yet because state transfer is blocked
-      assertTrue(cache(1).keySet().isEmpty());
+      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // initiate a REMOVE
       Future<Object> getFuture = fork(new Callable<Object>() {
@@ -141,7 +141,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       }
 
       // paranoia, yes the value is still missing from data container
-      assertTrue(cache(1).keySet().isEmpty());
+      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // allow rebalance to start
       ctm0.setRebalancingEnabled(true);
@@ -201,7 +201,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertFalse(cacheTopology.getCurrentCH().getMembers().contains(address(1)));
 
       // no keys should be present on node B yet because state transfer is blocked
-      assertTrue(cache(1).keySet().isEmpty());
+      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // initiate a PUT
       Future<Object> getFuture = fork(new Callable<Object>() {
@@ -223,7 +223,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       }
 
       // paranoia, yes the value is still missing from data container
-      assertTrue(cache(1).keySet().isEmpty());
+      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // allow rebalance to start
       ctm0.setRebalancingEnabled(true);
@@ -283,7 +283,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       assertFalse(cacheTopology.getCurrentCH().getMembers().contains(address(1)));
 
       // no keys should be present on node B yet because state transfer is blocked
-      assertTrue(cache(1).keySet().isEmpty());
+      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // initiate a REPLACE
       Future<Object> getFuture = fork(new Callable<Object>() {
@@ -305,7 +305,7 @@ public abstract class BaseOperationsDuringStateTransferTest extends MultipleCach
       }
 
       // paranoia, yes the value is still missing from data container
-      assertTrue(cache(1).keySet().isEmpty());
+      assertTrue(cache(1).getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL).keySet().isEmpty());
 
       // allow rebalance to start
       ctm0.setRebalancingEnabled(true);

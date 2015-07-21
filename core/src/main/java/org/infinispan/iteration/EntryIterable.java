@@ -22,5 +22,5 @@ public interface EntryIterable<K, V> extends CloseableIterable<CacheEntry<K, V>>
     * @param <C> The type of the converted value
     * @return A CloseableIterator that will use the given converter
     */
-   public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, ? extends C> converter);
+   public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, C> converter);
 }

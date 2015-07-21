@@ -493,6 +493,9 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * progressing further.</p>
     * @param filter The filter to use.  Note this is required and for distributed caches must be serializable.  Callbacks
     *               to the filter will never provide a key or value that will be null.
+    * @deprecated Please use {@link Collection#stream()} method on either {@link Cache#entrySet()},
+    * {@link Cache#keySet()} or {@link Cache#values()}.  The {@link org.infinispan.filter.CacheFilters} can be used to
+    * bridge between filter/converters and proper stream types
     */
    EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter);
 
