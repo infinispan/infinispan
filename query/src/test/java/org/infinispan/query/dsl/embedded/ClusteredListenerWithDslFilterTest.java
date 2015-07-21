@@ -96,7 +96,7 @@ public class ClusteredListenerWithDslFilterTest extends MultipleCacheManagersTes
       Query query = qf.from(org.infinispan.query.test.Person.class)
             .having("age").lte(31)
             .toBuilder()
-            .setProjection("name", "age")
+            .select("name", "age")
             .build();
 
       EntryListener listener = new EntryListener();

@@ -267,7 +267,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       // get account back from remote cache via query and check its attributes
       QueryFactory qf = Search.getQueryFactory(remoteCache);
       Query query = qf.from(AccountPB.class)
-            .setProjection("description", "id")
+            .select("description", "id")
             .having("description").like("%test%").toBuilder()
             .build();
       List<Object[]> list = query.list();
