@@ -93,6 +93,10 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
       return this;
    }
 
+   public boolean reaperEnabled() {
+      return attributes.attribute(REAPER_ENABLED).get();
+   }
+
    /**
     * Interval (in milliseconds) between subsequent runs to purge expired entries from memory and
     * any cache stores. If you wish to disable the periodic eviction process altogether, set
@@ -101,6 +105,10 @@ public class ExpirationConfigurationBuilder extends AbstractConfigurationChildBu
    public ExpirationConfigurationBuilder wakeUpInterval(long l) {
       attributes.attribute(WAKEUP_INTERVAL).set(l);
       return this;
+   }
+
+   public long wakeupInterval() {
+      return attributes.attribute(WAKEUP_INTERVAL).get();
    }
 
    /**

@@ -20,20 +20,6 @@ import org.infinispan.factories.scopes.Scopes;
 @ThreadSafe
 @Scope(Scopes.NAMED_CACHE)
 public interface EvictionManager<K, V> {
-
-   /**
-    * @deprecated This falls back to calling {@link ExpirationManager#processExpiration()}
-    * @see ExpirationManager
-    */
-   void processEviction();
-
-   /**
-    * @deprecated This falls back to calling {@link ExpirationManager#isEnabled()}
-    * @see ExpirationManager
-    * @return whether expiration is enabled or not
-    */
-   boolean isEnabled();
-
    /**
     * Handles notifications of evicted entries
     * @param evicted The entries that were just evicted

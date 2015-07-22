@@ -271,7 +271,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public EvictCommand buildEvictCommand(Object key, Set<Flag> flags) {
-      return new EvictCommand(key, notifier, flags, generateUUID());
+      return new EvictCommand(key, notifier, flags, generateUUID(), entryFactory);
    }
 
    @Override

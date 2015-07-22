@@ -224,7 +224,8 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
     */
    @Override
    public boolean contains(Object key) {
-      return entries.containsKey(key);
+      FileEntry entry = entries.get(key);
+      return entry != null && !entry.isExpired(timeService.wallClockTime());
    }
 
    /**
@@ -441,7 +442,6 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
 
    private MarshalledEntry<K, V> _load(Object key, boolean loadValue, boolean loadMetadata) {
       final FileEntry fe;
-      final boolean expired;
       resizeLock.readLock().lock();
       try {
          synchronized (entries) {
@@ -450,24 +450,13 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
             if (fe == null)
                return null;
 
-            expired = fe.isExpired(timeService.wallClockTime());
-            if (expired) {
-               // if expired, remove the entry (within entries monitor)
-               entries.remove(key);
+            // Entries are removed due to expiration from {@link SingleFileStore#purge}
+            if (fe.isExpired(timeService.wallClockTime())) {
+               return null;
             } else {
                // lock entry for reading before releasing entries monitor
                fe.lock();
             }
-         }
-
-         if (expired) {
-            // if expired, free the file entry (after releasing entries monitor)
-            try {
-               free(fe);
-            } catch (IOException e) {
-               throw new PersistenceException(e);
-            }
-            return null;
          }
       } finally {
          resizeLock.readLock().unlock();

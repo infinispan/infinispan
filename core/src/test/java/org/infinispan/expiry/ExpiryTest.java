@@ -8,6 +8,8 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ControlledTimeService;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -15,7 +17,6 @@ import org.testng.annotations.Test;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,21 +24,24 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.infinispan.test.TestingUtil.*;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.infinispan.test.TestingUtil.v;
+import static org.testng.AssertJUnit.*;
 
 @Test(groups = "functional", testName = "expiry.ExpiryTest")
 public class ExpiryTest extends AbstractInfinispanTest {
 
    public static final int EXPIRATION_TIMEOUT = 3000;
    public static final int IDLE_TIMEOUT = 3000;
-   public static final int EVICTION_CHECK_TIMEOUT = 2000;
+   public static final int EXPIRATION_CHECK_TIMEOUT = 2000;
    CacheContainer cm;
+
+   protected ControlledTimeService timeService;
 
    @BeforeMethod
    public void setUp() {
       cm = TestCacheManagerFactory.createCacheManager(false);
+      timeService = new ControlledTimeService(0);
+      TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
    }
 
    @AfterMethod
@@ -57,10 +61,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert se.getValue().equals("v");
       assert se.getLifespan() == lifespan;
       assert se.getMaxIdle() == -1;
-      assert !se.isExpired(TIME_SERVICE.wallClockTime());
+      assert !se.isExpired(timeService.wallClockTime());
       assert cache.get("k").equals("v");
-      Thread.sleep(lifespan + 100);
-      assert se.isExpired(TIME_SERVICE.wallClockTime());
+      timeService.advance(lifespan + 100);
+      assert se.isExpired(timeService.wallClockTime());
       assert cache.get("k") == null;
    }
 
@@ -75,37 +79,28 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert se.getValue().equals("v");
       assert se.getLifespan() == -1;
       assert se.getMaxIdle() == idleTime;
-      assert !se.isExpired(TIME_SERVICE.wallClockTime());
+      assert !se.isExpired(timeService.wallClockTime());
       assert cache.get("k").equals("v");
-      Thread.sleep(idleTime + 100);
-      assert se.isExpired(TIME_SERVICE.wallClockTime());
-      assert cache.get("k") == null;
+      timeService.advance(idleTime + 100);
+      assertTrue(se.isExpired(timeService.wallClockTime()));
+      assertNull(cache.get("k"));
    }
 
    public void testLifespanExpiryInPutAll() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      final long startTime = now();
       final long lifespan = EXPIRATION_TIMEOUT;
       Map<String, String> m = new HashMap();
       m.put("k1", "v");
       m.put("k2", "v");
       cache.putAll(m, lifespan, MILLISECONDS);
-      while (true) {
-         String v1 = cache.get("k1");
-         String v2 = cache.get("k2");
-         if (moreThanDurationElapsed(startTime, lifespan))
-            break;
-         assertEquals("v", v1);
-         assertEquals("v", v2);
-         Thread.sleep(100);
-      }
+      String v1 = cache.get("k1");
+      String v2 = cache.get("k2");
+      assertEquals("v", v1);
+      assertEquals("v", v2);
+      timeService.advance(lifespan + 100);
 
-      //make sure that in the next 30 secs data is removed
-      while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-         if (cache.get("k1") == null && cache.get("k2") == null) return;
-      }
-      assert cache.get("k1") == null;
-      assert cache.get("k2") == null;
+      assertNull(cache.get("k1"));
+      assertNull(cache.get("k2"));
    }
 
    public void testIdleExpiryInPutAll() throws InterruptedException {
@@ -114,36 +109,27 @@ public class ExpiryTest extends AbstractInfinispanTest {
       Map<String, String> m = new HashMap<String, String>();
       m.put("k1", "v");
       m.put("k2", "v");
-      long start = now();
       cache.putAll(m, -1, MILLISECONDS, idleTime, MILLISECONDS);
-      assert "v".equals(cache.get("k1")) || moreThanDurationElapsed(start, idleTime);
-      assert "v".equals(cache.get("k2")) || moreThanDurationElapsed(start, idleTime);
+      assertEquals("v", cache.get("k1"));
+      assertEquals("v", cache.get("k2"));
 
-      Thread.sleep(idleTime + 100);
+      timeService.advance(idleTime + 100);
 
-      assert cache.get("k1") == null;
-      assert cache.get("k2") == null;
+      assertNull(cache.get("k1"));
+      assertNull(cache.get("k2"));
    }
 
    public void testLifespanExpiryInPutIfAbsent() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
-      final long startTime = now();
       final long lifespan = EXPIRATION_TIMEOUT;
       assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) == null;
       long partial = lifespan / 10;
       // Sleep some time within the lifespan boundaries
-      Thread.sleep(lifespan - partial);
-      assert "v".equals(cache.get("k")) || moreThanDurationElapsed(startTime, lifespan);
+      timeService.advance(lifespan - partial);
+      assertEquals("v", cache.get("k"));
       // Sleep some time that guarantees that it'll be over the lifespan
-      Thread.sleep(partial * 2);
-      assert cache.get("k") == null;
-
-      //make sure that in the next 2 secs data is removed
-      while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-         if (cache.get("k") == null) break;
-         Thread.sleep(50);
-      }
-      assert cache.get("k") == null;
+      timeService.advance(lifespan);
+      assertNull(cache.get("k"));
 
       cache.put("k", "v");
       assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) != null;
@@ -152,86 +138,63 @@ public class ExpiryTest extends AbstractInfinispanTest {
    public void testIdleExpiryInPutIfAbsent() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
       long idleTime = EXPIRATION_TIMEOUT;
-      long start = now();
-      assert cache.putIfAbsent("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS) == null;
-      assert "v".equals(cache.get("k")) || moreThanDurationElapsed(start, idleTime);
+      assertNull(cache.putIfAbsent("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS));
+      assertEquals("v", cache.get("k"));
 
-      Thread.sleep(idleTime + 100);
+      timeService.advance(idleTime + 100);
 
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
 
       cache.put("k", "v");
-      assert cache.putIfAbsent("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS) != null;
+      assertNotNull(cache.putIfAbsent("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS));
    }
 
    public void testLifespanExpiryInReplace() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
       final long lifespan = EXPIRATION_TIMEOUT;
-      assert cache.get("k") == null;
-      assert cache.replace("k", "v", lifespan, MILLISECONDS) == null;
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
+      assertNull(cache.replace("k", "v", lifespan, MILLISECONDS));
+      assertNull(cache.get("k"));
       cache.put("k", "v-old");
-      assert cache.get("k").equals("v-old");
-      long startTime = now();
-      assert cache.replace("k", "v", lifespan, MILLISECONDS) != null;
-      assert "v".equals(cache.get("k")) || moreThanDurationElapsed(startTime, lifespan);
-      while (true) {
-         String v = cache.get("k");
-         if (moreThanDurationElapsed(startTime, lifespan))
-            break;
-         assertEquals("v", v);
-         Thread.sleep(100);
-      }
+      assertEquals("v-old", cache.get("k"));
+      assertNotNull(cache.replace("k", "v", lifespan, MILLISECONDS));
+      assertEquals("v", cache.get("k"));
 
-      //make sure that in the next 2 secs data is removed
-      while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-         if (cache.get("k") == null) break;
-         Thread.sleep(100);
-      }
-      assert cache.get("k") == null;
+      timeService.advance(lifespan + 100);
+
+      assertNull(cache.get("k"));
 
 
-      startTime = now();
       cache.put("k", "v");
-      assert cache.replace("k", "v", "v2", lifespan, MILLISECONDS);
-      while (true) {
-         String v = cache.get("k");
-         if (moreThanDurationElapsed(startTime, lifespan))
-            break;
-         assertEquals("v2", v);
-         Thread.sleep(100);
-      }
+      assertTrue(cache.replace("k", "v", "v2", lifespan, MILLISECONDS));
 
-      //make sure that in the next 2 secs data is removed
-      while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-         if (cache.get("k") == null) break;
-         Thread.sleep(50);
-      }
+      timeService.advance(lifespan + 100);
+
       assert cache.get("k") == null;
    }
 
    public void testIdleExpiryInReplace() throws InterruptedException {
       Cache<String, String> cache = cm.getCache();
       long idleTime = EXPIRATION_TIMEOUT;
-      assert cache.get("k") == null;
-      assert cache.replace("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS) == null;
-      assert cache.get("k") == null;
+      assertNull(cache.get("k"));
+      assertNull(cache.replace("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS));
+      assertNull(cache.get("k"));
       cache.put("k", "v-old");
-      assert cache.get("k").equals("v-old");
-      long start = now();
-      assert cache.replace("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS) != null;
-      assert "v".equals(cache.get("k")) || moreThanDurationElapsed(start, idleTime);
+      assertEquals("v-old", cache.get("k"));
+      assertNotNull(cache.replace("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS));
+      assertEquals("v", cache.get("k"));
 
-      Thread.sleep(idleTime + 100);
-      assert cache.get("k") == null;
+      timeService.advance(idleTime + 100);
+      assertNull(cache.get("k"));
 
       cache.put("k", "v");
-      assert cache.replace("k", "v", "v2", -1, MILLISECONDS, idleTime, MILLISECONDS);
+      assertTrue(cache.replace("k", "v", "v2", -1, MILLISECONDS, idleTime, MILLISECONDS));
 
-      Thread.sleep(idleTime + 100);
-      assert cache.get("k") == null;
+      timeService.advance(idleTime + 100);
+      assertNull(cache.get("k"));
    }
 
+   @Test
    public void testEntrySetAfterExpiryInPut(Method m) throws Exception {
       doTestEntrySetAfterExpiryInPut(m, cm);
    }
@@ -257,44 +220,32 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    private CacheContainer createTransactionalCacheContainer() {
-      return TestCacheManagerFactory.createCacheManager(TestCacheManagerFactory.getDefaultCacheConfiguration(true));
+      CacheContainer cc = TestCacheManagerFactory.createCacheManager(
+              TestCacheManagerFactory.getDefaultCacheConfiguration(true));
+      TestingUtil.replaceComponent(cc, TimeService.class, timeService, true);
+      return cc;
    }
 
    private CacheContainer createCacheContainerWithStore(String location) {
       ConfigurationBuilder b = new ConfigurationBuilder();
       b.persistence().addSingleFileStore().location(location);
-      return TestCacheManagerFactory.createCacheManager(b);
+      CacheContainer cc = TestCacheManagerFactory.createCacheManager(b);
+      TestingUtil.replaceComponent(cc, TimeService.class, timeService, true);
+      return cc;
    }
 
    private void doTestEntrySetAfterExpiryInPut(Method m, CacheContainer cc) throws Exception {
       Cache<Integer, String> cache = cc.getCache();
-      Set<Map.Entry<Integer, String>> entries;
       Map dataIn = new HashMap();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
-      Set entriesIn = dataIn.entrySet();
 
-      final long startTime = now();
       final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
-      while (true) {
-         // cache.entrySet is backing so expired entries will be removed so we have to make a copy
-         entries = new HashSet<>(cache.entrySet());
-         if (moreThanDurationElapsed(startTime, lifespan))
-            break;
-         // If the time hasn't lapsed then the entries should be the same
-         assertEquals(entriesIn, entries);
-         Thread.sleep(100);
-      }
+      timeService.advance(lifespan + 100);
 
-      // Make sure that in the next 20 secs data is removed
-      while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-         entries = cache.entrySet();
-         if (entries.size() == 0) break;
-      }
-
-      assertEquals(0, entries.size());
+      assertEquals(0, cache.entrySet().size());
    }
 
    private void doEntrySetAfterExpiryInTransaction(Method m, CacheContainer cc) throws Exception {
@@ -304,7 +255,6 @@ public class ExpiryTest extends AbstractInfinispanTest {
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
 
-      final long startTime = now();
       final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
@@ -318,53 +268,26 @@ public class ExpiryTest extends AbstractInfinispanTest {
          // Add an entry within tx
          cache.putAll(txDataIn);
 
-         while (true) {
-            entries = new HashSet<>(cache.entrySet());
-            if (moreThanDurationElapsed(startTime, lifespan))
-               break;
-            assertEquals(allEntriesIn.entrySet(), entries);
-            Thread.sleep(100);
-         }
-
-         // Make sure that in the next 20 secs data is removed
-         while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-            entries = cache.entrySet();
-            if (entries.size() == 1) break;
-         }
+         timeService.advance(lifespan + 100);
       } finally {
          cache.getAdvancedCache().getTransactionManager().commit();
       }
 
-      assertEquals(1, entries.size());
+      assertEquals(1, cache.entrySet().size());
    }
 
    public void testKeySetAfterExpiryInPut(Method m) throws Exception {
       Cache<Integer, String> cache = cm.getCache();
-      Set<Integer> keys;
       Map dataIn = new HashMap();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
-      Set keysIn = dataIn.keySet();
 
-      final long startTime = now();
       final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
-      while (true) {
-         keys = new HashSet<>(cache.keySet());
-         if (moreThanDurationElapsed(startTime, lifespan))
-            break;
-         assertEquals(keysIn, keys);
-         Thread.sleep(100);
-      }
+      timeService.advance(lifespan + 100);
 
-      // Make sure that in the next 20 secs data is removed
-      while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-         keys = cache.keySet();
-         if (keys.size() == 0) break;
-      }
-
-      assertEquals(0, keys.size());
+      assertEquals(0, cache.keySet().size());
    }
 
    public void testKeySetAfterExpiryInTransaction(Method m) throws Exception {
@@ -378,12 +301,10 @@ public class ExpiryTest extends AbstractInfinispanTest {
 
    private void doKeySetAfterExpiryInTransaction(Method m, CacheContainer cc) throws Exception {
       Cache<Integer, String> cache = cc.getCache();
-      Set<Integer> keys;
       Map dataIn = new HashMap();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
 
-      final long startTime = now();
       final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
@@ -397,24 +318,12 @@ public class ExpiryTest extends AbstractInfinispanTest {
          // Add an entry within tx
          cache.putAll(txDataIn);
 
-         while (true) {
-            keys = new HashSet<>(cache.keySet());
-            if (moreThanDurationElapsed(startTime, lifespan))
-               break;
-            assertEquals(allEntriesIn.keySet(), keys);
-            Thread.sleep(100);
-         }
-
-         // Make sure that in the next 20 secs data is removed
-         while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-            keys = cache.keySet();
-            if (keys.size() == 1) break;
-         }
+         timeService.advance(lifespan + 100);
       } finally {
          cache.getAdvancedCache().getTransactionManager().commit();
       }
 
-      assertEquals(1, keys.size());
+      assertEquals(1, cache.keySet().size());
    }
 
    public void testValuesAfterExpiryInPut(Method m) throws Exception {
@@ -426,27 +335,13 @@ public class ExpiryTest extends AbstractInfinispanTest {
       Map<Integer, String> dataIn = new HashMap<>();
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
-      Collection<String> valuesIn = new ArrayList<>(dataIn.values());
 
-      final long startTime = now();
       final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
-      while (true) {
-         values = new ArrayList<>(cache.values());
-         if (moreThanDurationElapsed(startTime, lifespan))
-            break;
-         assertEquals(valuesIn, values);
-         Thread.sleep(100);
-      }
+      timeService.advance(lifespan + 100);
 
-      // Make sure that in the next 20 secs data is removed
-      while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-         values = cache.values();
-         if (values.size() == 0) break;
-      }
-
-      assertEquals(0, values.size());
+      assertEquals(0, cache.values().size());
    }
 
    public void testValuesAfterExpiryInTransaction(Method m) throws Exception {
@@ -475,7 +370,6 @@ public class ExpiryTest extends AbstractInfinispanTest {
       dataIn.put(1, v(m, 1));
       dataIn.put(2, v(m, 2));
 
-      final long startTime = now();
       final long lifespan = EXPIRATION_TIMEOUT;
       cache.putAll(dataIn, lifespan, TimeUnit.MILLISECONDS);
 
@@ -489,23 +383,11 @@ public class ExpiryTest extends AbstractInfinispanTest {
          // Add an entry within tx
          cache.putAll(txDataIn);
 
-         while (true) {
-            values = new ArrayList<>(cache.values());
-            if (moreThanDurationElapsed(startTime, lifespan))
-               break;
-            assertTrue(allValuesIn.containsAll(values));
-            Thread.sleep(100);
-         }
-
-         // Make sure that in the next 20 secs data is removed
-         while (!moreThanDurationElapsed(startTime, lifespan + EVICTION_CHECK_TIMEOUT)) {
-            values = cache.values();
-            if (values.size() == 1) break;
-         }
+         timeService.advance(lifespan + 100);
       } finally {
          cache.getAdvancedCache().getTransactionManager().commit();
       }
 
-      assertEquals(1, values.size());
+      assertEquals(1, cache.values().size());
    }
 }

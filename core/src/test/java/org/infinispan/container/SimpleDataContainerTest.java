@@ -1,6 +1,7 @@
 package org.infinispan.container;
 
 import org.infinispan.eviction.ActivationManager;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.container.entries.ImmortalCacheEntry;
@@ -44,7 +45,8 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
       internalEntryFactory.injectTimeService(TIME_SERVICE);
       ActivationManager activationManager = mock(ActivationManager.class);
       doNothing().when(activationManager).onUpdate(Mockito.anyObject(), Mockito.anyBoolean());
-      dc.initialize(null, null, internalEntryFactory, activationManager, null, TIME_SERVICE);
+      dc.initialize(null, null, internalEntryFactory, activationManager, null, TIME_SERVICE, null, mock(
+              ExpirationManager.class));
       return dc;
    }
 
@@ -78,7 +80,7 @@ public class SimpleDataContainerTest extends AbstractInfinispanTest {
 
       dc.put("k", "v", new EmbeddedMetadata.Builder().lifespan(0, TimeUnit.MINUTES).build());
       Thread.sleep(100);
-      assert dc.size() == 1;
+      assert dc.size() == 0;
       dc.purgeExpired();
       assert dc.size() == 0;
    }

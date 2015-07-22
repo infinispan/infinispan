@@ -62,7 +62,7 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
       cacheNotifier.getListenerCollectionForAnnotation(CacheEntryRemoved.class).removeAll(filteringInvocations.values());
       cacheNotifier.getListenerCollectionForAnnotation(CacheEntryVisited.class).removeAll(filteringInvocations.values());
       cacheNotifier.getListenerCollectionForAnnotation(CacheEntriesEvicted.class).removeAll(filteringInvocations.values());
-      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryEvicted.class).removeAll(filteringInvocations.values());
+      cacheNotifier.getListenerCollectionForAnnotation(CacheEntryExpired.class).removeAll(filteringInvocations.values());
       filteringInvocations.clear();
    }
 
@@ -108,7 +108,7 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
       if (annotation == CacheEntryPassivated.class) return Event.Type.CACHE_ENTRY_PASSIVATED;
       if (annotation == CacheEntryVisited.class) return Event.Type.CACHE_ENTRY_VISITED;
       if (annotation == CacheEntriesEvicted.class) return Event.Type.CACHE_ENTRY_EVICTED;
-      if (annotation == CacheEntryEvicted.class) return Event.Type.CACHE_ENTRY_EVICTED;
+      if (annotation == CacheEntryExpired.class) return Event.Type.CACHE_ENTRY_EXPIRED;
       return null;
    }
 
@@ -126,7 +126,7 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
             cacheNotifier.getListenerCollectionForAnnotation(CacheEntryRemoved.class).add(filteringInvocation);
             cacheNotifier.getListenerCollectionForAnnotation(CacheEntryVisited.class).add(filteringInvocation);
             cacheNotifier.getListenerCollectionForAnnotation(CacheEntriesEvicted.class).add(filteringInvocation);
-            cacheNotifier.getListenerCollectionForAnnotation(CacheEntryEvicted.class).add(filteringInvocation);
+            cacheNotifier.getListenerCollectionForAnnotation(CacheEntryExpired.class).add(filteringInvocation);
          }
       }
    }
@@ -146,6 +146,7 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
       private final DelegatingCacheEntryListenerInvocation<K, V>[] removed_invocations;
       private final DelegatingCacheEntryListenerInvocation<K, V>[] visited_invocations;
       private final DelegatingCacheEntryListenerInvocation<K, V>[] evicted_invocations;
+      private final DelegatingCacheEntryListenerInvocation<K, V>[] expired_invocations;
 
       private Matcher matcher;
       protected FilterSubscription subscription;
@@ -163,7 +164,8 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
          passivated_invocations = makeArray(listeners, CacheEntryPassivated.class);
          removed_invocations = makeArray(listeners, CacheEntryRemoved.class);
          visited_invocations = makeArray(listeners, CacheEntryVisited.class);
-         evicted_invocations = concatArrays(makeArray(listeners, CacheEntriesEvicted.class), makeArray(listeners, CacheEntryEvicted.class));
+         evicted_invocations = makeArray(listeners, CacheEntriesEvicted.class);
+         expired_invocations = makeArray(listeners, CacheEntryExpired.class);
       }
 
       private DelegatingCacheEntryListenerInvocation<K, V>[] makeArray(Map<Class<? extends Annotation>, List<DelegatingCacheEntryListenerInvocation<K, V>>> listeners, Class<? extends Annotation> eventType) {
@@ -228,6 +230,9 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
                break;
             case CACHE_ENTRY_EVICTED:
                invocations = evicted_invocations;
+               break;
+            case CACHE_ENTRY_EXPIRED:
+               invocations = expired_invocations;
                break;
             default:
                return;

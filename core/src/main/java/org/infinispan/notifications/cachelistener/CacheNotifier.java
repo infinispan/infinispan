@@ -55,13 +55,9 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
          InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Syntactic sugar
-    * @param key key evicted
-    * @param value value evicted
-    * @param ctx context
+    * Notifies all registered listeners of a CacheEntryExpired event.
     */
-   void notifyCacheEntryEvicted(K key, V value,
-         InvocationContext ctx, FlagAffectedCommand command);
+   void notifyCacheEntryExpired(K key, V value, Metadata metadata);
 
    /**
     * Notifies all registered listeners of a CacheEntryInvalidated event.

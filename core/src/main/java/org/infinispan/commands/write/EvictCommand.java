@@ -3,6 +3,7 @@ package org.infinispan.commands.write;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.metadata.Metadata;
@@ -10,6 +11,7 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -20,8 +22,12 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
 
    private static final Log log = LogFactory.getLog(EvictCommand.class);
 
-   public EvictCommand(Object key, CacheNotifier notifier, Set<Flag> flags, CommandInvocationId commandInvocationId) {
+   private final InternalEntryFactory factory;
+
+   public EvictCommand(Object key, CacheNotifier notifier, Set<Flag> flags, CommandInvocationId commandInvocationId,
+           InternalEntryFactory factory) {
       super(key, null, notifier, flags, null, commandInvocationId);
+      this.factory = factory;
    }
 
    @Override
@@ -48,7 +54,8 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
          if (log.isTraceEnabled())
             log.tracef("Notify eviction listeners for key=%", key);
 
-         notifier.notifyCacheEntryEvicted(key, value, ctx, this);
+         notifier.notifyCacheEntriesEvicted(Collections.singleton(factory.create(key, value, previousMetadata)), ctx,
+                 this);
       }
    }
 

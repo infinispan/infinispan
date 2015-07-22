@@ -14,6 +14,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -85,6 +86,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private final Map<Object, StoreConfiguration> configMap = new HashMap<>();
 
    private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
+   private ExpirationManager expirationManager;
 
    /**
     * making it volatile as it might change after @Start, so it needs the visibility.
@@ -99,7 +101,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
    public void inject(AdvancedCache<Object, Object> cache, @ComponentName(CACHE_MARSHALLER) StreamingMarshaller marshaller,
                       Configuration configuration, TransactionManager transactionManager,
                       TimeService timeService, @ComponentName(PERSISTENCE_EXECUTOR) ExecutorService persistenceExecutor,
-                      ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory, CacheStoreFactoryRegistry cacheStoreFactoryRegistry) {
+                      ByteBufferFactory byteBufferFactory, MarshalledEntryFactory marshalledEntryFactory,
+                      CacheStoreFactoryRegistry cacheStoreFactoryRegistry, ExpirationManager expirationManager) {
       this.cache = cache;
       this.m = marshaller;
       this.configuration = configuration;
@@ -109,6 +112,7 @@ public class PersistenceManagerImpl implements PersistenceManager {
       this.byteBufferFactory = byteBufferFactory;
       this.marshalledEntryFactory = marshalledEntryFactory;
       this.cacheStoreFactoryRegistry = cacheStoreFactoryRegistry;
+      this.expirationManager = expirationManager;
    }
 
    @Override
@@ -339,13 +343,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
          try {
             for (CacheWriter w : writers) {
                if (w instanceof AdvancedCacheWriter) {
-                  final CacheNotifier notifier = cache.getComponentRegistry().getComponent(CacheNotifier.class);
-                  ((AdvancedCacheWriter)w).purge(persistenceExecutor, new AdvancedCacheWriter.PurgeListener() {
-                     @Override
-                     public void entryPurged(Object key) {
-                        InternalCacheEntry ice = new ImmortalCacheEntry(key, null);
-                        notifier.notifyCacheEntriesEvicted(Collections.singleton(ice), null, null);
-                     }
+                  ((AdvancedCacheWriter)w).purge(persistenceExecutor, key -> {
+                     expirationManager.handleInStoreExpiration(key);
                   });
                }
             }

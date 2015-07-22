@@ -16,24 +16,10 @@ import java.util.Map;
 public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    // components to be injected
    private CacheNotifier<K, V> cacheNotifier;
-   private ExpirationManager<K, V> expirationManager;
 
    @Inject
    public void initialize(CacheNotifier<K, V> cacheNotifier, ExpirationManager<K, V> expirationManager) {
       this.cacheNotifier = cacheNotifier;
-   }
-
-   @Deprecated
-   @Override
-   public void processEviction() {
-      // This does nothing, as eviction is always done on the same thread that caused it
-      expirationManager.processExpiration();
-   }
-
-   @Deprecated
-   @Override
-   public boolean isEnabled() {
-      return expirationManager.isEnabled();
    }
 
    @Override

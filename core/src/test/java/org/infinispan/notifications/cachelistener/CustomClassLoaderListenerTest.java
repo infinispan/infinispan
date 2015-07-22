@@ -1,12 +1,13 @@
 package org.infinispan.notifications.cachelistener;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
+import org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryActivated;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryLoaded;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryPassivated;
@@ -14,7 +15,6 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryVisited;
 import org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent;
@@ -154,14 +154,6 @@ public class CustomClassLoaderListenerTest extends SingleCacheManagerTest {
          }
       }
 
-      @CacheEntryEvicted
-      public void handleEvicted(CacheEntryEvictedEvent e) {
-         assertEquals(ccl, Thread.currentThread().getContextClassLoader());
-         if (!e.isPre()) {
-            evictedCounter++;
-         }
-      }
-
       @CacheEntryPassivated
       public void handlePassivated(CacheEntryPassivatedEvent e) {
          assertEquals(ccl, Thread.currentThread().getContextClassLoader());
@@ -184,6 +176,12 @@ public class CustomClassLoaderListenerTest extends SingleCacheManagerTest {
          if (!e.isPre()) {
             loadedCounter++;
          }
+      }
+
+      @CacheEntriesEvicted
+      public void handleEvicted(CacheEntriesEvictedEvent e) {
+         assertEquals(ccl, Thread.currentThread().getContextClassLoader());
+         evictedCounter+= e.getEntries().size();
       }
 
       void reset() {
