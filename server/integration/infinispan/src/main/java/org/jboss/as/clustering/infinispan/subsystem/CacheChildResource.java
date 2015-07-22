@@ -13,27 +13,27 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
  * @since 7.2
  */
 abstract class CacheChildResource extends SimpleResourceDefinition {
-    protected final CacheResource cacheResource;
+    protected final RestartableResourceDefinition resource;
     protected final AttributeDefinition[] attributes;
 
-    CacheChildResource(PathElement path, String resourceKey, CacheResource cacheResource) {
-        this(path, resourceKey, cacheResource, new AttributeDefinition[]{});
+    CacheChildResource(PathElement path, String resourceKey, RestartableResourceDefinition resource) {
+        this(path, resourceKey, resource, new AttributeDefinition[]{});
     }
 
-    CacheChildResource(PathElement path, String resourceKey, CacheResource cacheResource,
+    CacheChildResource(PathElement path, String resourceKey, RestartableResourceDefinition resource,
             AttributeDefinition[] attributes) {
         super(path, new InfinispanResourceDescriptionResolver(resourceKey),
-                new RestartCacheResourceAdd(cacheResource.getPathElement().getKey(), cacheResource.getCacheAddHandler(), attributes),
-                new RestartCacheResourceRemove(cacheResource.getPathElement().getKey(), cacheResource.getCacheAddHandler()));
-        this.cacheResource = cacheResource;
+                new RestartCacheResourceAdd(resource.getPathElement().getKey(), resource.getServiceInstaller(), attributes),
+                new RestartCacheResourceRemove(resource.getPathElement().getKey(), resource.getServiceInstaller()));
+        this.resource = resource;
         this.attributes = attributes;
     }
 
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         if (attributes != null) {
-            final OperationStepHandler restartCacheWriteHandler = new RestartCacheWriteAttributeHandler(cacheResource
-                    .getPathElement().getKey(), cacheResource.getCacheAddHandler(), attributes);
+            final OperationStepHandler restartCacheWriteHandler = new RestartCacheWriteAttributeHandler(resource
+                    .getPathElement().getKey(), resource.getServiceInstaller(), attributes);
             for (AttributeDefinition attr : attributes) {
                 resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
             }

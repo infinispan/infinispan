@@ -7,7 +7,6 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.RestartParentResourceAddHandler;
 import org.jboss.as.controller.operations.common.Util;
-import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
@@ -21,12 +20,12 @@ import org.jboss.msc.service.ServiceName;
  */
 public class RestartCacheResourceAdd extends RestartParentResourceAddHandler {
     private final AttributeDefinition[] attributes;
-    private final CacheAdd cacheAddHandler;
+    private final RestartableResourceServiceInstaller addHandler;
 
-    RestartCacheResourceAdd(String parentKeyName, CacheAdd cacheAddHandler, AttributeDefinition[] attributes) {
+    RestartCacheResourceAdd(String parentKeyName, RestartableResourceServiceInstaller addHandler, AttributeDefinition[] attributes) {
         super(parentKeyName);
         this.attributes = attributes;
-        this.cacheAddHandler = cacheAddHandler;
+        this.addHandler = addHandler;
     }
 
     @Override
@@ -42,7 +41,7 @@ public class RestartCacheResourceAdd extends RestartParentResourceAddHandler {
         ModelNode containerModel = context.readResourceFromRoot(containerAddress).getModel();
         ModelNode operation = Util.createAddOperation(cacheAddress);
 
-        cacheAddHandler.installRuntimeServices(context, operation, containerModel, cacheModel);
+        addHandler.installRuntimeServices(context, operation, containerModel, cacheModel);
     }
 
     @Override

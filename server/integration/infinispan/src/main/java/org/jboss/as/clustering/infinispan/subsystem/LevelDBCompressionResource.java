@@ -1,10 +1,12 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.persistence.leveldb.configuration.CompressionType;
-import org.jboss.as.controller.*;
+import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.SimpleAttributeDefinition;
+import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
-import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -32,7 +34,7 @@ public class LevelDBCompressionResource extends CacheChildResource {
     static final AttributeDefinition[] LEVELDB_COMPRESSION_ATTRIBUTES = {TYPE};
 
 
-    public LevelDBCompressionResource(CacheResource cacheResource) {
+    public LevelDBCompressionResource(RestartableResourceDefinition cacheResource) {
         super(LEVELDB_COMPRESSION_PATH, ModelKeys.COMPRESSION, cacheResource, LEVELDB_COMPRESSION_ATTRIBUTES);
     }
 

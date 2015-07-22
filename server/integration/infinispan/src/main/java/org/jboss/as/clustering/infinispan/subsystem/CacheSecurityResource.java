@@ -33,13 +33,13 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
  */
 public class CacheSecurityResource extends CacheChildResource {
 
-    CacheSecurityResource(CacheResource cacheResource) {
+    CacheSecurityResource(RestartableResourceDefinition cacheResource) {
         super(PathElement.pathElement(ModelKeys.SECURITY), String.format("%s.%s", ModelKeys.CACHE, ModelKeys.SECURITY), cacheResource);
     }
 
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
-        resourceRegistration.registerSubModel(new CacheAuthorizationResource(cacheResource));
+        resourceRegistration.registerSubModel(new CacheAuthorizationResource(resource));
     }
 
 }

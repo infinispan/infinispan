@@ -117,7 +117,7 @@ public class DistributedCacheResource extends SharedCacheResource {
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
 
-        final OperationStepHandler restartWriteHandler = new RestartCacheWriteAttributeHandler(getPathElement().getKey(), getCacheAddHandler(), DISTRIBUTED_CACHE_ATTRIBUTES);
+        final OperationStepHandler restartWriteHandler = new RestartCacheWriteAttributeHandler(getPathElement().getKey(), getServiceInstaller(), DISTRIBUTED_CACHE_ATTRIBUTES);
         for (AttributeDefinition attr : DISTRIBUTED_CACHE_ATTRIBUTES) {
             resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartWriteHandler);
         }

@@ -124,7 +124,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
-public abstract class CacheAdd extends AbstractAddStepHandler {
+public abstract class CacheAdd extends AbstractAddStepHandler implements RestartableResourceServiceInstaller {
 
     private static final Logger log = Logger.getLogger(CacheAdd.class.getPackage().getName());
     private static final String DEFAULTS = "infinispan-defaults.xml";
@@ -213,7 +213,8 @@ public abstract class CacheAdd extends AbstractAddStepHandler {
         this.installRuntimeServices(context, operation, containerModel, cacheModel);
     }
 
-    Collection<ServiceController<?>> installRuntimeServices(OperationContext context, ModelNode operation, ModelNode containerModel, ModelNode cacheModel) throws OperationFailedException {
+    @Override
+    public Collection<ServiceController<?>> installRuntimeServices(OperationContext context, ModelNode operation, ModelNode containerModel, ModelNode cacheModel) throws OperationFailedException {
 
         // get all required addresses, names and service names
         PathAddress cacheAddress = getCacheAddressFromOperation(operation);

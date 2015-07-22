@@ -133,7 +133,7 @@ public class BackupSiteResource extends CacheChildResource {
     @Override
     public void registerOperations(ManagementResourceRegistration resourceRegistration) {
         super.registerOperations(resourceRegistration);
-        if (cacheResource.isRuntimeRegistration()) {
+        if (resource.isRuntimeRegistration()) {
             resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_BRING_SITE_ONLINE, CacheCommands.BackupBringSiteOnlineCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_TAKE_SITE_OFFLINE, CacheCommands.BackupTakeSiteOfflineCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_SITE_STATUS, CacheCommands.BackupSiteStatusCommand.INSTANCE);
@@ -149,6 +149,6 @@ public class BackupSiteResource extends CacheChildResource {
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
-        resourceRegistration.registerSubModel(new BackupSiteStateTransferResource(cacheResource.isRuntimeRegistration()));
+        resourceRegistration.registerSubModel(new BackupSiteStateTransferResource(resource.isRuntimeRegistration()));
     }
 }
