@@ -107,6 +107,17 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         return addOp ;
     }
 
+    protected static ModelNode getCacheConfigurationReadOperation(String containerName, String cacheType, String cacheName, String name) {
+        // create the address of the subsystem
+        PathAddress cacheAddress = getCacheConfigurationAddress(containerName, cacheType, cacheName);
+        ModelNode readOp = new ModelNode() ;
+        readOp.get(OP).set(READ_ATTRIBUTE_OPERATION);
+        readOp.get(OP_ADDR).set(cacheAddress.toModelNode());
+        // required attributes
+        readOp.get(NAME).set(name);
+        return readOp ;
+    }
+
     protected static ModelNode getCacheReadOperation(String containerName, String cacheType, String cacheName, String name) {
         // create the address of the subsystem
         PathAddress cacheAddress = getCacheAddress(containerName, cacheType, cacheName);
@@ -116,6 +127,11 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
         // required attributes
         readOp.get(NAME).set(name);
         return readOp ;
+    }
+
+    protected static ModelNode getCacheConfigurationWriteOperation(String containerName, String cacheType, String cacheName, String name, String value) {
+        PathAddress cacheAddress = getCacheConfigurationAddress(containerName, cacheType, cacheName);
+        return Util.getWriteAttributeOperation(cacheAddress, name, new ModelNode().set(value));
     }
 
     protected static ModelNode getCacheWriteOperation(String containerName, String cacheType, String cacheName, String name, String value) {
@@ -186,19 +202,19 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
     }
 
     protected static PathAddress getMixedKeyedJDBCCacheStoreAddress(String containerName, String cacheType, String cacheName) {
-        return getCacheAddress(containerName, cacheType, cacheName).append(ModelKeys.MIXED_KEYED_JDBC_STORE, JDBC_STORE_NAME);
+        return getCacheConfigurationAddress(containerName, cacheType, cacheName).append(ModelKeys.MIXED_KEYED_JDBC_STORE, JDBC_STORE_NAME);
     }
 
     protected static PathAddress getBinaryKeyedJDBCCacheStoreAddress(String containerName, String cacheType, String cacheName) {
-        return getCacheAddress(containerName, cacheType, cacheName).append(ModelKeys.BINARY_KEYED_JDBC_STORE, ModelKeys.BINARY_KEYED_JDBC_STORE_NAME);
+        return getCacheConfigurationAddress(containerName, cacheType, cacheName).append(ModelKeys.BINARY_KEYED_JDBC_STORE, ModelKeys.BINARY_KEYED_JDBC_STORE_NAME);
     }
 
     protected static PathAddress getStringKeyedJDBCCacheStoreAddress(String containerName, String cacheType, String cacheName) {
-        return getCacheAddress(containerName, cacheType, cacheName).append(ModelKeys.STRING_KEYED_JDBC_STORE, ModelKeys.STRING_KEYED_JDBC_STORE_NAME);
+        return getCacheConfigurationAddress(containerName, cacheType, cacheName).append(ModelKeys.STRING_KEYED_JDBC_STORE, ModelKeys.STRING_KEYED_JDBC_STORE_NAME);
     }
 
     protected static PathAddress getRemoteCacheStoreAddress(String containerName, String cacheType, String cacheName) {
-        return getCacheAddress(containerName, cacheType, cacheName).append(ModelKeys.REMOTE_STORE, ModelKeys.REMOTE_STORE_NAME);
+        return getCacheConfigurationAddress(containerName, cacheType, cacheName).append(ModelKeys.REMOTE_STORE, ModelKeys.REMOTE_STORE_NAME);
     }
 
     protected static PathAddress getFileCacheStoreAddress(String containerName, String cacheType, String cacheName) {
@@ -215,6 +231,10 @@ public class OperationTestCaseBase extends AbstractSubsystemTest {
 
     protected static PathAddress getCacheAddress(String containerName, String cacheType, String cacheName) {
         return getCacheContainerAddress(containerName).append(cacheType, cacheName);
+    }
+
+    protected static PathAddress getCacheConfigurationAddress(String containerName, String cacheType, String cacheName) {
+        return getCacheContainerAddress(containerName).append(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME).append(cacheType, cacheName);
     }
 
     protected String getSubsystemXml() throws IOException {

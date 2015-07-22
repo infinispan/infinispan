@@ -35,11 +35,12 @@ import org.jboss.as.controller.registry.ManagementResourceRegistration;
  */
 public class CacheContainerSecurityResource extends SimpleResourceDefinition {
 
+    private static final PathElement PATH = PathElement.pathElement(ModelKeys.SECURITY);
+
     CacheContainerSecurityResource() {
-        super(PathElement.pathElement(ModelKeys.SECURITY), new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY), CacheConfigOperationHandlers.CONTAINER_SECURITY_ADD,
+        super(PATH, new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.SECURITY), CacheConfigOperationHandlers.CONTAINER_SECURITY_ADD,
                 ReloadRequiredRemoveStepHandler.INSTANCE);
     }
-
 
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {

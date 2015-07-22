@@ -22,20 +22,9 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VALUE;
-
-import org.jboss.as.clustering.infinispan.InfinispanMessages;
-import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ModelOnlyWriteAttributeHandler;
-import org.jboss.as.controller.ModelVersion;
-import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.client.helpers.MeasurementUnit;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
@@ -50,42 +39,9 @@ import org.jboss.dmr.ModelType;
  */
 public class DistributedCacheResource extends SharedCacheResource {
 
-    public static final PathElement DISTRIBUTED_CACHE_PATH = PathElement.pathElement(ModelKeys.DISTRIBUTED_CACHE);
+    public static final PathElement PATH = PathElement.pathElement(ModelKeys.DISTRIBUTED_CACHE);
 
     // attributes
-    static final SimpleAttributeDefinition L1_LIFESPAN =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.L1_LIFESPAN, ModelType.LONG, true)
-                    .setXmlName(Attribute.L1_LIFESPAN.getLocalName())
-                    .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(0))
-                    .build();
-
-    static final SimpleAttributeDefinition OWNERS =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.OWNERS, ModelType.INT, true)
-                    .setXmlName(Attribute.OWNERS.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(2))
-                    .build();
-
-    static final SimpleAttributeDefinition SEGMENTS =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.SEGMENTS, ModelType.INT, true)
-                    .setXmlName(Attribute.SEGMENTS.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(80)) // Recommended value is 10 * max_cluster_size.
-                    .build();
-
-    static final SimpleAttributeDefinition CAPACITY_FACTOR =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.CAPACITY_FACTOR, ModelType.DOUBLE, true)
-                    .setXmlName(Attribute.CAPACITY_FACTOR.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(1.0))
-                    .build();
-
     static final SimpleAttributeDefinition REBALANCING =
             new SimpleAttributeDefinitionBuilder(ModelKeys.REBALANCING, ModelType.BOOLEAN, true)
                     .setAllowExpression(true)
@@ -94,10 +50,8 @@ public class DistributedCacheResource extends SharedCacheResource {
                     .setStorageRuntime()
                     .build();
 
-    static final AttributeDefinition[] DISTRIBUTED_CACHE_ATTRIBUTES = {OWNERS, SEGMENTS, CAPACITY_FACTOR, L1_LIFESPAN};
-
     public DistributedCacheResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
-        super(DISTRIBUTED_CACHE_PATH,
+        super(PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.DISTRIBUTED_CACHE),
                 DistributedCacheAdd.INSTANCE,
                 new CacheRemoveHandler(), resolvePathHandler, runtimeRegistration);
@@ -106,11 +60,6 @@ public class DistributedCacheResource extends SharedCacheResource {
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
-
-        final OperationStepHandler restartWriteHandler = new RestartCacheWriteAttributeHandler(getPathElement().getKey(), getServiceInstaller(), DISTRIBUTED_CACHE_ATTRIBUTES);
-        for (AttributeDefinition attr : DISTRIBUTED_CACHE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartWriteHandler);
-        }
 
         if (runtimeRegistration) {
             // register writable attributes available only at runtime

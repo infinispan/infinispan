@@ -34,16 +34,16 @@ public class OperationsTestCase extends OperationTestCaseBase {
     // cache test operations
     static final ModelNode localCacheAddOp = getCacheAddOperation("maximal2", ModelKeys.LOCAL_CACHE, "new-cache");
     static final ModelNode localCacheRemovekOp = getCacheRemoveOperation("maximal2", ModelKeys.LOCAL_CACHE, "new-cache");
-    static final ModelNode readLocalCacheBatchingOp = getCacheReadOperation("maximal", ModelKeys.LOCAL_CACHE, "local", "batching");
-    static final ModelNode writeLocalCacheBatchingOp = getCacheWriteOperation("maximal", ModelKeys.LOCAL_CACHE, "local", "batching", "false");
+    static final ModelNode readLocalCacheBatchingOp = getCacheConfigurationReadOperation("maximal", ModelKeys.LOCAL_CACHE_CONFIGURATION, "local", "batching");
+    static final ModelNode writeLocalCacheBatchingOp = getCacheConfigurationWriteOperation("maximal", ModelKeys.LOCAL_CACHE_CONFIGURATION, "local", "batching", "false");
 
     // cache locking test operations
     // TODO
 
     // cache store test operations
-    static final ModelNode readDistCacheMixedJDBCStoreDatastoreOp = getMixedKeyedJDBCCacheStoreReadOperation("maximal", ModelKeys.DISTRIBUTED_CACHE, "dist", "datasource");
-    static final ModelNode writeDistCacheFileStoreDatastoreOp = getMixedKeyedJDBCCacheStoreWriteOperation("maximal", ModelKeys.DISTRIBUTED_CACHE, "dist", "datasource", "new-datasource");
-    static final ModelNode readDistCacheMixedJDBCStoreStringKeyedTableOp = getMixedKeyedJDBCCacheStoreReadOperation("maximal", ModelKeys.DISTRIBUTED_CACHE, "dist", "string-keyed-table");
+    static final ModelNode readDistCacheMixedJDBCStoreDatastoreOp = getMixedKeyedJDBCCacheStoreReadOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "datasource");
+    static final ModelNode writeDistCacheFileStoreDatastoreOp = getMixedKeyedJDBCCacheStoreWriteOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "datasource", "new-datasource");
+    static final ModelNode readDistCacheMixedJDBCStoreStringKeyedTableOp = getMixedKeyedJDBCCacheStoreReadOperation("maximal", ModelKeys.DISTRIBUTED_CACHE_CONFIGURATION, "dist", "string-keyed-table");
     // static final ModelNode writeDistCacheFileStoreStringKeyedTableOp = getMixedKeyedJDBCCacheStoreWriteOperation("maximal", ModelKeys.DISTRIBUTED_CACHE, "dist", "string-keyed-table", "new-datasource");
 
     /*

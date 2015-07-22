@@ -61,6 +61,10 @@ enum CacheType {
         this.removeHandler = removeHandler;
     }
 
+    public String getKey() {
+        return key;
+    }
+
     public ResourceDescriptionResolver getResourceDescriptionResolver() {
         return new InfinispanResourceDescriptionResolver(this.key);
     }

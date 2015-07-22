@@ -22,11 +22,6 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import static org.jboss.as.clustering.infinispan.subsystem.LevelDBCompressionResource.LEVELDB_COMPRESSION_ATTRIBUTES;
-import static org.jboss.as.clustering.infinispan.subsystem.LevelDBExpirationResource.LEVELDB_EXPIRATION_ATTRIBUTES;
-import static org.jboss.as.clustering.infinispan.subsystem.LevelDBImplementationResource.LEVELDB_IMPLEMENTATION_ATTRIBUTES;
-import static org.jboss.as.clustering.infinispan.subsystem.StoreWriteBehindResource.WRITE_BEHIND_ATTRIBUTES;
-
 import java.util.Arrays;
 
 import org.jboss.as.clustering.infinispan.InfinispanMessages;
@@ -49,22 +44,23 @@ import org.jboss.dmr.Property;
  * @author William Burns (c) 2013 Red Hat Inc.
  */
 public class CacheConfigOperationHandlers {
+    static final OperationStepHandler CONTAINER_CONFIGURATIONS_ADD = new CacheConfigAdd();
     static final OperationStepHandler CONTAINER_SECURITY_ADD = new CacheConfigAdd();
 
     static final OperationStepHandler LOADER_ADD = new CacheLoaderAdd();
     static final OperationStepHandler LOADER_PROPERTY_ADD = new CacheConfigAdd(new AttributeDefinition[]{LoaderPropertyResource.VALUE});
     static final OperationStepHandler CLUSTER_LOADER_ADD = new ClusterCacheLoaderAdd();
     static final OperationStepHandler STORE_ADD = new CacheStoreAdd();
-    static final OperationStepHandler STORE_WRITE_BEHIND_ADD = new CacheConfigAdd(WRITE_BEHIND_ATTRIBUTES);
+    static final OperationStepHandler STORE_WRITE_BEHIND_ADD = new CacheConfigAdd(StoreWriteBehindResource.ATTRIBUTES);
     static final OperationStepHandler FILE_STORE_ADD = new FileCacheStoreAdd();
     static final OperationStepHandler STRING_KEYED_JDBC_STORE_ADD = new StringKeyedJDBCCacheStoreAdd();
     static final OperationStepHandler BINARY_KEYED_JDBC_STORE_ADD = new BinaryKeyedJDBCCacheStoreAdd();
     static final OperationStepHandler MIXED_KEYED_JDBC_STORE_ADD = new MixedKeyedJDBCCacheStoreAdd();
     static final OperationStepHandler REMOTE_STORE_ADD = new RemoteCacheStoreAdd();
     static final OperationStepHandler LEVELDB_STORE_ADD = new LevelDBCacheStoreAdd();
-    static final OperationStepHandler LEVELDB_EXPIRATION_ADD = new CacheConfigAdd(LEVELDB_EXPIRATION_ATTRIBUTES);
-    static final OperationStepHandler LEVELDB_COMPRESSION_ADD = new CacheConfigAdd(LEVELDB_COMPRESSION_ATTRIBUTES);
-    static final OperationStepHandler LEVELDB_IMPLEMENTATION_ADD = new CacheConfigAdd(LEVELDB_IMPLEMENTATION_ATTRIBUTES);
+    static final OperationStepHandler LEVELDB_EXPIRATION_ADD = new CacheConfigAdd(LevelDBExpirationConfigurationResource.ATTRIBUTES);
+    static final OperationStepHandler LEVELDB_COMPRESSION_ADD = new CacheConfigAdd(LevelDBCompressionConfigurationResource.ATTRIBUTES);
+    static final OperationStepHandler LEVELDB_IMPLEMENTATION_ADD = new CacheConfigAdd(LevelDBImplementationConfigurationResource.ATTRIBUTES);
     static final OperationStepHandler REST_STORE_ADD = new RestCacheStoreAdd();
 
     /**
@@ -111,7 +107,7 @@ public class CacheConfigOperationHandlers {
         protected final AttributeDefinition[] attributes;
 
         AbstractCacheLoaderAdd() {
-            this(BaseLoaderResource.COMMON_LOADER_PARAMETERS);
+            this(BaseLoaderConfigurationResource.BASE_LOADER_PARAMETERS);
         }
 
         AbstractCacheLoaderAdd(AttributeDefinition[] attributes) {
@@ -124,7 +120,7 @@ public class CacheConfigOperationHandlers {
         */
         AbstractCacheLoaderAdd(AttributeDefinition[] attributes, boolean includeCommonLoaderAttributes) {
            if (includeCommonLoaderAttributes) {
-              this.attributes = concat(BaseLoaderResource.COMMON_LOADER_PARAMETERS, attributes);
+              this.attributes = concat(BaseLoaderConfigurationResource.BASE_LOADER_PARAMETERS, attributes);
            }
            else {
               this.attributes = attributes;
@@ -139,7 +135,7 @@ public class CacheConfigOperationHandlers {
             for(final AttributeDefinition attribute : attributes) {
                 // we use PROPERTIES only to allow the user to pass in a list of properties on store add commands
                 // don't copy these into the model
-                if (attribute.getName().equals(BaseStoreResource.PROPERTIES.getName()))
+                if (attribute.getName().equals(BaseStoreConfigurationResource.PROPERTIES.getName()))
                     continue ;
                 attribute.validateAndSet(operation, model);
             }
@@ -189,7 +185,7 @@ public class CacheConfigOperationHandlers {
     private static class CacheLoaderAdd extends AbstractCacheLoaderAdd {
 
         CacheLoaderAdd() {
-            super(LoaderResource.LOADER_ATTRIBUTES, true);
+            super(LoaderConfigurationResource.LOADER_ATTRIBUTES, true);
         }
     }
 
@@ -198,7 +194,7 @@ public class CacheConfigOperationHandlers {
      */
     private static class ClusterCacheLoaderAdd extends AbstractCacheLoaderAdd {
         ClusterCacheLoaderAdd() {
-            super(ClusterLoaderResource.CLUSTER_LOADER_ATTRIBUTES, true);
+            super(ClusterLoaderConfigurationResource.ATTRIBUTES, true);
         }
     }
 
@@ -213,11 +209,11 @@ public class CacheConfigOperationHandlers {
      */
     abstract static class AbstractCacheStoreAdd extends AbstractCacheLoaderAdd {
         AbstractCacheStoreAdd() {
-            super(BaseStoreResource.COMMON_STORE_PARAMETERS);
+            super(BaseStoreConfigurationResource.BASE_STORE_PARAMETERS);
         }
 
         AbstractCacheStoreAdd(AttributeDefinition[] attributes) {
-            super(concat(BaseStoreResource.COMMON_STORE_PARAMETERS, attributes));
+            super(concat(BaseStoreConfigurationResource.BASE_STORE_PARAMETERS, attributes));
         }
     }
 
@@ -240,7 +236,7 @@ public class CacheConfigOperationHandlers {
      */
     private static class CacheStoreAdd extends AbstractCacheStoreAdd {
         CacheStoreAdd() {
-            super(StoreResource.STORE_ATTRIBUTES);
+            super(StoreConfigurationResource.STORE_ATTRIBUTES);
         }
     }
 
@@ -249,13 +245,13 @@ public class CacheConfigOperationHandlers {
      */
     private static class FileCacheStoreAdd extends AbstractCacheStoreAdd {
         FileCacheStoreAdd() {
-            super(FileStoreResource.FILE_STORE_ATTRIBUTES);
+            super(FileStoreResource.ATTRIBUTES);
         }
     }
 
     private static class JDBCCacheStoreAdd extends AbstractCacheStoreAdd {
         JDBCCacheStoreAdd() {
-            super(BaseJDBCStoreResource.COMMON_JDBC_STORE_ATTRIBUTES);
+            super(BaseJDBCStoreConfigurationResource.COMMON_JDBC_STORE_ATTRIBUTES);
         }
 
     }
@@ -264,7 +260,7 @@ public class CacheConfigOperationHandlers {
         private final AttributeDefinition[] additionalAttributes;
 
         StringKeyedJDBCCacheStoreAdd() {
-            this.additionalAttributes = StringKeyedJDBCStoreResource.STRING_KEYED_JDBC_STORE_ATTRIBUTES;
+            this.additionalAttributes = StringKeyedJDBCStoreResource.ATTRIBUTES;
         }
 
         @Override
@@ -287,7 +283,7 @@ public class CacheConfigOperationHandlers {
         private final AttributeDefinition[] additionalAttributes;
 
         BinaryKeyedJDBCCacheStoreAdd() {
-            this.additionalAttributes = BinaryKeyedJDBCStoreResource.BINARY_KEYED_JDBC_STORE_ATTRIBUTES;
+            this.additionalAttributes = BinaryKeyedJDBCStoreConfigurationResource.ATTRIBUTES;
         }
 
         @Override
@@ -310,7 +306,7 @@ public class CacheConfigOperationHandlers {
         private final AttributeDefinition[] attributes;
 
         MixedKeyedJDBCCacheStoreAdd() {
-            this.attributes = MixedKeyedJDBCStoreResource.MIXED_KEYED_JDBC_STORE_ATTRIBUTES;
+            this.attributes = MixedKeyedJDBCStoreConfigurationResource.MIXED_KEYED_JDBC_STORE_ATTRIBUTES;
         }
 
         @Override
@@ -328,19 +324,19 @@ public class CacheConfigOperationHandlers {
 
     private static class RemoteCacheStoreAdd extends AbstractCacheStoreAdd {
         RemoteCacheStoreAdd() {
-            super(RemoteStoreResource.REMOTE_STORE_ATTRIBUTES);
+            super(RemoteStoreConfigurationResource.REMOTE_STORE_ATTRIBUTES);
         }
     }
 
     private static class LevelDBCacheStoreAdd extends AbstractCacheStoreAdd {
         LevelDBCacheStoreAdd() {
-            super(LevelDBStoreResource.LEVELDB_STORE_ATTRIBUTES);
+            super(LevelDBStoreConfigurationResource.LEVELDB_STORE_ATTRIBUTES);
         }
     }
 
     private static class RestCacheStoreAdd extends AbstractCacheStoreAdd {
         RestCacheStoreAdd() {
-            super(RestStoreResource.REST_STORE_ATTRIBUTES);
+            super(RestStoreConfigurationResource.REST_STORE_ATTRIBUTES);
         }
     }
 }

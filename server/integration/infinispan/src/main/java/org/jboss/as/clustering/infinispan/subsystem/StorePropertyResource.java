@@ -32,9 +32,9 @@ import org.jboss.as.controller.PathElement;
  * @author William Burns (c) 2013 Red Hat Inc.
  */
 public class StorePropertyResource extends LoaderPropertyResource {
-    static final PathElement STORE_PROPERTY_PATH = LOADER_PROPERTY_PATH;
+    static final PathElement PATH = LOADER_PROPERTY_PATH;
 
-    static final AttributeDefinition[] STORE_PROPERTY_ATTRIBUTES = LOADER_PROPERTY_ATTRIBUTES;
+    static final AttributeDefinition[] ATTRIBUTES = LOADER_PROPERTY_ATTRIBUTES;
 
 
     public StorePropertyResource(CacheResource cacheResource) {

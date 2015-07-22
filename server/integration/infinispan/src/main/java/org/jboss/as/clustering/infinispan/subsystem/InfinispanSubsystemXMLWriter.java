@@ -22,6 +22,10 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import java.util.List;
+
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
@@ -31,9 +35,6 @@ import org.jboss.dmr.ModelType;
 import org.jboss.dmr.Property;
 import org.jboss.staxmapper.XMLElementWriter;
 import org.jboss.staxmapper.XMLExtendedStreamWriter;
-
-import javax.xml.stream.XMLStreamException;
-import java.util.List;
 
 /**
  * XML writer for current Infinispan subsystem schema version.
@@ -65,8 +66,8 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 this.writeListAsAttribute(writer, Attribute.ALIASES, container, ModelKeys.ALIASES);
                 this.writeOptional(writer, Attribute.ASYNC_EXECUTOR, container, ModelKeys.ASYNC_EXECUTOR);
                 this.writeOptional(writer, Attribute.DEFAULT_CACHE, container, ModelKeys.DEFAULT_CACHE);
-                this.writeOptional(writer, Attribute.EVICTION_EXECUTOR, container, ModelKeys.EVICTION_EXECUTOR);
                 this.writeOptional(writer, Attribute.JNDI_NAME, container, ModelKeys.JNDI_NAME);
+                this.writeOptional(writer, Attribute.EXPIRATION_EXECUTOR, container, ModelKeys.EXPIRATION_EXECUTOR);
                 this.writeOptional(writer, Attribute.LISTENER_EXECUTOR, container, ModelKeys.LISTENER_EXECUTOR);
                 this.writeOptional(writer, Attribute.REPLICATION_QUEUE_EXECUTOR, container, ModelKeys.REPLICATION_QUEUE_EXECUTOR);
                 this.writeOptional(writer, Attribute.STATE_TRANSFER_EXECUTOR, container, ModelKeys.STATE_TRANSFER_EXECUTOR);
@@ -82,7 +83,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     this.writeOptional(writer, Attribute.LOCK_TIMEOUT, transport, ModelKeys.LOCK_TIMEOUT);
                     this.writeOptional(writer, Attribute.REMOTE_COMMAND_EXECUTOR, transport, ModelKeys.REMOTE_COMMAND_EXECUTOR);
                     this.writeOptional(writer, Attribute.STRICT_PEER_TO_PEER, transport, ModelKeys.STRICT_PEER_TO_PEER);
-                    this.writeOptional(writer, Attribute.TOTAL_ORDER_EXECUTOR, transport, ModelKeys.TOTAL_ORDER_EXECUTOR);
                     writer.writeEndElement();
                 }
 
@@ -122,93 +122,80 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writer.writeEndElement();
                 }
 
+                ModelNode configurations = container.get(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME);
+
                 // write any existent cache types
-                if (container.get(ModelKeys.LOCAL_CACHE).isDefined()) {
-                    for (Property localCacheEntry : container.get(ModelKeys.LOCAL_CACHE).asPropertyList()) {
-                        String localCacheName = localCacheEntry.getName();
-                        ModelNode localCache = localCacheEntry.getValue();
+                processCacheConfiguration(writer, container, configurations, ModelKeys.LOCAL_CACHE);
+                processCacheConfiguration(writer, container, configurations, ModelKeys.INVALIDATION_CACHE);
+                processCacheConfiguration(writer, container, configurations, ModelKeys.REPLICATED_CACHE);
+                processCacheConfiguration(writer, container, configurations, ModelKeys.DISTRIBUTED_CACHE);
 
-                        writer.writeStartElement(Element.LOCAL_CACHE.getLocalName());
-                        // write identifier before other attributes
-                        writer.writeAttribute(Attribute.NAME.getLocalName(), localCacheName);
-
-                        processCommonCacheAttributesElements(writer, localCache);
-
-                        writer.writeEndElement();
-                    }
-                }
-
-                if (container.get(ModelKeys.INVALIDATION_CACHE).isDefined()) {
-                    for (Property invalidationCacheEntry : container.get(ModelKeys.INVALIDATION_CACHE).asPropertyList()) {
-                        String invalidationCacheName = invalidationCacheEntry.getName();
-                        ModelNode invalidationCache = invalidationCacheEntry.getValue();
-
-                        writer.writeStartElement(Element.INVALIDATION_CACHE.getLocalName());
-                        // write identifier before other attributes
-                        writer.writeAttribute(Attribute.NAME.getLocalName(), invalidationCacheName);
-
-                        processCommonClusteredCacheAttributes(writer, invalidationCache);
-                        processCommonCacheAttributesElements(writer, invalidationCache);
-
-                        writer.writeEndElement();
-                    }
-                }
-
-                if (container.get(ModelKeys.REPLICATED_CACHE).isDefined()) {
-                    for (Property replicatedCacheEntry : container.get(ModelKeys.REPLICATED_CACHE).asPropertyList()) {
-                        String replicatedCacheName = replicatedCacheEntry.getName();
-                        ModelNode replicatedCache = replicatedCacheEntry.getValue();
-
-                        writer.writeStartElement(Element.REPLICATED_CACHE.getLocalName());
-                        // write identifier before other attributes
-                        writer.writeAttribute(Attribute.NAME.getLocalName(), replicatedCacheName);
-
-                        processCommonClusteredCacheAttributes(writer, replicatedCache);
-                        processCommonCacheAttributesElements(writer, replicatedCache);
-
-                        writer.writeEndElement();
-                    }
-                }
-
-                if (container.get(ModelKeys.DISTRIBUTED_CACHE).isDefined()) {
-                    for (Property distributedCacheEntry : container.get(ModelKeys.DISTRIBUTED_CACHE).asPropertyList()) {
-                        String distributedCacheName = distributedCacheEntry.getName();
-                        ModelNode distributedCache = distributedCacheEntry.getValue();
-
-                        writer.writeStartElement(Element.DISTRIBUTED_CACHE.getLocalName());
-                        // write identifier before other attributes
-                        writer.writeAttribute(Attribute.NAME.getLocalName(), distributedCacheName);
-                        // distributed cache attributes
-                        this.writeOptional(writer, Attribute.OWNERS, distributedCache, ModelKeys.OWNERS);
-                        this.writeOptional(writer, Attribute.SEGMENTS, distributedCache, ModelKeys.SEGMENTS);
-                        this.writeOptional(writer, Attribute.CAPACITY_FACTOR, distributedCache, ModelKeys.CAPACITY_FACTOR);
-                        this.writeOptional(writer, Attribute.L1_LIFESPAN, distributedCache, ModelKeys.L1_LIFESPAN);
-
-                        processCommonClusteredCacheAttributes(writer, distributedCache);
-                        processCommonCacheAttributesElements(writer, distributedCache);
-
-                        writer.writeEndElement();
-                    }
-                }
                 writer.writeEndElement();
             }
         }
         writer.writeEndElement();
     }
 
+    /*
+     * TODO: first of all output all _CONFIGURATION elements which don't have a single cache associated with them (i.e. cache.configuration = configuration.name)
+     * then loop through the concrete caches. For those which point to a configuration with the same name
+     */
+    private void processCacheConfiguration(XMLExtendedStreamWriter writer, ModelNode container, ModelNode configurations, String cacheType)
+            throws XMLStreamException {
+        String cacheConfigurationType = cacheType + ModelKeys.CONFIGURATION_SUFFIX;
+        if (configurations.get(cacheConfigurationType).isDefined()) {
+            for (Property cacheEntry : configurations.get(cacheConfigurationType).asPropertyList()) {
+                String cacheName = cacheEntry.getName();
+                ModelNode cacheConfiguration = cacheEntry.getValue();
+
+                Element element;
+                // See if there is a cache with the same name
+                if (container.hasDefined(cacheType, cacheName)) {
+                    element = Element.forName(cacheType);
+                } else {
+                    element = Element.forName(cacheConfigurationType);
+                }
+
+                writer.writeStartElement(element.getLocalName());
+                // write identifier before other attributes
+                writer.writeAttribute(Attribute.NAME.getLocalName(), cacheName);
+
+                switch(cacheType) {
+                    case ModelKeys.DISTRIBUTED_CACHE:
+                        processDistributedCacheAttributes(writer, cacheConfiguration);
+                    case ModelKeys.REPLICATED_CACHE:
+                    case ModelKeys.INVALIDATION_CACHE:
+                        processCommonClusteredCacheAttributes(writer, cacheConfiguration);
+                    default:
+                        processCommonCacheConfigurationAttributesElements(writer, cacheConfiguration);
+                }
+
+                writer.writeEndElement();
+            }
+        }
+    }
+
+    private void processDistributedCacheAttributes(XMLExtendedStreamWriter writer, ModelNode distributedCache) throws XMLStreamException {
+        this.writeOptional(writer, Attribute.OWNERS, distributedCache, ModelKeys.OWNERS);
+        this.writeOptional(writer, Attribute.SEGMENTS, distributedCache, ModelKeys.SEGMENTS);
+        this.writeOptional(writer, Attribute.CAPACITY_FACTOR, distributedCache, ModelKeys.CAPACITY_FACTOR);
+        this.writeOptional(writer, Attribute.L1_LIFESPAN, distributedCache, ModelKeys.L1_LIFESPAN);
+    }
+
     private void processCommonClusteredCacheAttributes(XMLExtendedStreamWriter writer, ModelNode cache)
             throws XMLStreamException {
 
         this.writeOptional(writer, Attribute.ASYNC_MARSHALLING, cache, ModelKeys.ASYNC_MARSHALLING);
-        this.writeRequired(writer, Attribute.MODE, cache, ModelKeys.MODE);
+        this.writeOptional(writer, Attribute.MODE, cache, ModelKeys.MODE);
         this.writeOptional(writer, Attribute.QUEUE_SIZE, cache, ModelKeys.QUEUE_SIZE);
         this.writeOptional(writer, Attribute.QUEUE_FLUSH_INTERVAL, cache, ModelKeys.QUEUE_FLUSH_INTERVAL);
         this.writeOptional(writer, Attribute.REMOTE_TIMEOUT, cache, ModelKeys.REMOTE_TIMEOUT);
     }
 
-    private void processCommonCacheAttributesElements(XMLExtendedStreamWriter writer, ModelNode cache)
+    private void processCommonCacheConfigurationAttributesElements(XMLExtendedStreamWriter writer, ModelNode cache)
             throws XMLStreamException {
 
+        this.writeOptional(writer, Attribute.CONFIGURATION, cache, ModelKeys.CONFIGURATION);
         this.writeOptional(writer, Attribute.START, cache, ModelKeys.START);
         this.writeOptional(writer, Attribute.BATCHING, cache, ModelKeys.BATCHING);
         this.writeOptional(writer, Attribute.JNDI_NAME, cache, ModelKeys.JNDI_NAME);
@@ -275,8 +262,8 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         if (cache.get(ModelKeys.COMPATIBILITY).isDefined()) {
             ModelNode compatibility = cache.get(ModelKeys.COMPATIBILITY, ModelKeys.COMPATIBILITY_NAME);
             writer.writeStartElement(Element.COMPATIBILITY.getLocalName());
-            CompatibilityResource.ENABLED.marshallAsAttribute(compatibility, writer);
-            CompatibilityResource.MARSHALLER.marshallAsAttribute(compatibility, writer);
+            CompatibilityConfigurationResource.ENABLED.marshallAsAttribute(compatibility, writer);
+            CompatibilityConfigurationResource.MARSHALLER.marshallAsAttribute(compatibility, writer);
             writer.writeEndElement();
         }
 
@@ -286,7 +273,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             if (security.hasDefined(ModelKeys.AUTHORIZATION)) {
                 writer.writeStartElement(Element.AUTHORIZATION.getLocalName());
                 ModelNode authorization = security.get(ModelKeys.AUTHORIZATION, ModelKeys.AUTHORIZATION_NAME);
-                CacheAuthorizationResource.ENABLED.marshallAsAttribute(authorization, writer);
+                CacheAuthorizationConfigurationResource.ENABLED.marshallAsAttribute(authorization, writer);
                 this.writeListAsAttribute(writer, Attribute.ROLES, authorization, ModelKeys.ROLES);
                 writer.writeEndElement();
             }
@@ -301,7 +288,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(clusterLoaderEntry.getName());
-                LoaderResource.NAME.marshallAsAttribute(name, false, writer);
+                LoaderConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeRequired(writer, Attribute.CLASS, loader, ModelKeys.CLASS);
                 this.writeLoaderAttributes(writer, loader);
                 this.writeStoreProperties(writer, loader);
@@ -316,7 +303,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(clusterLoaderEntry.getName());
-                ClusterLoaderResource.NAME.marshallAsAttribute(name, false, writer);
+                ClusterLoaderConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.REMOTE_TIMEOUT, loader, ModelKeys.REMOTE_TIMEOUT);
                 this.writeLoaderAttributes(writer, loader);
                 this.writeStoreProperties(writer, loader);
@@ -331,7 +318,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(storeEntry.getName());
-                StoreResource.NAME.marshallAsAttribute(name, false, writer);
+                StoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeRequired(writer, Attribute.CLASS, store, ModelKeys.CLASS);
                 this.writeStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
@@ -381,7 +368,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(binaryKeyedJDBCStoreEntry.getName());
-                BinaryKeyedJDBCStoreResource.NAME.marshallAsAttribute(name, false, writer);
+                BinaryKeyedJDBCStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeJdbcStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
                 this.writeStoreProperties(writer, store);
@@ -397,7 +384,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(mixedKeyedJDBCStoreEntry.getName());
-                MixedKeyedJDBCStoreResource.NAME.marshallAsAttribute(name, false, writer);
+                MixedKeyedJDBCStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeJdbcStoreAttributes(writer, store);
                 this.writeStoreWriteBehind(writer, store);
                 this.writeStoreProperties(writer, store);
@@ -414,7 +401,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(remoteStoreEntry.getName());
-                RemoteStoreResource.NAME.marshallAsAttribute(name, false, writer);
+                RemoteStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.CACHE, store, ModelKeys.CACHE);
                 this.writeOptional(writer, Attribute.HOTROD_WRAPPING, store, ModelKeys.HOTROD_WRAPPING);
                 this.writeOptional(writer, Attribute.RAW_VALUES, store, ModelKeys.RAW_VALUES);
@@ -439,7 +426,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(restStoreEntry.getName());
-                RestStoreResource.NAME.marshallAsAttribute(name, false, writer);
+                RestStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.APPEND_CACHE_NAME_TO_PATH, store, ModelKeys.APPEND_CACHE_NAME_TO_PATH);
                 this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
 
@@ -471,9 +458,9 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
 
         if (cache.get(ModelKeys.INDEXING).isDefined()|| cache.get(ModelKeys.INDEXING_PROPERTIES).isDefined()){
             writer.writeStartElement(Element.INDEXING.getLocalName());
-            CacheResource.INDEXING.marshallAsAttribute(cache, writer);
-            CacheResource.INDEXING_AUTO_CONFIG.marshallAsAttribute(cache, writer);
-            CacheResource.INDEXING_PROPERTIES.marshallAsElement(cache,writer);
+            CacheConfigurationResource.INDEXING.marshallAsAttribute(cache, writer);
+            CacheConfigurationResource.INDEXING_AUTO_CONFIG.marshallAsAttribute(cache, writer);
+            CacheConfigurationResource.INDEXING_PROPERTIES.marshallAsElement(cache,writer);
             writer.writeEndElement();
         }
 
@@ -483,15 +470,15 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 writer.writeStartElement(Element.BACKUP.getLocalName());
                 writer.writeAttribute(Attribute.SITE.getLocalName(), property.getName());
                 ModelNode backup = property.getValue();
-                BackupSiteResource.FAILURE_POLICY.marshallAsAttribute(backup, writer);
-                BackupSiteResource.STRATEGY.marshallAsAttribute(backup, writer);
-                BackupSiteResource.REPLICATION_TIMEOUT.marshallAsAttribute(backup, writer);
-                BackupSiteResource.ENABLED.marshallAsAttribute(backup, writer);
+                BackupSiteConfigurationResource.FAILURE_POLICY.marshallAsAttribute(backup, writer);
+                BackupSiteConfigurationResource.STRATEGY.marshallAsAttribute(backup, writer);
+                BackupSiteConfigurationResource.REPLICATION_TIMEOUT.marshallAsAttribute(backup, writer);
+                BackupSiteConfigurationResource.ENABLED.marshallAsAttribute(backup, writer);
                 if (backup.hasDefined(ModelKeys.TAKE_BACKUP_OFFLINE_AFTER_FAILURES)
                         || backup.hasDefined(ModelKeys.TAKE_BACKUP_OFFLINE_MIN_WAIT)) {
                     writer.writeStartElement(Element.TAKE_OFFLINE.getLocalName());
-                    BackupSiteResource.TAKE_OFFLINE_AFTER_FAILURES.marshallAsAttribute(backup, writer);
-                    BackupSiteResource.TAKE_OFFLINE_MIN_WAIT.marshallAsAttribute(backup, writer);
+                    BackupSiteConfigurationResource.TAKE_OFFLINE_AFTER_FAILURES.marshallAsAttribute(backup, writer);
+                    BackupSiteConfigurationResource.TAKE_OFFLINE_MIN_WAIT.marshallAsAttribute(backup, writer);
                     writer.writeEndElement();
                 }
                 if (backup.get(ModelKeys.STATE_TRANSFER, ModelKeys.STATE_TRANSFER_NAME).isDefined()) {
@@ -501,10 +488,10 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                           || stateTransfer.hasDefined(ModelKeys.MAX_RETRIES)
                           || stateTransfer.hasDefined(ModelKeys.WAIT_TIME)) {
                        writer.writeStartElement(Element.STATE_TRANSFER.getLocalName());
-                       BackupSiteStateTransferResource.STATE_TRANSFER_CHUNK_SIZE.marshallAsAttribute(stateTransfer, writer);
-                       BackupSiteStateTransferResource.STATE_TRANSFER_TIMEOUT.marshallAsAttribute(stateTransfer, writer);
-                       BackupSiteStateTransferResource.STATE_TRANSFER_MAX_RETRIES.marshallAsAttribute(stateTransfer, writer);
-                       BackupSiteStateTransferResource.STATE_TRANSFER_WAIT_TIME.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_CHUNK_SIZE.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_TIMEOUT.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_MAX_RETRIES.marshallAsAttribute(stateTransfer, writer);
+                       BackupSiteStateTransferConfigurationResource.STATE_TRANSFER_WAIT_TIME.marshallAsAttribute(stateTransfer, writer);
                        writer.writeEndElement();
                     }
                 }
@@ -515,8 +502,8 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
 
         if (cache.get(ModelKeys.REMOTE_CACHE).isDefined() || cache.get(ModelKeys.REMOTE_SITE).isDefined()) {
             writer.writeStartElement(Element.BACKUP_FOR.getLocalName());
-            CacheResource.REMOTE_CACHE.marshallAsAttribute(cache, writer);
-            CacheResource.REMOTE_SITE.marshallAsAttribute(cache, writer);
+            CacheConfigurationResource.REMOTE_CACHE.marshallAsAttribute(cache, writer);
+            CacheConfigurationResource.REMOTE_SITE.marshallAsAttribute(cache, writer);
             writer.writeEndElement();
         }
 
@@ -527,7 +514,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // write identifier before other attributes
                 ModelNode name = new ModelNode();
                 name.get(ModelKeys.NAME).set(levelDbStoreEntry.getName());
-                LevelDBStoreResource.NAME.marshallAsAttribute(name, false, writer);
+                LevelDBStoreConfigurationResource.NAME.marshallAsAttribute(name, false, writer);
                 this.writeOptional(writer, Attribute.RELATIVE_TO, store, ModelKeys.RELATIVE_TO);
                 this.writeOptional(writer, Attribute.PATH, store, ModelKeys.PATH);
                 this.writeOptional(writer, Attribute.BLOCK_SIZE, store, ModelKeys.BLOCK_SIZE);

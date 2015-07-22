@@ -22,19 +22,11 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.configuration.cache.BackupConfiguration.BackupStrategy;
-import org.infinispan.configuration.cache.BackupFailurePolicy;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.SimpleAttributeDefinition;
-import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
-import org.jboss.as.controller.operations.validation.EnumValidator;
-import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.dmr.ModelNode;
-import org.jboss.dmr.ModelType;
 
 /**
  * @author Paul Ferraro
@@ -42,52 +34,7 @@ import org.jboss.dmr.ModelType;
  */
 public class BackupSiteResource extends CacheChildResource {
 
-    static final SimpleAttributeDefinition FAILURE_POLICY = new SimpleAttributeDefinitionBuilder(ModelKeys.BACKUP_FAILURE_POLICY, ModelType.STRING, true)
-            .setXmlName(Attribute.BACKUP_FAILURE_POLICY.getLocalName())
-            .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setValidator(new EnumValidator<>(BackupFailurePolicy.class, true, true))
-            .setDefaultValue(new ModelNode().set(BackupFailurePolicy.WARN.name()))
-            .build()
-    ;
-    static final SimpleAttributeDefinition STRATEGY = new SimpleAttributeDefinitionBuilder(ModelKeys.BACKUP_STRATEGY, ModelType.STRING, true)
-            .setXmlName(Attribute.STRATEGY.getLocalName())
-            .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setValidator(new EnumValidator<>(BackupStrategy.class, true, true))
-            .setDefaultValue(new ModelNode().set(BackupStrategy.ASYNC.name()))
-            .build()
-    ;
-    static final SimpleAttributeDefinition REPLICATION_TIMEOUT = new SimpleAttributeDefinitionBuilder(ModelKeys.TIMEOUT, ModelType.STRING, true)
-            .setXmlName(Attribute.TIMEOUT.getLocalName())
-            .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setDefaultValue(new ModelNode().set(10000L))
-            .build()
-    ;
-    static final SimpleAttributeDefinition ENABLED = new SimpleAttributeDefinitionBuilder(ModelKeys.ENABLED, ModelType.BOOLEAN, true)
-            .setXmlName(Attribute.ENABLED.getLocalName())
-            .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setDefaultValue(new ModelNode().set(true))
-            .build()
-    ;
-    static final SimpleAttributeDefinition TAKE_OFFLINE_AFTER_FAILURES = new SimpleAttributeDefinitionBuilder(ModelKeys.TAKE_BACKUP_OFFLINE_AFTER_FAILURES, ModelType.INT, true)
-            .setXmlName(Attribute.TAKE_BACKUP_OFFLINE_AFTER_FAILURES.getLocalName())
-            .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setDefaultValue(new ModelNode().set(0))
-            .build()
-    ;
-    static final SimpleAttributeDefinition TAKE_OFFLINE_MIN_WAIT = new SimpleAttributeDefinitionBuilder(ModelKeys.TAKE_BACKUP_OFFLINE_MIN_WAIT, ModelType.INT, true)
-            .setXmlName(Attribute.TAKE_BACKUP_OFFLINE_MIN_WAIT.getLocalName())
-            .setAllowExpression(true)
-            .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-            .setDefaultValue(new ModelNode().set(0))
-            .build()
-    ;
-
-    static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { FAILURE_POLICY, STRATEGY, REPLICATION_TIMEOUT, ENABLED, TAKE_OFFLINE_AFTER_FAILURES, TAKE_OFFLINE_MIN_WAIT };
+    static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { };
 
     // operations
     static final OperationDefinition BACKUP_BRING_SITE_ONLINE =
@@ -144,11 +91,5 @@ public class BackupSiteResource extends CacheChildResource {
             resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_CLEAR_PUSH_STATE_STATUS, CacheCommands.BackupClearPushStatusCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(BackupSiteResource.BACKUP_SENDING_SITE, CacheCommands.BackupGetSendingSiteCommand.INSTANCE);
         }
-    }
-
-    @Override
-    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
-        super.registerChildren(resourceRegistration);
-        resourceRegistration.registerSubModel(new BackupSiteStateTransferResource(resource.isRuntimeRegistration()));
     }
 }

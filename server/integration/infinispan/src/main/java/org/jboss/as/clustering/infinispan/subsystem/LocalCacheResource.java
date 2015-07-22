@@ -29,15 +29,16 @@ import org.jboss.as.controller.services.path.ResolvePathHandler;
  * Resource description for the addressable resource /subsystem=infinispan/cache-container=X/local-cache=*
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
+ * @author Tristan Tarrant
  */
 public class LocalCacheResource extends CacheResource {
 
-    public static final PathElement LOCAL_CACHE_PATH = PathElement.pathElement(ModelKeys.LOCAL_CACHE);
+    public static final PathElement PATH = PathElement.pathElement(ModelKeys.LOCAL_CACHE);
 
     // attributes
 
     public LocalCacheResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
-        super(LOCAL_CACHE_PATH,
+        super(PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.LOCAL_CACHE),
                 LocalCacheAdd.INSTANCE,
                 new CacheRemoveHandler(), resolvePathHandler, runtimeRegistration);

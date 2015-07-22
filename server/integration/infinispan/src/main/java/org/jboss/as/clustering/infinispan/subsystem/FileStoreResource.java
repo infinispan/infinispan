@@ -22,19 +22,11 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
-
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.OperationDefinition;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
 import org.jboss.as.controller.registry.AttributeAccess;
-import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.registry.OperationEntry;
-import org.jboss.as.controller.services.path.ResolvePathHandler;
 import org.jboss.as.server.ServerEnvironment;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -44,7 +36,7 @@ import org.jboss.dmr.ModelType;
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
-public class FileStoreResource extends BaseStoreResource {
+public class FileStoreResource extends BaseStoreConfigurationResource {
 
     public static final PathElement FILE_STORE_PATH = PathElement.pathElement(ModelKeys.FILE_STORE);
 
@@ -72,41 +64,14 @@ public class FileStoreResource extends BaseStoreResource {
                     .setDefaultValue(new ModelNode().set(ServerEnvironment.SERVER_DATA_DIR))
                     .build();
 
-    static final AttributeDefinition[] FILE_STORE_ATTRIBUTES = {MAX_ENTRIES, RELATIVE_TO, PATH};
+    static final AttributeDefinition[] ATTRIBUTES = {MAX_ENTRIES, RELATIVE_TO, PATH};
 
     static final SimpleAttributeDefinition NAME =
-            new SimpleAttributeDefinitionBuilder(BaseStoreResource.NAME)
+            new SimpleAttributeDefinitionBuilder(BaseStoreConfigurationResource.NAME)
                     .setDefaultValue(new ModelNode().set(ModelKeys.FILE_STORE_NAME))
                     .build();
 
-    // operations
-    private static final OperationDefinition FILE_STORE_ADD_DEFINITION = new SimpleOperationDefinitionBuilder(ADD, new InfinispanResourceDescriptionResolver(ModelKeys.FILE_STORE))
-        .setParameters(COMMON_STORE_PARAMETERS)
-        .addParameter(MAX_ENTRIES)
-        .addParameter(RELATIVE_TO)
-        .addParameter(PATH)
-        .setAttributeResolver(new InfinispanResourceDescriptionResolver(ModelKeys.FILE_STORE))
-        .build();
-
-    private final ResolvePathHandler resolvePathHandler;
-
-    public FileStoreResource(CacheResource cacheResource, ResolvePathHandler resolvePathHandler) {
-        super(FILE_STORE_PATH, ModelKeys.FILE_STORE, cacheResource, FILE_STORE_ATTRIBUTES);
-        this.resolvePathHandler = resolvePathHandler;
+    public FileStoreResource(CacheConfigurationResource parent) {
+        super(FILE_STORE_PATH, ModelKeys.FILE_STORE, parent, ATTRIBUTES);
     }
-
-    @Override
-    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
-        super.registerOperations(resourceRegistration);
-    }
-
-    // override the add operation to provide a custom definition (for the optional PROPERTIES parameter to add())
-    @Override
-    protected void registerAddOperation(final ManagementResourceRegistration registration, final OperationStepHandler handler, OperationEntry.Flag... flags) {
-        registration.registerOperationHandler(FILE_STORE_ADD_DEFINITION, handler);
-        if (resolvePathHandler != null) {
-            registration.registerOperationHandler(resolvePathHandler.getOperationDefinition(), resolvePathHandler);
-        }
-    }
-
 }
