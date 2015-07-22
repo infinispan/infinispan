@@ -70,16 +70,6 @@ public class DistributedCacheResource extends SharedCacheResource {
                     .setDefaultValue(new ModelNode().set(2))
                     .build();
 
-    @Deprecated
-    static final SimpleAttributeDefinition VIRTUAL_NODES =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.VIRTUAL_NODES, ModelType.INT, true)
-                    .setXmlName(Attribute.VIRTUAL_NODES.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(1))
-                    .setDeprecated(ModelVersion.create(1, 4, 0))
-                    .build();
-
     static final SimpleAttributeDefinition SEGMENTS =
             new SimpleAttributeDefinitionBuilder(ModelKeys.SEGMENTS, ModelType.INT, true)
                     .setXmlName(Attribute.SEGMENTS.getLocalName())
@@ -126,19 +116,5 @@ public class DistributedCacheResource extends SharedCacheResource {
             // register writable attributes available only at runtime
             resourceRegistration.registerReadWriteAttribute(REBALANCING, RebalancingAttributeHandler.INSTANCE, RebalancingAttributeHandler.INSTANCE);
         }
-
-        // Attribute virtual-nodes has been deprecated, so not to break management API, attempt to use it will fail.
-        final OperationStepHandler virtualNodesWriteHandler = new ModelOnlyWriteAttributeHandler(VIRTUAL_NODES) {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                if (operation.hasDefined(VALUE) && operation.get(VALUE).asInt() != 1) {
-                    throw InfinispanMessages.MESSAGES.attributeDeprecated(ModelKeys.VIRTUAL_NODES);
-                }
-                context.stepCompleted();
-            }
-        };
-
-        // Legacy attributes
-        resourceRegistration.registerReadWriteAttribute(VIRTUAL_NODES, null, virtualNodesWriteHandler);
     }
 }

@@ -63,7 +63,6 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
     @Parameters
     public static Collection<Object[]> data() {
       Object[][] data = new Object[][] {
-                                         { Namespace.INFINISPAN_SERVER_5_3, 51 },
                                          { Namespace.INFINISPAN_SERVER_6_0, 76 },
                                          { Namespace.INFINISPAN_SERVER_7_0, 89 },
                                          { Namespace.INFINISPAN_SERVER_7_1, 89 },
