@@ -18,11 +18,11 @@ import org.jboss.msc.service.ServiceName;
  * @since 7.2
  */
 public class RestartCacheResourceRemove extends RestartParentResourceRemoveHandler {
-    private final CacheAdd cacheAddHandler;
+    private final RestartableResourceServiceInstaller serviceInstaller;
 
-    protected RestartCacheResourceRemove(String parentKeyName, CacheAdd cacheAddHandler) {
+    protected RestartCacheResourceRemove(String parentKeyName, RestartableResourceServiceInstaller serviceInstaller) {
         super(parentKeyName);
-        this.cacheAddHandler = cacheAddHandler;
+        this.serviceInstaller = serviceInstaller;
     }
 
     @Override
@@ -31,7 +31,7 @@ public class RestartCacheResourceRemove extends RestartParentResourceRemoveHandl
         ModelNode containerModel = context.readResourceFromRoot(containerAddress).getModel();
         ModelNode operation = Util.createAddOperation(cacheAddress);
 
-        cacheAddHandler.installRuntimeServices(context, operation, containerModel, cacheModel);
+        serviceInstaller.installRuntimeServices(context, operation, containerModel, cacheModel);
     }
 
     @Override

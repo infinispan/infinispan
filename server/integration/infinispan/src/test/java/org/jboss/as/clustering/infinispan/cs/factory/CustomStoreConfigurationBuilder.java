@@ -7,6 +7,7 @@ import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.ClusteringConfigurationBuilder;
 import org.infinispan.configuration.cache.CompatibilityModeConfigurationBuilder;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationChildBuilder;
 import org.infinispan.configuration.cache.CustomInterceptorsConfigurationBuilder;
 import org.infinispan.configuration.cache.DataContainerConfigurationBuilder;
 import org.infinispan.configuration.cache.DeadlockDetectionConfigurationBuilder;

@@ -24,7 +24,7 @@ public class LoaderPropertyResource extends CacheChildResource {
 
     static final AttributeDefinition[] LOADER_PROPERTY_ATTRIBUTES = {VALUE};
 
-    public LoaderPropertyResource(CacheResource cacheResource) {
+    public LoaderPropertyResource(RestartableResourceDefinition cacheResource) {
         super(LOADER_PROPERTY_PATH, ModelKeys.PROPERTY, cacheResource, LOADER_PROPERTY_ATTRIBUTES);
     }
 

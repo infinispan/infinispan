@@ -116,7 +116,7 @@ public class TransactionResource extends CacheChildResource {
     @Override
     public void registerOperations(ManagementResourceRegistration resourceRegistration) {
         super.registerOperations(resourceRegistration);
-        if (cacheResource.isRuntimeRegistration()) {
+        if (resource.isRuntimeRegistration()) {
             resourceRegistration.registerOperationHandler(TransactionResource.RESET_TX_STATISTICS, CacheCommands.ResetTxStatisticsCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(TransactionResource.LIST_IN_DOUBT_TRANSACTIONS, CacheCommands.TransactionListInDoubtCommand.INSTANCE);
             resourceRegistration.registerOperationHandler(TransactionResource.TRANSACTION_FORCE_COMMIT, CacheCommands.TransactionForceCommitCommand.INSTANCE);

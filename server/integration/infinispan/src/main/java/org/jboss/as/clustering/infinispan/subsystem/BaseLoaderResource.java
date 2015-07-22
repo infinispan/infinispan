@@ -102,7 +102,7 @@ public class BaseLoaderResource extends CacheChildResource {
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
-        resourceRegistration.registerSubModel(new LoaderPropertyResource(cacheResource));
+        resourceRegistration.registerSubModel(new LoaderPropertyResource(resource));
     }
 
     @Override

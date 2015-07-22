@@ -49,7 +49,7 @@ import javax.xml.stream.XMLStreamWriter;
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
-public class CacheResource extends SimpleResourceDefinition {
+public class CacheResource extends SimpleResourceDefinition implements RestartableResourceDefinition {
 
     // attributes
     static final SimpleAttributeDefinition BATCHING =
@@ -230,17 +230,18 @@ public class CacheResource extends SimpleResourceDefinition {
 
     protected final ResolvePathHandler resolvePathHandler;
     protected final boolean runtimeRegistration;
-    private final CacheAdd cacheAddHandler;
+    private final RestartableResourceServiceInstaller serviceInstaller;
 
     public CacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd cacheAddHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(pathElement, descriptionResolver, cacheAddHandler, removeHandler);
-        this.cacheAddHandler = cacheAddHandler;
+        this.serviceInstaller = cacheAddHandler;
         this.resolvePathHandler = resolvePathHandler;
         this.runtimeRegistration = runtimeRegistration;
     }
 
-    public CacheAdd getCacheAddHandler() {
-        return cacheAddHandler;
+    @Override
+    public RestartableResourceServiceInstaller getServiceInstaller() {
+        return serviceInstaller;
     }
 
     public boolean isRuntimeRegistration() {
@@ -251,7 +252,7 @@ public class CacheResource extends SimpleResourceDefinition {
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
 
-        final OperationStepHandler restartWriteHandler = new RestartCacheWriteAttributeHandler(getPathElement().getKey(), cacheAddHandler, CACHE_ATTRIBUTES);
+        final OperationStepHandler restartWriteHandler = new RestartCacheWriteAttributeHandler(getPathElement().getKey(), serviceInstaller, CACHE_ATTRIBUTES);
         for (AttributeDefinition attr : CACHE_ATTRIBUTES) {
             resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartWriteHandler);
         }

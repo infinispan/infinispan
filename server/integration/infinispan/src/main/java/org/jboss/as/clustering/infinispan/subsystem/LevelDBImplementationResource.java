@@ -34,7 +34,7 @@ public class LevelDBImplementationResource extends CacheChildResource {
     static final AttributeDefinition[] LEVELDB_IMPLEMENTATION_ATTRIBUTES = {TYPE};
 
 
-    public LevelDBImplementationResource(CacheResource cacheResource) {
+    public LevelDBImplementationResource(RestartableResourceDefinition cacheResource) {
         super(LEVELDB_IMPLEMENTATION_PATH, ModelKeys.IMPLEMENTATION, cacheResource, LEVELDB_IMPLEMENTATION_ATTRIBUTES);
     }
 

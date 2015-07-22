@@ -124,9 +124,9 @@ public class LevelDBStoreResource extends BaseStoreResource {
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
         // child resources
-        resourceRegistration.registerSubModel(new LevelDBExpirationResource(cacheResource));
-        resourceRegistration.registerSubModel(new LevelDBCompressionResource(cacheResource));
-        resourceRegistration.registerSubModel(new LevelDBImplementationResource(cacheResource));
+        resourceRegistration.registerSubModel(new LevelDBExpirationResource(resource));
+        resourceRegistration.registerSubModel(new LevelDBCompressionResource(resource));
+        resourceRegistration.registerSubModel(new LevelDBImplementationResource(resource));
     }
 
 }

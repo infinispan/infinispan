@@ -14,11 +14,11 @@ import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 
 public class RestartCacheWriteAttributeHandler extends RestartParentWriteAttributeHandler {
-    private final CacheAdd cacheAddHandler;
+    private final RestartableResourceServiceInstaller serviceInstaller;
 
-    public RestartCacheWriteAttributeHandler(String parentKeyName, CacheAdd cacheAddHandler, AttributeDefinition... definitions) {
+    public RestartCacheWriteAttributeHandler(String parentKeyName, RestartableResourceServiceInstaller serviceInstaller, AttributeDefinition... definitions) {
         super(parentKeyName, definitions);
-        this.cacheAddHandler = cacheAddHandler;
+        this.serviceInstaller = serviceInstaller;
     }
 
     @Override
@@ -33,7 +33,7 @@ public class RestartCacheWriteAttributeHandler extends RestartParentWriteAttribu
         ModelNode containerModel = context.readResourceFromRoot(containerAddress).getModel();
         ModelNode operation = Util.createAddOperation(cacheAddress);
 
-        cacheAddHandler.installRuntimeServices(context, operation, containerModel, cacheModel);
+        serviceInstaller.installRuntimeServices(context, operation, containerModel, cacheModel);
     }
 
     @Override

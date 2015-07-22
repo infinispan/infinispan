@@ -57,7 +57,7 @@ public class CacheAuthorizationResource extends CacheChildResource {
 
     static final AttributeDefinition[] ATTRIBUTES = new AttributeDefinition[] { ENABLED, ROLES };
 
-    CacheAuthorizationResource(CacheResource cacheResource) {
+    CacheAuthorizationResource(RestartableResourceDefinition cacheResource) {
         super(PathElement.pathElement(ModelKeys.AUTHORIZATION), String.format("%s.%s.%s", ModelKeys.CACHE, ModelKeys.SECURITY, ModelKeys.AUTHORIZATION), cacheResource, ATTRIBUTES);
     }
 

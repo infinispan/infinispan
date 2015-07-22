@@ -5,7 +5,6 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.AttributeAccess;
-import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -37,7 +36,7 @@ public class LevelDBExpirationResource extends CacheChildResource {
 
     static final AttributeDefinition[] LEVELDB_EXPIRATION_ATTRIBUTES = {PATH, QUEUE_SIZE};
 
-    public LevelDBExpirationResource(CacheResource cacheResource) {
+    public LevelDBExpirationResource(RestartableResourceDefinition cacheResource) {
         super(LEVELDB_EXPIRATION_PATH, ModelKeys.EXPIRATION, cacheResource, LEVELDB_EXPIRATION_ATTRIBUTES);
     }
 
