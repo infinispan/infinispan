@@ -1,3 +1,25 @@
+/*
+ * JBoss, Home of Professional Open Source.
+ * Copyright 2012, Red Hat, Inc., and individual contributors
+ * as indicated by the @author tags. See the copyright.txt file in the
+ * distribution for a full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
@@ -18,11 +40,11 @@ import org.jboss.msc.service.ServiceName;
  * @since 7.2
  */
 public class RestartCacheResourceRemove extends RestartParentResourceRemoveHandler {
-    private final RestartableResourceServiceInstaller serviceInstaller;
+    private final RestartableServiceHandler parentServiceHandler;
 
-    protected RestartCacheResourceRemove(String parentKeyName, RestartableResourceServiceInstaller serviceInstaller) {
+    protected RestartCacheResourceRemove(String parentKeyName, RestartableServiceHandler parentServiceHandler) {
         super(parentKeyName);
-        this.serviceInstaller = serviceInstaller;
+        this.parentServiceHandler = parentServiceHandler;
     }
 
     @Override
@@ -31,7 +53,7 @@ public class RestartCacheResourceRemove extends RestartParentResourceRemoveHandl
         ModelNode containerModel = context.readResourceFromRoot(containerAddress).getModel();
         ModelNode operation = Util.createAddOperation(cacheAddress);
 
-        serviceInstaller.installRuntimeServices(context, operation, containerModel, cacheModel);
+        parentServiceHandler.installRuntimeServices(context, operation, containerModel, cacheModel);
     }
 
     @Override
@@ -46,16 +68,16 @@ public class RestartCacheResourceRemove extends RestartParentResourceRemoveHandl
     @Override
     protected void removeServices(OperationContext context, ServiceName parentService, ModelNode parentModel)
             throws OperationFailedException {
-        String containerName = parentService.getParent().getSimpleName();
+        /*String containerName = parentService.getParent().getSimpleName();
         String cacheName = parentService.getSimpleName();
         ModelNode resolvedValue = null;
-        String jndiName = (resolvedValue = CacheResource.JNDI_NAME.resolveModelAttribute(context, parentModel))
+        String jndiName = (resolvedValue = CacheConfigurationResource.JNDI_NAME.resolveModelAttribute(context, parentModel))
                 .isDefined() ? resolvedValue.asString() : null;
         ContextNames.BindInfo bindInfo;
         bindInfo = ContextNames.bindInfoFor(InfinispanJndiName.createCacheJndiName(jndiName, containerName, cacheName));
-        context.removeService(bindInfo.getBinderServiceName());
+        context.removeService(bindInfo.getBinderServiceName());*/
         super.removeServices(context, parentService, parentModel);
-        context.removeService(CacheServiceName.CONFIGURATION.getServiceName(containerName, cacheName));
+        //context.removeService(CacheServiceName.CONFIGURATION.getServiceName(containerName, cacheName));
     }
 
     @Override

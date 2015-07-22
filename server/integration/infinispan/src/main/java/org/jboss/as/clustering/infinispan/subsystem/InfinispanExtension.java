@@ -21,8 +21,6 @@
  */
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.List;
-
 import org.infinispan.server.infinispan.spi.InfinispanSubsystem;
 import org.jboss.as.controller.Extension;
 import org.jboss.as.controller.ExtensionContext;
@@ -31,8 +29,6 @@ import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.parsing.ExtensionParsingContext;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
-import org.jboss.dmr.ModelNode;
-import org.jboss.staxmapper.XMLElementReader;
 import org.kohsuke.MetaInfServices;
 
 /**
@@ -78,10 +74,7 @@ public class InfinispanExtension implements Extension {
     @Override
     public void initializeParsers(ExtensionParsingContext context) {
         for (Namespace namespace: Namespace.values()) {
-            XMLElementReader<List<ModelNode>> reader = namespace.getXMLReader();
-            if (reader != null) {
-                context.setSubsystemXmlMapping(SUBSYSTEM_NAME, namespace.getUri(), reader);
-            }
+            context.setSubsystemXmlMapping(SUBSYSTEM_NAME, namespace.getUri(), new InfinispanSubsystemXMLReader(namespace));
         }
     }
 }

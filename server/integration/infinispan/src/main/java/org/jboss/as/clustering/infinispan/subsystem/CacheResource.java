@@ -23,26 +23,18 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.AttributeMarshaller;
 import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.SimpleMapAttributeDefinition;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
-import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
-import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
-import org.jboss.dmr.Property;
-
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
 
 /**
  * Base class for cache resources which require common cache attributes only.
@@ -52,110 +44,14 @@ import javax.xml.stream.XMLStreamWriter;
 public class CacheResource extends SimpleResourceDefinition implements RestartableResourceDefinition {
 
     // attributes
-    static final SimpleAttributeDefinition BATCHING =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.BATCHING, ModelType.BOOLEAN, true)
-                    .setXmlName(Attribute.BATCHING.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
-                    .build();
-
-    static final SimpleAttributeDefinition CACHE_MODULE =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.MODULE, ModelType.STRING, true)
-                    .setXmlName(Attribute.MODULE.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new ModuleIdentifierValidator(true))
-                    .build();
-
-    static final SimpleAttributeDefinition INDEXING =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.INDEXING, ModelType.STRING, true)
-                    .setXmlName(Attribute.INDEX.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new EnumValidator<>(Indexing.class, true, false))
-                    .setDefaultValue(new ModelNode().set(Indexing.NONE.name()))
-                    .build();
-
-    static final SimpleAttributeDefinition INDEXING_AUTO_CONFIG =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.AUTO_CONFIG, ModelType.BOOLEAN, true)
-                    .setXmlName(Attribute.AUTO_CONFIG.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
-                    .build();
-
-    static final SimpleMapAttributeDefinition INDEXING_PROPERTIES = new SimpleMapAttributeDefinition.Builder(ModelKeys.INDEXING_PROPERTIES, true)
-            .setAllowExpression(true)
-            .setAttributeMarshaller(new AttributeMarshaller() {
-                @Override
-                public void marshallAsElement(AttributeDefinition attribute, ModelNode resourceModel, boolean marshallDefault, XMLStreamWriter writer) throws XMLStreamException {
-                    resourceModel = resourceModel.get(attribute.getName());
-                    if (!resourceModel.isDefined()) {
-                        return;
-                    }
-                    for (Property property : resourceModel.asPropertyList()) {
-                        writer.writeStartElement(org.jboss.as.controller.parsing.Element.PROPERTY.getLocalName());
-                        writer.writeAttribute(org.jboss.as.controller.parsing.Element.NAME.getLocalName(), property.getName());
-                        writer.writeCharacters(property.getValue().asString());
-                        writer.writeEndElement();
-                    }
-                }
-            })
-            .build();
-
-    static final SimpleAttributeDefinition JNDI_NAME =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.JNDI_NAME, ModelType.STRING, true)
-                    .setXmlName(Attribute.JNDI_NAME.getLocalName())
+    static final SimpleAttributeDefinition CONFIGURATION =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.CONFIGURATION, ModelType.STRING, true)
+                    .setXmlName(Attribute.CONFIGURATION.getLocalName())
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
-    static final SimpleAttributeDefinition START =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.START, ModelType.STRING, true)
-                    .setXmlName(Attribute.START.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new EnumValidator<>(StartMode.class, true, false))
-                    .setDefaultValue(new ModelNode().set(StartMode.EAGER.name()))
-                    .build();
-
-    static final SimpleAttributeDefinition STATISTICS =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.STATISTICS, ModelType.BOOLEAN, true)
-                    .setXmlName(Attribute.STATISTICS.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(false))
-                    .build();
-
-   static final SimpleAttributeDefinition STATISTICS_AVAILABLE =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.STATISTICS_AVAILABLE, ModelType.BOOLEAN, true)
-               .setXmlName(Attribute.STATISTICS_AVAILABLE.getLocalName())
-               .setAllowExpression(false)
-               .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-               .setDefaultValue(new ModelNode().set(true))
-               .build();
-
-   static final SimpleAttributeDefinition MIGRATOR_NAME =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.MIGRATOR_NAME, ModelType.STRING, true)
-                   .setAllowExpression(false)
-                   .build();
-
-    static final SimpleAttributeDefinition REMOTE_CACHE =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_CACHE, ModelType.STRING, true)
-                   .setXmlName(Attribute.REMOTE_CACHE.getLocalName())
-                   .setAllowExpression(false)
-                   .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                   .build();
-
-    static final SimpleAttributeDefinition REMOTE_SITE =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_SITE, ModelType.STRING, true)
-                   .setXmlName(Attribute.REMOTE_SITE.getLocalName())
-                   .setAllowExpression(false)
-                   .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                   .build();
-
-    static final AttributeDefinition[] CACHE_ATTRIBUTES = {BATCHING, CACHE_MODULE, INDEXING, INDEXING_AUTO_CONFIG, INDEXING_PROPERTIES, JNDI_NAME, START, STATISTICS, STATISTICS_AVAILABLE, REMOTE_CACHE, REMOTE_SITE};
+    static final AttributeDefinition[] CACHE_ATTRIBUTES = {CONFIGURATION};
 
     // here for legacy purposes only
     static final SimpleAttributeDefinition NAME =
@@ -164,6 +60,12 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
                     .setAllowExpression(false)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
+
+    // operation parameters
+    static final SimpleAttributeDefinition MIGRATOR_NAME =
+            new SimpleAttributeDefinitionBuilder(ModelKeys.MIGRATOR_NAME, ModelType.STRING, true)
+                   .setAllowExpression(false)
+                   .build();
 
     // operations
     static final OperationDefinition CLEAR_CACHE =
@@ -230,7 +132,7 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
 
     protected final ResolvePathHandler resolvePathHandler;
     protected final boolean runtimeRegistration;
-    private final RestartableResourceServiceInstaller serviceInstaller;
+    private final RestartableServiceHandler serviceInstaller;
 
     public CacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd cacheAddHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(pathElement, descriptionResolver, cacheAddHandler, removeHandler);
@@ -240,10 +142,11 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
     }
 
     @Override
-    public RestartableResourceServiceInstaller getServiceInstaller() {
+    public RestartableServiceHandler getServiceInstaller() {
         return serviceInstaller;
     }
 
+    @Override
     public boolean isRuntimeRegistration() {
         return runtimeRegistration;
     }
@@ -280,24 +183,8 @@ public class CacheResource extends SimpleResourceDefinition implements Restartab
     @Override
     public void registerChildren(ManagementResourceRegistration resourceRegistration) {
         super.registerChildren(resourceRegistration);
-
-        resourceRegistration.registerSubModel(new LockingResource(this));
         resourceRegistration.registerSubModel(new TransactionResource(this));
-        resourceRegistration.registerSubModel(new EvictionResource(this));
-        resourceRegistration.registerSubModel(new ExpirationResource(this));
-        resourceRegistration.registerSubModel(new CompatibilityResource(this));
-        resourceRegistration.registerSubModel(new LoaderResource(this));
-        resourceRegistration.registerSubModel(new ClusterLoaderResource(this));
         resourceRegistration.registerSubModel(new BackupSiteResource(this));
-        resourceRegistration.registerSubModel(new StoreResource(this));
-        resourceRegistration.registerSubModel(new FileStoreResource(this, resolvePathHandler));
-        resourceRegistration.registerSubModel(new StringKeyedJDBCStoreResource(this));
-        resourceRegistration.registerSubModel(new BinaryKeyedJDBCStoreResource(this));
-        resourceRegistration.registerSubModel(new MixedKeyedJDBCStoreResource(this));
-        resourceRegistration.registerSubModel(new RemoteStoreResource(this));
-        resourceRegistration.registerSubModel(new LevelDBStoreResource(this, resolvePathHandler));
-        resourceRegistration.registerSubModel(new RestStoreResource(this));
-        resourceRegistration.registerSubModel(new CacheSecurityResource(this));
     }
 
 }

@@ -22,64 +22,27 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.infinispan.transaction.LockingMode;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
-import org.jboss.as.controller.client.helpers.MeasurementUnit;
-import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
 /**
  * Resource description for the addressable resource /subsystem=infinispan/cache-container=X/cache=Y/transaction=TRANSACTION
  *
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
+ * @author Tristan Tarrant
  */
 public class TransactionResource extends CacheChildResource {
 
-    public static final PathElement TRANSACTION_PATH = PathElement.pathElement(ModelKeys.TRANSACTION, ModelKeys.TRANSACTION_NAME);
+    public static final PathElement PATH = PathElement.pathElement(ModelKeys.TRANSACTION, ModelKeys.TRANSACTION_NAME);
 
-    // attributes
-    // cache mode required, txn mode not
-    static final SimpleAttributeDefinition LOCKING =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.LOCKING, ModelType.STRING, true)
-                    .setXmlName(Attribute.LOCKING.getLocalName())
-                    .setAllowExpression(true)
-                    .setValidator(new EnumValidator<LockingMode>(LockingMode.class, true, false))
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(LockingMode.OPTIMISTIC.name()))
-                    .build();
-    static final SimpleAttributeDefinition MODE =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.MODE, ModelType.STRING, true)
-                    .setXmlName(Attribute.MODE.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new EnumValidator<TransactionMode>(TransactionMode.class, true, true))
-                    .setDefaultValue(new ModelNode().set(TransactionMode.NONE.name()))
-                    .build();
-    static final SimpleAttributeDefinition STOP_TIMEOUT =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.STOP_TIMEOUT, ModelType.LONG, true)
-                    .setXmlName(Attribute.STOP_TIMEOUT.getLocalName())
-                    .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(30000))
-                    .build();
-   static final SimpleAttributeDefinition NOTIFICATIONS =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.NOTIFICATIONS, ModelType.BOOLEAN, true)
-                   .setXmlName(Attribute.NOTIFICATIONS.getLocalName())
-                   .setAllowExpression(false)
-                   .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                   .setDefaultValue(new ModelNode().set(true))
-                   .build();
-
-    static final AttributeDefinition[] TRANSACTION_ATTRIBUTES = {MODE, STOP_TIMEOUT, LOCKING, NOTIFICATIONS};
+    static final AttributeDefinition[] ATTRIBUTES = {};
 
  // operation parameters
     static final SimpleAttributeDefinition TX_INTERNAL_ID =
@@ -110,7 +73,7 @@ public class TransactionResource extends CacheChildResource {
                 .build();
 
     public TransactionResource(CacheResource cacheResource) {
-        super(TRANSACTION_PATH, ModelKeys.TRANSACTION, cacheResource, TRANSACTION_ATTRIBUTES);
+        super(PATH, ModelKeys.TRANSACTION, cacheResource, ATTRIBUTES);
     }
 
     @Override

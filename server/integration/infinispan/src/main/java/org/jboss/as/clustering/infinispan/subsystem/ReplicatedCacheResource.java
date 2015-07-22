@@ -32,12 +32,12 @@ import org.jboss.as.controller.services.path.ResolvePathHandler;
  */
 public class ReplicatedCacheResource extends SharedCacheResource {
 
-    public static final PathElement REPLICATED_CACHE_PATH = PathElement.pathElement(ModelKeys.REPLICATED_CACHE);
+    public static final PathElement PATH = PathElement.pathElement(ModelKeys.REPLICATED_CACHE);
 
     // attributes
 
     public ReplicatedCacheResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
-        super(REPLICATED_CACHE_PATH,
+        super(PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.REPLICATED_CACHE),
                 ReplicatedCacheAdd.INSTANCE,
                 new CacheRemoveHandler(), resolvePathHandler, runtimeRegistration);

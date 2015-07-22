@@ -22,11 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.List;
-
 import org.jboss.as.controller.ModelVersion;
-import org.jboss.dmr.ModelNode;
-import org.jboss.staxmapper.XMLElementReader;
 
 /**
  * @author Paul Ferraro
@@ -34,13 +30,13 @@ import org.jboss.staxmapper.XMLElementReader;
  */
 public enum Namespace {
     // must be first
-    UNKNOWN("jboss:domain:infinispan", 0, 0, null),
+    UNKNOWN("jboss:domain:infinispan", 0, 0),
 
-    INFINISPAN_SERVER_6_0("infinispan:server:core", 6, 0, InfinispanSubsystemXMLReader_6_0.INSTANCE),
-    INFINISPAN_SERVER_7_0("infinispan:server:core", 7, 0, InfinispanSubsystemXMLReader_7_2.INSTANCE),
-    INFINISPAN_SERVER_7_1("infinispan:server:core", 7, 1, InfinispanSubsystemXMLReader_7_2.INSTANCE),
-    INFINISPAN_SERVER_7_2("infinispan:server:core", 7, 2, InfinispanSubsystemXMLReader_7_2.INSTANCE),
-    INFINISPAN_SERVER_8_0("infinispan:server:core", 8, 0, InfinispanSubsystemXMLReader_8_0.INSTANCE),
+    INFINISPAN_SERVER_6_0("infinispan:server:core", 6, 0),
+    INFINISPAN_SERVER_7_0("infinispan:server:core", 7, 0),
+    INFINISPAN_SERVER_7_1("infinispan:server:core", 7, 1),
+    INFINISPAN_SERVER_7_2("infinispan:server:core", 7, 2),
+    INFINISPAN_SERVER_8_0("infinispan:server:core", 8, 0),
     ;
     private static final String URN_PATTERN = "urn:%s:%d.%d";
 
@@ -51,15 +47,13 @@ public enum Namespace {
 
     private final int major;
     private final int minor;
-    private final XMLElementReader<List<ModelNode>> reader;
     private final String domain;
     private final ModelVersion version;
 
-    Namespace(String domain, int major, int minor, XMLElementReader<List<ModelNode>> reader) {
+    Namespace(String domain, int major, int minor) {
         this.domain = domain;
         this.major = major;
         this.minor = minor;
-        this.reader = reader;
         this.version = ModelVersion.create(major, minor);
     }
 
@@ -72,10 +66,6 @@ public enum Namespace {
         return String.format(URN_PATTERN, domain, this.major, this.minor);
     }
 
-    public XMLElementReader<List<ModelNode>> getXMLReader() {
-        return this.reader;
-    }
-
     public ModelVersion getVersion() {
         return this.version;
     }
@@ -83,4 +73,9 @@ public enum Namespace {
     public String format(String format) {
         return String.format(format, major, minor);
     }
+
+    public boolean since(Namespace schema) {
+        return (this.major > schema.major) || ((this.major == schema.major) && (this.minor >= schema.minor));
+    }
+
 }

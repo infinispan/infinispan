@@ -22,21 +22,19 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import javax.transaction.xa.XAResource;
+
 import org.infinispan.Cache;
-import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.factory.CacheStoreFactory;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.jboss.logging.Logger;
 import org.jboss.msc.service.Service;
-import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;
 import org.jboss.tm.XAResourceRecovery;
 import org.jboss.tm.XAResourceRecoveryRegistry;
-
-import javax.transaction.xa.XAResource;
 
 /**
  * @author Paul Ferraro
@@ -76,10 +74,10 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
     public void start(StartContext context) {
         EmbeddedCacheManager container = this.dependencies.getCacheContainer();
 
-       CacheStoreFactoryRegistry cacheStoreFactoryRegistry = container.getGlobalComponentRegistry().getComponent(CacheStoreFactoryRegistry.class);
-       cacheStoreFactoryRegistry.addCacheStoreFactory(this.dependencies.getDeployedCacheStoreFactory());
+        CacheStoreFactoryRegistry cacheStoreFactoryRegistry = container.getGlobalComponentRegistry().getComponent(CacheStoreFactoryRegistry.class);
+        cacheStoreFactoryRegistry.addCacheStoreFactory(this.dependencies.getDeployedCacheStoreFactory());
 
-       this.cache = SecurityActions.startCache(container, this.name);
+        this.cache = SecurityActions.startCache(container, this.name);
 
         XAResourceRecoveryRegistry recoveryRegistry = this.dependencies.getRecoveryRegistry();
         if (recoveryRegistry != null) {

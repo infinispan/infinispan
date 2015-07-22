@@ -85,16 +85,8 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
-    @Deprecated
-    static final SimpleAttributeDefinition TOTAL_ORDER_EXECUTOR =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.TOTAL_ORDER_EXECUTOR, ModelType.STRING, true)
-                    .setXmlName(Attribute.TOTAL_ORDER_EXECUTOR.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .build();
-
     static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {CHANNEL, EXECUTOR, LOCK_TIMEOUT,
-            REMOTE_COMMAND_EXECUTOR, STRICT_PEER_TO_PEER, TOTAL_ORDER_EXECUTOR};
+            REMOTE_COMMAND_EXECUTOR, STRICT_PEER_TO_PEER};
 
     public TransportResource() {
         super(TRANSPORT_PATH,

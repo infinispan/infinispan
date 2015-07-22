@@ -32,12 +32,12 @@ import org.jboss.as.controller.services.path.ResolvePathHandler;
  */
 public class InvalidationCacheResource extends ClusteredCacheResource {
 
-    public static final PathElement INVALIDATION_CACHE_PATH = PathElement.pathElement(ModelKeys.INVALIDATION_CACHE);
+    public static final PathElement PATH = PathElement.pathElement(ModelKeys.INVALIDATION_CACHE);
 
     // attributes
 
     public InvalidationCacheResource(final ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
-        super(INVALIDATION_CACHE_PATH,
+        super(PATH,
                 new InfinispanResourceDescriptionResolver(ModelKeys.INVALIDATION_CACHE),
                 InvalidationCacheAdd.INSTANCE,
                 new CacheRemoveHandler(), resolvePathHandler, runtimeRegistration);

@@ -22,19 +22,11 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.SimpleAttributeDefinition;
-import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
-import org.jboss.as.controller.client.helpers.MeasurementUnit;
 import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
-import org.jboss.as.controller.operations.validation.EnumValidator;
-import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.services.path.ResolvePathHandler;
-import org.jboss.dmr.ModelNode;
-import org.jboss.dmr.ModelType;
 
 /**
  * Base class for cache resources which require common cache attributes and clustered cache attributes.
@@ -42,42 +34,6 @@ import org.jboss.dmr.ModelType;
  * @author Richard Achmatowicz (c) 2011 Red Hat Inc.
  */
 public class ClusteredCacheResource extends CacheResource {
-    // the attribute definition for the cache mode
-    static final SimpleAttributeDefinition MODE =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.MODE, ModelType.STRING, false)
-                    .setXmlName(Attribute.MODE.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setValidator(new EnumValidator<>(Mode.class, false, true))
-                    .build();
-
-    static final SimpleAttributeDefinition QUEUE_FLUSH_INTERVAL =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.QUEUE_FLUSH_INTERVAL, ModelType.LONG, true)
-                    .setXmlName(Attribute.QUEUE_FLUSH_INTERVAL.getLocalName())
-                    .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(10))
-                    .build();
-
-    static final SimpleAttributeDefinition QUEUE_SIZE =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.QUEUE_SIZE, ModelType.INT, true)
-                    .setXmlName(Attribute.QUEUE_SIZE.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(0))
-                    .build();
-
-    static final SimpleAttributeDefinition REMOTE_TIMEOUT =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_TIMEOUT, ModelType.LONG, true)
-                    .setXmlName(Attribute.REMOTE_TIMEOUT.getLocalName())
-                    .setMeasurementUnit(MeasurementUnit.MILLISECONDS)
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(15000))
-                    .build();
-
-    static final AttributeDefinition[] CLUSTERED_CACHE_ATTRIBUTES = { MODE, QUEUE_SIZE, QUEUE_FLUSH_INTERVAL, REMOTE_TIMEOUT };
 
     public ClusteredCacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd addHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(pathElement, descriptionResolver, addHandler, removeHandler, resolvePathHandler, runtimeRegistration);
@@ -86,11 +42,6 @@ public class ClusteredCacheResource extends CacheResource {
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
         super.registerAttributes(resourceRegistration);
-
-        final OperationStepHandler restartWriteHandler = new RestartCacheWriteAttributeHandler(getPathElement().getKey(), getServiceInstaller(), CLUSTERED_CACHE_ATTRIBUTES);
-        for (AttributeDefinition attr : CLUSTERED_CACHE_ATTRIBUTES) {
-            resourceRegistration.registerReadWriteAttribute(attr, CacheReadAttributeHandler.INSTANCE, restartWriteHandler);
-        }
 
         if (runtimeRegistration) {
             CacheMetricsHandler.INSTANCE.registerClusteredMetrics(resourceRegistration);

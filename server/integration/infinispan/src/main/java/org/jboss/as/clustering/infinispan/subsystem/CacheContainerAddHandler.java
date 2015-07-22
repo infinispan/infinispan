@@ -100,7 +100,6 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
                     .setStrictPeerToPeer(TransportResource.STRICT_PEER_TO_PEER.resolveModelAttribute(context, transport).asBoolean())
                     .setExecutor(ModelNodes.asString(TransportResource.EXECUTOR.resolveModelAttribute(context, transport)))
                     .setRemoteCommandExecutor(ModelNodes.asString(TransportResource.REMOTE_COMMAND_EXECUTOR.resolveModelAttribute(context, transport)))
-                    .setTotalOrderExecutor(ModelNodes.asString(TransportResource.TOTAL_ORDER_EXECUTOR.resolveModelAttribute(context, transport)))
                     .build(target).install();
 
             if (!name.equals(channel)) {

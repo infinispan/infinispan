@@ -25,6 +25,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
 
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.jboss.as.clustering.infinispan.TransactionManagerProvider;
@@ -43,6 +44,7 @@ public class CacheConfigurationService extends AbstractCacheConfigurationService
         EmbeddedCacheManager getCacheContainer();
         TransactionManager getTransactionManager();
         TransactionSynchronizationRegistry getTransactionSynchronizationRegistry();
+        Configuration getTemplateConfiguration();
     }
 
     private final ConfigurationBuilder builder;
@@ -61,15 +63,21 @@ public class CacheConfigurationService extends AbstractCacheConfigurationService
 
     @Override
     protected ConfigurationBuilder getConfigurationBuilder() {
-        this.builder.jmxStatistics().enabled(this.dependencies.getCacheContainer().getCacheManagerConfiguration().globalJmxStatistics().enabled());
+        ConfigurationBuilder builder = new ConfigurationBuilder();
+        Configuration templateConfiguration = this.dependencies.getTemplateConfiguration();
+        if (templateConfiguration != null) {
+            builder.read(templateConfiguration);
+        }
+        builder.read(this.builder.build());
+        builder.jmxStatistics().enabled(this.dependencies.getCacheContainer().getCacheManagerConfiguration().globalJmxStatistics().enabled());
         TransactionManager tm = this.dependencies.getTransactionManager();
         if (tm != null) {
-            this.builder.transaction().transactionManagerLookup(new TransactionManagerProvider(tm));
+            builder.transaction().transactionManagerLookup(new TransactionManagerProvider(tm));
         }
         TransactionSynchronizationRegistry tsr = this.dependencies.getTransactionSynchronizationRegistry();
         if (tsr != null) {
-            this.builder.transaction().transactionSynchronizationRegistryLookup(new TransactionSynchronizationRegistryProvider(tsr));
+            builder.transaction().transactionSynchronizationRegistryLookup(new TransactionSynchronizationRegistryProvider(tsr));
         }
-        return this.builder;
+        return builder;
     }
 }

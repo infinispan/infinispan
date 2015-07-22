@@ -10,18 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.client.ModelControllerClient;
-import static org.jboss.as.controller.client.helpers.ClientConstants.ADD;
-import static org.jboss.as.controller.client.helpers.ClientConstants.CHILD_TYPE;
-import static org.jboss.as.controller.client.helpers.ClientConstants.NAME;
-import static org.jboss.as.controller.client.helpers.ClientConstants.OP;
-import static org.jboss.as.controller.client.helpers.ClientConstants.OP_ADDR;
-import static org.jboss.as.controller.client.helpers.ClientConstants.OUTCOME;
-import static org.jboss.as.controller.client.helpers.ClientConstants.READ_ATTRIBUTE_OPERATION;
-import static org.jboss.as.controller.client.helpers.ClientConstants.READ_CHILDREN_NAMES_OPERATION;
-import static org.jboss.as.controller.client.helpers.ClientConstants.REMOVE_OPERATION;
-import static org.jboss.as.controller.client.helpers.ClientConstants.RESULT;
-import static org.jboss.as.controller.client.helpers.ClientConstants.SUBSYSTEM;
-import static org.jboss.as.controller.client.helpers.ClientConstants.SUCCESS;
+import static org.jboss.as.controller.client.helpers.ClientConstants.*;
 import org.jboss.dmr.ModelNode;
 
 public class ServerManager {
@@ -84,7 +73,7 @@ public class ServerManager {
                ModelNode op = new ModelNode();
                op.get(OP).set(READ_ATTRIBUTE_OPERATION);
                op.get(OP_ADDR).set(pathAddress.toModelNode());
-               op.get(NAME).set("start");
+               op.get(NAME).set("configuration");
 
                ModelNode resp = client.execute(op);
                if (SUCCESS.equals(resp.get(OUTCOME).asString())) {
@@ -114,17 +103,30 @@ public class ServerManager {
       withManagementClient(host, port, new ManagementRunnable() {
          @Override
          public void run(ModelControllerClient client) throws Exception {
-            PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
-                  .append("cache-container", getHotRodCacheContainer(client))
-                  .append("local-cache", cacheName);
+            final ModelNode composite = new ModelNode();
+            composite.get(OP).set(COMPOSITE);
+            composite.get(OP_ADDR).setEmptyList();
 
-            ModelNode op = new ModelNode();
-            op.get(OP).set(ADD);
-            op.get(OP_ADDR).set(pathAddress.toModelNode());
-            op.get("start").set("EAGER");
+            final ModelNode steps = composite.get(STEPS);
 
-            ModelNode resp = client.execute(op);
+            final ModelNode configAddOp = steps.add();
+            configAddOp.get(OP).set(ADD);
+            String cacheContainer = getHotRodCacheContainer(client);
+            configAddOp.get(OP_ADDR).set(PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
+                  .append("cache-container", cacheContainer)
+                  .append("configurations", "CONFIGURATIONS")
+                  .append("local-cache-configuration", cacheName).toModelNode());
+
+            final ModelNode cacheAddOp = steps.add();
+            cacheAddOp.get(OP).set(ADD);
+            cacheAddOp.get(OP_ADDR).set(PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
+                  .append("cache-container", cacheContainer)
+                  .append("local-cache", cacheName).toModelNode());
+            cacheAddOp.get("configuration").set(cacheName);
+
+            ModelNode resp = client.execute(composite);
             if (!SUCCESS.equals(resp.get(OUTCOME).asString())) {
+               System.err.println(resp);
                throw new IllegalArgumentException(resp.asString());
             }
          }
@@ -137,17 +139,29 @@ public class ServerManager {
       withManagementClient(host, port, new ManagementRunnable() {
          @Override
          public void run(ModelControllerClient client) throws Exception {
-            PathAddress pathAddress = PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
-                  .append("cache-container", getHotRodCacheContainer(client))
-                  .append("local-cache", cacheName);
+            final ModelNode composite = new ModelNode();
+            composite.get(OP).set(COMPOSITE);
+            composite.get(OP_ADDR).setEmptyList();
 
-            ModelNode op = new ModelNode();
-            op.get(OP).set(REMOVE_OPERATION);
-            op.get(OP_ADDR).set(pathAddress.toModelNode());
+            final ModelNode steps = composite.get(STEPS);
 
-            ModelNode resp = client.execute(op);
+            final ModelNode cacheRemoveOp = steps.add();
+            cacheRemoveOp.get(OP).set(REMOVE_OPERATION);
+            String cacheContainer = getHotRodCacheContainer(client);
+            cacheRemoveOp.get(OP_ADDR).set(PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
+                  .append("cache-container", cacheContainer)
+                  .append("local-cache", cacheName).toModelNode());
+            final ModelNode configRemoveOp = steps.add();
+            configRemoveOp.get(OP).set(REMOVE_OPERATION);
+            configRemoveOp.get(OP_ADDR).set(PathAddress.pathAddress(SUBSYSTEM, INFINISPAN_SUBSYSTEM_NAME)
+                  .append("cache-container", cacheContainer)
+                  .append("configurations", "CONFIGURATIONS")
+                  .append("local-cache-configuration", cacheName).toModelNode());
+
+            ModelNode resp = client.execute(composite);
             if (!SUCCESS.equals(resp.get(OUTCOME).asString())) {
                //TODO: don't ignore failures other than "resource doens't exist"
+               System.err.println(resp);
             }
          }
       });

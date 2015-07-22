@@ -80,10 +80,10 @@ public class StoreWriteBehindResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(1))
                     .build();
 
-    static final AttributeDefinition[] WRITE_BEHIND_ATTRIBUTES = {FLUSH_LOCK_TIMEOUT, MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE, SHUTDOWN_TIMEOUT};
+    static final AttributeDefinition[] ATTRIBUTES = {FLUSH_LOCK_TIMEOUT, MODIFICATION_QUEUE_SIZE, THREAD_POOL_SIZE, SHUTDOWN_TIMEOUT};
 
     static final ObjectTypeAttributeDefinition WRITE_BEHIND_OBJECT = ObjectTypeAttributeDefinition.
-            Builder.of(ModelKeys.WRITE_BEHIND, WRITE_BEHIND_ATTRIBUTES).
+            Builder.of(ModelKeys.WRITE_BEHIND, ATTRIBUTES).
             setAllowNull(true).
             setSuffix("write-behind").
             build();
@@ -101,14 +101,9 @@ public class StoreWriteBehindResource extends SimpleResourceDefinition {
         super.registerAttributes(resourceRegistration);
 
         // check that we don't need a special handler here?
-        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(WRITE_BEHIND_ATTRIBUTES);
-        for (AttributeDefinition attr : WRITE_BEHIND_ATTRIBUTES) {
+        final OperationStepHandler writeHandler = new ReloadRequiredWriteAttributeHandler(ATTRIBUTES);
+        for (AttributeDefinition attr : ATTRIBUTES) {
             resourceRegistration.registerReadWriteAttribute(attr, null, writeHandler);
         }
-    }
-
-    @Override
-    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
-        super.registerOperations(resourceRegistration);
     }
 }

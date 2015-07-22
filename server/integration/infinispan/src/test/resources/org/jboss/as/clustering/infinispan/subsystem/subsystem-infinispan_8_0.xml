@@ -4,6 +4,9 @@
     </cache-container>
     <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" jndi-name="java:global/infinispan/maximal" module="org.infinispan" statistics="false">
         <transport channel="maximal-channel" lock-timeout="120000" strict-peer-to-peer="false"/>
+        <local-cache-configuration name="local-template">
+        </local-cache-configuration>
+        <local-cache name="local-instance" configuration="local-template"/>
         <local-cache name="local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
             <transaction mode="NON_DURABLE_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
@@ -40,6 +43,9 @@
         <local-cache name="short-stack-tx" statistics-available="false">
             <transaction mode="NON_DURABLE_XA" notifications="false"/>
         </local-cache>
+        <invalidation-cache-configuration name="invalidation-template" mode="ASYNC">
+        </invalidation-cache-configuration>
+        <invalidation-cache name="invalidation-instance" configuration="invalidation-template"/>
         <invalidation-cache name="invalid" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER" statistics="true">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="READ_UNCOMMITTED" striping="true"/>
             <transaction mode="NON_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>
@@ -52,6 +58,9 @@
             </remote-store>
             <indexing index="NONE" />
         </invalidation-cache>
+        <replicated-cache-configuration name="replicated-template" mode="ASYNC">
+        </replicated-cache-configuration>
+        <replicated-cache name="replicated-instance" configuration="replicated-template"/>
         <replicated-cache name="repl" mode="ASYNC" batching="true" queue-flush-interval="10" queue-size="1000" start="EAGER" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="SERIALIZABLE" striping="true"/>
             <transaction mode="NON_DURABLE_XA" stop-timeout="60000" locking="OPTIMISTIC"/>

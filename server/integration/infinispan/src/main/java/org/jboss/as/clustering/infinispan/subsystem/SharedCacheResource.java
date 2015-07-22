@@ -60,17 +60,4 @@ public class SharedCacheResource extends ClusteredCacheResource {
             resourceRegistration.registerReadWriteAttribute(CACHE_AVAILABILITY, CacheAvailabilityAttributeHandler.INSTANCE, CacheAvailabilityAttributeHandler.INSTANCE);
         }
     }
-
-    @Override
-    public void registerOperations(ManagementResourceRegistration resourceRegistration) {
-        super.registerOperations(resourceRegistration);
-    }
-
-    @Override
-    public void registerChildren(ManagementResourceRegistration resourceRegistration) {
-        super.registerChildren(resourceRegistration);
-
-        resourceRegistration.registerSubModel(new StateTransferResource(this));
-        resourceRegistration.registerSubModel(new PartitionHandlingResource(this));
-    }
 }
