@@ -48,9 +48,11 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ThreadFactory;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
@@ -529,19 +531,35 @@ public class Parser80 implements ConfigurationParser {
                break;
             }
             case LOCAL_CACHE: {
-               parseLocalCache(reader, holder);
+               parseLocalCache(reader, holder, false);
+               break;
+            }
+            case LOCAL_CACHE_CONFIGURATION: {
+               parseLocalCache(reader, holder, true);
                break;
             }
             case INVALIDATION_CACHE: {
-               parseInvalidationCache(reader, holder);
+               parseInvalidationCache(reader, holder, false);
+               break;
+            }
+            case INVALIDATION_CACHE_CONFIGURATION: {
+               parseInvalidationCache(reader, holder, true);
                break;
             }
             case REPLICATED_CACHE: {
-               parseReplicatedCache(reader, holder);
+               parseReplicatedCache(reader, holder, false);
+               break;
+            }
+            case REPLICATED_CACHE_CONFIGURATION: {
+               parseReplicatedCache(reader, holder, true);
                break;
             }
             case DISTRIBUTED_CACHE: {
-               parseDistributedCache(reader, holder);
+               parseDistributedCache(reader, holder, false);
+               break;
+            }
+            case DISTRIBUTED_CACHE_CONFIGURATION: {
+               parseDistributedCache(reader, holder, true);
                break;
             }
             case SERIALIZATION: {
@@ -792,9 +810,10 @@ public class Parser80 implements ConfigurationParser {
       return threadPoolConfiguration;
    }
 
-   private void parseLocalCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseLocalCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name);
+      String configuration = reader.getAttributeValue(null, Attribute.CONFIGURATION.getLocalName());
+      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, configuration);
       builder.clustering().cacheMode(CacheMode.LOCAL);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          String value = replaceProperties(reader.getAttributeValue(i));
@@ -812,6 +831,7 @@ public class Parser80 implements ConfigurationParser {
          int index, Attribute attribute, String value, ConfigurationBuilder builder) throws XMLStreamException {
       switch (attribute) {
          case NAME:
+         case CONFIGURATION:
             // Handled by the caller
             break;
          case START:
@@ -1427,9 +1447,10 @@ public class Parser80 implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseInvalidationCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseInvalidationCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name);
+      String extend = reader.getAttributeValue(null, Attribute.EXTENDS.getLocalName());
+      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, extend);
       CacheMode baseCacheMode = CacheMode.INVALIDATION_SYNC;
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -1477,9 +1498,10 @@ public class Parser80 implements ConfigurationParser {
       }
    }
 
-   private void parseReplicatedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseReplicatedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name);
+      String extend = reader.getAttributeValue(null, Attribute.EXTENDS.getLocalName());
+      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, extend);
       CacheMode baseCacheMode = CacheMode.REPL_SYNC;
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -1527,9 +1549,10 @@ public class Parser80 implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseDistributedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+   private void parseDistributedCache(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder, boolean template) throws XMLStreamException {
       String name = reader.getAttributeValue(null, Attribute.NAME.getLocalName());
-      ConfigurationBuilder builder = getConfigurationBuilder(holder, name);
+      String extend = reader.getAttributeValue(null, Attribute.EXTENDS.getLocalName());
+      ConfigurationBuilder builder = getConfigurationBuilder(holder, name, template, extend);
       CacheMode baseCacheMode = CacheMode.DIST_SYNC;
       builder.clustering().cacheMode(baseCacheMode);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
@@ -1619,10 +1642,20 @@ public class Parser80 implements ConfigurationParser {
 
    }
 
-   private ConfigurationBuilder getConfigurationBuilder(ConfigurationBuilderHolder holder, String name) {
+   private ConfigurationBuilder getConfigurationBuilder(ConfigurationBuilderHolder holder, String name, boolean template, String configuration) {
       ConfigurationBuilder builder = holder.getNamedConfigurationBuilders().get(name);
-      if (builder == null)
-         builder = holder.newConfigurationBuilder(name);
+      if (builder == null) {
+         builder = holder.newConfigurationBuilder(name).template(template);
+         if (configuration != null) {
+            ConfigurationBuilder extendBuilder = holder.getNamedConfigurationBuilders().get(configuration);
+            if (extendBuilder == null) {
+               throw log.undeclaredConfiguration(configuration, name);
+            }
+            if (!extendBuilder.build().isTemplate()) {
+               throw log.noConfiguration(configuration);
+            }
+         }
+      }
 
       return builder;
    }

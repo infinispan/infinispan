@@ -1,10 +1,7 @@
 package org.infinispan.configuration.parsing;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-import static org.testng.AssertJUnit.fail;
+import static org.testng.AssertJUnit.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -115,6 +112,21 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(TestCacheManagerFactory.STATE_TRANSFER_EXEC_QUEUE_SIZE, threadPool.queueLength()); //
       // overriden by TestCacheManagerFactory
       assertEquals(TestCacheManagerFactory.KEEP_ALIVE, threadPool.keepAlive());  // overriden by TestCacheManagerFactory
+
+      assertTemplateConfiguration(cm, "local-template");
+      assertTemplateConfiguration(cm, "invalidation-template");
+      assertTemplateConfiguration(cm, "repl-template");
+      assertTemplateConfiguration(cm, "dist-template");
+
+      assertCacheConfiguration(cm, "local-instance");
+      assertCacheConfiguration(cm, "invalidation-instance");
+      assertCacheConfiguration(cm, "repl-instance");
+      assertCacheConfiguration(cm, "dist-instance");
+
+      Configuration replTemplate = cm.getCacheConfiguration("repl-template");
+      Configuration replConfiguration = cm.getCacheConfiguration("repl-instance");
+      assertEquals(31000, replTemplate.locking().lockAcquisitionTimeout());
+      assertEquals(32000, replConfiguration.locking().lockAcquisitionTimeout());
    }
 
    private static void configurationCheck70(EmbeddedCacheManager cm) {
@@ -147,7 +159,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(1, threadPool.maxThreads());
       assertEquals(0, threadPool.queueLength());
       assertEquals(0, threadPool.keepAlive());
-      
+
       assertTrue(cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadPoolFactory() instanceof CachedThreadPoolExecutorFactory);
       threadFactory = cm.getCacheManagerConfiguration().transport().totalOrderThreadPool().threadFactory();
       assertEquals("infinispan", threadFactory.threadGroup().getName());
@@ -500,6 +512,18 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.storeAsBinary().enabled());
       assertTrue(c.storeAsBinary().storeKeysAsBinary());
       assertFalse(c.storeAsBinary().storeValuesAsBinary());
+   }
+
+   private static void assertTemplateConfiguration(EmbeddedCacheManager cm, String name) {
+      Configuration configuration = cm.getCacheConfiguration(name);
+      assertNotNull("Configuration " + name + " expected", configuration);
+      assertTrue("Configuration " + name + " should be a template", configuration.isTemplate());
+   }
+
+   private static void assertCacheConfiguration(EmbeddedCacheManager cm, String name) {
+      Configuration configuration = cm.getCacheConfiguration(name);
+      assertNotNull("Configuration " + name + " expected", configuration);
+      assertFalse("Configuration " + name + " should not be a template", configuration.isTemplate());
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

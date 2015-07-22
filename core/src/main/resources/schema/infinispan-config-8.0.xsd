@@ -27,6 +27,10 @@
         <xs:annotation>
           <xs:documentation>Defines an embedded cache container.</xs:documentation>
         </xs:annotation>
+        <xs:unique name="cache_id_unique">
+          <xs:selector xpath="./tns:local-cache|./tns:local-cache-configuration|./tns:invalidation-cache|./tns:invalidation-cache-configuration|./tns:replicated-cache|./tns:replicated-cache-configuration|./tns:distributed-cache|./tns:distributed-cache-configuration" />
+          <xs:field xpath="@name" />
+        </xs:unique>
       </xs:element>
     </xs:all>
   </xs:complexType>
@@ -193,9 +197,19 @@
             <xs:documentation>Defines a LOCAL mode cache.</xs:documentation>
           </xs:annotation>
         </xs:element>
+        <xs:element name="local-cache-configuration" type="tns:local-cache">
+          <xs:annotation>
+            <xs:documentation>Defines a LOCAL mode cache configuration.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element name="replicated-cache" type="tns:replicated-cache">
           <xs:annotation>
             <xs:documentation>Defines a REPL_* mode cache.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="replicated-cache-configuration" type="tns:replicated-cache">
+          <xs:annotation>
+            <xs:documentation>Defines a REPL_* mode cache configuration.</xs:documentation>
           </xs:annotation>
         </xs:element>
         <xs:element name="invalidation-cache" type="tns:invalidation-cache">
@@ -203,9 +217,19 @@
             <xs:documentation>Defines an INVALIDATION_* mode cache.</xs:documentation>
           </xs:annotation>
         </xs:element>
+        <xs:element name="invalidation-cache-configuration" type="tns:invalidation-cache">
+          <xs:annotation>
+            <xs:documentation>Defines an INVALIDATION_* mode cache configuration.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element name="distributed-cache" type="tns:distributed-cache">
           <xs:annotation>
             <xs:documentation>Defines a DIST_* mode cache.</xs:documentation>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="distributed-cache-configuration" type="tns:distributed-cache">
+          <xs:annotation>
+            <xs:documentation>Defines a DIST_* mode cache configuration.</xs:documentation>
           </xs:annotation>
         </xs:element>
       </xs:choice>
@@ -634,9 +658,14 @@
         </xs:annotation>
       </xs:element>
     </xs:sequence>
-    <xs:attribute name="name" type="xs:string" use="required">
+    <xs:attribute name="name" type="xs:ID" use="required">
       <xs:annotation>
         <xs:documentation>Uniquely identifies this cache within its cache container.</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="configuration" type="xs:IDREF">
+      <xs:annotation>
+        <xs:documentation>The name of the cache configuration which this configuration inherits from.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="start">

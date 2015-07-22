@@ -32,12 +32,14 @@ public enum Attribute {
     CLUSTER("cluster"),
     COMPLETED_TX_TIMEOUT("complete-timeout"),
     CONCURRENCY_LEVEL("concurrency-level"),
+    CONFIGURATION("configuration"),
     CONSISTENT_HASH_FACTORY("consistent-hash-factory"),
     CORE_THREADS("core-threads"),
     DATA_CONTAINER("data-container"),
     DEFAULT_CACHE("default-cache"),
     ENABLED("enabled"),
     EXECUTOR("executor"),
+    EXTENDS("extends"),
     @Deprecated
     EVICTION_EXECUTOR("eviction-executor"),
     EXPIRATION_EXECUTOR("expiration-executor"),
@@ -74,6 +76,7 @@ public enum Attribute {
     MODIFICATION_QUEUE_SIZE("modification-queue-size"),
     MODULE("module"),
     NAME("name"),
+    NAMES("names"),
     NOTIFICATIONS("notifications"),
     ON_REHASH("onRehash"),
     OWNERS("owners"),
@@ -139,7 +142,6 @@ public enum Attribute {
     WAIT_TIME("wait-time"),
     WRITE_SKEW_CHECK("write-skew"),
     FRAGMENTATION_FACTOR("fragmentation-factor"),
-
     ;
 
     private final String name;

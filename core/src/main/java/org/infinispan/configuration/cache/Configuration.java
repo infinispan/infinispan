@@ -26,8 +26,9 @@ public class Configuration {
    private final SecurityConfiguration securityConfiguration;
    private final SitesConfiguration sitesConfiguration;
    private final CompatibilityModeConfiguration compatibilityConfiguration;
+   private final boolean template;
 
-   Configuration(ClusteringConfiguration clusteringConfiguration,
+   Configuration(boolean template, ClusteringConfiguration clusteringConfiguration,
                  CustomInterceptorsConfiguration customInterceptorsConfiguration,
                  DataContainerConfiguration dataContainerConfiguration, DeadlockDetectionConfiguration deadlockDetectionConfiguration,
                  EvictionConfiguration evictionConfiguration, ExpirationConfiguration expirationConfiguration,
@@ -42,6 +43,7 @@ public class Configuration {
                  SitesConfiguration sitesConfiguration,
                  CompatibilityModeConfiguration compatibilityConfiguration,
                  List<?> modules) {
+      this.template = template;
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -148,6 +150,10 @@ public class Configuration {
       return compatibilityConfiguration;
    }
 
+   public boolean isTemplate() {
+      return template;
+   }
+
    @Override
    public String toString() {
       return "Configuration{" +
@@ -177,6 +183,7 @@ public class Configuration {
    public int hashCode() {
       final int prime = 31;
       int result = 1;
+      result = prime * result + (template ? 1231 : 1237);
       result = prime * result + ((clusteringConfiguration == null) ? 0 : clusteringConfiguration.hashCode());
       result = prime * result + ((compatibilityConfiguration == null) ? 0 : compatibilityConfiguration.hashCode());
       result = prime * result
@@ -211,6 +218,9 @@ public class Configuration {
       if (getClass() != obj.getClass())
          return false;
       Configuration other = (Configuration) obj;
+      if (template != other.template) {
+         return false;
+      }
       if (clusteringConfiguration == null) {
          if (other.clusteringConfiguration != null)
             return false;
