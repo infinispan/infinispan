@@ -149,12 +149,12 @@ public class CacheObserver {
       eventsMap.addEvent(Cache2.class, TopologyChangedEvent.class, event);
    }
 
-   private void observeCache1CacheEntryEvictedEvent(@Observes @Cache1 CacheEntryEvictedEvent event) {
-      eventsMap.addEvent(Cache1.class, CacheEntryEvictedEvent.class, event);
+   private void observeCache1CacheEntryExpiredEvent(@Observes @Cache1 CacheEntryExpiredEvent event) {
+      eventsMap.addEvent(Cache1.class, CacheEntryExpiredEvent.class, event);
    }
 
-   private void observeCache2CacheEntryEvictedEvent(@Observes @Cache2 CacheEntryEvictedEvent event) {
-      eventsMap.addEvent(Cache2.class, CacheEntryEvictedEvent.class, event);
+   private void observeCache2CacheEntryExpiredEvent(@Observes @Cache2 CacheEntryExpiredEvent event) {
+      eventsMap.addEvent(Cache2.class, CacheEntryExpiredEvent.class, event);
    }
 
    /**

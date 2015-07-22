@@ -1,10 +1,12 @@
 package org.infinispan.container;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.function.BiConsumer;
 
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -78,9 +80,15 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
 
    /**
     *
-    * @return count of the number of entries in the container
+    * @return count of the number of entries in the container excluding expired entries
     */
    int size();
+
+   /**
+    *
+    * @return count of the number of entries in the container including expired entries
+    */
+   int sizeIncludingExpired();
 
    /**
     * Removes all entries in the container
@@ -115,8 +123,11 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
    Set<InternalCacheEntry<K, V>> entrySet();
 
    /**
-    * Purges entries that have passed their expiry time
+    * This method just calls to {@link ExpirationManager#processExpiration()}
+    * @deprecated This method doesn't allow for proper expiration notifications when a cache loader is also in use.
+    * @see ExpirationManager#processExpiration()
     */
+   @Deprecated
    void purgeExpired();
 
    /**
@@ -151,7 +162,7 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * @param action the specified action to execute on filtered key/values
     * @throws InterruptedException
     */
-   public void executeTask(final KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException;
+   void executeTask(final KeyFilter<? super K> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException;
 
    /**
     * Executes task specified by the given action on the container key/values filtered using the specified keyvalue filter.
@@ -160,9 +171,23 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * @param action the specified action to execute on filtered key/values
     * @throws InterruptedException
     */
-   public void executeTask(KeyValueFilter<? super K, ? super V> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException;
+   void executeTask(KeyValueFilter<? super K, ? super V> filter, BiConsumer<? super K, InternalCacheEntry<K, V>> action) throws InterruptedException;
 
-   public static interface ComputeAction<K, V> {
+   /**
+    * {@inheritDoc}
+    * <p>This iterator only returns entries that are not expired, however it will not remove them while doing so.</p>
+    * @return iterator that doesn't produce expired entries
+    */
+   @Override
+   Iterator<InternalCacheEntry<K, V>> iterator();
+
+   /**
+    * Same as {@link DataContainer#iterator()} except that is also returns expired entries.
+    * @return iterator that returns all entries including expired ones
+    */
+   Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired();
+
+   interface ComputeAction<K, V> {
 
       /**
        * Computes the new value for the key.

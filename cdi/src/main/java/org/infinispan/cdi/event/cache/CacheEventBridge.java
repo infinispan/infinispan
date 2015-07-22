@@ -31,9 +31,9 @@ public class CacheEventBridge extends AbstractEventBridge<Event<?, ?>> {
          listenable.addListener(new CacheEntriesEvictedAdapter(getBaseEvent()
                .select(CacheEntriesEvictedAdapter.WILDCARD_TYPE, qualifiers)));
       }
-      if (hasObservers(CacheEntryEvictedAdapter.EMPTY, qualifiers)) {
-         listenable.addListener(new CacheEntryEvictedAdapter(getBaseEvent()
-               .select(CacheEntryEvictedAdapter.WILDCARD_TYPE, qualifiers)));
+      if (hasObservers(CacheEntryExpiredAdapter.EMPTY, qualifiers)) {
+         listenable.addListener(new CacheEntryExpiredAdapter(getBaseEvent()
+                 .select(CacheEntryExpiredAdapter.WILDCARD_TYPE, qualifiers)));
       }
       if (hasObservers(CacheEntryInvalidatedAdapter.EMPTY, qualifiers)) {
          listenable.addListener(new CacheEntryInvalidatedAdapter(getBaseEvent()

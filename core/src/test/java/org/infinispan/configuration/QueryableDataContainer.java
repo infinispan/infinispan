@@ -41,6 +41,12 @@ public class QueryableDataContainer implements DataContainer<Object, Object> {
    }
 
    @Override
+   public Iterator<InternalCacheEntry<Object, Object>> iteratorIncludingExpired() {
+      loggedOperations.add("expiredIterator()");
+      return delegate.iteratorIncludingExpired();
+   }
+
+   @Override
    public InternalCacheEntry<Object, Object> get(Object k) {
       loggedOperations.add("get(" + k + ")" );
       return delegate.get(k);
@@ -74,6 +80,12 @@ public class QueryableDataContainer implements DataContainer<Object, Object> {
    public int size() {
       loggedOperations.add("size()" );
       return delegate.size();
+   }
+
+   @Override
+   public int sizeIncludingExpired() {
+      loggedOperations.add("sizeIncludingExpired()" );
+      return delegate.sizeIncludingExpired();
    }
 
    @Override

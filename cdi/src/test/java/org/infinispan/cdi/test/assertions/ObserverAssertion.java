@@ -73,8 +73,8 @@ public class ObserverAssertion {
       return this;
    }
 
-   public ObserverAssertion hasEntryEvictedEvent(String key) {
-      assertEquals(getNonEmptyListOfEvents(CacheEntryEvictedEvent.class).get(0).getKey(), key);
+   public ObserverAssertion hasEntryExpiredEvent(String key) {
+      assertEquals(getNonEmptyListOfEvents(CacheEntryExpiredEvent.class).get(0).getKey(), key);
       return this;
    }
 

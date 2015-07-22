@@ -8,6 +8,7 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.eviction.PassivationManager;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.container.*;
 import org.infinispan.metadata.Metadata;
@@ -75,16 +76,6 @@ public class DataContainerStressTest {
       // Mockito cannot be used as it will run out of memory from keeping all the invocations, thus we use blank impls
       dc.initialize(new EvictionManager() {
                        @Override
-                       public void processEviction() {
-
-                       }
-
-                       @Override
-                       public boolean isEnabled() {
-                          return false;
-                       }
-
-                       @Override
                        public void onEntryEviction(Map evicted) {
 
                        }
@@ -139,7 +130,27 @@ public class DataContainerStressTest {
                  public long getActivationCount() {
                     return 0;
                  }
-              }, null, timeService);
+              }, null, timeService, null, new ExpirationManager() {
+                 @Override
+                 public void processExpiration() {
+
+                 }
+
+                 @Override
+                 public boolean isEnabled() {
+                    return false;
+                 }
+
+                 @Override
+                 public void handleInMemoryExpiration(InternalCacheEntry entry) {
+
+                 }
+
+                 @Override
+                 public void handleInStoreExpiration(Object key) {
+
+                 }
+              });
    }
 
    private long threeQuarterMemorySize(int numKeys, int keyLength, int valueLength) {

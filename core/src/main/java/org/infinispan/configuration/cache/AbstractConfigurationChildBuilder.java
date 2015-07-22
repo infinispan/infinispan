@@ -2,7 +2,7 @@ package org.infinispan.configuration.cache;
 
 abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBuilder {
 
-   private final ConfigurationBuilder builder;
+   protected final ConfigurationBuilder builder;
 
    protected AbstractConfigurationChildBuilder(ConfigurationBuilder builder) {
       this.builder = builder;

@@ -30,7 +30,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
-import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.ControlledTimeService;
 import org.infinispan.util.PersistenceMockUtil;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterMethod;
@@ -411,6 +411,13 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
 
       timeService.advance(lifespan + 1);
 
+      // Make sure we don't report that we contain these values
+      assertContains("k1", false);
+      assertContains("k2", false);
+      assertContains("k3", false);
+      assertContains("k4", true);
+      assertContains("k5", true);
+
       purgeExpired("k1", "k2", "k3");
 
       assertContains("k1", false);
@@ -558,28 +565,6 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
       @Override
       public int hashCode() {
          return role != null ? role.hashCode() : 0;
-      }
-   }
-
-   public static class ControlledTimeService extends DefaultTimeService {
-      private long currentMillis;
-
-      public ControlledTimeService(long currentMillis) {
-         this.currentMillis = currentMillis;
-      }
-
-      @Override
-      public long wallClockTime() {
-         return currentMillis;
-      }
-
-      @Override
-      public long time() {
-         return currentMillis * 1000;
-      }
-
-      public void advance(long time) {
-         currentMillis += time;
       }
    }
 

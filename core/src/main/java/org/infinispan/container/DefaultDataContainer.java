@@ -22,11 +22,13 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.eviction.PassivationManager;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.metadata.impl.L1Metadata;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.CoreImmutables;
 import org.infinispan.util.TimeService;
@@ -62,6 +64,8 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    private ActivationManager activator;
    private PersistenceManager pm;
    private TimeService timeService;
+   private CacheNotifier cacheNotifier;
+   private ExpirationManager<K, V> expirationManager;
 
    public DefaultDataContainer(int concurrencyLevel) {
       // If no comparing implementations passed, could fallback on JDK CHM
@@ -135,13 +139,16 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Inject
    public void initialize(EvictionManager evictionManager, PassivationManager passivator,
-                          InternalEntryFactory entryFactory, ActivationManager activator, PersistenceManager clm, TimeService timeService) {
+                          InternalEntryFactory entryFactory, ActivationManager activator, PersistenceManager clm,
+                          TimeService timeService, CacheNotifier cacheNotifier, ExpirationManager<K, V> expirationManager) {
       this.evictionManager = evictionManager;
       this.passivator = passivator;
       this.entryFactory = entryFactory;
       this.activator = activator;
       this.pm = clm;
       this.timeService = timeService;
+      this.cacheNotifier = cacheNotifier;
+      this.expirationManager = expirationManager;
    }
 
    public static <K, V> DefaultDataContainer<K, V> boundedDataContainer(int concurrencyLevel, long maxEntries,
@@ -182,8 +189,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       if (e != null && e.canExpire()) {
          long currentTimeMillis = timeService.wallClockTime();
          if (e.isExpired(currentTimeMillis)) {
-            // We can only remove the same value - in case if a concurrent write updates it
-            entries.remove(k, e);
+            expirationManager.handleInMemoryExpiration(e);
             e = null;
          } else {
             e.touch(currentTimeMillis);
@@ -247,6 +253,17 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Override
    public int size() {
+      int size = 0;
+      // We have to loop through to make sure to remove expired entries
+      for (Iterator<InternalCacheEntry<K, V>> iter = iterator(); iter.hasNext(); ) {
+         iter.next();
+         if (++size == Integer.MAX_VALUE) return Integer.MAX_VALUE;
+      }
+      return size;
+   }
+
+   @Override
+   public int sizeIncludingExpired() {
       return entries.size();
    }
 
@@ -273,13 +290,8 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Override
    public void purgeExpired() {
-      long currentTimeMillis = timeService.wallClockTime();
-      for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = entries.values().iterator(); purgeCandidates.hasNext();) {
-         InternalCacheEntry e = purgeCandidates.next();
-         if (e.isExpired(currentTimeMillis)) {
-            purgeCandidates.remove();
-         }
-      }
+      // Just calls to expiration manager to handle this
+      expirationManager.processExpiration();
    }
 
    @Override
@@ -309,7 +321,12 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    @Override
    public Iterator<InternalCacheEntry<K, V>> iterator() {
-      return new EntryIterator(entries.values().iterator());
+      return new EntryIterator(entries.values().iterator(), false);
+   }
+
+   @Override
+   public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired() {
+      return new EntryIterator(entries.values().iterator(), true);
    }
 
    private final class DefaultEvictionListener implements EvictionListener<K, InternalCacheEntry<K, V>> {
@@ -341,7 +358,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
 
    private class ImmutableEntryIterator extends EntryIterator {
       ImmutableEntryIterator(Iterator<InternalCacheEntry<K, V>> it){
-         super(it);
+         super(it, false);
       }
 
       @Override
@@ -353,28 +370,30 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    public class EntryIterator implements Iterator<InternalCacheEntry<K, V>> {
 
       private final Iterator<InternalCacheEntry<K, V>> it;
+      private final boolean includeExpired;
 
       private InternalCacheEntry<K, V> next;
 
-      EntryIterator(Iterator<InternalCacheEntry<K, V>> it){this.it=it;}
+      EntryIterator(Iterator<InternalCacheEntry<K, V>> it, boolean includeExpired){
+         this.it=it;
+         this.includeExpired = includeExpired;
+      }
 
       private InternalCacheEntry<K, V> getNext() {
+         boolean initializedTime = false;
+         long now = 0;
          while (it.hasNext()) {
             InternalCacheEntry<K, V> entry = it.next();
-            long now;
-            if (entry.canExpire() && entry.isExpired((now = timeService.wallClockTime()))) {
-               InternalCacheEntry<K, V> computed = entries.compute(entry.getKey(), (k, oldEntry) -> {
-                  if (oldEntry.isExpired(now)) {
-                     return null;
-                  }
-                  return oldEntry;
-               });
-               if (computed != null) {
-                  return computed;
-               }
-            } else {
-               // Iterator doesn't count as a regular read, so don't touch entry
+            if (includeExpired || !entry.canExpire()) {
                return entry;
+            } else {
+               if (!initializedTime) {
+                  now = timeService.wallClockTime();
+                  initializedTime = true;
+               }
+               if (!entry.isExpired(now)) {
+                  return entry;
+               }
             }
          }
          return null;

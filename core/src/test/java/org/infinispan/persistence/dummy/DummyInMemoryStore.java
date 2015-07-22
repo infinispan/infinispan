@@ -121,6 +121,7 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
          MarshalledEntry se = deserialize(next.getKey(), next.getValue(), false, true);
          if (isExpired(se, currentTimeMillis)) {
             if (task != null) task.entryPurged(next.getKey());
+            // TODO: need to call to expiration manager
             i.remove();
             expired.add(next.getKey());
          }
@@ -136,7 +137,6 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
       long now = timeService.wallClockTime();
       if (isExpired(me, now)) {
          log.tracef("Key %s exists, but has expired.  Entry is %s", key, me);
-         store.remove(key);
          return null;
       }
       return me;
@@ -289,7 +289,16 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
 
    @Override
    public boolean contains(Object key) {
-      return store.containsKey(key);
+      record("load");
+      if (key == null) return false;
+      MarshalledEntry me = deserialize(key, store.get(key), false, true);
+      if (me == null) return false;
+      long now = timeService.wallClockTime();
+      if (isExpired(me, now)) {
+         log.tracef("Key %s exists, but has expired.  Entry is %s", key, me);
+         return false;
+      }
+      return true;
    }
 
    private byte[] serialize(MarshalledEntry o) {

@@ -97,16 +97,15 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       allowedListeners.put(TransactionRegistered.class, TransactionRegisteredEvent.class);
       allowedListeners.put(TransactionCompleted.class, TransactionCompletedEvent.class);
       allowedListeners.put(CacheEntryInvalidated.class, CacheEntryInvalidatedEvent.class);
+      allowedListeners.put(CacheEntryExpired.class, CacheEntryExpiredEvent.class);
       allowedListeners.put(DataRehashed.class, DataRehashedEvent.class);
       allowedListeners.put(TopologyChanged.class, TopologyChangedEvent.class);
       allowedListeners.put(PartitionStatusChanged.class, PartitionStatusChangedEvent.class);
 
-      // For backward compat
-      allowedListeners.put(CacheEntryEvicted.class, CacheEntryEvictedEvent.class);
-
       clusterAllowedListeners.put(CacheEntryCreated.class, CacheEntryCreatedEvent.class);
       clusterAllowedListeners.put(CacheEntryModified.class, CacheEntryModifiedEvent.class);
       clusterAllowedListeners.put(CacheEntryRemoved.class, CacheEntryRemovedEvent.class);
+      clusterAllowedListeners.put(CacheEntryExpired.class, CacheEntryExpiredEvent.class);
    }
 
    final List<CacheEntryListenerInvocation<K, V>> cacheEntryCreatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
@@ -117,15 +116,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    final List<CacheEntryListenerInvocation<K, V>> cacheEntryPassivatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
    final List<CacheEntryListenerInvocation<K, V>> cacheEntryLoadedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
    final List<CacheEntryListenerInvocation<K, V>> cacheEntryInvalidatedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
+   final List<CacheEntryListenerInvocation<K, V>> cacheEntryExpiredListeners = new CopyOnWriteArrayList<>();
    final List<CacheEntryListenerInvocation<K, V>> cacheEntriesEvictedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
    final List<CacheEntryListenerInvocation<K, V>> transactionRegisteredListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
    final List<CacheEntryListenerInvocation<K, V>> transactionCompletedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
    final List<CacheEntryListenerInvocation<K, V>> dataRehashedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
    final List<CacheEntryListenerInvocation<K, V>> topologyChangedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
    final List<CacheEntryListenerInvocation<K, V>> partitionChangedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
-
-   // For backward compat
-   final List<CacheEntryListenerInvocation<K, V>> cacheEntryEvictedListeners = new CopyOnWriteArrayList<CacheEntryListenerInvocation<K, V>>();
 
    private Cache<K, V> cache;
    private ClusteringDependentLogic clusteringDependentLogic;
@@ -167,15 +164,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       listenersMap.put(CacheEntryPassivated.class, cacheEntryPassivatedListeners);
       listenersMap.put(CacheEntryLoaded.class, cacheEntryLoadedListeners);
       listenersMap.put(CacheEntriesEvicted.class, cacheEntriesEvictedListeners);
+      listenersMap.put(CacheEntryExpired.class, cacheEntryExpiredListeners);
       listenersMap.put(TransactionRegistered.class, transactionRegisteredListeners);
       listenersMap.put(TransactionCompleted.class, transactionCompletedListeners);
       listenersMap.put(CacheEntryInvalidated.class, cacheEntryInvalidatedListeners);
       listenersMap.put(DataRehashed.class, dataRehashedListeners);
       listenersMap.put(TopologyChanged.class, topologyChangedListeners);
       listenersMap.put(PartitionStatusChanged.class, partitionChangedListeners);
-
-      // For backward compat
-      listenersMap.put(CacheEntryEvicted.class, cacheEntryEvictedListeners);
    }
 
    @Inject
@@ -431,37 +426,20 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             e.setEntries(evictedKeysAndValues);
             for (CacheEntryListenerInvocation<K, V> listener : cacheEntriesEvictedListeners) listener.invoke(e);
          }
-
-         // For backward compat
-         if (isNotificationAllowed(command, cacheEntryEvictedListeners)) {
-            for (InternalCacheEntry<? extends K, ? extends V> ice : entries) {
-               EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-               e.setKey(ice.getKey());
-               e.setValue(ice.getValue());
-               boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(ice.getKey());
-               for (CacheEntryListenerInvocation<K, V> listener : cacheEntryEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
-            }
-         }
       }
    }
 
    @Override
-   public void notifyCacheEntryEvicted(K key, V value,
-         InvocationContext ctx, FlagAffectedCommand command) {
-      boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-      if (isNotificationAllowed(command, cacheEntriesEvictedListeners)) {
-         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
-         Map<K, V> map = Collections.singletonMap(key, value);
-         e.setEntries(map);
-         for (CacheEntryListenerInvocation<K, V> listener : cacheEntriesEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
-      }
-
-      // For backward compat
-      if (isNotificationAllowed(command, cacheEntryEvictedListeners)) {
-         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EVICTED);
+   public void notifyCacheEntryExpired(K key, V value, Metadata metadata) {
+      if (isNotificationAllowed(null, cacheEntryExpiredListeners)) {
+         EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EXPIRED);
          e.setKey(key);
          e.setValue(value);
-         for (CacheEntryListenerInvocation<K, V> listener : cacheEntryEvictedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
+         e.setMetadata(metadata);
+         e.setOriginLocal(true);
+         e.setPre(false);
+         boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
+         cacheEntryExpiredListeners.forEach(l -> l.invoke(e, isLocalNodePrimaryOwner));
       }
    }
 

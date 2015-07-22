@@ -7,6 +7,7 @@ import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.container.InternalEntryFactoryImpl;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.eviction.ActivationManager;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -73,7 +74,8 @@ public class DataContainerTest extends AbstractInfinispanTest {
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getCacheConfiguration().locking().concurrencyLevel());
          ActivationManager activationManager = mock(ActivationManager.class);
          doNothing().when(activationManager).onUpdate(Mockito.anyObject(), Mockito.anyBoolean());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), activationManager, null, TIME_SERVICE);
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), activationManager, null,
+                 TIME_SERVICE, null, mock(ExpirationManager.class));
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the default is correctly established
@@ -108,7 +110,8 @@ public class DataContainerTest extends AbstractInfinispanTest {
          DataContainer ddc = DefaultDataContainer.unBoundedDataContainer(cache.getCacheConfiguration().locking().concurrencyLevel());
          ActivationManager activationManager = mock(ActivationManager.class);
          doNothing().when(activationManager).onUpdate(Mockito.anyObject(), Mockito.anyBoolean());
-         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), activationManager, null, TIME_SERVICE);
+         ((DefaultDataContainer) ddc).initialize(null, null,new InternalEntryFactoryImpl(), activationManager, null,
+                 TIME_SERVICE, null, mock(ExpirationManager.class));
          QueryableDataContainer.setDelegate(ddc);
 
          // Verify that the config is correct

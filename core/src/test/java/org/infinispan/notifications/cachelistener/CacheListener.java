@@ -57,6 +57,7 @@ public class CacheListener {
    @CacheEntryVisited
    @TransactionCompleted
    @TransactionRegistered
+   @CacheEntryExpired
    public void handle(Event e) {
       events.add(e);
       if (e.isPre())

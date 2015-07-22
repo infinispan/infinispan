@@ -5,10 +5,13 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationUtils;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIVATION;
 
@@ -17,7 +20,9 @@ import static org.infinispan.configuration.cache.PersistenceConfiguration.PASSIV
  *
  */
 public class PersistenceConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<PersistenceConfiguration> {
-   private List<StoreConfigurationBuilder<?,?>> stores = new ArrayList<StoreConfigurationBuilder<?,?>>(2);
+   private static final Log log = LogFactory.getLog(PersistenceConfigurationBuilder.class);
+
+   private final List<StoreConfigurationBuilder<?,?>> stores = new ArrayList<StoreConfigurationBuilder<?,?>>(2);
    private final AttributeSet attributes;
 
    protected PersistenceConfigurationBuilder(ConfigurationBuilder builder) {
@@ -109,6 +114,22 @@ public class PersistenceConfigurationBuilder extends AbstractConfigurationChildB
       }
       if (numFetchPersistentState > 1)
          throw new CacheConfigurationException("Maximum one store can be set to 'fetchPersistentState'!");
+
+      // If we have a store we have to guarantee the reaper expiration thread is enabled
+      if (!stores.isEmpty()) {
+         boolean reaperEnabled = builder.expiration().reaperEnabled();
+         long wakeupInterval = builder.expiration().wakeupInterval();
+         if (!reaperEnabled || wakeupInterval < 0) {
+            builder.expiration().enableReaper();
+            if (wakeupInterval < 0) {
+               log.debug("Store present and expiration reaper wakeup was less than 0 - explicitly enabling and setting " +
+                       "wakeup interval to 1 minute.");
+               builder.expiration().wakeUpInterval(1, TimeUnit.MINUTES);
+            } else {
+               log.debug("Store present however expiration reaper was not enabled - explicitly enabling.");
+            }
+         }
+      }
    }
 
    @Override

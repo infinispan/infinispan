@@ -3,33 +3,32 @@ package org.infinispan.cdi.event.cache;
 import org.infinispan.Cache;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
-import org.infinispan.notifications.cachelistener.event.CacheEntryEvictedEvent;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
+import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.transaction.xa.GlobalTransaction;
 
 import javax.enterprise.event.Event;
 import javax.enterprise.util.TypeLiteral;
 
 /**
- * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted}.
+ * Event bridge for {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired}.
  *
- * @author Pete Muir
- * @author Sebastian Laskawiec
+ * @author William Burns
  * @see org.infinispan.notifications.Listener
- * @see org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted
+ * @see org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired
  */
 @Listener
-public class CacheEntryEvictedAdapter<K, V> extends AbstractAdapter<CacheEntryEvictedEvent<K, V>> {
+public class CacheEntryExpiredAdapter<K, V> extends AbstractAdapter<CacheEntryExpiredEvent<K, V>> {
 
    /**
     * CDI does not allow parametrized type for events (like <code><K,V></code>). This is why this wrapped needs to be
     * introduced. To ensure type safety, this needs to be linked to parent class (in other words this class can not
     * be static).
     */
-   private class CDICacheEntriesEvictedEvent implements CacheEntryEvictedEvent<K, V> {
-      private CacheEntryEvictedEvent<K, V> decoratedEvent;
+   private class CDICacheEntriesEvictedEvent implements CacheEntryExpiredEvent<K, V> {
+      private CacheEntryExpiredEvent<K, V> decoratedEvent;
 
-      private CDICacheEntriesEvictedEvent(CacheEntryEvictedEvent<K, V> decoratedEvent) {
+      private CDICacheEntriesEvictedEvent(CacheEntryExpiredEvent<K, V> decoratedEvent) {
          this.decoratedEvent = decoratedEvent;
       }
 
@@ -77,7 +76,7 @@ public class CacheEntryEvictedAdapter<K, V> extends AbstractAdapter<CacheEntryEv
    /**
     * Needed for creating event bridge.
     */
-   public static final CacheEntryEvictedEvent<?, ?> EMPTY = new CacheEntryEvictedEvent<Object, Object>() {
+   public static final CacheEntryExpiredEvent<?, ?> EMPTY = new CacheEntryExpiredEvent<Object, Object>() {
 
       @Override
       public Object getKey() {
@@ -124,16 +123,16 @@ public class CacheEntryEvictedAdapter<K, V> extends AbstractAdapter<CacheEntryEv
     * Events which will be selected (including generic type information (<code><?, ?></code>).
     */
    @SuppressWarnings("serial")
-   public static final TypeLiteral<CacheEntryEvictedEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryEvictedEvent<?, ?>>() {
+   public static final TypeLiteral<CacheEntryExpiredEvent<?, ?>> WILDCARD_TYPE = new TypeLiteral<CacheEntryExpiredEvent<?, ?>>() {
    };
 
-   public CacheEntryEvictedAdapter(Event<CacheEntryEvictedEvent<K, V>> event) {
+   public CacheEntryExpiredAdapter(Event<CacheEntryExpiredEvent<K, V>> event) {
       super(event);
    }
 
    @Override
-   @CacheEntryEvicted
-   public void fire(CacheEntryEvictedEvent<K, V> payload) {
+   @CacheEntryExpired
+   public void fire(CacheEntryExpiredEvent<K, V> payload) {
       super.fire(new CDICacheEntriesEvictedEvent(payload));
    }
 }

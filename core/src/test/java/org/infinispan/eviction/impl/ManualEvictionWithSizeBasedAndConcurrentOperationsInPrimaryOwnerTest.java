@@ -457,6 +457,11 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       }
 
       @Override
+      public int sizeIncludingExpired() {
+         return delegate.sizeIncludingExpired();
+      }
+
+      @Override
       @Stop(priority = 999)
       public void clear() {
          delegate.clear();
@@ -496,6 +501,11 @@ public class ManualEvictionWithSizeBasedAndConcurrentOperationsInPrimaryOwnerTes
       @Override
       public Iterator<InternalCacheEntry<K, V>> iterator() {
          return delegate.iterator();
+      }
+
+      @Override
+      public Iterator<InternalCacheEntry<K, V>> iteratorIncludingExpired() {
+         return delegate.iteratorIncludingExpired();
       }
 
       @Override

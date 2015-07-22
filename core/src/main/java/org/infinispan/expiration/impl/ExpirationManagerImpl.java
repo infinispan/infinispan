@@ -6,18 +6,22 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
+import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -47,9 +51,9 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
                  persistenceManager, cacheNotifier, timeService);
    }
 
-   void initialize(ScheduledExecutorService executor,
-            String cacheName, Configuration cfg, DataContainer<K, V> dataContainer,
-            PersistenceManager persistenceManager, CacheNotifier<K, V> cacheNotifier, TimeService timeService) {
+   void initialize(ScheduledExecutorService executor, String cacheName, Configuration cfg,
+           DataContainer<K, V> dataContainer, PersistenceManager persistenceManager, CacheNotifier<K, V> cacheNotifier,
+           TimeService timeService) {
       this.executor = executor;
       this.configuration = cfg;
       this.cacheName = cacheName;
@@ -87,7 +91,14 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
                log.trace("Purging data container of expired entries");
                start = timeService.time();
             }
-            dataContainer.purgeExpired();
+            long currentTimeMillis = timeService.wallClockTime();
+            for (Iterator<InternalCacheEntry<K, V>> purgeCandidates = dataContainer.iteratorIncludingExpired();
+                 purgeCandidates.hasNext();) {
+               InternalCacheEntry<K, V> e = purgeCandidates.next();
+               if (e.isExpired(currentTimeMillis)) {
+                  handleInMemoryExpiration(e);
+               }
+            }
             if (trace) {
                log.tracef("Purging data container completed in %s",
                           Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
@@ -105,6 +116,48 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    @Override
    public boolean isEnabled() {
       return enabled;
+   }
+
+   @Override
+   public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry) {
+      dataContainer.compute(entry.getKey(), ((k, oldEntry, factory) -> {
+         if (entry == oldEntry) {
+            // We have to delete from shared stores as well to make sure there are not multiple expiration events
+            persistenceManager.deleteFromAllStores(k, PersistenceManager.AccessMode.BOTH);
+            if (cacheNotifier != null) {
+               cacheNotifier.notifyCacheEntryExpired(k, entry.getValue(), entry.getMetadata());
+            }
+            return null;
+         }
+         return oldEntry;
+      }));
+   }
+
+   @Override
+   public void handleInStoreExpiration(K key) {
+      // Note since this is invoked without the actual key lock it is entirely possible for a remove to occur
+      // concurrently before the data container lock is acquired and then the oldEntry below will be null causing an
+      // expiration event to be generated that is extra
+      dataContainer.compute(key, ((k, oldEntry, factory) -> {
+         if (oldEntry == null || (oldEntry.canExpire() && oldEntry.isExpired(timeService.time()))) {
+            // We have to delete from shared stores as well to make sure there are not multiple expiration events
+            persistenceManager.deleteFromAllStores(key, PersistenceManager.AccessMode.BOTH);
+            if (cacheNotifier != null) {
+               V value;
+               Metadata metadata;
+               if (oldEntry != null) {
+                  value = oldEntry.getValue();
+                  metadata = oldEntry.getMetadata();
+               } else {
+                  value = null;
+                  metadata = null;
+               }
+               cacheNotifier.notifyCacheEntryExpired(k, value, metadata);
+            }
+            return null;
+         }
+         return oldEntry;
+      }));
    }
 
    @Stop(priority = 5)

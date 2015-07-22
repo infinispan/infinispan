@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
@@ -27,6 +28,7 @@ import java.util.Map;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.testng.AssertJUnit.*;
 
 
 @Test(groups = "unit", testName = "notifications.cachelistener.CacheNotifierImplTest")
@@ -132,7 +134,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryEvicted() {
-      n.notifyCacheEntryEvicted("k", "v", null, null);
+      n.notifyCacheEntriesEvicted(Collections.singleton(new ImmortalCacheEntry("k", "v")), null, null);
 
       assert cl.isReceivedPost();
       assert cl.getInvocationCount() == 1;
@@ -156,6 +158,18 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
       Map.Entry<Object, Object> entry = entries.entrySet().iterator().next();
       assert entry.getKey().equals("k");
       assert entry.getValue().equals("v");
+   }
+
+   public void testNotifyCacheEntryExpired() {
+      n.notifyCacheEntryExpired("k", "v", null);
+
+      assertTrue(cl.isReceivedPost());
+      assertEquals(1, cl.getInvocationCount());
+      assertEquals(mockCache, cl.getEvents().get(0).getCache());
+      assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, cl.getEvents().get(0).getType());
+      CacheEntryExpiredEvent expiredEvent = ((CacheEntryExpiredEvent) cl.getEvents().get(0));
+      assertEquals("k", expiredEvent.getKey());
+      assertEquals("v", expiredEvent.getValue());
    }
 
    public void testNotifyCacheEntryInvalidated() {

@@ -4,7 +4,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryEvicted;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -349,7 +348,7 @@ public class CacheListenerVisibilityTest extends SingleCacheManagerTest {
          this.afterContinue = afterContinue;
       }
 
-      @CacheEntryEvicted
+      @CacheEntriesEvicted
       @SuppressWarnings("unused")
       public void entryEvicted(Event e) {
          log.info("Cache entry evicted, now check in different thread");

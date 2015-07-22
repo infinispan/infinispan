@@ -28,7 +28,7 @@ public class ExpirationManagerTest extends AbstractInfinispanTest {
       return builder;
    }
 
-   public void testNoEvictionThread() {
+   public void testNoExpirationThread() {
       ExpirationManagerImpl em = new ExpirationManagerImpl();
       Configuration cfg = getCfg().expiration().wakeUpInterval(0L).build();
 

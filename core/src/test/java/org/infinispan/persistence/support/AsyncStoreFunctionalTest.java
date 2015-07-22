@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.eviction.EvictionStrategy;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.AbstractNamedCacheComponentFactory;
 import org.infinispan.factories.AutoInstantiableFactory;
 import org.infinispan.factories.GlobalComponentRegistry;
@@ -188,8 +189,8 @@ public class AsyncStoreFunctionalTest extends AbstractInfinispanTest {
                modApplyLatch.countDown();
             }
 
-            DataContainer dataContainer = TestingUtil.extractComponent(cache, DataContainer.class);
-            dataContainer.purgeExpired();
+            ExpirationManager expirationManager = TestingUtil.extractComponent(cache, ExpirationManager.class);
+            expirationManager.processExpiration();
 
             Set<Integer> keys = cache.keySet();
             assertTrue("Keys not empty: " + keys, keys.isEmpty());

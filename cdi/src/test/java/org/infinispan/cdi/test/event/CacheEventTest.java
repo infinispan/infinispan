@@ -139,7 +139,7 @@ public class CacheEventTest extends Arquillian {
       cache1.evict("pete");
 
       //then
-      assertThat(cacheObserver, Cache1.class).hasEntryEvictedEvent("pete");
+      assertThat(cacheObserver, Cache1.class).hasEntriesEvictedEvent("pete");
    }
 
    public void testFiringEntryModifiedEventWhenModifyingEntryInCache() throws Exception {

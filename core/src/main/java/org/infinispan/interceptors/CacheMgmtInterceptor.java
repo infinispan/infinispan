@@ -368,12 +368,12 @@ public class CacheMgmtInterceptor extends JmxStatsCommandInterceptor {
    }
 
    @ManagedAttribute(
-         description = "Number of entries currently in the cache",
+         description = "Number of entries currently in memory including expired entries",
          displayName = "Number of current cache entries",
          displayType = DisplayType.SUMMARY
    )
    public int getNumberOfEntries() {
-      return dataContainer.size();
+      return dataContainer.sizeIncludingExpired();
    }
 
    @ManagedAttribute(
