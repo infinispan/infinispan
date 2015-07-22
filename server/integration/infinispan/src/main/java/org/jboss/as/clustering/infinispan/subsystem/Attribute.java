@@ -144,7 +144,6 @@ public enum Attribute {
     TIMEOUT(ModelKeys.TIMEOUT),
     TOTAL_ORDER_EXECUTOR(ModelKeys.TOTAL_ORDER_EXECUTOR),
     TYPE(ModelKeys.TYPE),
-    @Deprecated VIRTUAL_NODES("virtual-nodes"),
     WAIT_TIME(ModelKeys.WAIT_TIME),
     ;
 
