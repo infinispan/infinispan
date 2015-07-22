@@ -65,7 +65,7 @@ public abstract class AbstractNodeAuthentication {
       return replicatedCache;
    }
 
-   private EmbeddedCacheManager getCacheManager(String jgrousConfigFile) {
+   protected EmbeddedCacheManager getCacheManager(String jgrousConfigFile) {
       GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder();
       globalConfig.globalJmxStatistics().disable();
       globalConfig.globalJmxStatistics().mBeanServerLookup(null); //TODO remove once WFLY-3124 is fixed, for now fail JMX registration
