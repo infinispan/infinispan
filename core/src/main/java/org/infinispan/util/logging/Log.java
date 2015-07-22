@@ -1337,4 +1337,13 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Statistics are enabled while attribute 'available' is set to false.", id = 372)
    CacheConfigurationException statisticsEnabledNotAvailable();
+   
+   @Message(value = "Attempted to start a cache using configuration template '%s'", id = 373)
+   CacheConfigurationException templateConfigurationStartAttempt(String cacheName);
+
+   @Message(value = "No such template '%s' when declaring '%s'", id = 374)
+   CacheConfigurationException undeclaredConfiguration(String extend, String name);
+
+   @Message(value = "Cannot use configuration '%s' as a template", id = 375)
+   CacheConfigurationException noConfiguration(String extend);
 }

@@ -428,6 +428,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
     */
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName) {
+      return getCache(cacheName, cacheName);
+   }
+
+   @Override
+   public <K, V> Cache<K, V> getCache(String cacheName, String configurationName) {
       assertIsNotTerminated();
       if (cacheName == null)
          throw new NullPointerException("Null arguments not allowed");
@@ -437,7 +442,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
          return cw.getCache();
       }
 
-      return createCache(cacheName);
+      return createCache(cacheName, configurationName);
    }
 
    @Override
@@ -447,11 +452,16 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
 
    @Override
    public <K, V> Cache<K, V> getCache(String cacheName, boolean createIfAbsent) {
+      return getCache(cacheName, cacheName, createIfAbsent);
+   }
+
+   @Override
+   public <K, V> Cache<K, V> getCache(String cacheName, String configurationTemplate, boolean createIfAbsent) {
       boolean cacheExists = cacheExists(cacheName);
       if (!cacheExists && !createIfAbsent)
          return null;
       else
-         return getCache(cacheName);
+         return getCache(cacheName, configurationTemplate);
    }
 
    @Override
@@ -466,7 +476,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             @Override
             public void run() {
                try {
-                  createCache(cacheName);
+                  createCache(cacheName, cacheName);
                } catch (RuntimeException e) {
                   exception.set(e);
                } catch (Throwable t) {
@@ -563,11 +573,11 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       return t != null && t.isCoordinator();
    }
 
-   private <K, V> Cache<K, V> createCache(String cacheName) {
+   private <K, V> Cache<K, V> createCache(String cacheName, String configurationName) {
       final boolean trace = log.isTraceEnabled();
       LogFactory.pushNDC(cacheName, trace);
       try {
-         Cache<K, V> cache = wireAndStartCache(cacheName);
+         Cache<K, V> cache = wireAndStartCache(cacheName, configurationName);
          // a null return value means the cache was created by someone else before we got the lock
          if (cache == null)
             return caches.get(cacheName).getCache();
@@ -578,9 +588,10 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
    }
 
    /**
+    * @param configurationName
     * @return a null return value means the cache was created by someone else before we got the lock
     */
-   private <K, V> Cache<K, V> wireAndStartCache(String cacheName) {
+   private <K, V> Cache<K, V> wireAndStartCache(String cacheName, String configurationName) {
       CacheWrapper createdCacheWrapper = null;
       Configuration c = null;
       try {
@@ -590,10 +601,13 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
             if (existingCacheWrapper != null) {
                return null; //signal that the cache was created by someone else
             }
-            c = getConfiguration(cacheName);
+            c = getConfiguration(configurationName);
             if (c.security().authorization().enabled()) {
                // Don't even attempt to wire anything if we don't have LIFECYCLE privileges
                authzHelper.checkPermission(c.security().authorization(), AuthorizationPermission.LIFECYCLE);
+            }
+            if (c.isTemplate() && cacheName.equals(configurationName)) {
+               throw log.templateConfigurationStartAttempt(cacheName);
             }
             createdCacheWrapper = new CacheWrapper();
             if (caches.put(cacheName, createdCacheWrapper) != null) {

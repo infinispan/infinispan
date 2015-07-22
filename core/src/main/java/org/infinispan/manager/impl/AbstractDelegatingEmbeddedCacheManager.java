@@ -118,6 +118,16 @@ public class AbstractDelegatingEmbeddedCacheManager implements EmbeddedCacheMana
    }
 
    @Override
+   public <K, V> Cache<K, V> getCache(String cacheName, String configurationName) {
+      return cm.getCache(cacheName, configurationName);
+   }
+
+   @Override
+   public <K, V> Cache<K, V> getCache(String cacheName, String configurationTemplate, boolean createIfAbsent) {
+      return cm.getCache(cacheName, configurationTemplate, createIfAbsent);
+   }
+
+   @Override
    public EmbeddedCacheManager startCaches(String... cacheNames) {
       return cm.startCaches(cacheNames);
    }

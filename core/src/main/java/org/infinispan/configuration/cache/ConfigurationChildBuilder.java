@@ -40,6 +40,10 @@ public interface ConfigurationChildBuilder {
 
    CompatibilityModeConfigurationBuilder compatibility();
 
+   default ConfigurationChildBuilder template(boolean template) {
+      return this;
+   }
+
    void validate(GlobalConfiguration globalConfig);
 
    Configuration build();
