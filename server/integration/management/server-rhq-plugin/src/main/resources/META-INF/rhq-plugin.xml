@@ -562,7 +562,6 @@
                             <c:property-options>
                                 <c:option value="AVAILABLE"/>
                                 <c:option value="DEGRADED_MODE"/>
-                                <c:option value="UNAVAILABLE"/>
                             </c:property-options>
                         </c:simple-property>
                     </c:group>
