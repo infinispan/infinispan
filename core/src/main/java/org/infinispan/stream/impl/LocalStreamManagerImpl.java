@@ -6,6 +6,7 @@ import org.infinispan.CacheSet;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.distribution.ch.ConsistentHash;
@@ -93,13 +94,13 @@ public class LocalStreamManagerImpl<K, V> implements LocalStreamManager<K> {
 
    @Inject
    public void inject(Cache<K, V> cache, ComponentRegistry registry, StateTransferManager stm, RpcManager rpc,
-           PersistenceManager persistenceManager, CommandsFactory factory) {
+           Configuration configuration, CommandsFactory factory) {
       this.cache = cache.getAdvancedCache().withFlags(Flag.CACHE_MODE_LOCAL);
       this.registry = registry;
       this.stm = stm;
       this.rpc = rpc;
       this.factory = factory;
-      this.hasLoader = persistenceManager.getStoresAsString().size() > 0;
+      this.hasLoader = configuration.persistence().usingStores();
    }
 
    @Start

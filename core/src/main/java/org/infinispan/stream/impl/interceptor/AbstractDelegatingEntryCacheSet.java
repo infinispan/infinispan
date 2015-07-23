@@ -3,6 +3,7 @@ package org.infinispan.stream.impl.interceptor;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
+import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.stream.impl.AbstractDelegatingCacheSet;
@@ -31,15 +32,22 @@ public abstract class AbstractDelegatingEntryCacheSet<K, V> extends AbstractDele
 
    @Override
    public CacheStream<CacheEntry<K, V>> stream() {
-      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-      return new LocalEntryCacheStream<>(cache, false, dm != null ? dm.getConsistentHash() : null,
-              () -> StreamSupport.stream(spliterator(), false), cache.getAdvancedCache().getComponentRegistry());
+      return getStream(false);
    }
 
    @Override
    public CacheStream<CacheEntry<K, V>> parallelStream() {
+      return getStream(true);
+   }
+
+   private CacheStream<CacheEntry<K, V>> getStream(boolean parallel) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-      return new LocalEntryCacheStream<>(cache, true, dm != null ? dm.getConsistentHash() : null,
-              () -> StreamSupport.stream(spliterator(), true), cache.getAdvancedCache().getComponentRegistry());
+      CloseableSpliterator<CacheEntry<K, V>> closeableSpliterator = spliterator();
+      CacheStream<CacheEntry<K, V>> stream = new LocalEntryCacheStream<>(cache, parallel, dm != null ?
+              dm.getConsistentHash() : null, () -> StreamSupport.stream(closeableSpliterator, parallel),
+              cache.getAdvancedCache().getComponentRegistry());
+      // We rely on the fact that on close returns the same instance
+      stream.onClose(() -> closeableSpliterator.close());
+      return stream;
    }
 }
