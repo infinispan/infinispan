@@ -54,9 +54,7 @@ import org.junit.runner.RunWith;
  * @since 8.0
  */
 @RunWith(Arquillian.class)
-// @Category(HotRodLocal.class)
-// Restore this when WFLY-4771 is resolved
-@Category({Unstable.class})
+@Category(HotRodLocal.class)
 public class HotRodCustomMarshallerIteratorIT {
 
    private static final String TO_STRING_FILTER_CONVERTER_FACTORY_NAME = "to-string-filter-converter";
