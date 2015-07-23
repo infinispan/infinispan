@@ -137,7 +137,7 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
          }
          currentBatchSize = batch;
          estimateRemaining -= i;
-         return Spliterators.spliterator(array, 0, i + 1, characteristics);
+         return Spliterators.spliterator(array, 0, i, characteristics);
       }
       return null;
    }

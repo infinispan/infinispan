@@ -35,6 +35,7 @@ import org.infinispan.commons.equivalence.AnyServerEquivalence;
 import org.infinispan.commons.equivalence.EquivalentHashSet;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
@@ -212,7 +213,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
          @Override
          public CloseableIterator<CacheEntry<K, V>> iterator() {
-            CloseableIterator<CacheEntry<K, V>> iterator = super.iterator();
+            CloseableIterator<CacheEntry<K, V>> iterator = Closeables.iterator(entrySet.stream());
             // TODO: can we use data container equivalence?
             Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
                     new AnyServerEquivalence());
@@ -233,35 +234,6 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
             return new IteratorAsSpliterator.Builder<>(iterator)
                     .setCharacteristics(Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL)
                     .get();
-         }
-
-         @Override
-         public CacheStream<CacheEntry<K, V>> stream() {
-            CloseableIterator<CacheEntry<K, V>> iterator = iterator();
-            DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-
-            CacheStream<CacheEntry<K, V>> cacheStream = new LocalEntryCacheStream<>(cache, false,
-                    dm != null ? dm.getConsistentHash() : null,
-                    () -> StreamSupport.stream(spliteratorFromIterator(iterator), false),
-                    cache.getAdvancedCache().getComponentRegistry());
-
-            // Since our iterator will require closing if we short circuit we need to make sure to do that
-            cacheStream.onClose(() -> iterator.close());
-            return cacheStream;
-         }
-
-         @Override
-         public CacheStream<CacheEntry<K, V>> parallelStream() {
-            CloseableIterator<CacheEntry<K, V>> iterator = iterator();
-            Spliterator<CacheEntry<K, V>> spliterator = spliteratorFromIterator(iterator);
-            DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-
-            CacheStream<CacheEntry<K, V>> cacheStream = new LocalEntryCacheStream<>(cache, true,
-                    dm != null ? dm.getConsistentHash() : null, () -> StreamSupport.stream(spliterator, true),
-                    cache.getAdvancedCache().getComponentRegistry());
-
-            cacheStream.onClose(() -> iterator.close());
-            return cacheStream;
          }
 
          @Override
@@ -307,7 +279,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
 
          @Override
          public CloseableIterator<K> iterator() {
-            CloseableIterator<K> iterator = super.iterator();
+            CloseableIterator<K> iterator = Closeables.iterator(keySet.stream());
             // TODO: can we use data container equivalence?
             Set<K> seenKeys = new EquivalentHashSet<K>(cache.getAdvancedCache().getDataContainer().size(),
                     new AnyServerEquivalence());

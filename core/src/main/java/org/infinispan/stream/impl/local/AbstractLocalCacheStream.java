@@ -10,6 +10,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Optional;
@@ -37,6 +39,8 @@ public abstract class AbstractLocalCacheStream<R, K, V> implements CacheStream<R
    protected final ConsistentHash hash;
    protected final Supplier<Stream<CacheEntry<K, V>>> supplier;
    protected final ComponentRegistry registry;
+
+   protected final Collection<Runnable> onCloseRunnables = new ArrayList<>(4);
 
    protected Set<Integer> segmentsToFilter;
    protected Set<?> keysToFilter;
@@ -70,6 +74,9 @@ public abstract class AbstractLocalCacheStream<R, K, V> implements CacheStream<R
    private final Stream<R> getOrCreateStream() {
       if (stream == null) {
          stream = getStream();
+         for (Runnable runnable : onCloseRunnables) {
+            stream = stream.onClose(runnable);
+         }
       }
       return stream;
    }
@@ -320,7 +327,7 @@ public abstract class AbstractLocalCacheStream<R, K, V> implements CacheStream<R
 
    @Override
    public Stream<R> onClose(Runnable closeHandler) {
-      stream = getOrCreateStream().onClose(closeHandler);
+      onCloseRunnables.add(closeHandler);
       return this;
    }
 

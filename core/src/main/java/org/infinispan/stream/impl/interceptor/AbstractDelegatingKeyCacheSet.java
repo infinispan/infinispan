@@ -3,6 +3,8 @@ package org.infinispan.stream.impl.interceptor;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.stream.impl.AbstractDelegatingCacheSet;
 import org.infinispan.stream.impl.local.LocalKeyCacheStream;
@@ -30,19 +32,22 @@ public abstract class AbstractDelegatingKeyCacheSet<K, V> extends AbstractDelega
 
    @Override
    public CacheStream<K> stream() {
-      DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-      // TODO: add custom local key cache stream that doesn't use entries - this way it doesn't need to use entry set
-      return new LocalKeyCacheStream<>(cache, false, dm != null ? dm.getConsistentHash() : null,
-              () -> StreamSupport.stream(cache.getAdvancedCache().cacheEntrySet().spliterator(), false),
-              cache.getAdvancedCache().getComponentRegistry());
+      return getStream(false);
    }
 
    @Override
    public CacheStream<K> parallelStream() {
+      return getStream(true);
+   }
+
+   private CacheStream<K> getStream(boolean parallel) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
+      CloseableSpliterator<CacheEntry<K, V>> closeableSpliterator = cache.getAdvancedCache().cacheEntrySet().spliterator();
       // TODO: add custom local key cache stream that doesn't use entries - this way it doesn't need to use entry set
-      return new LocalKeyCacheStream<>(cache, true, dm != null ? dm.getConsistentHash() : null,
-              () -> StreamSupport.stream(cache.getAdvancedCache().cacheEntrySet().spliterator(), true),
-              cache.getAdvancedCache().getComponentRegistry());
+      CacheStream<K> stream = new LocalKeyCacheStream<>(cache, parallel, dm != null ? dm.getConsistentHash() : null,
+              () -> StreamSupport.stream(closeableSpliterator, parallel), cache.getAdvancedCache().getComponentRegistry());
+      // We rely on the fact that on close returns the same instance
+      stream.onClose(() -> closeableSpliterator.close());
+      return stream;
    }
 }
