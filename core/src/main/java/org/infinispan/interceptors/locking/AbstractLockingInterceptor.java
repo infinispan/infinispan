@@ -23,7 +23,8 @@ import org.infinispan.util.concurrent.locks.LockUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -160,21 +161,17 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
    }
 
    protected final void lockAndRecord(InvocationContext context, Object key, long timeout) throws InterruptedException {
-      lockManager.acquireLock(context, key, timeout, false);
+      context.addLockedKey(key);
+      lockManager.lock(key, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).lock();
    }
 
    protected final void lockAllAndRecord(InvocationContext context, Stream<?> keys, long timeout) throws InterruptedException {
-      for (Iterator<?> iterator = keys.iterator(); iterator.hasNext();) {
-         lockManager.acquireLock(context, iterator.next(), timeout, false);
-      }
+      lockAllAndRecord(context, keys.collect(Collectors.toList()), timeout);
    }
 
    protected final void lockAllAndRecord(InvocationContext context, Collection<?> keys, long timeout) throws InterruptedException {
-      if (keys.isEmpty()) {
-         return;
-      }
-      for (Object key : keys) {
-         lockManager.acquireLock(context, key, timeout, false);
-      }
+      keys.forEach(context::addLockedKey);
+      lockManager.lockAll(keys, context.getLockOwner(), timeout, TimeUnit.MILLISECONDS).lock();
    }
+
 }

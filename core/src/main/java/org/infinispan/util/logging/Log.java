@@ -1087,8 +1087,8 @@ public interface Log extends BasicLogger {
    @Message(value = "Using internal security checker", id = 298)
    void authorizationEnabledWithoutSecurityManager();
 
-   @Message(value = "Unable to acquire lock after %s for key %s and requestor %s. Lock is held by %s, while request came from %s", id = 299)
-   TimeoutException unableToAcquireLock(String timeout, Object key, Object requestor, Object owner, String origin);
+   @Message(value = "Unable to acquire lock after %s for key %s and requestor %s. Lock is held by %s", id = 299)
+   TimeoutException unableToAcquireLock(String timeout, Object key, Object requestor, Object owner);
 
    @Message(value = "There was an exception while processing retrieval of entry values", id = 300)
    CacheException exceptionProcessingEntryRetrievalValues(@Cause Throwable cause);

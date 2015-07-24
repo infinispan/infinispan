@@ -15,7 +15,7 @@ import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.rpc.RpcManagerImpl;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
-import org.infinispan.util.concurrent.locks.LockManagerImpl;
+import org.infinispan.util.concurrent.locks.impl.DefaultLockManager;
 import org.jboss.as.controller.AbstractRuntimeOnlyHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -147,7 +147,7 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
             context.getFailureDescription().set(String.format("Unavailable cache %s", attrName));
         } else {
             AdvancedCache<?, ?> aCache = cache.getAdvancedCache();
-            LockManagerImpl lockManager = (LockManagerImpl) SecurityActions.getLockManager(aCache);
+            DefaultLockManager lockManager = (DefaultLockManager) SecurityActions.getLockManager(aCache);
             RpcManagerImpl rpcManager = (RpcManagerImpl) SecurityActions.getRpcManager(aCache);
             List<CommandInterceptor> interceptors = SecurityActions.getInterceptorChain(aCache);
             ComponentRegistry registry = SecurityActions.getComponentRegistry(aCache);
@@ -332,7 +332,6 @@ public class CacheMetricsHandler extends AbstractRuntimeOnlyHandler {
         for (CommandInterceptor interceptor : interceptors) {
             boolean isSubclass = interceptorClass.isAssignableFrom(interceptor.getClass());
             if (isSubclass) {
-                Collections.emptyList();
                 return (T) interceptor;
             }
         }

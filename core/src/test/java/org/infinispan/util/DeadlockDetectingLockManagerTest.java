@@ -1,27 +1,22 @@
 package org.infinispan.util;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.LocalTxInvocationContext;
-import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.test.AbstractInfinispanTest;
-import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.xa.DldGlobalTransaction;
-import org.infinispan.transaction.xa.TransactionFactory;
+import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectedException;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
-import org.infinispan.util.concurrent.locks.containers.LockContainer;
+import org.infinispan.util.concurrent.locks.LockPromise;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
+import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
+import org.testng.AssertJUnit;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
+import static org.testng.Assert.fail;
 
 /**
  * Tests functionality in {@link org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager}.
@@ -31,77 +26,67 @@ import org.testng.annotations.Test;
 @Test(groups = "unit", testName = "util.DeadlockDetectingLockManagerTest")
 public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
 
-   DeadlockDetectingLockManagerMock lockManager;
-   Configuration config = new ConfigurationBuilder().build();
-   private LockContainer lc;
-   private static final int SPIN_DURATION = 1000;
-   private DldGlobalTransaction lockOwner;
+   private DeadlockDetectingLockManagerMock lockManager;
 
    @BeforeMethod
    public void setUp() {
-      lc = mock(LockContainer.class);
-      lockManager = new DeadlockDetectingLockManagerMock(SPIN_DURATION, true, lc, config);
-      lockManager.injectTimeService(TIME_SERVICE);
-      lockOwner = (DldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_NORECOVERY_XA.newGlobalTransaction();
+      lockManager = new DeadlockDetectingLockManagerMock(createLockContainer());
    }
 
-
    public void testNoTransaction() throws Exception {
-      InvocationContext nonTx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
-
-      Lock mockLock = mock(Lock.class);
-      when(lc.acquireLock(nonTx.getLockOwner(), "k", config.locking().lockAcquisitionTimeout(), TimeUnit.MILLISECONDS)).thenReturn(mockLock).thenReturn(null);
-
-      assert lockManager.lockAndRecord("k", nonTx, config.locking().lockAcquisitionTimeout());
-      assert !lockManager.lockAndRecord("k", nonTx, config.locking().lockAcquisitionTimeout());
-
+      lockManager.lock("k", "aThread", 0, TimeUnit.MILLISECONDS).lock();
+      try {
+         lockManager.lock("k", "anotherThread", 0, TimeUnit.MILLISECONDS).lock();
+         fail("TimeoutException expected!");
+      } catch (TimeoutException e) {
+         //expected
+      }
    }
 
    public void testLockHeldByThread() throws Exception {
-      InvocationContext localTxContext = buildLocalTxIc(new DldGlobalTransaction());
+      lockManager.lock("k", "aThread", 0, TimeUnit.MILLISECONDS).lock();
+      try {
+         LockPromise promise = lockManager.lock("k", new DldGlobalTransaction(), 1000, TimeUnit.MILLISECONDS);
+         lockManager.run(); //runs the deadlock check
+         promise.lock();
+         fail("TimeoutException expected!");
+      } catch (TimeoutException e) {
+         //expected
+      }
 
-      Lock mockLock = mock(Lock.class);
-      //this makes sure that we cannot acquire lock from the first try
-      when(lc.acquireLock(localTxContext.getLockOwner(), "k", SPIN_DURATION, TimeUnit.MILLISECONDS)).thenReturn(null).thenReturn(mockLock);
-      lockManager.setOwner(Thread.currentThread() );
-      //next lock acquisition will succeed
-
-      assert lockManager.lockAndRecord("k", localTxContext, config.locking().lockAcquisitionTimeout());
-      assert lockManager.getOverlapWithNotDeadlockAwareLockOwners() == 1;
+      AssertJUnit.assertEquals(1, lockManager.getOverlapWithNotDeadlockAwareLockOwners());
    }
 
    public void testLocalDeadlock() throws Exception {
-      final DldGlobalTransaction ddgt = (DldGlobalTransaction) TransactionFactory.TxFactoryEnum.DLD_NORECOVERY_XA.newGlobalTransaction();
-
-      InvocationContext localTxContext = buildLocalTxIc(ddgt);
+      final DldGlobalTransaction ddgt = new DldGlobalTransaction();
+      final DldGlobalTransaction lockOwner = new DldGlobalTransaction();
 
       ddgt.setCoinToss(0);
       lockOwner.setCoinToss(1);
-      assert ddgt.wouldLose(lockOwner);
-
-      //this makes sure that we cannot acquire lock from the first try
-      Lock mockLock = mock(Lock.class);
-      when(lc.acquireLock(localTxContext.getLockOwner(), "k", SPIN_DURATION, TimeUnit.MILLISECONDS)).thenReturn(null).thenReturn(mockLock);
       lockOwner.setRemote(false);
-      lockOwner.setLockIntention("k");
+      lockOwner.setLockIntention(Collections.singleton("k"));
+      AssertJUnit.assertTrue(ddgt.wouldLose(lockOwner));
+
       lockManager.setOwner(lockOwner);
       lockManager.setOwnsLock(true);
+
+      lockManager.lock("k", lockOwner, 0, TimeUnit.MILLISECONDS).lock();
+
       try {
-         lockManager.lockAndRecord("k", localTxContext, config.locking().lockAcquisitionTimeout());
+         LockPromise lockPromise = lockManager.lock("k", ddgt, 1500, TimeUnit.MILLISECONDS);
+         lockManager.run(); //runs the deadlock checker
+         lockPromise.lock();
          assert false;
       } catch (DeadlockDetectedException e) {
          //expected
       }
-      assertEquals(1l,lockManager.getDetectedLocalDeadlocks());
+      AssertJUnit.assertEquals(1, lockManager.getDetectedLocalDeadlocks());
    }
 
-   private InvocationContext buildLocalTxIc(final DldGlobalTransaction ddgt) {
-      return new LocalTxInvocationContext(mock(LocalTransaction.class)) {
-         @Override
-         public Object getLockOwner() {
-            return ddgt;
-         }
-      };
+   private LockContainer createLockContainer() {
+      PerKeyLockContainer lockContainer = new PerKeyLockContainer(32, AnyEquivalence.getInstance());
+      lockContainer.inject(TIME_SERVICE);
+      return lockContainer;
    }
 
    public static class DeadlockDetectingLockManagerMock extends DeadlockDetectingLockManager {
@@ -109,11 +94,9 @@ public class DeadlockDetectingLockManagerTest extends AbstractInfinispanTest {
       private Object owner;
       private boolean ownsLock;
 
-      public DeadlockDetectingLockManagerMock(long spinDuration, boolean exposeJmxStats, LockContainer lockContainer, Configuration configuration) {
-         this.spinDuration = spinDuration;
-         this.exposeJmxStats = exposeJmxStats;
+      public DeadlockDetectingLockManagerMock(LockContainer lockContainer) {
          super.lockContainer = lockContainer;
-         this.configuration = configuration;
+         this.exposeJmxStats = true;
       }
 
       public void setOwner(Object owner) {

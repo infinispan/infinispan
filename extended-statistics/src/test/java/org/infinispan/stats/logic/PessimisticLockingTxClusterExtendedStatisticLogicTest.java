@@ -19,7 +19,10 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.TransactionTrackInterceptor;
 import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
+import org.infinispan.util.concurrent.locks.impl.StripedLockContainer;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -130,9 +133,9 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
       waitForClusterToForm();
       for (int i = 0; i < NUM_NODES; ++i) {
          ExtendedStatisticInterceptor interceptor = extendedStatisticInterceptors[i];
-         CacheStatisticManager manager = (CacheStatisticManager) extractField(interceptor, "cacheStatisticManager");
-         CacheStatisticCollector collector = (CacheStatisticCollector) extractField(manager, "cacheStatisticCollector");
-         ConcurrentGlobalContainer globalContainer = (ConcurrentGlobalContainer) extractField(collector, "globalContainer");
+         CacheStatisticManager manager = extractField(interceptor, "cacheStatisticManager");
+         CacheStatisticCollector collector = extractField(manager, "cacheStatisticCollector");
+         ConcurrentGlobalContainer globalContainer = extractField(collector, "globalContainer");
          ExtendedStatisticRpcManager rpcManager = (ExtendedStatisticRpcManager) extractComponent(cache(i), RpcManager.class);
          ExtendedStatisticLockManager lockManager = (ExtendedStatisticLockManager) extractLockManager(cache(i));
          lockManagers[i] = lockManager;
@@ -147,7 +150,12 @@ public class PessimisticLockingTxClusterExtendedStatisticLogicTest extends Multi
          transactionTrackInterceptors[i] = TransactionTrackInterceptor.injectInCache(cache(i));
          if (i == 0) {
             DeadlockDetectingLockManager dldLockManager = (DeadlockDetectingLockManager) lockManager.getActual();
-            dldLockManager.injectTimeService(lockManagerTimeService);
+            LockContainer container = extractField(dldLockManager, "lockContainer");
+            if (container instanceof PerKeyLockContainer) {
+               ((PerKeyLockContainer) container).inject(lockManagerTimeService);
+            } else if (container instanceof StripedLockContainer) {
+               ((StripedLockContainer) container).inject(lockManagerTimeService);
+            }
          }
       }
    }

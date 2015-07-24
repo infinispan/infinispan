@@ -3,10 +3,9 @@ package org.infinispan.api.mvcc;
 import org.infinispan.Cache;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.concurrent.locks.containers.LockContainer;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -35,7 +34,7 @@ public class LockAssert {
    }
 
    public static void assertNoLocks(LockManager lockManager) {
-      LockContainer lc = (LockContainer) TestingUtil.extractField(lockManager, "lockContainer");
+      LockContainer lc = TestingUtil.extractField(lockManager, "lockContainer");
       assertEquals("Stale locks exist! NumLocksHeld is " + lc.getNumLocksHeld() + " and lock info is " + lockManager.printLockInfo(),
             0, lc.getNumLocksHeld());
    }

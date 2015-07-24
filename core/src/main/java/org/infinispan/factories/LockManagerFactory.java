@@ -3,8 +3,8 @@ package org.infinispan.factories;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.util.concurrent.locks.DeadlockDetectingLockManager;
 import org.infinispan.util.concurrent.locks.LockManager;
-import org.infinispan.util.concurrent.locks.LockManagerImpl;
 import org.infinispan.util.concurrent.locks.PendingLockManager;
+import org.infinispan.util.concurrent.locks.impl.DefaultLockManager;
 import org.infinispan.util.concurrent.locks.impl.DefaultPendingLockManager;
 import org.infinispan.util.concurrent.locks.impl.NoOpPendingLockManager;
 
@@ -26,7 +26,7 @@ public class LockManagerFactory extends AbstractNamedCacheComponentFactory imple
       } else if (LockManager.class.equals(componentType)) {
          return componentType.cast(configuration.deadlockDetection().enabled() ?
                                          new DeadlockDetectingLockManager() :
-                                         new LockManagerImpl());
+                                         new DefaultLockManager());
       }
       throw new IllegalArgumentException("Unexpected component type " + componentType + ".");
    }

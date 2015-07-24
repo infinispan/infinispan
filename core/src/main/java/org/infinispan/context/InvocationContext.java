@@ -32,9 +32,14 @@ public interface InvocationContext extends EntryLookup, Cloneable {
    boolean isInTxScope();
 
    /**
-    * Returns the in behalf of which locks will be aquired.
+    * Returns the in behalf of which locks will be acquired.
     */
    Object getLockOwner();
+
+   /**
+    * Sets the object to be used by lock owner.
+    */
+   void setLockOwner(Object lockOwner);
 
    /**
     * Clones the invocation context.

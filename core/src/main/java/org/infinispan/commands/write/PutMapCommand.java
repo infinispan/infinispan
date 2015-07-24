@@ -10,7 +10,10 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -21,7 +24,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteCommand, MetadataAwareCommand {
+public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteCommand, MetadataAwareCommand, RemoteLockCommand {
    public static final byte COMMAND_ID = 9;
 
    Map<Object, Object> map;
@@ -57,6 +60,26 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitPutMapCommand(ctx, this);
+   }
+
+   @Override
+   public Collection<Object> getKeysToLock() {
+      return isForwarded ? Collections.emptyList() : Collections.unmodifiableCollection(map.keySet());
+   }
+
+   @Override
+   public Object getLockOwner() {
+      return commandInvocationId;
+   }
+
+   @Override
+   public boolean hasZeroLockAcquisition() {
+      return hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+   }
+
+   @Override
+   public boolean hasSkipLocking() {
+      return hasFlag(Flag.SKIP_LOCKING);
    }
 
    private MVCCEntry lookupMvccEntry(InvocationContext ctx, Object key) {

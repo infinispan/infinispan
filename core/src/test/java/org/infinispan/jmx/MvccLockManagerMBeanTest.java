@@ -17,7 +17,7 @@ import static org.infinispan.test.TestingUtil.checkMBeanOperationParameterNaming
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
 
 /**
- * Test the JMX functionality in {@link org.infinispan.util.concurrent.locks.LockManagerImpl}.
+ * Test the JMX functionality in {@link org.infinispan.util.concurrent.locks.LockManager}.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño

@@ -3,7 +3,9 @@ package org.infinispan.commands.write;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.context.Flag;
+import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -13,7 +15,7 @@ import java.util.Set;
  * @author Manik Surtani
  * @since 4.0
  */
-public abstract class AbstractDataWriteCommand extends AbstractDataCommand implements DataWriteCommand {
+public abstract class AbstractDataWriteCommand extends AbstractDataCommand implements DataWriteCommand, RemoteLockCommand {
 
    protected CommandInvocationId commandInvocationId;
 
@@ -39,5 +41,25 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    @Override
    public boolean canBlock() {
       return true;
+   }
+
+   @Override
+   public Collection<Object> getKeysToLock() {
+      return getAffectedKeys();
+   }
+
+   @Override
+   public final Object getLockOwner() {
+      return commandInvocationId;
+   }
+
+   @Override
+   public final boolean hasZeroLockAcquisition() {
+      return hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+   }
+
+   @Override
+   public final boolean hasSkipLocking() {
+      return hasFlag(Flag.SKIP_LOCKING);
    }
 }
