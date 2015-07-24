@@ -10,6 +10,7 @@ import org.hibernate.hql.QueryParser;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.lucene.LuceneProcessingChain;
 import org.hibernate.hql.lucene.LuceneQueryParsingResult;
+import org.hibernate.hql.lucene.internal.builder.ClassBasedLucenePropertyHelper;
 import org.hibernate.hql.lucene.spi.FieldBridgeProvider;
 import org.hibernate.search.bridge.FieldBridge;
 import org.hibernate.search.bridge.builtin.NumericFieldBridge;
@@ -46,6 +47,7 @@ import org.kohsuke.MetaInfServices;
 import java.io.IOException;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -189,18 +191,28 @@ public final class QueryFacadeImpl implements QueryFacade {
       return makeResponse(false, serCtx, list, projSize, cacheQuery.getResultSize(), list.size());
    }
 
-   private LuceneQueryParsingResult parseQuery(Configuration cacheConfiguration, final SerializationContext serCtx, String queryString, SearchIntegrator searchFactory) {
+   private LuceneQueryParsingResult parseQuery(final Configuration cacheConfiguration, final SerializationContext serCtx, String queryString, final SearchIntegrator searchFactory) {
       LuceneProcessingChain processingChain;
       if (cacheConfiguration.compatibility().enabled()) {
-         EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
+         final EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
             @Override
             public Class<?> getClassFromName(String entityName) {
                return serCtx.canMarshall(entityName) ? serCtx.getMarshaller(entityName).getJavaClass() : null;
             }
          };
 
+         FieldBridgeProvider fieldBridgeProvider = new FieldBridgeProvider() {
+
+            private final ClassBasedLucenePropertyHelper propertyHelper = new ClassBasedLucenePropertyHelper(searchFactory, entityNamesResolver);
+
+            @Override
+            public FieldBridge getFieldBridge(String type, String propertyPath) {
+               return propertyHelper.getFieldBridge(type, Arrays.asList(propertyPath.split("[.]")));
+            }
+         };
+
          processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
-               .buildProcessingChainForClassBasedEntities();
+               .buildProcessingChainForClassBasedEntities(fieldBridgeProvider);
       } else {
          EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
             @Override
