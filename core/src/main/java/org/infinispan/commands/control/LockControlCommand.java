@@ -11,12 +11,14 @@ import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +34,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class LockControlCommand extends AbstractTransactionBoundaryCommand implements FlagAffectedCommand {
+public class LockControlCommand extends AbstractTransactionBoundaryCommand implements FlagAffectedCommand, TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(LockControlCommand.class);
 
@@ -54,7 +56,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       super(cacheName);
       if (keys != null) {
          //building defensive copies is here in order to support replaceKey operation
-         this.keys = new ArrayList<Object>(keys);
+         this.keys = new ArrayList<>(keys);
       } else {
          this.keys = InfinispanCollections.emptyList();
       }
@@ -64,7 +66,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
 
    public LockControlCommand(Object key, String cacheName, Set<Flag> flags, GlobalTransaction gtx) {
       this(cacheName);
-      this.keys = new ArrayList<Object>(1);
+      this.keys = new ArrayList<>(1);
       this.keys.add(key);
       this.flags = flags;
       this.globalTx = gtx;
@@ -115,6 +117,15 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       if (ignored != null)
          throw new IllegalStateException("Expected null context!");
 
+      RemoteTxInvocationContext ctxt = createContext();
+      if (ctxt == null) {
+         return null;
+      }
+      return invoker.invoke(ctxt, this);
+   }
+
+   @Override
+   public RemoteTxInvocationContext createContext() {
       RemoteTransaction transaction = txTable.getRemoteTransaction(globalTx);
 
       if (transaction == null) {
@@ -125,8 +136,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
          //create a remote tx without any modifications (we do not know modifications ahead of time)
          transaction = txTable.getOrCreateRemoteTransaction(globalTx, null);
       }
-      RemoteTxInvocationContext ctxt = icf.createRemoteTxInvocationContext(transaction, getOrigin());
-      return invoker.invoke(ctxt, this);
+      return icf.createRemoteTxInvocationContext(transaction, getOrigin());
    }
 
    @Override
@@ -234,4 +244,23 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
       // no-op
    }
 
+   @Override
+   public Collection<Object> getKeysToLock() {
+      return unlock ? Collections.emptyList() : Collections.unmodifiableCollection(keys);
+   }
+
+   @Override
+   public Object getLockOwner() {
+      return globalTx;
+   }
+
+   @Override
+   public boolean hasZeroLockAcquisition() {
+      return hasFlag(Flag.ZERO_LOCK_ACQUISITION_TIMEOUT);
+   }
+
+   @Override
+   public boolean hasSkipLocking() {
+      return hasFlag(Flag.SKIP_LOCKING); //is it possible??
+   }
 }

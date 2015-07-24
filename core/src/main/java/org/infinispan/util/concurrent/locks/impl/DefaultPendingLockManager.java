@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -297,7 +298,7 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
    }
 
-   private class PendingLockPromiseImpl implements PendingLockPromise, CacheTransaction.TransactionCompletedListener, Runnable {
+   private class PendingLockPromiseImpl implements PendingLockPromise, CacheTransaction.TransactionCompletedListener, Callable<Void> {
 
       private final Collection<PendingTransaction> pendingTransactions;
       private final long expectedEndTime;
@@ -349,8 +350,9 @@ public class DefaultPendingLockManager implements PendingLockManager {
       }
 
       @Override
-      public void run() {
+      public Void call() throws Exception {
          isReady();
+         return null;
       }
 
       private PendingTransaction getTimedOutTransaction() {
@@ -373,9 +375,5 @@ public class DefaultPendingLockManager implements PendingLockManager {
          }
          isReady();
       }
-   }
-
-   private interface Filter {
-      Object getAnyConflictingKey(CacheTransaction transaction);
    }
 }

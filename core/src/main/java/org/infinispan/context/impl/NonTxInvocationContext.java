@@ -20,11 +20,11 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
 
    private static final int INITIAL_CAPACITY = 4;
 
-   protected final Map<Object, CacheEntry> lookedUpEntries;
-
-   protected Set<Object> lockedKeys;
-
+   private final Map<Object, CacheEntry> lookedUpEntries;
    private final Equivalence<Object> keyEq;
+   private Set<Object> lockedKeys;
+   private Object lockOwner;
+
 
    public NonTxInvocationContext(int numEntries, Address origin, Equivalence<Object> keyEq) {
       super(origin);
@@ -68,7 +68,12 @@ public class NonTxInvocationContext extends AbstractInvocationContext {
 
    @Override
    public Object getLockOwner() {
-      return Thread.currentThread();
+      return lockOwner;
+   }
+
+   @Override
+   public void setLockOwner(Object lockOwner) {
+      this.lockOwner = lockOwner;
    }
 
    @Override

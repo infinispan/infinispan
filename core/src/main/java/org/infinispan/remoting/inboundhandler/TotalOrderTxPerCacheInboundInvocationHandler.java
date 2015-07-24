@@ -10,7 +10,6 @@ import org.infinispan.commands.tx.totalorder.TotalOrderVersionedCommitCommand;
 import org.infinispan.commands.tx.totalorder.TotalOrderVersionedPrepareCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.totalorder.RetryPrepareException;
-import org.infinispan.remoting.responses.CacheNotFoundResponse;
 import org.infinispan.remoting.responses.ExceptionResponse;
 import org.infinispan.statetransfer.StateRequestCommand;
 import org.infinispan.transaction.impl.TotalOrderRemoteTransactionState;
@@ -54,7 +53,7 @@ public class TotalOrderTxPerCacheInboundInvocationHandler extends BasePerCacheIn
                   return;
                }
                TotalOrderRemoteTransactionState state = ((TotalOrderPrepareCommand) command).getOrCreateState();
-               totalOrderManager.ensureOrder(state, ((PrepareCommand) command).getAffectedKeysToLock(false));
+               totalOrderManager.ensureOrder(state, ((PrepareCommand) command).getKeysToLock());
                runnable = createRunnableForPrepare(state, (PrepareCommand) command, reply);
                onExecutorService = true;
                break;

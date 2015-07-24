@@ -9,14 +9,12 @@ import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.TransactionMode;
-import org.infinispan.util.concurrent.locks.containers.LockContainer;
+import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
 import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Tests if the same lock is used for the same key.
@@ -60,20 +58,26 @@ public class KeyLockTest extends SingleCacheManagerTest {
    }
 
    private void doTest(CacheName cacheName) throws Exception {
-      final LockContainer<?> lockContainer = TestingUtil.extractComponent(cache(cacheName.name()), LockContainer.class);
+      final LockContainer lockContainer = TestingUtil.extractComponent(cache(cacheName.name()), LockContainer.class);
       final Object lockOwner = new Object();
-      AssertJUnit.assertNotNull(lockContainer.acquireLock(lockOwner, byteArray(), 10, TimeUnit.MILLISECONDS));
+      try {
+         lockContainer.acquire(byteArray(), lockOwner, 10, TimeUnit.MILLISECONDS).lock();
+      } catch (InterruptedException | TimeoutException e) {
+         AssertJUnit.fail();
+      }
       AssertJUnit.assertTrue(lockContainer.isLocked(byteArray()));
 
-      fork(new Callable<Void>() {
-         @Override
-         public Void call() throws InterruptedException {
-            for (int i = 0; i < RETRIES; ++i) {
-               AssertJUnit.assertTrue(lockContainer.isLocked(byteArray()));
-               AssertJUnit.assertNull(lockContainer.acquireLock(new Object(), byteArray(), 10, TimeUnit.MILLISECONDS));
+      fork(() -> {
+         for (int i = 0; i < RETRIES; ++i) {
+            AssertJUnit.assertTrue(lockContainer.isLocked(byteArray()));
+            try {
+               lockContainer.acquire(byteArray(), new Object(), 10, TimeUnit.MILLISECONDS).lock();
+               AssertJUnit.fail();
+            } catch (InterruptedException | TimeoutException e) {
+               //expected
             }
-            return null;
          }
+         return null;
       }).get(10, TimeUnit.SECONDS);
    }
 
@@ -81,7 +85,7 @@ public class KeyLockTest extends SingleCacheManagerTest {
       return new byte[]{1};
    }
 
-   private static enum CacheName {
+   private enum CacheName {
       STRIPPED_LOCK_TX {
          @Override
          void configure(ConfigurationBuilder builder) {

@@ -24,8 +24,8 @@ import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.KeyValuePair;
-import org.infinispan.util.concurrent.locks.containers.LockContainer;
-import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
+import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterTest;
@@ -45,7 +45,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
 
 import static java.lang.Math.sqrt;
 import static org.infinispan.test.TestingUtil.marshalledEntry;
@@ -96,7 +95,7 @@ public class AsyncStoreStressTest {
    // ImmortalCacheEntry{key=key165168, value=ImmortalCacheValue {value=61456}}}
    // (Thread-194:) Expected state updated with key=key165168, value=61456
    // (Thread-200:) Expected state updated with key=key165168, value=60483
-   private LockContainer locks = new ReentrantPerEntryLockContainer(32, AnyEquivalence.getInstance());
+   private LockContainer locks = new PerKeyLockContainer(32, AnyEquivalence.getInstance());
 
    private Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> createAsyncStores() throws PersistenceException {
       Map<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>> stores = new TreeMap<String, KeyValuePair<AdvancedAsyncCacheLoader, AdvancedAsyncCacheWriter>>();
@@ -320,19 +319,16 @@ public class AsyncStoreStressTest {
    }
    
    private boolean withStore(String key, Callable<Boolean> call) {
-      Lock lock = null;
       boolean result = false;
       try {
-         lock = locks.acquireLock(Thread.currentThread(), key, 30, TimeUnit.SECONDS);
-         if (lock != null) {
-            result = call.call().booleanValue();
-         }
+         locks.acquire(key, Thread.currentThread(), 30, TimeUnit.SECONDS).lock();
+         result = call.call();
+      } catch (Exception e) {
+         //ignored
       } finally {
-         if (lock != null) {
-            lock.unlock();
-         }
-         return result;
+         locks.release(key, Thread.currentThread());
       }
+      return result;
    }
 
    private double computeStdDev(AdvancedCacheLoader store, int numKeys) throws PersistenceException {

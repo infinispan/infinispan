@@ -5,6 +5,7 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -34,6 +35,9 @@ public abstract class BaseRpcInvokingCommand extends BaseRpcCommand {
       if (cacheCommand instanceof VisitableCommand) {
          VisitableCommand vc = (VisitableCommand) cacheCommand;
          final InvocationContext ctx = icf.createRemoteInvocationContextForCommand(vc, getOrigin());
+         if (cacheCommand instanceof RemoteLockCommand) {
+            ctx.setLockOwner(((RemoteLockCommand) cacheCommand).getLockOwner());
+         }
          if (vc.shouldInvoke(ctx)) {
             if (trace) log.tracef("Invoking command %s, with originLocal flag set to %b", cacheCommand, ctx.isOriginLocal());
             return interceptorChain.invoke(ctx, vc);

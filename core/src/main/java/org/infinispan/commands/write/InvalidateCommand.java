@@ -140,6 +140,11 @@ public class InvalidateCommand extends RemoveCommand {
    }
 
    @Override
+   public Collection<Object> getKeysToLock() {
+      return Arrays.asList(keys);
+   }
+
+   @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       switch (status) {
          case FAILED:

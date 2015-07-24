@@ -2,6 +2,7 @@ package org.infinispan.commands.write;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 import org.infinispan.commands.CommandInvocationId;
@@ -102,6 +103,12 @@ public class InvalidateL1Command extends InvalidateCommand {
          if (!locality.isLocal() || locality.isUncertain()) return true;
       }
       return false;
+   }
+
+   @Override
+   public Collection<Object> getKeysToLock() {
+      //no keys to lock
+      return Collections.emptyList();
    }
 
    @Override

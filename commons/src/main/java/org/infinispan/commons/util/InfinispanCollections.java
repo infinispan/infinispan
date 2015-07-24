@@ -6,6 +6,7 @@ import org.infinispan.commons.marshall.Ids;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.*;
+import java.util.function.Consumer;
 
 import static java.util.Collections.singletonMap;
 import static java.util.Collections.unmodifiableMap;
@@ -271,7 +272,7 @@ public class InfinispanCollections {
     * @see #EMPTY_SET
     */
    @SuppressWarnings("unchecked")
-   public static final <T> Set<T> emptySet() {
+   public static <T> Set<T> emptySet() {
       return EMPTY_SET;
    }
 
@@ -286,7 +287,7 @@ public class InfinispanCollections {
     * @see #EMPTY_MAP
     */
    @SuppressWarnings("unchecked")
-   public static final <K,V> Map<K,V> emptyMap() {
+   public static <K,V> Map<K,V> emptyMap() {
       return EMPTY_MAP;
    }
 
@@ -301,15 +302,22 @@ public class InfinispanCollections {
     * @see #EMPTY_LIST
     */
    @SuppressWarnings("unchecked")
-   public static final <T> List<T> emptyList() {
+   public static <T> List<T> emptyList() {
       return EMPTY_LIST;
    }
 
-   public static final <T> boolean containsAny(Collection<T> haystack, Collection<T> needle) {
+   public static <T> boolean containsAny(Collection<T> haystack, Collection<T> needle) {
       for (T element : needle) {
          if (haystack.contains(element))
             return true;
       }
       return false;
+   }
+
+   public static <T> void forEach(T[] array, Consumer<T> consumer) {
+      final int size = Objects.requireNonNull(array, "Array must be non-null.").length;
+      for (int i = 0; i < size; ++i) {
+         consumer.accept(array[i]);
+      }
    }
 }

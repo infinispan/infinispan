@@ -127,7 +127,9 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
             .createSingleKeyNonTxInvocationContext();
 
       for (XSiteState siteState : chunk) {
-         interceptorChain.invoke(ctx, createPut(siteState));
+         PutKeyValueCommand command = createPut(siteState);
+         ctx.setLockOwner(command.getLockOwner());
+         interceptorChain.invoke(ctx, command);
          ctx.resetState(); //re-use same context. Old context is not longer needed
          if (trace) {
             log.tracef("Successfully applied key'%s'", siteState);

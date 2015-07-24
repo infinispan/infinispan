@@ -100,7 +100,7 @@ public class TxCompletionNotificationCommand  extends RecoveryCommand implements
       if (remoteTx == null) return null;
       forwardCommandRemotely(remoteTx);
 
-      lockManager.unlock(remoteTx.getLockedKeys(), remoteTx.getGlobalTransaction());
+      lockManager.unlockAll(remoteTx.getLockedKeys(), remoteTx.getGlobalTransaction());
       return null;
    }
 

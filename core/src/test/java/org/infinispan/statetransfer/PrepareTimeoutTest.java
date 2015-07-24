@@ -1,7 +1,6 @@
 package org.infinispan.statetransfer;
 
 import org.infinispan.Cache;
-import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.configuration.cache.CacheMode;
@@ -16,11 +15,7 @@ import org.infinispan.util.ControlledConsistentHashFactory;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
-import java.net.InetAddress;
 import java.util.Arrays;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.concurrent.StateSequencerUtil.advanceOnInterceptor;
 import static org.infinispan.test.concurrent.StateSequencerUtil.matchCommand;
@@ -40,11 +35,10 @@ public class PrepareTimeoutTest extends MultipleCacheManagersTest {
    private static final String TX1_VALUE = "value1";
    private static final java.lang.Object TX2_VALUE = "value2";
    public static final int COMPLETED_TX_TIMEOUT = 2000;
-   private ControlledConsistentHashFactory consistentHashFactory;
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      consistentHashFactory = new ControlledConsistentHashFactory(1, 2);
+      ControlledConsistentHashFactory consistentHashFactory = new ControlledConsistentHashFactory(1, 2);
 
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.clustering().cacheMode(CacheMode.DIST_SYNC);

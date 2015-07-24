@@ -8,8 +8,6 @@ import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.hash.Hash;
-import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -19,14 +17,18 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.transaction.impl.RemoteTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.transaction.xa.recovery.RecoveryManager;
+import org.infinispan.util.concurrent.locks.TransactionalRemoteLockCommand;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.infinispan.commons.util.InfinispanCollections.forEach;
 
 /**
  * Command corresponding to the 1st phase of 2PC.
@@ -35,7 +37,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @since 4.0
  */
-public class PrepareCommand extends AbstractTransactionBoundaryCommand {
+public class PrepareCommand extends AbstractTransactionBoundaryCommand implements TransactionalRemoteLockCommand {
 
    private static final Log log = LogFactory.getLog(PrepareCommand.class);
    private boolean trace = log.isTraceEnabled();
@@ -49,16 +51,6 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
    private transient boolean replayEntryWrapping  = false;
    
    private static final WriteCommand[] EMPTY_WRITE_COMMAND_ARRAY = new WriteCommand[0];
-   private static final Object[] EMPTY_ARRAY = new Object[0];
-   private static final Comparator<Object> KEY_COMPARATOR = new Comparator<Object>() {
-
-      private final Hash hash = MurmurHash3.getInstance();
-
-      @Override
-      public int compare(Object o1, Object o2) {
-         return Integer.compare(hash.hash(o1), hash.hash(o2));
-      }
-   };
 
    public void initialize(CacheNotifier notifier, RecoveryManager recoveryManager) {
       this.notifier = notifier;
@@ -92,6 +84,19 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       if (ignored != null)
          throw new IllegalStateException("Expected null context!");
 
+      RemoteTxInvocationContext ctx = createContext();
+      if (ctx == null) {
+         return null;
+      }
+
+      if (trace)
+         log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
+      notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
+      return invoker.invoke(ctx, this);
+   }
+
+   @Override
+   public RemoteTxInvocationContext createContext() {
       if (recoveryManager != null && recoveryManager.isTransactionPrepared(globalTx)) {
          log.tracef("The transaction %s is already prepared. Skipping prepare call.", globalTx);
          return null;
@@ -106,12 +111,53 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       }
 
       // 2. then set it on the invocation context
-      RemoteTxInvocationContext ctx = icf.createRemoteTxInvocationContext(remoteTransaction, getOrigin());
+      return icf.createRemoteTxInvocationContext(remoteTransaction, getOrigin());
+   }
 
-      if (trace)
-         log.tracef("Invoking remotely originated prepare: %s with invocation context: %s", this, ctx);
-      notifier.notifyTransactionRegistered(ctx.getGlobalTransaction(), false);
-      return invoker.invoke(ctx, this);
+   @Override
+   public Collection<Object> getKeysToLock() {
+      if (modifications == null || modifications.length == 0) {
+         return Collections.emptyList();
+      }
+      final Set<Object> set = new HashSet<>(modifications.length);
+      forEach(modifications, writeCommand -> {
+         if (writeCommand.hasFlag(Flag.SKIP_LOCKING)) {
+            return;
+         }
+         switch (writeCommand.getCommandId()) {
+            case PutKeyValueCommand.COMMAND_ID:
+            case RemoveCommand.COMMAND_ID:
+            case ReplaceCommand.COMMAND_ID:
+               set.add(((DataWriteCommand) writeCommand).getKey());
+               break;
+            case PutMapCommand.COMMAND_ID:
+               set.addAll(writeCommand.getAffectedKeys());
+               break;
+            case ApplyDeltaCommand.COMMAND_ID:
+               ApplyDeltaCommand command = (ApplyDeltaCommand) writeCommand;
+               Object[] compositeKeys = command.getCompositeKeys();
+               set.addAll(Arrays.asList(compositeKeys));
+               break;
+            default:
+               break;
+         }
+      });
+      return set;
+   }
+
+   @Override
+   public Object getLockOwner() {
+      return globalTx;
+   }
+
+   @Override
+   public boolean hasZeroLockAcquisition() {
+      return false;
+   }
+
+   @Override
+   public boolean hasSkipLocking() {
+      return false;
    }
 
    @Override
@@ -207,55 +253,9 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand {
       this.replayEntryWrapping = replayEntryWrapping;
    }
 
-   public boolean writesToASingleKey() {
-      if (modifications == null || modifications.length != 1)
-         return false;
-      WriteCommand wc = modifications[0];
-      return wc instanceof PutKeyValueCommand || wc instanceof RemoveCommand || wc instanceof ReplaceCommand;
-   }
-
    @Override
    public boolean isReturnValueExpected() {
       return false;
    }
 
-   /**
-    * It returns an array of keys affected by the WriteCommand in modifications.
-    *
-    * @param sort          if {@code true}, the array returned is sorted by the key hash.
-    * @return  an array of keys
-    */
-   public Object[] getAffectedKeysToLock(boolean sort) {
-      if (modifications == null) {
-         return EMPTY_ARRAY;
-      }
-      Set<Object> set = new HashSet<>(modifications.length);
-      for (WriteCommand wc : modifications) {
-         if (wc.hasFlag(Flag.SKIP_LOCKING)) {
-            continue;
-         }
-         switch (wc.getCommandId()) {
-            case PutKeyValueCommand.COMMAND_ID:
-            case RemoveCommand.COMMAND_ID:
-            case ReplaceCommand.COMMAND_ID:
-               set.add(((DataWriteCommand) wc).getKey());
-               break;
-            case PutMapCommand.COMMAND_ID:
-               set.addAll(wc.getAffectedKeys());
-               break;
-            case ApplyDeltaCommand.COMMAND_ID:
-               ApplyDeltaCommand command = (ApplyDeltaCommand) wc;
-               Object[] compositeKeys = command.getCompositeKeys();
-               set.addAll(Arrays.asList(compositeKeys));
-               break;
-            default:
-               break;
-         }
-      }
-      Object[] sorted = set.toArray(new Object[set.size()]);
-      if (sort) {
-         Arrays.sort(sorted, KEY_COMPARATOR);
-      }
-      return sorted;
-   }
 }

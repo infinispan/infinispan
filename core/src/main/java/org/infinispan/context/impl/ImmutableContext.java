@@ -70,6 +70,11 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
+   public void setLockOwner(Object lockOwner) {
+      throw newUnsupportedMethod();
+   }
+
+   @Override
    public Set<Object> getLockedKeys() {
       return InfinispanCollections.emptySet();
    }
@@ -93,7 +98,7 @@ public final class ImmutableContext implements InvocationContext {
     * @return an exception to state this context is read only
     */
    private static CacheException newUnsupportedMethod() {
-      throw newUnsupportedMethod();
+      throw new UnsupportedOperationException();
    }
 
    @Override

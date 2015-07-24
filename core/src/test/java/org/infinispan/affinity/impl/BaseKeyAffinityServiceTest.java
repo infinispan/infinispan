@@ -36,11 +36,13 @@ public abstract class BaseKeyAffinityServiceTest extends BaseDistFunctionalTest<
    @AfterTest
    public void stopExecutorService() throws InterruptedException {
       if (keyAffinityService != null) keyAffinityService.stop();
-      if (executor != null) executor.shutdown();
-      boolean terminatedGracefully = executor.awaitTermination(100, TimeUnit.MILLISECONDS);
-      if (!terminatedGracefully) {
+      if (executor != null) {
+         executor.shutdown();
+         boolean terminatedGracefully = executor.awaitTermination(100, TimeUnit.MILLISECONDS);
          executor.shutdownNow();
-         fail("KeyGenerator Executor not terminated in expected time");
+         if (!terminatedGracefully) {
+            fail("KeyGenerator Executor not terminated in expected time");
+         }
       }
    }
 

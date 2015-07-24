@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -26,13 +27,11 @@ public class DldGlobalTransaction extends GlobalTransaction {
 
    protected volatile long coinToss;
 
-   protected transient volatile Object localLockIntention;
+   protected transient volatile Collection<Object> lockIntention = InfinispanCollections.emptySet();
 
-   protected volatile Collection<Object> remoteLockIntention =
-         InfinispanCollections.emptySet();
+   protected volatile Collection<Object> remoteLockIntention = InfinispanCollections.emptySet();
 
-   protected volatile Set<Object> locksAtOrigin =
-         InfinispanCollections.emptySet();
+   protected volatile Set<Object> locksAtOrigin = InfinispanCollections.emptySet();
 
    public DldGlobalTransaction() {
    }
@@ -77,7 +76,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
    public String toString() {
       return "DldGlobalTransaction{" +
             "coinToss=" + coinToss +
-            ", lockIntention=" + localLockIntention +
+            ", lockIntention=" + lockIntention +
             ", affectedKeys=" + remoteLockIntention +
             ", locksAtOrigin=" + locksAtOrigin +
             "} " + super.toString();
@@ -86,13 +85,14 @@ public class DldGlobalTransaction extends GlobalTransaction {
    /**
     * Returns the key this transaction intends to lock. 
     */
-   public Object getLockIntention() {
-      return localLockIntention;
+   public Collection<Object> getLockIntention() {
+      return lockIntention;
    }
 
-   public void setLockIntention(Object lockIntention) {
+   public void setLockIntention(Collection<Object> lockIntention) {
+      Objects.requireNonNull(lockIntention, "Local lock Intention must be non-null.");
       if (trace) log.tracef("Setting local lock intention to %s", lockIntention);
-      this.localLockIntention = lockIntention;
+      this.lockIntention = lockIntention;
    }
 
    public boolean wouldLose(DldGlobalTransaction other) {
@@ -100,6 +100,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
    }
 
    public void setRemoteLockIntention(Collection<Object> remoteLockIntention) {
+      Objects.requireNonNull(lockIntention, "Remote lock intention must be non-null.");
       if (trace) {
          log.tracef("Setting the remote lock intention: %s", remoteLockIntention);
       }
@@ -110,10 +111,12 @@ public class DldGlobalTransaction extends GlobalTransaction {
       return remoteLockIntention;
    }
 
-   public boolean hasLockAtOrigin(Collection<Object> remoteLockIntention) {
-      log.tracef("Our(%s) locks at origin are: %s. Others remote lock intention is: %s",
-                    this, locksAtOrigin, remoteLockIntention);
-      for (Object key : remoteLockIntention) {
+   public boolean hasAnyLockAtOrigin(DldGlobalTransaction otherTx) {
+      if (trace) {
+         log.tracef("Our(%s) locks at origin are: %s. Others remote lock intention is: %s",
+                    this, locksAtOrigin, otherTx.getRemoteLockIntention());
+      }
+      for (Object key : otherTx.getRemoteLockIntention()) {
          if (this.locksAtOrigin.contains(key)) {
             return true;
          }
@@ -122,6 +125,7 @@ public class DldGlobalTransaction extends GlobalTransaction {
    }
 
    public void setLocksHeldAtOrigin(Set<Object> locksAtOrigin) {
+      Objects.requireNonNull(locksAtOrigin, "Locks at origin must be non-null.");
       if (trace) log.tracef("Setting locks at origin for (%s) to %s", this, locksAtOrigin);
       this.locksAtOrigin = locksAtOrigin;
    }

@@ -1,12 +1,16 @@
 package org.infinispan.stats.wrappers;
 
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.stats.topK.StreamSummaryContainer;
-import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.LockState;
+import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
 
 import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Top-key stats about locks.
@@ -25,25 +29,37 @@ public class TopKeyLockManager implements LockManager {
    }
 
    @Override
-   public boolean lockAndRecord(Object key, InvocationContext ctx, long timeoutMillis) throws InterruptedException {
-      boolean isContented = isContented(key, ctx.getLockOwner());
-      try {
-         boolean lockAcquired = current.lockAndRecord(key, ctx, timeoutMillis);
-         container.addLockInformation(key, isContented, !lockAcquired);
-         return lockAcquired;
-      } catch (InterruptedException e) {
-         container.addLockInformation(key, isContented, true);
-         throw e;
-      } catch (RuntimeException e) {
-         //TimeoutException extends RuntimeException!
-         container.addLockInformation(key, isContented, true);
-         throw e;
+   public KeyAwareLockPromise lock(Object key, Object lockOwner, long time, TimeUnit unit) {
+      if (lockOwnerAlreadyExists(key, lockOwner)) {
+         return current.lock(key, lockOwner, time, unit);
       }
+      KeyAwareLockPromise lockPromise = current.lock(key, lockOwner, time, unit);
+      final boolean contented = !lockOwner.equals(current.getOwner(key));
+      lockPromise.addListener(state -> container.addLockInformation(key, contented, state != LockState.ACQUIRED));
+      return lockPromise;
    }
 
    @Override
-   public void unlock(Collection<Object> lockedKeys, Object lockOwner) {
-      current.unlock(lockedKeys, lockOwner);
+   public KeyAwareLockPromise lockAll(Collection<?> keys, Object lockOwner, long time, TimeUnit unit) {
+      final Set<Object> keysToTrack = keys.stream().filter(key -> !lockOwnerAlreadyExists(key, lockOwner)).collect(Collectors.toSet());
+      final KeyAwareLockPromise lockPromise = current.lockAll(keys, lockOwner, time, unit);
+      final Set<Object> contentedKeys = keys.stream().filter(key -> !lockOwner.equals(current.getOwner(key))).collect(Collectors.toSet());
+      lockPromise.addListener((lockedKey, state) -> {
+         if (keysToTrack.contains(lockedKey)) {
+            container.addLockInformation(lockedKey, contentedKeys.contains(lockedKey), state != LockState.ACQUIRED);
+         }
+      });
+      return lockPromise;
+   }
+
+   @Override
+   public void unlock(Object key, Object lockOwner) {
+      current.unlock(key, lockOwner);
+   }
+
+   @Override
+   public void unlockAll(Collection<?> keys, Object lockOwner) {
+      current.unlockAll(keys, lockOwner);
    }
 
    @Override
@@ -72,58 +88,17 @@ public class TopKeyLockManager implements LockManager {
    }
 
    @Override
-   public boolean possiblyLocked(CacheEntry entry) {
-      return current.possiblyLocked(entry);
-   }
-
-   @Override
    public int getNumberOfLocksHeld() {
       return current.getNumberOfLocksHeld();
    }
 
    @Override
-   public int getLockId(Object key) {
-      return current.getLockId(key);
+   public InfinispanLock getLock(Object key) {
+      return current.getLock(key);
    }
 
-   @Override
-   public boolean acquireLock(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking)
-         throws InterruptedException, TimeoutException {
-      boolean isContented = isContented(key, ctx.getLockOwner());
-      try {
-         boolean retVal = current.acquireLock(ctx, key, timeoutMillis, skipLocking);
-         container.addLockInformation(key, isContented, false);
-         return retVal;
-      } catch (InterruptedException e) {
-         container.addLockInformation(key, isContented, true);
-         throw e;
-      } catch (RuntimeException e) {
-         //TimeoutException extends RuntimeException!
-         container.addLockInformation(key, isContented, true);
-         throw e;
-      }
-   }
-
-   @Override
-   public boolean acquireLockNoCheck(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking)
-         throws InterruptedException, TimeoutException {
-      boolean isContented = isContented(key, ctx.getLockOwner());
-      try {
-         boolean retVal = current.acquireLockNoCheck(ctx, key, timeoutMillis, skipLocking);
-         container.addLockInformation(key, isContented, false);
-         return retVal;
-      } catch (InterruptedException e) {
-         container.addLockInformation(key, isContented, true);
-         throw e;
-      } catch (RuntimeException e) {
-         //TimeoutException extends RuntimeException!
-         container.addLockInformation(key, isContented, true);
-         throw e;
-      }
-   }
-
-   private boolean isContented(Object key, Object requestor) {
-      Object holder = current.getOwner(key);
-      return holder != null && !holder.equals(requestor);
+   private boolean lockOwnerAlreadyExists(Object key, Object lockOwner) {
+      final InfinispanLock lock = current.getLock(key);
+      return lock != null && lock.containsLockOwner(lockOwner);
    }
 }

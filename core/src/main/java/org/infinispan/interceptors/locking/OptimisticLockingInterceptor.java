@@ -20,7 +20,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -58,10 +57,10 @@ public class OptimisticLockingInterceptor extends AbstractTxLockingInterceptor {
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
-      final Object[] affectedKeys = command.getAffectedKeysToLock(true);
+      final Collection<Object> keysToLock = command.getKeysToLock();
       ((TxInvocationContext<?>) ctx).addAllAffectedKeys(command.getAffectedKeys());
-      if (affectedKeys.length != 0) {
-         Collection<Object> lockedKeys = lockAllOrRegisterBackupLock(ctx, Arrays.asList(affectedKeys),
+      if (!keysToLock.isEmpty()) {
+         Collection<Object> lockedKeys = lockAllOrRegisterBackupLock(ctx, keysToLock,
                                                                      cacheConfiguration.locking().lockAcquisitionTimeout());
          if (!lockedKeys.isEmpty()) {
             for (Object key : lockedKeys) {

@@ -1,21 +1,26 @@
 package org.infinispan.stats.wrappers;
 
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.stats.CacheStatisticManager;
 import org.infinispan.transaction.xa.GlobalTransaction;
 import org.infinispan.util.TimeService;
-import org.infinispan.util.concurrent.TimeoutException;
+import org.infinispan.util.concurrent.locks.KeyAwareLockPromise;
 import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.concurrent.locks.LockState;
+import org.infinispan.util.concurrent.locks.impl.InfinispanLock;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.infinispan.stats.container.ExtendedStatistic.*;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_HOLD_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.LOCK_WAITING_TIME;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_HELD_LOCKS;
+import static org.infinispan.stats.container.ExtendedStatistic.NUM_WAITED_FOR_LOCKS;
 
 /**
  * Takes statistic about lock acquisition.
@@ -44,39 +49,99 @@ public class ExtendedStatisticLockManager implements LockManager {
    }
 
    @Override
-   public boolean lockAndRecord(Object key, InvocationContext ctx, long timeoutMillis) throws InterruptedException {
-      return actual.lockAndRecord(key, ctx, timeoutMillis);
+   public KeyAwareLockPromise lock(Object key, Object lockOwner, long time, TimeUnit unit) {
+      if (lockOwnerAlreadyExists(key, lockOwner)) {
+         return actual.lock(key, lockOwner, time, unit);
+      }
+
+      LockInfo lockInfo = new LockInfo(lockOwner instanceof GlobalTransaction ? (GlobalTransaction) lockOwner : null);
+      updateContentionStats(key, lockInfo);
+
+      final long start = timeService.time();
+      final KeyAwareLockPromise lockPromise = actual.lock(key, lockOwner, time, unit);
+      lockPromise.addListener((lockedKey, state) -> {
+         long end = timeService.time();
+         lockInfo.lockTimeStamp = end;
+         if (lockInfo.contention) {
+            lockInfo.lockWaiting = timeService.timeDuration(start, end, NANOSECONDS);
+         }
+
+         //if some owner tries to acquire the lock twice, we don't added it
+         if (state == LockState.ACQUIRED) {
+            lockInfoMap.putIfAbsent(lockedKey, lockInfo);
+         } else {
+            lockInfo.updateStats(null); //null == not locked
+         }
+      });
+      return lockPromise;
    }
 
    @Override
-   public void unlock(Collection<Object> lockedKeys, Object lockOwner) {
+   public KeyAwareLockPromise lockAll(Collection<?> keys, Object lockOwner, long time, TimeUnit unit) {
+      if (keys.size() == 1) {
+         return lock(keys.iterator().next(), lockOwner, time, unit);
+      }
+      final Map<Object, LockInfo> tmpMap = new HashMap<>();
+      for (Object key : keys) {
+         if (lockOwnerAlreadyExists(key, lockOwner)) {
+            continue;
+         }
+         LockInfo lockInfo = new LockInfo(lockOwner instanceof GlobalTransaction ? (GlobalTransaction) lockOwner : null);
+         updateContentionStats(key, lockInfo);
+         tmpMap.put(key, lockInfo);
+      }
+
+
+      final long start = timeService.time();
+      final KeyAwareLockPromise lockPromise = actual.lockAll(keys, lockOwner, time, unit);
+      lockPromise.addListener((lockedKey, state) -> {
+         long end = timeService.time();
+         final LockInfo lockInfo = tmpMap.get(lockedKey);
+         if (lockInfo == null) {
+            return;
+         }
+         lockInfo.lockTimeStamp = end;
+         if (lockInfo.contention) {
+            lockInfo.lockWaiting = timeService.timeDuration(start, end, NANOSECONDS);
+         }
+
+         //if some owner tries to acquire the lock twice, we don't added it
+         if (state == LockState.ACQUIRED) {
+            lockInfoMap.putIfAbsent(lockedKey, lockInfo);
+         } else {
+            lockInfo.updateStats(null); //null == not locked
+         }
+      });
+      return lockPromise;
+   }
+
+   @Override
+   public void unlock(Object key, Object lockOwner) {
       final long timestamp = timeService.time();
 
-      for (Object key : lockedKeys) {
-         LockInfo lockInfo = lockInfoMap.get(key);
-         if (lockInfo != null && lockInfo.owner.equals(lockOwner)) {
-            lockInfo.updateStats(timestamp);
-            lockInfoMap.remove(key);
-         }
+      onUnlock(key, lockOwner, timestamp);
+      actual.unlock(key, lockOwner);
+   }
+
+   @Override
+   public void unlockAll(Collection<?> keys, Object lockOwner) {
+      final long timestamp = timeService.time();
+
+      for (Object key : keys) {
+         onUnlock(key, lockOwner, timestamp);
       }
-      actual.unlock(lockedKeys, lockOwner);
+      actual.unlockAll(keys, lockOwner);
    }
 
    @Override
    public void unlockAll(InvocationContext ctx) {
-      List<LockInfo> acquiredLockInfo = new ArrayList<LockInfo>();
+      final long timestamp = timeService.time();
+      final Object lockOwner = ctx.getLockOwner();
+
       for (Object key : ctx.getLockedKeys()) {
-         LockInfo lockInfo = lockInfoMap.get(key);
-         if (lockInfo != null && lockInfo.owner.equals(ctx.getLockOwner())) {
-            acquiredLockInfo.add(lockInfo);
-            lockInfoMap.remove(key);
-         }
+         onUnlock(key, lockOwner, timestamp);
       }
       actual.unlockAll(ctx);
-      long timestamp = timeService.time();
-      for (LockInfo lockInfo : acquiredLockInfo) {
-         lockInfo.updateStats(timestamp);
-      }
    }
 
    @Override
@@ -100,78 +165,32 @@ public class ExtendedStatisticLockManager implements LockManager {
    }
 
    @Override
-   public boolean possiblyLocked(CacheEntry entry) {
-      return actual.possiblyLocked(entry);
-   }
-
-   @Override
    public int getNumberOfLocksHeld() {
       return actual.getNumberOfLocksHeld();
    }
 
    @Override
-   public int getLockId(Object key) {
-      return actual.getLockId(key);
+   public InfinispanLock getLock(Object key) {
+      return actual.getLock(key);
    }
 
-   @Override
-   public boolean acquireLock(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking) throws InterruptedException, TimeoutException {
-      LockInfo lockInfo = new LockInfo(ctx);
-      updateContentionStats(key, lockInfo);
-
-      boolean locked = false;
-      long start = timeService.time();
-      try {
-         locked = actual.acquireLock(ctx, key, timeoutMillis, skipLocking);  //this returns false if you already have acquired the lock previously
-      } finally {
-         long end = timeService.time();
-         lockInfo.lockTimeStamp = end;
-         if (lockInfo.contention) {
-            lockInfo.lockWaiting = timeService.timeDuration(start, end, NANOSECONDS);
-         }
-
-         //if some owner tries to acquire the lock twice, we don't added it
-         if (locked) {
-            lockInfoMap.putIfAbsent(key, lockInfo);
-         } else {
-            lockInfo.updateStats(null); //null == not locked
-         }
-      }
-
-      return locked;
-   }
-
-   @Override
-   public boolean acquireLockNoCheck(InvocationContext ctx, Object key, long timeoutMillis, boolean skipLocking) throws InterruptedException, TimeoutException {
-      LockInfo lockInfo = new LockInfo(ctx);
-      updateContentionStats(key, lockInfo);
-
-      boolean locked = false;
-      long start = timeService.time();
-      try {
-         locked = actual.acquireLockNoCheck(ctx, key, timeoutMillis, skipLocking);  //this returns false if you already have acquired the lock previously
-      } finally {
-         long end = timeService.time();
-         lockInfo.lockTimeStamp = end;
-         if (lockInfo.contention) {
-            lockInfo.lockWaiting = timeService.timeDuration(start, end, NANOSECONDS);
-         }
-
-         //if some owner tries to acquire the lock twice, we don't added it
-         if (locked) {
-            lockInfoMap.putIfAbsent(key, lockInfo);
-         } else {
-            lockInfo.updateStats(null); //null == not locked
-         }
-      }
-
-      return locked;
+   private boolean lockOwnerAlreadyExists(Object key, Object lockOwner) {
+      final InfinispanLock lock = actual.getLock(key);
+      return lock != null && lock.containsLockOwner(lockOwner);
    }
 
    private void updateContentionStats(Object key, LockInfo lockInfo) {
       Object holder = getOwner(key);
       if (holder != null) {
          lockInfo.contention = !holder.equals(lockInfo.owner);
+      }
+   }
+
+   private void onUnlock(Object key, Object lockOwner, long timestamp) {
+      LockInfo lockInfo = lockInfoMap.get(key);
+      if (lockInfo != null && lockInfo.owner.equals(lockOwner)) {
+         lockInfo.updateStats(timestamp);
+         lockInfoMap.remove(key);
       }
    }
 
@@ -182,9 +201,9 @@ public class ExtendedStatisticLockManager implements LockManager {
       private boolean contention = false;
       private long lockWaiting = -1;
 
-      public LockInfo(InvocationContext ctx) {
-         owner = ctx.getLockOwner() instanceof GlobalTransaction ? (GlobalTransaction) ctx.getLockOwner() : null;
-         local = ctx.isOriginLocal();
+      public LockInfo(GlobalTransaction owner) {
+         this.owner = owner;
+         this.local = owner != null && !owner.isRemote();
       }
 
       public final void updateStats(Long releaseTimeStamp) {

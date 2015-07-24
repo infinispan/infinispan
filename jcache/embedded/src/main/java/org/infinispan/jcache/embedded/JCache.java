@@ -1,10 +1,7 @@
 package org.infinispan.jcache.embedded;
 
-import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.CONFIGURATION;
-import static org.infinispan.jcache.RIMBeanServerRegistrationUtility.ObjectNameType.STATISTICS;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -21,11 +18,9 @@ import javax.cache.Cache;
 import javax.cache.CacheException;
 import javax.cache.CacheManager;
 import javax.cache.configuration.CacheEntryListenerConfiguration;
-import javax.cache.configuration.CompleteConfiguration;
 import javax.cache.integration.CacheLoader;
 import javax.cache.integration.CacheWriter;
 import javax.cache.integration.CompletionListener;
-import javax.cache.management.CacheMXBean;
 import javax.cache.management.CacheStatisticsMXBean;
 import javax.cache.processor.EntryProcessor;
 import javax.cache.processor.EntryProcessorException;
@@ -46,15 +41,13 @@ import org.infinispan.jcache.AbstractJCacheNotifier;
 import org.infinispan.jcache.Exceptions;
 import org.infinispan.jcache.JCacheEntry;
 import org.infinispan.jcache.MutableJCacheEntry;
-import org.infinispan.jcache.RIDelegatingCacheMXBean;
-import org.infinispan.jcache.RIMBeanServerRegistrationUtility;
 import org.infinispan.jcache.embedded.interceptor.ExpirationTrackingInterceptor;
 import org.infinispan.jcache.embedded.logging.Log;
 import org.infinispan.jmx.JmxUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.manager.PersistenceManagerImpl;
-import org.infinispan.util.concurrent.locks.containers.LockContainer;
-import org.infinispan.util.concurrent.locks.containers.ReentrantPerEntryLockContainer;
+import org.infinispan.util.concurrent.locks.impl.LockContainer;
+import org.infinispan.util.concurrent.locks.impl.PerKeyLockContainer;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -83,7 +76,8 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    public JCache(AdvancedCache<K, V> cache, CacheManager cacheManager, ConfigurationAdapter<K, V> c) {
       super(c.getConfiguration(), cacheManager, new JCacheNotifier<K, V>());
       this.cache = cache;
-      this.processorLocks = new ReentrantPerEntryLockContainer(32, cache.getCacheConfiguration().dataContainer().keyEquivalence());
+      this.processorLocks = new PerKeyLockContainer(32, cache.getCacheConfiguration().dataContainer().keyEquivalence());
+      ((PerKeyLockContainer) processorLocks).inject(cache.getComponentRegistry().getTimeService());
       this.ignoreReturnValuesCache = cache.withFlags(Flag.IGNORE_RETURN_VALUES);
       this.skipCacheLoadCache = cache.withFlags(Flag.SKIP_CACHE_LOAD);
       this.skipCacheLoadAndStatsCache = cache.withFlags(Flag.SKIP_CACHE_LOAD, Flag.SKIP_STATISTICS);
@@ -316,6 +310,8 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
                case REMOVE:
                   cache.remove(key);
                   break;
+               default:
+                  break;
             }
 
             return ret;
@@ -357,12 +353,11 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    }
 
    private void acquiredProcessorLock(K key) throws InterruptedException {
-      processorLocks.acquireLock(
-            Thread.currentThread(), key, lockTimeout, TimeUnit.MILLISECONDS);
+      processorLocks.acquire(key, Thread.currentThread(), lockTimeout, TimeUnit.MILLISECONDS);
    }
 
    private void releaseProcessorLock(K key) {
-      processorLocks.releaseLock(Thread.currentThread(), key);
+      processorLocks.release(key, Thread.currentThread());
    }
 
    @Override
