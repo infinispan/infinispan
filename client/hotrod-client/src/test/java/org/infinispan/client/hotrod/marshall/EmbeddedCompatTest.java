@@ -21,6 +21,7 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 import org.infinispan.query.dsl.embedded.testdomain.NotIndexed;
+import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS;
 import org.infinispan.query.remote.CompatibilityProtoStreamMarshaller;
@@ -115,7 +116,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    }
 
    public void testPutAndGet() throws Exception {
-      Account account = createAccount();
+      Account account = createAccountPB(1);
       remoteCache.put(1, account);
 
       // try to get the object through the local cache interface and check it's the same object we put
@@ -148,7 +149,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
    }
 
    public void testRemoteQuery() throws Exception {
-      Account account = createAccount();
+      Account account = createAccountPB(1);
       remoteCache.put(1, account);
 
       // get account back from remote cache via query and check its attributes
@@ -175,7 +176,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       Query query = qf.from(AccountPB.class)
             .having("description").like("%test%").toBuilder()
             .build();
-      List<AccountPB> list = query.list();
+      List<Account> list = query.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -195,7 +196,7 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       Query query = qf.from(UserPB.class)
             .having("notes").like("%567%").toBuilder()
             .build();
-      List<UserPB> list = query.list();
+      List<User> list = query.list();
 
       assertNotNull(list);
       assertEquals(1, list.size());
@@ -221,6 +222,33 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals("testing 123", list.get(0).notIndexedField);
    }
 
+   public void testRemoteQueryForEmbeddedEntryOnIndexedAndNonIndexedField() throws Exception {
+      UserHS user = new UserHS();
+      user.setId(1);
+      user.setName("test name");
+      user.setSurname("test surname");
+      user.setNotes("1234567890");
+      cache.put(1, user);
+
+      // get user back from remote cache via query and check its attributes
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+      Query query = qf.from(UserPB.class)
+            .having("notes").like("%567%")
+            .and()
+            .having("surname").eq("test surname")
+            .toBuilder()
+            .build();
+      List<User> list = query.list();
+
+      assertNotNull(list);
+      assertEquals(1, list.size());
+      assertNotNull(list.get(0));
+      assertEquals(UserPB.class, list.get(0).getClass());
+      assertEquals(1, list.get(0).getId());
+      assertEquals("1234567890", list.get(0).getNotes());
+      assertEquals("test surname", list.get(0).getSurname());
+   }
+
    public void testRemoteQueryWithProjectionsForEmbeddedEntry() throws Exception {
       AccountHS account = new AccountHS();
       account.setId(1);
@@ -242,8 +270,8 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertEquals(1, list.get(0)[1]);
    }
 
-   public void testEmbeddedQuery() throws Exception {
-      Account account = createAccount();
+   public void testEmbeddedLuceneQuery() throws Exception {
+      Account account = createAccountPB(1);
       remoteCache.put(1, account);
 
       // get account back from local cache via query and check its attributes
@@ -259,9 +287,81 @@ public class EmbeddedCompatTest extends SingleCacheManagerTest {
       assertAccount((Account) list.get(0), AccountHS.class);
    }
 
-   private AccountPB createAccount() {
-      AccountPB account = new AccountPB();
+   public void testEqEmptyStringRemote() throws Exception {
+      UserHS user = new UserHS();
+      user.setId(1);
+      user.setName("test name");
+      user.setSurname("test surname");
+      user.setNotes("1234567890");
+      cache.put(1, user);
+
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(UserPB.class)
+            .having("name").eq("")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertTrue(list.isEmpty());
+   }
+
+   public void testEqSentenceRemote() throws Exception {
+      AccountHS account = new AccountHS();
       account.setId(1);
+      account.setDescription("John Doe's first bank account");
+      account.setCreationDate(new Date(42));
+      cache.put(1, account);
+
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query q = qf.from(AccountPB.class)
+            .having("description").eq("John Doe's first bank account")
+            .toBuilder().build();
+
+      List<Account> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
+   }
+
+   public void testEqEmptyStringEmbedded() throws Exception {
+      UserHS user = new UserHS();
+      user.setId(1);
+      user.setName("test name");
+      user.setSurname("test surname");
+      user.setNotes("1234567890");
+      cache.put(1, user);
+
+      QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
+
+      Query q = qf.from(UserHS.class)
+            .having("name").eq("")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertTrue(list.isEmpty());
+   }
+
+   public void testEqSentenceEmbedded() throws Exception {
+      AccountHS account = new AccountHS();
+      account.setId(1);
+      account.setDescription("John Doe's first bank account");
+      account.setCreationDate(new Date(42));
+      cache.put(1, account);
+
+      QueryFactory qf = org.infinispan.query.Search.getQueryFactory(cache);
+
+      Query q = qf.from(AccountHS.class)
+            .having("description").eq("John Doe's first bank account")
+            .toBuilder().build();
+
+      List<Account> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
+   }
+
+   private AccountPB createAccountPB(int id) {
+      AccountPB account = new AccountPB();
+      account.setId(id);
       account.setDescription("test description");
       account.setCreationDate(new Date(42));
       return account;
