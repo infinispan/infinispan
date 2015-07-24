@@ -223,8 +223,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .having("description").eq("John Doe's first bank account")
             .toBuilder().build();
 
-      List<User> list = q.list();
+      List<Account> list = q.list();
       assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
    }
 
    public void testEq() throws Exception {
@@ -255,6 +256,19 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
+   }
+
+   public void testEqHybridQuery() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("notes").eq("Lorem ipsum dolor sit amet")
+            .and().having("surname").eq("Doe")
             .toBuilder().build();
 
       List<User> list = q.list();
@@ -698,6 +712,28 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.size());
    }
 
+   public void testTautology() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").gt("A").or().having("name").lte("A")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   public void testContradiction() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").gt("A").and().having("name").lte("A")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertTrue(list.isEmpty());
+   }
+
    @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL100005:.*")
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = getQueryFactory();
@@ -708,7 +744,29 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       queryBuilder.build();  // exception expected
    }
 
-   public void testIsNull() throws Exception {
+   public void testIsNull1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("surname").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(0, list.size());
+   }
+
+   public void testIsNull2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .not().having("surname").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   public void testIsNull3() throws Exception {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())

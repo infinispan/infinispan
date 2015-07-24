@@ -242,8 +242,9 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
             .having("description").eq("John Doe's first bank account")
             .toBuilder().build();
 
-      List<User> list = q.list();
+      List<Account> list = q.list();
       assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
    }
 
    @Test
@@ -285,6 +286,19 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
+   public void testEqHybridQuery() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("notes").eq("Lorem ipsum dolor sit amet")
+            .and().having("surname").eq("Doe")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
+   }
+
    public void testEqInNested1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -751,6 +765,30 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(3, list.size());
    }
 
+   @Test
+   public void testTautology() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").gt("A").or().having("name").lte("A")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   @Test
+   public void testContradiction() {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").gt("A").and().having("name").lte("A")
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertTrue(list.isEmpty());
+   }
+
    @Test(expected = ParsingException.class)
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       QueryFactory qf = getQueryFactory();
@@ -762,7 +800,31 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
-   public void testIsNull() throws Exception {
+   public void testIsNull1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("surname").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(0, list.size());
+   }
+
+   @Test
+   public void testIsNull2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .not().having("surname").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   @Test
+   public void testIsNull3() throws Exception {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
