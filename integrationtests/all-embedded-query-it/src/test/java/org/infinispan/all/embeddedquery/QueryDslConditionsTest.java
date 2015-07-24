@@ -232,8 +232,9 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
             .having("description").eq("John Doe's first bank account")
             .toBuilder().build();
 
-      List<User> list = q.list();
+      List<Account> list = q.list();
       assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
    }
 
    @Test
