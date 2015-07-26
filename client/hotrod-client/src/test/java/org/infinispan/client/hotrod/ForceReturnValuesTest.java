@@ -54,4 +54,31 @@ public class ForceReturnValuesTest extends SingleCacheManagerTest {
       assert rv != null;
       assert "Value".equals(rv);
    }
+
+   public void testSameInstanceForSameForceReturnValues() {
+      RemoteCache<String, String> rcDontForceReturn = remoteCacheManager.getCache(false);
+      RemoteCache<String, String> rcDontForceReturn2 = remoteCacheManager.getCache(false);
+      assert rcDontForceReturn == rcDontForceReturn2;
+
+      RemoteCache<String, String> rcForceReturn = remoteCacheManager.getCache(true);
+      RemoteCache<String, String> rcForceReturn2 = remoteCacheManager.getCache(true);
+      assert rcForceReturn == rcForceReturn2;
+   }
+
+   public void testDifferentInstancesForDifferentForceReturnValues() {
+      RemoteCache<String, String> rcDontForceReturn = remoteCacheManager.getCache(false);
+      RemoteCache<String, String> rcForceReturn = remoteCacheManager.getCache(true);
+      assert rcForceReturn != rcDontForceReturn;
+
+      String rv = rcDontForceReturn.put("Key", "Value");
+      assert rv == null;
+      rv = rcDontForceReturn.put("Key", "Value2");
+      assert rv == null;
+
+      rv = rcForceReturn.put("Key2", "Value");
+      assert rv == null;
+      rv = rcForceReturn.put("Key2", "Value2");
+      assert rv != null;
+      assert "Value".equals(rv);
+   }
 }
