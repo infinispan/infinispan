@@ -143,7 +143,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
 
    private volatile boolean started = false;
-   private final Map<String, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<String, RemoteCacheHolder>();
+   private final Map<RemoteCacheKey, RemoteCacheHolder> cacheName2RemoteCache = new HashMap<>();
    private final AtomicInteger defaultCacheTopologyId = new AtomicInteger(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
    private Configuration configuration;
    private Codec codec;
@@ -620,7 +620,8 @@ public class RemoteCacheManager implements BasicCacheContainer {
    @SuppressWarnings("unchecked")
    private <K, V> RemoteCache<K, V> createRemoteCache(String cacheName, Boolean forceReturnValueOverride) {
       synchronized (cacheName2RemoteCache) {
-         if (!cacheName2RemoteCache.containsKey(cacheName)) {
+         RemoteCacheKey key = new RemoteCacheKey(cacheName, forceReturnValueOverride);
+         if (!cacheName2RemoteCache.containsKey(key)) {
             RemoteCacheImpl<K, V> result = createRemoteCache(cacheName);
             RemoteCacheHolder rcc = new RemoteCacheHolder(result, forceReturnValueOverride == null ? configuration.forceReturnValues() : forceReturnValueOverride);
             AtomicInteger topologyId = cacheName.isEmpty() ? defaultCacheTopologyId : new AtomicInteger(-1);
@@ -635,10 +636,10 @@ public class RemoteCacheManager implements BasicCacheContainer {
             }
             result.start();
             // If ping on startup is disabled, or cache is defined in server
-            cacheName2RemoteCache.put(cacheName, rcc);
+            cacheName2RemoteCache.put(key, rcc);
             return result;
          } else {
-            return (RemoteCache<K, V>) cacheName2RemoteCache.get(cacheName).remoteCache;
+            return (RemoteCache<K, V>) cacheName2RemoteCache.get(key).remoteCache;
          }
       }
    }
@@ -686,6 +687,35 @@ public class RemoteCacheManager implements BasicCacheContainer {
       return HotRodConstants.DEFAULT_CACHE_NAME_BYTES;
    }
 
+}
+
+class RemoteCacheKey {
+
+   final String cacheName;
+   final boolean forceReturnValue;
+
+   RemoteCacheKey(String cacheName, boolean forceReturnValue) {
+      this.cacheName = cacheName;
+      this.forceReturnValue = forceReturnValue;
+   }
+
+   @Override
+   public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof RemoteCacheKey)) return false;
+
+      RemoteCacheKey that = (RemoteCacheKey) o;
+
+      if (forceReturnValue != that.forceReturnValue) return false;
+      return !(cacheName != null ? !cacheName.equals(that.cacheName) : that.cacheName != null);
+   }
+
+   @Override
+   public int hashCode() {
+      int result = cacheName != null ? cacheName.hashCode() : 0;
+      result = 31 * result + (forceReturnValue ? 1 : 0);
+      return result;
+   }
 }
 
 class RemoteCacheHolder {
