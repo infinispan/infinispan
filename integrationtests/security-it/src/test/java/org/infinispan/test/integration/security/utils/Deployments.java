@@ -43,7 +43,8 @@ public final class Deployments {
                   new File("target/test-libs/infinispan-core.jar"),
                   new File("target/test-libs/infinispan-commons.jar"),
                   new File("target/test-libs/jboss-marshalling.jar"),
-                  new File("target/test-libs/jboss-marshalling-river.jar"))
+                  new File("target/test-libs/jboss-marshalling-river.jar"),
+                  new File("target/test-libs/wildfly-controller-client.jar"))
             .addPackage(Deployments.class.getPackage())
             .addPackage(AbstractAuthentication.class.getPackage());
       return war;

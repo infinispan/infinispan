@@ -11,22 +11,24 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+
 /**
- *  
  * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
  * @since 7.0
  */
 @RunWith(Arquillian.class)
 @ServerSetup({
-      NodeAuthenticationKrbPassIT.KerberosSystemPropertiesSetupTask.class,
-      NodeAuthenticationKrbPassIT.SecurityDomainsSetupTask.class,
-      NodeAuthenticationKrbPassIT.SecurityTraceLoggingServerSetupTask.class,
       NodeAuthenticationKrbPassIT.KrbLdapServerSetupTask.class,
       NodeAuthenticationKrbPassIT.Krb5ConfServerSetupTask.class
 })
 public class NodeAuthenticationKrbPassIT extends AbstractNodeAuthentication {
 
    protected static final String JOINING_NODE = "node1";
+
+   public NodeAuthenticationKrbPassIT() {
+      super(true);
+   }
 
    @Override
    protected String getCoordinatorNodeConfig() {

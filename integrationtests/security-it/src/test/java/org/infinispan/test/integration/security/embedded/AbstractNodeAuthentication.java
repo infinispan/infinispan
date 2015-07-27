@@ -22,12 +22,17 @@ import org.jboss.arquillian.junit.InSequence;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.as.arquillian.api.ServerSetupTask;
 import org.jboss.as.arquillian.container.ManagementClient;
+import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.test.integration.security.common.config.SecurityDomain;
 import org.jboss.as.test.integration.security.common.config.SecurityModule;
+import org.jboss.as.test.shared.TestSuiteEnvironment;
 import org.jboss.security.SecurityConstants;
 import org.junit.Test;
+import org.wildfly.test.api.Authentication;
 
 import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,6 +62,7 @@ public abstract class AbstractNodeAuthentication {
 
    private static final String TRUE = Boolean.TRUE.toString(); // TRUE
    private static final Log LOG = LogFactory.getLog(AbstractNodeAuthentication.class);
+   private final boolean krbProvided;
 
    @ArquillianResource
    protected ContainerController controller;
@@ -69,6 +75,10 @@ public abstract class AbstractNodeAuthentication {
    protected abstract String getJoiningNodeName();
 
    protected abstract String getJoiningNodeConfig();
+
+   public AbstractNodeAuthentication(boolean krbProvided) {
+      this.krbProvided = krbProvided;
+   }
 
    protected Cache<String, String> getReplicatedCache(EmbeddedCacheManager manager) throws Exception {
       ConfigurationBuilder cacheConfig = new ConfigurationBuilder();
@@ -99,6 +109,18 @@ public abstract class AbstractNodeAuthentication {
       assertTrue(controller.isStarted(COORDINATOR_NODE));
       controller.start(getJoiningNodeName());
       assertTrue(controller.isStarted(getJoiningNodeName()));
+
+      if (krbProvided) {
+         for (int port : new int[]{10090, 10190}) {
+            ModelControllerClient client = getModelControllerClient(port);
+            ManagementClient managementClient = new ManagementClient(client, "localhost",
+                                                                     port, "http-remoting");
+            KerberosSystemPropertiesSetupTask.INSTANCE.setup(managementClient, null);
+            SecurityTraceLoggingServerSetupTask.INSTANCE.setup(managementClient, null);
+            SecurityDomainsSetupTask.INSTANCE.setup(managementClient, null);
+         }
+      }
+
       deployer.deploy(COORDINATOR_NODE);
       deployer.deploy(getJoiningNodeName());
    }
@@ -127,6 +149,19 @@ public abstract class AbstractNodeAuthentication {
    public void stopJoiningNodes() throws Exception {
       deployer.undeploy(getJoiningNodeName());
       deployer.undeploy(COORDINATOR_NODE);
+
+      if (krbProvided) {
+         for (int port : new int[]{10090, 10190}) {
+            ModelControllerClient client = getModelControllerClient(port);
+            ManagementClient managementClient = new ManagementClient(client, "localhost",
+                                                                     port, "http-remoting");
+
+            KerberosSystemPropertiesSetupTask.INSTANCE.tearDown(managementClient, null);
+            SecurityTraceLoggingServerSetupTask.INSTANCE.tearDown(managementClient, null);
+            SecurityDomainsSetupTask.INSTANCE.tearDown(managementClient, null);
+         }
+      }
+
       try {
          controller.stop(getJoiningNodeName());
       } catch (Exception e) {
@@ -143,6 +178,18 @@ public abstract class AbstractNodeAuthentication {
       assertFalse(controller.isStarted(COORDINATOR_NODE));
    }
 
+   public static ModelControllerClient getModelControllerClient(int port) {
+      try {
+         return ModelControllerClient.Factory.create(
+               InetAddress.getByName("localhost"),
+               port,
+               Authentication.getCallbackHandler()
+         );
+      } catch (UnknownHostException e) {
+         throw new RuntimeException(e);
+      }
+   }
+
    /**
     * A Kerberos system-properties server setup task. Sets path to a <code>krb5.conf</code> file and enables Kerberos
     * debug messages.
@@ -152,10 +199,7 @@ public abstract class AbstractNodeAuthentication {
     */
    static class KerberosSystemPropertiesSetupTask extends AbstractSystemPropertiesServerSetupTask {
 
-//      @Override
-//      public void tearDown(ManagementClient managementClient, String containerId) throws Exception {
-//         // noop, workaround for AssertionError in ActiveOperationSupport:151
-//      }
+      public static final KerberosSystemPropertiesSetupTask INSTANCE = new KerberosSystemPropertiesSetupTask();
 
       /**
        * Returns "java.security.krb5.conf" and "sun.security.krb5.debug" properties.
@@ -180,15 +224,12 @@ public abstract class AbstractNodeAuthentication {
     */
    static class SecurityTraceLoggingServerSetupTask extends AbstractTraceLoggingServerSetupTask {
 
+      public static final SecurityTraceLoggingServerSetupTask INSTANCE = new SecurityTraceLoggingServerSetupTask();
+
       @Override
       protected Collection<String> getCategories(ManagementClient managementClient, String containerId) {
          return Arrays.asList("javax.security", "org.jboss.security", "org.picketbox");
       }
-
-//      @Override
-//      public void tearDown(ManagementClient managementClient, String containerId) throws Exception {
-//         // noop, workaround for AssertionError in ActiveOperationSupport:151
-//      }
    }
 
    /**
@@ -202,10 +243,7 @@ public abstract class AbstractNodeAuthentication {
       public static final String SECURITY_DOMAIN_PREFIX = "krb-";
       private static final String KEYTABS_DIR = "${java.io.tmpdir}" + File.separator + "keytabs" + File.separator;
 
-//      @Override
-//      public void tearDown(ManagementClient managementClient, String containerId) throws Exception {
-//         // noop, workaround for AssertionError in ActiveOperationSupport:151
-//      }
+      public static final SecurityDomainsSetupTask INSTANCE = new SecurityDomainsSetupTask();
 
       /**
        * Returns SecurityDomains configuration for this testcase.
