@@ -407,7 +407,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
       Caches.withinTx(BatchModeTransactionManager.getInstance(), new Callable<Void>() {
          @Override
          public Void call() throws Exception {
-            region.put(KEY, VALUE1);
+            region.put(null, KEY, VALUE1);
             return null;
          }
       });
@@ -453,8 +453,8 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 					properties
 			);
 
-			region.put( KEY, VALUE1 );
-			assertEquals( VALUE1, region.get( KEY ) );
+			region.put(null, KEY, VALUE1 );
+			assertEquals( VALUE1, region.get(null, KEY ) );
 
 			final CountDownLatch readerLatch = new CountDownLatch( 1 );
 			final CountDownLatch writerLatch = new CountDownLatch( 1 );
@@ -467,7 +467,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 					try {
 						BatchModeTransactionManager.getInstance().begin();
 						log.debug( "Transaction began, get value for key" );
-						assertTrue( VALUE2.equals( region.get( KEY ) ) == false );
+						assertTrue( VALUE2.equals( region.get(null, KEY ) ) == false );
 						BatchModeTransactionManager.getInstance().commit();
 					}
 					catch (AssertionFailedError e) {
@@ -490,7 +490,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 					try {
 						BatchModeTransactionManager.getInstance().begin();
 						log.debug( "Put value2" );
-						region.put( KEY, VALUE2 );
+						region.put(null, KEY, VALUE2 );
 						log.debug( "Put finished for value2, await writer latch" );
 						writerLatch.await();
 						log.debug( "Writer latch finished" );
@@ -520,7 +520,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 			writerLatch.countDown();
 			assertTrue( "Reader finished promptly", completionLatch.await( 100, TimeUnit.MILLISECONDS ) );
 
-			assertEquals( VALUE2, region.get( KEY ) );
+			assertEquals( VALUE2, region.get(null, KEY ) );
 
 			if ( holder.a1 != null ) {
 				throw holder.a1;
@@ -559,8 +559,8 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 					properties
 			);
 
-			region.put( KEY, VALUE1 );
-			assertEquals( VALUE1, region.get( KEY ) );
+			region.put(null, KEY, VALUE1 );
+			assertEquals( VALUE1, region.get(null, KEY ) );
 
 			// final Fqn rootFqn = getRegionFqn(getStandardRegionName(REGION_PREFIX), REGION_PREFIX);
 			final AdvancedCache jbc = getInfinispanCache(regionFactory);
@@ -580,7 +580,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 						jbc.addListener( blocker );
 
 						BatchModeTransactionManager.getInstance().begin();
-						region.get( KEY );
+						region.get(null, KEY );
 						BatchModeTransactionManager.getInstance().commit();
 					}
 					catch (Exception e) {
@@ -601,7 +601,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 						writerLatch.await();
 
 						BatchModeTransactionManager.getInstance().begin();
-						region.put( KEY, VALUE2 );
+						region.put(null, KEY, VALUE2 );
 						BatchModeTransactionManager.getInstance().commit();
 					}
 					catch (Exception e) {
@@ -631,10 +631,10 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 				unblocked = true;
 
 				if ( IsolationLevel.REPEATABLE_READ.equals( jbc.getCacheConfiguration().locking().isolationLevel() ) ) {
-					assertEquals( VALUE1, region.get( KEY ) );
+					assertEquals( VALUE1, region.get(null, KEY ) );
 				}
 				else {
-					assertEquals( VALUE2, region.get( KEY ) );
+					assertEquals( VALUE2, region.get(null, KEY ) );
 				}
 
 				if ( holder.a1 != null ) {
