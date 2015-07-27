@@ -37,7 +37,11 @@ public class NodeAuthPropertiesHandlerIT extends AbstractNodeAuthentication {
    protected static final String JOINING_NODE = "simple-auth-node1";
    
    private static final Log LOG = LogFactory.getLog(NodeAuthPropertiesHandlerIT.class);
-   
+
+   public NodeAuthPropertiesHandlerIT() {
+      super(false);
+   }
+
    @Override
    protected String getCoordinatorNodeConfig() {
       return COORDINATOR_JGROUSP_CONFIG_MD5;

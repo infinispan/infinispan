@@ -20,6 +20,10 @@ public class NodeAuthenticationMD5PassIT extends AbstractNodeAuthentication {
 
    protected static final String JOINING_NODE = "node1";
 
+   public NodeAuthenticationMD5PassIT() {
+      super(false);
+   }
+
    @Override
    protected String getCoordinatorNodeConfig() {
       return COORDINATOR_JGROUSP_CONFIG_MD5;

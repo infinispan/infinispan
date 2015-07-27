@@ -20,6 +20,10 @@ public class NodeAuthorizationMD5FailIT extends AbstractNodeAuthentication {
 
    protected static final String JOINING_NODE = "node1";
 
+   public NodeAuthorizationMD5FailIT() {
+      super(false);
+   }
+
    @Override
    protected String getCoordinatorNodeConfig() {
       return COORDINATOR_JGROUSP_CONFIG_MD5_USER;
