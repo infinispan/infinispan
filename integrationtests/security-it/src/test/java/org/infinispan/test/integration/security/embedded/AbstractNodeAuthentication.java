@@ -11,6 +11,7 @@ import org.infinispan.test.integration.security.tasks.AbstractSecurityDomainsSer
 import org.infinispan.test.integration.security.tasks.AbstractSystemPropertiesServerSetupTask;
 import org.infinispan.test.integration.security.tasks.AbstractTraceLoggingServerSetupTask;
 import org.infinispan.test.integration.security.utils.ApacheDsKrbLdap;
+import org.infinispan.test.integration.security.utils.ManagementClientParams;
 import org.infinispan.test.integration.security.utils.Utils;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.util.logging.Log;
@@ -25,7 +26,6 @@ import org.jboss.as.arquillian.container.ManagementClient;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.test.integration.security.common.config.SecurityDomain;
 import org.jboss.as.test.integration.security.common.config.SecurityModule;
-import org.jboss.as.test.shared.TestSuiteEnvironment;
 import org.jboss.security.SecurityConstants;
 import org.junit.Test;
 import org.wildfly.test.api.Authentication;
@@ -111,10 +111,10 @@ public abstract class AbstractNodeAuthentication {
       assertTrue(controller.isStarted(getJoiningNodeName()));
 
       if (krbProvided) {
-         for (int port : new int[]{10090, 10190}) {
-            ModelControllerClient client = getModelControllerClient(port);
-            ManagementClient managementClient = new ManagementClient(client, "localhost",
-                                                                     port, "http-remoting");
+         for (ManagementClientParams params : getManagementClientListParams()) {
+            ModelControllerClient client = getModelControllerClient(params);
+            ManagementClient managementClient = new ManagementClient(client, params.getHostname(),
+                                                                     params.getPort(), "http-remoting");
             KerberosSystemPropertiesSetupTask.INSTANCE.setup(managementClient, null);
             SecurityTraceLoggingServerSetupTask.INSTANCE.setup(managementClient, null);
             SecurityDomainsSetupTask.INSTANCE.setup(managementClient, null);
@@ -151,10 +151,10 @@ public abstract class AbstractNodeAuthentication {
       deployer.undeploy(COORDINATOR_NODE);
 
       if (krbProvided) {
-         for (int port : new int[]{10090, 10190}) {
-            ModelControllerClient client = getModelControllerClient(port);
-            ManagementClient managementClient = new ManagementClient(client, "localhost",
-                                                                     port, "http-remoting");
+         for (ManagementClientParams params : getManagementClientListParams()) {
+            ModelControllerClient client = getModelControllerClient(params);
+            ManagementClient managementClient = new ManagementClient(client, params.getHostname(),
+                                                                     params.getPort(), "http-remoting");
 
             KerberosSystemPropertiesSetupTask.INSTANCE.tearDown(managementClient, null);
             SecurityTraceLoggingServerSetupTask.INSTANCE.tearDown(managementClient, null);
@@ -178,16 +178,28 @@ public abstract class AbstractNodeAuthentication {
       assertFalse(controller.isStarted(COORDINATOR_NODE));
    }
 
-   public static ModelControllerClient getModelControllerClient(int port) {
+   public static ModelControllerClient getModelControllerClient(ManagementClientParams params) {
       try {
          return ModelControllerClient.Factory.create(
-               InetAddress.getByName("localhost"),
-               port,
+               InetAddress.getByName(params.getHostname()),
+               params.getPort(),
                Authentication.getCallbackHandler()
          );
       } catch (UnknownHostException e) {
          throw new RuntimeException(e);
       }
+   }
+
+   List<ManagementClientParams> getManagementClientListParams() {
+      List<ManagementClientParams> list = new ArrayList<>();
+
+      for (int i = 0; i < 2; i++) {
+         ManagementClientParams params = new ManagementClientParams(
+               System.getProperty("node" + i + ".mgmt.addr"), 10090 + 100 * i
+         );
+         list.add(i, params);
+      }
+      return list;
    }
 
    /**
