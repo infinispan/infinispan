@@ -2,6 +2,7 @@ package org.infinispan.test.integration.security.utils;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.directory.api.ldap.model.constants.SupportedSaslMechanisms;
 import org.apache.directory.api.ldap.model.entry.DefaultEntry;
 import org.apache.directory.api.ldap.model.ldif.LdifEntry;
@@ -29,6 +30,9 @@ import org.apache.directory.server.ldap.handlers.sasl.ntlm.NtlmMechanismHandler;
 import org.apache.directory.server.ldap.handlers.sasl.plain.PlainMechanismHandler;
 import org.infinispan.commons.logging.Log;
 import org.infinispan.commons.logging.LogFactory;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author <a href="mailto:vjuranek@redhat.com">Vojtech Juranek</a>
@@ -114,11 +118,14 @@ public class ApacheDsKrbLdap {
    )
    public void createLdap(final String hostname) throws Exception {
       final String initFile = System.getProperty("ldap.init.file", LDAP_INIT_FILE);
-      final String ldifContent = IOUtils.toString(getClass().getClassLoader().getResource(initFile));
-      final SchemaManager schemaManager = directoryService.getSchemaManager();
+      final String ldifContent = IOUtils.toString(getClass().getClassLoader().getResource(initFile), "UTF-8");
 
+      final Map<String, String> map = new HashMap<String, String>();
+      map.put("hostname", hostname);
+
+      final SchemaManager schemaManager = directoryService.getSchemaManager();
       try {
-         for (LdifEntry ldifEntry : new LdifReader(IOUtils.toInputStream(ldifContent))) {
+         for (LdifEntry ldifEntry : new LdifReader(IOUtils.toInputStream(StrSubstitutor.replace(ldifContent, map)))) {
             directoryService.getAdminSession().add(new DefaultEntry(schemaManager, ldifEntry.getEntry()));
          }
       } catch (Exception e) {

@@ -38,6 +38,7 @@
                                              -Dsasl.password=test_password
                                              -Dsasl.realm=test_realm
             </property>
+            <property name="managementAddress">${node0.mgmt.addr:127.0.0.1}</property>
             <property name="managementPort">10090</property>
          </configuration>
       </container>
@@ -56,6 +57,7 @@
                                              -Dsasl.password=test_password 
                                              -Dsasl.realm=test_realm
             </property>
+            <property name="managementAddress">${node1.mgmt.addr:127.0.0.1}</property>
             <property name="managementPort">10190</property>
          </configuration>
       </container>

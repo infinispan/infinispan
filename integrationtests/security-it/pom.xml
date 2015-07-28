@@ -97,6 +97,10 @@
                   </goals>
                   <configuration>
                      <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                     <systemPropertyVariables>
+                        <node0.mgmt.addr>127.0.0.1</node0.mgmt.addr>
+                        <node1.mgmt.addr>127.0.0.1</node1.mgmt.addr>
+                     </systemPropertyVariables>
                   </configuration>
                </execution>
             </executions>
