@@ -32,6 +32,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.assertNotNull;
 
 /**
  * Test concurrent reads, writes, and clear operations on the SingleFileStore.
@@ -307,6 +308,43 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
       }
    }
 
+   public void testProcessWithNoDiskAccess() throws ExecutionException, InterruptedException {
+      final int NUM_WRITER_THREADS = 2;
+      final int NUM_KEYS = 2000;
+      final int MAX_VALUE_SIZE = 100;
+
+      Cache<String, String> cache = cacheManager.getCache(CACHE_NAME);
+      PersistenceManager persistenceManager = TestingUtil.extractComponent(cache, PersistenceManager.class);
+      final SingleFileStore store = persistenceManager.getStores(SingleFileStore.class).iterator().next();
+      final StreamingMarshaller marshaller = TestingUtil.extractComponentRegistry(cache).getCacheMarshaller();
+      assertEquals(0, store.size());
+
+      final List<String> keys = new ArrayList<>(NUM_KEYS);
+      for (int j = 0; j < NUM_KEYS; j++) {
+         String key = "key" + j;
+         String value = key + "_value_" + j + times("123456789_", new Random().nextInt(MAX_VALUE_SIZE / 10));
+         keys.add(key);
+         MarshalledEntryImpl entry = new MarshalledEntryImpl<>(key, value, null, marshaller);
+         store.write(entry);
+      }
+
+      final CountDownLatch stopLatch = new CountDownLatch(1);
+      Future[] writeFutures = new Future[NUM_WRITER_THREADS];
+      for (int i = 0; i < NUM_WRITER_THREADS; i++) {
+         writeFutures[i] = fork(stopOnException(new WriteTask(store, marshaller, keys, stopLatch), stopLatch));
+      }
+
+      Future processFuture = fork(stopOnException(new ProcessTaskNoDiskRead(store), stopLatch));
+
+      // Stop the writers only after we finish processing
+      processFuture.get();
+      stopLatch.countDown();
+
+      for (int i = 0; i < NUM_WRITER_THREADS; i++) {
+         writeFutures[i].get();
+      }
+   }
+
    private Callable<Object> stopOnException(Callable<Object> task, CountDownLatch stopLatch) {
       return new StopOnExceptionTask(task, stopLatch);
    }
@@ -447,6 +485,35 @@ public class SingleFileStoreStressTest extends SingleCacheManagerTest {
             }
          }, executor, true, true);
          log.tracef("Processed %d entries from the store", count.get());
+         return null;
+      }
+   }
+
+   private class ProcessTaskNoDiskRead implements Callable<Object> {
+      private final SingleFileStore store;
+
+      public ProcessTaskNoDiskRead(SingleFileStore store) {
+         this.store = store;
+      }
+
+      @Override
+      public Object call() throws Exception {
+         final int NUM_PROCESS_THREADS = Runtime.getRuntime().availableProcessors();
+
+         File file = new File(location, CACHE_NAME + ".dat");
+         assertTrue(file.exists());
+
+         final ExecutorService executor = Executors.newFixedThreadPool(NUM_PROCESS_THREADS, getTestThreadFactory("process-"));
+         final AtomicInteger count = new AtomicInteger(0);
+         store.process(
+                 (key) -> true,
+                 (marshalledEntry, taskContext) -> {
+                    count.incrementAndGet();
+                    Object key = marshalledEntry.getKey();
+                    assertNotNull(key);
+                 },
+                 executor, false, false);  // Set (value and metadata) == false so that no disk reads are performed
+         log.tracef("Processed %d in-memory keys from the store", count.get());
          return null;
       }
    }

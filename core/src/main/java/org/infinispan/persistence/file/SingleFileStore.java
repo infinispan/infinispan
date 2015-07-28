@@ -473,10 +473,22 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
          resizeLock.readLock().unlock();
       }
 
+      org.infinispan.commons.io.ByteBuffer valueBb = null;
+      org.infinispan.commons.io.ByteBuffer metadataBb = null;
+
+      // If we only require the key, then no need to read disk
+      if (!loadValue && !loadMetadata) {
+         try {
+            return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, valueBb, metadataBb);
+         } finally {
+            fe.unlock();
+         }
+      }
+
       final byte[] data;
       try {
          // load serialized data from disk
-         data = new byte[fe.keyLen + (loadValue || loadMetadata ? fe.dataLen : 0) + (loadMetadata ? fe.metadataLen : 0)];
+         data = new byte[fe.keyLen + fe.dataLen + (loadMetadata ? fe.metadataLen : 0)];
          // The entry lock will prevent clear() from truncating the file at this point
          channel.read(ByteBuffer.wrap(data), fe.offset + KEY_POS);
       } catch (Exception e) {
@@ -490,8 +502,6 @@ public class SingleFileStore<K, V> implements AdvancedLoadWriteStore<K, V> {
       if (trace) log.tracef("Read entry %s at %d:%d", key, fe.offset, fe.actualSize());
       ByteBufferFactory factory = ctx.getByteBufferFactory();
       org.infinispan.commons.io.ByteBuffer keyBb = factory.newByteBuffer(data, 0, fe.keyLen);
-      org.infinispan.commons.io.ByteBuffer valueBb = null;
-      org.infinispan.commons.io.ByteBuffer metadataBb = null;
       if (loadValue) {
          valueBb = factory.newByteBuffer(data, fe.keyLen, fe.dataLen);
       }
