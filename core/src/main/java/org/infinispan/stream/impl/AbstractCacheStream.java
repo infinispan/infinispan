@@ -616,11 +616,17 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
    }
 
    protected Supplier<Stream<CacheEntry>> supplierForSegments(ConsistentHash ch, Set<Integer> targetSegments,
-           Set<Object> excludedKeys) {
+                                                              Set<Object> excludedKeys) {
+      return supplierForSegments(ch, targetSegments, excludedKeys, true);
+   }
+
+   protected Supplier<Stream<CacheEntry>> supplierForSegments(ConsistentHash ch, Set<Integer> targetSegments,
+                                                              Set<Object> excludedKeys, boolean primaryOwnerOnly) {
       if (!ch.getMembers().contains(localAddress)) {
          return () -> Stream.empty();
       }
-      Set<Integer> segments = ch.getPrimarySegmentsForOwner(localAddress);
+      Set<Integer> segments = primaryOwnerOnly ? ch.getPrimarySegmentsForOwner(localAddress) :
+              ch.getSegmentsForOwner(localAddress);
       if (targetSegments != null) {
          segments.retainAll(targetSegments);
       }

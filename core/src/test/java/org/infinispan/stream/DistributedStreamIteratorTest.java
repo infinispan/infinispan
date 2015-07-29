@@ -1,6 +1,7 @@
 package org.infinispan.stream;
 
 import org.infinispan.Cache;
+import org.infinispan.CacheStream;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
@@ -35,11 +36,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyCollectionOf;
 import static org.mockito.Matchers.anySetOf;
 import static org.mockito.Mockito.anyBoolean;
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.*;
 import static org.testng.AssertJUnit.*;
 
@@ -291,6 +294,44 @@ public class DistributedStreamIteratorTest extends BaseClusteredStreamIteratorTe
       }
 
       assertEquals(values.size(), count);
+   }
+
+   @Test
+   public void testStayLocalIfAllSegmentsPresentLocallyWithReHash() throws Exception {
+      testStayLocalIfAllSegmentsPresentLocally(true);
+   }
+
+   @Test
+   public void testStayLocalIfAllSegmentsPresentLocallyWithoutRehash() throws Exception {
+      testStayLocalIfAllSegmentsPresentLocally(false);
+   }
+
+   private void testStayLocalIfAllSegmentsPresentLocally(boolean rehashAware) throws Exception {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+
+      ClusterStreamManager clusterStreamManager = replaceWithSpy(cache0);
+
+      IntStream.rangeClosed(0, 499).boxed().forEach(i -> cache0.put(i, i.toString()));
+
+      ConsistentHash ch = cache0.getAdvancedCache().getDistributionManager().getConsistentHash();
+      Set<Integer> segmentsCache0 = ch.getSegmentsForOwner(cache0.getCacheManager().getAddress());
+
+      CacheStream<Map.Entry<Object, String>> stream = cache0.entrySet().stream();
+      if (!rehashAware) stream = stream.disableRehashAware();
+
+      Map<Object, String> entries = mapFromIterator(stream.filterKeySegments(segmentsCache0).iterator());
+
+      Map<Integer, Set<Map.Entry<Object, String>>> entriesPerSegment = generateEntriesPerSegment(ch, entries.entrySet());
+
+      assertEquals(segmentsCache0, entriesPerSegment.keySet());
+      verify(clusterStreamManager, never()).awaitCompletion(any(UUID.class), anyLong(), any(TimeUnit.class));
+   }
+
+   private ClusterStreamManager replaceWithSpy(Cache<?,?> cache) {
+      ClusterStreamManager component = TestingUtil.extractComponent(cache, ClusterStreamManager.class);
+      ClusterStreamManager clusterStreamManager = spy(component);
+      TestingUtil.replaceComponent(cache, ClusterStreamManager.class, clusterStreamManager, false);
+      return clusterStreamManager;
    }
 
    private Map<Integer, Set<Map.Entry<Object, String>>> generateEntriesPerSegment(ConsistentHash hash, Iterable<Map.Entry<Object, String>> entries) {
