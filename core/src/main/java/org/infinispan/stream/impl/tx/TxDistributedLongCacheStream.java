@@ -34,9 +34,9 @@ public class TxDistributedLongCacheStream extends DistributedLongCacheStream {
 
    @Override
    protected Supplier<Stream<CacheEntry>> supplierForSegments(ConsistentHash ch, Set<Integer> targetSegments,
-           Set<Object> excludedKeys) {
+           Set<Object> excludedKeys, boolean primaryOnly) {
       return () -> {
-         Supplier<Stream<CacheEntry>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys);
+         Supplier<Stream<CacheEntry>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
          Set<CacheEntry> set = ctx.getLookedUpEntries().values().stream().filter(
                  e -> !localAddress.equals(ch.locatePrimaryOwner(e.getKey()))).collect(Collectors.toSet());
          Stream<CacheEntry> suppliedStream = supplier.get();

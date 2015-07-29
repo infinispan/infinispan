@@ -61,9 +61,9 @@ public class TxDistributedCacheStream<R> extends DistributedCacheStream<R> {
 
    @Override
    protected Supplier<Stream<CacheEntry>> supplierForSegments(ConsistentHash ch, Set<Integer> targetSegments,
-           Set<Object> excludedKeys) {
+           Set<Object> excludedKeys, boolean primaryOnly) {
       return () -> {
-         Supplier<Stream<CacheEntry>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys);
+         Supplier<Stream<CacheEntry>> supplier = super.supplierForSegments(ch, targetSegments, excludedKeys, primaryOnly);
          // Now we have to add entries that aren't mapped to our local segments since we are excluding those
          // remotely via {@link TxClusterStreamManager} using the same hash
          Set<CacheEntry> set = ctx.getLookedUpEntries().values().stream().filter(
