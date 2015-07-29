@@ -95,15 +95,20 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx, command))
-         checkMarshallable(command.getKeys());
+      if (isStoreAsBinary() || isClusterInvocation(ctx, command)) {
+         for (Object key : command.getKeys()) {
+            checkMarshallable(key);
+         }
+      }
       return super.visitLockControlCommand(ctx, command);
    }
 
    @Override
    public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
-         checkMarshallable(command.getKey(), command.getValue());
+      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
+         checkMarshallable(command.getKey());
+         checkMarshallable(command.getValue());
+      }
       return super.visitPutKeyValueCommand(ctx, command);
    }
 
@@ -123,8 +128,10 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
-      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command))
-         checkMarshallable(command.getKey(), command.getNewValue());
+      if (isStoreAsBinary() || isClusterInvocation(ctx, command) || isStoreInvocation(command)) {
+         checkMarshallable(command.getKey());
+         checkMarshallable(command.getNewValue());
+      }
       return super.visitReplaceCommand(ctx, command);
    }
 
@@ -158,18 +165,16 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
             && !distManager.getLocality(key).isLocal();
    }
 
-   private void checkMarshallable(Object... objs) throws NotSerializableException {
-      for (Object o : objs) {
-         boolean marshallable = false;
-         try {
-            marshallable = marshaller.isMarshallable(o);
-         } catch (Exception e) {
-            throwNotSerializable(o, e);
-         }
-
-         if (!marshallable)
-            throwNotSerializable(o, null);
+   private void checkMarshallable(Object o) throws NotSerializableException {
+      boolean marshallable = false;
+      try {
+         marshallable = marshaller.isMarshallable(o);
+      } catch (Exception e) {
+         throwNotSerializable(o, e);
       }
+
+      if (!marshallable)
+         throwNotSerializable(o, null);
    }
 
    private void throwNotSerializable(Object o, Throwable t) {
@@ -182,8 +187,10 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
    }
 
    private void checkMarshallable(Map<Object, Object> objs) throws NotSerializableException {
-      for (Map.Entry<Object, Object> entry : objs.entrySet())
-         checkMarshallable(entry.getKey(), entry.getValue());
+      for (Map.Entry<Object, Object> entry : objs.entrySet()) {
+         checkMarshallable(entry.getKey());
+         checkMarshallable(entry.getValue());
+      }
    }
 
 }
