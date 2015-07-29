@@ -8,7 +8,6 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
-import static org.testng.AssertJUnit.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,6 +18,8 @@ import java.util.Map;
 import java.util.Set;
 
 import static org.infinispan.test.TestingUtil.assertNoLocks;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.fail;
 
 /**
  * @author Mircea Markus
@@ -166,6 +167,7 @@ public class APINonTxTest extends SingleCacheManagerTest {
       }
    }
 
+   @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testAddMethodsForEntryCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
       Map<String, String> m = new HashMap<String, String>();
@@ -178,17 +180,6 @@ public class APINonTxTest extends SingleCacheManagerTest {
 
       Map.Entry entry = new ImmortalCacheEntry("4", "four");
       entries.add(entry);
-
-      assertEquals(4, cache.size());
-
-      List<Map.Entry<Object, Object>> entryCollection = new ArrayList<>(2);
-
-      entryCollection.add(new ImmortalCacheEntry("5", "five"));
-      entryCollection.add(new ImmortalCacheEntry("6", "six"));
-
-      entries.addAll(entryCollection);
-
-      assertEquals(6, cache.size());
    }
 
    public void testRemoveMethodOfKeyValueEntryCollections() {

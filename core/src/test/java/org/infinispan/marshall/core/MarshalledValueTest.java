@@ -278,6 +278,7 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
       }
    }
 
+   @Test(expectedExceptions = UnsupportedOperationException.class)
    public void testAddMethodsForEntryCollection() {
       final String key1 = "1", value1 = "one", key2 = "2", value2 = "two", key3 = "3", value3 = "three";
       Map<String, String> m = new HashMap<>();
@@ -290,17 +291,6 @@ public class MarshalledValueTest extends MultipleCacheManagersTest {
 
       Map.Entry entry = new ImmortalCacheEntry("4", "four");
       entries.add(entry);
-
-      assertEquals(4, cache(0, "replSync").size());
-
-      List<Map.Entry<Object, Object>> entryCollection = new ArrayList<>(2);
-
-      entryCollection.add(new ImmortalCacheEntry("5", "five"));
-      entryCollection.add(new ImmortalCacheEntry("6", "six"));
-
-      entries.addAll(entryCollection);
-
-      assertEquals(6, cache(0, "replSync").size());
    }
 
    public void testRemoveMethodOfKeyValueEntryCollections() {

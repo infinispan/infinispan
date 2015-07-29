@@ -103,9 +103,10 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
 
       @Override
       public boolean add(CacheEntry<K, V> internalCacheEntry) {
-         V value = cache.put(internalCacheEntry.getKey(), internalCacheEntry.getValue());
-         // If the value was already there we can treat as if it wasn't added
-         return value != null && value.equals(internalCacheEntry.getValue());
+         /**
+          * {@link Map#entrySet()} defines no support for add or addAll methods
+          */
+         throw new UnsupportedOperationException();
       }
 
       private Map.Entry<K, V> toEntry(Object obj) {
