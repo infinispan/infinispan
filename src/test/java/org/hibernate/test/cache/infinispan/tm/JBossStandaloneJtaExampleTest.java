@@ -57,6 +57,7 @@ import org.hibernate.test.common.ServiceRegistryHolder;
 =======
 =======
 
+<<<<<<< HEAD
 >>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 import org.hibernate.testing.ServiceRegistryBuilder;
 <<<<<<< HEAD
@@ -71,6 +72,9 @@ import org.jnp.server.Main;
 import org.jnp.server.NamingServer;
 <<<<<<< HEAD
 =======
+=======
+import org.hibernate.test.cache.infinispan.util.InfinispanTestingSetup;
+>>>>>>> HHH-10001 Make the testsuite compatible with Infinispan 8
 import org.hibernate.testing.ServiceRegistryBuilder;
 >>>>>>> HHH-5765 - Replaced ServiceRegistryHolder with ServiceRegistryBuilder
 =======
@@ -92,6 +96,7 @@ import org.hibernate.testing.jta.TestingJtaPlatformImpl;
 import org.hibernate.test.cache.infinispan.functional.Item;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -126,6 +131,9 @@ public class JBossStandaloneJtaExampleTest {
    Context ctx;
    Main jndiServer;
    private ServiceRegistry serviceRegistry;
+
+   @ClassRule
+   public static final InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
 
    @Before
    public void setUp() throws Exception {

@@ -117,6 +117,7 @@ import org.hibernate.internal.util.compare.ComparableComparator;
 import org.hibernate.test.cache.infinispan.AbstractNonFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.NodeEnvironment;
 import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
+import org.hibernate.test.cache.infinispan.util.InfinispanTestingSetup;
 import org.hibernate.test.cache.infinispan.util.TestingKeyFactory;
 import org.infinispan.Cache;
 import org.infinispan.test.TestingUtil;
@@ -127,6 +128,7 @@ import org.jboss.logging.Logger;
 =======
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 >>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
 
@@ -972,6 +974,9 @@ public abstract class AbstractEntityRegionAccessStrategyTestCase extends Abstrac
 =======
    private static final Logger log = Logger.getLogger(AbstractEntityRegionAccessStrategyTestCase.class);
 >>>>>>> HHH-7763 No need to clear caches when these are going to be stopped
+
+   @Rule
+   public InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
 
    public static final String REGION_NAME = "test/com.foo.test";
    public static final String KEY_BASE = "KEY";

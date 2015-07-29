@@ -35,6 +35,7 @@ import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoo
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.tm.JtaPlatformImpl;
 <<<<<<< HEAD
@@ -74,6 +75,9 @@ import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.tm.JtaPlatformImpl;
 >>>>>>> HHH-9747 - Import initial reworking of transaction handling (based on JdbcSession work)
 =======
+=======
+import org.hibernate.test.cache.infinispan.util.InfinispanTestingSetup;
+>>>>>>> HHH-10001 Make the testsuite compatible with Infinispan 8
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.tm.JtaPlatformImpl;
 import org.junit.Before;
@@ -83,7 +87,11 @@ import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+<<<<<<< HEAD
 >>>>>>> HHH-9803 - Checkstyle fix ups - headers
+=======
+import org.junit.ClassRule;
+>>>>>>> HHH-10001 Make the testsuite compatible with Infinispan 8
 
 /**
  * @author Galder Zamarreño
@@ -92,6 +100,9 @@ import org.infinispan.util.logging.LogFactory;
 public abstract class SingleNodeTestCase extends BaseNonConfigCoreFunctionalTestCase {
 	private static final Log log = LogFactory.getLog( SingleNodeTestCase.class );
 	protected TransactionManager tm;
+
+	@ClassRule
+	public static final InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
 
 	@Before
 	public void prepare() {

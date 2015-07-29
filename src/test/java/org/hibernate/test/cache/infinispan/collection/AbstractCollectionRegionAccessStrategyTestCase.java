@@ -102,6 +102,7 @@ import org.hibernate.test.cache.infinispan.util.CacheTestUtil;
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 import org.hibernate.testing.ServiceRegistryBuilder;
 <<<<<<< HEAD
 import org.hibernate.util.ComparableComparator;
@@ -110,6 +111,9 @@ import org.infinispan.transaction.tm.BatchModeTransactionManager;
 =======
 =======
 =======
+=======
+import org.hibernate.test.cache.infinispan.util.InfinispanTestingSetup;
+>>>>>>> HHH-10001 Make the testsuite compatible with Infinispan 8
 import org.hibernate.test.cache.infinispan.util.TestingKeyFactory;
 <<<<<<< HEAD
 >>>>>>> HHH-9840 Allow 2nd level cache implementations to customize the various key implementations
@@ -130,6 +134,7 @@ import org.jboss.logging.Logger;
 =======
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 >>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
 
@@ -161,6 +166,7 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractCollectionRegionAccessStrategyTestCase extends AbstractNonFunctionalTestCase {
 	private static final Logger log = Logger.getLogger( AbstractCollectionRegionAccessStrategyTestCase.class );
+<<<<<<< HEAD
 <<<<<<< HEAD
 
 <<<<<<< HEAD
@@ -734,6 +740,12 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 =======
 =======
 >>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
+=======
+
+	@Rule
+	public InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
+
+>>>>>>> HHH-10001 Make the testsuite compatible with Infinispan 8
 	public static final String REGION_NAME = "test/com.foo.test";
 	public static final String KEY_BASE = "KEY";
 	public static final String VALUE1 = "VALUE1";

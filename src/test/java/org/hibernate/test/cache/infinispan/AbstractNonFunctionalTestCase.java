@@ -12,6 +12,7 @@ import static org.hibernate.TestLogger.LOG;
 >>>>>>> HHH-5942 - Migrate to JUnit 4
 import java.util.Set;
 
+import org.hibernate.test.cache.infinispan.util.InfinispanTestingSetup;
 import org.infinispan.Cache;
 import org.jboss.logging.Logger;
 <<<<<<< HEAD
@@ -39,6 +40,7 @@ import org.junit.Before;
 import org.hibernate.cache.spi.RegionFactory;
 >>>>>>> HHH-7197 reimport imports
 import org.hibernate.test.cache.infinispan.util.CacheTestSupport;
+import org.junit.Rule;
 
 /**
  * Base class for all non-functional tests of Infinispan integration.
@@ -48,6 +50,9 @@ import org.hibernate.test.cache.infinispan.util.CacheTestSupport;
  */
 public abstract class AbstractNonFunctionalTestCase extends org.hibernate.testing.junit4.BaseUnitTestCase {
    private static final Logger log = Logger.getLogger(AbstractNonFunctionalTestCase.class);
+
+   @Rule
+   public InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
 
    public static final String REGION_PREFIX = "test";
 

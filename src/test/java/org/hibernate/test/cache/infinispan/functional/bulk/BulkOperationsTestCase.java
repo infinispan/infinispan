@@ -53,6 +53,7 @@ import org.hibernate.resource.transaction.backend.jta.internal.JtaTransactionCoo
 >>>>>>> HHH-9747 - Import initial reworking of transaction handling (based on JdbcSession work)
 import org.hibernate.stat.SecondLevelCacheStatistics;
 
+import org.hibernate.test.cache.infinispan.util.InfinispanTestingSetup;
 import org.hibernate.testing.junit4.BaseNonConfigCoreFunctionalTestCase;
 import org.hibernate.test.cache.infinispan.functional.Contact;
 import org.hibernate.test.cache.infinispan.functional.Customer;
@@ -84,6 +85,7 @@ import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 =======
 import org.hibernate.test.cache.infinispan.functional.SingleNodeTestCase;
 import org.hibernate.test.cache.infinispan.tm.JtaPlatformImpl;
+import org.junit.ClassRule;
 import org.junit.Test;
 >>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 
@@ -99,6 +101,10 @@ import static org.junit.Assert.assertNull;
  * @since 3.5
  */
 public class BulkOperationsTestCase extends BaseNonConfigCoreFunctionalTestCase {
+
+	@ClassRule
+	public static final InfinispanTestingSetup infinispanTestIdentifier = new InfinispanTestingSetup();
+
 	private TransactionManager tm;
 
 	@Override
