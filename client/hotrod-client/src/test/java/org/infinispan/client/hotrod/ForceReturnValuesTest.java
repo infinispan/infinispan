@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
 import java.util.Properties;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.*;
 
 @Test(testName = "client.hotrod.ForceReturnValuesTest", groups = "functional")
 @CleanupAfterMethod
@@ -58,27 +59,27 @@ public class ForceReturnValuesTest extends SingleCacheManagerTest {
    public void testSameInstanceForSameForceReturnValues() {
       RemoteCache<String, String> rcDontForceReturn = remoteCacheManager.getCache(false);
       RemoteCache<String, String> rcDontForceReturn2 = remoteCacheManager.getCache(false);
-      assert rcDontForceReturn == rcDontForceReturn2;
+      assertSame("RemoteCache instances should be the same", rcDontForceReturn, rcDontForceReturn2);
 
       RemoteCache<String, String> rcForceReturn = remoteCacheManager.getCache(true);
       RemoteCache<String, String> rcForceReturn2 = remoteCacheManager.getCache(true);
-      assert rcForceReturn == rcForceReturn2;
+      assertSame("RemoteCache instances should be the same", rcForceReturn, rcForceReturn2);
    }
 
    public void testDifferentInstancesForDifferentForceReturnValues() {
       RemoteCache<String, String> rcDontForceReturn = remoteCacheManager.getCache(false);
       RemoteCache<String, String> rcForceReturn = remoteCacheManager.getCache(true);
-      assert rcForceReturn != rcDontForceReturn;
+      assertNotSame("RemoteCache instances should not be the same", rcDontForceReturn, rcForceReturn);
 
       String rv = rcDontForceReturn.put("Key", "Value");
-      assert rv == null;
+      assertNull(rv);
       rv = rcDontForceReturn.put("Key", "Value2");
-      assert rv == null;
+      assertNull(rv);
 
       rv = rcForceReturn.put("Key2", "Value");
-      assert rv == null;
+      assertNull(rv);
       rv = rcForceReturn.put("Key2", "Value2");
-      assert rv != null;
-      assert "Value".equals(rv);
+      assertNotNull(rv);
+      assertEquals("Previous value should be 'Value'", "Value", rv);
    }
 }
