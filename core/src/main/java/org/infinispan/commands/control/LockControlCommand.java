@@ -16,10 +16,8 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -218,20 +216,6 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    @Override
    public void setFlags(Set<Flag> flags) {
       this.flags = flags;
-   }
-
-   @Override
-   public boolean hasFlag(Flag flag) {
-      return flags != null && flags.contains(flag);
-   }
-
-   @Override
-   public void setFlags(Flag... flags) {
-      if (flags == null || flags.length == 0) return;
-      if (this.flags == null)
-         this.flags = EnumSet.copyOf(Arrays.asList(flags));
-      else
-         this.flags.addAll(Arrays.asList(flags));
    }
 
    @Override

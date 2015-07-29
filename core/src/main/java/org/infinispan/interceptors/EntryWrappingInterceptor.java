@@ -2,6 +2,7 @@ package org.infinispan.interceptors;
 
 import static org.infinispan.commons.util.Util.toStr;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -68,6 +69,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private static final Log log = LogFactory.getLog(EntryWrappingInterceptor.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final EnumSet<Flag> EVICT_FLAGS =
+         EnumSet.of(Flag.SKIP_OWNERSHIP_CHECK, Flag.CACHE_MODE_LOCAL);
 
    @Override
    protected Log getLog() {
@@ -294,7 +297,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    @Override
    public Object visitEvictCommand(InvocationContext ctx, EvictCommand command) throws Throwable {
-      command.setFlags(Flag.SKIP_OWNERSHIP_CHECK, Flag.CACHE_MODE_LOCAL); //to force the wrapping
+      command.addFlags(EVICT_FLAGS); //to force the wrapping
       return visitRemoveCommand(ctx, command);
    }
 

@@ -372,7 +372,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
          command.setTopologyId(newTopologyId);
          waitForTransactionData(newTopologyId);
 
-         command.setFlags(Flag.COMMAND_RETRY);
+         command.addFlag(Flag.COMMAND_RETRY);
          localResult = handleNonTxWriteCommand(ctx, command);
       }
 

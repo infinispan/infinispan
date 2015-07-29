@@ -13,21 +13,48 @@ import java.util.Set;
  */
 public interface LocalFlagAffectedCommand {
    /**
-    * @return the Flags which where set in the context - only valid to invoke after {@link #setFlags(java.util.Set)}
+    * @return The command flags - only valid to invoke after {@link #setFlags(java.util.Set)}. The set should
+    * not be modified directly, only via the {@link #setFlags(Set)}, {@link #addFlag(Flag)} and {@link
+    * #addFlags(Set)} methods.
     */
    Set<Flag> getFlags();
 
    /**
-    * Use it to store the flags from the InvocationContext into the Command before remoting the Command.
-    * @param flags
+    * Set the flags, replacing any existing flags.
+    *
+    * @param flags The new flags.
     */
    void setFlags(Set<Flag> flags);
 
    /**
-    * Use it to store the flags from the InvocationContext into the Command before remoting the Command.
-    * @param flags
+    * Add some flags to the command.
+    *
+    * @deprecated Use either {@link #addFlag(Flag)} or {@link #addFlags(Set)} instead.
+    *
+    * @param newFlags The flags to add.
     */
-   void setFlags(Flag... flags);
+   @Deprecated
+   default void setFlags(Flag... newFlags) {
+      setFlags(Flag.addFlags(getFlags(), newFlags));
+   }
+
+   /**
+    * Add a single flag to the command.
+    *
+    * @param flag The flag to add.
+    */
+   default void addFlag(Flag flag) {
+      setFlags(Flag.addFlag(getFlags(), flag));
+   }
+
+   /**
+    * Add a set of flags to the command.
+    *
+    * @param flags The flags to add.
+    */
+   default void addFlags(Set<Flag> flags) {
+      setFlags(Flag.addFlags(getFlags(), flags));
+   }
 
    /**
     * Check whether a particular flag is present in the command
@@ -35,5 +62,8 @@ public interface LocalFlagAffectedCommand {
     * @param flag to lookup in the command
     * @return true if the flag is present
     */
-   boolean hasFlag(Flag flag);
+   default boolean hasFlag(Flag flag) {
+      Set<Flag> flags = getFlags();
+      return flags != null && flags.contains(flag);
+   }
 }

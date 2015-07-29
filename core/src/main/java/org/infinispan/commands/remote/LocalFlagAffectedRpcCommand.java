@@ -1,7 +1,5 @@
 package org.infinispan.commands.remote;
 
-import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.Set;
 
 import org.infinispan.commands.LocalFlagAffectedCommand;
@@ -26,15 +24,6 @@ public abstract class LocalFlagAffectedRpcCommand extends BaseRpcCommand impleme
    @Override
    public void setFlags(Set<Flag> flags) {
       this.flags = flags;
-   }
-
-   @Override
-   public void setFlags(Flag... flags) {
-      if (flags == null || flags.length == 0) return;
-      if (this.flags == null)
-         this.flags = EnumSet.copyOf(Arrays.asList(flags));
-      else
-         this.flags.addAll(Arrays.asList(flags));
    }
 
    @Override
