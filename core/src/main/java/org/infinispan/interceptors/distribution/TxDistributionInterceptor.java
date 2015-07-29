@@ -136,7 +136,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
       try {
-         return visitGetCommand(ctx, command, false);
+         return visitGetCommand(ctx, command, true);
       } catch (SuspectException e) {
          // retry
          return visitGetCacheEntryCommand(ctx, command);
@@ -158,7 +158,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          Object key = filterDeltaCompositeKey(command.getKey());
          if (needsRemoteGet(ctx, command)) {
             InternalCacheEntry ice = remoteGet(ctx, key, false, command);
-            if (ice != null) {
+            returnValue = ice;
+            if (ice != null && !isGetCacheEntry) {
                returnValue = ice.getValue();
             }
          }
