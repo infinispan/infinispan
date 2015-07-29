@@ -40,6 +40,11 @@ public final class GetCacheEntryCommand extends AbstractDataCommand implements R
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry == null || entry.isNull()) {

@@ -34,7 +34,6 @@ import org.infinispan.remoting.responses.UnsureResponse;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
-import org.infinispan.remoting.transport.jgroups.SuspectException;
 import org.infinispan.statetransfer.OutdatedTopologyException;
 import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -48,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
-import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKey;
 import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
 import static org.infinispan.util.DeltaCompositeKeyUtil.getAffectedKeysFromContext;
 
@@ -82,7 +80,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       try {
-         return handleTxWriteCommand(ctx, command, command.getKey(), false);
+         return handleTxWriteCommand(ctx, command, command.getKey());
       } finally {
          if (ctx.isOriginLocal()) {
             // If the state transfer interceptor has to retry the command, it should ignore the previous value.
@@ -94,7 +92,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       try {
-         return handleTxWriteCommand(ctx, command, command.getKey(), false);
+         return handleTxWriteCommand(ctx, command, command.getKey());
       } finally {
          if (ctx.isOriginLocal()) {
             // If the state transfer interceptor has to retry the command, it should ignore the previous value.
@@ -109,7 +107,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          return handleNonTxWriteCommand(ctx, command);
       }
 
-      Object returnValue = handleTxWriteCommand(ctx, command, command.getKey(), command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER));
+      Object returnValue = handleTxWriteCommand(ctx, command, command.getKey());
       if (ctx.isOriginLocal()) {
          // If the state transfer interceptor has to retry the command, it should ignore the previous value.
          command.setValueMatcher(command.isSuccessful() ? ValueMatcher.MATCH_ALWAYS : ValueMatcher.MATCH_NEVER);
@@ -120,54 +118,34 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // don't bother with a remote get for the PutMapCommand!
-      return handleTxWriteCommand(ctx, command, null, true);
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      try {
-         return visitGetCommand(ctx, command, false);
-      } catch (SuspectException e) {
-         // retry
-         return visitGetKeyValueCommand(ctx, command);
-      }
+      return visitGetCommand(ctx, command);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      try {
-         return visitGetCommand(ctx, command, true);
-      } catch (SuspectException e) {
-         // retry
-         return visitGetCacheEntryCommand(ctx, command);
-      }
+      return visitGetCommand(ctx, command);
    }
 
-   private Object visitGetCommand(InvocationContext ctx, AbstractDataCommand command,
-      boolean isGetCacheEntry) throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
-
-      //if the cache entry has the value lock flag set, skip the remote get.
-      CacheEntry entry = ctx.lookupEntry(command.getKey());
-      boolean skipRemoteGet = entry != null && entry.skipLookup();
-
-      // need to check in the context as well since a null retval is not necessarily an indication of the entry not being
-      // available.  It could just have been removed in the same tx beforehand.  Also don't bother with a remote get if
-      // the entry is mapped to the local node.
-      if (!skipRemoteGet && returnValue == null && ctx.isOriginLocal()) {
-         Object key = filterDeltaCompositeKey(command.getKey());
-         if (needsRemoteGet(ctx, command)) {
-            InternalCacheEntry ice = remoteGet(ctx, key, false, command);
-            returnValue = ice;
-            if (ice != null && !isGetCacheEntry) {
-               returnValue = ice.getValue();
-            }
+   private Object visitGetCommand(InvocationContext ctx, AbstractDataCommand command) throws Throwable {
+      Object key = command.getKey();
+      CacheEntry entry = ctx.lookupEntry(key);
+      // If the cache entry has the value lock flag set, skip the remote get.
+      if (ctx.isOriginLocal() && valueIsMissing(entry)) {
+         InternalCacheEntry remoteEntry = null;
+         if (readNeedsRemoteValue(ctx, command)) {
+            remoteEntry = remoteGet(ctx, key, false, command);
          }
-         if (returnValue == null && !ctx.isEntryRemovedInContext(command.getKey())) {
-            returnValue = localGet(ctx, key, false, command, isGetCacheEntry);
+         if (remoteEntry == null) {
+            localGet(ctx, key, false, command);
          }
       }
-      return returnValue;
+
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -180,7 +158,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          log.tracef("Registered remote locks acquired %s", affectedNodes);
          RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
          Map<Address, Response> responseMap = rpcManager.invokeRemotely(affectedNodes, command, rpcOptions);
-         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired());
+         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx,
+                                 ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired());
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -190,7 +169,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> recipients = getCommitNodes(ctx);
-         Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, createCommitRpcOptions());
+         Map<Address, Response> responseMap =
+               rpcManager.invokeRemotely(recipients, command, createCommitRpcOptions());
          checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
       }
       return invokeNextInterceptor(ctx, command);
@@ -203,8 +183,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(ctx));
          prepareOnAffectedNodes(ctx, command, recipients);
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(recipients == null ? dm.getWriteConsistentHash()
-               .getMembers() : recipients);
+         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(
+               recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);
       }
       return retVal;
    }
@@ -291,110 +271,103 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       return false;
    }
 
-   private boolean shouldFetchRemoteValuesForWriteSkewCheck(InvocationContext ctx, WriteCommand cmd) {
-      // Note: the primary owner always already has the data, so this method is always going to return false
-      if (useClusteredWriteSkewCheck && ctx.isInTxScope() && dm.isRehashInProgress()) {
-         for (Object key : cmd.getAffectedKeys()) {
-            boolean shouldPerformWriteSkewCheck = cdl.localNodeIsPrimaryOwner(key);
-            // TODO Dan: remoteGet() already checks if the key is available locally or not
-            if (shouldPerformWriteSkewCheck && dm.isAffectedByRehash(key) && !dataContainer.containsKey(key))
-               return true;
-         }
-      }
-      return false;
-   }
-
    /**
     * If we are within one transaction we won't do any replication as replication would only be performed at commit
     * time. If the operation didn't originate locally we won't do any replication either.
     */
-   private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command, Object key, boolean skipRemoteGet) throws Throwable {
+   private Object handleTxWriteCommand(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
       // see if we need to load values from remote sources first
-      if (!skipRemoteGet && needValuesFromPreviousOwners(ctx, command))
-         remoteGetBeforeWrite(ctx, command, key);
+      remoteGetBeforeWrite(ctx, command, key);
 
-      // FIRST pass this call up the chain.  Only if it succeeds (no exceptions) locally do we attempt to distribute.
       return invokeNextInterceptor(ctx, command);
    }
 
    @Override
-   protected boolean needValuesFromPreviousOwners(InvocationContext ctx, WriteCommand command) {
+   protected boolean writeNeedsRemoteValue(InvocationContext ctx, WriteCommand command, Object key) {
+      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         return false;
+      }
       if (ctx.isOriginLocal()) {
          // The return value only matters on the originator.
          // Conditional commands also check the previous value only on the originator.
-         if (isNeedReliableReturnValues(command) || command.isConditional())
-            return true;
+         if (!command.readsExistingValues()) {
+            return false;
+         }
+         // TODO Could make DELTA_WRITE/ApplyDeltaCommand override SKIP_REMOTE_LOOKUP by changing next line to
+         // return !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) || command.alwaysReadsExistingValues();
+         return !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP);
+      } else {
+         // Ignore SKIP_REMOTE_LOOKUP on remote nodes
+         // TODO Can we ignore the CACHE_MODE_LOCAL flag as well?
+         return command.alwaysReadsExistingValues();
       }
-      return !command.hasFlag(Flag.CACHE_MODE_LOCAL) && (shouldFetchRemoteValuesForWriteSkewCheck(ctx, command) || command.hasFlag(Flag.DELTA_WRITE));
    }
 
-   private Object localGet(InvocationContext ctx, Object key, boolean isWrite,
-                           FlagAffectedCommand command, boolean isGetCacheEntry) throws Throwable {
+   private void localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command)
+         throws Throwable {
       InternalCacheEntry ice = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
       if (ice != null) {
-         if (isWrite && isPessimisticCache && ctx.isInTxScope()) {
-            ((TxInvocationContext) ctx).addAffectedKey(key);
-         }
-         if (!ctx.replaceValue(key, ice)) {
-            if (isWrite)
-               entryFactory.wrapEntryForPut(ctx, key, ice, false, command, false);
-            else
-               ctx.putLookedUpEntry(key, ice);
-         }
-         return isGetCacheEntry ? ice : ice.getValue();
+         wrapInternalCacheEntry(ice, ctx, key, isWrite, command);
       }
-      return null;
    }
 
    protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
-      boolean skipRemoteGet =  entry != null && entry.skipLookup();
-      if (skipRemoteGet) {
+      if (!valueIsMissing(entry)) {
+         // The entry already exists in the context, and it shouldn't be re-fetched
          return;
       }
-      InternalCacheEntry ice = remoteGet(ctx, key, true, command);
-      if (ice == null) {
-         localGet(ctx, key, true, command, false);
+      InternalCacheEntry remoteEntry = null;
+      if (writeNeedsRemoteValue(ctx, command, key)) {
+         // Normally looking the value up in the local data container doesn't help, because we already
+         // tried to read it in the EntryWrappingInterceptor.
+         // But if we became an owner in the read CH after EntryWrappingInterceptor, we may not find the value
+         // on the remote nodes (e.g. because the local node is now the only owner).
+         if (!isValueAvailableLocally(dm.getReadConsistentHash(), key)) {
+            remoteEntry = remoteGet(ctx, key, true, command);
+         }
+         if (remoteEntry == null) {
+            // TODO Check fails if the entry was passivated
+            InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
+            if (localEntry != null) {
+               wrapInternalCacheEntry(localEntry, ctx, key, true, command);
+            }
+         }
       }
    }
 
-   private InternalCacheEntry remoteGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
-      if (ctx.isOriginLocal() && !isValueAvailableLocally(dm.getReadConsistentHash(), key) || dm.isAffectedByRehash(key) && !dataContainer.containsKey(key)) {
-         if (trace) log.tracef("Doing a remote get for key %s", key);
+   protected InternalCacheEntry remoteGet(InvocationContext ctx, Object key, boolean isWrite,
+                                          FlagAffectedCommand command) throws Throwable {
+      if (trace) log.tracef("Doing a remote get for key %s", key);
 
-         boolean acquireRemoteLock = false;
-         if (ctx.isInTxScope() && ctx.isOriginLocal()) {
-            TxInvocationContext txContext = (TxInvocationContext) ctx;
-            acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
+      boolean acquireRemoteLock = false;
+      if (ctx.isInTxScope() && ctx.isOriginLocal()) {
+         TxInvocationContext txContext = (TxInvocationContext) ctx;
+         acquireRemoteLock = isWrite && isPessimisticCache && !txContext.getAffectedKeys().contains(key);
+      }
+      // attempt a remote lookup
+      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command, isWrite);
+
+      if (acquireRemoteLock) {
+         ((TxInvocationContext) ctx).addAffectedKey(key);
+      }
+
+      if (ice != null) {
+         if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
+            ((TxInvocationContext) ctx).getCacheTransaction().putLookedUpRemoteVersion(key, ice.getMetadata().version());
          }
-         // attempt a remote lookup
-         InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, acquireRemoteLock, command, isWrite);
 
-         if (acquireRemoteLock) {
-            ((TxInvocationContext) ctx).addAffectedKey(key);
-         }
-
-         if (ice != null) {
-            if (useClusteredWriteSkewCheck && ctx.isInTxScope()) {
-               ((TxInvocationContext) ctx).getCacheTransaction().putLookedUpRemoteVersion(key, ice.getMetadata().version());
-            }
-
-            if (!ctx.replaceValue(key, ice)) {
-               if (isWrite)
-                  entryFactory.wrapEntryForPut(ctx, key, ice, false, command, false);
-               else {
-                  ctx.putLookedUpEntry(key, ice);
-                  if (ctx.isInTxScope()) {
-                     ((TxInvocationContext) ctx).getCacheTransaction().replaceVersionRead(key, ice.getMetadata().version());
-                  }
+         if (!ctx.replaceValue(key, ice)) {
+            if (isWrite)
+               entryFactory.wrapEntryForPut(ctx, key, ice, false, command, false);
+            else {
+               ctx.putLookedUpEntry(key, ice);
+               if (ctx.isInTxScope()) {
+                  ((TxInvocationContext) ctx).getCacheTransaction().replaceVersionRead(key, ice.getMetadata().version());
                }
             }
-            return ice;
          }
-      } else {
-         if (trace) {
-            log.tracef("Not doing a remote get for key %s since entry is mapped to current node (%s), or is in L1. Owners are %s", key, rpcManager.getAddress(), dm.locate(key));
-         }
+         return ice;
       }
       return null;
    }

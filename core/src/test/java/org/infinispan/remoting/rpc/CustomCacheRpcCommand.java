@@ -80,4 +80,9 @@ public class CustomCacheRpcCommand extends BaseRpcCommand implements VisitableCo
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }
+
+   @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
 }

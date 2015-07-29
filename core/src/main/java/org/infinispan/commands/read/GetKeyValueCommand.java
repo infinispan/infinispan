@@ -41,6 +41,11 @@ public class GetKeyValueCommand extends AbstractDataCommand implements RemoteFet
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry entry = ctx.lookupEntry(key);
       if (entry == null || entry.isNull()) {

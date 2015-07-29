@@ -115,6 +115,16 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
+   @Override
+   public boolean alwaysReadsExistingValues() {
+      return true;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (this == o) {
          return true;

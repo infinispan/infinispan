@@ -88,7 +88,8 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      Map<Object, Object> previousValues = new HashMap<Object, Object>();
+      // The previous values map is only used by the query interceptor to locate the index for the old value
+      Map<Object, Object> previousValues = new HashMap<>();
       for (Entry<Object, Object> e : map.entrySet()) {
          Object key = e.getKey();
          MVCCEntry me = lookupMvccEntry(ctx, key);
@@ -226,6 +227,11 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
    @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
+      return false;
+   }
+
+   @Override
+   public boolean readsExistingValues() {
       return false;
    }
 

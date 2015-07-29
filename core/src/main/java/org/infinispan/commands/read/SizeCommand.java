@@ -45,6 +45,11 @@ public class SizeCommand extends AbstractLocalCommand implements VisitableComman
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
+
+   @Override
    public Integer perform(InvocationContext ctx) throws Throwable {
       long size = getFlagRespectingCache().keySet().stream().count();
       if (size > Integer.MAX_VALUE) {

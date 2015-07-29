@@ -157,6 +157,12 @@ public class InvalidateCommand extends RemoveCommand {
    }
 
    @Override
+   public boolean readsExistingValues() {
+      // TODO Return true only if there are invalidation listeners registered
+      return true;
+   }
+
+   @Override
    public boolean equals(Object o) {
       if (!super.equals(o)) {
          return false;

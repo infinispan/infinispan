@@ -65,9 +65,11 @@ public class ConcurrentStartTest extends MultipleCacheManagersTest {
       JChannel ch1 = new JChannel(JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartTest.class.getName(), new TransportFlags()));
       ch1.setName(TestResourceTracker.getNextNodeName());
       ch1.connect(ConcurrentStartTest.class.getSimpleName());
+      log.tracef("Channel %s connected: %s", ch1, ch1.getViewAsString());
       JChannel ch2 = new JChannel(JGroupsConfigBuilder.getJGroupsConfig(ConcurrentStartTest.class.getName(), new TransportFlags()));
       ch2.setName(TestResourceTracker.getNextNodeName());
       ch2.connect(ConcurrentStartTest.class.getSimpleName());
+      log.tracef("Channel %s connected: %s", ch2, ch2.getViewAsString());
 
       // Use a JGroupsChannelLookup to pass the created channels to the transport
       GlobalConfigurationBuilder gcb1 = new GlobalConfigurationBuilder();

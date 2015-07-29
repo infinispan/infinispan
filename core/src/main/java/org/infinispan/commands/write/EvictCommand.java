@@ -74,4 +74,10 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
          .append("}")
          .toString();
    }
+
+   @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
+
 }

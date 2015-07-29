@@ -72,6 +72,11 @@ public class DistributedExecuteCommand<V> extends BaseRpcCommand implements Visi
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
+
+   @Override
    public boolean shouldInvoke(InvocationContext ctx) {
       return true;
    }

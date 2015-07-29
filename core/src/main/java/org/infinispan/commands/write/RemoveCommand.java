@@ -34,7 +34,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value.
-    * When null, the entry should
+    * When null, the entry should be removed regardless of what value it is mapped to.
     */
    protected Object value;
 
@@ -191,6 +191,11 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       return false;
    }
 
+   @Override
+   public boolean readsExistingValues() {
+      return value != null || !hasFlag(Flag.IGNORE_RETURN_VALUES);
+   }
+
    public Object getValue() {
       return value;
    }
@@ -201,8 +206,8 @@ public class RemoveCommand extends AbstractDataWriteCommand {
 
    @Override
    public final boolean isReturnValueExpected() {
-      //SKIP_RETURN_VALUE ignored for conditional remove
-      return super.isReturnValueExpected() || isConditional();
+      // IGNORE_RETURN_VALUES ignored for conditional remove
+      return isConditional() || super.isReturnValueExpected();
    }
 
    protected Object performRemove(CacheEntry e, InvocationContext ctx) {

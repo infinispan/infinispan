@@ -41,53 +41,23 @@ public class ClusteredCacheLoaderInterceptor extends CacheLoaderInterceptor {
 
    @Override
    protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
-      return transactional ? skipLoadForTxCommand(cmd, key, ctx) : skipLoadForNonTxCommand(cmd, key);
-   }
-
-   private boolean skipLoadForNonTxCommand(WriteCommand cmd, Object key) {
-      if (cdl.localNodeIsPrimaryOwner(key) || cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
-         if (isDeltaWrite(cmd)) {
-            if (trace) {
-               log.tracef("Don't skip load for DeltaWrite or conditional command %s.", cmd);
+      if (!cmd.alwaysReadsExistingValues()) {
+         if (transactional) {
+            if (!ctx.isOriginLocal()) {
+               if (trace) log.tracef("Skip load for remote tx write command %s.");
+               return true;
             }
-            return false;
-         } else if (isConditional(cmd)) {
-            boolean skip = hasSkipLoadFlag(cmd);
-            if (trace) {
-               log.tracef("Skip load for conditional command %s? %s", cmd, skip);
+         } else {
+            // TODO Do we replicate CACHE_MODE_LOCAL commands?
+            if (!cdl.localNodeIsPrimaryOwner(key) && !cmd.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+               if (trace) {
+                  log.tracef("Skip load for command %s. This node is not the primary owner of %s", cmd, key);
+               }
+               return true;
             }
-            return skip;
          }
-         boolean skip = hasSkipLoadFlag(cmd) || hasIgnoreReturnValueFlag(cmd);
-         if (trace) {
-            log.tracef("Skip load for command %s? %s", cmd, skip);
-         }
-         return skip;
       }
-      if (trace) {
-         log.tracef("Skip load for command %s. This node is not the primary owner of %s", cmd, key);
-      }
-      return true;
-   }
-
-   private boolean skipLoadForTxCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
-      if (isDeltaWrite(cmd)) {
-         if (trace) {
-            log.tracef("Don't skip load for DeltaWrite command %s.", cmd);
-         }
-         return false;
-      } else if (isConditional(cmd)) {
-         boolean skip = hasSkipLoadFlag(cmd);
-         if (trace) {
-            log.tracef("Skip load for conditional command %s? %s", cmd, skip);
-         }
-         return skip;
-      }
-      boolean skip = hasSkipLoadFlag(cmd) || hasIgnoreReturnValueFlag(cmd);
-      if (trace) {
-         log.tracef("Skip load for command %s? %s", cmd, skip);
-      }
-      return skip || (!ctx.isOriginLocal() && !cdl.localNodeIsPrimaryOwner(key));
+      return super.skipLoadForWriteCommand(cmd, key, ctx);
    }
 
    @Override

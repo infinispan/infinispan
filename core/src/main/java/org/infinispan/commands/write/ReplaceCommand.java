@@ -58,6 +58,11 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       // It's not worth looking up the entry if we're never going to apply the change.
       if (valueMatcher == ValueMatcher.MATCH_NEVER) {
@@ -209,8 +214,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
 
    @Override
    public final boolean isReturnValueExpected() {
-     //SKIP_RETURN_VALUE ignored for conditional replace
-     return super.isReturnValueExpected() || isConditional();
+     return true;
    }
 
    @Override
