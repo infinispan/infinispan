@@ -28,7 +28,6 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
-import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
@@ -50,10 +49,8 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
-import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.filter.NullValueConverter;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
@@ -381,11 +378,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final boolean isEmpty(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      // TODO: replace with stream findAny isPresent instead
-      try (CloseableIterable<CacheEntry<K, Void>> iterable = filterEntries(AcceptAllKeyValueFilter.getInstance(),
-            explicitFlags, explicitClassLoader).converter(NullValueConverter.getInstance())) {
-         return !iterable.iterator().hasNext();
-      }
+      return !entrySet(explicitFlags, explicitClassLoader).stream().anyMatch(StreamMarshalling.alwaysTruePredicate());
    }
 
    @Override
@@ -606,7 +599,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public CacheCollection<V> values() {
-      return new ValueCacheCollection<>(this, cacheEntrySet());
+      return values(null, null);
+   }
+
+   CacheCollection<V> values(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      return new ValueCacheCollection<>(this, cacheEntrySet(explicitFlags, explicitClassLoader));
    }
 
    @Override
