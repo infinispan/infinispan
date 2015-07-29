@@ -545,7 +545,7 @@ public class ClusteredConditionalCommandTest extends MultipleCacheManagersTest {
          return cacheEnumMap.get(ownership).getAdvancedCache().getComponentRegistry().getCacheMarshaller();
       }
 
-      private long loads(Ownership ownership) {
+      protected long loads(Ownership ownership) {
          InterceptorChain chain = extractComponent(cache(ownership), InterceptorChain.class);
          CacheLoaderInterceptor interceptor = (CacheLoaderInterceptor) chain.getInterceptorsWhichExtend(CacheLoaderInterceptor.class).get(0);
          return interceptor.getCacheLoaderLoads();

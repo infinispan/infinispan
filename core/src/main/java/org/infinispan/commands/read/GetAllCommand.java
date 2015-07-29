@@ -71,6 +71,11 @@ public class GetAllCommand extends AbstractFlagAffectedCommand {
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       Map<Object, Object> map = createMap();
       for (Object key : keys) {

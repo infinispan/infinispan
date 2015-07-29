@@ -165,6 +165,16 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
+   @Override
+   public boolean alwaysReadsExistingValues() {
+      return false;
+   }
+
+   @Override
    public Set<Flag> getFlags() {
       return null;  // TODO: Customise this generated block
    }

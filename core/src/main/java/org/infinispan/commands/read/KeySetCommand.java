@@ -49,6 +49,11 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
+
+   @Override
    public Set<K> perform(InvocationContext ctx) throws Throwable {
       return new BackingKeySet<>(cache);
    }

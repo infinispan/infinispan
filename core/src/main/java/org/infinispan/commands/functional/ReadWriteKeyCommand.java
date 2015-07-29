@@ -82,4 +82,14 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadWriteKeyCommand(ctx, this);
    }
+
+   @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
+   @Override
+   public boolean alwaysReadsExistingValues() {
+      return false;
+   }
 }

@@ -2,6 +2,9 @@ package org.infinispan.persistence;
 
 import org.testng.annotations.Test;
 
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertTrue;
+
 /**
  * Tests if the conditional commands correctly fetch the value from cache loader even with the skip cache load/store
  * flags.
@@ -20,23 +23,22 @@ public class ClusteredTxConditionalCommandTest extends ClusteredConditionalComma
 
    @Override
    protected <K, V> void assertLoadAfterOperation(CacheHelper<K, V> cacheHelper, ConditionalOperation operation, Ownership ownership, boolean skipLoad) {
-      if (operation == ConditionalOperation.PUT_IF_ABSENT && !skipLoad) {
-         //if the put if absent does not skip load, the transaction originator will load the entry from the cache store
-         //and it will fail. This way, the transaction will not have any modifications.
-         switch (ownership) {
-            case PRIMARY_OWNER:
-               assertLoad(cacheHelper, 1, 0, 0);
-               break;
-            case BACKUP_OWNER:
-               assertLoad(cacheHelper, 0, 1, 0);
-               break;
-         }
-      } else {
-         //if the test is performed in the non_owner, it will fetch the data. sometimes, one of the nodes delays the
-         // get and the test can fail randomly. So the assert is not performed in that case.
-         if (ownership != Ownership.NON_OWNER) {
-            assertLoad(cacheHelper, skipLoad ? 0 : 1, skipLoad ? 0 : 1, 0);
-         }
+      switch (ownership) {
+         case PRIMARY_OWNER:
+            assertLoad(cacheHelper, skipLoad ? 0 : 1, 0, 0);
+            break;
+         case BACKUP_OWNER:
+            assertLoad(cacheHelper, 0, skipLoad ? 0 : 1, 0);
+            break;
+         case NON_OWNER:
+            if (!skipLoad) {
+               assertTrue("any owner load", cacheHelper.loads(Ownership.PRIMARY_OWNER) +
+                     cacheHelper.loads(Ownership.BACKUP_OWNER) >= 1);
+               assertEquals("non owner load", 0, cacheHelper.loads(Ownership.NON_OWNER));
+            } else {
+               assertLoad(cacheHelper, 0, 0, 0);
+            }
+            break;
       }
    }
 }

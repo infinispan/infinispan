@@ -59,8 +59,8 @@ public abstract class BaseReplicatedAPITest extends MultipleCacheManagersTest {
    }
 
    public void remove() {
-      AdvancedCache cache1 = cache(0,"replication").getAdvancedCache();
-      AdvancedCache cache2 = cache(1,"replication").getAdvancedCache();
+      AdvancedCache<String, String> cache1 = advancedCache(0,"replication");
+      AdvancedCache<String, String> cache2 = advancedCache(1,"replication");
       cache2.withFlags(CACHE_MODE_LOCAL).put("key", "value");
       assert cache2.get("key").equals("value");
       assert cache1.get("key") == null;

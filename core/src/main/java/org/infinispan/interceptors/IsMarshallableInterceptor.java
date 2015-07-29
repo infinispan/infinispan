@@ -154,7 +154,7 @@ public class IsMarshallableInterceptor extends CommandInterceptor {
       return ctx.isOriginLocal()
             && cacheConfiguration.clustering().cacheMode().isDistributed()
             && !command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            && !command.hasFlag(Flag.IGNORE_RETURN_VALUES)
+            && !command.hasFlag(Flag.CACHE_MODE_LOCAL)
             && !distManager.getLocality(key).isLocal();
    }
 

@@ -1,6 +1,5 @@
 package org.infinispan.interceptors.distribution;
 
-import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.functional.*;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -12,6 +11,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -62,37 +62,42 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitGetKeyValueCommand(InvocationContext ctx, GetKeyValueCommand command) throws Throwable {
-      return visitRemoteFetchingCommand(ctx, command, false);
+      return visitGetCommand(ctx, command);
    }
 
    @Override
    public Object visitGetCacheEntryCommand(InvocationContext ctx, GetCacheEntryCommand command) throws Throwable {
-      return visitRemoteFetchingCommand(ctx, command, true);
+      return visitGetCommand(ctx, command);
    }
 
-   private <T extends AbstractDataCommand & RemoteFetchingCommand> Object visitRemoteFetchingCommand(InvocationContext ctx, T command, boolean returnEntry) throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
-      if (returnValue == null) {
+   private <T extends AbstractDataCommand & RemoteFetchingCommand> Object visitGetCommand(
+         InvocationContext ctx, T command) throws Throwable {
+      if (ctx.isOriginLocal()) {
          Object key = command.getKey();
-         if (needsRemoteGet(ctx, command)) {
-            InternalCacheEntry remoteEntry = remoteGetCacheEntry(ctx, key, command);
-            returnValue = computeGetReturn(remoteEntry, returnEntry);
-         }
-         if (returnValue == null) {
-            InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
-            if (localEntry != null) {
-               wrapInternalCacheEntry(localEntry, ctx, key, false, command);
+         CacheEntry entry = ctx.lookupEntry(key);
+         if (valueIsMissing(entry)) {
+            // First try to fetch from remote owners
+            InternalCacheEntry remoteEntry = null;
+            if (readNeedsRemoteValue(ctx, command)) {
+               if (trace) log.tracef("Doing a remote get for key %s", key);
+               remoteEntry = retrieveFromRemoteSource(key, ctx, false, command, false);
+               command.setRemotelyFetchedValue(remoteEntry);
+               if (remoteEntry != null) {
+                  wrapInternalCacheEntry(remoteEntry, ctx, key, false, command);
+               }
             }
-            returnValue = computeGetReturn(localEntry, returnEntry);
+            if (remoteEntry == null) {
+               // Then search for the entry in the local data container, in case we became an owner after
+               // EntryWrappingInterceptor
+               // TODO Check fails if the entry was passivated
+               InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
+               if (localEntry != null) {
+                  wrapInternalCacheEntry(localEntry, ctx, key, false, command);
+               }
+            }
          }
       }
-      return returnValue;
-   }
-
-   private Object computeGetReturn(InternalCacheEntry entry, boolean returnEntry) {
-      if (!returnEntry && entry != null)
-         return entry.getValue();
-      return entry;
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -218,27 +223,35 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
 
    @Override
    public Object visitReadOnlyKeyCommand(InvocationContext ctx, ReadOnlyKeyCommand command) throws Throwable {
-      Object returnValue = invokeNextInterceptor(ctx, command);
-      if (returnValue == null) {
+      if (ctx.isOriginLocal()) {
          Object key = command.getKey();
-         if (needsRemoteGet(ctx, command)) {
-            // Contrary to 'visitRemoteFetchingCommand', it avoids guessing what the
-            // command does with remote entries (e.g. call computeGetReturn).
-            // Instead, it calls perform on the command which uses the function
-            // to decide what do do.
-            if (trace) log.tracef("Doing a remote get for key %s", key);
-            InternalCacheEntry remoteEntry = retrieveFromRemoteSource(key, ctx, false, command, false);
-            returnValue = command.perform(remoteEntry);
-         }
-         if (returnValue == null) {
+         CacheEntry entry = ctx.lookupEntry(key);
+         if (valueIsMissing(entry)) {
+            // First try to fetch from remote owners
+            InternalCacheEntry remoteEntry = null;
+            if (readNeedsRemoteValue(ctx, command)) {
+               if (trace)
+                  log.tracef("Doing a remote get for key %s", key);
+               remoteEntry = retrieveFromRemoteSource(key, ctx, false, command, false);
+               // TODO Do we need to do something else instead of setRemotelyFetchedValue?
+               // command.setRemotelyFetchedValue(remoteEntry);
+               if (remoteEntry != null) {
+                  wrapInternalCacheEntry(remoteEntry, ctx, key, false, command);
+               }
+               return command.perform(remoteEntry);
+            }
+
+            // Then search for the entry in the local data container, in case we became an owner after
+            // EntryWrappingInterceptor
+            // TODO Check fails if the entry was passivated
             InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
             if (localEntry != null) {
                wrapInternalCacheEntry(localEntry, ctx, key, false, command);
             }
-            returnValue = computeGetReturn(localEntry, false);
+            return command.perform(localEntry);
          }
       }
-      return returnValue;
+      return invokeNextInterceptor(ctx, command);
    }
 
    @Override
@@ -667,52 +680,52 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       return handleNonTxWriteCommand(ctx, command);
    }
 
-   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key) throws Throwable {
-      if (cdl.localNodeIsPrimaryOwner(key)) {
-         // Then it makes sense to try a local get and wrap again. This will compensate the fact the the entry was not local
-         // earlier when the EntryWrappingInterceptor executed during current invocation context but it should be now.
-         localGetCacheEntry(ctx, key, true, command);
+   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key) throws
+         Throwable {
+      CacheEntry entry = ctx.lookupEntry(key);
+      if (!valueIsMissing(entry)) {
+         return;
       }
-   }
-
-   private InternalCacheEntry localGetCacheEntry(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command) throws Throwable {
-      InternalCacheEntry ice = dataContainer.get(key);
-      if (ice != null) {
-         wrapInternalCacheEntry(ice, ctx, key, isWrite, command);
-         return ice;
-      }
-      return null;
-   }
-
-   private void wrapInternalCacheEntry(InternalCacheEntry ice, InvocationContext ctx, Object key, boolean isWrite,
-                                       FlagAffectedCommand command) {
-      if (!ctx.replaceValue(key, ice))  {
-         if (isWrite)
-            entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
-         else
-            ctx.putLookedUpEntry(key, ice);
-      }
-   }
-
-   private <T extends FlagAffectedCommand & RemoteFetchingCommand> InternalCacheEntry remoteGetCacheEntry(InvocationContext ctx, Object key, T command) throws Throwable {
-      if (trace) log.tracef("Doing a remote get for key %s", key);
-      InternalCacheEntry ice = retrieveFromRemoteSource(key, ctx, false, command, false);
-      command.setRemotelyFetchedValue(ice);
-      return ice;
-   }
-
-   protected boolean needValuesFromPreviousOwners(InvocationContext ctx, WriteCommand command) {
-      if (command.hasFlag(Flag.PUT_FOR_STATE_TRANSFER)) return false;
-      if (command.hasFlag(Flag.DELTA_WRITE) && !command.hasFlag(Flag.CACHE_MODE_LOCAL)) return true;
-
-      // The return value only matters on the primary owner.
-      // The conditional commands also check the previous value only on the primary owner.
-      // Note: This should not be necessary, as the primary owner always has the previous value
-      if (isNeedReliableReturnValues(command) || command.isConditional()) {
-         for (Object key : command.getAffectedKeys()) {
-            if (cdl.localNodeIsPrimaryOwner(key)) return true;
+      // First try to fetch from remote owners
+      InternalCacheEntry remoteEntry = null;
+      if (writeNeedsRemoteValue(ctx, command, key)) {
+         // Normally looking the value up in the local data container doesn't help, because we already
+         // tried to read it in the EntryWrappingInterceptor.
+         // But if we became an owner in the read CH after EntryWrappingInterceptor, we may not find the value
+         // on the remote nodes (e.g. because the local node is now the only owner).
+         if (!isValueAvailableLocally(dm.getReadConsistentHash(), key)) {
+            if (trace) log.tracef("Doing a remote get for key %s", key);
+            remoteEntry = retrieveFromRemoteSource(key, ctx, false, command, false);
+            if (remoteEntry != null) {
+               wrapInternalCacheEntry(remoteEntry, ctx, key, false, command);
+            }
+         }
+         if (remoteEntry == null) {
+            // Then search for the entry in the local data container, in case we became an owner after
+            // EntryWrappingInterceptor
+            // We can skip the local lookup if the operation doesn't need the previous values
+            // TODO Check fails if the entry was passivated
+            InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
+            if (localEntry != null) {
+               wrapInternalCacheEntry(localEntry, ctx, key, false, command);
+            }
          }
       }
-      return false;
+   }
+
+   protected boolean writeNeedsRemoteValue(InvocationContext ctx, WriteCommand command, Object key) {
+      if (command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         return false;
+      }
+      if (ctx.isOriginLocal() && command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
+         // Ignore SKIP_REMOTE_LOOKUP if we're already remote
+         return false;
+      }
+      // Most of the time, the previous value only matters on the primary owner,
+      // and we always have the existing value on the primary owner.
+      // For DeltaAware writes we need the previous value on all the owners.
+      // But if the originator is executing the command directly, it means it's the primary owner
+      // and so it has the existing value already.
+      return !ctx.isOriginLocal() && command.alwaysReadsExistingValues();
    }
 }

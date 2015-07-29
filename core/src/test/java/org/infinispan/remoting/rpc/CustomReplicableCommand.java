@@ -79,4 +79,9 @@ public class CustomReplicableCommand implements VisitableCommand, Serializable {
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;
    }
+
+   @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
 }

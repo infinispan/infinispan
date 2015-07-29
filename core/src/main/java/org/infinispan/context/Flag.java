@@ -81,11 +81,13 @@ public enum Flag {
     */
    SKIP_CACHE_STORE,
    /**
-    * Skips loading an entry from any configured {@link org.infinispan.persistence.spi.CacheLoader}s. Useful for example to perform a put() operation
-    * while not interested in the return value of <tt>put()</tt> which would return the eventually existing previous value.
+    * Skips loading an entry from any configured {@link org.infinispan.persistence.spi.CacheLoader}s.
+    * Useful for example to perform a {@link Cache#put(Object, Object)} operation while not interested
+    * in the return value (i.e. the previous value of the key).
     * <br>
-    * Note that if you want to ignore the return value of <tt>put()</tt> and you are in distributed mode
-    * you should also use the {@link #SKIP_REMOTE_LOOKUP} flag.
+    * Note that the loader will be skipped even if that changes the meaning of the operation, e.g. for
+    * conditional or {@link org.infinispan.atomic.DeltaAware} write operations. If that is not intended,
+    * you should use {@link #IGNORE_RETURN_VALUES} instead.
     */
    SKIP_CACHE_LOAD,
    /**
@@ -98,13 +100,15 @@ public enum Flag {
     */
    FAIL_SILENTLY,
    /**
-    * When used with <b>distributed</b> cache mode, will prevent retrieving a remote value either when executing a get()
-    * or exists(), or to provide an overwritten return value for a put() or remove().  This would render return values
-    * for some operations (such as {@link Cache#put(Object, Object)} or {@link Cache#remove(Object)} unusable, in
-    * exchange for the performance gains of reducing remote calls.
+    * When used with <b>distributed</b> cache mode, will prevent retrieving a remote value either when
+    * executing a {@link Cache#get(Object)} or {@link Cache#containsKey(Object)},
+    * or to return the overwritten value for {@link Cache#put(Object, Object)} or {@link Cache#remove(Object)}.
+    * This would render return values for most operations unusable, in exchange for the performance gains of
+    * reducing remote calls.
     * <br>
-    * Note that if you want to ignore the return value of <tt>put()</tt> and you have configured a cache store
-    * you should also use the {@link #SKIP_CACHE_LOAD} flag.
+    * Note that the remote lookup will be skipped even if that changes the meaning of the operation, e.g. for
+    * conditional or {@link org.infinispan.atomic.DeltaAware} write operations. If that is not intended,
+    * you should use {@link #IGNORE_RETURN_VALUES} instead.
     */
    SKIP_REMOTE_LOOKUP,
 
@@ -125,6 +129,9 @@ public enum Flag {
     * Flags the invocation as a put operation done internally by the state transfer.
     * This flag was created purely for internal Infinispan usage, and should not be
     * used by clients calling into Infinispan.
+    *
+    * Note for internal users: PUT_FOR_STATE_TRANSFER only applies to state transfer-specific actions,
+    * in order to avoid loading the previous value one should add the IGNORE_RETURN_VALUES flag explicitly.
     */
    PUT_FOR_STATE_TRANSFER,
 
@@ -162,19 +169,21 @@ public enum Flag {
    DELTA_WRITE,
 
    /**
-    * Signals that an operation's return value will be ignored. Typical
-    * operations whose return value might be ignored include
+    * Signals that a write operation's return value will be ignored, so reading
+    * the existing value from a store or from a remote node is not necessary.
+    *
+    * Typical operations whose return value might be ignored include
     * {@link java.util.Map#put(Object, Object)} whose return value indicates
     * previous value. So, a user might decide to the put something in the
-    * cache but might not be interested in the return value. This flag is ignored
-    * with the conditional remove ({@link java.util.concurrent.ConcurrentMap#remove(Object, Object)})
-    * and conditional replace ({@link java.util.concurrent.ConcurrentMap#replace(Object, Object, Object)})
-    * operations which return a boolean result: this has a minimal serialization payload and is
-    * generally relevant in order to determine whether the operation was successful or not.
+    * cache but might not be interested in the return value.
     *
-    * Not requiring return values makes the cache behave more efficiently by
-    * applying flags such as {@link Flag#SKIP_REMOTE_LOOKUP} or
-    * {@link Flag#SKIP_CACHE_LOAD}.
+    * This flag is ignored for operations that need the existing value to execute
+    * correctly, e.g. {@link Cache#get(Object)},
+    * conditional remove ({@link Cache#remove(Object, Object)})
+    * and conditional replace ({@link Cache#replace(Object, Object, Object)}).
+    *
+    * That means it is safe to use {@code IGNORE_RETURN_VALUES} for all the operations on a cache,
+    * unlike {@link Flag#SKIP_REMOTE_LOOKUP} and {@link Flag#SKIP_CACHE_LOAD}.
     */
    IGNORE_RETURN_VALUES,
 

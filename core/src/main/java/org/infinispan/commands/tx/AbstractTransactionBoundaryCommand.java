@@ -124,6 +124,11 @@ public abstract class AbstractTransactionBoundaryCommand implements TransactionB
       return false;
    }
 
+   @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
+
    public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;

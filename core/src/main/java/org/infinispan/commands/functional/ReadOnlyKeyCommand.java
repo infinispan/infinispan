@@ -62,6 +62,16 @@ public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand imple
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
+   @Override
+   public boolean alwaysReadsExistingValues() {
+      return false;
+   }
+
+   @Override
    public String toString() {
       return "ReadOnlyKeyCommand{" +
             "f=" + f +

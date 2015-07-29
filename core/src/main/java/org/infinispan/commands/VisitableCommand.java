@@ -36,4 +36,16 @@ public interface VisitableCommand extends ReplicableCommand {
     */
    boolean ignoreCommandOnStatus(ComponentStatus status);
 
+   /**
+    * @return {@code true} if the command needs to read the previous values of the keys it acts on.
+    */
+   boolean readsExistingValues();
+
+   /**
+    * @return {@code true} if the command needs to read the previous values even on the backup owners.
+    *   In transactional caches, this refers to all the owners except the originator.
+    */
+   default boolean alwaysReadsExistingValues() {
+      return false;
+   }
 }

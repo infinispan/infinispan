@@ -212,7 +212,7 @@ public final class AtomicHashMap<K, V> implements AtomicMap<K, V>, CopyableDelta
       // Galder: Sure, but we need a way to track the contents of the atomic
       // hash map somehow, so, we need to log each operation that affects its
       // contents, and when its state is restored.
-      return "AtomicHashMap";
+      return "AtomicHashMap{size=" + size() + "}";
    }
 
    /**

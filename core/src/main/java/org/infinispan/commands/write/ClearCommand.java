@@ -126,4 +126,9 @@ public class ClearCommand extends AbstractFlagAffectedCommand implements WriteCo
       return false;
    }
 
+   @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
+
 }

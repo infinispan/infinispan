@@ -73,6 +73,16 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return putIfAbsent || !hasFlag(Flag.IGNORE_RETURN_VALUES);
+   }
+
+   @Override
+   public boolean alwaysReadsExistingValues() {
+      return hasFlag(Flag.DELTA_WRITE);
+   }
+
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       // It's not worth looking up the entry if we're never going to apply the change.
       if (valueMatcher == ValueMatcher.MATCH_NEVER) {

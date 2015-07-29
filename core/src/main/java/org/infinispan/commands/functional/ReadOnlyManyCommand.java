@@ -88,6 +88,16 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand impl
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
+   @Override
+   public boolean alwaysReadsExistingValues() {
+      return false;
+   }
+
+   @Override
    public String toString() {
       return "ReadOnlyManyCommand{" +
          "keys=" + keys +

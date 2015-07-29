@@ -100,6 +100,16 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
+
+   @Override
+   public boolean alwaysReadsExistingValues() {
+      return false;
+   }
+
+   @Override
    public boolean isWriteOnly() {
       return true;
    }

@@ -128,6 +128,8 @@ import static org.infinispan.factories.KnownComponentNames.CACHE_MARSHALLER;
 @MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents an individual cache instance.")
 public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public static final String OBJECT_NAME = "Cache";
+   private static final EnumSet<Flag> IGNORE_RETURN_VALUES_FLAG_SET = EnumSet.of(IGNORE_RETURN_VALUES);
+
    protected InvocationContextContainer icc;
    protected InvocationContextFactory invocationContextFactory;
    protected CommandsFactory commandsFactory;
@@ -510,8 +512,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       try {
          InvocationContext context = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, UNBOUNDED);
          Map<K, V> keys = internalGetGroup(groupName, explicitFlags, explicitClassLoader, context);
-         EnumSet<Flag> removeFlags = explicitFlags == null ? EnumSet.noneOf(Flag.class) : EnumSet.copyOf(explicitFlags);
-         removeFlags.add(IGNORE_RETURN_VALUES);
+         EnumSet<Flag> removeFlags = flagsWithIgnoreReturnValues(explicitFlags);
          for (K key : keys.keySet()) {
             removeInternal(key, removeFlags, context);
          }
@@ -529,8 +530,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private void nonTransactionalRemoveGroup(String groupName, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
       InvocationContext context = getInvocationContextForRead(explicitClassLoader, UNBOUNDED);
       Map<K, V> keys = internalGetGroup(groupName, explicitFlags, explicitClassLoader, context);
-      EnumSet<Flag> removeFlags = explicitFlags == null ? EnumSet.noneOf(Flag.class) : EnumSet.copyOf(explicitFlags);
-      removeFlags.add(IGNORE_RETURN_VALUES);
+      EnumSet<Flag> removeFlags = flagsWithIgnoreReturnValues(explicitFlags);
       for (K key : keys.keySet()) {
          //a new context is needed for remove since in the non-owners, the command is sent to the primary owner to be
          //executed. If the context is already populated, it throws a ClassCastException because the wrapForRemove is
@@ -552,7 +552,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    private V removeInternal(Object key, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       assertKeyNotNull(key);
-      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, explicitFlags);
+      EnumSet flags = flagsWithIgnoreReturnValues(explicitFlags);
+      RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, flags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -754,7 +755,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private InvocationContext getInvocationContextWithImplicitTransactionForAsyncOps(boolean isPutForExternalRead, ClassLoader explicitClassLoader, int keyCount) {
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead, explicitClassLoader, keyCount);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead,
+                                                                          explicitClassLoader, keyCount);
       //If the transaction was injected then we should not have it associated to caller's thread, but with the async thread
       try {
          if (isTxInjected(ctx))
@@ -833,7 +835,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
          throw new IllegalArgumentException("Cannot lock empty list of keys");
       }
       InvocationContext ctx = getInvocationContextForWrite(null, UNBOUNDED, false);
-      ApplyDeltaCommand command = commandsFactory.buildApplyDeltaCommand(deltaAwareValueKey, delta, Arrays.asList(locksToAcquire));
+      ApplyDeltaCommand command = commandsFactory.buildApplyDeltaCommand(deltaAwareValueKey, delta,
+                                                                         Arrays.asList(locksToAcquire));
       ctx.setLockOwner(command.getKeyLockOwner());
       invoker.invoke(ctx, command);
    }
@@ -1084,10 +1087,24 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private V putInternal(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
+      EnumSet flags = flagsWithIgnoreReturnValues(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, explicitFlags);
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
+   }
+
+   private EnumSet<Flag> flagsWithIgnoreReturnValues(EnumSet<Flag> explicitFlags) {
+      EnumSet<Flag> flags = explicitFlags;
+      if (config.unsafe().unreliableReturnValues()) {
+         if (flags != null) {
+            flags = EnumSet.copyOf(explicitFlags);
+            flags.add(IGNORE_RETURN_VALUES);
+         } else {
+            flags = IGNORE_RETURN_VALUES_FLAG_SET;
+         }
+      }
+      return flags;
    }
 
    @Override
@@ -1101,7 +1118,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    final V putIfAbsent(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead(explicitFlags), explicitClassLoader, 1);
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead(explicitFlags),
+                                                                          explicitClassLoader, 1);
       return putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
    }
 
@@ -1109,7 +1127,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private V putIfAbsentInternal(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, explicitFlags);
+      EnumSet flags = flagsWithIgnoreReturnValues(explicitFlags);
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, flags);
       command.setPutIfAbsent(true);
       command.setValueMatcher(ValueMatcher.MATCH_EXPECTED);
       ctx.setLockOwner(command.getKeyLockOwner());
@@ -1125,7 +1144,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final void putAll(Map<? extends K, ? extends V> map, Metadata metadata, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, map.size());
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader,
+                                                                          map.size());
       putAllInternal(map, metadata, explicitFlags, ctx);
    }
 
@@ -1153,7 +1173,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    private V replaceInternal(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, metadata, explicitFlags);
+      EnumSet<Flag> flags = flagsWithIgnoreReturnValues(explicitFlags);
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, metadata, flags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }

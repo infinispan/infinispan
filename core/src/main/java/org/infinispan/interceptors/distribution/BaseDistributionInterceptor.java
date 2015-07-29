@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commands.functional.ReadOnlyManyCommand;
 import org.infinispan.commands.read.GetAllCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
@@ -31,6 +32,7 @@ import org.infinispan.distribution.RemoteValueRetrievedListener;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.ClusteringInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.remoting.RemoteException;
@@ -70,6 +72,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
 
    protected ClusteringDependentLogic cdl;
    protected RemoteValueRetrievedListener rvrl;
+   protected boolean isL1Enabled;
    private GroupManager groupManager;
 
    private static final Log log = LogFactory.getLog(BaseDistributionInterceptor.class);
@@ -87,6 +90,13 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       this.cdl = cdl;
       this.rvrl = rvrl;
       this.groupManager = groupManager;
+   }
+
+
+   @Start
+   public void configure() {
+      // Can't rely on the super injectConfiguration() to be called before our injectDependencies() method2
+      isL1Enabled = cacheConfiguration.clustering().l1().enabled();
    }
 
    @Override
@@ -119,7 +129,6 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       return invokeNextInterceptor(ctx, command);
    }
 
-   @Override
    protected final InternalCacheEntry retrieveFromRemoteSource(Object key, InvocationContext ctx, boolean acquireRemoteLock, FlagAffectedCommand command, boolean isWrite) throws Exception {
       GlobalTransaction gtx = ctx.isInTxScope() ? ((TxInvocationContext)ctx).getGlobalTransaction() : null;
       ClusteredGetCommand get = cf.buildClusteredGetCommand(key, command.getFlags(), acquireRemoteLock, gtx);
@@ -268,9 +277,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
       }
 
       // see if we need to load values from remote sources first
-      if (needValuesFromPreviousOwners(ctx, command)) {
-         remoteGetBeforeWrite(ctx, command, command.getKey());
-      }
+      remoteGetBeforeWrite(ctx, command, command.getKey());
 
       // invoke the command locally, we need to know if it's successful or not
       Object localResult = invokeNextInterceptor(ctx, command);
@@ -344,7 +351,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
             return localResult;
          } else {
             log.tracef("I'm not the primary owner, so sending the command to the primary owner(%s) in order to be forwarded", primaryOwner);
-            boolean isSyncForwarding = isSync || isNeedReliableReturnValues(command);
+            boolean isSyncForwarding = isSync || command.isReturnValueExpected();
 
             Map<Address, Response> addressResponseMap;
             try {
@@ -420,8 +427,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
    @Override
    public Object visitGetAllCommand(InvocationContext ctx, GetAllCommand command) throws Throwable {
       if (command.hasFlag(Flag.CACHE_MODE_LOCAL)
-            || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)
-            || command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+            || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
          return invokeNextInterceptor(ctx, command);
       }
 
@@ -599,15 +605,66 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor 
                }
             }
          }
-         Map<Object, Object> values = (Map<Object, Object>) invokeNextInterceptor(ctx, command);
-         return values;
+         return invokeNextInterceptor(ctx, command);
+      }
+   }
+
+   protected void wrapInternalCacheEntry(InternalCacheEntry ice, InvocationContext ctx, Object key,
+                                         boolean isWrite, FlagAffectedCommand command) {
+      if (!ctx.replaceValue(key, ice))  {
+         if (isWrite)
+            entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
+         else
+            ctx.putLookedUpEntry(key, ice);
       }
    }
 
    /**
     * @return Whether a remote get is needed to obtain the previous values of the affected entries.
     */
-   protected abstract boolean needValuesFromPreviousOwners(InvocationContext ctx, WriteCommand command);
+   protected abstract boolean writeNeedsRemoteValue(InvocationContext ctx, WriteCommand command, Object key);
+
+   protected boolean valueIsMissing(CacheEntry entry) {
+      return entry == null || (entry.isNull() && !entry.isRemoved() && !entry.skipLookup());
+   }
 
    protected abstract void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key) throws Throwable;
+
+   /**
+    * @return {@code true} if the value is not available on the local node and a read command is allowed to
+    * fetch it from a remote node. Does not check if the value is already in the context.
+    */
+   protected boolean readNeedsRemoteValue(InvocationContext ctx, AbstractDataCommand command) {
+      if (!ctx.isOriginLocal() || command.hasFlag(Flag.CACHE_MODE_LOCAL) ||
+            command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
+         return false;
+      }
+      Object key = command.getKey();
+      ConsistentHash ch = stateTransferManager.getCacheTopology().getReadConsistentHash();
+      boolean shouldFetchFromRemote = !isValueAvailableLocally(ch, key);
+      if (!shouldFetchFromRemote && getLog().isTraceEnabled()) {
+         getLog().tracef("Not doing a remote get for key %s since entry is mapped to current node (%s) or is in L1. Owners are %s", toStr(key), rpcManager.getAddress(), ch.locateOwners(key));
+      }
+      return shouldFetchFromRemote;
+   }
+
+   protected boolean isValueAvailableLocally(ConsistentHash consistentHash, Object key) {
+      if (consistentHash.isKeyLocalToNode(rpcManager.getAddress(), key)) {
+         return true;
+      } else if (isL1Enabled) {
+         InternalCacheEntry entry = dataContainer.get(key);
+         return entry != null && entry.isL1Entry();
+      }
+      return false;
+   }
+
+   protected InternalCacheEntry fetchValueLocallyIfAvailable(ConsistentHash consistentHash, Object key) {
+      if (consistentHash.isKeyLocalToNode(rpcManager.getAddress(), key)) {
+         return dataContainer.get(key);
+      } else if (isL1Enabled) {
+         InternalCacheEntry entry = dataContainer.get(key);
+         return entry != null && entry.isL1Entry() ? entry : null;
+      }
+      return null;
+   }
 }

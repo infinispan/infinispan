@@ -59,6 +59,16 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
+
+   @Override
+   public boolean alwaysReadsExistingValues() {
+      return false;
+   }
+
+   @Override
    public Object perform(InvocationContext ctx) throws Throwable {
       CacheEntry<K, V> e = ctx.lookupEntry(key);
 

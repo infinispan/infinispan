@@ -105,6 +105,11 @@ public class GetKeysInGroupCommand extends AbstractFlagAffectedCommand implement
       return false;
    }
 
+   @Override
+   public boolean readsExistingValues() {
+      return true;
+   }
+
    public String getGroupName() {
       return groupName;
    }

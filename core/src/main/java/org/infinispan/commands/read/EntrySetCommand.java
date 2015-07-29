@@ -49,6 +49,11 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
    }
 
    @Override
+   public boolean readsExistingValues() {
+      return false;
+   }
+
+   @Override
    public Set<CacheEntry<K, V>> perform(InvocationContext ctx) throws Throwable {
       return new BackingEntrySet<>(cache);
    }

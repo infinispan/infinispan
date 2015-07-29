@@ -11,11 +11,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.stream.StreamSupport;
 
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
-import org.infinispan.CacheStream;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.functional.ReadOnlyKeyCommand;
@@ -47,7 +45,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.group.GroupFilter;
 import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.annotations.ComponentName;
@@ -70,7 +67,6 @@ import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.util.PersistenceManagerCloseableSupplier;
-import org.infinispan.stream.impl.local.LocalEntryCacheStream;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
@@ -331,25 +327,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return visitDataCommand(ctx, command);
    }
 
-   /**
-    * Indicates whether the operation is a delta write. If it is, the
-    * previous value needs to be loaded from the cache store so that
-    * it can be merged.
-    */
-   protected final boolean isDeltaWrite(WriteCommand cmd) {
-      return cmd.hasFlag(Flag.DELTA_WRITE);
-   }
-
    protected final boolean isConditional(WriteCommand cmd) {
       return cmd.isConditional();
    }
 
    protected final boolean hasSkipLoadFlag(LocalFlagAffectedCommand cmd) {
       return cmd.hasFlag(Flag.SKIP_CACHE_LOAD);
-   }
-
-   protected final boolean hasIgnoreReturnValueFlag(LocalFlagAffectedCommand cmd) {
-      return cmd.hasFlag(Flag.IGNORE_RETURN_VALUES);
    }
 
    protected boolean canLoad(Object key) {
@@ -366,12 +349,15 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
     *         queried for the value, so it was neither a hit or a miss.
     * @throws Throwable
     */
-   protected final Boolean loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) throws Throwable {
+   protected final Boolean loadIfNeeded(final InvocationContext ctx, Object key, final FlagAffectedCommand cmd) {
       if (skipLoad(cmd, key, ctx)) {
          return null;
       }
 
-      final boolean isDelta = cmd instanceof ApplyDeltaCommand;
+      return loadInContext(ctx, key, cmd);
+   }
+
+   private Boolean loadInContext(InvocationContext ctx, Object key, FlagAffectedCommand cmd) {
       final AtomicReference<Boolean> isLoaded = new AtomicReference<>();
       InternalCacheEntry<K, V> entry = PersistenceUtil.loadAndStoreInDataContainer(dataContainer, persistenceManager, (K) key,
                                                                              ctx, timeService, isLoaded);
@@ -390,7 +376,7 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       }
 
       if (entry != null) {
-         CacheEntry wrappedEntry = wrapInternalCacheEntry(ctx, key, cmd, entry, isDelta);
+         CacheEntry wrappedEntry = wrapInternalCacheEntry(ctx, key, cmd, entry);
          if (isLoadedValue != null && isLoadedValue.booleanValue() && wrappedEntry != null) {
             recordLoadedEntry(ctx, key, wrappedEntry, entry, cmd);
          }
@@ -430,24 +416,22 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
    }
 
    protected boolean skipLoadForWriteCommand(WriteCommand cmd, Object key, InvocationContext ctx) {
-      if (isDeltaWrite(cmd)) {
-         if (trace) {
-            log.tracef("Don't skip load for command %s. Value is needed!", cmd);
+      if (cmd.readsExistingValues()) {
+         // TODO Could make DELTA_WRITE/ApplyDeltaCommand override SKIP_CACHE_LOAD by changing the next line to
+         // if (hasSkipLoadFlag(cmd) && !cmd.alwaysReadsExistingValues)
+         if (hasSkipLoadFlag(cmd)) {
+            log.tracef("Skipping load for command that reads existing values %s", cmd);
+            return true;
+         } else {
+            return false;
          }
-         return false;
-      } else if (isConditional(cmd)) {
-         boolean skip = hasSkipLoadFlag(cmd);
-         if (trace) {
-            log.tracef("Skip load for conditional command %s? %s", cmd, skip);
-         }
-         return skip;
       }
-      return hasSkipLoadFlag(cmd) || hasIgnoreReturnValueFlag(cmd);
+      return true;
    }
 
    private CacheEntry wrapInternalCacheEntry(InvocationContext ctx, Object key, FlagAffectedCommand cmd,
-                                             InternalCacheEntry ice, boolean isDelta) {
-      if (isDelta) {
+                                             InternalCacheEntry ice) {
+      if (cmd instanceof ApplyDeltaCommand) {
          ctx.putLookedUpEntry(key, ice);
          return entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand) cmd).getDelta());
       } else {
