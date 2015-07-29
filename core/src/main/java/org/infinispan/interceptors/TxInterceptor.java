@@ -358,7 +358,7 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
          boolean implicitWith1Pc = useOnePhaseForAutoCommitTx && localTransaction.isImplicitTransaction();
          if (implicitWith1Pc) {
             //in this situation we don't support concurrent updates so skip locking entirely
-            command.setFlags(Flag.SKIP_LOCKING);
+            command.addFlag(Flag.SKIP_LOCKING);
          }
       }
       Object rv;

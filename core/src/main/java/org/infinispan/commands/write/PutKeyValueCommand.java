@@ -43,12 +43,16 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
                              CacheNotifier notifier, Metadata metadata, Set<Flag> flags,
                              Equivalence valueEquivalence, CommandInvocationId commandInvocationId) {
       super(key, flags, commandInvocationId);
-      setValue(value);
+      this.value = value;
       this.putIfAbsent = putIfAbsent;
       this.valueMatcher = putIfAbsent ? ValueMatcher.MATCH_EXPECTED : ValueMatcher.MATCH_ALWAYS;
       this.notifier = notifier;
       this.metadata = metadata;
       this.valueEquivalence = valueEquivalence;
+
+      if (value instanceof DeltaAware) {
+         addFlag(Flag.DELTA_WRITE);
+      }
    }
 
    public void init(CacheNotifier notifier, Configuration cfg) {
@@ -62,9 +66,6 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
 
    public void setValue(Object value) {
       this.value = value;
-      if (value instanceof DeltaAware) {
-         setFlags(Flag.DELTA_WRITE);
-      }
    }
 
    @Override

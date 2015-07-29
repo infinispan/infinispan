@@ -3,6 +3,7 @@ package org.infinispan.context;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -179,8 +180,8 @@ public enum Flag {
     *
     * This flag is ignored for operations that need the existing value to execute
     * correctly, e.g. {@link Cache#get(Object)},
-    * conditional remove ({@link Cache#remove(Object, Object)})
-    * and conditional replace ({@link Cache#replace(Object, Object, Object)}).
+    * conditional remove ({@link Cache#remove(Object, Object)}),
+    * and replace with an expected value ({@link Cache#replace(Object, Object, Object)}).
     *
     * That means it is safe to use {@code IGNORE_RETURN_VALUES} for all the operations on a cache,
     * unlike {@link Flag#SKIP_REMOTE_LOOKUP} and {@link Flag#SKIP_CACHE_LOAD}.
@@ -291,6 +292,44 @@ public enum Flag {
       } else {
          return flags;
       }
+   }
+
+   public static Set<Flag> addFlag(Set<Flag> flags, Flag newFlag) {
+      if (flags == null || flags.isEmpty()) {
+         return EnumSet.of(newFlag);
+      }
+      if (flags.contains(newFlag)) {
+         return flags;
+      }
+      EnumSet<Flag> copy = EnumSet.copyOf(flags);
+      copy.add(newFlag);
+      return copy;
+   }
+
+   public static Set<Flag> addFlags(Set<Flag> flags, Flag... newFlags) {
+      if (newFlags == null || newFlags.length == 0) {
+         return flags;
+      }
+      EnumSet<Flag> copy;
+      if (flags == null) {
+         copy = EnumSet.noneOf(Flag.class);
+      } else {
+         copy = EnumSet.copyOf(flags);
+      }
+      Collections.addAll(copy, newFlags);
+      return copy;
+   }
+
+   public static Set<Flag> addFlags(Set<Flag> flags, Set<Flag> newFlags) {
+      if (newFlags == null || newFlags.isEmpty()) {
+         return flags;
+      }
+      if (flags == null || flags.isEmpty()) {
+         return newFlags;
+      }
+      EnumSet<Flag> copy = EnumSet.copyOf(flags);
+      copy.addAll(newFlags);
+      return copy;
    }
 
    public static class Externalizer extends AbstractExternalizer<Flag> {
