@@ -8,6 +8,7 @@ import org.jboss.marshalling.util.IdentityIntMap;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -31,8 +32,20 @@ public class StreamMarshalling {
       return new EqualityPredicate(object);
    }
 
+   /**
+    * Predicate that returns true if the object passed to it is not null.
+    * @return the predicate
+    */
    public static Predicate<Object> nonNullPredicate() {
       return NonNullPredicate.getInstance();
+   }
+
+   /**
+    * Predicate taht always returns true irrespective of the value provided
+    * @return the predicate
+    */
+   public static Predicate<Object> alwaysTruePredicate() {
+      return AlwaysTruePredicate.getInstance();
    }
 
    /**
@@ -81,6 +94,18 @@ public class StreamMarshalling {
       }
    }
 
+   private static final class AlwaysTruePredicate implements Predicate<Object> {
+      private static final AlwaysTruePredicate INSTANCE = new AlwaysTruePredicate();
+
+      public static AlwaysTruePredicate getInstance() {
+         return INSTANCE;
+      }
+      @Override
+      public boolean test(Object t) {
+         return true;
+      }
+   }
+
    private static final class EntryToKeyFunction<K, V> implements Function<Map.Entry<K, V>, K> {
       private static final EntryToKeyFunction<?, ?> FUNCTION = new EntryToKeyFunction<>();
 
@@ -108,25 +133,32 @@ public class StreamMarshalling {
    }
 
    public static final class StreamMarshallingExternalizer implements AdvancedExternalizer<Object> {
+      enum ExternalizerId {
+         EQUALITY_PREDICATE(EqualityPredicate.class),
+         ENTRY_KEY_FUNCTION(EntryToKeyFunction.class),
+         ENTRY_VALUE_FUNCTION(EntryToValueFunction.class),
+         NON_NULL_PREDICATE(NonNullPredicate.class),
+         ALWAYS_TRUE_PREDICATE(AlwaysTruePredicate.class);
 
-      private static final int EQUALITY_PREDICATE = 0;
-      private static final int ENTRY_KEY_FUNCTION = 1;
-      private static final int ENTRY_VALUE_FUNCTION = 2;
-      private static final int NON_NULL_PREDICATE = 3;
+         private final Class<? extends Object> marshalledClass;
 
-      private final IdentityIntMap<Class<? extends Object>> objects = new IdentityIntMap<>();
+         ExternalizerId(Class<? extends Object> marshalledClass) {
+            this.marshalledClass = marshalledClass;
+         }
+      }
+
+      private final Map<Class<? extends Object>, ExternalizerId> objects = new HashMap<>();
 
       public StreamMarshallingExternalizer() {
-         objects.put(EqualityPredicate.class, EQUALITY_PREDICATE);
-         objects.put(EntryToKeyFunction.class, ENTRY_KEY_FUNCTION);
-         objects.put(EntryToValueFunction.class, ENTRY_VALUE_FUNCTION);
-         objects.put(NonNullPredicate.class, NON_NULL_PREDICATE);
+         for (ExternalizerId id : ExternalizerId.values()) {
+            objects.put(id.marshalledClass, id);
+         }
       }
 
       @Override
       public Set<Class<?>> getTypeClasses() {
          return Util.<Class<? extends Object>>asSet(EqualityPredicate.class, EntryToKeyFunction.class,
-                 EntryToValueFunction.class, NonNullPredicate.class);
+                 EntryToValueFunction.class, NonNullPredicate.class, AlwaysTruePredicate.class);
       }
 
       @Override
@@ -136,9 +168,12 @@ public class StreamMarshalling {
 
       @Override
       public void writeObject(ObjectOutput output, Object object) throws IOException {
-         int number = objects.get(object.getClass(), -1);
-         output.writeByte(number);
-         switch (number) {
+         ExternalizerId id = objects.get(object.getClass());
+         if (id == null) {
+            throw new IllegalArgumentException("Unsupported class " + object.getClass() + " was provided!");
+         }
+         output.writeByte(id.ordinal());
+         switch (id) {
             case EQUALITY_PREDICATE:
                output.writeObject(((EqualityPredicate) object).object);
                break;
@@ -148,7 +183,12 @@ public class StreamMarshalling {
       @Override
       public Object readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          int number = input.readUnsignedByte();
-         switch (number) {
+         ExternalizerId[] ids = ExternalizerId.values();
+         if (number < 0 || number >= ids.length) {
+            throw new IllegalArgumentException("Found invalid number " + number);
+         }
+         ExternalizerId id = ids[number];
+         switch (id) {
             case EQUALITY_PREDICATE:
                return new EqualityPredicate(input.readObject());
             case ENTRY_KEY_FUNCTION:
@@ -157,8 +197,10 @@ public class StreamMarshalling {
                return EntryToValueFunction.getInstance();
             case NON_NULL_PREDICATE:
                return NonNullPredicate.getInstance();
+            case ALWAYS_TRUE_PREDICATE:
+               return AlwaysTruePredicate.getInstance();
             default:
-               throw new IllegalArgumentException("Found invalid number " + number);
+               throw new IllegalArgumentException("ExternalizerId not supported: " + id);
          }
       }
    }
