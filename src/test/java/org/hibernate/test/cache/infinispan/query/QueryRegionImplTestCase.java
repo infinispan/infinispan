@@ -18,6 +18,7 @@ import java.util.List;
 >>>>>>> HHH-7898 Regression on org.hibernate.cache.infinispan.query.QueryResultsRegionImpl.put(Object, Object)
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.Session;
@@ -446,7 +447,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 				@Override
 				public void run() {
 					try {
-						assertNotEquals(VALUE2, callWithSession(sessionFactory, session-> region.get(session, KEY)));
+						assertNotEquals(VALUE2, callWithSession(sessionFactory, session -> region.get(session, KEY)));
 					} catch (AssertionFailedError e) {
 						holder.addAssertionFailure(e);
 					} catch (Exception e) {
@@ -462,7 +463,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 				public void run() {
 					try {
 						withSession(sessionFactory, session -> {
-							region.put((SessionImplementor) session, KEY, VALUE2);
+							region.put(session, KEY, VALUE2);
 							writerLatch.await();
 						});
 					} catch (Exception e) {
@@ -487,7 +488,7 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 
 			assertTrue("Reader finished promptly", completionLatch.await(100, TimeUnit.MILLISECONDS));
 
-			assertEquals(VALUE2, region.get(null, KEY));
+			assertEquals(VALUE2, callWithSession(sessionFactory, session -> region.get(session, KEY)));
 		});
 	}
 
@@ -654,6 +655,71 @@ public class QueryRegionImplTestCase extends AbstractGeneralDataRegionTestCase {
 			holder.checkExceptions();
 
 			assertEquals(VALUE2, callWithSession(sessionFactory, session -> region.get(session, KEY)));
+		});
+	}
+
+	@Test
+	public void testQueryUpdate() throws Exception {
+		withQueryRegion((sessionFactory, region) -> {
+			ExceptionHolder holder = new ExceptionHolder();
+			CyclicBarrier barrier = new CyclicBarrier(2);
+			withSession(sessionFactory, session -> region.put(session, KEY, VALUE1));
+
+			Thread updater = new Thread() {
+				@Override
+				public void run() {
+					try {
+						withSession(sessionFactory, (session) -> {
+							assertEquals(VALUE1, region.get(session, KEY));
+							region.put(session, KEY, VALUE2);
+							assertEquals(VALUE2, region.get(session, KEY));
+							barrier.await(5, TimeUnit.SECONDS);
+							barrier.await(5, TimeUnit.SECONDS);
+							region.put(session, KEY, VALUE3);
+							assertEquals(VALUE3, region.get(session, KEY));
+							barrier.await(5, TimeUnit.SECONDS);
+							barrier.await(5, TimeUnit.SECONDS);
+						});
+					} catch (AssertionFailedError e) {
+						holder.addAssertionFailure(e);
+						barrier.reset();
+					} catch (Exception e) {
+						holder.addException(e);
+						barrier.reset();
+					}
+				}
+			};
+
+			Thread reader = new Thread() {
+				@Override
+				public void run() {
+					try {
+						withSession(sessionFactory, (session) -> {
+							assertEquals(VALUE1, region.get(session, KEY));
+							barrier.await(5, TimeUnit.SECONDS);
+							assertEquals(VALUE1, region.get(session, KEY));
+							barrier.await(5, TimeUnit.SECONDS);
+							barrier.await(5, TimeUnit.SECONDS);
+							assertEquals(VALUE1, region.get(session, KEY));
+							barrier.await(5, TimeUnit.SECONDS);
+						});
+					} catch (AssertionFailedError e) {
+						holder.addAssertionFailure(e);
+						barrier.reset();
+					} catch (Exception e) {
+						holder.addException(e);
+						barrier.reset();
+					}
+				}
+			};
+
+			updater.start();
+			reader.start();
+			updater.join();
+			reader.join();
+			holder.checkExceptions();
+
+			assertEquals(VALUE3, callWithSession(sessionFactory, session -> region.get(session, KEY)));
 		});
 	}
 
