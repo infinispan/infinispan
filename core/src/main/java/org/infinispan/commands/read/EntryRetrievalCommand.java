@@ -40,10 +40,18 @@ public class EntryRetrievalCommand<K, V> extends AbstractLocalCommand implements
 
    @Override
    public EntryIterable<K, V> perform(InvocationContext ctx) throws Throwable {
+      Cache<K, V> cacheToUse;
+      EnumSet<Flag> flagsToUse;
+      if (flags != null) {
+         flagsToUse = EnumSet.copyOf(flags);
+         cacheToUse = cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+      } else {
+         flagsToUse = null;
+         cacheToUse = cache;
+      }
       // We need to copy the flag set since it is possible to modify the flags after retrieving the
       // EntryIterable and we don't want it to effect that.
-      return new EntryIterableImpl<>(retriever, filter, flags != null ? EnumSet.copyOf(flags) :
-            EnumSet.noneOf(Flag.class), cache);
+      return new EntryIterableImpl<>(retriever, filter, flagsToUse, cacheToUse);
    }
 
    public KeyValueFilter<K, V> getFilter() {
