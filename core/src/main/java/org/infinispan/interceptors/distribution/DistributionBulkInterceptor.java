@@ -24,10 +24,12 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.stream.StreamMarshalling;
 import org.infinispan.stream.impl.ClusterStreamManager;
 import org.infinispan.stream.impl.DistributedCacheStream;
+import org.infinispan.stream.impl.RemovableCloseableIterator;
+import org.infinispan.stream.impl.RemovableIterator;
 import org.infinispan.stream.impl.tx.TxClusterStreamManager;
 import org.infinispan.stream.impl.tx.TxDistributedCacheStream;
 
-import java.io.Serializable;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Spliterator;
 import java.util.concurrent.Executor;
@@ -77,8 +79,8 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
 
       @Override
       public CloseableIterator<CacheEntry<K, V>> iterator() {
-         return new CloseableIteratorMapper<>(Closeables.iterator(stream()),
-                 e -> new EntryWrapper<>(cache, e));
+         return new CloseableIteratorMapper<>(new RemovableCloseableIterator<>(Closeables.iterator(stream()), cache,
+                 CacheEntry::getKey), e -> new EntryWrapper<>(cache, e));
       }
 
       @Override
@@ -127,11 +129,19 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
       public CacheStream<CacheEntry<K, V>> stream() {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
-         return new DistributedCacheStream<>(cache.getCacheManager().getAddress(), false,
+         return new DistributedCacheStream<CacheEntry<K, V>>(cache.getCacheManager().getAddress(), false,
                  advancedCache.getDistributionManager(), () -> entrySet.stream(),
                  registry.getComponent(ClusterStreamManager.class), !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
-                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry);
+                 registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry) {
+            @Override
+            public Iterator<CacheEntry<K, V>> iterator() {
+               if (intermediateOperations.isEmpty()) {
+                  return new RemovableIterator<>(super.iterator(), cache, e -> e.getKey());
+               }
+               return super.iterator();
+            }
+         };
       }
 
       @Override
@@ -237,7 +247,7 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
 
       @Override
       public CloseableIterator<K> iterator() {
-         return Closeables.iterator(stream());
+         return new RemovableCloseableIterator(Closeables.iterator(stream()), cache, Function.identity());
       }
 
       @Override
@@ -260,12 +270,21 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
       public CacheStream<K> stream() {
          AdvancedCache<K, V> advancedCache = cache.getAdvancedCache();
          ComponentRegistry registry = advancedCache.getComponentRegistry();
-         return new DistributedCacheStream<>(cache.getCacheManager().getAddress(), false,
+         return new DistributedCacheStream<K>(cache.getCacheManager().getAddress(), false,
                  advancedCache.getDistributionManager(), () -> entrySet.stream(),
                  registry.getComponent(ClusterStreamManager.class), !command.hasFlag(Flag.SKIP_CACHE_LOAD),
                  cache.getCacheConfiguration().clustering().stateTransfer().chunkSize(),
                  registry.getComponent(Executor.class, ASYNC_OPERATIONS_EXECUTOR), registry,
-                 StreamMarshalling.entryToKeyFunction());
+                 StreamMarshalling.entryToKeyFunction()) {
+            @Override
+            public Iterator<K> iterator() {
+               // The act of mapping to key requires 1 intermediate operation
+               if (intermediateOperations.size() == 1) {
+                  return new RemovableIterator<>(super.iterator(), cache, Function.identity());
+               }
+               return super.iterator();
+            }
+         };
       }
 
       @Override

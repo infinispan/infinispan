@@ -267,10 +267,12 @@ public interface Cache<K, V> extends BasicCache<K, V>, BatchingCache, FilteringL
     * mentioned {@link org.infinispan.context.Flag#SKIP_CACHE_LOAD} is also configured.
     * <p/>
     * <h3>Iterator Use</h3>
-    * This class implements the {@link CloseableIteratorCollection} interface which creates a
+    * <p>This class implements the {@link CloseableIteratorCollection} interface which creates a
     * {@link org.infinispan.commons.util.CloseableIterator} instead of a regular one.  This means this iterator must be
     * explicitly closed either through try with resource or calling the close method directly.  Technically this iterator
-    * will also close itself if you iterate fully over it, but it is safest to always make sure you close it explicitly.
+    * will also close itself if you iterate fully over it, but it is safest to always make sure you close it explicitly.</p>
+    * <p>The iterator retrieved using {@link CacheCollection#iterator()} supports the remove method, however the
+    * iterator retrieved from {@link CacheStream#iterator()} will not support remove.</p>
     * <h3>Unsupported Operations</h3>
     * Due to not being able to add null values the following methods are not supported and will throw
     * {@link java.lang.UnsupportedOperationException} if invoked.

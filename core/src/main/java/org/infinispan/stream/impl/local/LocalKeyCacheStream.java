@@ -1,10 +1,13 @@
 package org.infinispan.stream.impl.local;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.stream.impl.RemovableCloseableIterator;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -41,5 +44,10 @@ public class LocalKeyCacheStream<K, V> extends AbstractLocalCacheStream<K, K, V>
          stream = stream.filter(k -> segmentsToFilter.contains(hash.getSegment(k)));
       }
       return stream;
+   }
+
+   @Override
+   protected CloseableIterator<K> removableIterator(CloseableIterator<K> realIterator) {
+      return new RemovableCloseableIterator<>(realIterator, cache, Function.identity());
    }
 }
