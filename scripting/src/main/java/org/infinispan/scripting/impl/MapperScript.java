@@ -34,6 +34,7 @@ public class MapperScript<KIn, VIn, KOut, VOut> implements Mapper<KIn, VIn, KOut
    public void setEnvironment(EmbeddedCacheManager cacheManager) {
       scriptManager = (ScriptingManagerImpl) SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ScriptingManager.class);
       bindings = new SimpleBindings();
+      bindings.put("marshaller", scriptManager.getMarshaller());
       bindings.put("cacheManager", cacheManager);
    }
 
