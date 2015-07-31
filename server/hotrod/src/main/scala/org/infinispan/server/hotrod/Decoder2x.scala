@@ -303,7 +303,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             new SizeResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
                h.topologyId, size)
          case ExecRequest =>
-            val marshaller = new GenericJBossMarshaller() // FIXME: don't create a new one every time and allow changing it
+            val marshaller = Option(server.getMarshaller).getOrElse(new GenericJBossMarshaller)
             val name = readString(buffer)
             val paramCount = readUnsignedInt(buffer)
             val params = new HashMap[String, Object]
@@ -314,7 +314,8 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             }
             params.put("marshaller", marshaller)
             params.put("cache", cache)
-            val scriptingManager = SecurityActions.getCacheGlobalComponentRegistry(cache).getComponent(classOf[ScriptingManager]);
+            val scriptingManager = SecurityActions.getCacheGlobalComponentRegistry(cache).getComponent(classOf[ScriptingManager])
+            scriptingManager.setMarshaller(marshaller)
             val result: Any = scriptingManager.runScript(name, cache, new SimpleBindings(params)).get
             new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, marshaller.objectToByteBuffer(result))
       }
@@ -534,7 +535,17 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
 
    private def createServerErrorResponse(h: HotRodHeader, t: Throwable): ErrorResponse = {
       new ErrorResponse(h.version, h.messageId, h.cacheName, h.clientIntel,
-         ServerError, h.topologyId, t.toString)
+         ServerError, h.topologyId, createErrorMsg(t))
+   }
+
+   def createErrorMsg(t: Throwable): String = {
+      val causes = mutable.LinkedHashSet[Throwable]()
+      var initial = t
+      while (initial != null && !causes.contains(initial)) {
+         causes += initial
+         initial = initial.getCause
+      }
+      causes.mkString("\n")
    }
 
    override def getOptimizedCache(h: HotRodHeader, c: Cache): Cache = {
