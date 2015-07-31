@@ -6,11 +6,11 @@ import java.util.{BitSet => JavaBitSet, UUID}
 
 import org.infinispan.CacheStream
 import org.infinispan.commons.marshall.Marshaller
-import org.infinispan.commons.util.{CloseableIterator, CollectionFactory, InfinispanCollections}
+import org.infinispan.commons.util.{CollectionFactory, InfinispanCollections}
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.filter.CacheFilters.filterAndConvert
-import org.infinispan.filter.{CacheFilters, KeyValueFilterConverter, KeyValueFilterConverterFactory}
+import org.infinispan.filter.{KeyValueFilterConverter, KeyValueFilterConverterFactory}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.hotrod.OperationStatus.OperationStatus
 import org.infinispan.server.hotrod._
@@ -40,7 +40,7 @@ class IterationSegmentsListener extends CacheStream.SegmentCompletionListener {
    override def segmentCompleted(segments: util.Set[Integer]): Unit = finished addAll segments
 }
 
-class IterationState(val listener: IterationSegmentsListener, val iterator: CloseableIterator[CacheEntry[AnyRef, AnyRef]], val batch: Integer, val compatInfo: CompatInfo)
+class IterationState(val listener: IterationSegmentsListener, val iterator: java.util.Iterator[CacheEntry[AnyRef, AnyRef]], val stream: CacheStream[CacheEntry[AnyRef, AnyRef]], val batch: Integer, val compatInfo: CompatInfo)
 
 class IterableIterationResult(finishedSegments: util.Set[Integer], val statusCode: OperationStatus, entries: List[CacheEntry[AnyRef, AnyRef]], compatInfo: CompatInfo) {
    def segmentsToBytes = {
@@ -80,7 +80,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
 
    override def start(cacheName: String, segments: Option[JavaBitSet], filterConverterFactory: Option[String], batch: Integer): IterationId = {
       val iterationId = UUID.randomUUID().toString
-      val stream = cacheManager.getCache(cacheName).getAdvancedCache.cacheEntrySet.stream().asInstanceOf[CacheStream[_]]
+      val stream = cacheManager.getCache(cacheName).getAdvancedCache.cacheEntrySet.stream().asInstanceOf[CacheStream[CacheEntry[AnyRef, AnyRef]]]
       segments.map(bitSet => {
          val segments = bitSet.stream().boxed().collect(Collectors.toSet[Integer])
          stream.filterKeySegments(segments)
@@ -97,7 +97,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
          filterAndConvert(stream.asInstanceOf[util.stream.Stream[CacheEntry[Any, Any]]], f.asInstanceOf[KeyValueFilterConverter[Any, Any, Any]])
       }.getOrElse(stream).iterator()
 
-      val iterationState = new IterationState(segmentListener, iterator.asInstanceOf[CloseableIterator[CacheEntry[AnyRef, AnyRef]]], batch, compatInfo)
+      val iterationState = new IterationState(segmentListener, iterator.asInstanceOf[java.util.Iterator[CacheEntry[AnyRef, AnyRef]]], stream, batch, compatInfo)
 
       iterationStateMap.put(iterationId, iterationState)
       iterationId
@@ -126,7 +126,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
    override def close(cacheName: String, iterationId: IterationId): Boolean = {
       val iterationState = Option(iterationStateMap.get(iterationId))
       val removed = iterationState.map { state =>
-         state.iterator.close()
+         state.stream.close()
          iterationStateMap.remove(iterationId)
       }
       Option(removed).isDefined

@@ -1,17 +1,23 @@
 package org.infinispan.iteration;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.filter.AcceptAllKeyValueFilter;
 import org.infinispan.filter.CollectionKeyFilter;
 import org.infinispan.filter.CompositeKeyValueFilterConverter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
+import org.infinispan.filter.NullValueConverter;
+import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.infinispan.iteration.impl.EntryRetriever;
 import org.testng.annotations.Test;
 
@@ -25,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Base class for entry retriever tests
@@ -205,5 +212,28 @@ public abstract class BaseEntryRetrieverTest extends BaseSetupEntryRetrieverTest
          }
       }
    }
-}
 
+   @Test
+   public void simpleTestWithFlags() {
+      Map<Object, String> values = putValuesInCache();
+
+      final Cache<Object, Object> cache = cache(0, CACHE_NAME);
+
+      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
+         @Override
+         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            return super.visitRemoveCommand(ctx, command);
+         }
+      }, 0);
+
+      for (Iterator<CacheEntry<Object, Void>> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(
+              Flag.SKIP_CACHE_STORE).filterEntries(AcceptAllKeyValueFilter.getInstance()).converter(
+              NullValueConverter.getInstance()).iterator(); it.hasNext();) {
+         assertTrue(values.containsKey(it.next().getKey()));
+         it.remove();
+      }
+
+      assertTrue(cache.isEmpty());
+   }
+}

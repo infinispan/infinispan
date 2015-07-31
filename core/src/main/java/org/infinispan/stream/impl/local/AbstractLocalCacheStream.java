@@ -1,6 +1,5 @@
 package org.infinispan.stream.impl.local;
 
-import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.Closeables;
@@ -13,7 +12,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
@@ -73,10 +71,15 @@ public abstract class AbstractLocalCacheStream<R, K, V> implements CacheStream<R
 
    private final Stream<R> getOrCreateStream() {
       if (stream == null) {
-         stream = getStream();
-         for (Runnable runnable : onCloseRunnables) {
-            stream = stream.onClose(runnable);
-         }
+         stream = createStream();
+      }
+      return stream;
+   }
+
+   private final Stream<R> createStream() {
+      Stream<R> stream = getStream();
+      for (Runnable runnable : onCloseRunnables) {
+         stream = stream.onClose(runnable);
       }
       return stream;
    }
@@ -294,8 +297,15 @@ public abstract class AbstractLocalCacheStream<R, K, V> implements CacheStream<R
 
    @Override
    public CloseableIterator<R> iterator() {
-      return Closeables.iterator(getOrCreateStream());
+      // If the stream is null we can assume no intermediate operations and thus we can support remove
+      if (stream == null) {
+         return removableIterator(Closeables.iterator(createStream()));
+      } else {
+         return Closeables.iterator(stream);
+      }
    }
+
+   protected abstract CloseableIterator<R> removableIterator(CloseableIterator<R> realIterator);
 
    @Override
    public Spliterator<R> spliterator() {

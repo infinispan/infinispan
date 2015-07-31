@@ -174,6 +174,8 @@ public interface CacheStream<R> extends Stream<R> {
     * elements that mapped to that many keys.  Note that when using methods such as
     * {@link CacheStream#flatMap(Function)} that you will have possibly more than 1 element mapped to a given key
     * so this doesn't guarantee that many number of entries are returned per batch.</p>
+    * <p>Note that the {@link Iterator#remove()} method is only supported if no intermediate operations have been
+    * applied to the stream and this is not a stream created from a {@link Cache#values()} collection.</p>
     * @return the element iterator for this stream
     */
    @Override

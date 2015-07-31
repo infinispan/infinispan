@@ -1,9 +1,12 @@
 package org.infinispan.stream;
 
 import org.infinispan.Cache;
+import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.MagicKey;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.CollectionKeyFilter;
@@ -11,6 +14,7 @@ import org.infinispan.filter.CompositeKeyValueFilterConverter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
+import org.infinispan.interceptors.base.BaseCustomInterceptor;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -24,6 +28,7 @@ import java.util.stream.Stream;
 
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Base class for stream iterator tests
@@ -136,6 +141,146 @@ public abstract class BaseStreamIteratorTest extends BaseSetupStreamIteratorTest
             assertEquals(entry.getValue().substring(2, 7), results.get(entry.getKey()));
          }
       }
+   }
+
+   @Test
+   public void testKeySetRemove() {
+      Map<Object, String> values = putValuesInCache();
+
+      final Cache<Object, Object> cache = cache(0, CACHE_NAME);
+
+      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
+         @Override
+         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            return super.visitRemoveCommand(ctx, command);
+         }
+      }, 0);
+
+      for (Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).keySet().iterator();
+           it.hasNext();) {
+         assertTrue(values.containsKey(it.next()));
+         it.remove();
+      }
+
+      assertEquals(0, cache.size());
+   }
+
+   @Test
+   public void testKeySetStreamRemove() {
+      Map<Object, String> values = putValuesInCache();
+
+      final Cache<Object, Object> cache = cache(0, CACHE_NAME);
+
+      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
+         @Override
+         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            return super.visitRemoveCommand(ctx, command);
+         }
+      }, 0);
+
+      for (Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).keySet().stream()
+              .iterator(); it.hasNext();) {
+         assertTrue(values.containsKey(it.next()));
+         it.remove();
+      }
+
+      assertEquals(0, cache.size());
+   }
+
+   @Test
+   public void testValuesRemove() {
+      Map<Object, String> values = putValuesInCache();
+
+      final Cache<Object, Object> cache = cache(0, CACHE_NAME);
+
+      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
+         @Override
+         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            return super.visitRemoveCommand(ctx, command);
+         }
+      }, 0);
+
+      for (Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).values().iterator();
+           it.hasNext();) {
+         assertTrue(values.containsValue(it.next()));
+         it.remove();
+      }
+
+      assertEquals(0, cache.size());
+   }
+
+   @Test(expectedExceptions = UnsupportedOperationException.class)
+   public void testValuesStreamRemove() {
+      Map<Object, String> values = putValuesInCache();
+
+      final Cache<Object, Object> cache = cache(0, CACHE_NAME);
+
+      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
+         @Override
+         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            return super.visitRemoveCommand(ctx, command);
+         }
+      }, 0);
+
+      for (Iterator<Object> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(Flag.SKIP_CACHE_STORE).values().stream()
+              .iterator(); it.hasNext();) {
+         assertTrue(values.containsValue(it.next()));
+         it.remove();
+      }
+   }
+
+   @Test
+   public void testEntrySetRemove() {
+      Map<Object, String> values = putValuesInCache();
+
+      final Cache<Object, Object> cache = cache(0, CACHE_NAME);
+
+      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
+         @Override
+         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            return super.visitRemoveCommand(ctx, command);
+         }
+      }, 0);
+
+      for (Iterator<Map.Entry<Object, Object>> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(
+              Flag.SKIP_CACHE_STORE).entrySet().iterator(); it.hasNext();) {
+         Map.Entry<Object, Object> entry = it.next();
+         Object key = entry.getKey();
+         assertEquals(values.get(key), entry.getValue());
+         it.remove();
+      }
+
+      assertEquals(0, cache.size());
+   }
+
+   @Test
+   public void testEntrySetStreamRemove() {
+      Map<Object, String> values = putValuesInCache();
+
+      final Cache<Object, Object> cache = cache(0, CACHE_NAME);
+
+      cache.getAdvancedCache().addInterceptor(new BaseCustomInterceptor() {
+         @Override
+         public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+            assertTrue(command.hasFlag(Flag.SKIP_CACHE_STORE));
+            return super.visitRemoveCommand(ctx, command);
+         }
+      }, 0);
+
+      for (Iterator<Map.Entry<Object, Object>> it = cache(0, CACHE_NAME).getAdvancedCache().withFlags(
+              Flag.SKIP_CACHE_STORE).entrySet().stream().iterator(); it.hasNext();) {
+         Map.Entry<Object, Object> entry = it.next();
+         Object key = entry.getKey();
+         assertEquals(values.get(key), entry.getValue());
+         it.remove();
+      }
+
+      assertEquals(0, cache.size());
    }
 }
 
