@@ -299,6 +299,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(1, list.get(0).getId());
    }
 
+   @Test
    public void testEqInNested1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
