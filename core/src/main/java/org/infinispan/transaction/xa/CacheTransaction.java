@@ -139,4 +139,9 @@ public interface CacheTransaction {
    interface TransactionCompletedListener {
       void onCompletion();
    }
+
+   /**
+    * Prevent new modifications after prepare or commit started.
+    */
+   void freezeModifications();
 }
