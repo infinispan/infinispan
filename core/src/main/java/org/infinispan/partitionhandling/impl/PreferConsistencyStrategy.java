@@ -194,7 +194,7 @@ public class PreferConsistencyStrategy implements AvailabilityStrategy {
          log.debugf("After merge, cache %s is staying in degraded mode", context.getCacheName());
          context.updateAvailabilityMode(actualMembers, newAvailabilityMode, true);
       } else { // AVAILABLE
-         log.debugf("After merge, cache %s has recovered and is entering available mode");
+         log.debugf("After merge, cache %s has recovered and is entering available mode", context.getCacheName());
          updateMembersAndRebalance(context, actualMembers, context.getExpectedMembers());
       }
    }
