@@ -2,7 +2,6 @@ package org.infinispan.util.concurrent;
 
 import org.infinispan.commons.util.InfinispanCollections;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
