@@ -7,14 +7,6 @@ public interface GlobalConfigurationChildBuilder {
 
    SerializationConfigurationBuilder serialization();
 
-   ExecutorFactoryConfigurationBuilder asyncListenerExecutor();
-
-   ExecutorFactoryConfigurationBuilder persistenceExecutor();
-
-   ExecutorFactoryConfigurationBuilder asyncTransportExecutor();
-
-   ExecutorFactoryConfigurationBuilder remoteCommandsExecutor();
-
    ThreadPoolConfigurationBuilder listenerThreadPool();
 
    ThreadPoolConfigurationBuilder replicationQueueThreadPool();
@@ -32,10 +24,6 @@ public interface GlobalConfigurationChildBuilder {
    ThreadPoolConfigurationBuilder stateTransferThreadPool();
 
    ThreadPoolConfigurationBuilder asyncThreadPool();
-
-   ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor();
-
-   ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor();
 
    GlobalSecurityConfigurationBuilder security();
 

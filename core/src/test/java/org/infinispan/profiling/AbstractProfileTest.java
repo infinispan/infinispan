@@ -1,6 +1,6 @@
 package org.infinispan.profiling;
 
-import org.infinispan.commons.executors.ExecutorFactory;
+import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
@@ -11,8 +11,8 @@ import org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.Test;
 
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 import static org.infinispan.configuration.cache.CacheMode.*;
 
@@ -55,7 +55,7 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       GlobalConfigurationBuilder builder = new GlobalConfigurationBuilder();
-      builder.asyncTransportExecutor().factory(new WTE());
+      builder.transport().transportThreadPool().threadPoolFactory(new WithinThreadExecutorFactory());
       cacheManager = TestCacheManagerFactory.createClusteredCacheManager(builder, new ConfigurationBuilder());
 
       cacheManager.defineConfiguration(LOCAL_CACHE_NAME, getBaseCfg().build());
@@ -70,10 +70,16 @@ public abstract class AbstractProfileTest extends SingleCacheManagerTest {
       return cacheManager;
    }
 
-   public static class WTE implements ExecutorFactory {
+   public static class WithinThreadExecutorFactory implements ThreadPoolExecutorFactory {
+
       @Override
-      public ExecutorService getExecutor(Properties p) {
+      public ExecutorService createExecutor(ThreadFactory factory) {
          return new WithinThreadExecutor();
+      }
+
+      @Override
+      public void validate() {
+         // No-op
       }
    }
 }
