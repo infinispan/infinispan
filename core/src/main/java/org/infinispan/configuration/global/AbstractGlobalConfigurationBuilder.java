@@ -28,66 +28,6 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
       return globalConfig.serialization();
    }
 
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link #listenerThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ExecutorFactoryConfigurationBuilder asyncListenerExecutor() {
-      return globalConfig.asyncListenerExecutor();
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link #persistenceThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ExecutorFactoryConfigurationBuilder persistenceExecutor() {
-      return globalConfig.persistenceExecutor();
-   }
-
-   /**
-    * @deprecated This method always returns {@code null} now.
-    * Set thread pool via {@link TransportConfigurationBuilder#transportThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ExecutorFactoryConfigurationBuilder asyncTransportExecutor() {
-      return globalConfig.asyncTransportExecutor();
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link TransportConfigurationBuilder#remoteCommandThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ExecutorFactoryConfigurationBuilder remoteCommandsExecutor() {
-      return globalConfig.remoteCommandsExecutor();
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link #evictionThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
-      return globalConfig.evictionScheduledExecutor();
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link #replicationQueueThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor() {
-      return globalConfig.replicationQueueScheduledExecutor();
-   }
-
    @Override
    public ThreadPoolConfigurationBuilder listenerThreadPool() {
       return globalConfig.listenerThreadPool();

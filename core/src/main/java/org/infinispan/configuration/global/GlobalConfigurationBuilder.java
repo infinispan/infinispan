@@ -101,61 +101,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link TransportConfigurationBuilder#transportThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ExecutorFactoryConfigurationBuilder asyncTransportExecutor() {
-      return null;
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link #listenerThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ExecutorFactoryConfigurationBuilder asyncListenerExecutor() {
-      return null;
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link #persistenceThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ExecutorFactoryConfigurationBuilder persistenceExecutor() {
-      return null;
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link TransportConfigurationBuilder#remoteCommandThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ExecutorFactoryConfigurationBuilder remoteCommandsExecutor() {
-      return null;
-   }
-
-   @Override
-   public ScheduledExecutorFactoryConfigurationBuilder evictionScheduledExecutor() {
-      return null;
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link #replicationQueueThreadPool()} instead.
-    */
-   @Deprecated
-   @Override
-   public ScheduledExecutorFactoryConfigurationBuilder replicationQueueScheduledExecutor() {
-      return null;
-   }
-
-   /**
     * @deprecated this returns the thread pool returned from {@link GlobalConfigurationBuilder#expirationThreadPool}
     */
    @Deprecated
@@ -221,15 +166,6 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       } catch (Exception e) {
          throw new CacheConfigurationException("Could not instantiate module configuration builder '" + klass.getName() + "'", e);
       }
-   }
-
-   /**
-    * @deprecated This method always returns null now.
-    * Set thread pool via {@link TransportConfigurationBuilder#totalOrderThreadPool()} instead.
-    */
-   @Deprecated
-   public ExecutorFactoryConfigurationBuilder totalOrderExecutor() {
-      return null;
    }
 
    @SuppressWarnings("unchecked")
