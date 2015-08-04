@@ -22,7 +22,11 @@ import javax.transaction.TransactionManager;
 >>>>>>> HHH-7197 reimport imports
 =======
 import javax.transaction.TransactionManager;
+<<<<<<< HEAD
 >>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
+=======
+
+>>>>>>> HHH-9881 Pending put needs to be invalidated on update on remote node
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -116,6 +120,7 @@ import org.hibernate.test.cache.infinispan.util.InfinispanTestingSetup;
 >>>>>>> HHH-10001 Make the testsuite compatible with Infinispan 8
 import org.hibernate.test.cache.infinispan.util.TestingKeyFactory;
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> HHH-9840 Allow 2nd level cache implementations to customize the various key implementations
 import org.junit.After;
 import org.junit.Before;
@@ -125,6 +130,10 @@ import junit.framework.AssertionFailedError;
 
 =======
 >>>>>>> HHH-9840 Change all kinds of CacheKey contract to a raw Object
+=======
+import org.infinispan.AdvancedCache;
+import org.infinispan.manager.EmbeddedCacheManager;
+>>>>>>> HHH-9881 Pending put needs to be invalidated on update on remote node
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.tm.BatchModeTransactionManager;
@@ -843,29 +852,10 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 		final CountDownLatch pferLatch = new CountDownLatch( 1 );
 		final CountDownLatch removeLatch = new CountDownLatch( 1 );
       final TransactionManager remoteTm = remoteCollectionRegion.getTransactionManager();
-      withCacheManager(new CacheManagerCallable(TestCacheManagerFactory.createCacheManager(false)) {
+      withCacheManager(new CacheManagerCallable(createCacheManager()) {
          @Override
          public void call() {
-            PutFromLoadValidator validator = new PutFromLoadValidator(remoteCollectionRegion.getCache(), cm,
-                  remoteTm, 20000) {
-               @Override
-               public Lock acquirePutFromLoadLock(Object key) {
-                  Lock lock = super.acquirePutFromLoadLock( key );
-                  try {
-                     removeLatch.countDown();
-                     pferLatch.await( 2, TimeUnit.SECONDS );
-                  }
-                  catch (InterruptedException e) {
-                     log.debug( "Interrupted" );
-                     Thread.currentThread().interrupt();
-                  }
-                  catch (Exception e) {
-                     log.error( "Error", e );
-                     throw new RuntimeException( "Error", e );
-                  }
-                  return lock;
-               }
-            };
+            PutFromLoadValidator validator = getPutFromLoadValidator(remoteCollectionRegion.getCache(), cm, remoteTm, removeLatch, pferLatch);
 
             final TransactionalAccessDelegate delegate =
                   new TransactionalAccessDelegate(localCollectionRegion, validator);
@@ -906,7 +896,40 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 
             assertFalse(localCollectionRegion.getCache().containsKey("k1"));
          }
-      });
+		});
+	}
+
+	private static EmbeddedCacheManager createCacheManager() {
+		EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(false);
+		cacheManager.defineConfiguration(InfinispanRegionFactory.PENDING_PUTS_CACHE_NAME,
+				InfinispanRegionFactory.PENDING_PUTS_CACHE_CONFIGURATION);
+		return cacheManager;
+	}
+
+	protected PutFromLoadValidator getPutFromLoadValidator(AdvancedCache cache, EmbeddedCacheManager cm,
+																			 TransactionManager tm,
+																			 CountDownLatch removeLatch, CountDownLatch pferLatch) {
+		// remove the interceptor inserted by default PutFromLoadValidator, we're using different one
+		PutFromLoadValidator.removeFromCache(cache);
+		return new PutFromLoadValidator(cache, cm, tm) {
+			@Override
+			public Lock acquirePutFromLoadLock(Object key, long txTimestamp) {
+				Lock lock = super.acquirePutFromLoadLock( key, txTimestamp);
+				try {
+					removeLatch.countDown();
+					pferLatch.await( 2, TimeUnit.SECONDS );
+				}
+				catch (InterruptedException e) {
+					log.debug( "Interrupted" );
+					Thread.currentThread().interrupt();
+				}
+				catch (Exception e) {
+					log.error( "Error", e );
+					throw new RuntimeException( "Error", e );
+				}
+				return lock;
+			}
+		};
 	}
 
 	@Test
@@ -1142,6 +1165,9 @@ public abstract class AbstractCollectionRegionAccessStrategyTestCase extends Abs
 		assertEquals( null, remoteAccessStrategy.get(null, KEY, System.currentTimeMillis() ) );
 
 		assertEquals( 0, remoteCollectionRegion.getCache().size() );
+
+		// Wait for async propagation of EndInvalidationCommand
+		sleep( 250 );
 
 		// Test whether the get above messes up the optimistic version
 		remoteAccessStrategy.putFromLoad(null, KEY, VALUE1, System.currentTimeMillis(), new Integer( 1 ) );
