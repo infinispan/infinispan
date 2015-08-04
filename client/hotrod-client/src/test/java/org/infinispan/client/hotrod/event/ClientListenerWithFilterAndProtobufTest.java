@@ -55,7 +55,7 @@ public class ClientListenerWithFilterAndProtobufTest extends MultiHotRodServersT
          // WARNING! This is not the actual instance used at runtime. A new instance is created instead, so all state is lost unless it is re-created in the constructor!
          ProtoStreamMarshaller marshaller = new CustomProtoStreamMarshaller();
 
-         server(i).setEventMarshaller(marshaller);
+         server(i).setMarshaller(marshaller);
       }
 
       //initialize server-side serialization context

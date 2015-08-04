@@ -26,11 +26,13 @@
       <module name="org.apache.xerces" services="import" />
       <module name="org.hibernate.validator" services="import" />
       <module name="org.infinispan" />
+      <module name="org.infinispan.scripting" services="import"/>
       <module name="org.infinispan.persistence.jdbc" />
       <module name="org.infinispan.persistence.remote" />
       <module name="org.infinispan.server" />
       <module name="org.infinispan.server.hotrod" />
       <module name="org.infinispan.remote-query.server" services="import"/>
+      <module name="org.infinispan.server.hotrod" services="import"/>
       <module name="org.infinispan.server.memcached" />
       <module name="org.infinispan.server.rest" />
       <module name="org.infinispan.server.websocket" />
