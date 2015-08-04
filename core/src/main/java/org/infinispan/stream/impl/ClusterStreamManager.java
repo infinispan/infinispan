@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl;
 
+import org.infinispan.CacheStream;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.remoting.transport.Address;
 
@@ -8,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -23,7 +25,9 @@ public interface ClusterStreamManager<K> {
     */
    interface ResultsCallback<R> {
       /**
-       * Called back for intermediate data returned from an operation.  This is useful
+       * Called back for intermediate data returned from an operation.  This is useful for operations that utilized
+       * batch fetching such as {@link CacheStream#iterator()}, {@link CacheStream#spliterator()},
+       * {@link CacheStream#forEach(Consumer)} and {@link CacheStream#toArray()}.
        * @param address Which node this data came from
        * @param results The results obtained so far.
        * @return the segments that completed with some value

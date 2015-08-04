@@ -23,7 +23,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * A closeable supplier that provides a wait to supply cache entries from a given persistence manager.  On the first
+ * A closeable supplier that provides a way to supply cache entries from a given persistence manager.  On the first
  * call to get this class will submit a task to collect all of the entries from the loader (or optionally a subset
  * provided a given {@link org.infinispan.filter.KeyFilter}).  A timeout value is required so that if a get blocks
  * for the given timeout it will throw a {@link TimeoutException}.

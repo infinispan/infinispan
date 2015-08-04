@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl.termop;
 
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
@@ -62,10 +63,10 @@ public abstract class AbstractForEachOperation<K, V, S extends BaseStream<V, S>>
       List<CacheEntry<K, K>> collectedValues = new ArrayList(batchSize);
 
       List<V> currentList = new ArrayList<>();
-      Object[] currentKey = new Object[1];
+      ByRef<K> currentKey = new ByRef<>(null);
       stream = ((Stream<Map.Entry<K, ?>>) stream).peek(e -> {
          if (!currentList.isEmpty()) {
-            collectedValues.add(new ImmortalCacheEntry(currentKey[0], currentKey[0]));
+            collectedValues.add(new ImmortalCacheEntry(currentKey.get(), null));
             if (collectedValues.size() >= batchSize) {
                handleList(currentList);
                response.sendDataResonse(collectedValues);
@@ -73,7 +74,7 @@ public abstract class AbstractForEachOperation<K, V, S extends BaseStream<V, S>>
                currentList.clear();
             }
          }
-         currentKey[0] = e.getKey();
+         currentKey.set(e.getKey());
       });
       for (IntermediateOperation intermediateOperation : intermediateOperations) {
          stream = intermediateOperation.perform(stream);
@@ -84,7 +85,7 @@ public abstract class AbstractForEachOperation<K, V, S extends BaseStream<V, S>>
       handleStreamForEach(convertedStream, currentList);
       if (!currentList.isEmpty()) {
          handleList(currentList);
-         collectedValues.add(new ImmortalCacheEntry(currentKey[0], currentKey[0]));
+         collectedValues.add(new ImmortalCacheEntry(currentKey.get(), null));
       }
       return collectedValues;
    }

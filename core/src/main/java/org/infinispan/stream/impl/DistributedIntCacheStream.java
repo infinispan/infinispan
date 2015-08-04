@@ -5,7 +5,6 @@ import org.infinispan.stream.impl.intops.primitive.i.*;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapIntOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachIntOperation;
 
-import java.io.Serializable;
 import java.util.*;
 import java.util.function.*;
 import java.util.stream.DoubleStream;
@@ -319,13 +318,13 @@ public class DistributedIntCacheStream extends AbstractCacheStream<Integer, IntS
       intermediateOperations.add(BoxedIntOperation.getInstance());
       DistributedCacheStream<Integer> stream = new DistributedCacheStream<>(this);
       Iterator<Integer> iterator = stream.remoteIterator();
-      return new IntegerIteratorToPrimiviteInteger(iterator);
+      return new IntegerIteratorToPrimitiveInteger(iterator);
    }
 
-   static class IntegerIteratorToPrimiviteInteger implements PrimitiveIterator.OfInt {
+   static class IntegerIteratorToPrimitiveInteger implements PrimitiveIterator.OfInt {
       private final Iterator<Integer> iterator;
 
-      IntegerIteratorToPrimiviteInteger(Iterator<Integer> iterator) {
+      IntegerIteratorToPrimitiveInteger(Iterator<Integer> iterator) {
          this.iterator = iterator;
       }
 

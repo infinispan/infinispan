@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl.termop.object;
 
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
@@ -57,22 +58,21 @@ public class FlatMapIteratorOperation<K, V> extends BaseTerminalOperation implem
 
       List<CacheEntry<K, Collection<V>>> collectedValues = new ArrayList(batchSize);
 
-      List<V>[] currentList = new List[1];
-      currentList[0] = new ArrayList<>();
-      Object[] currentKey = new Object[1];
+      ByRef<List<V>> currentList = new ByRef<>(new ArrayList<>());
+      ByRef<K> currentKey = new ByRef<>(null);
       stream = ((Stream<Map.Entry<K, ?>>) stream).peek(e -> {
-         List<V> list = currentList[0];
+         List<V> list = currentList.get();
          if (!list.isEmpty()) {
-            collectedValues.add(new ImmortalCacheEntry((K)currentKey[0], list));
+            collectedValues.add(new ImmortalCacheEntry(currentKey.get(), list));
             if (collectedValues.size() >= batchSize) {
                response.sendDataResonse(collectedValues);
                collectedValues.clear();
                list.clear();
             } else {
-               currentList[0] = new ArrayList<V>(list.size());
+               currentList.set(new ArrayList<V>(list.size()));
             }
          }
-         currentKey[0] = e.getKey();
+         currentKey.set(e.getKey());
       });
       for (IntermediateOperation intermediateOperation : intermediateOperations) {
          stream = intermediateOperation.perform(stream);
@@ -81,11 +81,11 @@ public class FlatMapIteratorOperation<K, V> extends BaseTerminalOperation implem
       Stream<V> convertedStream = ((Stream<V>)stream);
       // We rely on the fact that iterator processes 1 entry at a time
       convertedStream.forEach(v -> {
-         currentList[0].add(v);
+         currentList.get().add(v);
       });
-      List<V> lastList = currentList[0];
+      List<V> lastList = currentList.get();
       if (lastList != null && !lastList.isEmpty()) {
-         collectedValues.add(new ImmortalCacheEntry(currentKey[0], lastList));
+         collectedValues.add(new ImmortalCacheEntry(currentKey.get(), lastList));
       }
       return collectedValues;
    }

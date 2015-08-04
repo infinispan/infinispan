@@ -423,9 +423,9 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
       Lock nextLock = new ReentrantLock();
       Condition nextCondition = nextLock.newCondition();
 
-      Consumer<R> consumer = new HandOffConsumer(queue, complete, nextLock, nextCondition);
+      Consumer<R> consumer = new HandOffConsumer<>(queue, complete, nextLock, nextCondition);
 
-      IteratorSupplier<R> supplier = new IteratorSupplier(queue, complete, nextLock, nextCondition, csm);
+      IteratorSupplier<R> supplier = new IteratorSupplier<>(queue, complete, nextLock, nextCondition, csm);
 
       boolean iteratorParallelDistribute = parallelDistribution == null ? false : parallelDistribution;
 
