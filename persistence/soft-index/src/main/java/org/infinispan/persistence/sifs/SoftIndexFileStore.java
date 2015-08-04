@@ -193,7 +193,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             }
          });
       }
-      logAppender.setSeqId(0);
+      logAppender.setSeqId(maxSeqId.get() + 1);
    }
 
    @Override
