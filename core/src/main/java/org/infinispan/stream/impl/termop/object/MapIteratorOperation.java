@@ -1,5 +1,6 @@
 package org.infinispan.stream.impl.termop.object;
 
+import org.infinispan.commons.util.ByRef;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
@@ -55,9 +56,9 @@ public class MapIteratorOperation<K, V, V2> extends BaseTerminalOperation implem
 
       List<CacheEntry<K, V2>> collectedValues = new ArrayList(batchSize);
 
-      Object[] currentKey = new Object[1];
+      ByRef<Object> ref = new ByRef<>(null);
       stream = ((Stream<Map.Entry<K, ?>>) stream).peek(
-              e -> currentKey[0] = e.getKey());
+              e -> ref.set(e.getKey()));
       for (IntermediateOperation intermediateOperation : intermediateOperations) {
          stream = intermediateOperation.perform(stream);
       }
@@ -66,7 +67,7 @@ public class MapIteratorOperation<K, V, V2> extends BaseTerminalOperation implem
       // We rely on the fact that iterator processes 1 entry at a time
       convertedStream.forEach(v -> {
          // TODO: do we care about metadata in this case?
-         collectedValues.add(new ImmortalCacheEntry(currentKey[0], v));
+         collectedValues.add(new ImmortalCacheEntry(ref.get(), v));
          if (collectedValues.size() >= batchSize) {
             response.sendDataResonse(collectedValues);
             collectedValues.clear();

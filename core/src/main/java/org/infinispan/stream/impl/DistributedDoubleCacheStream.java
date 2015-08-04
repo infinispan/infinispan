@@ -5,7 +5,6 @@ import org.infinispan.stream.impl.intops.primitive.d.*;
 import org.infinispan.stream.impl.termop.primitive.ForEachDoubleOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapDoubleOperation;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.DoubleSummaryStatistics;
 import java.util.Iterator;
@@ -314,13 +313,13 @@ public class DistributedDoubleCacheStream extends AbstractCacheStream<Double, Do
       intermediateOperations.add(BoxedDoubleOperation.getInstance());
       DistributedCacheStream<Double> stream = new DistributedCacheStream<>(this);
       Iterator<Double> iterator = stream.remoteIterator();
-      return new DoubleIteratorToPrimiviteDouble(iterator);
+      return new DoubleIteratorToPrimitiveDouble(iterator);
    }
 
-   static class DoubleIteratorToPrimiviteDouble implements PrimitiveIterator.OfDouble {
+   static class DoubleIteratorToPrimitiveDouble implements PrimitiveIterator.OfDouble {
       private final Iterator<Double> iterator;
 
-      DoubleIteratorToPrimiviteDouble(Iterator<Double> iterator) {
+      DoubleIteratorToPrimitiveDouble(Iterator<Double> iterator) {
          this.iterator = iterator;
       }
 

@@ -5,7 +5,6 @@ import org.infinispan.stream.impl.intops.primitive.l.*;
 import org.infinispan.stream.impl.termop.primitive.ForEachFlatMapLongOperation;
 import org.infinispan.stream.impl.termop.primitive.ForEachLongOperation;
 
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LongSummaryStatistics;
@@ -320,13 +319,13 @@ public class DistributedLongCacheStream extends AbstractCacheStream<Long, LongSt
       intermediateOperations.add(BoxedLongOperation.getInstance());
       DistributedCacheStream<Long> stream = new DistributedCacheStream<>(this);
       Iterator<Long> iterator = stream.remoteIterator();
-      return new LongIteratorToPrimiviteLong(iterator);
+      return new LongIteratorToPrimitiveLong(iterator);
    }
 
-   static class LongIteratorToPrimiviteLong implements PrimitiveIterator.OfLong {
+   static class LongIteratorToPrimitiveLong implements PrimitiveIterator.OfLong {
       private final Iterator<Long> iterator;
 
-      LongIteratorToPrimiviteLong(Iterator<Long> iterator) {
+      LongIteratorToPrimitiveLong(Iterator<Long> iterator) {
          this.iterator = iterator;
       }
 

@@ -5,22 +5,15 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.notifications.Listener;
-import org.infinispan.notifications.cachelistener.annotation.PartitionStatusChanged;
-import org.infinispan.notifications.cachelistener.event.PartitionStatusChangedEvent;
-import org.infinispan.partitionhandling.AvailabilityException;
-import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
-import org.infinispan.util.concurrent.ConcurrentHashSet;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,7 +55,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    public <R> UUID remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
            Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
            TerminalOperation<R> operation, ResultsCallback<R> callback, Predicate<? super R> earlyTerminatePredicate) {
-      return remoteStreamIgnoreKeyOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
+      return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
               keysToExclude, includeLoader, operation, callback, StreamRequestCommand.Type.TERMINAL,
               earlyTerminatePredicate);
    }
@@ -72,14 +65,14 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
            ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
            boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
            Predicate<? super R> earlyTerminatePredicate) {
-      return remoteStreamIgnoreKeyOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
+      return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
               keysToExclude, includeLoader, operation, callback, StreamRequestCommand.Type.TERMINAL_REHASH,
               earlyTerminatePredicate);
    }
 
-   private <R> UUID remoteStreamIgnoreKeyOperation(boolean parallelDistribution, boolean parallelStream,
+   private <R> UUID commonRemoteStreamOperation(boolean parallelDistribution, boolean parallelStream,
            ConsistentHash ch, Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude,
-           boolean includeLoader, TerminalOperation<R> operation, ResultsCallback<R> callback,
+           boolean includeLoader, SegmentAwareOperation operation, ResultsCallback<R> callback,
            StreamRequestCommand.Type type, Predicate<? super R> earlyTerminatePredicate) {
       Map<Address, Set<Integer>> targets = determineTargets(ch, segments);
       UUID uuid = UUID.randomUUID();
@@ -110,26 +103,8 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
    public <R> UUID remoteStreamOperation(boolean parallelDistribution, boolean parallelStream, ConsistentHash ch,
            Set<Integer> segments, Set<K> keysToInclude, Map<Integer, Set<K>> keysToExclude, boolean includeLoader,
            KeyTrackingTerminalOperation<K, R, ?> operation, ResultsCallback<Collection<R>> callback) {
-      Map<Address, Set<Integer>> targets = determineTargets(ch, segments);
-      UUID uuid = UUID.randomUUID();
-      if (!targets.isEmpty()) {
-         log.tracef("Performing remote key aware operations %s for id %s", targets, uuid);
-         RequestTracker<Collection<R>> tracker = new RequestTracker<>(callback, targets, null);
-         currentlyRunning.put(uuid, tracker);
-         if (parallelDistribution) {
-            submitAsyncTasks(uuid, targets, keysToExclude, parallelStream, keysToInclude, includeLoader,
-                    StreamRequestCommand.Type.TERMINAL_KEY, operation);
-         } else {
-            for (Map.Entry<Address, Set<Integer>> targetInfo : targets.entrySet()) {
-               Set<Integer> targetSegments = targetInfo.getValue();
-               Set<K> keysExcluded = determineExcludedKeys(keysToExclude, targetSegments);
-               rpc.invokeRemotely(Collections.singleton(targetInfo.getKey()), factory.buildStreamRequestCommand(uuid,
-                       parallelStream, StreamRequestCommand.Type.TERMINAL_KEY, targetSegments, keysToInclude,
-                       keysExcluded, includeLoader, operation), rpc.getDefaultRpcOptions(true));
-            }
-         }
-      }
-      return uuid;
+      return commonRemoteStreamOperation(parallelDistribution, parallelStream, ch, segments, keysToInclude,
+              keysToExclude, includeLoader, operation, callback, StreamRequestCommand.Type.TERMINAL_KEY, null);
    }
 
    @Override
@@ -164,22 +139,15 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
                      receiveResponse(uuid, dest, true, targetSegments, null);
                   }
                } catch (Exception e) {
-                  Throwable cause = e;
-                  boolean wasSuspect = false;
-                  // Unwrap exception
-                  do {
-                     if (cause instanceof SuspectException) {
-                        log.tracef("Exception from %s contained a SuspectException, making all segments %s suspect",
-                                dest, targetSegments);
-                        receiveResponse(uuid, dest, true, targetSegments, null);
-                        wasSuspect = true;
-                        break;
-                     }
-                  } while ((cause = cause.getCause()) != null);
+                  boolean wasSuspect = containedSuspectException(e);
 
                   if (!wasSuspect) {
                      log.tracef(e, "Encounted exception for %s from %s", uuid, dest);
                      throw e;
+                  } else {
+                     log.tracef("Exception from %s contained a SuspectException, making all segments %s suspect",
+                             dest, targetSegments);
+                     receiveResponse(uuid, dest, true, targetSegments, null);
                   }
                }
             }
@@ -208,18 +176,7 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
                   receiveResponse(uuid, targetInfo.getKey(), true, targetInfo.getValue(), null);
                }
             } else if (e != null) {
-               Throwable cause = e;
-               boolean wasSuspect = false;
-               // Unwrap the exception
-               do {
-                  if (cause instanceof SuspectException) {
-                     log.tracef("Exception contained a SuspectException, making all segments %s suspect",
-                             targetInfo.getValue());
-                     receiveResponse(uuid, targetInfo.getKey(), true, targetInfo.getValue(), null);
-                     wasSuspect = true;
-                     break;
-                  }
-               } while ((cause = cause.getCause()) != null);
+               boolean wasSuspect = containedSuspectException(e);
 
                if (!wasSuspect) {
                   log.tracef(e, "Encounted exception for %s from %s", uuid, targetInfo.getKey());
@@ -229,10 +186,28 @@ public class ClusterStreamManagerImpl<K> implements ClusterStreamManager<K> {
                   } else {
                      log.warnf("Unhandled remote stream exception encountered", e);
                   }
+               } else {
+                  log.tracef("Exception contained a SuspectException, making all segments %s suspect",
+                          targetInfo.getValue());
+                  receiveResponse(uuid, targetInfo.getKey(), true, targetInfo.getValue(), null);
                }
             }
          });
       }
+   }
+
+   private boolean containedSuspectException(Throwable e) {
+      Throwable cause = e;
+      boolean wasSuspect = false;
+      // Unwrap the exception
+      do {
+         if (cause instanceof SuspectException) {
+            wasSuspect = true;
+            break;
+         }
+      } while ((cause = cause.getCause()) != null);
+
+      return wasSuspect;
    }
 
    protected static void markTrackerWithException(RequestTracker<?> tracker, Address dest, Throwable e, UUID uuid) {
