@@ -46,8 +46,11 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
    private var queryFacades: Seq[QueryFacade] = _
    private val saslMechFactories = CollectionFactory.makeConcurrentMap[String, SaslServerFactory](4, 0.9f, 16)
    private var clientListenerRegistry: ClientListenerRegistry = _
+   private var marshaller: Marshaller = _
 
    def getAddress: ServerAddress = address
+
+   def getMarshaller = marshaller
 
    def getQueryFacades: Seq[QueryFacade] = queryFacades
 
@@ -251,7 +254,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       clientListenerRegistry.removeCacheEventFilterConverterFactory(name)
    }
 
-   def setEventMarshaller(marshaller: Marshaller): Unit = {
+   def setMarshaller(marshaller: Marshaller): Unit = {
+      this.marshaller = marshaller
       clientListenerRegistry.setEventMarshaller(Option(marshaller))
    }
 

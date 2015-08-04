@@ -12,6 +12,7 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.concurrent.NoOpFuture;
@@ -53,6 +54,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
    Cache<String, String> scriptCache;
    ConcurrentMap<String, CompiledScript> compiledScripts = CollectionFactory.makeConcurrentMap();
    private AuthorizationManager authzManager;
+   private Marshaller marshaller;
 
 
    public ScriptingManagerImpl() {
@@ -118,6 +120,16 @@ public class ScriptingManagerImpl implements ScriptingManager {
       if (getScriptCache().remove(name) == null) {
          throw log.noNamedScript(name);
       }
+   }
+
+   @Override
+   public void setMarshaller(Marshaller marshaller) {
+      this.marshaller = marshaller;
+   }
+
+   @Override
+   public Marshaller getMarshaller() {
+         return this.marshaller;
    }
 
    @Override

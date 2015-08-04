@@ -145,7 +145,7 @@ public class ExtensionManagerService implements Service<ExtensionManagerService>
     public void setMarshaller(Marshaller marshaller) {
        synchronized (servers) {
           for (HotRodServer server : servers)
-             server.setEventMarshaller(marshaller);
+             server.setMarshaller(marshaller);
        }
     }
 

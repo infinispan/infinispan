@@ -4,6 +4,7 @@ import javax.script.Bindings;
 import javax.script.ScriptEngine;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 
 /**
@@ -36,6 +37,19 @@ public interface ScriptingManager {
     *           the name of the script ro remove
     */
    void removeScript(String name);
+
+   /**
+    * Configures a custom marshaller to be exposed to scripts
+    * as a binding variable
+    *
+    * @param marshaller
+    */
+   void setMarshaller(Marshaller marshaller);
+
+   /**
+    * @return configured marshaller
+    */
+   Marshaller getMarshaller();
 
    /**
     * Runs a named script
