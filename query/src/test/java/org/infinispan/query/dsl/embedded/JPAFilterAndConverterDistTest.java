@@ -55,7 +55,7 @@ public class JPAFilterAndConverterDistTest extends MultipleCacheManagersTest {
          cache.put(key, value);
       }
 
-      JPAFilterAndConverter filterAndConverter = new JPAFilterAndConverter<Object, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", ReflectionMatcher.class);
+      JPAFilterAndConverter filterAndConverter = new JPAFilterAndConverter<Object, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", null, ReflectionMatcher.class);
 
       CloseableIterator<Map.Entry<Object, ObjectFilter.FilterResult>> iterator = cache(0).getAdvancedCache().filterEntries(filterAndConverter).converter(filterAndConverter).iterator();
       Map<Object, ObjectFilter.FilterResult> results = mapFromIterator(iterator);

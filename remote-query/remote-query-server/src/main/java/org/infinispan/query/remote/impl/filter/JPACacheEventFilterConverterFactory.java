@@ -11,6 +11,8 @@ import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.kohsuke.MetaInfServices;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -35,15 +37,25 @@ public final class JPACacheEventFilterConverterFactory implements CacheEventFilt
    @Override
    public CacheEventFilterConverter<?, ?, ?> getFilterConverter(Object[] params) {
       String jpql;
+      Map<String, Object> namedParams = null;
       try {
          jpql = (String) paramMarshaller.objectFromByteBuffer((byte[]) params[0]);
+         if (params.length > 1) {
+            namedParams = new HashMap<String, Object>((params.length - 1) / 2);
+            int i = 1;
+            while (i < params.length) {
+               String name = (String) paramMarshaller.objectFromByteBuffer((byte[]) params[i++]);
+               Object value = paramMarshaller.objectFromByteBuffer((byte[]) params[i++]);
+               namedParams.put(name, value);
+            }
+         }
       } catch (IOException e) {
          throw new CacheException(e);
       } catch (ClassNotFoundException e) {
          throw new CacheException(e);
       }
       //todo [anistor] test this in compat mode too!
-      return new JPAProtobufCacheEventFilterConverter(new JPAProtobufFilterAndConverter(jpql));
+      return new JPAProtobufCacheEventFilterConverter(new JPAProtobufFilterAndConverter(jpql, namedParams));
    }
 }
 

@@ -741,7 +741,9 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       QueryBuilder queryBuilder = qf.from(getModelFactory().getUserImplClass())
             .select("addresses");
 
-      queryBuilder.build();  // exception expected
+      Query q = queryBuilder.build();
+
+      q.list();  // exception expected
    }
 
    public void testIsNull1() throws Exception {
@@ -1822,5 +1824,46 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
       assertEquals(2, list.get(0)[0]);
       assertEquals(149.0d, (Double) list.get(0)[1], 0.0001d);
+   }
+
+   public void testParam() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("gender").eq(Expression.param("param2"))
+            .toBuilder().build();
+
+      q.setParameter("param2", User.Gender.MALE);
+
+      List<User> list = q.list();
+
+      assertEquals(2, list.size());
+      assertEquals(User.Gender.MALE, list.get(0).getGender());
+      assertEquals(User.Gender.MALE, list.get(1).getGender());
+   }
+
+   @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "No parameter named 'param2' was found")
+   public void testUnknownParam() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+              .having("name").eq(Expression.param("param1"))
+            .toBuilder().build();
+
+      q.setParameter("param2", "John");
+   }
+
+   @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "Query parameter 'param2' was not set")
+   public void testMissingParam() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").eq(Expression.param("param1"))
+                  .and().having("gender").eq(Expression.param("param2"))
+            .toBuilder().build();
+
+      q.setParameter("param1", "John");
+
+      q.list();
    }
 }

@@ -5,6 +5,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author anistor@redhat.com
@@ -29,12 +30,7 @@ public class ReflectionParsingTest extends AbstractParsingTest {
       assertEquals("org.infinispan.objectfilter.test.model.Person", result.getTargetEntityName());
       assertEquals(org.infinispan.objectfilter.test.model.Person.class, result.getTargetEntityMetadata());
 
-      assertNotNull(result.getProjections());
-
-      assertEquals(0, result.getProjections().size());
-
-      assertNotNull(result.getSortFields());
-
-      assertEquals(0, result.getSortFields().size());
+      assertNull(result.getProjectedPaths());
+      assertNull(result.getSortFields());
    }
 }

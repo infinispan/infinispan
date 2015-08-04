@@ -1,8 +1,11 @@
 package org.infinispan.query.remote.client;
 
 import org.infinispan.protostream.MessageMarshaller;
+import org.infinispan.protostream.WrappedMessage;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author anistor@redhat.com
@@ -11,6 +14,8 @@ import java.io.IOException;
 public final class QueryRequest {
 
    private String jpqlString;
+
+   private List<NamedParameter> namedParameters;
 
    private long startOffset;
 
@@ -40,6 +45,14 @@ public final class QueryRequest {
       this.maxResults = maxResults;
    }
 
+   public List<NamedParameter> getNamedParameters() {
+      return namedParameters;
+   }
+
+   public void setNamedParameters(List<NamedParameter> namedParameters) {
+      this.namedParameters = namedParameters;
+   }
+
    public static final class Marshaller implements MessageMarshaller<QueryRequest> {
 
       @Override
@@ -48,14 +61,16 @@ public final class QueryRequest {
          queryRequest.setJpqlString(reader.readString("jpqlString"));
          queryRequest.setStartOffset(reader.readLong("startOffset"));
          queryRequest.setMaxResults(reader.readInt("maxResults"));
+         queryRequest.setNamedParameters(reader.readCollection("namedParameters", new ArrayList<NamedParameter>(), NamedParameter.class));
          return queryRequest;
       }
 
       @Override
-      public void writeTo(ProtoStreamWriter writer, QueryRequest remoteQuery) throws IOException {
-         writer.writeString("jpqlString", remoteQuery.getJpqlString());
-         writer.writeLong("startOffset", remoteQuery.getStartOffset());
-         writer.writeInt("maxResults", remoteQuery.getMaxResults());
+      public void writeTo(ProtoStreamWriter writer, QueryRequest queryRequest) throws IOException {
+         writer.writeString("jpqlString", queryRequest.getJpqlString());
+         writer.writeLong("startOffset", queryRequest.getStartOffset());
+         writer.writeInt("maxResults", queryRequest.getMaxResults());
+         writer.writeCollection("namedParameters", queryRequest.getNamedParameters(), NamedParameter.class);
       }
 
       @Override
@@ -66,6 +81,58 @@ public final class QueryRequest {
       @Override
       public String getTypeName() {
          return "org.infinispan.query.remote.client.QueryRequest";
+      }
+   }
+
+   public static final class NamedParameter {
+
+      private String name;
+
+      private Object value;
+
+      public NamedParameter(String name, Object value) {
+         if (name == null) {
+            throw new IllegalArgumentException("name cannot be null");
+         }
+         if (value == null) {
+            throw new IllegalArgumentException("value cannot be null");
+         }
+         this.name = name;
+         this.value = value;
+      }
+
+      public String getName() {
+         return name;
+      }
+
+      public Object getValue() {
+         return value;
+      }
+
+      public static final class Marshaller implements MessageMarshaller<NamedParameter> {
+
+         @Override
+         public NamedParameter readFrom(ProtoStreamReader reader) throws IOException {
+            String name = reader.readString("name");
+            WrappedMessage value = reader.readObject("value", WrappedMessage.class);
+            return new NamedParameter(name, value.getValue());
+         }
+
+         @Override
+         public void writeTo(ProtoStreamWriter writer, NamedParameter namedParameter) throws IOException {
+            writer.writeString("name", namedParameter.getName());
+            writer.writeObject("value", new WrappedMessage(namedParameter.getValue()), WrappedMessage.class);
+         }
+
+         @Override
+         public Class<? extends NamedParameter> getJavaClass() {
+            return NamedParameter.class;
+         }
+
+         @Override
+         public String getTypeName() {
+            return "org.infinispan.query.remote.client.QueryRequest.NamedParameter";
+         }
       }
    }
 }

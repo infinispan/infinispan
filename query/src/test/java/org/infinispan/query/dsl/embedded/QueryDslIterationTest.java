@@ -1,7 +1,9 @@
 package org.infinispan.query.dsl.embedded;
 
+import org.infinispan.Cache;
 import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
+import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
@@ -23,6 +25,11 @@ import static org.junit.Assert.*;
  */
 @Test(groups = "functional", testName = "query.dsl.embedded.QueryDslIterationTest")
 public class QueryDslIterationTest extends AbstractQueryDslTest {
+
+   @Override
+   protected QueryFactory getQueryFactory() {
+      return Search.getSearchManager((Cache) getCacheForQuery()).getQueryFactory();
+   }
 
    @BeforeClass(alwaysRun = true)
    protected void populateCache() throws Exception {

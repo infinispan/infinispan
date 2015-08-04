@@ -8,6 +8,8 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimeZone;
 
 /**
@@ -25,7 +27,13 @@ public class JPAQueryGenerator implements Visitor<String> {
 
    private DateFormat dateFormat;
 
+   protected Map<String, Object> namedParameters;
+
    public JPAQueryGenerator() {
+   }
+
+   public Map<String, Object> getNamedParameters() {
+      return namedParameters;
    }
 
    @Override
@@ -306,6 +314,16 @@ public class JPAQueryGenerator implements Visitor<String> {
             sb.append(c);
          }
          sb.append('\'');
+         return;
+      }
+
+      if (argument instanceof ParameterExpression) {
+         ParameterExpression param = (ParameterExpression) argument;
+         sb.append(':').append(param.getParamName());
+         if (namedParameters == null) {
+            namedParameters = new HashMap<String, Object>(5);
+         }
+         namedParameters.put(param.getParamName(), null);
          return;
       }
 

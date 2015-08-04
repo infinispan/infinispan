@@ -18,7 +18,9 @@ import org.kohsuke.MetaInfServices;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A query facade implementation for both Lucene based queries and non-indexed queries.
@@ -54,13 +56,25 @@ public final class QueryFacadeImpl implements QueryFacade {
          SearchManager searchManager = isIndexed ? Search.getSearchManager(cache) : null;  // this also checks access permissions
 
          Query q = new RemoteQueryEngine(cache, searchManager, isCompatMode, serCtx)
-               .buildQuery(null, request.getJpqlString(), request.getStartOffset(), request.getMaxResults());
+               .buildQuery(null, request.getJpqlString(), getNamedParameters(request), request.getStartOffset(), request.getMaxResults());
 
          QueryResponse response = makeResponse(q);
          return ProtobufUtil.toByteArray(serCtx, response);
       } catch (IOException e) {
          throw log.errorExecutingQuery(e);
       }
+   }
+
+   private Map<String, Object> getNamedParameters(QueryRequest request) {
+      List<QueryRequest.NamedParameter> namedParameters = request.getNamedParameters();
+      if (namedParameters == null || namedParameters.isEmpty()) {
+         return null;
+      }
+      Map<String, Object> params = new HashMap<String, Object>(namedParameters.size());
+      for (QueryRequest.NamedParameter p : namedParameters) {
+         params.put(p.getName(), p.getValue());
+      }
+      return params;
    }
 
    private QueryResponse makeResponse(Query q) {

@@ -23,10 +23,11 @@ final class EmbeddedQueryBuilder extends BaseQueryBuilder<Query> {
 
    @Override
    public Query build() {
-      String jpqlString = accept(new JPAQueryGenerator());
+      JPAQueryGenerator generator = new JPAQueryGenerator();
+      String jpqlString = accept(generator);
       if (log.isTraceEnabled()) {
          log.tracef("JPQL string : %s", jpqlString);
       }
-      return queryEngine.buildQuery(queryFactory, jpqlString, startOffset, maxResults);
+      return new DelegatingQuery(queryEngine, queryFactory, jpqlString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
    }
 }

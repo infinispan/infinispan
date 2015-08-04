@@ -4,7 +4,7 @@ import org.infinispan.query.FetchOptions;
 import org.infinispan.query.ResultIterator;
 import org.infinispan.query.dsl.Query;
 
-//TODO remove this class until 8.0.Final
+//TODO [anistor] remove this class in infinispan-8.0.0.Final
 
 /**
  * A Query kind that offers iteration and lazy/eager loading options. This is only available in embedded mode.

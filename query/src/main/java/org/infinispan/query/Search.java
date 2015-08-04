@@ -24,7 +24,8 @@ import org.infinispan.security.AuthorizationPermission;
 public final class Search {
 
    public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(Query query) {
-      JPAFilterAndConverter<K, V> filterAndConverter = new JPAFilterAndConverter<K, V>(((BaseQuery) query).getJPAQuery(), ReflectionMatcher.class);
+      BaseQuery baseQuery = (BaseQuery) query;
+      JPAFilterAndConverter<K, V> filterAndConverter = new JPAFilterAndConverter<K, V>(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), ReflectionMatcher.class);
       return new JPACacheEventFilterConverter<K, V, ObjectFilter.FilterResult>(filterAndConverter);
    }
 

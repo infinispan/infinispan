@@ -18,6 +18,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -137,8 +138,10 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query query = qf.from(UserPB.class)
-            .having("age").lte(32)
-            .toBuilder().select("age").build();
+            .having("age").lte(Expression.param("ageParam"))
+            .toBuilder().select("age")
+            .build()
+            .setParameter("ageParam", 32);
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
       ClientEvents.addClientQueryListener(remoteCache, listener, query);

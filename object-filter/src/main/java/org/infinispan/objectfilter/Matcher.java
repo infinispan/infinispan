@@ -2,6 +2,8 @@ package org.infinispan.objectfilter;
 
 import org.infinispan.query.dsl.Query;
 
+import java.util.Map;
+
 /**
  * An object matcher able to test a given object against multiple registered filters specified either as JPA queries or
  * using the query DSL (see {@link org.infinispan.query.dsl}). The matching filters are notified via a callback supplied
@@ -15,6 +17,8 @@ import org.infinispan.query.dsl.Query;
 public interface Matcher {
 
    FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType);
+
+   FilterSubscription registerFilter(String jpaQuery, Map<String, Object> namedParameters, FilterCallback callback, Object... eventType);
 
    FilterSubscription registerFilter(String jpaQuery, FilterCallback callback, Object... eventType);
 
@@ -44,4 +48,6 @@ public interface Matcher {
    ObjectFilter getObjectFilter(Query query);
 
    ObjectFilter getObjectFilter(String jpaQuery);
+
+   ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters);
 }

@@ -14,6 +14,7 @@ import org.infinispan.objectfilter.impl.util.StringHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A registry for filters on the same type of entity.
@@ -74,7 +75,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       }
    }
 
-   public FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> addFilter(String queryString, BooleanExpr query, List<String> projection, List<SortField> sortFields, FilterCallback callback, Object[] eventTypes) {
+   public FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> addFilter(String queryString, Map<String, Object> namedParameters, BooleanExpr query, String[] projection, SortField[] sortFields, FilterCallback callback, Object[] eventTypes) {
       if (eventTypes != null) {
          if (eventTypes.length == 0) {
             eventTypes = null;
@@ -89,16 +90,16 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       }
 
       List<List<AttributeId>> translatedProjections = null;
-      if (projection != null && !projection.isEmpty()) {
-         translatedProjections = new ArrayList<List<AttributeId>>(projection.size());
+      if (projection != null && projection.length != 0) {
+         translatedProjections = new ArrayList<List<AttributeId>>(projection.length);
          for (String projectionPath : projection) {
             translatedProjections.add(metadataAdapter.translatePropertyPath(StringHelper.splitPropertyPath(projectionPath)));
          }
       }
 
       List<List<AttributeId>> translatedSortFields = null;
-      if (sortFields != null && !sortFields.isEmpty()) {
-         translatedSortFields = new ArrayList<List<AttributeId>>(sortFields.size());
+      if (sortFields != null) {
+         translatedSortFields = new ArrayList<List<AttributeId>>(sortFields.length);
          for (SortField sortField : sortFields) {
             translatedSortFields.add(metadataAdapter.translatePropertyPath(sortField.getPath().getPath()));
          }
@@ -107,7 +108,7 @@ public final class FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId e
       query = booleanFilterNormalizer.normalize(query);
       BETree beTree = treeMaker.make(query);
 
-      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>(queryString, useIntervals, metadataAdapter, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields, eventTypes);
+      FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription = new FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>(queryString, namedParameters, useIntervals, metadataAdapter, beTree, callback, projection, translatedProjections, sortFields, translatedSortFields, eventTypes);
       filterSubscription.registerProjection(predicateIndex);
       filterSubscription.subscribe(predicateIndex);
       filterSubscription.index = filterSubscriptions.size();

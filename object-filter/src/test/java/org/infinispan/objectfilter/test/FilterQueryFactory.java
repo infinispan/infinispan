@@ -12,6 +12,7 @@ import org.infinispan.query.dsl.impl.JPAQueryGenerator;
 import org.jboss.logging.Logger;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -55,25 +56,23 @@ public final class FilterQueryFactory extends BaseQueryFactory<Query> {
 
       @Override
       public Query build() {
-         String jpqlString = accept(new JPAQueryGenerator());
+         JPAQueryGenerator generator = new JPAQueryGenerator();
+         String jpqlString = accept(generator);
          if (log.isTraceEnabled()) {
             log.tracef("JPQL string : %s", jpqlString);
          }
-         String[] _projection = null;
-         if (projection != null) {
-            _projection = new String[projection.length];
-            for (int i = 0; i < projection.length; i++) {
-               _projection[i] = projection[i].toString();
-            }
-         }
-         return new FilterQuery(queryFactory, jpqlString, _projection);
+         return new FilterQuery(queryFactory, jpqlString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
       }
    }
 
    private static final class FilterQuery extends BaseQuery {
 
-      FilterQuery(QueryFactory queryFactory, String jpaQuery, String[] projection) {
-         super(queryFactory, jpaQuery, projection);
+      FilterQuery(QueryFactory queryFactory, String jpaQuery, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
+         super(queryFactory, jpaQuery, namedParameters, projection, startOffset, maxResults);
+      }
+
+      @Override
+      public void resetQuery() {
       }
 
       // TODO [anistor] need to rethink the dsl Query/QueryBuilder interfaces to accommodate the filtering scenario ...

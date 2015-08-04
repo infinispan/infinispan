@@ -2,6 +2,7 @@ package org.infinispan.query.remote.impl.filter;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.factories.annotations.Inject;
@@ -23,6 +24,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -35,6 +38,8 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends A
     * The JPA query to execute.
     */
    private final String jpaQuery;
+
+   private final Map<String, Object> namedParameters;
 
    /**
     * The implementation class of the Matcher component to lookup and use.
@@ -60,11 +65,12 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends A
 
    private boolean usesValueWrapper;
 
-   public JPAContinuousQueryProtobufCacheEventFilterConverter(String jpaQuery, Class<? extends Matcher> matcherImplClass) {
+   public JPAContinuousQueryProtobufCacheEventFilterConverter(String jpaQuery,  Map<String, Object> namedParameters, Class<? extends Matcher> matcherImplClass) {
       if (jpaQuery == null || matcherImplClass == null) {
          throw new IllegalArgumentException("Arguments cannot be null");
       }
       this.jpaQuery = jpaQuery;
+      this.namedParameters = namedParameters;
       this.matcherImplClass = matcherImplClass;
    }
 
@@ -82,16 +88,17 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends A
 
    private ObjectFilter getObjectFilter() {
       if (objectFilter == null) {
-         if (queryCache != null) {
+         // if parameters are present caching cannot be currently performed due to internal implementation limitations
+         if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
             KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpaQuery, matcherImplClass);
             ObjectFilter objectFilter = queryCache.get(queryCacheKey);
             if (objectFilter == null) {
-               objectFilter = matcher.getObjectFilter(jpaQuery);
+               objectFilter = matcher.getObjectFilter(jpaQuery, namedParameters);
                queryCache.put(queryCacheKey, objectFilter);
             }
             this.objectFilter = objectFilter;
          } else {
-            objectFilter = matcher.getObjectFilter(jpaQuery);
+            objectFilter = matcher.getObjectFilter(jpaQuery, namedParameters);
          }
       }
       return objectFilter;
@@ -145,14 +152,34 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends A
       @Override
       public void writeObject(ObjectOutput output, JPAContinuousQueryProtobufCacheEventFilterConverter filterAndConverter) throws IOException {
          output.writeUTF(filterAndConverter.jpaQuery);
+         Map<String, Object> namedParameters = filterAndConverter.namedParameters;
+         if (namedParameters != null) {
+            UnsignedNumeric.writeUnsignedInt(output, namedParameters.size());
+            for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
+               output.writeUTF(e.getKey());
+               output.writeObject(e.getValue());
+            }
+         } else {
+            UnsignedNumeric.writeUnsignedInt(output, 0);
+         }
          output.writeObject(filterAndConverter.matcherImplClass);
       }
 
       @Override
       public JPAContinuousQueryProtobufCacheEventFilterConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          String jpaQuery = input.readUTF();
+         int paramsSize = UnsignedNumeric.readUnsignedInt(input);
+         Map<String, Object> namedParameters = null;
+         if (paramsSize != 0) {
+            namedParameters = new HashMap<String, Object>(paramsSize);
+            for (int i = 0; i < paramsSize; i++) {
+               String paramName = input.readUTF();
+               Object paramValue = input.readObject();
+               namedParameters.put(paramName, paramValue);
+            }
+         }
          Class<? extends Matcher> matcherImplClass = (Class<? extends Matcher>) input.readObject();
-         return new JPAContinuousQueryProtobufCacheEventFilterConverter(jpaQuery, matcherImplClass);
+         return new JPAContinuousQueryProtobufCacheEventFilterConverter(jpaQuery, namedParameters, matcherImplClass);
       }
 
       @Override

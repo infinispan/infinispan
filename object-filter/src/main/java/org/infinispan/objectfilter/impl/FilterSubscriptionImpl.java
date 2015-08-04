@@ -13,6 +13,7 @@ import org.infinispan.objectfilter.impl.util.ComparableArrayComparator;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -21,6 +22,8 @@ import java.util.List;
 public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId extends Comparable<AttributeId>> implements FilterSubscription {
 
    private final String queryString;
+
+   private final Map<String, Object> namedParameters;
 
    private final boolean useIntervals;
 
@@ -46,28 +49,19 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    private Comparator<Comparable[]> comparator;
 
-   protected FilterSubscriptionImpl(String queryString, boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
-                                    List<String> projection, List<List<AttributeId>> translatedProjection,
-                                    List<SortField> sortFields, List<List<AttributeId>> translatedSortProjection,
+   protected FilterSubscriptionImpl(String queryString, Map<String, Object> namedParameters,
+                                    boolean useIntervals, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, BETree beTree, FilterCallback callback,
+                                    String[] projection, List<List<AttributeId>> translatedProjection,
+                                    SortField[] sortFields, List<List<AttributeId>> translatedSortProjection,
                                     Object[] eventTypes) {
       this.queryString = queryString;
+      this.namedParameters = namedParameters;
       this.useIntervals = useIntervals;
       this.metadataAdapter = metadataAdapter;
       this.beTree = beTree;
       this.callback = callback;
-
-      if (projection != null && !projection.isEmpty()) {
-         this.projection = projection.toArray(new String[projection.size()]);
-      } else {
-         this.projection = null;
-      }
-
-      if (sortFields != null && !sortFields.isEmpty()) {
-         this.sortFields = sortFields.toArray(new SortField[sortFields.size()]);
-      } else {
-         this.sortFields = null;
-      }
-
+      this.projection = projection;
+      this.sortFields = sortFields;
       this.translatedProjection = translatedProjection;
       this.translatedSortProjection = translatedSortProjection;
       this.eventTypes = eventTypes;
@@ -75,6 +69,10 @@ public final class FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, Attri
 
    public String getQueryString() {
       return queryString;
+   }
+
+   public Map<String, Object> getNamedParameters() {
+      return namedParameters;
    }
 
    public boolean isUseIntervals() {

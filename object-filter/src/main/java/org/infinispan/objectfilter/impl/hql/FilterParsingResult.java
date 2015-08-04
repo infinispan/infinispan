@@ -1,12 +1,13 @@
 package org.infinispan.objectfilter.impl.hql;
 
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
+import org.hibernate.hql.ast.spi.SingleEntityHavingQueryBuilder;
+import org.hibernate.hql.ast.spi.SingleEntityQueryBuilder;
 import org.infinispan.objectfilter.PropertyPath;
 import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -41,23 +42,25 @@ public final class FilterParsingResult<TypeMetadata> {
       }
    }
 
-   private final BooleanExpr whereFilter;
-   private final BooleanExpr havingFilter;
+   private final SingleEntityQueryBuilder<BooleanExpr> whereBuilder;
+   private final SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder;
    private final String targetEntityName;
    private final TypeMetadata targetEntityMetadata;
-   private final List<PropertyPath> projectedPaths;
-   private final List<PropertyPath> groupBy;
-   private final List<SortField> sortFields;
+   private final PropertyPath[] projectedPaths;
+   private final PropertyPath[] groupBy;
+   private final SortField[] sortFields;
 
-   FilterParsingResult(BooleanExpr whereFilter, BooleanExpr havingFilter, String targetEntityName, TypeMetadata targetEntityMetadata,
+   FilterParsingResult(SingleEntityQueryBuilder<BooleanExpr> whereBuilder,
+                       SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder,
+                       String targetEntityName, TypeMetadata targetEntityMetadata,
                        List<PropertyPath> projectedPaths, List<PropertyPath> groupBy, List<SortField> sortFields) {
-      this.whereFilter = whereFilter;
-      this.havingFilter = havingFilter;
+      this.whereBuilder = whereBuilder;
+      this.havingBuilder = havingBuilder;
       this.targetEntityName = targetEntityName;
       this.targetEntityMetadata = targetEntityMetadata;
-      this.projectedPaths = projectedPaths != null ? projectedPaths : Collections.<PropertyPath>emptyList();
-      this.groupBy = groupBy != null ? groupBy : Collections.<PropertyPath>emptyList();
-      this.sortFields = sortFields != null ? sortFields : Collections.<SortField>emptyList();
+      this.projectedPaths = projectedPaths == null ? null : projectedPaths.toArray(new PropertyPath[projectedPaths.size()]);
+      this.groupBy = groupBy == null ? null : groupBy.toArray(new PropertyPath[groupBy.size()]);
+      this.sortFields = sortFields == null ? null : sortFields.toArray(new SortField[sortFields.size()]);
    }
 
    /**
@@ -66,11 +69,11 @@ public final class FilterParsingResult<TypeMetadata> {
     * @return the filter created while walking the parse tree
     */
    public BooleanExpr getWhereClause() {
-      return whereFilter;
+      return whereBuilder.build();
    }
 
    public BooleanExpr getHavingClause() {
-      return havingFilter;
+      return havingBuilder.build();
    }
 
    /**
@@ -96,49 +99,62 @@ public final class FilterParsingResult<TypeMetadata> {
     * Returns the projections of the parsed query, represented as dot paths in case of references to fields of embedded
     * entities, e.g. {@code ["foo", "bar.qaz"]}.
     *
-    * @return a list with the projections of the parsed query; an empty list will be returned if no the query has no
-    * projections
+    * @return an array with the projections of the parsed query or null if the query has no projections
     */
-   public List<String> getProjections() {
-      List<String> projections = new ArrayList<>(projectedPaths.size());
-      for (PropertyPath p : projectedPaths) {
-         projections.add(p.asStringPath());
+   public String[] getProjections() {
+      if (projectedPaths == null) {
+         return null;
+      }
+      String[] projections = new String[projectedPaths.length];
+      for (int i = 0; i< projectedPaths.length; i++) {
+         projections[i] = projectedPaths[i].asStringPath();
       }
       return projections;
    }
 
-   public List<PropertyPath> getProjectedPaths() {
+   public PropertyPath[] getProjectedPaths() {
       return projectedPaths;
    }
 
    public boolean hasGroupingOrAggregations() {
-      if (havingFilter != null || !groupBy.isEmpty()) {
+      //todo [anistor] havingBuilder.build() builds the query prematurely and is inefficient
+      if (groupBy != null || havingBuilder.build() != null) {
          return true;
       }
-      for (PropertyPath p : projectedPaths) {
-         if (p.getAggregationType() != null) {
-            return true;
+      if (projectedPaths != null) {
+         for (PropertyPath p : projectedPaths) {
+            if (p.getAggregationType() != null) {
+               return true;
+            }
          }
       }
-      for (SortField s : sortFields) {
-         if (s.getPath().getAggregationType() != null) {
-            return true;
+      if (sortFields != null) {
+         for (SortField s : sortFields) {
+            if (s.getPath().getAggregationType() != null) {
+               return true;
+            }
          }
       }
       return false;
    }
 
-   public List<PropertyPath> getGroupBy() {
+   public PropertyPath[] getGroupBy() {
       return groupBy;
    }
 
-   public List<SortField> getSortFields() {
+   public SortField[] getSortFields() {
       return sortFields;
    }
 
    @Override
    public String toString() {
-      return "FilterParsingResult [filter=" + whereFilter + ", havingFilter=" + havingFilter + ", targetEntityName=" + targetEntityName
-            + ", projectedPaths=" + projectedPaths + ", sortFields=" + sortFields + "]";
+      return "FilterParsingResult [" +
+              "targetEntityName=" + targetEntityName
+            + ", whereClause=" + getWhereClause()
+            + ", havingClause=" + getHavingClause()
+            + ", projectedPaths=" + Arrays.toString(projectedPaths)
+            + ", groupBy=" + Arrays.toString(groupBy)
+            + ", sortFields=" + Arrays.toString(sortFields)
+            + "]";
    }
 }

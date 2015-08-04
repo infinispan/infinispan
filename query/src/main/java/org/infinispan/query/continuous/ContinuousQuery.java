@@ -46,7 +46,8 @@ public final class ContinuousQuery<K, V> {
    }
 
    private JPAContinuousQueryCacheEventFilterConverter<K, V> makeFilter(Query query) {
-      return new JPAContinuousQueryCacheEventFilterConverter<K, V>(((BaseQuery) query).getJPAQuery(), ReflectionMatcher.class);
+      BaseQuery baseQuery = (BaseQuery) query;
+      return new JPAContinuousQueryCacheEventFilterConverter<K, V>(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), ReflectionMatcher.class);
    }
 
    @Listener(observation = Listener.Observation.POST)

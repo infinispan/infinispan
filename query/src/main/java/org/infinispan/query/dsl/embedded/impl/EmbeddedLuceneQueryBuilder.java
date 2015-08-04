@@ -7,7 +7,7 @@ import org.infinispan.query.dsl.impl.JPAQueryGenerator;
 import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-//TODO remove this class until 8.0.Final
+//TODO [anistor] remove this class in infinispan-8.0.0.Final
 
 /**
  * @author anistor@redhat.com
@@ -27,10 +27,11 @@ final class EmbeddedLuceneQueryBuilder extends BaseQueryBuilder<LuceneQuery> {
 
    @Override
    public LuceneQuery build() {
-      String jpqlString = accept(new JPAQueryGenerator());
+      JPAQueryGenerator generator = new JPAQueryGenerator();
+      String jpqlString = accept(generator);
       if (log.isTraceEnabled()) {
          log.tracef("JPQL string : %s", jpqlString);
       }
-      return queryEngine.buildLuceneQuery(queryFactory, jpqlString, startOffset, maxResults);
+      return new EmbeddedLuceneQuery(queryEngine, queryFactory, jpqlString, generator.getNamedParameters(), getProjectionPaths(), startOffset, maxResults);
    }
 }

@@ -9,7 +9,7 @@ import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
 import org.infinispan.objectfilter.impl.syntax.BooleanExpr;
 
 import java.util.Comparator;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -32,12 +32,12 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
 
    ObjectFilterImpl(BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId> matcher,
                     MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter,
-                    String queryString, BooleanExpr query, List<String> projections, List<SortField> sortFields) {
+                    String queryString, Map<String, Object> namedParameters, BooleanExpr query, String[] projections, SortField[] sortFields) {
       this.matcher = matcher;
 
       //todo [anistor] we need an efficient single-filter registry
       FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry = new FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId>(metadataAdapter, false);
-      filterSubscription = filterRegistry.addFilter(queryString, query, projections, sortFields, emptyCallback, null);
+      filterSubscription = filterRegistry.addFilter(queryString, namedParameters, query, projections, sortFields, emptyCallback, null);
       root = filterRegistry.getPredicateIndex().getRoot();
    }
 

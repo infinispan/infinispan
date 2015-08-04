@@ -8,6 +8,7 @@ import org.infinispan.query.dsl.embedded.LuceneQuery;
 import org.infinispan.query.dsl.impl.BaseQuery;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -18,39 +19,59 @@ import java.util.List;
  */
 final class EmbeddedLuceneQuery extends BaseQuery implements LuceneQuery {
 
-   private final CacheQuery cacheQuery;
+   private final QueryEngine queryEngine;
 
-   EmbeddedLuceneQuery(QueryFactory queryFactory, String jpaQuery, String[] projection, CacheQuery cacheQuery) {
-      super(queryFactory, jpaQuery, projection);
-      this.cacheQuery = cacheQuery;
+   /**
+    * An Infinispan Cache query that wraps an actual Lucene query object. This is built lazily when the query is
+    * executed first.
+    */
+   private CacheQuery cacheQuery;
+
+   EmbeddedLuceneQuery(QueryEngine queryEngine, QueryFactory queryFactory, String jpaQuery, Map<String, Object> namedParameters, String[] projection,
+                       long startOffset, int maxResults) {
+      super(queryFactory, jpaQuery, namedParameters, projection, startOffset, maxResults);
+      this.queryEngine = queryEngine;
+   }
+
+   @Override
+   public void resetQuery() {
+      cacheQuery = null;
+   }
+
+   private CacheQuery createQuery() {
+      // query is created first time only
+      if (cacheQuery == null) {
+         cacheQuery = queryEngine.buildLuceneQuery(jpaQuery, namedParameters, startOffset, maxResults);
+      }
+      return cacheQuery;
    }
 
    @Override
    @SuppressWarnings("unchecked")
    public <T> List<T> list() {
-      return (List<T>) cacheQuery.list();    //todo [anistor] cache this result to be similar in behaviour with EmbeddedQuery?
+      return (List<T>) createQuery().list();
    }
 
    @Override
    public ResultIterator iterator(FetchOptions fetchOptions) {
-      return cacheQuery.iterator(fetchOptions);
+      return createQuery().iterator(fetchOptions);
    }
 
    @Override
    public ResultIterator iterator() {
-      return cacheQuery.iterator();
+      return createQuery().iterator();
    }
 
    @Override
    public int getResultSize() {
-      return cacheQuery.getResultSize();
+      return createQuery().getResultSize();
    }
 
    @Override
    public String toString() {
       return "EmbeddedLuceneQuery{" +
             "jpaQuery=" + jpaQuery +
-            ", cacheQuery=" + cacheQuery +
+            ", namedParameters=" + namedParameters +
             '}';
    }
 }

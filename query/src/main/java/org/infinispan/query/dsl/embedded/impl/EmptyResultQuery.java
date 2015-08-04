@@ -7,6 +7,7 @@ import org.infinispan.query.dsl.QueryFactory;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
@@ -17,8 +18,9 @@ import java.util.NoSuchElementException;
  */
 final class EmptyResultQuery extends BaseEmbeddedQuery {
 
-   EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, long startOffset, int maxResults) {
-      super(queryFactory, cache, jpaQuery, null, startOffset, maxResults);
+   EmptyResultQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
+                    long startOffset, int maxResults) {
+      super(queryFactory, cache, jpaQuery, namedParameters, null, startOffset, maxResults);
    }
 
    @Override
@@ -50,6 +52,7 @@ final class EmptyResultQuery extends BaseEmbeddedQuery {
    public String toString() {
       return "EmptyResultQuery{" +
             "jpaQuery=" + jpaQuery +
+            ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +

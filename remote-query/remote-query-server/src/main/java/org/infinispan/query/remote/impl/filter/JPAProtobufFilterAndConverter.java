@@ -1,6 +1,7 @@
 package org.infinispan.query.remote.impl.filter;
 
 import org.infinispan.Cache;
+import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.metadata.Metadata;
@@ -14,6 +15,8 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,8 +36,8 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
       usesValueWrapper = cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled();
    }
 
-   public JPAProtobufFilterAndConverter(String jpaQuery) {
-      super(jpaQuery, ProtobufMatcher.class);
+   public JPAProtobufFilterAndConverter(String jpaQuery, Map<String, Object> namedParameters) {
+      super(jpaQuery, namedParameters, ProtobufMatcher.class);
    }
 
    @Override
@@ -59,11 +62,32 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
       @Override
       public void writeObject(ObjectOutput output, JPAProtobufFilterAndConverter filterAndConverter) throws IOException {
          output.writeUTF(filterAndConverter.getJPAQuery());
+         Map<String, Object> namedParameters = filterAndConverter.getNamedParameters();
+         if (namedParameters != null) {
+            UnsignedNumeric.writeUnsignedInt(output, namedParameters.size());
+            for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
+               output.writeUTF(e.getKey());
+               output.writeObject(e.getValue());
+            }
+         } else {
+            UnsignedNumeric.writeUnsignedInt(output, 0);
+         }
       }
 
       @Override
       public JPAProtobufFilterAndConverter readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new JPAProtobufFilterAndConverter(input.readUTF());
+         String jpaQuery = input.readUTF();
+         int paramsSize = UnsignedNumeric.readUnsignedInt(input);
+         Map<String, Object> namedParameters = null;
+         if (paramsSize != 0) {
+            namedParameters = new HashMap<String, Object>(paramsSize);
+            for (int i = 0; i < paramsSize; i++) {
+               String paramName = input.readUTF();
+               Object paramValue = input.readObject();
+               namedParameters.put(paramName, paramValue);
+            }
+         }
+         return new JPAProtobufFilterAndConverter(jpaQuery, namedParameters);
       }
 
       @Override

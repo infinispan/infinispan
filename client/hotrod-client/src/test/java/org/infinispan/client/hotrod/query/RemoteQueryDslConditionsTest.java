@@ -18,7 +18,6 @@ import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.embedded.QueryDslConditionsTest;
@@ -134,18 +133,10 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals(RemoteQueryFactory.class, getQueryFactory().getClass());
    }
 
-   @Test(enabled = false, expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*HQL100005:.*", description = "see https://issues.jboss.org/browse/ISPN-4423")
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000405:.*")
    @Override
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
-      QueryFactory qf = getQueryFactory();
-
-      QueryBuilder queryBuilder = qf.from(getModelFactory().getUserImplClass())
-            .select("addresses");
-
-      Query q = queryBuilder.build();
-
-      //todo [anistor] it would be best if the problem would be detected early at build() instead at doing it at list()
-      q.list();  // exception expected
+      super.testInvalidEmbeddedAttributeQuery();
    }
 
    /**

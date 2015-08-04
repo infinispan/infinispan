@@ -67,33 +67,44 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    @Override
    public ObjectFilter getObjectFilter(Query query) {
       BaseQuery baseQuery = (BaseQuery) query;
-      return getObjectFilter(baseQuery.getJPAQuery());
+      return getObjectFilter(baseQuery.getJPAQuery(), baseQuery.getNamedParameters());
    }
 
    @Override
    public ObjectFilter getObjectFilter(String jpaQuery) {
+      return getObjectFilter(jpaQuery, null);
+   }
+
+   @Override
+   public ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters) {
       //todo [anistor] possible optimisation: if jpaQuery is a contradiction or a tautology just return a special instance that rejects/accepts anything. how do we handle projections then?
-      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, null);
+      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, namedParameters);
       disallowGroupingAndAggregations(parsingResult);
       MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter = createMetadataAdapter(parsingResult.getTargetEntityMetadata());
-      return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields());
+      return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, namedParameters,
+                                                                                parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields());
    }
 
    @Override
    public ObjectFilter getObjectFilter(FilterSubscription filterSubscription) {
       FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscriptionImpl = (FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId>) filterSubscription;
-      return getObjectFilter(filterSubscriptionImpl.getQueryString());
+      return getObjectFilter(filterSubscriptionImpl.getQueryString(), filterSubscriptionImpl.getNamedParameters());
    }
 
    @Override
    public FilterSubscription registerFilter(Query query, FilterCallback callback, Object... eventType) {
       BaseQuery baseQuery = (BaseQuery) query;
-      return registerFilter(baseQuery.getJPAQuery(), callback);
+      return registerFilter(baseQuery.getJPAQuery(), baseQuery.getNamedParameters(), callback);
    }
 
    @Override
    public FilterSubscription registerFilter(String jpaQuery, FilterCallback callback, Object... eventType) {
-      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, null);
+      return registerFilter(jpaQuery, null, callback, eventType);
+   }
+
+   @Override
+   public FilterSubscription registerFilter(String jpaQuery, Map<String, Object> namedParameters, FilterCallback callback, Object... eventType) {
+      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, namedParameters);
       disallowGroupingAndAggregations(parsingResult);
 
       write.lock();
@@ -104,14 +115,13 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
             filtersByTypeName.put(parsingResult.getTargetEntityName(), filterRegistry);
             filtersByType.put(filterRegistry.getMetadataAdapter().getTypeMetadata(), filterRegistry);
          }
-         return filterRegistry.addFilter(jpaQuery, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields(), callback, eventType);
+         return filterRegistry.addFilter(jpaQuery, namedParameters, parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields(), callback, eventType);
       } finally {
          write.unlock();
       }
    }
 
    public FilterParsingResult<TypeMetadata> parse(String jpaQuery, Map<String, Object> namedParameters) {
-      //todo [anistor] query params not yet fully supported by HQL parser. to be added later.
       return queryParser.parseQuery(jpaQuery, createFilterProcessingChain(namedParameters));
    }
 

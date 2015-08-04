@@ -18,24 +18,46 @@ import java.util.Map;
  */
 final class EmbeddedQuery extends BaseEmbeddedQuery {
 
-   private final JPAFilterAndConverter filter;
+   private final QueryEngine queryEngine;
 
-   EmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, JPAFilterAndConverter filter,
+   private JPAFilterAndConverter filter;
+
+   EmbeddedQuery(QueryEngine queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
+                 String jpaQuery, Map<String, Object> namedParameters, String[] projection,
                  long startOffset, int maxResults) {
-      super(queryFactory, cache, filter.getJPAQuery(), filter.getObjectFilter().getProjection(), startOffset, maxResults);
-      this.filter = filter;
+      super(queryFactory, cache, jpaQuery, namedParameters, projection, startOffset, maxResults);
+      this.queryEngine = queryEngine;
+   }
+
+   @Override
+   public void resetQuery() {
+      super.resetQuery();
+      filter = null;
+   }
+
+   private JPAFilterAndConverter createFilter() {
+      // filter is created first time only
+      if (filter == null) {
+         filter = queryEngine.makeFilter(jpaQuery, namedParameters);
+      }
+      return filter;
+   }
+
+   private CloseableIterator createFilteredIterator() {
+      JPAFilterAndConverter f = createFilter();
+      return cache.filterEntries(f).converter(f).iterator();
    }
 
    @Override
    protected Comparator<Comparable[]> getComparator() {
-      return filter.getObjectFilter().getComparator();
+      return createFilter().getObjectFilter().getComparator();
    }
 
    @Override
    protected CloseableIterator<ObjectFilter.FilterResult> getIterator() {
       return new CloseableIterator<ObjectFilter.FilterResult>() {
 
-         private final CloseableIterator<Map.Entry<?, ObjectFilter.FilterResult>> it = cache.filterEntries(filter).converter(filter).iterator();
+         private final CloseableIterator<Map.Entry<?, ObjectFilter.FilterResult>> it = createFilteredIterator();
 
          @Override
          public boolean hasNext() {
@@ -58,6 +80,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
    public String toString() {
       return "EmbeddedQuery{" +
             "jpaQuery=" + jpaQuery +
+            ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +

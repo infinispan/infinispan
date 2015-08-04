@@ -30,7 +30,7 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
 
    private List<SortField> sortFields;
 
-   private final List<PropertyPath> projections = new ArrayList<PropertyPath>();
+   private List<PropertyPath> projections;
 
    public FilterRendererDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper,
                                  SingleEntityQueryBuilder<BooleanExpr> builder, SingleEntityHavingQueryBuilder<BooleanExpr> havingBuilder, Map<String, Object> namedParameters) {
@@ -70,6 +70,9 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
    @Override
    public void setPropertyPath(org.hibernate.hql.ast.origin.hql.resolve.path.PropertyPath propertyPath) {
       if (status == Status.DEFINING_SELECT) {
+         if (projections == null) {
+            projections = new ArrayList<PropertyPath>(5);
+         }
          if (propertyPath.getNodes().size() == 1 && propertyPath.getNodes().get(0).isAlias()) {
             projections.add(new PropertyPath(null, "__HSearch_This")); //todo [anistor] this is a leftover from hsearch ????   this represents the entity itself. see org.hibernate.search.ProjectionConstants
          } else {
@@ -89,8 +92,6 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
 
    @Override
    public FilterParsingResult<TypeMetadata> getResult() {
-      BooleanExpr whereFilter = builder.build();
-      BooleanExpr havingFilter = havingBuilder.build();
-      return new FilterParsingResult<TypeMetadata>(whereFilter, havingFilter, targetTypeName, targetEntityMetadata, projections, groupBy, sortFields);
+      return new FilterParsingResult<TypeMetadata>(builder, havingBuilder, targetTypeName, targetEntityMetadata, projections, groupBy, sortFields);
    }
 }

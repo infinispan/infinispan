@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -24,31 +25,19 @@ public final class RemoteQuery extends BaseQuery {
    private final RemoteCacheImpl cache;
    private final SerializationContext serializationContext;
 
-   private final long startOffset; //todo can this really be long or it has to be int due to limitations in query module?
-   private final int maxResults;
-
    private List results = null;
    private int totalResults;
 
    RemoteQuery(QueryFactory queryFactory, RemoteCacheImpl cache, SerializationContext serializationContext,
-               String jpaQuery, String[] projection, long startOffset, int maxResults) {
-      super(queryFactory, jpaQuery, projection);
+               String jpaQuery, Map<String, Object> namedParameters, String[] projection, long startOffset, int maxResults) {
+      super(queryFactory, jpaQuery, namedParameters, projection, startOffset, maxResults);
       this.cache = cache;
       this.serializationContext = serializationContext;
-      this.startOffset = startOffset;
-      this.maxResults = maxResults;
    }
 
-   public RemoteCacheImpl getCache() {
-      return cache;
-   }
-
-   public long getStartOffset() {
-      return startOffset;
-   }
-
-   public int getMaxResults() {
-      return maxResults;
+   @Override
+   public void resetQuery() {
+      results = null;
    }
 
    @Override
@@ -62,6 +51,8 @@ public final class RemoteQuery extends BaseQuery {
    }
 
    private List<Object> executeQuery() {
+      checkParameters();
+
       List<Object> results;
 
       QueryOperation op = cache.getOperationsFactory().newQueryOperation(this);
@@ -93,6 +84,16 @@ public final class RemoteQuery extends BaseQuery {
       return results;
    }
 
+   private void checkParameters() {
+      if (namedParameters != null) {
+         for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
+            if (e.getValue() == null) {
+               throw new IllegalStateException("Query parameter '" + e.getKey() + "' was not set");
+            }
+         }
+      }
+   }
+
    @Override
    public int getResultSize() {
       list();
@@ -107,6 +108,7 @@ public final class RemoteQuery extends BaseQuery {
    public String toString() {
       return "RemoteQuery{" +
             "jpaQuery=" + jpaQuery +
+            ", namedParameters=" + namedParameters +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +
             '}';

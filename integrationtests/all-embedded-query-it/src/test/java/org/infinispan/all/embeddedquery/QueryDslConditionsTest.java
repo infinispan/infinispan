@@ -787,7 +787,9 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryBuilder queryBuilder = qf.from(getModelFactory().getUserImplClass())
             .select("addresses");
 
-      queryBuilder.build();  // exception expected
+      Query q = queryBuilder.build();
+
+      q.list();  // exception expected
    }
 
    @Test
@@ -1872,6 +1874,108 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       Query q = qf.from(getModelFactory().getUserImplClass())
             .groupBy("name")
             .build();
+      q.list();
+   }
+
+   @Test
+   public void testGroupBy6() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.sum("amount"))
+            .groupBy("accountId")
+            .having(Expression.sum("amount")).gt(3324).toBuilder()
+            .orderBy("accountId")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0)[0]);
+      assertEquals(6370.0d, (Double) list.get(0)[1], 0.0001d);
+   }
+
+   @Test
+   public void testGroupBy7() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.avg("amount"))
+            .groupBy("accountId")
+            .having(Expression.avg("amount")).lt(130.0).toBuilder()
+            .orderBy("accountId")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0)[0]);
+      assertEquals(120.188679d, (Double) list.get(0)[1], 0.0001d);
+   }
+
+   @Test
+   public void testGroupBy8() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.min("amount"))
+            .groupBy("accountId")
+            .having(Expression.min("amount")).lt(10).toBuilder()
+            .orderBy("accountId")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0)[0]);
+      assertEquals(5.0d, (Double) list.get(0)[1], 0.0001d);
+   }
+
+   @Test
+   public void testGroupBy9() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.max("amount"))
+            .groupBy("accountId")
+            .having(Expression.avg("amount")).lt(150).toBuilder()
+            .orderBy("accountId")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0)[0]);
+      assertEquals(149.0d, (Double) list.get(0)[1], 0.0001d);
+   }
+
+   @Test
+   public void testParam() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("gender").eq(Expression.param("param2"))
+            .toBuilder().build();
+
+      q.setParameter("param2", User.Gender.MALE);
+
+      List<User> list = q.list();
+
+      assertEquals(2, list.size());
+      assertEquals(User.Gender.MALE, list.get(0).getGender());
+      assertEquals(User.Gender.MALE, list.get(1).getGender());
+   }
+
+   @Test(expected = IllegalArgumentException.class)
+   public void testUnknownParam() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+              .having("name").eq(Expression.param("param1"))
+            .toBuilder().build();
+
+      q.setParameter("param2", "John");
+   }
+
+   @Test(expected = IllegalStateException.class)
+   public void testMissingParam() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("name").eq(Expression.param("param1"))
+                  .and().having("gender").eq(Expression.param("param2"))
+            .toBuilder().build();
+
+      q.setParameter("param1", "John");
+
       q.list();
    }
 

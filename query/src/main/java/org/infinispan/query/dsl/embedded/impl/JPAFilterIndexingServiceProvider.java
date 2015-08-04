@@ -90,7 +90,7 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
          eventTypes[i++] = getEventType(annotation);
       }
       Callback<K, V> callback = new Callback<K, V>(matcher, isClustered, isPrimaryOnly, filterAndConvert, listeners);
-      callback.subscription = matcher.registerFilter(filter.getJPAQuery(), callback, eventTypes);
+      callback.subscription = matcher.registerFilter(filter.getJPAQuery(), filter.getNamedParameters(), callback, eventTypes);
    }
 
    /**

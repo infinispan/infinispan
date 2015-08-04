@@ -11,7 +11,7 @@ import java.util.List;
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class QueryResponse {
+public final class QueryResponse {
 
    private int numResults;
 

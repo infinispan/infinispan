@@ -13,7 +13,7 @@ message QueryRequest {
     */
    required string jpqlString = 1;
 
-   // id 2 was used for sort criteria
+   // NOTE: id 2 was used for sort criteria, which is now into the ORDER BY clause inside the jpqlString
 
    /**
     * The number of matching results to skip before the first returned result.
@@ -24,6 +24,24 @@ message QueryRequest {
     * Maximum number of matching results to return.
     */
    required int32 maxResults = 4;
+
+   /**
+    * Multiple, optional named parameters. Each name must occur only once.
+    */
+   repeated NamedParameter namedParameters = 5;
+
+   message NamedParameter {
+
+      /**
+       * Parameter name.
+       */
+      required string name = 1;
+
+      /**
+       * Parameter value.
+       */
+      required org.infinispan.protostream.WrappedMessage value = 2;
+   }
 }
 
 /**
@@ -53,6 +71,18 @@ message QueryResponse {
    repeated org.infinispan.protostream.WrappedMessage results = 3;
 
    required int64 totalResults = 4;
+}
+
+/**
+ * @TypeId(1000103)
+ */
+message FilterResult {
+
+   optional bytes instance = 1;
+
+   repeated org.infinispan.protostream.WrappedMessage projection = 2;
+
+   repeated org.infinispan.protostream.WrappedMessage sortProjection = 3;
 }
 
 /**

@@ -13,6 +13,7 @@ import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class ClientEvents {
 
@@ -61,16 +62,32 @@ public class ClientEvents {
       if (!l.converterFactoryName().equals(QUERY_DSL_FILTER_FACTORY_NAME)) {
          throw new IllegalArgumentException("The client listener must use the '" + QUERY_DSL_FILTER_FACTORY_NAME + "' converter factory");
       }
-      Object[] factoryParams = new Object[]{((BaseQuery) query).getJPAQuery()};
-      remoteCache.addClientListener(listener, factoryParams, factoryParams);
+      Object[] factoryParams = makeFactoryParams(query);
+      remoteCache.addClientListener(listener, factoryParams, null);
    }
 
    public static Object addContinuousQueryListener(RemoteCache<?, ?> remoteCache, ContinuousQueryListener queryListener, Query query) {
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCache.getRemoteCacheManager());
-      Object[] factoryParams = new Object[]{((BaseQuery) query).getJPAQuery()};
       ClientEntryListener eventListener = new ClientEntryListener(serCtx, queryListener);
-      remoteCache.addClientListener(eventListener, factoryParams, factoryParams);
+      Object[] factoryParams = makeFactoryParams(query);
+      remoteCache.addClientListener(eventListener, factoryParams, null);
       return eventListener;
+   }
+
+   private static Object[] makeFactoryParams(Query query) {
+      BaseQuery baseQuery = (BaseQuery) query;
+      Map<String, Object> namedParameters = baseQuery.getNamedParameters();
+      if (namedParameters == null) {
+         return new Object[]{baseQuery.getJPAQuery()};
+      }
+      Object[] factoryParams = new Object[1 + namedParameters.size() * 2];
+      factoryParams[0] = baseQuery.getJPAQuery();
+      int i = 1;
+      for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
+         factoryParams[i++] = e.getKey();
+         factoryParams[i++] = e.getValue();
+      }
+      return factoryParams;
    }
 
    @ClientListener(filterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,

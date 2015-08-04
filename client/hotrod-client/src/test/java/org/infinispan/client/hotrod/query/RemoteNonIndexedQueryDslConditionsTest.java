@@ -1,7 +1,6 @@
 package org.infinispan.client.hotrod.query;
 
 import org.hibernate.search.spi.SearchIntegrator;
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
@@ -24,12 +23,6 @@ public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslCondit
    @Override
    public void testIndexPresence() {
       org.infinispan.query.Search.getSearchManager(getEmbeddedCache()).unwrap(SearchIntegrator.class);
-   }
-
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = ".*ISPN000405:.*")
-   @Override
-   public void testInvalidEmbeddedAttributeQuery() throws Exception {
-      super.testInvalidEmbeddedAttributeQuery();
    }
 
    @Test

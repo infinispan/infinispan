@@ -1,5 +1,6 @@
 package org.infinispan.query.dsl;
 
+import org.infinispan.query.dsl.impl.ParameterExpression;
 import org.infinispan.query.dsl.impl.PathExpression;
 
 /**
@@ -7,6 +8,10 @@ import org.infinispan.query.dsl.impl.PathExpression;
  * @since 8.0
  */
 public interface Expression {
+
+   static Expression param(String paramName) {
+      return new ParameterExpression(paramName);
+   }
 
    static Expression property(String attributePath) {
       return new PathExpression(null, attributePath);

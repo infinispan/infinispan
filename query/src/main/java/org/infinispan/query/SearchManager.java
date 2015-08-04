@@ -16,6 +16,7 @@ import org.infinispan.query.dsl.embedded.LuceneQuery;
  */
 public interface SearchManager {
 
+   //TODO [anistor] remove this method in infinispan-8.0.0.Final
    /**
     * Experimental! Obtains the factory for DSL-based queries backed by Lucene indexes.
     *

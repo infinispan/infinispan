@@ -2,8 +2,6 @@ package org.infinispan.objectfilter.impl.syntax;
 
 import org.infinispan.objectfilter.SortField;
 
-import java.util.List;
-
 /**
  * Generates a JPA query from an expression tree.
  *
@@ -20,17 +18,17 @@ public final class JPATreePrinter {
       return sb.toString();
    }
 
-   public static String printTree(String fromEntityTypeName, BooleanExpr whereClause, List<SortField> orderBy) {
+   public static String printTree(String fromEntityTypeName, BooleanExpr whereClause, SortField[] orderBy) {
       StringBuilder sb = new StringBuilder();
       sb.append("FROM ").append(fromEntityTypeName);
       sb.append(printTree(whereClause));
-      if (orderBy != null && !orderBy.isEmpty()) {
+      if (orderBy != null && orderBy.length != 0) {
          sb.append(" ORDER BY ");
-         for (int i = 0; i < orderBy.size(); i++) {
+         for (int i = 0; i < orderBy.length; i++) {
             if (i != 0) {
                sb.append(", ");
             }
-            SortField sf = orderBy.get(i);
+            SortField sf = orderBy[i];
             sb.append(sf.getPath());
             if (!sf.isAscending()) {
                sb.append(" DESC");

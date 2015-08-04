@@ -4,12 +4,23 @@ import org.infinispan.query.dsl.Query;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
  * @since 7.0
  */
 public class DummyQuery implements Query {
+
+   @Override
+   public Query setParameter(String paramName, Object paramValue) {
+      return this;
+   }
+
+   @Override
+   public Query setParameters(Map<String, Object> paramValues) {
+      return null;
+   }
 
    @Override
    public <T> List<T> list() {

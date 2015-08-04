@@ -10,6 +10,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -21,12 +22,12 @@ final class AggregatingQuery extends HybridQuery {
 
    private final FieldAccumulator[] accumulators;
 
-   AggregatingQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery,
+   AggregatingQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
                     int[] groupFieldPositions, FieldAccumulator[] accumulators,
                     ObjectFilter objectFilter,
                     long startOffset, int maxResults,
                     Query baseQuery) {
-      super(queryFactory, cache, jpaQuery, objectFilter, startOffset, maxResults, baseQuery);
+      super(queryFactory, cache, jpaQuery, namedParameters, objectFilter, startOffset, maxResults, baseQuery);
       this.groupFieldPositions = groupFieldPositions;
       this.accumulators = accumulators;
    }
@@ -45,6 +46,7 @@ final class AggregatingQuery extends HybridQuery {
    public String toString() {
       return "AggregatingQuery{" +
             "jpaQuery=" + jpaQuery +
+            ", namedParameters=" + namedParameters +
             ", groupFieldPositions=" + Arrays.toString(groupFieldPositions) +
             ", accumulators=" + Arrays.toString(accumulators) +
             ", projection=" + Arrays.toString(projection) +

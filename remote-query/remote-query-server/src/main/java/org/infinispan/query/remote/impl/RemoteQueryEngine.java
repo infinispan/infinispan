@@ -32,6 +32,7 @@ import org.infinispan.query.remote.impl.logging.Log;
 
 import java.security.PrivilegedAction;
 import java.util.Arrays;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -39,7 +40,7 @@ import java.util.Arrays;
  */
 final class RemoteQueryEngine extends QueryEngine {
 
-   private static final Log log = LogFactory.getLog(QueryFacadeImpl.class, Log.class);
+   private static final Log log = LogFactory.getLog(RemoteQueryEngine.class, Log.class);
 
    private final boolean isCompatMode;
 
@@ -75,12 +76,12 @@ final class RemoteQueryEngine extends QueryEngine {
    }
 
    @Override
-   protected JPAFilterAndConverter makeFilter(final String jpaQuery) {
+   protected JPAFilterAndConverter makeFilter(final String jpaQuery, final Map<String, Object> namedParameters) {
       return SecurityActions.doPrivileged(new PrivilegedAction<JPAFilterAndConverter>() {
          @Override
          public JPAFilterAndConverter run() {
-            JPAFilterAndConverter filter = searchManager != null && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery) :
-                  new JPAFilterAndConverter(jpaQuery, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
+            JPAFilterAndConverter filter = searchManager != null && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery, namedParameters) :
+                  new JPAFilterAndConverter(jpaQuery, namedParameters, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
             filter.injectDependencies(cache);
 
             // force early validation!
@@ -97,7 +98,7 @@ final class RemoteQueryEngine extends QueryEngine {
    }
 
    @Override
-   protected LuceneProcessingChain makeProcessingChain() {
+   protected LuceneProcessingChain makeProcessingChain(Map<String, Object> namedParameters) {
       LuceneProcessingChain processingChain;
       if (isCompatMode) {
          EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
@@ -118,6 +119,7 @@ final class RemoteQueryEngine extends QueryEngine {
          };
 
          processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
+               .namedParameters(namedParameters)
                .buildProcessingChainForClassBasedEntities(fieldBridgeProvider);
       } else {
          EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
@@ -161,6 +163,7 @@ final class RemoteQueryEngine extends QueryEngine {
          };
 
          processingChain = new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
+               .namedParameters(namedParameters)
                .buildProcessingChainForDynamicEntities(fieldBridgeProvider);
       }
       return processingChain;

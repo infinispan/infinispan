@@ -81,8 +81,8 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       LuceneQueryParsingResult cachedParsingResult = queryCache.get(queryCacheKey);
       assertNull(cachedParsingResult);
 
-      // first attempt to build the query (cache is empty)
-      queryQueryBuilder.build();
+      // first attempt to build and execute the query (query cache is empty)
+      queryQueryBuilder.build().list();
 
       // ensure the query cache has it now
       cachedParsingResult = queryCache.get(queryCacheKey);
@@ -101,8 +101,8 @@ public class QueryCacheEmbeddedTest extends SingleCacheManagerTest {
       reset(queryCacheSpy);
       lastGetResult = captureLastGetResult(queryCacheSpy);
 
-      // second attempt to build the query
-      queryQueryBuilder.build();
+      // second attempt to build and execute the query
+      queryQueryBuilder.build().list();
 
       // check interaction with query cache - expect a cache hit
       inOrder = inOrder(queryCacheSpy);

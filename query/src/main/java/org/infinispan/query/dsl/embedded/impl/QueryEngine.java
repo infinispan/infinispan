@@ -31,7 +31,7 @@ import org.infinispan.query.CacheQuery;
 import org.infinispan.query.SearchManager;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.embedded.LuceneQuery;
+import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.impl.ComponentRegistryUtils;
 import org.infinispan.util.KeyValuePair;
 
@@ -42,12 +42,15 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
  * @since 7.2
  */
 public class QueryEngine {
+
+   private static final String DEFAULT_ALIAS = "_gen0";
 
    protected final AdvancedCache<?, ?> cache;
 
@@ -77,16 +80,28 @@ public class QueryEngine {
       searchFactory = searchManager != null ? searchManager.unwrap(SearchIntegrator.class) : null;
    }
 
-   public Query buildQuery(QueryFactory queryFactory, String jpqlString, long startOffset, int maxResults) {
-      FilterParsingResult<?> parsingResult = parse(jpqlString);
+   public BaseQuery buildQuery(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
+      checkParameters(namedParameters);
+
+      FilterParsingResult<?> parsingResult = parse(jpqlString, namedParameters);
       if (parsingResult.hasGroupingOrAggregations()) {
-         return buildQueryWithAggregations(queryFactory, jpqlString, startOffset, maxResults, parsingResult);
+         return buildQueryWithAggregations(queryFactory, jpqlString, namedParameters, startOffset, maxResults, parsingResult);
       }
-      return buildQueryNoAggregations(queryFactory, jpqlString, startOffset, maxResults, parsingResult);
+      return buildQueryNoAggregations(queryFactory, jpqlString, namedParameters, startOffset, maxResults, parsingResult);
    }
 
-   private Query buildQueryWithAggregations(QueryFactory queryFactory, String jpqlString, long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
-      if (parsingResult.getProjectedPaths().isEmpty()) {
+   private void checkParameters(Map<String, Object> namedParameters) {
+      if (namedParameters != null) {
+         for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
+            if (e.getValue() == null) {
+               throw new IllegalStateException("Query parameter '" + e.getKey() + "' was not set");
+            }
+         }
+      }
+   }
+
+   private BaseQuery buildQueryWithAggregations(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
+      if (parsingResult.getProjectedPaths() == null) {
          throw new ParsingException("Queries containing grouping and aggregation functions must use projections.");
       }
 
@@ -94,13 +109,15 @@ public class QueryEngine {
 
       ObjectPropertyHelper<?> propertyHelper = getFirstPhaseMatcher().getPropertyHelper();
       LinkedHashSet<Integer> groupFieldPositions = new LinkedHashSet<Integer>();
-      for (PropertyPath p : parsingResult.getGroupBy()) {
-         // Duplicates in 'group by' are accepted and silently discarded. This behaviour is similar to SQL.
-         if (!columns.containsKey(p)) {
-            int idx = columns.size();
-            Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), p.getPath());
-            columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
-            groupFieldPositions.add(idx);
+      if (parsingResult.getGroupBy() != null) {
+         for (PropertyPath p : parsingResult.getGroupBy()) {
+            // Duplicates in 'group by' are accepted and silently discarded. This behaviour is similar to SQL.
+            if (!columns.containsKey(p)) {
+               int idx = columns.size();
+               Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), p.getPath());
+               columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
+               groupFieldPositions.add(idx);
+            }
          }
       }
       for (PropertyPath p : parsingResult.getProjectedPaths()) {
@@ -117,19 +134,21 @@ public class QueryEngine {
             columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
          }
       }
-      for (SortField sortField : parsingResult.getSortFields()) {
-         PropertyPath p = sortField.getPath();
-         RowPropertyHelper.ColumnMetadata c = columns.get(p);
-         if (p.getAggregationType() == null) {
-            // this must be an already processed 'group by' field, or else it's an invalid query
-            if (c == null || !groupFieldPositions.contains(c.getColumnIndex())) {
-               throw new ParsingException("The expression '" + p + "' must be part of an aggregate function or it should be included in the GROUP BY clause");
+      if (parsingResult.getSortFields() != null) {
+         for (SortField sortField : parsingResult.getSortFields()) {
+            PropertyPath p = sortField.getPath();
+            RowPropertyHelper.ColumnMetadata c = columns.get(p);
+            if (p.getAggregationType() == null) {
+               // this must be an already processed 'group by' field, or else it's an invalid query
+               if (c == null || !groupFieldPositions.contains(c.getColumnIndex())) {
+                  throw new ParsingException("The expression '" + p + "' must be part of an aggregate function or it should be included in the GROUP BY clause");
+               }
             }
-         }
-         if (c == null) {
-            int idx = columns.size();
-            Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), p.getPath());
-            columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
+            if (c == null) {
+               int idx = columns.size();
+               Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), p.getPath());
+               columns.put(p, new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType));
+            }
          }
       }
 
@@ -137,7 +156,7 @@ public class QueryEngine {
       if (parsingResult.getHavingClause() != null) {
          BooleanExpr normalizedHavingClause = booleanFilterNormalizer.normalize(parsingResult.getHavingClause());
          if (normalizedHavingClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery(queryFactory, cache, jpqlString, startOffset, maxResults);
+            return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
          }
          if (normalizedHavingClause != ConstantBooleanExpr.TRUE) {
             havingClause = JPATreePrinter.printTree(swapVariables(normalizedHavingClause, parsingResult, columns));
@@ -154,14 +173,14 @@ public class QueryEngine {
             } else {
                firstPhaseQuery.append(", ");
             }
-            firstPhaseQuery.append("_gen0.").append(c.asStringPath());
+            firstPhaseQuery.append(DEFAULT_ALIAS).append('.').append(c.asStringPath());
          }
       }
-      firstPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(" _gen0");
+      firstPhaseQuery.append(" FROM ").append(parsingResult.getTargetEntityName()).append(' ').append(DEFAULT_ALIAS);
       if (parsingResult.getWhereClause() != null) {
          BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
          if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
-            return new EmptyResultQuery(queryFactory, cache, jpqlString, startOffset, maxResults);
+            return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
          }
          if (normalizedWhereClause != ConstantBooleanExpr.TRUE) {
             firstPhaseQuery.append(' ').append(JPATreePrinter.printTree(normalizedWhereClause));
@@ -186,7 +205,7 @@ public class QueryEngine {
       if (havingClause != null) {
          secondPhaseQuery.append(' ').append(havingClause);
       }
-      if (!parsingResult.getSortFields().isEmpty()) {
+      if (parsingResult.getSortFields() != null) {
          secondPhaseQuery.append(" ORDER BY ");
          boolean isFirst = true;
          for (SortField sortField : parsingResult.getSortFields()) {
@@ -239,12 +258,13 @@ public class QueryEngine {
 
       // first phase: gather rows matching the 'where' clause
       String firstPhaseQueryStr = firstPhaseQuery.toString();
-      Query baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, -1, -1, parse(firstPhaseQueryStr));
+      Query baseQuery = buildQueryNoAggregations(queryFactory, firstPhaseQueryStr, namedParameters, -1, -1, parse(firstPhaseQueryStr, namedParameters));
 
       // second phase: grouping, aggregation, 'having' clause filtering, sorting and paging
       String secondPhaseQueryStr = secondPhaseQuery.toString();
-      return new AggregatingQuery(queryFactory, cache, secondPhaseQueryStr, _groupFieldPositions, _accumulators,
-                                  getObjectFilter(secondPhaseQueryStr, new RowMatcher(_columns)),
+      return new AggregatingQuery(queryFactory, cache, secondPhaseQueryStr, namedParameters,
+                                  _groupFieldPositions, _accumulators,
+                                  getObjectFilter(new RowMatcher(_columns), secondPhaseQueryStr, namedParameters),
                                   startOffset, maxResults, baseQuery);
    }
 
@@ -326,7 +346,7 @@ public class QueryEngine {
       return expr.acceptVisitor(new PropertyReplacer());
    }
 
-   private Query buildQueryNoAggregations(QueryFactory queryFactory, String jpqlString, long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
+   private BaseQuery buildQueryNoAggregations(QueryFactory queryFactory, String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults, FilterParsingResult<?> parsingResult) {
       if (parsingResult.hasGroupingOrAggregations()) {
          throw new IllegalArgumentException("The query must not use grouping or aggregation"); // may happen only due to programming error
       }
@@ -334,10 +354,10 @@ public class QueryEngine {
       BooleanExpr normalizedWhereClause = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
       if (normalizedWhereClause == ConstantBooleanExpr.FALSE) {
          // the query is a contradiction, there are no matches
-         return new EmptyResultQuery(queryFactory, cache, jpqlString, startOffset, maxResults);
+         return new EmptyResultQuery(queryFactory, cache, jpqlString, namedParameters, startOffset, maxResults);
       }
       if (normalizedWhereClause == null || normalizedWhereClause == ConstantBooleanExpr.TRUE || searchManager == null) {
-         return new EmbeddedQuery(queryFactory, cache, makeFilter(jpqlString), startOffset, maxResults);
+         return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
       BooleShannonExpansion bse = new BooleShannonExpansion(getIndexedFieldProvider(parsingResult));
@@ -346,18 +366,22 @@ public class QueryEngine {
       if (expansion == normalizedWhereClause) {  // identity comparison is intended here!
          // everything is indexed, so go the Lucene way
          //todo [anistor] we should be able to generate the lucene query ourselves rather than depend on hibernate-hql-lucene to do it
-         return buildLuceneQuery(queryFactory, jpqlString, startOffset, maxResults);
+         return new EmbeddedLuceneQuery(this, queryFactory, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
       if (expansion == ConstantBooleanExpr.TRUE) {
          // expansion leads to a full non-indexed query
-         return new EmbeddedQuery(queryFactory, cache, makeFilter(jpqlString), startOffset, maxResults);
+         return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
       // some fields are indexed, run a hybrid query
       String expandedJpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), expansion, null);
-      Query expandedQuery = buildLuceneQuery(queryFactory, expandedJpaOut, -1, -1);
-      return new HybridQuery(queryFactory, cache, jpqlString, getObjectFilter(jpqlString, getSecondPhaseMatcher()), startOffset, maxResults, expandedQuery);
+      Query expandedQuery = new EmbeddedLuceneQuery(this, queryFactory, expandedJpaOut, namedParameters, parsingResult.getProjections(), -1, -1);
+      HybridQuery hybridQuery = new HybridQuery(queryFactory, cache, jpqlString, namedParameters, getObjectFilter(getSecondPhaseMatcher(), jpqlString, namedParameters), startOffset, maxResults, expandedQuery);
+      if (namedParameters != null) {
+         hybridQuery.setParameters(namedParameters);
+      }
+      return hybridQuery;
    }
 
    protected BaseMatcher getFirstPhaseMatcher() {
@@ -368,32 +392,34 @@ public class QueryEngine {
       return getFirstPhaseMatcher();
    }
 
-   private FilterParsingResult<?> parse(String jpqlString) {
+   private FilterParsingResult<?> parse(String jpqlString, Map<String, Object> namedParameters) {
       FilterParsingResult<?> parsingResult;
-      if (queryCache != null) {
+      // if parameters are present caching cannot be currently performed due to internal implementation limitations
+      if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
          KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, FilterParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
          if (parsingResult == null) {
-            parsingResult = getFirstPhaseMatcher().parse(jpqlString, null);
+            parsingResult = getFirstPhaseMatcher().parse(jpqlString, namedParameters);
             queryCache.put(queryCacheKey, parsingResult);
          }
       } else {
-         parsingResult = getFirstPhaseMatcher().parse(jpqlString, null);
+         parsingResult = getFirstPhaseMatcher().parse(jpqlString, namedParameters);
       }
       return parsingResult;
    }
 
-   private ObjectFilter getObjectFilter(String jpqlString, BaseMatcher matcher) {
+   private ObjectFilter getObjectFilter(BaseMatcher matcher, String jpqlString, Map<String, Object> namedParameters) {
       ObjectFilter objectFilter;
-      if (queryCache != null) {
+      // if parameters are present caching cannot be currently performed due to internal implementation limitations
+      if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
          KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, matcher.getClass());
          objectFilter = queryCache.get(queryCacheKey);
          if (objectFilter == null) {
-            objectFilter = matcher.getObjectFilter(jpqlString);
+            objectFilter = matcher.getObjectFilter(jpqlString, namedParameters);
             queryCache.put(queryCacheKey, objectFilter);
          }
       } else {
-         objectFilter = matcher.getObjectFilter(jpqlString);
+         objectFilter = matcher.getObjectFilter(jpqlString, namedParameters);
       }
       return objectFilter;
    }
@@ -402,12 +428,12 @@ public class QueryEngine {
       return new HibernateSearchIndexedFieldProvider(searchFactory, (Class<?>) parsingResult.getTargetEntityMetadata());
    }
 
-   protected JPAFilterAndConverter makeFilter(final String jpaQuery) {
+   protected JPAFilterAndConverter makeFilter(final String jpaQuery, final Map<String, Object> namedParameters) {
       //todo [anistor] possible optimisation: if jpaQuery is a tautology and there are no projections just return null, ie. no filtering needed, just get everything
       return SecurityActions.doPrivileged(new PrivilegedAction<JPAFilterAndConverter>() {
          @Override
          public JPAFilterAndConverter run() {
-            JPAFilterAndConverter filter = new JPAFilterAndConverter(jpaQuery, ReflectionMatcher.class);
+            JPAFilterAndConverter filter = new JPAFilterAndConverter(jpaQuery, namedParameters, ReflectionMatcher.class);
             filter.injectDependencies(cache);
 
             // force early validation!
@@ -417,27 +443,26 @@ public class QueryEngine {
       });
    }
 
+   //todo [anistor] test this method with non-indexed fields and see if a proper exception is thrown
    /**
     * Build a Lucene index query.
     */
-   //todo [anistor] make this private when LuceneQuery/LuceneQueryBuilder are removed
-   public LuceneQuery buildLuceneQuery(QueryFactory queryFactory, String jpqlString, long startOffset, int maxResults) {
+   public CacheQuery buildLuceneQuery(String jpqlString, Map<String, Object> namedParameters, long startOffset, int maxResults) {
       if (searchManager == null) {
          throw new IllegalStateException("Cannot run Lucene queries on a cache that does not have indexing enabled");
       }
 
-      LuceneQueryParsingResult parsingResult = transformJpaToLucene(jpqlString);
+      checkParameters(namedParameters);
+
+      LuceneQueryParsingResult parsingResult = transformJpaToLucene(jpqlString, namedParameters);
       org.apache.lucene.search.Query luceneQuery = makeTypeQuery(parsingResult.getQuery(), parsingResult.getTargetEntityName());
       CacheQuery cacheQuery = searchManager.getQuery(luceneQuery, parsingResult.getTargetEntity());
 
       if (parsingResult.getSort() != null) {
          cacheQuery = cacheQuery.sort(parsingResult.getSort());
       }
-
-      String[] projection = null;
       if (parsingResult.getProjections() != null && !parsingResult.getProjections().isEmpty()) {
-         int projSize = parsingResult.getProjections().size();
-         projection = parsingResult.getProjections().toArray(new String[projSize]);
+         String[] projection = parsingResult.getProjections().toArray(new String[parsingResult.getProjections().size()]);
          cacheQuery = cacheQuery.projection(projection);
       }
       if (startOffset >= 0) {
@@ -447,29 +472,30 @@ public class QueryEngine {
          cacheQuery = cacheQuery.maxResults(maxResults);
       }
 
-      return new EmbeddedLuceneQuery(queryFactory, jpqlString, projection, cacheQuery);
+      return cacheQuery;
    }
 
    protected org.apache.lucene.search.Query makeTypeQuery(org.apache.lucene.search.Query query, String targetEntityName) {
       return query;
    }
 
-   private LuceneQueryParsingResult transformJpaToLucene(String jpqlString) {
+   private LuceneQueryParsingResult transformJpaToLucene(String jpqlString, Map<String, Object> namedParameters) {
       LuceneQueryParsingResult parsingResult;
-      if (queryCache != null) {
+      // if parameters are present caching cannot be currently performed due to internal implementation limitations
+      if (queryCache != null && (namedParameters == null || namedParameters.isEmpty())) {
          KeyValuePair<String, Class> queryCacheKey = new KeyValuePair<String, Class>(jpqlString, LuceneQueryParsingResult.class);
          parsingResult = queryCache.get(queryCacheKey);
          if (parsingResult == null) {
-            parsingResult = queryParser.parseQuery(jpqlString, makeProcessingChain());
+            parsingResult = queryParser.parseQuery(jpqlString, makeProcessingChain(namedParameters));
             queryCache.put(queryCacheKey, parsingResult);
          }
       } else {
-         parsingResult = queryParser.parseQuery(jpqlString, makeProcessingChain());
+         parsingResult = queryParser.parseQuery(jpqlString, makeProcessingChain(namedParameters));
       }
       return parsingResult;
    }
 
-   protected LuceneProcessingChain makeProcessingChain() {
+   protected LuceneProcessingChain makeProcessingChain(Map<String, Object> namedParameters) {
       EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
          @Override
          public Class<?> getClassFromName(String entityName) {
@@ -490,6 +516,8 @@ public class QueryEngine {
             return propertyHelper.getFieldBridge(type, Arrays.asList(propertyPath.split("[.]")));
          }
       };
-      return new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver).buildProcessingChainForClassBasedEntities(fieldBridgeProvider);
+      return new LuceneProcessingChain.Builder(searchFactory, entityNamesResolver)
+            .namedParameters(namedParameters)
+            .buildProcessingChainForClassBasedEntities(fieldBridgeProvider);
    }
 }

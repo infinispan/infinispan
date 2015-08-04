@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 
 /**
@@ -35,19 +36,11 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
 
    private int resultSize;
 
-   protected final int startOffset;
-
-   protected final int maxResults;
-
-   protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery,
+   protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
                                String[] projection, long startOffset, int maxResults) {
-      super(queryFactory, jpaQuery, projection);
-
-      ensureAccessPermissions(cache);
-
+      super(queryFactory, jpaQuery, namedParameters, projection, startOffset, maxResults);
       this.cache = cache;
-      this.startOffset = startOffset < 0 ? 0 : (int) startOffset;
-      this.maxResults = maxResults;
+      ensureAccessPermissions(cache);
    }
 
    private void ensureAccessPermissions(AdvancedCache<?, ?> cache) {
@@ -55,6 +48,11 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
       if (authorizationManager != null) {
          authorizationManager.checkPermission(AuthorizationPermission.BULK_READ);
       }
+   }
+
+   @Override
+   public void resetQuery() {
+      results = null;
    }
 
    @Override
@@ -148,6 +146,7 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
    public String toString() {
       return "BaseEmbeddedQuery{" +
             "jpaQuery=" + jpaQuery +
+            ", namedParameters=" + namedParameters +
             ", projection=" + Arrays.toString(projection) +
             ", startOffset=" + startOffset +
             ", maxResults=" + maxResults +

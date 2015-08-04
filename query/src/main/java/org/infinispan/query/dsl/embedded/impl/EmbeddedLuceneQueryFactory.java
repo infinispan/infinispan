@@ -4,7 +4,7 @@ import org.infinispan.query.dsl.QueryBuilder;
 import org.infinispan.query.dsl.embedded.LuceneQuery;
 import org.infinispan.query.dsl.impl.BaseQueryFactory;
 
-//TODO remove this class until 8.0.Final
+//TODO [anistor] remove this class in infinispan-8.0.0.Final
 
 /**
  * @author anistor@redhat.com

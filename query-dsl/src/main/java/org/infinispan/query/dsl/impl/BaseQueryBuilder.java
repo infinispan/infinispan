@@ -91,7 +91,7 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
          throw new IllegalArgumentException("Projection cannot be null or empty");
       }
       Expression[] projection = new Expression[attributePath.length];
-      for (int i = 0 ; i < attributePath.length; i++) {
+      for (int i = 0; i < attributePath.length; i++) {
          projection[i] = Expression.property(attributePath[i]);
       }
       return select(projection);
@@ -117,6 +117,17 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
 
    protected Expression[] getProjection() {
       return projection;
+   }
+
+   protected String[] getProjectionPaths() {
+      if (projection == null) {
+         return null;
+      }
+      String[] _projection = new String[projection.length];
+      for (int i = 0; i < projection.length; i++) {
+         _projection[i] = projection[i].toString();
+      }
+      return _projection;
    }
 
    @Override

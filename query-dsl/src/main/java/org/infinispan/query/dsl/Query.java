@@ -1,6 +1,7 @@
 package org.infinispan.query.dsl;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * An immutable object representing both the query and the result. The result is obtained lazily when one of the methods
@@ -12,6 +13,10 @@ import java.util.List;
  * @since 6.0
  */
 public interface Query {
+
+   Query setParameter(String paramName, Object paramValue);
+
+   Query setParameters(Map<String, Object> paramValues);
 
    /**
     * Returns the results of a search as a list.

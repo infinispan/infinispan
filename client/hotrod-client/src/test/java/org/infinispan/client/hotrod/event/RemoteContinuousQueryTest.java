@@ -11,6 +11,7 @@ import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
@@ -111,8 +112,10 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       QueryFactory qf = Search.getQueryFactory(remoteCache);
 
       Query query = qf.from(UserPB.class)
-            .having("age").lte(32)
-            .toBuilder().select("age").build();
+            .having("age").lte(Expression.param("ageParam"))
+            .toBuilder().select("age")
+            .build()
+            .setParameter("ageParam", 32);
 
       final BlockingQueue<Object> joined = new ArrayBlockingQueue<Object>(50);
       final BlockingQueue<Object> left = new ArrayBlockingQueue<Object>(50);
