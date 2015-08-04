@@ -2,9 +2,11 @@ package org.infinispan.persistence.sifs;
 
 import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.infinispan.test.TestingUtil.recursiveFileRemove;
+import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
@@ -81,6 +83,27 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
             AssertJUnit.fail("Key " + key(i) + " not found");
          }
       }
+   }
+
+   // test for ISPN-5658
+   public void testStopStartAndMultipleWrites() {
+      MarshalledEntry<Object, Object> entry1 = marshalledEntry(internalCacheEntry("k1", "v1", -1));
+      MarshalledEntry<Object, Object> entry2 = marshalledEntry(internalCacheEntry("k1", "v2", -1));
+
+      store.write(entry1);
+      store.write(entry1);
+      store.write(entry1);
+
+      store.stop();
+      store.start();
+
+      assertEquals("v1", store.load("k1").getValue());
+      store.write(entry2);
+
+      store.stop();
+      store.start();
+
+      assertEquals("v2", store.load("k1").getValue());
    }
 
    private String key(int i) {
