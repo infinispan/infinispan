@@ -26,7 +26,6 @@ import org.infinispan.executors.ExecutorAllCompletionService;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
-import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.jdbc.JdbcUtil;
 import org.infinispan.persistence.jdbc.TableManipulation;
@@ -254,7 +253,31 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
 
    @Override
    public int size() {
-      return PersistenceUtil.count(this, null);
+      int count = 0;
+      Connection conn = null;
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+      try {
+         String sql = tableManipulation.getLoadNonExpiredAllRowsSql();
+         conn = connectionFactory.getConnection();
+         ps = conn.prepareStatement(sql, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+         ps.setLong(1, ctx.getTimeService().wallClockTime());
+         ps.setFetchSize(tableManipulation.getFetchSize());
+         rs = ps.executeQuery();
+         while (rs.next()) {
+            InputStream binaryStream = rs.getBinaryStream(1);
+            final Bucket bucket = unmarshallBucket(binaryStream);
+            count += bucket.getStoredEntries().size();
+         }
+         return count;
+      } catch (SQLException e) {
+         log.sqlFailureFetchingAllStoredEntries(e);
+         throw new PersistenceException("SQL error while fetching all Non Expired Entries", e);
+      } finally {
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
+         connectionFactory.releaseConnection(conn);
+      }
    }
 
    @Override
