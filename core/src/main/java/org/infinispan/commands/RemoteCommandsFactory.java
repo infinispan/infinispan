@@ -3,7 +3,6 @@ package org.infinispan.commands;
 import java.util.Map;
 
 import org.infinispan.commands.control.LockControlCommand;
-import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.read.DistributedExecuteCommand;
 import org.infinispan.commands.read.GetCacheEntryCommand;
@@ -284,7 +283,7 @@ public class RemoteCommandsFactory {
                throw new CacheException("Unknown command id " + id + "!");
          }
       } else {
-         ExtendedModuleCommandFactory mcf = (ExtendedModuleCommandFactory) commandFactories.get(id);
+         ModuleCommandFactory mcf = (ModuleCommandFactory) commandFactories.get(id);
          if (mcf != null)
             return mcf.fromStream(id, parameters, cacheName);
          else
