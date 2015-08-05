@@ -84,7 +84,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public Map<K, V> getAll(Set<? extends K> keys) {
       checkNotClosed();
-      checkNotNullOrNullElement(keys, "keys");
+      InfinispanCollections.assertNotNullEntries(keys, "keys");
 
       if (keys.isEmpty()) {
          return InfinispanCollections.emptyMap();
@@ -175,7 +175,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public void putAll(Map<? extends K, ? extends V> inputMap) {
       checkNotClosed();
-      checkNotNullOrNullKV(inputMap, "map");
+      InfinispanCollections.assertNotNullEntries(inputMap, "inputMap");
 
       //FIXME locks
       for (final Map.Entry<? extends K, ? extends V> e : inputMap.entrySet()) {
@@ -290,7 +290,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public void removeAll(Set<? extends K> keys) {
       checkNotClosed();
-      checkNotNullOrNullElement(keys, "keys");
+      InfinispanCollections.assertNotNullEntries(keys, "keys");
       for (K k : keys) {
          remove(k);
       }
@@ -426,61 +426,6 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
          throw log.cacheClosed();
 
       return this;
-   }
-
-   private JCache<K, V> checkNotNullOrNullKV(Map<? extends K, ? extends V> map, String name) {
-      checkNotNull((Object) map, name);
-      if (containsNullKey(map)) {
-         throw log.parameterMustNotContainNullKeys(name);
-      }
-      if (containsNullValue(map)) {
-         throw log.parameterMustNotContainNullValues(name);
-      }
-      return this;
-   }
-
-   private JCache<K, V> checkNotNullOrNullElement(Collection<?> collection, String name) {
-      checkNotNull((Object) collection, name);
-      if (containsNull(collection)) {
-         throw log.parameterMustNotContainNullKeys(name);
-      }
-      return this;
-   }
-
-   private boolean containsNull(Collection<?> collection) {
-      if (collection == null) {
-         throw new IllegalArgumentException("Argument cannot be null.");
-      }
-      try {
-         return collection.contains(null);
-      } catch (NullPointerException ex) {
-         /* Collection doesn't support null elements. */
-         return false;
-      }
-   }
-
-   private boolean containsNullKey(Map<? extends K, ? extends V> map) {
-      if (map == null) {
-         throw new IllegalArgumentException("Argument cannot be null.");
-      }
-      try {
-         return map.containsKey(null);
-      } catch (NullPointerException ex) {
-         /* Map doesn't support null keys. */
-         return false;
-      }
-   }
-
-   private boolean containsNullValue(Map<? extends K, ? extends V> map) {
-      if (map == null) {
-         throw new IllegalArgumentException("Argument cannot be null.");
-      }
-      try {
-         return map.containsValue(null);
-      } catch (NullPointerException ex) {
-         /* Map doesn't support null values. */
-         return false;
-      }
    }
 
    private class Itr implements Iterator<Cache.Entry<K, V>> {

@@ -412,11 +412,7 @@ public class JCache<K, V> extends AbstractJCache<K, V> {
    @Override
    public void putAll(Map<? extends K, ? extends V> inputMap) {
       checkNotClosed();
-      // spec required check
-      if (inputMap == null || inputMap.containsKey(null) || inputMap.containsValue(null)) {
-         throw new NullPointerException(
-            "inputMap is null or keys/values contain a null entry: " + inputMap);
-      }
+      InfinispanCollections.assertNotNullEntries(inputMap, "inputMap");  // spec required check
       /**
        * TODO Similar to mentioned before, it'd be interesting to see if multiple putAsync() calls
        * could be executed in parallel to speed up.

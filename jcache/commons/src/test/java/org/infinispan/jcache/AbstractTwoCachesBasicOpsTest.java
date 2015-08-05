@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.infinispan.jcache.util.JCacheTestingUtil.getEntryCount;
 import static org.infinispan.jcache.util.JCacheTestingUtil.sleep;
@@ -104,6 +105,36 @@ public abstract class AbstractTwoCachesBasicOpsTest extends MultipleCacheManager
       assertTrue(cache1.containsKey("key2"));
       assertTrue(cache2.containsKey("key1"));
       assertTrue(cache2.containsKey("key2"));
+   }
+
+   @Test
+   public void testPutAllMapNullValuesNotAllowed(Method m) {
+      Cache<String, String> cache1 = getCache1(m);
+      Map<String, String> entryMap = new ConcurrentHashMap<>();
+      entryMap.put("key1", "val1");
+      entryMap.put("key2", "val2");
+      cache1.putAll(entryMap);
+      assertTrue(cache1.containsKey("key1"));
+      assertTrue(cache1.containsKey("key2"));
+   }
+
+   @Test (expectedExceptions = NullPointerException.class)
+   public void testPutAllNullMap(Method m) {
+      getCache1(m).putAll(null);
+   }
+
+   @Test (expectedExceptions = NullPointerException.class)
+   public void testPutAllMapWithNullKeys(Method m) {
+      Map<String, String> entryMap = new HashMap<>();
+      entryMap.put(null, "val1");
+      getCache1(m).putAll(entryMap);
+   }
+
+   @Test (expectedExceptions = NullPointerException.class)
+   public void testPutAllMapWithNullValues(Method m) {
+      Map<String, String> entryMap = new HashMap<>();
+      entryMap.put("key1", null);
+      getCache1(m).putAll(entryMap);
    }
 
    @Test
