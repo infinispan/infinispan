@@ -168,7 +168,7 @@ For more information see the chapter on the test suite; this chapter gives advic
 
 === Communicating with other Infinispan contributors
 Infinispan contributors use a mix of technologies to communicate.  
-Visit link:http://infinispan.github.io/forums.html[this page] to learn more.
+Visit link:$$http://infinispan.org/community/$$[this page] to learn more.
 
 === Style Requirements
 Infinispan uses the link:$$http://en.wikipedia.org/wiki/Indent_style#K.26R_style$$[K&amp;R code style] for all Java source files, with two exceptions: 

@@ -185,7 +185,7 @@ Some clues on when to enable deadlock detection. A high number of transaction ro
 Note: deadlock detection only runs on an a per cache basis: deadlocks that spread over two or more caches won't be detected.
 
 === Dealing with exceptions
-If a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/CacheException.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
+If a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/tion.html[CacheException] (or a subclass of it) is thrown by a cache method within the scope of a JTA transaction, then the transaction is automatically marked for rollback.
 
 === Enlisting Synchronizations
 By default Infinispan registers itself as a first class participant in distributed transactions through link:http://docs.oracle.com/javaee/6/api/javax/transaction/xa/XAResource.html[XAResource] . There are situations where Infinispan is not required to be a participant in the transaction, but only to be notified by its lifecycle (prepare, complete): e.g. in the case Infinispan is used as a 2nd level cache in Hibernate.
