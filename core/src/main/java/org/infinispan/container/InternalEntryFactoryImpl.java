@@ -300,11 +300,11 @@ public class InternalEntryFactoryImpl implements InternalEntryFactory {
             if (maxIdle < 0) {
                return new MetadataImmortalCacheEntry(ice.getKey(), ice.getValue(), metadata);
             } else {
-               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, maxIdle);
+               return new MetadataTransientCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
             }
          } else {
             if (maxIdle < 0) {
-               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, lifespan);
+               return new MetadataMortalCacheEntry(ice.getKey(), ice.getValue(), metadata, timeService.wallClockTime());
             } else {
                ice.setMetadata(metadata);
                return ice;
