@@ -5,8 +5,20 @@ import org.infinispan.commons.marshall.Ids;
 
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.AbstractList;
+import java.util.AbstractSet;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.RandomAccess;
+import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static java.util.Collections.singletonMap;
 import static java.util.Collections.unmodifiableMap;
@@ -319,5 +331,21 @@ public class InfinispanCollections {
       for (int i = 0; i < size; ++i) {
          consumer.accept(array[i]);
       }
+   }
+
+   public static void assertNotNullEntries(Map<?, ?> map, String name) {
+      Objects.requireNonNull(map, () -> "Map '" + name + "' must be non null.");
+      Supplier<String> keySupplier = () -> "Map '" + name + "' contains null key.";
+      Supplier<String> valueSupplier = () -> "Map '" + name + "' contains null value.";
+      map.forEach((k, v) -> {
+         Objects.requireNonNull(k, keySupplier);
+         Objects.requireNonNull(v, valueSupplier);
+      });
+   }
+
+   public static void assertNotNullEntries(Collection<?> collection, String name) {
+      Objects.requireNonNull(collection, () -> "Collection '" + name + "' must be non null.");
+      Supplier<String> entrySupplier = () -> "Collection '" + name + "' contains null entry.";
+      collection.forEach(k -> Objects.requireNonNull(k, entrySupplier));
    }
 }

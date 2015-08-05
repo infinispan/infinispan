@@ -28,6 +28,8 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.api.BasicCacheContainer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.commons.util.CloseableIterable;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.AbstractInProcessNotifyingFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
@@ -232,17 +234,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private void assertValueNotNull(Object value) {
       if (value == null) {
          throw new NullPointerException("Null values are not supported!");
-      }
-   }
-
-   private void assertKeysNotNull(Map<?, ?> data) {
-      if (data == null) {
-         throw new NullPointerException("Expected map cannot be null");
-      }
-      for (Object key : data.keySet()) {
-         if (key == null) {
-            throw new NullPointerException("Null keys are not supported!");
-         }
       }
    }
 
@@ -1131,7 +1122,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private void putAllInternal(Map<? extends K, ? extends V> map, Metadata metadata, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      assertKeysNotNull(map);
+      InfinispanCollections.assertNotNullEntries(map, "map");
       PutMapCommand command = commandsFactory.buildPutMapCommand(map, metadata, explicitFlags);
       ctx.setLockOwner(command.getLockOwner());
       executeCommandAndCommitIfNeeded(ctx, command);
