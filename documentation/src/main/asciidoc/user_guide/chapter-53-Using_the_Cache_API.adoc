@@ -237,7 +237,7 @@ cache.addListener(listener, new SpecificKeyFilter("Only Me"));
 
 This can be useful when you want to limit what events you receive in a more efficient manner.
 
-There is also a link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/notifications/filter/CacheEventConverter.html[CacheEventConverter] that can be supplied that allows for converting a value to another before raising the event.  This can be nice to modularize any code that does value conversions.
+There is also a link:https://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/notifications/cachelistener/filter/CacheEventConverter.html[CacheEventConverter] that can be supplied that allows for converting a value to another before raising the event.  This can be nice to modularize any code that does value conversions.
 
 NOTE: The mentioned filters and converters are especially beneficial when used in conjunction with a Cluster Listener.  This is because the filtering and conversion is done on the node where the event originated and not on the node where event is listened to.  This can provide benefits of not having to replicate events across the cluster (filter) or even have reduced payloads (converter).
 
@@ -329,7 +329,7 @@ These are, in order of cost:
 As of Infinispan 4.0, using the async methods will take the network calls and marshalling off the critical path.  For various technical reasons, writing to a cache store and acquiring locks, however, still happens in the caller's thread.  In future, we plan to take these offline as well.  See link:http://lists.jboss.org/pipermail/infinispan-dev/2010-January/002219.html[this developer mail list thread] about this topic. 
 
 ==== Notifying futures
-Strictly, these methods do not return JDK Futures, but rather a sub-interface known as a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/util/concurrent/NotifyingFuture.html[NotifyingFuture] .  The main difference is that you can attach a listener to a NotifyingFuture such that you could be notified when the future completes.  Here is an example of making use of a notifying future:
+Strictly, these methods do not return JDK Futures, but rather a sub-interface known as a link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/commons/util/concurrent/NotifyingFuture.html[NotifyingFuture] .  The main difference is that you can attach a listener to a NotifyingFuture such that you could be notified when the future completes.  Here is an example of making use of a notifying future:
 
 [source,java]
 ----

@@ -169,7 +169,7 @@ And that's it - you're ready to go!
 
 ====== Exploring your new project
 The skeleton project ships with a sample application class for interacting with Infinispan.
-You can open this new project in your IDE - most good IDEs such as IntelliJ and Eclipse allow you to import Maven projects, see link:$$http://www.jetbrains.com/idea/webhelp/importing-maven-project.html$$[this guide] and link:$$http://m2eclipse.sonatype.org/$$[this guide].
+You can open this new project in your IDE - most good IDEs such as IntelliJ and Eclipse allow you to import Maven projects, see link:$$https://www.jetbrains.com/idea/help/importing-project-from-maven-model.html$$[this guide] and link:$$http://m2eclipse.sonatype.org/$$[this guide].
 Once you open your project in your IDE, you should examine the generated classes and read through the comments. 
 
 ====== On the command line...

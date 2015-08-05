@@ -126,7 +126,7 @@ The preferred way to manage multiple Infinispan instances spread across differen
 +
 .Careful with H2 database installation
 WARNING: If you're just building a demo or testing RHQ server, you can avoid the need to install a fully fledged database and use an in-memory H2 database instead.
-However, you might encounter issues after testing database connection as shown link:https://fedorahosted.org/pipermail/rhq-users/2010-June/000045.html[here].
+However, you might encounter issues after testing database connection as shown link:https://lists.fedorahosted.org/pipermail/rhq-users/2010-June/000045.html[here].
 Simply repeating the installation avoiding testing the connection should work. 
 +
 .Where do I install the RHQ agent?

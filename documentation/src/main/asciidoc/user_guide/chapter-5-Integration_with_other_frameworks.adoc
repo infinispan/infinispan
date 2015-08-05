@@ -1172,8 +1172,6 @@ Infinispan's very own spring modules do - amongst other things - exactly this an
 
 Here's how.
 
-NOTE: The following is based on a small but fully functional example that is part of Spring Infinispan's test suite. For further details you are encouraged to look at link:https://github.com/infinispan/infinispan/blob/master/spring/spring4/src/test/java/org/infinispan/spring/provider/sample/CachingBookDaoContextTest.java[org.infinispan.spring.provider.sample.CachingBookDaoContextTest] and its ilk.
-
 ==== Activating Spring Cache support
 You activate Spring's cache support using xml:
 
@@ -1302,7 +1300,7 @@ void deleteBook(Integer bookId) {...}
 and you may rest assured that no stray books be left in your application once you decide to remove them.
 
 ==== Conclusion
-Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html$$[reference documentation]. Also see link:$$http://blog.springsource.com/2011/02/23/spring-3-1-m1-caching/$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
+Hopefully you enjoyed our quick tour of Infinispan's support for Spring's cache abstraction and saw how easy it is for all your caching woes to be taken care of by Infinispan. More information may be found in Spring's link:$$http://docs.spring.io/spring-framework/docs/4.1.1.RELEASE/spring-framework-reference/html/cache.html$$[reference documentation]. Also see link:$$http://spring.io/blog/2011/02/23/spring-3-1-m1-cache-abstraction$$[this link] - a very nice posting on the official Spring blog for a somewhat more comprehensive introduction to Spring's cache abstraction.
 
 ===  Infinispan modules for JBoss AS 7.x
 Since Infinispan 5.2, the distribution includes a set of modules for JBoss AS 7.x. By installing these modules, it is possible to deploy user applications without packaging the Infinispan JARs within the deployments (WARs, EARs, etc), thus minimizing their size. In order not to conflict with the Infinispan modules which are already present within an AS installation, the modules provided by the Infinispan distribution are located within their own slot identified by the _major.minor_ versions (e.g. slot="5.2"). 

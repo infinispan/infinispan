@@ -148,8 +148,8 @@ While we haven't extensively tested Infinispan on anything other than Java, ther
 === Cache Loader and Cache Store questions
 
 ==== Cache loaders and cache stores - what's the difference?
-Infinispan has two interfaces - a link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/loader/CacheLoader.html$$[CacheLoader] simply loads state from elsewhere, while a link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/loader/CacheStore.html$$[CacheStore] - which extends CacheLoader - exposes methods to store state as well.
-Infinispan ships with several high performance implementations of these interfaces.
+These are old interfaces used in Infinispan 5.3 and lower - a link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/loaders/CacheLoader.html$$[CacheLoader] simply loads state from elsewhere, while a link:$$http://docs.jboss.org/infinispan/4.0/apidocs/org/infinispan/loaders/CacheStore.html$$[CacheStore] - which extends CacheLoader - exposes methods to store state as well.
+Please read link:$$../user_guide/user_guide.html#_persistence$$[Persistence] for information about the new SPI used in Infinispan 6.0 and higher.
 
 ==== Are modifications to asynchronous cache stores coalesced or aggregated?
 Modifications are coalesced or aggregated for the interval that the modification processor thread is currently applying.
@@ -390,9 +390,9 @@ By default Infinispan uses JBoss Logging 3.0 as logging framework. JBoss Logging
 . checking whether the JBoss Log Manager is configured (e.g. Infinispan is running in JBoss Application Server 7) and if it is, using it
 . otherwise, checking if link:$$http://logging.apache.org/log4j/1.2/index.html$$[Apache Log4j] is in the classpath (JBoss Logging checks if the classes org.apache.log4j.LogManager and org.apache.log4j.Hierarchy are available) and if it is, using it 
 . otherwise, checking if link:$$http://logback.qos.ch/$$[LogBack] in the classpath (JBoss Logging checks if the class ch.qos.logback.classic.Logger is available) and if it is, using it 
-. finally, if none of the above are available, using link:$$http://java.sun.com/j2se/1.4.2/docs/guide/util/logging/overview.html$$[JDK logging]
+. finally, if none of the above are available, using link:$$http://docs.oracle.com/javase/8/docs/technotes/guides/logging/overview.html$$[JDK logging]
 
-You can use this link:$$https://github.com/infinispan/infinispan/blob/master/core/src/test/resources/log4j.xml$$[log4j.xml] as base for any Infinispan related logging, and you can pass it to your system via system parameter (e.g., `-Dlog4j.configuration=file:/path/to/log4j.xml`). 
+You can use this link:$$https://github.com/infinispan/infinispan/blob/master/core/src/test/resources/log4j2.xml$$[log4j2.xml] as base for any Infinispan related logging, and you can pass it to your system via system parameter (e.g., `-Dlog4j.configuration=file:/path/to/log4j2.xml`).
 
 === Third Party Container questions
 ==== Can I run my own Infinispan cache within JBoss Application Server 5 or 4?

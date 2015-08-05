@@ -141,7 +141,7 @@ link:$$https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/api/BasicCac
 , which are parent classes of existing 
 link:$$https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/Cache.html$$[`Cache`]
 and 
-link:$$https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/CacheContainer.html$$[`CacheContainer`]
+link:$$https://docs.jboss.org/infinispan/5.1/apidocs/org/infinispan/manager/CacheContainer.html$$[`CacheContainer`]
 classes respectively. What's important is that Hot Rod clients must now code
 against `BasicCache` and `BasicCacheContainer` rather than `Cache` and `CacheContainer`.
 So previous code that was written like this will no longer compile. 

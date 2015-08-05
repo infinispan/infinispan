@@ -20,7 +20,7 @@ All the sample configurations are in the sample-configurations.xml file attached
 The Infinispan tutorial makes use of Groovy to get a more interactive experience when starting to learn about how to use the Infinispan API. So you will need to install a few prerequisites before getting started:
 
 
-*  The Groovy Platform, link:$$http://dist.groovy.codehaus.org/distributions/groovy-binary-1.6.3.zip$$[I used Groovy 1.6.3] 
+* link:$$http://www.groovy-lang.org/$$[The Groovy Platform] (I used Groovy 1.6.3)
 * Java and Infinispan
 
 Download those and extract/install where you feel appropriate, depending on your operating system and personal preferences you will either have installers or compressed distributions. You can read more about read installing Java and Infinispan in link:$$https://docs.jboss.org/author/pages/viewpage.action?pageId=3737054$$[Installing Infinispan for the tutorials] . 
@@ -229,9 +229,6 @@ You are able to specify the cache to use a transaction manager, and even explici
 
 
 *  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/JBossStandaloneJTAManagerLookup.html$$[org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup]
-
-
-*  link:$$http://docs.jboss.org/infinispan/6.0/apidocs/org/infinispan/transaction/lookup/JBossTransactionManagerLookup.html$$[org.infinispan.transaction.lookup.JBossTransactionManagerLookup]
 
 Each use different methods to lookup the transaction manager, depending on the environment you are running Infinispan you should figure out which one to use. Check the JavaDoc for more details.
 

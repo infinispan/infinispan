@@ -16,7 +16,7 @@
     <description>The Infinispan Documentation</description>
 
     <properties>
-        <infinispan.version>7.1</infinispan.version>
+        <infinispan.version>8.0</infinispan.version>
         
         <maven.deploy.skip>true</maven.deploy.skip>
 		<skipTests>true</skipTests>
