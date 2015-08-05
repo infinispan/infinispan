@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.infinispan.commands.ReplicableCommand;
-import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
@@ -61,7 +60,7 @@ public class ModuleProperties extends Properties {
          moduleCommands = new HashSet<Class<? extends ReplicableCommand>>(1);
          for (ModuleCommandExtensions extension : moduleCmdExtLoader) {
             log.debugf("Loading module command extension SPI class: %s", extension);
-            ExtendedModuleCommandFactory cmdFactory = extension.getModuleCommandFactory();
+            ModuleCommandFactory cmdFactory = extension.getModuleCommandFactory();
             ModuleCommandInitializer cmdInitializer = extension.getModuleCommandInitializer();
             for (Map.Entry<Byte, Class<? extends ReplicableCommand>> command :
                   cmdFactory.getModuleCommands().entrySet()) {

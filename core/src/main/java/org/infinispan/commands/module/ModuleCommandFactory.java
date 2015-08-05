@@ -1,6 +1,7 @@
 package org.infinispan.commands.module;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.remote.CacheRpcCommand;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
@@ -39,4 +40,15 @@ public interface ModuleCommandFactory {
     * @return a ReplicableCommand
     */
    ReplicableCommand fromStream(byte commandId, Object[] args);
+
+   /**
+    * Construct and initialize a {@link CacheRpcCommand} based on the command
+    * id and argument array passed in.
+    *
+    * @param commandId  command id to construct
+    * @param args       array of arguments with which to initialize the {@link CacheRpcCommand}
+    * @param cacheName  cache name at which command to be created is directed
+    * @return           a {@link CacheRpcCommand}
+    */
+   CacheRpcCommand fromStream(byte commandId, Object[] args, String cacheName);
 }
