@@ -33,6 +33,7 @@
       <dependency>
          <groupId>javax.cache</groupId>
          <artifactId>cache-api</artifactId>
+         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>javax.enterprise</groupId>
@@ -44,6 +45,7 @@
          <groupId>org.jboss.spec.javax.jms</groupId>
          <artifactId>jboss-jms-api_1.1_spec</artifactId>
          <version>1.0.0.Final</version>
+         <scope>provided</scope>
       </dependency>
       <dependency>
          <groupId>org.hornetq</groupId>

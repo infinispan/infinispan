@@ -1555,6 +1555,7 @@
                      <goal>java</goal>
                   </goals>
                   <configuration>
+                     <classpathScope>compile</classpathScope>
                      <skip>${module.skipComponentMetaDataProcessing}</skip>
                      <mainClass>org.infinispan.factories.components.ComponentMetadataPersister</mainClass>
                      <arguments>
