@@ -254,7 +254,24 @@ public class JdbcBinaryStore implements AdvancedLoadWriteStore {
 
    @Override
    public int size() {
-      return PersistenceUtil.count(this, null);
+      Connection conn = null;
+      PreparedStatement ps = null;
+      ResultSet rs = null;
+      try {
+         conn = connectionFactory.getConnection();
+         String sql = tableManipulation.getCountRowsSql();
+         ps = conn.prepareStatement(sql);
+         rs = ps.executeQuery();
+         rs.next();
+         return rs.getInt(1);
+      } catch (SQLException e) {
+         log.sqlFailureIntegratingState(e);
+         throw new PersistenceException("SQL failure while integrating state into store", e);
+      } finally {
+         JdbcUtil.safeClose(rs);
+         JdbcUtil.safeClose(ps);
+         connectionFactory.releaseConnection(conn);
+      }
    }
 
    @Override
