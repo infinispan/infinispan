@@ -120,9 +120,4 @@ public abstract class AbstractNonFunctionalTestCase extends org.hibernate.testin
    protected void avoidConcurrentFlush() {
       testSupport.avoidConcurrentFlush();
    }
-
-   protected int getValidKeyCount(Set keys) {
-      return keys.size();
-   }
-
 }
