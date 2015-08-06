@@ -1,13 +1,16 @@
 package org.infinispan.commands.functional;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 
+import java.util.Set;
 import java.util.function.BiConsumer;
 
 public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyCommand<K, V> {
@@ -17,8 +20,8 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    private BiConsumer<V, WriteEntryView<V>> f;
    private V value;
 
-   public WriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      super(key, f.getClass().getAnnotation(SerializeWith.class));
+   public WriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f, CommandInvocationId id) {
+      super(key, f.getClass().getAnnotation(SerializeWith.class), id);
       this.f = f;
       this.value = value;
    }
@@ -39,11 +42,13 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       value = (V) parameters[1];
       f = (BiConsumer<V, WriteEntryView<V>>) parameters[2];
       valueMatcher = (ValueMatcher) parameters[3];
+      flags = (Set<Flag>) parameters[4];
+      commandInvocationId = (CommandInvocationId) parameters[5];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, f, valueMatcher};
+      return new Object[]{key, value, f, valueMatcher, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
    }
 
    @Override

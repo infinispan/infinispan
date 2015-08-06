@@ -519,6 +519,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case StreamSegmentResponseCommand.COMMAND_ID:
             StreamSegmentResponseCommand streamSegmentResponseCommand = (StreamSegmentResponseCommand) c;
             streamSegmentResponseCommand.inject(clusterStreamManager);
+            break;
          case ReadWriteKeyCommand.COMMAND_ID:
             ReadWriteKeyCommand rwKeyCmd = (ReadWriteKeyCommand) c;
             rwKeyCmd.init(functionalNotifier);
@@ -745,14 +746,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      ReadWriteKeyValueCommand<K, V, R> cmd = new ReadWriteKeyValueCommand<>(key, value, f);
+      ReadWriteKeyValueCommand<K, V, R> cmd = new ReadWriteKeyValueCommand<>(key, value, f, generateUUID());
       cmd.init(functionalNotifier);
       return cmd;
    }
 
    @Override
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f) {
-      ReadWriteKeyCommand<K, V, R> cmd = new ReadWriteKeyCommand<>(key, f);
+      ReadWriteKeyCommand<K, V, R> cmd = new ReadWriteKeyCommand<>(key, f, generateUUID());
       cmd.init(functionalNotifier);
       return cmd;
    }
@@ -773,14 +774,14 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f) {
-      WriteOnlyKeyCommand<K, V> cmd = new WriteOnlyKeyCommand<>(key, f);
+      WriteOnlyKeyCommand<K, V> cmd = new WriteOnlyKeyCommand<>(key, f, generateUUID());
       cmd.init(functionalNotifier);
       return cmd;
    }
 
    @Override
    public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      WriteOnlyKeyValueCommand<K, V> cmd = new WriteOnlyKeyValueCommand<>(key, value, f);
+      WriteOnlyKeyValueCommand<K, V> cmd = new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID());
       cmd.init(functionalNotifier);
       return cmd;
    }

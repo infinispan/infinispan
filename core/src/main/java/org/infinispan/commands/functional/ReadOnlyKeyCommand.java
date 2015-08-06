@@ -1,5 +1,6 @@
 package org.infinispan.commands.functional;
 
+import org.infinispan.commands.LocalCommand;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
@@ -9,7 +10,7 @@ import org.infinispan.functional.impl.EntryViews;
 
 import java.util.function.Function;
 
-public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand {
+public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand implements LocalCommand {
 
    private Function<ReadEntryView<K, V>, R> f;
 

@@ -1,8 +1,9 @@
 package org.infinispan.functional.impl;
 
-import org.infinispan.commons.api.functional.Closeables.CloseableSpliterator;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.stream.CacheCollectors;
 
 import java.util.List;
 import java.util.Optional;
@@ -23,7 +24,7 @@ public final class Traversables {
    }
 
    public static <T> Traversable<T> eager(Stream<T> stream) {
-      List<T> list = stream.collect(Collectors.toList());
+      List<T> list = stream.collect(CacheCollectors.serializableCollector(() -> Collectors.toList()));
       return new StreamTraversable<>(list.stream());
    }
 

@@ -1,6 +1,5 @@
 package org.infinispan.functional.impl;
 
-import org.infinispan.commons.api.functional.Closeables;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.WaitMode;
 import org.infinispan.commons.api.functional.Traversable;

@@ -1,5 +1,6 @@
 package org.infinispan.commands.functional;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -11,8 +12,8 @@ abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand {
    ValueMatcher valueMatcher;
    boolean successful = true;
 
-   public AbstractWriteKeyCommand(K key, SerializeWith ann) {
-      super(key, null);
+   public AbstractWriteKeyCommand(K key, SerializeWith ann, CommandInvocationId id) {
+      super(key, null, id);
       this.valueMatcher = ann != null
          ? ValueMatcher.valueOf(ann.valueMatcher().toString())
          : ValueMatcher.MATCH_ALWAYS;

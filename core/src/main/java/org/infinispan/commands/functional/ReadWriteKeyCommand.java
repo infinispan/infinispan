@@ -1,13 +1,16 @@
 package org.infinispan.commands.functional;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 
+import java.util.Set;
 import java.util.function.Function;
 
 public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
@@ -16,8 +19,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    private Function<ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f) {
-      super(key, f.getClass().getAnnotation(SerializeWith.class));
+   public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f, CommandInvocationId id) {
+      super(key, f.getClass().getAnnotation(SerializeWith.class), id);
       this.f = f;
    }
 
@@ -36,11 +39,13 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       key = parameters[0];
       f = (Function<ReadWriteEntryView<K, V>, R>) parameters[1];
       valueMatcher = (ValueMatcher) parameters[2];
+      flags = (Set<Flag>) parameters[3];
+      commandInvocationId = (CommandInvocationId) parameters[4];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, f, valueMatcher};
+      return new Object[]{key, f, valueMatcher, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
    }
 
    @Override

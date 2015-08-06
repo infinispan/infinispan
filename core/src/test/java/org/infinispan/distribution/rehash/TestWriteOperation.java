@@ -2,6 +2,8 @@ package org.infinispan.distribution.rehash;
 
 import org.infinispan.AdvancedCache;
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.functional.ReadWriteKeyCommand;
+import org.infinispan.commands.functional.ReadWriteKeyValueCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
@@ -20,7 +22,14 @@ public enum TestWriteOperation {
    REPLACE(ReplaceCommand.class, "v1", ValueMatcher.MATCH_NON_NULL, "v0", "v0", "v1"),
    REPLACE_EXACT(ReplaceCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
    REMOVE(RemoveCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
-   REMOVE_EXACT(RemoveCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true);
+   REMOVE_EXACT(RemoveCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
+   // Functional methods
+   PUT_CREATE_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, "v1"),
+   PUT_IF_ABSENT_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
+   REPLACE_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_NON_NULL, "v0", "v0", "v1"),
+   REMOVE_FUNCTIONAL(ReadWriteKeyCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
+   REPLACE_EXACT_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
+   ;
 
    private final Class<? extends VisitableCommand> commandClass;
    private final Object value;
@@ -62,14 +71,19 @@ public enum TestWriteOperation {
       switch (this) {
          case PUT_CREATE:
          case PUT_OVERWRITE:
+         case PUT_CREATE_FUNCTIONAL:
             return cache.put(key, value);
          case PUT_IF_ABSENT:
+         case PUT_IF_ABSENT_FUNCTIONAL:
             return cache.putIfAbsent(key, value);
          case REPLACE:
+         case REPLACE_FUNCTIONAL:
             return cache.replace(key, value);
          case REPLACE_EXACT:
+         case REPLACE_EXACT_FUNCTIONAL:
             return cache.replace(key, previousValue, value);
          case REMOVE:
+         case REMOVE_FUNCTIONAL:
             return cache.remove(key);
          case REMOVE_EXACT:
             return cache.remove(key, previousValue);

@@ -1,13 +1,17 @@
 package org.infinispan.commands.functional;
 
+import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 
+import java.util.Set;
 import java.util.function.BiFunction;
 
 public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
@@ -17,8 +21,9 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    private V value;
    private BiFunction<V, ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      super(key, f.getClass().getAnnotation(SerializeWith.class));
+   public ReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f,
+         CommandInvocationId id) {
+      super(key, f.getClass().getAnnotation(SerializeWith.class), id);
       this.value = value;
       this.f = f;
    }
@@ -39,11 +44,13 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       value = (V) parameters[1];
       f = (BiFunction<V, ReadWriteEntryView<K, V>, R>) parameters[2];
       valueMatcher = (ValueMatcher) parameters[3];
+      flags = (Set<Flag>) parameters[4];
+      commandInvocationId = (CommandInvocationId) parameters[5];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, f, valueMatcher};
+      return new Object[]{key, value, f, valueMatcher, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
    }
 
    @Override
@@ -75,5 +82,10 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    @Override
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitReadWriteKeyValueCommand(ctx, this);
+   }
+
+   @Override
+   public String toString() {
+      return super.toString() + "@" + Util.hexIdHashCode(this);
    }
 }

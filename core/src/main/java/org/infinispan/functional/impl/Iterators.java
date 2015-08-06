@@ -1,7 +1,7 @@
 package org.infinispan.functional.impl;
 
-import org.infinispan.commons.api.functional.Closeables.CloseableSpliterator;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableSpliterator;
 
 import java.util.Iterator;
 import java.util.List;
