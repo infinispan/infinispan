@@ -1,6 +1,6 @@
 package org.infinispan.query.impl;
 
-import org.infinispan.commands.module.ModuleCommandFactory;
+import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.kohsuke.MetaInfServices;
@@ -9,7 +9,7 @@ import org.kohsuke.MetaInfServices;
 public class QueryModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override
-   public ModuleCommandFactory getModuleCommandFactory() {
+   public ExtendedModuleCommandFactory getModuleCommandFactory() {
       return new CommandFactory();
    }
 

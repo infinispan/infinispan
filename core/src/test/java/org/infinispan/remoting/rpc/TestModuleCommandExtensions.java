@@ -1,6 +1,7 @@
 package org.infinispan.remoting.rpc;
 
 import org.infinispan.commands.ReplicableCommand;
+import org.infinispan.commands.module.ExtendedModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandExtensions;
 import org.infinispan.commands.module.ModuleCommandFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
@@ -16,8 +17,8 @@ import java.util.Map;
 public class TestModuleCommandExtensions implements ModuleCommandExtensions {
 
    @Override
-   public ModuleCommandFactory getModuleCommandFactory() {
-      return new ModuleCommandFactory() {
+   public ExtendedModuleCommandFactory getModuleCommandFactory() {
+      return new ExtendedModuleCommandFactory() {
          @Override
          public Map<Byte, Class<? extends ReplicableCommand>> getModuleCommands() {
             Map<Byte, Class<? extends ReplicableCommand>> map = new HashMap<Byte, Class<? extends ReplicableCommand>>(2);
