@@ -2,6 +2,7 @@ package org.infinispan.commands.write;
 
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.Util;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -131,6 +132,11 @@ public class InvalidateCommand extends RemoveCommand {
 
    public Object[] getKeys() {
       return keys;
+   }
+
+   @Override
+   public Set<Object> getAffectedKeys() {
+      return CollectionFactory.makeSet(keys);
    }
 
    @Override
