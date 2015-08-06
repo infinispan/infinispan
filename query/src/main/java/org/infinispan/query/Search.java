@@ -3,6 +3,7 @@ package org.infinispan.query;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
+import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
@@ -22,9 +23,9 @@ import org.infinispan.security.AuthorizationPermission;
  */
 public final class Search {
 
-   public static <K, V, C> CacheEventFilterConverter<K, V, C> makeFilter(Query query) {
+   public static <K, V> CacheEventFilterConverter<K, V, ObjectFilter.FilterResult> makeFilter(Query query) {
       JPAFilterAndConverter<K, V> filterAndConverter = new JPAFilterAndConverter<K, V>(((BaseQuery) query).getJPAQuery(), ReflectionMatcher.class);
-      return new JPACacheEventFilterConverter<K, V, C>(filterAndConverter);
+      return new JPACacheEventFilterConverter<K, V, ObjectFilter.FilterResult>(filterAndConverter);
    }
 
    public static QueryFactory getQueryFactory(Cache<?, ?> cache) {
