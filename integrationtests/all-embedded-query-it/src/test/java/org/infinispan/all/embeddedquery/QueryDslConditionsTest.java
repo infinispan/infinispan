@@ -8,7 +8,6 @@ import org.infinispan.all.embeddedquery.testdomain.NotIndexed;
 import org.infinispan.all.embeddedquery.testdomain.Transaction;
 import org.infinispan.all.embeddedquery.testdomain.User;
 import org.infinispan.all.embeddedquery.testdomain.hsearch.ModelFactoryHS;
-import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.FilterConditionEndContext;
 import org.infinispan.query.dsl.Query;
@@ -17,6 +16,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.text.DateFormat;
@@ -827,7 +827,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(3, list.get(0).getId());
    }
 
-   @Test
+   @Ignore(value = "https://hibernate.atlassian.net/browse/HSEARCH-1956")
    public void testIsNullNumericWithProjection1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
