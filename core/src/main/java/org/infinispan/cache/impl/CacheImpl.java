@@ -209,6 +209,11 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       this.globalCfg = globalCfg;
       this.partitionHandlingManager = partitionHandlingManager;
       this.localTopologyManager = localTopologyManager;
+
+      // We have to do this before start, since some components may start before the actual cache and they
+      // have to have access to the default metadata on some operations
+      defaultMetadata = new EmbeddedMetadata.Builder()
+              .lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
    }
 
    private void assertKeyNotNull(Object key) {
@@ -841,8 +846,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    )
    public void start() {
       componentRegistry.start();
-      defaultMetadata = new EmbeddedMetadata.Builder()
-            .lifespan(config.expiration().lifespan()).maxIdle(config.expiration().maxIdle()).build();
       // Context only needs to ship ClassLoader if marshalling will be required
       isClassLoaderInContext = config.clustering().cacheMode().isClustered()
             || config.persistence().usingStores()
@@ -1082,7 +1085,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private V putInternal(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       assertKeyValueNotNull(key, value);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, explicitFlags);
+      Metadata merged = applyDefaultMetadata(metadata);
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, explicitFlags);
       ctx.setLockOwner(command.getLockOwner());
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -1677,8 +1681,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V put(K key, V value, Metadata metadata) {
-      Metadata merged = applyDefaultMetadata(metadata);
-      return put(key, value, merged, null, null);
+      return put(key, value, metadata, null, null);
    }
 
    @Override
@@ -1688,6 +1691,9 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    private Metadata applyDefaultMetadata(Metadata metadata) {
+      if (metadata == null) {
+         return defaultMetadata;
+      }
       Metadata.Builder builder = metadata.builder();
       return builder != null ? builder.merge(defaultMetadata).build() : metadata;
    }
@@ -1712,8 +1718,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
-      Metadata merged = applyDefaultMetadata(metadata);
-      return putAsync(key, value, merged, null, null);
+      return putAsync(key, value, metadata, null, null);
    }
 
    private void associateImplicitTransactionWithCurrentThread(InvocationContext ctx) throws InvalidTransactionException, SystemException {
