@@ -779,6 +779,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.get(0).getId());
    }
 
+   @Test(enabled = false, description = "https://hibernate.atlassian.net/browse/HSEARCH-1956")
    public void testIsNullNumericWithProjection1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
