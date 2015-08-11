@@ -251,16 +251,9 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
                event = clone;
             }
             for (DelegatingCacheEntryListenerInvocation<K, V> invocation : invocations) {
-               if (event.isPre()) {
-                  if (invocation.getObservation() == Listener.Observation.POST) {
-                     continue;
-                  }
-               } else {
-                  if (invocation.getObservation() == Listener.Observation.PRE) {
-                     continue;
-                  }
+               if (invocation.getObservation().shouldInvoke(event.isPre())) {
+                  invocation.invokeNoChecks(event, false, filterAndConvert);
                }
-               invocation.invokeNoChecks(event, false, filterAndConvert);
             }
          }
       }
@@ -331,7 +324,7 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
 
       @Override
       public Listener.Observation getObservation() {
-         return null;
+         return Listener.Observation.BOTH;
       }
 
       @Override
