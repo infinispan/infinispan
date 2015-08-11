@@ -2,6 +2,7 @@ package org.infinispan.query.remote.filter;
 
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.cachelistener.filter.FilterIndexingServiceProvider;
 import org.infinispan.notifications.cachelistener.filter.IndexedFilter;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
@@ -16,7 +17,7 @@ import java.io.IOException;
  * @author anistor@redhat.com
  * @since 7.2
  */
-@MetaInfServices
+@MetaInfServices(FilterIndexingServiceProvider.class)
 public final class JPAProtobufFilterIndexingServiceProvider extends JPAFilterIndexingServiceProvider {
 
    private SerializationContext serCtx;

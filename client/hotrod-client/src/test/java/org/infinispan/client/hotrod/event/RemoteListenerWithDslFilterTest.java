@@ -25,6 +25,8 @@ import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.FilterResult;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.filter.JPACacheEventFilterConverterFactory;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -145,9 +147,13 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
    @ClientListener(filterFactoryName = ClientEvents.QUERY_DSL_FILTER_FACTORY_NAME,
          converterFactoryName = ClientEvents.QUERY_DSL_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)
-   public class ClientEntryListener {
+   public static class ClientEntryListener {
+
+      private final Log log = LogFactory.getLog(getClass());
 
       public final List<FilterResult> createEvents = new ArrayList<FilterResult>();
+
+      public final List<FilterResult> modifyEvents = new ArrayList<FilterResult>();
 
       private final SerializationContext serializationContext;
 
@@ -167,8 +173,15 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       }
 
       @ClientCacheEntryModified
-      public void handleClientCacheEntryModifiedEvent(ClientCacheEntryModifiedEvent event) {
-         log.debugf("handleClientCacheEntryModifiedEvent %s\n", event.getKey());
+      public void handleClientCacheEntryModifiedEvent(ClientCacheEntryCustomEvent event) throws IOException {
+         FilterResult r = (FilterResult) ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
+         modifyEvents.add(r);
+
+         log.debugf("handleClientCacheEntryModifiedEvent instance=%s projection=%s sortProjection=%s\n",
+                    r.getInstance(),
+                    r.getProjection() == null ? null : Arrays.asList(r.getProjection()),
+                    r.getSortProjection() == null ? null : Arrays.asList(r.getSortProjection()));
+
       }
 
       @ClientCacheEntryRemoved
