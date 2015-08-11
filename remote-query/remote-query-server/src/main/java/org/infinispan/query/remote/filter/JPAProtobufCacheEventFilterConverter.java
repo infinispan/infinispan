@@ -24,11 +24,11 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFilterConverter<byte[], byte[], byte[]> {
+public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFilterConverter<Object, Object, byte[]> {
 
    private transient SerializationContext serCtx;
 
-   public JPAProtobufCacheEventFilterConverter(JPAFilterAndConverter<byte[], byte[]> filterAndConverter) {
+   public JPAProtobufCacheEventFilterConverter(JPAFilterAndConverter<Object, Object> filterAndConverter) {
       super(filterAndConverter);
    }
 
@@ -38,7 +38,7 @@ public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFil
    }
 
    @Override
-   public byte[] filterAndConvert(byte[] key, byte[] oldValue, Metadata oldMetadata, byte[] newValue, Metadata newMetadata, EventType eventType) {
+   public byte[] filterAndConvert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
       ObjectFilter.FilterResult filterResult = filterAndConverter.filterAndConvert(key, newValue, newMetadata);
       if (filterResult != null) {
          try {

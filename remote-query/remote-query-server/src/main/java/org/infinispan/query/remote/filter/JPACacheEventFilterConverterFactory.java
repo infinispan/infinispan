@@ -1,14 +1,12 @@
 package org.infinispan.query.remote.filter;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.filter.NamedFactory;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.CacheEventFilterConverterFactory;
-import org.infinispan.filter.NamedFactory;
-import org.infinispan.objectfilter.impl.ProtobufMatcher;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.protostream.config.Configuration;
-import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
 import org.kohsuke.MetaInfServices;
 
@@ -35,7 +33,7 @@ public final class JPACacheEventFilterConverterFactory implements CacheEventFilt
    };
 
    @Override
-   public CacheEventFilterConverter<byte[], byte[], byte[]> getFilterConverter(Object[] params) {
+   public CacheEventFilterConverter<?, ?, ?> getFilterConverter(Object[] params) {
       String jpql;
       try {
          jpql = (String) paramMarshaller.objectFromByteBuffer((byte[]) params[0]);
@@ -44,7 +42,8 @@ public final class JPACacheEventFilterConverterFactory implements CacheEventFilt
       } catch (ClassNotFoundException e) {
          throw new CacheException(e);
       }
-      return new JPAProtobufCacheEventFilterConverter(new JPAFilterAndConverter<byte[], byte[]>(jpql, ProtobufMatcher.class));
+      //todo [anistor] test this in compat mode too!
+      return new JPAProtobufCacheEventFilterConverter(new JPAProtobufFilterAndConverter(jpql));
    }
 }
 
