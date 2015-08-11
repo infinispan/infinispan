@@ -1,5 +1,7 @@
 package org.infinispan.query.dsl.embedded;
 
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
@@ -30,7 +32,15 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager();
+      return TestCacheManagerFactory.createCacheManager(getConfigurationBuilder());
+   }
+
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder cfgBuilder = new ConfigurationBuilder();
+      cfgBuilder.indexing().index(Index.ALL)
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+      return cfgBuilder;
    }
 
    public void testEventFilter() {

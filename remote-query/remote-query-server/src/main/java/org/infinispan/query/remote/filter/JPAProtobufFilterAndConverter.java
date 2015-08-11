@@ -1,6 +1,8 @@
 package org.infinispan.query.remote.filter;
 
+import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ProtobufMatcher;
@@ -20,19 +22,31 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public class JPAProtobufFilterAndConverter<K> extends JPAFilterAndConverter<K, ProtobufValueWrapper> {
+public final class JPAProtobufFilterAndConverter<Object> extends JPAFilterAndConverter<Object, Object> {
+
+   private boolean usesValueWrapper;
+
+   @Override
+   public void injectDependencies(Cache cache) {
+      super.injectDependencies(cache);
+      Configuration cfg = cache.getCacheConfiguration();
+      usesValueWrapper = cfg.indexing().index().isEnabled() && !cfg.compatibility().enabled();
+   }
 
    public JPAProtobufFilterAndConverter(String jpaQuery) {
       super(jpaQuery, ProtobufMatcher.class);
    }
 
    @Override
-   public ObjectFilter.FilterResult filterAndConvert(K key, ProtobufValueWrapper value, Metadata metadata) {
+   public ObjectFilter.FilterResult filterAndConvert(Object key, Object value, Metadata metadata) {
       if (value == null) {
          // this is a 'pre' invocation, ignore it
          return null;
       }
-      return getObjectFilter().filter(value.getBinary());
+      if (usesValueWrapper) {
+         value = (Object) ((ProtobufValueWrapper) value).getBinary();
+      }
+      return getObjectFilter().filter(value);
    }
 
    @Override

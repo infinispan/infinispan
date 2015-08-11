@@ -54,11 +54,7 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
    @Override
    protected void createCacheManagers() throws Throwable {
-      ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
-      cfgBuilder.indexing().index(Index.ALL)
-            .addProperty("default.directory_provider", "ram")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
-
+      ConfigurationBuilder cfgBuilder = getConfigurationBuilder();
       createHotRodServers(NUM_NODES, cfgBuilder);
 
       waitForClusterToForm();
@@ -77,6 +73,14 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
       //initialize client-side serialization context
       MarshallerRegistration.registerMarshallers(ProtoStreamMarshaller.getSerializationContext(client(0)));
+   }
+
+   protected ConfigurationBuilder getConfigurationBuilder() {
+      ConfigurationBuilder cfgBuilder = hotRodCacheConfiguration(getDefaultClusteredCacheConfig(CacheMode.DIST_SYNC, false));
+      cfgBuilder.indexing().index(Index.ALL)
+            .addProperty("default.directory_provider", "ram")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+      return cfgBuilder;
    }
 
    @Override
@@ -121,8 +125,13 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
       user3.setName("Spider");
       user3.setSurname("Woman");
       user3.setGender(User.Gender.FEMALE);
-      user3.setAge(40);
+      user3.setAge(31);
       user3.setAccountIds(Collections.<Integer>emptySet());
+
+      remoteCache.put("user_" + user1.getId(), user1);
+      remoteCache.put("user_" + user2.getId(), user2);
+      remoteCache.put("user_" + user3.getId(), user3);
+      assertEquals(3, remoteCache.size());
 
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(client(0));
       QueryFactory qf = Search.getQueryFactory(remoteCache);
@@ -133,13 +142,15 @@ public class RemoteListenerWithDslFilterTest extends MultiHotRodServersTest {
 
       ClientEntryListener listener = new ClientEntryListener(serCtx);
       ClientEvents.addClientQueryListener(remoteCache, listener, query);
+      assertEquals(3, listener.createEvents.size());
 
+      user3.setAge(40);
       remoteCache.put("user_" + user1.getId(), user1);
       remoteCache.put("user_" + user2.getId(), user2);
       remoteCache.put("user_" + user3.getId(), user3);
 
       assertEquals(3, remoteCache.size());
-      assertEquals(2, listener.createEvents.size());
+      assertEquals(2, listener.modifyEvents.size());
 
       remoteCache.removeClientListener(listener);
    }
