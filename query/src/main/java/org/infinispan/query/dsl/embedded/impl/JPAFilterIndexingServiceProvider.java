@@ -2,6 +2,7 @@ package org.infinispan.query.dsl.embedded.impl;
 
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.CacheNotifierImpl;
@@ -245,6 +246,15 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
                event = clone;
             }
             for (DelegatingCacheEntryListenerInvocation<K, V> invocation : invocations) {
+               if (event.isPre()) {
+                  if (invocation.getObservation() == Listener.Observation.POST) {
+                     continue;
+                  }
+               } else {
+                  if (invocation.getObservation() == Listener.Observation.PRE) {
+                     continue;
+                  }
+               }
                invocation.invokeNoChecks(event, false, filterAndConvert);
             }
          }
@@ -311,6 +321,11 @@ public class JPAFilterIndexingServiceProvider implements FilterIndexingServicePr
 
       @Override
       public UUID getIdentifier() {
+         return null;
+      }
+
+      @Override
+      public Listener.Observation getObservation() {
          return null;
       }
 

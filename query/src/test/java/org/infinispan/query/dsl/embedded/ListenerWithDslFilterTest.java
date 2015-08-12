@@ -18,8 +18,7 @@ import org.testng.annotations.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 
 /**
@@ -35,6 +34,15 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
    }
 
    public void testEventFilter() {
+      for (int i = 0; i < 10; ++i) {
+         Person value = new Person();
+         value.setName("John");
+         value.setAge(99);
+
+         cache().put(i, value);
+      }
+      assertEquals(10, cache.size());
+
       QueryFactory qf = Search.getQueryFactory(cache());
 
       Query query = qf.from(Person.class)
@@ -46,6 +54,9 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       // we want our cluster listener to be notified only if the entity matches our query
       cache().addListener(listener, Search.makeFilter(query), null);
 
+      assertTrue(listener.createEvents.isEmpty());
+      assertTrue(listener.modifyEvents.isEmpty());
+
       for (int i = 0; i < 10; ++i) {
          Person value = new Person();
          value.setName("John");
@@ -54,8 +65,11 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
          cache().put(i, value);
       }
 
-      assertEquals(7, listener.results.size());
-      for (ObjectFilter.FilterResult r : listener.results) {
+      assertEquals(10, cache.size());
+      assertTrue(listener.createEvents.isEmpty());
+      assertEquals(7, listener.modifyEvents.size());
+
+      for (ObjectFilter.FilterResult r : listener.modifyEvents) {
          Person p = (Person) r.getInstance();
          assertTrue(p.getAge() <= 31);
       }
@@ -63,13 +77,15 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
       cache().removeListener(listener);
 
       // ensure no more invocations after the listener was removed
-      listener.results.clear();
+      listener.createEvents.clear();
+      listener.modifyEvents.clear();
       Person value = new Person();
       value.setName("George");
       value.setAge(30);
 
       cache().put(-1, value);
-      assertEquals(0, listener.results.size());
+      assertTrue(listener.createEvents.isEmpty());
+      assertTrue(listener.modifyEvents.isEmpty());
    }
 
    public void testEventFilterAndConverter() {
@@ -94,34 +110,37 @@ public class ListenerWithDslFilterTest extends SingleCacheManagerTest {
          cache.put(i, value);
       }
 
-      assertEquals(7, listener.results.size());
-      for (ObjectFilter.FilterResult r : listener.results) {
+      assertEquals(10, cache.size());
+      assertEquals(7, listener.createEvents.size());
+      assertTrue(listener.modifyEvents.isEmpty());
+
+      for (ObjectFilter.FilterResult r : listener.createEvents) {
+         assertNotNull(r.getProjection());
+         assertEquals(2, r.getProjection().length);
          assertTrue((Integer) r.getProjection()[1] <= 31);
       }
 
       cache().removeListener(listener);
    }
 
-   @Listener
+   @Listener(includeCurrentState = true, observation = Listener.Observation.POST)
    public static class EntryListener {
 
       // this is where we accumulate matches
-      public final List<ObjectFilter.FilterResult> results = new ArrayList<ObjectFilter.FilterResult>();
+      public final List<ObjectFilter.FilterResult> createEvents = new ArrayList<ObjectFilter.FilterResult>();
+
+      public final List<ObjectFilter.FilterResult> modifyEvents = new ArrayList<ObjectFilter.FilterResult>();
 
       @CacheEntryCreated
       public void handleEvent(CacheEntryCreatedEvent<?, ObjectFilter.FilterResult> event) {
-         if (!event.isPre()) {
-            ObjectFilter.FilterResult filterResult = event.getValue();
-            results.add(filterResult);
-         }
+         ObjectFilter.FilterResult filterResult = event.getValue();
+         createEvents.add(filterResult);
       }
 
       @CacheEntryModified
       public void handleEvent(CacheEntryModifiedEvent<?, ObjectFilter.FilterResult> event) {
-         if (!event.isPre()) {
-            ObjectFilter.FilterResult filterResult = event.getValue();
-            results.add(filterResult);
-         }
+         ObjectFilter.FilterResult filterResult = event.getValue();
+         modifyEvents.add(filterResult);
       }
    }
 }
