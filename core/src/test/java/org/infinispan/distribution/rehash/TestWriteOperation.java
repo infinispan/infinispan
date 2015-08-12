@@ -23,12 +23,19 @@ public enum TestWriteOperation {
    REPLACE_EXACT(ReplaceCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
    REMOVE(RemoveCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
    REMOVE_EXACT(RemoveCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
-   // Functional methods
-   PUT_CREATE_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, "v1"),
+
+   // Functional put create must return null even on retry (as opposed to non-functional)
+   PUT_CREATE_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, null, null, null),
+   // Functional put overwrite must return the previous value (as opposed to non-functional)
+   PUT_OVERWRITE_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_ALWAYS, "v0", "v0", "v0"),
    PUT_IF_ABSENT_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, null, null),
-   REPLACE_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_NON_NULL, "v0", "v0", "v1"),
+   // Functional replace must return the previous value (as opposed to non-functional)
+   REPLACE_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_NON_NULL, "v0", "v0", "v0"),
    REMOVE_FUNCTIONAL(ReadWriteKeyCommand.class, null, ValueMatcher.MATCH_NON_NULL, "v0", "v0", null),
    REPLACE_EXACT_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, "v0", true, true),
+   REMOVE_EXACT_FUNCTIONAL(ReadWriteKeyValueCommand.class, null, ValueMatcher.MATCH_EXPECTED, "v0", true, true),
+   // Functional replace
+   REPLACE_META_FUNCTIONAL(ReadWriteKeyValueCommand.class, "v1", ValueMatcher.MATCH_EXPECTED, null, true, true)
    ;
 
    private final Class<? extends VisitableCommand> commandClass;
@@ -72,6 +79,7 @@ public enum TestWriteOperation {
          case PUT_CREATE:
          case PUT_OVERWRITE:
          case PUT_CREATE_FUNCTIONAL:
+         case PUT_OVERWRITE_FUNCTIONAL:
             return cache.put(key, value);
          case PUT_IF_ABSENT:
          case PUT_IF_ABSENT_FUNCTIONAL:
@@ -86,6 +94,7 @@ public enum TestWriteOperation {
          case REMOVE_FUNCTIONAL:
             return cache.remove(key);
          case REMOVE_EXACT:
+         case REMOVE_EXACT_FUNCTIONAL:
             return cache.remove(key, previousValue);
          default:
             throw new IllegalArgumentException("Unsupported operation: " + this);

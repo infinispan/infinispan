@@ -46,7 +46,7 @@ import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.re
  * {@link ReadOnlyMap}, {@link WriteOnlyMap} and {@link ReadWriteMap}, and
  * validates their usefulness.
  */
-public class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalListeners<K, V> {
+public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalListeners<K, V> {
 
    final ReadOnlyMap<K, V> readOnly;
    final WriteOnlyMap<K, V> writeOnly;

@@ -1,6 +1,7 @@
 package org.infinispan.distribution.rehash;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commands.functional.ReadOnlyKeyCommand;
 import org.infinispan.commands.read.GetKeyValueCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -75,7 +76,7 @@ public class NonTxJoinerBecomingBackupOwnerTest extends MultipleCacheManagersTes
       doTest(TestWriteOperation.REMOVE_EXACT);
    }
 
-   private void doTest(final TestWriteOperation op) throws Exception {
+   protected void doTest(final TestWriteOperation op) throws Exception {
       final StateSequencer sequencer = new StateSequencer();
       sequencer.logicalThread("st", "st:cache0_before_send_state");
       sequencer.logicalThread("write", "write:before_start", "write:start", "write:cache1_before_return", "write:cache2_before_dist", "write:end", "write:after_end");

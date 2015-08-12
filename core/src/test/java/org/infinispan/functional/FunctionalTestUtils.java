@@ -37,7 +37,7 @@ public final class FunctionalTestUtils {
          it.next();
    }
 
-   static <T> T await(CompletableFuture<T> cf) {
+   public static <T> T await(CompletableFuture<T> cf) {
       try {
          return cf.get();
       } catch (InterruptedException | ExecutionException e) {

@@ -71,6 +71,10 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       doTest(TestWriteOperation.PUT_CREATE);
    }
 
+   public void testPrimaryOwnerChangingDuringPutOverwrite() throws Exception {
+      doTest(TestWriteOperation.PUT_OVERWRITE);
+   }
+
    public void testPrimaryOwnerChangingDuringPutIfAbsent() throws Exception {
       doTest(TestWriteOperation.PUT_IF_ABSENT);
    }
@@ -91,7 +95,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       doTest(TestWriteOperation.REMOVE_EXACT);
    }
 
-   private void doTest(final TestWriteOperation op) throws Exception {
+   protected void doTest(final TestWriteOperation op) throws Exception {
       final String key = "testkey";
       if (op.getPreviousValue() != null) {
          cache(0, CACHE_NAME).put(key, op.getPreviousValue());
@@ -153,7 +157,7 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       Future<Object> future = fork(new Callable<Object>() {
          @Override
          public Object call() throws Exception {
-            return op.perform(cache0, key);
+            return perform(op, cache0, key);
          }
       });
 
@@ -199,6 +203,10 @@ public class NonTxBackupOwnerBecomingPrimaryOwnerTest extends MultipleCacheManag
       assertFalse(cache0.getAdvancedCache().getLockManager().isLocked(key));
       assertFalse(cache1.getAdvancedCache().getLockManager().isLocked(key));
       assertFalse(cache2.getAdvancedCache().getLockManager().isLocked(key));
+   }
+
+   protected Object perform(TestWriteOperation op, AdvancedCache<Object, Object> cache0, String key) {
+      return op.perform(cache0, key);
    }
 
    private static class CustomConsistentHashFactory extends BaseControlledConsistentHashFactory {

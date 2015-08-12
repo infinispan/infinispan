@@ -35,6 +35,11 @@ public final class EntryViews {
       return new CacheEntryReadWriteEntryView<>(entry, notifier);
    }
 
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry,
+         V prevValue, Metadata prevMetadata, FunctionalNotifier<K, V> notifier) {
+      return new PreviousReadWriteEntryView<>(entry, prevValue, prevMetadata, notifier);
+   }
+
    public static <K, V> ReadEntryView<K, V> noValue(K key) {
       return new NoValueView<>(key);
    }
@@ -271,6 +276,121 @@ public final class EntryViews {
       }
    }
 
+   private static final class PreviousReadWriteEntryView<K, V> implements ReadWriteEntryView<K, V> {
+      final FunctionalNotifier<K, V> notifier;
+      final CacheEntry<K, V> entry;
+      final V prevValue;
+      final Metadata prevMetadata;
+
+      private PreviousReadWriteEntryView(CacheEntry<K, V> entry,
+            V prevValue, Metadata prevMetadata, FunctionalNotifier<K, V> notifier) {
+         this.entry = entry;
+         this.prevValue = prevValue;
+         this.prevMetadata = prevMetadata;
+         this.notifier = notifier;
+      }
+
+      @Override
+      public K key() {
+         return entry.getKey();
+      }
+
+      @Override
+      public Optional<V> find() {
+         return prevValue == null ? Optional.empty() : Optional.ofNullable(prevValue);
+         //return entry == null ? Optional.empty() : Optional.ofNullable(entry.getValue());
+      }
+
+      @Override
+      public Void set(V value, MetaParam.Writable... metas) {
+         boolean hasModified = notifier.hasModifyListeners();
+         boolean hasCreated = notifier.hasCreateListeners();
+         if (hasModified && !entry.isCreated()) setAndNotifyModified(value, metas);
+         else if (hasCreated && entry.isCreated()) setAndNotifyCreated(value, metas);
+         else setOnly(value, metas);
+         return null;
+      }
+
+      private void setOnly(V value, MetaParam.Writable[] metas) {
+         entry.setValue(value);
+         entry.setChanged(true);
+         updateMetaParams(entry, metas);
+      }
+
+      private void setAndNotifyModified(V value, MetaParam.Writable[] metas) {
+         // Calculate previous values
+         K key = entry.getKey();
+         V prev = entry.getValue();
+         MetaParams prevMetas = extractMetaParams(entry);
+         // Update entry
+         entry.setValue(value);
+         entry.setChanged(true);
+         MetaParams newMetas = updateMetaParams(entry, metas);
+         // Notify
+         notifier.notifyOnModify(
+            EntryViews.readOnly(key, prev, prevMetas),
+            EntryViews.readOnly(key, value, newMetas));
+      }
+
+      private void setAndNotifyCreated(V value, MetaParam.Writable[] metas) {
+         entry.setValue(value);
+         entry.setChanged(true);
+         MetaParams newMetas = updateMetaParams(entry, metas);
+         notifier.notifyOnCreate(EntryViews.readOnly(entry.getKey(), value, newMetas));
+      }
+
+      @Override
+      public Void remove() {
+         if (!entry.isNull()) {
+            if (notifier.hasRemoveListeners()) {
+               V prev = entry.getValue();
+               MetaParams prevMetas = extractMetaParams(entry);
+               notifier.notifyOnRemove(EntryViews.readOnly(entry.getKey(), prev, prevMetas));
+            }
+
+            entry.setRemoved(true);
+            entry.setChanged(true);
+         }
+
+         return null;
+      }
+
+      @Override
+      public <T> T getMetaParam(Class<T> type) {
+         Metadata metadata = prevMetadata; // Use previous metadata
+         if (metadata instanceof MetaParamsInternalMetadata) {
+            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+            return metaParamsMetadata.getMetaParam(type);
+         }
+
+         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
+
+         throw new NoSuchElementException("Metadata with type=" + type + " not found");
+      }
+
+      @Override
+      public <T> Optional<T> findMetaParam(Class<T> type) {
+         Metadata metadata = prevMetadata; // Use previous metadata
+         if (metadata instanceof MetaParamsInternalMetadata) {
+            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+            return metaParamsMetadata.findMetaParam(type);
+         }
+
+         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
+
+         return Optional.empty();
+      }
+
+      @Override
+      public V get() throws NoSuchElementException {
+         return prevValue;
+//         if (entry == null || entry.getValue() == null)
+//            throw new NoSuchElementException("No value present");
+//
+//         return entry.getValue();
+      }
+   }
+
    public static final class ReadWriteViewImplExternalizer extends AbstractExternalizer<CacheEntryReadWriteEntryView> {
       @Override
       public void writeObject(ObjectOutput output, CacheEntryReadWriteEntryView object) throws IOException {
@@ -339,7 +459,9 @@ public final class EntryViews {
          return metaParams;
       }
 
-      return MetaParams.empty();
+      MetaParams empty = MetaParams.empty();
+      entry.setMetadata(MetaParamsInternalMetadata.from(empty));
+      return empty;
    }
 
    private static <K, V> MetaParams extractMetaParams(CacheEntry<K, V> entry) {

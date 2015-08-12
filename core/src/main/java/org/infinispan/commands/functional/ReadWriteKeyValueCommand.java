@@ -4,22 +4,30 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
+import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.commons.util.Util;
-import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import static org.infinispan.commons.util.Util.toStr;
+
 public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
+   private static final Log log = LogFactory.getLog(ReadWriteKeyValueCommand.class);
 
    public static final byte COMMAND_ID = 51;
 
    private V value;
    private BiFunction<V, ReadWriteEntryView<K, V>, R> f;
+   private V prevValue;
+   private Metadata prevMetadata;
 
    public ReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f,
          CommandInvocationId id) {
@@ -46,11 +54,16 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       valueMatcher = (ValueMatcher) parameters[3];
       flags = (Set<Flag>) parameters[4];
       commandInvocationId = (CommandInvocationId) parameters[5];
+      prevValue = (V) parameters[6];
+      prevMetadata = (Metadata) parameters[7];
    }
 
    @Override
    public Object[] getParameters() {
-      return new Object[]{key, value, f, valueMatcher, Flag.copyWithoutRemotableFlags(flags), commandInvocationId};
+      return new Object[]{
+         key, value, f, valueMatcher, Flag.copyWithoutRemotableFlags(flags),
+         commandInvocationId, prevValue, prevMetadata
+      };
    }
 
    @Override
@@ -66,12 +79,35 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
          return null;
       }
 
-      CacheEntry<K, V> e = ctx.lookupEntry(key);
+      MVCCEntry<K, V> e = (MVCCEntry<K, V>) ctx.lookupEntry(key);
 
       // Could be that the key is not local
       if (e == null) return null;
 
-      return f.apply(value, EntryViews.readWrite(e, notifier));
+      // Command only has one previous value, do not override it
+      if (prevValue == null && (flags == null || !flags.contains(Flag.COMMAND_RETRY))) {
+         prevValue = e.getValue();
+         prevMetadata = e.getMetadata();
+      }
+
+      // Protect against outdated old value using the value matcher.
+      // If the value has been update while on the retry, use the newer value.
+      // Also take into account that the value might have been removed.
+      // TODO: Configure equivalence function
+      if (valueUnchanged(e, prevValue, value) || valueRemoved(e, prevValue)) {
+         log.tracef("Execute read-write function on previous value %s and previous metadata %s", prevValue, prevMetadata);
+         return f.apply(value, EntryViews.readWrite(e, prevValue, prevMetadata, notifier));
+      }
+
+      return f.apply(value, EntryViews.readWrite(e, e.getValue(), e.getMetadata(), notifier));
+   }
+
+   boolean valueRemoved(MVCCEntry<K, V> e, V prevValue) {
+      return valueUnchanged(e, prevValue, null);
+   }
+
+   boolean valueUnchanged(MVCCEntry<K, V> e, V prevValue, V value) {
+      return valueMatcher.matches(e, prevValue, value, AnyEquivalence.getInstance());
    }
 
    @Override
@@ -86,6 +122,17 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
 
    @Override
    public String toString() {
-      return super.toString() + "@" + Util.hexIdHashCode(this);
+      return new StringBuilder(getClass().getSimpleName())
+         .append(" {key=")
+         .append(toStr(key))
+         .append(", value=").append(toStr(value))
+         .append(", prevValue=").append(toStr(prevValue))
+         .append(", prevMetadata=").append(toStr(prevMetadata))
+         .append(", flags=").append(flags)
+         .append(", valueMatcher=").append(valueMatcher)
+         .append(", successful=").append(successful)
+         .append("}")
+         .toString();
    }
+
 }
