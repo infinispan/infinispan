@@ -1,5 +1,6 @@
 package org.infinispan.notifications.cachelistener.filter;
 
+import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheEntryListenerInvocation;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
@@ -63,6 +64,11 @@ public abstract class DelegatingCacheEntryListenerInvocation<K, V> implements Ca
    @Override
    public UUID getIdentifier() {
       return invocation.getIdentifier();
+   }
+
+   @Override
+   public Listener.Observation getObservation() {
+      return invocation.getObservation();
    }
 
    @Override
