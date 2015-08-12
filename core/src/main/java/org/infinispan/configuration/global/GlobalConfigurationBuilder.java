@@ -3,6 +3,7 @@ package org.infinispan.configuration.global;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -10,7 +11,6 @@ import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.CacheConfigurationException;
-import static java.util.Arrays.asList;
 
 public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuilder {
 
@@ -170,14 +170,21 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
 
    @SuppressWarnings("unchecked")
    public void validate() {
-      for (Builder<?> validatable : asList(expirationThreadPool, listenerThreadPool,
-            replicationQueueThreadPool, persistenceThreadPool, stateTransferThreadPool,
-            globalJmxStatistics, transport, security, serialization, shutdown, site)) {
-         validatable.validate();
-      }
-      for (Builder<?> m : modules) {
-         m.validate();
-      }
+      Arrays.asList(
+            expirationThreadPool,
+            listenerThreadPool,
+            replicationQueueThreadPool,
+            persistenceThreadPool,
+            stateTransferThreadPool,
+            asyncThreadPool,
+            globalJmxStatistics,
+            transport,
+            security,
+            serialization,
+            shutdown,
+            site
+      ).forEach(c -> c.validate());
+      modules.forEach(c -> c.validate());
    }
 
    @Override
@@ -217,6 +224,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       replicationQueueThreadPool.read(template.replicationQueueThreadPool());
       persistenceThreadPool.read(template.persistenceThreadPool());
       stateTransferThreadPool.read(template.stateTransferThreadPool());
+      asyncThreadPool.read(template.asyncThreadPool());
       globalJmxStatistics.read(template.globalJmxStatistics());
       security.read(template.security());
       serialization.read(template.serialization());
@@ -235,7 +243,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    @Override
    public String toString() {
       return "GlobalConfigurationBuilder{" +
-            "evictionExecutorThreadPool=" + expirationThreadPool +
+            "expirationThreadPool=" + expirationThreadPool +
             ", listenerExecutorThreadPool=" + listenerThreadPool +
             ", cl=" + cl +
             ", transport=" + transport +
@@ -244,6 +252,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             ", replicationQueueThreadPool=" + replicationQueueThreadPool +
             ", persistenceThreadPool=" + persistenceThreadPool +
             ", stateTransferThreadPool=" + stateTransferThreadPool +
+            ", asyncThreadPool=" + asyncThreadPool +
             ", security=" + security +
             ", shutdown=" + shutdown +
             ", site=" + site +
@@ -265,9 +274,12 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          return false;
       if (!persistenceThreadPool.equals(that.persistenceThreadPool))
          return false;
-      if(!stateTransferThreadPool.equals(that.stateTransferThreadPool))
+      if (!stateTransferThreadPool.equals(that.stateTransferThreadPool))
          return false;
-      if (cl != null ? !cl.equals(that.cl) : that.cl != null) return false;
+      if (!asyncThreadPool.equals(that.asyncThreadPool))
+         return false;
+      if (cl != null ? !cl.equals(that.cl) : that.cl != null)
+         return false;
       if (!globalJmxStatistics.equals(that.globalJmxStatistics))
          return false;
       if (!serialization.equals(that.serialization))
@@ -293,6 +305,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       result = 31 * result + (replicationQueueThreadPool.hashCode());
       result = 31 * result + (persistenceThreadPool.hashCode());
       result = 31 * result + (stateTransferThreadPool.hashCode());
+      result = 31 * result + (asyncThreadPool.hashCode());
       result = 31 * result + (shutdown.hashCode());
       result = 31 * result + (site.hashCode());
       result = 31 * result + (security.hashCode());
