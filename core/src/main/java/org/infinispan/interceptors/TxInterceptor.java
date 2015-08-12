@@ -330,10 +330,9 @@ public class TxInterceptor extends CommandInterceptor implements JmxStatisticsEx
 
    @Override
    public EntryIterable visitEntryRetrievalCommand(InvocationContext ctx, EntryRetrievalCommand command) throws Throwable {
-      // Enlistment shouldn't be needed for this command.  The remove on the iterator will internally make a remove
-      // command and the iterator itself does not place read values into the context.
       EntryIterable iterable = (EntryIterable) super.visitEntryRetrievalCommand(ctx, command);
       if (ctx.isInTxScope()) {
+         enlistIfNeeded(ctx);
          return new TransactionAwareEntryIterable(iterable, command.getFilter(), 
                (TxInvocationContext<LocalTransaction>) ctx, cache);
       } else {
