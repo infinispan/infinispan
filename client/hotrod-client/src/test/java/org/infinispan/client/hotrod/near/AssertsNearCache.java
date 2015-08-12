@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
 import org.infinispan.client.hotrod.configuration.NearCacheConfiguration;
+import org.infinispan.client.hotrod.configuration.NearCacheMode;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -21,12 +22,14 @@ class AssertsNearCache<K, V> {
    final Cache<byte[], ?> server;
    final BlockingQueue<MockEvent> events;
    final RemoteCacheManager manager;
+   final NearCacheMode nearCacheMode;
 
    private AssertsNearCache(RemoteCacheManager manager, Cache<byte[], ?> server, BlockingQueue<MockEvent> events) {
       this.manager = manager;
       this.remote = manager.getCache();
       this.server = server;
       this.events = events;
+      this.nearCacheMode = manager.getConfiguration().nearCache().mode();
    }
 
    static <K, V> AssertsNearCache<K, V> create(Cache<byte[], ?> server, ConfigurationBuilder builder) {
@@ -39,11 +42,6 @@ class AssertsNearCache<K, V> {
       };
 
       return new AssertsNearCache<>(manager, server, events);
-   }
-
-   static <K, V> AssertsNearCache<K, V> create(AssertsNearCache<K, V> client) {
-      final BlockingQueue<MockEvent> events = new ArrayBlockingQueue<>(128);
-      return new AssertsNearCache<>(client.manager, client.server, events);
    }
 
    AssertsNearCache<K, V> get(K key, V expected) {
@@ -116,9 +114,9 @@ class AssertsNearCache<K, V> {
 
    @SafeVarargs
    final AssertsNearCache<K, V> expectNearRemove(K key, AssertsNearCache<K, V>... affected) {
-      expectNearRemoveInClient(this, key);
+      expectLocalNearRemoveInClient(this, key);
       for (AssertsNearCache<K, V> client : affected)
-         expectNearRemoveInClient(client, key);
+         expectRemoteNearRemoveInClient(client, key);
 
       return this;
    }
@@ -141,9 +139,21 @@ class AssertsNearCache<K, V> {
       killRemoteCacheManager(manager);
    }
 
-   private static <K, V> void expectNearRemoveInClient(AssertsNearCache<K, V> client, K key) {
-      MockRemoveEvent remove = pollEvent(client.events);
-      assertEquals(key, remove.key);
+   private static <K, V> void expectLocalNearRemoveInClient(AssertsNearCache<K, V> client, K key) {
+      if (client.nearCacheMode.invalidated()) {
+         // Preemptive remove
+         MockRemoveEvent preemptiveRemove = pollEvent(client.events);
+         assertEquals(key, preemptiveRemove.key);
+      }
+      // Remote event remove
+      MockRemoveEvent remoteRemove = pollEvent(client.events);
+      assertEquals(key, remoteRemove.key);
+   }
+
+   private static <K, V> void expectRemoteNearRemoveInClient(AssertsNearCache<K, V> client, K key) {
+      // Remote event remove
+      MockRemoveEvent remoteRemove = pollEvent(client.events);
+      assertEquals(key, remoteRemove.key);
    }
 
    private static <E extends MockEvent> E pollEvent(BlockingQueue<MockEvent> events) {
