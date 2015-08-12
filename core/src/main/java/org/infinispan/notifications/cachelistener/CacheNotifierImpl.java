@@ -1264,6 +1264,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
 
       @Override
+      public Listener.Observation getObservation() {
+         return observation;
+      }
+
+      @Override
       public Class<? extends Annotation> getAnnotation() {
          return annotation;
       }
