@@ -51,7 +51,7 @@ public class LazyNearCacheTest extends EagerNearCacheTest {
       assertClient.expectNoNearEvents();
       assertClient.put(1, "v1").expectNearRemove(1);
 
-      final AssertsNearCache<Integer, String> newAsserts = createClient();
+      final AssertsNearCache<Integer, String> newAsserts = createAssertClient();
       withRemoteCacheManager(new RemoteCacheManagerCallable(newAsserts.manager) {
          @Override
          public void call() {

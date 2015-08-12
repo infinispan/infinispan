@@ -17,7 +17,8 @@ import org.infinispan.client.hotrod.configuration.ServerConfiguration;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
-import org.infinispan.client.hotrod.impl.NearRemoteCache;
+import org.infinispan.client.hotrod.impl.EagerNearRemoteCache;
+import org.infinispan.client.hotrod.impl.InvalidatedNearRemoteCache;
 import org.infinispan.client.hotrod.impl.RemoteCacheImpl;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
 import org.infinispan.client.hotrod.impl.operations.PingOperation.PingResult;
@@ -645,11 +646,16 @@ public class RemoteCacheManager implements BasicCacheContainer {
    }
 
    private <K, V> RemoteCacheImpl<K, V> createRemoteCache(String cacheName) {
-      if (configuration.nearCache().mode().enabled()) {
-         NearCacheService<K, V> srv = createNearCacheService(configuration.nearCache());
-         return new NearRemoteCache<K, V>(this, cacheName, srv);
-      } else {
-         return new RemoteCacheImpl<K, V>(this, cacheName);
+      switch (configuration.nearCache().mode()) {
+         case LAZY:
+            NearCacheService<K, V> invalidateNearCache = createNearCacheService(configuration.nearCache());
+            return new InvalidatedNearRemoteCache<>(this, cacheName, invalidateNearCache);
+         case EAGER:
+            NearCacheService<K, V> eagerNearCache = createNearCacheService(configuration.nearCache());
+            return new EagerNearRemoteCache<>(this, cacheName, eagerNearCache);
+         case DISABLED:
+         default:
+            return new RemoteCacheImpl<>(this, cacheName);
       }
    }
 
