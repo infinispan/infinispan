@@ -47,7 +47,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    private final String name;
    private final RemoteCacheManager remoteCacheManager;
    private volatile ExecutorService executorService;
-   private OperationsFactory operationsFactory;
+   protected OperationsFactory operationsFactory;
    private int estimateKeySize;
    private int estimateValueSize;
 

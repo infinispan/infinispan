@@ -20,15 +20,25 @@ public class EagerNearCacheTest extends SingleHotRodServerTest {
 
    @Override
    protected RemoteCacheManager getRemoteCacheManager() {
-      assertClient = createClient();
+      assertClient = createAssertClient();
       return assertClient.manager;
    }
 
-   protected <K, V> AssertsNearCache<K, V> createClient() {
+   protected <K, V> AssertsNearCache<K, V> createAssertClient() {
+      ConfigurationBuilder builder = clientConfiguration();
+      return AssertsNearCache.create(this.<byte[], Object>cache(), builder);
+   }
+
+   protected <K, V> RemoteCache<K, V> createClient() {
+      ConfigurationBuilder builder = clientConfiguration();
+      return new RemoteCacheManager(builder.build()).getCache();
+   }
+
+   private ConfigurationBuilder clientConfiguration() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
       builder.nearCache().mode(getNearCacheMode()).maxEntries(-1);
-      return AssertsNearCache.create(this.<byte[], Object>cache(), builder);
+      return builder;
    }
 
    protected NearCacheMode getNearCacheMode() {
@@ -83,7 +93,7 @@ public class EagerNearCacheTest extends SingleHotRodServerTest {
       assertClient.expectNoNearEvents();
       assertClient.put(1, "v1").expectNearPut(1, "v1");
 
-      final AssertsNearCache<Integer, String> newAsserts = createClient();
+      final AssertsNearCache<Integer, String> newAsserts = createAssertClient();
       withRemoteCacheManager(new RemoteCacheManagerCallable(newAsserts.manager) {
          @Override
          public void call() {
