@@ -11,11 +11,12 @@ import org.infinispan.client.hotrod.near.NearCacheService;
  * @param <K>
  * @param <V>
  */
-public class NearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
+@Deprecated
+public class EagerNearRemoteCache<K, V> extends RemoteCacheImpl<K, V> {
 
    private final NearCacheService<K, V> nearcache;
 
-   public NearRemoteCache(RemoteCacheManager rcm, String name, NearCacheService<K, V> nearcache) {
+   public EagerNearRemoteCache(RemoteCacheManager rcm, String name, NearCacheService<K, V> nearcache) {
       super(rcm, name);
       this.nearcache = nearcache;
    }

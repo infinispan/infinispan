@@ -239,4 +239,10 @@ public class OperationsFactory implements HotRodConstants {
          list.add(flag);
 
    }
+
+   public boolean hasFlag(Flag flag) {
+      List<Flag> list = this.flagsMap.get();
+      return list != null && list.contains(flag);
+   }
+
 }
