@@ -24,6 +24,7 @@ import org.infinispan.filter.CompositeKeyValueFilterConverter;
 import org.infinispan.filter.KeyFilterAsKeyValueFilter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.transaction.impl.TransactionTable;
 import org.testng.annotations.Test;
 
 /**
@@ -44,21 +45,27 @@ public class DistributedEntryRetrieverTxTest extends DistributedEntryRetrieverTe
       Map<Object, String> values = putValueInEachCache(3);
 
       Cache<Object, String> cache = cache(0, CACHE_NAME);
+      TransactionTable txTable = TestingUtil.extractComponent(cache,
+              TransactionTable.class);
+
       TransactionManager tm = TestingUtil.extractComponent(cache,
             TransactionManager.class);
       tm.begin();
       try {
+         assertEquals(0, txTable.getLocalTxCount());
          Object key = "filtered-key";
          cache.put(key, "filtered-value");
 
          CloseableIterator<CacheEntry<Object, String>> iterator = 
                cache.getAdvancedCache().filterEntries(
                      new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(key)))).iterator();
+         assertEquals(1, txTable.getLocalTxCount());
          Map<Object, String> results = mapFromIterator(iterator);
          assertEquals(values, results);
       } finally {
          tm.rollback();
       }
+      assertEquals(0, txTable.getLocalTxCount());
    }
 
    @Test
@@ -128,5 +135,35 @@ public class DistributedEntryRetrieverTxTest extends DistributedEntryRetrieverTe
       } finally {
          tm.rollback();
       }
+   }
+
+   public void testOnlyFilterInTransaction()  throws NotSupportedException,
+              SystemException, SecurityException, IllegalStateException, RollbackException,
+              HeuristicMixedException, HeuristicRollbackException {
+      Map<Object, String> values = putValueInEachCache(3);
+
+      Cache<Object, String> cache = cache(0, CACHE_NAME);
+      TransactionTable txTable = TestingUtil.extractComponent(cache,
+              TransactionTable.class);
+
+      Object key = "filtered-key";
+      cache.put(key, "filtered-value");
+
+      TransactionManager tm = TestingUtil.extractComponent(cache,
+              TransactionManager.class);
+      tm.begin();
+      try {
+         assertEquals(0, txTable.getLocalTxCount());
+
+         CloseableIterator<CacheEntry<Object, String>> iterator =
+                 cache.getAdvancedCache().filterEntries(
+                         new KeyFilterAsKeyValueFilter<>(new CollectionKeyFilter<>(Collections.singleton(key)))).iterator();
+         assertEquals(1, txTable.getLocalTxCount());
+         Map<Object, String> results = mapFromIterator(iterator);
+         assertEquals(values, results);
+      } finally {
+         tm.rollback();
+      }
+      assertEquals(0, txTable.getLocalTxCount());
    }
 }
