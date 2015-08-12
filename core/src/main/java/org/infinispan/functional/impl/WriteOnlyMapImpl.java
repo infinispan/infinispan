@@ -48,6 +48,7 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       WriteOnlyKeyCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyCommand(key, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
+      ctx.setLockOwner(cmd.getLockOwner());
       return withWaitFuture(waitMode, fmap.asyncExec(), () -> (Void) fmap.chain().invoke(ctx, cmd));
    }
 
@@ -57,6 +58,7 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       WriteOnlyKeyValueCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyValueCommand(key, value, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
+      ctx.setLockOwner(cmd.getLockOwner());
       return withWaitFuture(waitMode, fmap.asyncExec(), () -> (Void) fmap.chain().invoke(ctx, cmd));
    }
 
