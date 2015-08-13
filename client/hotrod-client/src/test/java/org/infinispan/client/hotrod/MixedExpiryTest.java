@@ -26,7 +26,12 @@ public class MixedExpiryTest extends MultiHotRodServersTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       builder.dataContainer().keyEquivalence(new AnyServerEquivalence());
+      configure(builder);
       createHotRodServers(1, builder);
+   }
+
+   protected void configure(ConfigurationBuilder configurationBuilder) {
+
    }
 
    public void testMixedExpiryLifespan() {
