@@ -206,7 +206,7 @@ public class OperationsFactory implements HotRodConstants {
 		return new ExecuteOperation(codec, transportFactory, cacheNameBytes, topologyId, flags(), taskName, marshalledParams);
 	}
 
-   private Flag[] flags() {
+   public Flag[] flags() {
       List<Flag> flags = this.flagsMap.get();
       this.flagsMap.remove();
       if (forceReturnValue) {
@@ -234,7 +234,6 @@ public class OperationsFactory implements HotRodConstants {
       }
       for(Flag flag : flags)
          list.add(flag);
-
    }
 
    public CacheTopologyInfo getCacheTopologyInfo() {

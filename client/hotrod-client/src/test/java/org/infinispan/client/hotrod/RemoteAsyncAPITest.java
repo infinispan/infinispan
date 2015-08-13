@@ -1,31 +1,20 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
+import org.infinispan.client.hotrod.configuration.ConfigurationBuilder;
+import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
+import org.infinispan.client.hotrod.test.SingleHotRodServerTest;
 import org.infinispan.commons.util.concurrent.FutureListener;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.server.hotrod.HotRodServer;
-import org.infinispan.test.SingleCacheManagerTest;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
-import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killRemoteCacheManager;
-import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.killServers;
-import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.junit.Assert.*;
 import static org.testng.Assert.assertNotEquals;
 
 /**
@@ -33,217 +22,204 @@ import static org.testng.Assert.assertNotEquals;
  * @since 4.1
  */
 @Test(groups = "functional", testName = "client.hotrod.RemoteAsyncAPITest")
-public class RemoteAsyncAPITest extends SingleCacheManagerTest {
-   private HotRodServer hotrodServer;
-   private RemoteCacheManager rcm;
-   private RemoteCache<String, String> c;
+public class RemoteAsyncAPITest extends SingleHotRodServerTest {
 
    @Override
-   protected EmbeddedCacheManager createCacheManager() throws Exception {
-      return TestCacheManagerFactory.createCacheManager(
-            hotRodCacheConfiguration());
+   protected RemoteCacheManager getRemoteCacheManager() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.forceReturnValues(isForceReturnValuesViaConfiguration());
+      builder.addServer().host("127.0.0.1").port(hotrodServer.getPort());
+      return new InternalRemoteCacheManager(builder.build());
    }
 
-   @Override
-   protected void setup() throws Exception {
-      super.setup();
-      hotrodServer = HotRodClientTestingUtil.startHotRodServer(cacheManager);
-      Properties props = new Properties();
-      props.put("infinispan.client.hotrod.server_list", "127.0.0.1:" + hotrodServer.getPort());
-      props.put("infinispan.client.hotrod.force_return_values","true");
-      props.put("testOnBorrow", "false");
-      rcm = new RemoteCacheManager(props);
-      c = rcm.getCache(true);
+   protected boolean isForceReturnValuesViaConfiguration() {
+      return true;
    }
 
-   @AfterClass
-   @Override
-   protected void destroyAfterClass() {
-      super.destroyAfterClass();
-      killRemoteCacheManager(rcm);
-      killServers(hotrodServer);
+   protected RemoteCache<String, String> remote() {
+      return remoteCacheManager.getCache();
    }
 
    public void testPutAsync() throws Exception {
       // put
-      Future<String> f = c.putAsync("k", "v");
+      Future<String> f = remote().putAsync("k", "v");
       testFuture(f, null);
       testK("v");
 
-      f = c.putAsync("k", "v2");
+      f = remote().putAsync("k", "v2");
       testFuture(f, "v");
       testK("v2");
    }
 
    public void testPutAsyncWithListener() throws Exception {
-      NotifyingFuture<String> f = c.putAsync("k", "v");
+      NotifyingFuture<String> f = remote().putAsync("k", "v");
       testFutureWithListener(f, null);
       testK("v");
 
-      f = c.putAsync("k", "v2");
+      f = remote().putAsync("k", "v2");
       testFutureWithListener(f, "v");
       testK("v2");
    }
 
    public void testPutAllAsync() throws Exception {
-      Future<Void> f = c.putAllAsync(Collections.singletonMap("k", "v3"));
+      Future<Void> f = remote().putAllAsync(Collections.singletonMap("k", "v3"));
       testFuture(f, null);
       testK("v3");
    }
 
    public void testPutAllAsyncWithListener() throws Exception {
-      NotifyingFuture<Void> f = c.putAllAsync(Collections.singletonMap("k", "v3"));
+      NotifyingFuture<Void> f = remote().putAllAsync(Collections.singletonMap("k", "v3"));
       testFutureWithListener(f, null);
       testK("v3");
    }
 
    public void testPutIfAbsentAsync() throws Exception {
-      c.put("k", "v3");
+      remote().put("k", "v3");
       testK("v3");
 
-      Future<String> f = c.putIfAbsentAsync("k", "v4");
+      Future<String> f = remote().putIfAbsentAsync("k", "v4");
       testFuture(f, "v3");
-      assertEquals("v3", c.remove("k"));
+      assertEquals("v3", remote().remove("k"));
 
-      f = c.putIfAbsentAsync("k", "v5");
+      f = remote().putIfAbsentAsync("k", "v5");
       testFuture(f, null);
       testK("v5");
    }
 
    public void testPutIfAbsentAsyncWithListener() throws Exception {
-      c.put("k", "v3");
+      remote().put("k", "v3");
       testK("v3");
 
-      NotifyingFuture<String> f = c.putIfAbsentAsync("k", "v4");
+      NotifyingFuture<String> f = remote().putIfAbsentAsync("k", "v4");
       testFutureWithListener(f, "v3");
-      assertEquals("v3", c.remove("k"));
+      assertEquals("v3", remote().remove("k"));
 
-      f = c.putIfAbsentAsync("k", "v5");
+      f = remote().putIfAbsentAsync("k", "v5");
       testFutureWithListener(f, null);
       testK("v5");
    }
 
    public void testRemoveAsync() throws Exception {
-      c.put("k","v3");
+      remote().put("k", "v3");
       testK("v3");
 
-      Future<String> f = c.removeAsync("k");
+      Future<String> f = remote().removeAsync("k");
       testFuture(f, "v3");
       testK(null);
    }
 
    public void testRemoveAsyncWithListener() throws Exception {
-      c.put("k","v3");
+      remote().put("k", "v3");
       testK("v3");
 
-      NotifyingFuture<String> f = c.removeAsync("k");
+      NotifyingFuture<String> f = remote().removeAsync("k");
       testFutureWithListener(f, "v3");
       testK(null);
    }
 
    public void testGetAsync() throws Exception {
-      c.put("k", "v");
+      remote().put("k", "v");
       testK("v");
 
-      Future<String> f = c.getAsync("k");
+      Future<String> f = remote().getAsync("k");
       testFuture(f, "v");
       testK("v");
    }
 
    public void testGetAsyncWithListener() throws Exception {
-      c.put("k", "v");
+      remote().put("k", "v");
       testK("v");
 
-      NotifyingFuture<String> f = c.getAsync("k");
+      NotifyingFuture<String> f = remote().getAsync("k");
       testFutureWithListener(f, "v");
    }
 
    public void testRemoveWithVersionAsync() throws Exception {
-      c.put("k","v4");
-      VersionedValue value = c.getVersioned("k");
+      remote().put("k", "v4");
+      VersionedValue value = remote().getVersioned("k");
 
-      Future<Boolean> f = c.removeWithVersionAsync("k", value.getVersion() + 1);
+      Future<Boolean> f = remote().removeWithVersionAsync("k", value.getVersion() + 1);
       testFuture(f, false);
       testK("v4");
 
-      f = c.removeWithVersionAsync("k", value.getVersion());
+      f = remote().removeWithVersionAsync("k", value.getVersion());
       testFuture(f, true);
       testK(null);
    }
 
    public void testRemoveWithVersionAsyncWithListener() throws Exception {
-      c.put("k","v4");
-      VersionedValue value = c.getVersioned("k");
+      remote().put("k", "v4");
+      VersionedValue value = remote().getVersioned("k");
 
-      NotifyingFuture<Boolean> f = c.removeWithVersionAsync("k", value.getVersion() + 1);
+      NotifyingFuture<Boolean> f = remote().removeWithVersionAsync("k", value.getVersion() + 1);
       testFutureWithListener(f, false);
       testK("v4");
 
-      f = c.removeWithVersionAsync("k", value.getVersion());
+      f = remote().removeWithVersionAsync("k", value.getVersion());
       testFutureWithListener(f, true);
       testK(null);
    }
 
    public void testReplaceAsync() throws Exception {
       testK(null);
-      Future<String> f = c.replaceAsync("k", "v5");
+      Future<String> f = remote().replaceAsync("k", "v5");
       testFuture(f, null);
       testK(null);
 
-      c.put("k", "v");
+      remote().put("k", "v");
       testK("v");
-      f = c.replaceAsync("k", "v5");
+      f = remote().replaceAsync("k", "v5");
       testFuture(f, "v");
       testK("v5");
    }
 
    public void testReplaceAsyncWithListener() throws Exception {
       testK(null);
-      NotifyingFuture<String> f = c.replaceAsync("k", "v5");
+      NotifyingFuture<String> f = remote().replaceAsync("k", "v5");
       testFutureWithListener(f, null);
       testK(null);
 
-      c.put("k", "v");
+      remote().put("k", "v");
       testK("v");
-      f = c.replaceAsync("k", "v5");
+      f = remote().replaceAsync("k", "v5");
       testFutureWithListener(f, "v");
       testK("v5");
    }
 
    public void testReplaceWithVersionAsync() throws Exception {
-      c.put("k", "v");
-      VersionedValue versioned1 = c.getVersioned("k");
+      remote().put("k", "v");
+      VersionedValue versioned1 = remote().getVersioned("k");
 
-      Future<Boolean> f = c.replaceWithVersionAsync("k", "v2", versioned1.getVersion());
+      Future<Boolean> f = remote().replaceWithVersionAsync("k", "v2", versioned1.getVersion());
       testFuture(f, true);
 
-      VersionedValue versioned2 = c.getVersioned("k");
+      VersionedValue versioned2 = remote().getVersioned("k");
       assertNotEquals(versioned1.getVersion(), versioned2.getVersion());
       assertEquals(versioned2.getValue(), "v2");
 
-      f = c.replaceWithVersionAsync("k", "v3", versioned1.getVersion());
+      f = remote().replaceWithVersionAsync("k", "v3", versioned1.getVersion());
       testFuture(f, false);
       testK("v2");
    }
 
    public void testReplaceWithVersionAsyncWithListener() throws Exception {
-      c.put("k", "v");
-      VersionedValue versioned1 = c.getVersioned("k");
+      remote().put("k", "v");
+      VersionedValue versioned1 = remote().getVersioned("k");
 
-      NotifyingFuture<Boolean> f = c.replaceWithVersionAsync("k", "v2", versioned1.getVersion());
+      NotifyingFuture<Boolean> f = remote().replaceWithVersionAsync("k", "v2", versioned1.getVersion());
       testFutureWithListener(f, true);
 
-      VersionedValue versioned2 = c.getVersioned("k");
+      VersionedValue versioned2 = remote().getVersioned("k");
       assertNotEquals(versioned1.getVersion(), versioned2.getVersion());
       assertEquals(versioned2.getValue(), "v2");
 
-      f = c.replaceWithVersionAsync("k", "v3", versioned1.getVersion());
+      f = remote().replaceWithVersionAsync("k", "v3", versioned1.getVersion());
       testFutureWithListener(f, false);
       testK("v2");
    }
 
    private <T> void testK(T expected) {
-      assertEquals(expected, c.get("k"));
+      assertEquals(expected, remote().get("k"));
    }
 
    private <T> void testFuture(Future<T> f, T expected) throws ExecutionException, InterruptedException {
