@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -274,10 +275,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public NotifyingFuture<V> putAsync(final K key, final V value, final long lifespan, final TimeUnit lifespanUnit, final long maxIdle, final TimeUnit maxIdleUnit) {
       assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-      Future<V> future = executorService.submit(new Callable<V>() {
+      Future<V> future = executorService.submit(new WithFlagsCallable(operationsFactory.flags()) {
          @Override
          public V call() throws Exception {
             try {
+               setFlagsIfPresent();
                V prevValue = put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
                try {
                   result.notifyDone(prevValue);
@@ -294,6 +296,7 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
                throw e;
             }
          }
+
       });
       result.setFuture(future);
       return result;
@@ -332,10 +335,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public NotifyingFuture<V> putIfAbsentAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdle,final TimeUnit maxIdleUnit) {
       assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-      Future<V> future = executorService.submit(new Callable<V>() {
+      Future<V> future = executorService.submit(new WithFlagsCallable(operationsFactory.flags()) {
          @Override
          public V call() throws Exception {
             try {
+               setFlagsIfPresent();
                V prevValue = putIfAbsent(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
                try {
                   result.notifyDone(prevValue);
@@ -361,10 +365,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public NotifyingFuture<V> removeAsync(final Object key) {
       assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-      Future<V> future = executorService.submit(new Callable<V>() {
+      Future<V> future = executorService.submit(new WithFlagsCallable(operationsFactory.flags()) {
          @Override
          public V call() throws Exception {
             try {
+               setFlagsIfPresent();
                V toReturn = remove(key);
                try {
                   result.notifyDone(toReturn);
@@ -390,10 +395,11 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    public NotifyingFuture<V> replaceAsync(final K key,final V value,final long lifespan,final TimeUnit lifespanUnit,final long maxIdle,final TimeUnit maxIdleUnit) {
       assertRemoteCacheManagerIsStarted();
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
-      Future<V> future = executorService.submit(new Callable<V>() {
+      Future<V> future = executorService.submit(new WithFlagsCallable(operationsFactory.flags()) {
          @Override
          public V call() throws Exception {
             try {
+               setFlagsIfPresent();
                V old = replace(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
                try {
                   result.notifyDone(old);
@@ -693,4 +699,18 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
 		ExecuteOperation op = operationsFactory.newExecuteOperation(taskName, marshalledParams);
 		return MarshallerUtil.bytes2obj(marshaller, op.execute());
 	}
+
+   private abstract class WithFlagsCallable implements Callable<V> {
+      final Flag[] asyncFlags;
+
+      protected WithFlagsCallable(Flag[] asyncFlags) {
+         this.asyncFlags = asyncFlags;
+      }
+
+      void setFlagsIfPresent() {
+         if (asyncFlags != null)
+            operationsFactory.addFlags(asyncFlags);
+      }
+   }
+
 }
