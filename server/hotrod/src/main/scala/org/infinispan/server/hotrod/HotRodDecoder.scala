@@ -76,8 +76,6 @@ extends ReplayingDecoder[HotRodDecoderState](DECODE_HEADER) with StatsChannelHan
       val ch = ctx.channel
       decodeCtx.obtainCache(cacheManager)
       val cacheConfiguration = server.getCacheConfiguration(decodeCtx.header.cacheName)
-      decodeCtx.defaultLifespanTime = cacheConfiguration.expiration().lifespan()
-      decodeCtx.defaultMaxIdleTime = cacheConfiguration.expiration().maxIdle()
       if (endOfOp.get) {
          val message = decodeCtx.header.op match {
             case StatsRequest => writeResponse(ch, createStatsResponse)

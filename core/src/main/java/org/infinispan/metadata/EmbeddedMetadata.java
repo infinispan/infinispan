@@ -125,15 +125,11 @@ public class EmbeddedMetadata implements Metadata {
       }
 
       protected boolean hasLifespan() {
-         return isExpirable(lifespan);
+         return lifespan != null;
       }
 
       protected boolean hasMaxIdle() {
-         return isExpirable(maxIdle);
-      }
-
-      private boolean isExpirable(Long timeout) {
-         return timeout != null && timeout >= 0;
+         return maxIdle != null;
       }
 
       @Override

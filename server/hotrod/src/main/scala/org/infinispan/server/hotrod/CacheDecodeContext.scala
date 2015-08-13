@@ -38,8 +38,6 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
    var decoder: AbstractVersionedDecoder = _
    var header: HotRodHeader = _
    var cache: AdvancedCache[Bytes, Bytes] = _
-   var defaultLifespanTime: Long = _
-   var defaultMaxIdleTime: Long = _
    var key: Bytes = _
    var rawValue: Bytes = _
    var params: RequestParameters = _
@@ -165,11 +163,11 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
       metadata.version(generateVersion(server.getCacheRegistry(header.cacheName), cache))
       (params.lifespan, params.maxIdle) match {
          case (EXPIRATION_DEFAULT, EXPIRATION_DEFAULT) =>
-            metadata.lifespan(defaultLifespanTime)
-            .maxIdle(defaultMaxIdleTime)
+            // Do nothing - default is merged in via embedded
          case (_, EXPIRATION_DEFAULT) =>
             metadata.lifespan(toMillis(params.lifespan))
-            .maxIdle(defaultMaxIdleTime)
+         case (EXPIRATION_DEFAULT, _) =>
+            metadata.maxIdle(toMillis(params.maxIdle))
          case (_, _) =>
             metadata.lifespan(toMillis(params.lifespan))
             .maxIdle(toMillis(params.maxIdle))
