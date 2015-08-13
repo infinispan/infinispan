@@ -64,13 +64,18 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
       // Could be that the key is not local
       if (e == null) return null;
 
-      f.accept(EntryViews.writeOnly(e, notifier));
+      f.accept(EntryViews.writeOnly(e));
       return null;
    }
 
    @Override
    public void updateStatusFromRemoteResponse(Object remoteResponse) {
       // TODO: Customise this generated block
+   }
+
+   @Override
+   public boolean isWriteOnly() {
+      return true;
    }
 
 }

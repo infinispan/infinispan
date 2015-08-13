@@ -21,6 +21,8 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -79,10 +81,12 @@ public interface ClusteringDependentLogic {
       protected CommitManager commitManager;
       protected PersistenceManager persistenceManager;
       protected TimeService timeService;
+      protected FunctionalNotifier<Object, Object> functionalNotifier;
 
       @Inject
       public void init(DataContainer<Object, Object> dataContainer, CacheNotifier<Object, Object> notifier, Configuration configuration,
-                       CommitManager commitManager, PersistenceManager persistenceManager, TimeService timeService) {
+                       CommitManager commitManager, PersistenceManager persistenceManager, TimeService timeService,
+                       FunctionalNotifier<Object, Object> functionalNotifier) {
          this.dataContainer = dataContainer;
          this.notifier = notifier;
          this.totalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
@@ -90,6 +94,7 @@ public interface ClusteringDependentLogic {
          this.commitManager = commitManager;
          this.persistenceManager = persistenceManager;
          this.timeService = timeService;
+         this.functionalNotifier = functionalNotifier;
       }
 
       @Override
@@ -125,21 +130,48 @@ public interface ClusteringDependentLogic {
 
       protected void notifyCommitEntry(boolean created, boolean removed, CacheEntry entry, InvocationContext ctx,
                                        FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
-        if (removed) {
+         boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
+         if (removed) {
             if (command instanceof RemoveCommand) {
                ((RemoveCommand)command).notify(ctx, previousValue, previousMetadata, false);
             } else {
                notifier.notifyCacheEntryRemoved(
-                     entry.getKey(), previousValue, previousMetadata, false, ctx, command);
+                  entry.getKey(), previousValue, previousMetadata, false, ctx, command);
+
+               // A write-only command only writes and so can't 100% guarantee
+               // to be able to retrieve previous value when removed, so only
+               // send remove event when the command is read-write.
+               if (!isWriteOnly)
+                  functionalNotifier.notifyOnRemove(EntryViews.readOnly(entry.getKey(), previousValue, previousMetadata));
+
+               functionalNotifier.notifyOnWrite(() -> EntryViews.noValue(entry.getKey()));
             }
          } else {
             // Notify entry event after container has been updated
             if (created) {
                notifier.notifyCacheEntryCreated(
-                     entry.getKey(), entry.getValue(), false, ctx, command);
+                  entry.getKey(), entry.getValue(), false, ctx, command);
+
+               // A write-only command only writes and so can't 100% guarantee
+               // that an entry has been created, so only send create event
+               // when the command is read-write.
+               if (!isWriteOnly)
+                  functionalNotifier.notifyOnCreate(EntryViews.readOnly(entry));
+
+               functionalNotifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
             } else {
                notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), previousValue, previousMetadata,
                                                  false, ctx, command);
+
+               // A write-only command only writes and so can't 100% guarantee
+               // that an entry has been created, so only send modify when the
+               // command is read-write.
+               if (!isWriteOnly)
+                  functionalNotifier.notifyOnModify(
+                     EntryViews.readOnly(entry.getKey(), previousValue, previousMetadata),
+                     EntryViews.readOnly(entry));
+
+               functionalNotifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
             }
          }
       }

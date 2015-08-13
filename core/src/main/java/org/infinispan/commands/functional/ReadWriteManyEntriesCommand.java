@@ -8,7 +8,6 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
-import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.metadata.Metadata;
 
@@ -28,7 +27,6 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
    private int topologyId = -1;
    boolean isForwarded = false;
    private List<R> remoteReturns = new ArrayList<>();
-   private FunctionalNotifier<K, V> notifier;
 
    public ReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
       this.entries = entries;
@@ -41,10 +39,6 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
    public ReadWriteManyEntriesCommand(ReadWriteManyEntriesCommand command) {
       this.entries = command.entries;
       this.f = command.f;
-   }
-
-   public void init(FunctionalNotifier<K, V> notifier) {
-      this.notifier = notifier;
    }
 
    public Map<? extends K, ? extends V> getEntries() {
@@ -121,7 +115,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (entry != null) {
-            R r = f.apply(v, EntryViews.readWrite(entry, notifier));
+            R r = f.apply(v, EntryViews.readWrite(entry));
             returns.add(r);
          }
       });

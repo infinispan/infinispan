@@ -27,7 +27,6 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    private int topologyId = -1;
    boolean isForwarded = false;
    private List<R> remoteReturns = new ArrayList<>();
-   private FunctionalNotifier<K, V> notifier;
 
    public ReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
       this.keys = keys;
@@ -40,10 +39,6 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
    }
 
    public ReadWriteManyCommand() {
-   }
-
-   public void init(FunctionalNotifier<K, V> notifier) {
-      this.notifier = notifier;
    }
 
    public Set<? extends K> getKeys() {
@@ -130,7 +125,7 @@ public final class ReadWriteManyCommand<K, V, R> implements WriteCommand {
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (entry != null) {
-            R r = f.apply(EntryViews.readWrite(entry, notifier));
+            R r = f.apply(EntryViews.readWrite(entry));
             returns.add(r);
          }
       });

@@ -30,31 +30,21 @@ public final class Listeners {
    }
 
    /**
-    * Read-write listeners enables user to register listeners for events
-    * happening in the read-write functional map.
+    * Read-write listeners enable user to register listeners for cache
+    * entry created, modified and removed events, and also register listeners
+    * for any cache entry write events.
     *
-    * DESIGN RATIONALES:
-    * <ul>
-    *    <li>Read-write listeners can distinguish between cache entry
-    *    creation versus cache entry modification or cache entry update
-    *    (a better name btw!). This is because it can read the previous
-    *    value and find out whether when the cache entry was written, whether
-    *    the previous cache entry was present or not. {@link WriteListeners}
-    *    cannot make such distinction because they are not allowed to read
-    *    the previous value.
-    *    </li>
-    *    <li>Read-write listeners can find out about entry removed events
-    *    and what the previous value for the entry was. Write-only listeners
-    *    do not have such capability since once again, they have no access to
-    *    previously stored data.
-    *    </li>
-    * </ul>
+    * Entry created, modified and removed events can only be fired when these
+    * originate on a read-write functional map, since this is the only one
+    * that guarantees that the previous value has been read, and hence the
+    * differentiation between create, modified and removed can be fully
+    * guaranteed.
     */
-   public interface ReadWriteListeners<K, V> {
+   public interface ReadWriteListeners<K, V> extends WriteListeners<K, V> {
       /**
        * Add a create event specific listener by passing in a
        * {@link Consumer} to be called back each time a new cache entry is
-       * created, passing in a {@link ReadEntryView} of that entry.
+       * created, passing in a {@link ReadEntryView} of that new entry.
        *
        * This method is shortcut for users who are only interested in
        * create events. If interested in multiple event types, calling
@@ -144,21 +134,18 @@ public final class Listeners {
    }
 
    /**
-    * Write-only listeners enables user to register listeners for events
-    * happening in the write-only functional map.
+    * Write listeners enable user to register listeners for any cache entry
+    * write events that happen in either a read-write or write-only
+    * functional map.
     *
-    * DESIGN RATIONALES:
-    * <ul>
-    *    <li>Write-only listeners cannot distinguish between cache entry
-    *    created and cache entry modify/update events. In either case, all
-    *    they know is that a new entry has been added, but they can't know if
-    *    entry was present before or not, nor what the previous value.
-    *    </li>
-    *    <li>Write-only listeners can distinguish between entry removals
-    *    vs cache entry create/modify-update events because they can query
-    *    what the new entry's value via {@link ReadEntryView#find()}.
-    *    </li>
-    * </ul>
+    * Listeners for write events cannot distinguish between cache entry
+    * created and cache entry modify/update events because they don't have
+    * access to the previous value. All they know is that a new non-null
+    * entry has been written.
+    *
+    * However, write event listeners can distinguish between entry removals
+    * and cache entry create/modify-update events because they can query
+    * what the new entry's value via {@link ReadEntryView#find()}.
     */
    public interface WriteListeners<K, V> {
       /**
@@ -173,7 +160,7 @@ public final class Listeners {
        *
        * For removed events, {@link ReadEntryView} passed in will represent
        * an empty entry view, hence {@link ReadEntryView#find()} will return
-       * an {@link java.util.Optional} instance that's empty, and
+       * an empty {@link java.util.Optional} instance, and
        * {@link ReadEntryView#get()} will throw
        * {@link java.util.NoSuchElementException}.
        *
@@ -208,7 +195,7 @@ public final class Listeners {
           *
           * For removed events, {@link ReadEntryView} passed in will represent
           * an empty entry view, hence {@link ReadEntryView#find()} will return
-          * an {@link java.util.Optional} instance that's empty, and
+          * an empty {@link java.util.Optional} instance, and
           * {@link ReadEntryView#get()} will throw
           * {@link java.util.NoSuchElementException}.
           *

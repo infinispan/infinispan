@@ -163,9 +163,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
-   // Functional
-   private FunctionalNotifier functionalNotifier;
-
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier<Object, Object> notifier, Cache<Object, Object> cache,
                                  InterceptorChain interceptorChain, DistributionManager distributionManager,
@@ -178,7 +175,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 ClusteringDependentLogic clusteringDependentLogic, FunctionalNotifier functionalNotifier) {
+                                 ClusteringDependentLogic clusteringDependentLogic) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -205,7 +202,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.localStreamManager = localStreamManager;
       this.clusterStreamManager = clusterStreamManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
-      this.functionalNotifier = functionalNotifier;
    }
 
    @Start(priority = 1)
@@ -520,38 +516,6 @@ public class CommandsFactoryImpl implements CommandsFactory {
             StreamSegmentResponseCommand streamSegmentResponseCommand = (StreamSegmentResponseCommand) c;
             streamSegmentResponseCommand.inject(clusterStreamManager);
             break;
-         case ReadWriteKeyCommand.COMMAND_ID:
-            ReadWriteKeyCommand rwKeyCmd = (ReadWriteKeyCommand) c;
-            rwKeyCmd.init(functionalNotifier);
-            break;
-         case ReadWriteKeyValueCommand.COMMAND_ID:
-            ReadWriteKeyValueCommand rwKeyValueCmd = (ReadWriteKeyValueCommand) c;
-            rwKeyValueCmd.init(functionalNotifier);
-            break;
-         case ReadWriteManyCommand.COMMAND_ID:
-            ReadWriteManyCommand rwManyCmd = (ReadWriteManyCommand) c;
-            rwManyCmd.init(functionalNotifier);
-            break;
-         case ReadWriteManyEntriesCommand.COMMAND_ID:
-            ReadWriteManyEntriesCommand rwManyEntriesCmd = (ReadWriteManyEntriesCommand) c;
-            rwManyEntriesCmd.init(functionalNotifier);
-            break;
-         case WriteOnlyKeyCommand.COMMAND_ID:
-            WriteOnlyKeyCommand woKeyCmd = (WriteOnlyKeyCommand) c;
-            woKeyCmd.init(functionalNotifier);
-            break;
-         case WriteOnlyKeyValueCommand.COMMAND_ID:
-            WriteOnlyKeyValueCommand woKeyValueCmd = (WriteOnlyKeyValueCommand) c;
-            woKeyValueCmd.init(functionalNotifier);
-            break;
-         case WriteOnlyManyCommand.COMMAND_ID:
-            WriteOnlyManyCommand woManyCmd = (WriteOnlyManyCommand) c;
-            woManyCmd.init(functionalNotifier);
-            break;
-         case WriteOnlyManyEntriesCommand.COMMAND_ID:
-            WriteOnlyManyEntriesCommand woManyEntriesCmd = (WriteOnlyManyEntriesCommand) c;
-            woManyEntriesCmd.init(functionalNotifier);
-            break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());
             if (mci != null) {
@@ -746,58 +710,42 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      ReadWriteKeyValueCommand<K, V, R> cmd = new ReadWriteKeyValueCommand<>(key, value, f, generateUUID());
-      cmd.init(functionalNotifier);
-      return cmd;
+      return new ReadWriteKeyValueCommand<>(key, value, f, generateUUID());
    }
 
    @Override
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f) {
-      ReadWriteKeyCommand<K, V, R> cmd = new ReadWriteKeyCommand<>(key, f, generateUUID());
-      cmd.init(functionalNotifier);
-      return cmd;
+      return new ReadWriteKeyCommand<>(key, f, generateUUID());
    }
 
    @Override
    public <K, V, R> ReadWriteManyCommand<K, V, R> buildReadWriteManyCommand(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
-      ReadWriteManyCommand<K, V, R> cmd = new ReadWriteManyCommand<>(keys, f);
-      cmd.init(functionalNotifier);
-      return cmd;
+      return new ReadWriteManyCommand<>(keys, f);
    }
 
    @Override
    public <K, V, R> ReadWriteManyEntriesCommand<K, V, R> buildReadWriteManyEntriesCommand(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      ReadWriteManyEntriesCommand<K, V, R> cmd = new ReadWriteManyEntriesCommand<>(entries, f);
-      cmd.init(functionalNotifier);
-      return cmd;
+      return new ReadWriteManyEntriesCommand<>(entries, f);
    }
 
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f) {
-      WriteOnlyKeyCommand<K, V> cmd = new WriteOnlyKeyCommand<>(key, f, generateUUID());
-      cmd.init(functionalNotifier);
-      return cmd;
+      return new WriteOnlyKeyCommand<>(key, f, generateUUID());
    }
 
    @Override
    public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      WriteOnlyKeyValueCommand<K, V> cmd = new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID());
-      cmd.init(functionalNotifier);
-      return cmd;
+      return new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID());
    }
 
    @Override
    public <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
-      WriteOnlyManyCommand<K, V> cmd = new WriteOnlyManyCommand<>(keys, f);
-      cmd.init(functionalNotifier);
-      return cmd;
+      return new WriteOnlyManyCommand<>(keys, f);
    }
 
    @Override
    public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
-      WriteOnlyManyEntriesCommand<K, V> cmd = new WriteOnlyManyEntriesCommand<>(entries, f);
-      cmd.init(functionalNotifier);
-      return cmd;
+      return new WriteOnlyManyEntriesCommand<>(entries, f);
    }
 
 }

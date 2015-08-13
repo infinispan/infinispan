@@ -84,17 +84,17 @@ public class FunctionalJCacheEventsTest extends FunctionalJCacheTest {
 
    @Override
    public void testLocalGetAndRemove() {
-      assertOrderedEvents(local2, super::testLocalGetAndRemove, createRemove("one", "two"));
+      assertOrderedEvents(local2, super::testLocalGetAndRemove, createThenRemove("one", "two"));
    }
 
    @Override
    public void testReplGetAndRemoveOnNonOwner() {
-      assertOrderedEvents(repl2, super::testReplGetAndRemoveOnNonOwner, createRemove("one", "two"));
+      assertOrderedEvents(repl2, super::testReplGetAndRemoveOnNonOwner, createThenRemove("one", "two"));
    }
 
    @Override
    public void testReplGetAndRemoveOnOwner() {
-      assertOrderedEvents(repl2, super::testReplGetAndRemoveOnOwner, createRemove("one", "two"));
+      assertOrderedEvents(repl2, super::testReplGetAndRemoveOnOwner, createThenRemove("one", "two"));
    }
 
    @Override
@@ -104,7 +104,7 @@ public class FunctionalJCacheEventsTest extends FunctionalJCacheTest {
 
    @Override
    public void testDistGetAndRemoveOnOwner() {
-      assertOrderedEvents(dist2, super::testDistGetAndRemoveOnOwner, createRemove("one", "two"));
+      assertOrderedEvents(dist2, super::testDistGetAndRemoveOnOwner, createThenRemove("one", "two"));
    }
 
    @Override
@@ -367,17 +367,17 @@ public class FunctionalJCacheEventsTest extends FunctionalJCacheTest {
 
    @Override
    public void testLocalInvokeAll() {
-      assertUnorderedEvents(local2, super::testLocalInvokeAll, createRemove("one", "two", "three"));
+      assertUnorderedEvents(local2, super::testLocalInvokeAll, createAllRemoveAll("one", "two", "three"));
    }
 
    @Override
    public void testReplInvokeAllOnNonOwner() {
-      assertUnorderedEvents(repl2, super::testReplInvokeAllOnNonOwner, createRemove("one", "two", "three"));
+      assertUnorderedEvents(repl2, super::testReplInvokeAllOnNonOwner, createAllRemoveAll("one", "two", "three"));
    }
 
    @Override
    public void testReplInvokeAllOnOwner() {
-      assertUnorderedEvents(repl2, super::testReplInvokeAllOnOwner, createRemove("one", "two", "three"));
+      assertUnorderedEvents(repl2, super::testReplInvokeAllOnOwner, createAllRemoveAll("one", "two", "three"));
    }
 
    @Override
@@ -387,7 +387,7 @@ public class FunctionalJCacheEventsTest extends FunctionalJCacheTest {
 
    @Override
    public void testDistInvokeAllOnOwner() {
-      assertUnorderedEvents(dist2, super::testDistInvokeAllOnOwner, createRemove("one", "two", "three"));
+      assertUnorderedEvents(dist2, super::testDistInvokeAllOnOwner, createAllRemoveAll("one", "two", "three"));
    }
 
 }

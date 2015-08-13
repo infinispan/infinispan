@@ -66,7 +66,7 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       // Could be that the key is not local, 'null' is how this is signalled
       if (e == null) return null;
 
-      return f.apply(EntryViews.readWrite(e, notifier));
+      return f.apply(EntryViews.readWrite(e));
    }
 
    @Override

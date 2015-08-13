@@ -76,7 +76,7 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
 
          // Could be that the key is not local, 'null' is how this is signalled
          if (cacheEntry != null) {
-            f.accept(EntryViews.writeOnly(cacheEntry, notifier));
+            f.accept(EntryViews.writeOnly(cacheEntry));
             returns.add(null);
          }
       });
@@ -106,6 +106,11 @@ public final class WriteOnlyManyCommand<K, V> extends AbstractWriteManyCommand<K
    @Override
    public boolean ignoreCommandOnStatus(ComponentStatus status) {
       return false;  // TODO: Customise this generated block
+   }
+
+   @Override
+   public boolean isWriteOnly() {
+      return true;
    }
 
 }

@@ -27,25 +27,24 @@ public final class EntryViews {
       return new CacheEntryReadEntryView<>(entry);
    }
 
-   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry, FunctionalNotifier<K, V> notifier) {
-      return new CacheEntryWriteEntryView<>(entry, notifier);
+   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry) {
+      return new CacheEntryWriteEntryView<>(entry);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, FunctionalNotifier<K, V> notifier) {
-      return new CacheEntryReadWriteEntryView<>(entry, notifier);
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry) {
+      return new CacheEntryReadWriteEntryView<>(entry);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry,
-         V prevValue, Metadata prevMetadata, FunctionalNotifier<K, V> notifier) {
-      return new PreviousReadWriteEntryView<>(entry, prevValue, prevMetadata, notifier);
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, V prevValue, Metadata prevMetadata) {
+      return new PreviousReadWriteEntryView<>(entry, prevValue, prevMetadata);
    }
 
    public static <K, V> ReadEntryView<K, V> noValue(K key) {
       return new NoValueView<>(key);
    }
 
-   private static <K, V> ReadEntryView<K, V> readOnly(K key, V value, MetaParams metas) {
-      return new ReadViewImpl<>(key, value, metas);
+   public static <K, V> ReadEntryView<K, V> readOnly(K key, V value, Metadata metadata) {
+      return new ReadViewMetadata<>(key, value, metadata);
    }
 
    private static final class CacheEntryReadEntryView<K, V> implements ReadEntryView<K, V> {
@@ -100,15 +99,15 @@ public final class EntryViews {
       }
    }
 
-   private static final class ReadViewImpl<K, V> implements ReadEntryView<K, V> {
+   private static final class ReadViewMetadata<K, V> implements ReadEntryView<K, V> {
       final K key;
       final V value;
-      final MetaParams metas;
+      final Metadata metadata;
 
-      private ReadViewImpl(K key, V value, MetaParams metas) {
+      private ReadViewMetadata(K key, V value, Metadata metadata) {
          this.key = key;
          this.value = value;
-         this.metas = metas;
+         this.metadata = metadata;
       }
 
       @Override
@@ -129,22 +128,34 @@ public final class EntryViews {
 
       @Override
       public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
-         return metas.get(type);
+         if (metadata instanceof MetaParamsInternalMetadata) {
+            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+            return metaParamsMetadata.getMetaParam(type);
+         }
+
+         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
+
+         throw new NoSuchElementException("Metadata with type=" + type + " not found");
       }
 
       @Override
       public <T> Optional<T> findMetaParam(Class<T> type) {
-         return metas.find(type);
+         if (metadata instanceof MetaParamsInternalMetadata) {
+            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+            return metaParamsMetadata.findMetaParam(type);
+         }
+
+         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
+
+         return Optional.empty();
       }
    }
 
    private static final class CacheEntryWriteEntryView<K, V> implements WriteEntryView<V> {
-      final FunctionalNotifier<K, V> notifier;
       final CacheEntry<K, V> entry;
 
-      private CacheEntryWriteEntryView(CacheEntry<K, V> entry, FunctionalNotifier<K, V> notifier) {
+      private CacheEntryWriteEntryView(CacheEntry<K, V> entry) {
          this.entry = entry;
-         this.notifier = notifier;
       }
 
       @Override
@@ -152,9 +163,6 @@ public final class EntryViews {
          entry.setValue(value);
          entry.setChanged(true);
          updateMetaParams(entry, metas);
-         // Data written, no assumptions about previous value can be made,
-         // hence we cannot distinguish between create or update.
-         notifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
          return null;
       }
 
@@ -162,19 +170,15 @@ public final class EntryViews {
       public Void remove() {
          entry.setRemoved(true);
          entry.setChanged(true);
-         // For remove write-only listener events, create a value-less read entry view
-         notifier.notifyOnWrite(() -> EntryViews.noValue(entry.getKey()));
          return null;
       }
    }
 
    private static final class CacheEntryReadWriteEntryView<K, V> implements ReadWriteEntryView<K, V> {
-      final FunctionalNotifier<K, V> notifier;
       final CacheEntry<K, V> entry;
 
-      private CacheEntryReadWriteEntryView(CacheEntry<K, V> entry, FunctionalNotifier<K, V> notifier) {
+      private CacheEntryReadWriteEntryView(CacheEntry<K, V> entry) {
          this.entry = entry;
-         this.notifier = notifier;
       }
 
       @Override
@@ -189,11 +193,7 @@ public final class EntryViews {
 
       @Override
       public Void set(V value, MetaParam.Writable... metas) {
-         boolean hasModified = notifier.hasModifyListeners();
-         boolean hasCreated = notifier.hasCreateListeners();
-         if (hasModified && !entry.isCreated()) setAndNotifyModified(value, metas);
-         else if (hasCreated && entry.isCreated()) setAndNotifyCreated(value, metas);
-         else setOnly(value, metas);
+         setOnly(value, metas);
          return null;
       }
 
@@ -203,37 +203,9 @@ public final class EntryViews {
          updateMetaParams(entry, metas);
       }
 
-      private void setAndNotifyModified(V value, MetaParam.Writable[] metas) {
-         // Calculate previous values
-         K key = entry.getKey();
-         V prev = entry.getValue();
-         MetaParams prevMetas = extractMetaParams(entry);
-         // Update entry
-         entry.setValue(value);
-         entry.setChanged(true);
-         MetaParams newMetas = updateMetaParams(entry, metas);
-         // Notify
-         notifier.notifyOnModify(
-            EntryViews.readOnly(key, prev, prevMetas),
-            EntryViews.readOnly(key, value, newMetas));
-      }
-
-      private void setAndNotifyCreated(V value, MetaParam.Writable[] metas) {
-         entry.setValue(value);
-         entry.setChanged(true);
-         MetaParams newMetas = updateMetaParams(entry, metas);
-         notifier.notifyOnCreate(EntryViews.readOnly(entry.getKey(), value, newMetas));
-      }
-
       @Override
       public Void remove() {
          if (!entry.isNull()) {
-            if (notifier.hasRemoveListeners()) {
-               V prev = entry.getValue();
-               MetaParams prevMetas = extractMetaParams(entry);
-               notifier.notifyOnRemove(EntryViews.readOnly(entry.getKey(), prev, prevMetas));
-            }
-
             entry.setRemoved(true);
             entry.setChanged(true);
          }
@@ -277,17 +249,15 @@ public final class EntryViews {
    }
 
    private static final class PreviousReadWriteEntryView<K, V> implements ReadWriteEntryView<K, V> {
-      final FunctionalNotifier<K, V> notifier;
       final CacheEntry<K, V> entry;
       final V prevValue;
       final Metadata prevMetadata;
 
       private PreviousReadWriteEntryView(CacheEntry<K, V> entry,
-            V prevValue, Metadata prevMetadata, FunctionalNotifier<K, V> notifier) {
+            V prevValue, Metadata prevMetadata) {
          this.entry = entry;
          this.prevValue = prevValue;
          this.prevMetadata = prevMetadata;
-         this.notifier = notifier;
       }
 
       @Override
@@ -298,16 +268,11 @@ public final class EntryViews {
       @Override
       public Optional<V> find() {
          return prevValue == null ? Optional.empty() : Optional.ofNullable(prevValue);
-         //return entry == null ? Optional.empty() : Optional.ofNullable(entry.getValue());
       }
 
       @Override
       public Void set(V value, MetaParam.Writable... metas) {
-         boolean hasModified = notifier.hasModifyListeners();
-         boolean hasCreated = notifier.hasCreateListeners();
-         if (hasModified && !entry.isCreated()) setAndNotifyModified(value, metas);
-         else if (hasCreated && entry.isCreated()) setAndNotifyCreated(value, metas);
-         else setOnly(value, metas);
+         setOnly(value, metas);
          return null;
       }
 
@@ -317,37 +282,9 @@ public final class EntryViews {
          updateMetaParams(entry, metas);
       }
 
-      private void setAndNotifyModified(V value, MetaParam.Writable[] metas) {
-         // Calculate previous values
-         K key = entry.getKey();
-         V prev = entry.getValue();
-         MetaParams prevMetas = extractMetaParams(entry);
-         // Update entry
-         entry.setValue(value);
-         entry.setChanged(true);
-         MetaParams newMetas = updateMetaParams(entry, metas);
-         // Notify
-         notifier.notifyOnModify(
-            EntryViews.readOnly(key, prev, prevMetas),
-            EntryViews.readOnly(key, value, newMetas));
-      }
-
-      private void setAndNotifyCreated(V value, MetaParam.Writable[] metas) {
-         entry.setValue(value);
-         entry.setChanged(true);
-         MetaParams newMetas = updateMetaParams(entry, metas);
-         notifier.notifyOnCreate(EntryViews.readOnly(entry.getKey(), value, newMetas));
-      }
-
       @Override
       public Void remove() {
          if (!entry.isNull()) {
-            if (notifier.hasRemoveListeners()) {
-               V prev = entry.getValue();
-               MetaParams prevMetas = extractMetaParams(entry);
-               notifier.notifyOnRemove(EntryViews.readOnly(entry.getKey(), prev, prevMetas));
-            }
-
             entry.setRemoved(true);
             entry.setChanged(true);
          }
@@ -384,10 +321,6 @@ public final class EntryViews {
       @Override
       public V get() throws NoSuchElementException {
          return prevValue;
-//         if (entry == null || entry.getValue() == null)
-//            throw new NoSuchElementException("No value present");
-//
-//         return entry.getValue();
       }
    }
 
@@ -398,9 +331,9 @@ public final class EntryViews {
       }
 
       @Override
-      public CacheEntryReadWriteEntryView<?, ?> readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public CacheEntryReadWriteEntryView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          CacheEntry entry = (CacheEntry) input.readObject();
-         return new CacheEntryReadWriteEntryView<>(entry, null);
+         return new CacheEntryReadWriteEntryView(entry);
       }
 
       @Override

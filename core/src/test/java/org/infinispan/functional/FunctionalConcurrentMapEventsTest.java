@@ -5,8 +5,6 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 
 import static org.infinispan.functional.FunctionalListenerAssertions.*;
-import static org.infinispan.functional.FunctionalListenerAssertions.TestType.CREATE;
-import static org.infinispan.functional.FunctionalListenerAssertions.TestType.WRITE;
 
 @Test(groups = "functional", testName = "functional.FunctionalConcurrentMapEventsTest")
 public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTest {
@@ -162,17 +160,17 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
 
    @Override
    public void testLocalSize() {
-      assertOrderedEvents(local2, super::testLocalSize, createRemove(CREATE, "one", "two"));
+      assertOrderedEvents(local2, super::testLocalSize, createAllRemoveAll("one", "two"));
    }
 
    @Override
    public void testReplSizeOnNonOwner() {
-      assertOrderedEvents(repl2, super::testReplSizeOnNonOwner, createRemove(CREATE, "one", "two"));
+      assertOrderedEvents(repl2, super::testReplSizeOnNonOwner, createAllRemoveAll("one", "two"));
    }
 
    @Override
    public void testReplSizeOnOwner() {
-      assertOrderedEvents(repl2, super::testReplSizeOnOwner, createRemove(CREATE, "one", "two"));
+      assertOrderedEvents(repl2, super::testReplSizeOnOwner, createAllRemoveAll("one", "two"));
    }
 
    @Override
@@ -182,7 +180,7 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
 
    @Override
    public void testDistSizeOnOwner() {
-      assertOrderedEvents(dist2, super::testDistSizeOnOwner, createRemove(CREATE, "one", "two"));
+      assertOrderedEvents(dist2, super::testDistSizeOnOwner, createAllRemoveAll("one", "two"));
    }
 
    @Override
@@ -212,19 +210,17 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
 
    @Override
    public void testLocalPutAll() {
-      assertUnorderedEvents(local2, super::testLocalPutAll, createRemove(WRITE, "one", "two", "two"));
+      assertUnorderedEvents(local2, super::testLocalPutAll, writeRemove("one", "two", "two"));
    }
 
    @Override
    public void testReplPutAllOnNonOwner() {
-      assertUnorderedEvents(repl2, super::testReplPutAllOnNonOwner,
-         createRemove(WRITE, "one", "two", "two"));
+      assertUnorderedEvents(repl2, super::testReplPutAllOnNonOwner, writeRemove("one", "two", "two"));
    }
 
    @Override
    public void testReplPutAllOnOwner() {
-      assertUnorderedEvents(repl2, super::testReplPutAllOnOwner,
-         createRemove(WRITE, "one", "two", "two"));
+      assertUnorderedEvents(repl2, super::testReplPutAllOnOwner, writeRemove("one", "two", "two"));
    }
 
    @Override
@@ -234,8 +230,7 @@ public class FunctionalConcurrentMapEventsTest extends FunctionalConcurrentMapTe
 
    @Override
    public void testDistPutAllOnOwner() {
-      assertUnorderedEvents(dist2, super::testDistPutAllOnOwner,
-         createRemove(WRITE, "one", "two", "two"));
+      assertUnorderedEvents(dist2, super::testDistPutAllOnOwner, writeRemove("one", "two", "two"));
    }
 
    @Override

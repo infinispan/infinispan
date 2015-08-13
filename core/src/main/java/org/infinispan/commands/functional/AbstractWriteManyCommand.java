@@ -11,13 +11,8 @@ import java.util.Set;
 
 abstract class AbstractWriteManyCommand<K, V> implements WriteCommand {
 
-   FunctionalNotifier<K, V> notifier;
    boolean isForwarded = false;
    private int topologyId = -1;
-
-   public void init(FunctionalNotifier<K, V> notifier) {
-      this.notifier = notifier;
-   }
 
    @Override
    public int getTopologyId() {

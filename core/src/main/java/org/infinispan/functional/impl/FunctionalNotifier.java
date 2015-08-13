@@ -14,13 +14,7 @@ import java.util.function.Supplier;
  * @since 8.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public interface FunctionalNotifier<K, V> extends ReadWriteListeners<K, V>, WriteListeners<K, V> {
-
-   boolean hasCreateListeners();
-
-   boolean hasModifyListeners();
-
-   boolean hasRemoveListeners();
+public interface FunctionalNotifier<K, V> extends ReadWriteListeners<K, V> {
 
    /**
     * Notify registered {@link ReadWriteListener} instances of the created entry.

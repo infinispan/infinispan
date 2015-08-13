@@ -122,8 +122,8 @@ public class FunctionalConcurrentMapTest extends AbstractFunctionalTest {
    }
 
    private <K> void doPutUpdate(Supplier<K> keySupplier,
-      ConcurrentMap<K, String> readMap,
-      ConcurrentMap<K, String> writeMap) {
+         ConcurrentMap<K, String> readMap,
+         ConcurrentMap<K, String> writeMap) {
       K key = keySupplier.get();
       assertEquals(null, writeMap.put(key, "one"));
       assertEquals("one", writeMap.put(key, "uno"));

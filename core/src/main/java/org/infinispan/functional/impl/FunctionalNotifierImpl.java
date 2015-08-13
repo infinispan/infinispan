@@ -58,21 +58,6 @@ public final class FunctionalNotifierImpl<K, V> implements FunctionalNotifier<K,
    }
 
    @Override
-   public boolean hasCreateListeners() {
-      return !onCreates.isEmpty();
-   }
-
-   @Override
-   public boolean hasModifyListeners() {
-      return !onModifies.isEmpty();
-   }
-
-   @Override
-   public boolean hasRemoveListeners() {
-      return !onRemoves.isEmpty();
-   }
-
-   @Override
    public void notifyOnCreate(ReadEntryView<K, V> created) {
       onCreates.forEach(c -> c.accept(created));
       rwListeners.forEach(rwl -> rwl.onCreate(created));

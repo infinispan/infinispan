@@ -195,29 +195,49 @@ public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
    public static Collection<TestEvent<String>> create(String... values) {
       List<TestEvent<String>> all = new ArrayList<>();
       for (String value : values) all.addAll(TestEvent.create(CREATE, value));
+      for (String value : values) all.addAll(TestEvent.create(WRITE, value));
       return all;
    }
 
    public static Collection<TestEvent<String>> createModify(String createdValue, String modifiedValue) {
       List<TestEvent<String>> all = new ArrayList<>();
       all.addAll(TestEvent.create(CREATE, createdValue));
+      all.addAll(TestEvent.create(WRITE, createdValue));
       all.addAll(TestEvent.create(MODIFY, modifiedValue, createdValue));
+      all.addAll(TestEvent.create(WRITE, modifiedValue));
       return all;
    }
 
-   public static Collection<TestEvent<String>> createRemove(String... values) {
+   public static Collection<TestEvent<String>> createRemove(String value) {
+      List<TestEvent<String>> all = new ArrayList<>();
+      all.addAll(TestEvent.create(CREATE, value));
+      all.addAll(TestEvent.create(WRITE, value));
+      all.addAll(TestEvent.create(REMOVE, null, value));
+      all.addAll(TestEvent.create(WRITE, null));
+      return all;
+   }
+
+   public static Collection<TestEvent<String>> createAllRemoveAll(String... values) {
       List<TestEvent<String>> all = new ArrayList<>();
       for (String s : values) {
          all.addAll(TestEvent.create(CREATE, s));
+         all.addAll(TestEvent.create(WRITE, s));
+      }
+      for (String s : values) {
          all.addAll(TestEvent.create(REMOVE, null, s));
+         all.addAll(TestEvent.create(WRITE, null));
       }
       return all;
    }
 
-   public static Collection<TestEvent<String>> createRemove(TestType inType, String... values) {
+   public static Collection<TestEvent<String>> createThenRemove(String... values) {
       List<TestEvent<String>> all = new ArrayList<>();
-      for (String value : values) all.addAll(TestEvent.create(inType, value));
-      for (String value : values) all.addAll(TestEvent.create(REMOVE, null, value));
+      for (String s : values) {
+         all.addAll(TestEvent.create(CREATE, s));
+         all.addAll(TestEvent.create(WRITE, s));
+         all.addAll(TestEvent.create(REMOVE, null, s));
+         all.addAll(TestEvent.create(WRITE, null));
+      }
       return all;
    }
 
@@ -230,24 +250,32 @@ public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
    public static Collection<TestEvent<String>> writeModify(List<String> written, List<String> modified) {
       List<TestEvent<String>> all = new ArrayList<>();
       for (String value : written) all.addAll(TestEvent.create(WRITE, value));
-      IntStream.range(0, modified.size()).forEach(i ->
-         all.addAll(TestEvent.create(MODIFY, modified.get(i), written.get(i))));
+      IntStream.range(0, modified.size()).forEach(i -> {
+            all.addAll(TestEvent.create(MODIFY, modified.get(i), written.get(i)));
+            all.addAll(TestEvent.create(WRITE, modified.get(i)));
+         }
+      );
       return all;
    }
 
    public static Collection<TestEvent<String>> createModifyRemove(String created, String modified) {
       List<TestEvent<String>> all = new ArrayList<>();
       all.addAll(TestEvent.create(CREATE, created));
+      all.addAll(TestEvent.create(WRITE, created));
       all.addAll(TestEvent.create(MODIFY, modified, created));
+      all.addAll(TestEvent.create(WRITE, modified));
       all.addAll(TestEvent.create(REMOVE, null, modified));
+      all.addAll(TestEvent.create(WRITE, null));
       return all;
    }
 
    public static Collection<TestEvent<String>> createModifyRemove(List<String> created, List<String> modified) {
       List<TestEvent<String>> all = new ArrayList<>();
       created.forEach(s -> all.addAll(TestEvent.create(CREATE, s)));
+      created.forEach(s -> all.addAll(TestEvent.create(WRITE, s)));
       modified.forEach(s -> all.addAll(TestEvent.create(WRITE, s)));
       modified.forEach(s -> all.addAll(TestEvent.create(REMOVE, null, s)));
+      modified.forEach(s -> all.addAll(TestEvent.create(WRITE, null)));
       return all;
    }
 
@@ -262,6 +290,7 @@ public class FunctionalListenerAssertions<K, V> implements AutoCloseable {
       List<TestEvent<String>> all = new ArrayList<>();
       for (String s : values) all.addAll(TestEvent.create(WRITE, s));
       for (String s : values) all.addAll(TestEvent.create(REMOVE, null, s));
+      for (String s : values) all.addAll(TestEvent.create(WRITE, null));
       return all;
    }
 

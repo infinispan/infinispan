@@ -96,10 +96,10 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       // TODO: Configure equivalence function
       if (valueUnchanged(e, prevValue, value) || valueRemoved(e, prevValue)) {
          log.tracef("Execute read-write function on previous value %s and previous metadata %s", prevValue, prevMetadata);
-         return f.apply(value, EntryViews.readWrite(e, prevValue, prevMetadata, notifier));
+         return f.apply(value, EntryViews.readWrite(e, prevValue, prevMetadata));
       }
 
-      return f.apply(value, EntryViews.readWrite(e, e.getValue(), e.getMetadata(), notifier));
+      return f.apply(value, EntryViews.readWrite(e, e.getValue(), e.getMetadata()));
    }
 
    boolean valueRemoved(MVCCEntry<K, V> e, V prevValue) {

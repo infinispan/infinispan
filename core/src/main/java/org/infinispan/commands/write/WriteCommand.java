@@ -52,4 +52,16 @@ public interface WriteCommand extends VisitableCommand, FlagAffectedCommand {
     * based on the result of its execution on the primary owner.
     */
    void updateStatusFromRemoteResponse(Object remoteResponse);
+
+   /**
+    * Indicates whether the command is write-only, meaning that it makes no
+    * attempt to read the previously associated value with key for which the
+    * command is directed.
+    *
+    * @return true is the command is write only, false otherwise.
+    */
+   default boolean isWriteOnly() {
+      return false;
+   }
+
 }

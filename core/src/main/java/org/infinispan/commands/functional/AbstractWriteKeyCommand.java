@@ -4,11 +4,9 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.marshall.SerializeWith;
-import org.infinispan.functional.impl.FunctionalNotifier;
 
 abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand {
 
-   FunctionalNotifier<K, V> notifier;
    ValueMatcher valueMatcher;
    boolean successful = true;
 
@@ -17,10 +15,6 @@ abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand {
       this.valueMatcher = ann != null
          ? ValueMatcher.valueOf(ann.valueMatcher().toString())
          : ValueMatcher.MATCH_ALWAYS;
-   }
-
-   public void init(FunctionalNotifier<K, V> notifier) {
-      this.notifier = notifier;
    }
 
    public AbstractWriteKeyCommand() {

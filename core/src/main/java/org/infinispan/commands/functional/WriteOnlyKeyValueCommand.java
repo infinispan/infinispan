@@ -63,7 +63,7 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
       // Could be that the key is not local
       if (e == null) return null;
 
-      f.accept(value, EntryViews.writeOnly(e, notifier));
+      f.accept(value, EntryViews.writeOnly(e));
       return null;
    }
 
@@ -76,4 +76,10 @@ public final class WriteOnlyKeyValueCommand<K, V> extends AbstractWriteKeyComman
    public Object acceptVisitor(InvocationContext ctx, Visitor visitor) throws Throwable {
       return visitor.visitWriteOnlyKeyValueCommand(ctx, this);
    }
+
+   @Override
+   public boolean isWriteOnly() {
+      return true;
+   }
+
 }
