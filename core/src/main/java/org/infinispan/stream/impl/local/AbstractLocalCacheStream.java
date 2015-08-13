@@ -15,6 +15,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.TimeUnit;
 import java.util.function.*;
 import java.util.stream.Collector;
 import java.util.stream.DoubleStream;
@@ -344,5 +345,11 @@ public abstract class AbstractLocalCacheStream<R, K, V> implements CacheStream<R
    @Override
    public void close() {
       getOrCreateStream().close();
+   }
+
+   @Override
+   public CacheStream<R> timeout(long timeout, TimeUnit unit) {
+      // Timeout does nothing for a local cache stream
+      return this;
    }
 }

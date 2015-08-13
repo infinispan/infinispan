@@ -462,7 +462,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                supplier.pending = id;
                try {
                   try {
-                     if (!csm.awaitCompletion(id, 30, TimeUnit.SECONDS)) {
+                     if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
                         throw new TimeoutException();
                      }
                   } catch (InterruptedException e) {
@@ -535,7 +535,7 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
                                 () -> ch.getPrimarySegmentsForOwner(localAddress), id);
                      }
                      try {
-                        if (!csm.awaitCompletion(id, 30, TimeUnit.SECONDS)) {
+                        if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
                            throw new TimeoutException();
                         }
                      } catch (InterruptedException e) {
@@ -854,6 +854,16 @@ public class DistributedCacheStream<R> extends AbstractCacheStream<R, Stream<R>,
    @Override
    public CacheStream<R> disableRehashAware() {
       rehashAware = false;
+      return this;
+   }
+
+   @Override
+   public CacheStream<R> timeout(long timeout, TimeUnit unit) {
+      if (timeout <= 0) {
+         throw new IllegalArgumentException("Timeout must be greater than 0");
+      }
+      this.timeout = timeout;
+      this.timeoutUnit = unit;
       return this;
    }
 

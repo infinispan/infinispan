@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Spliterator;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -128,6 +129,19 @@ public interface CacheStream<R> extends Stream<R> {
     * @return This stream again with rehash awareness disabled.
     */
    CacheStream<R> disableRehashAware();
+
+   /**
+    * Sets a given time to wait for a remote operation to respond by.  This timeout does nothing if the terminal
+    * operation does not go remote.
+    * <p>If a timeout does occur then a {@link java.util.concurrent.TimeoutException} is thrown from the terminal
+    * operation invoking thread or on the next call to the {@link Iterator} or {@link Spliterator}.</p>
+    * <p>Note that if a rehash occurs this timeout value is reset for the subsequent retry if rehash aware is
+    * enabled.</p>
+    * @param timeout the maximum time to wait
+    * @param unit the time unit of the timeout argument
+    * @return a stream with the timeout set
+    */
+   CacheStream<R> timeout(long timeout, TimeUnit unit);
 
    /**
     * Functional interface that is used as a callback when segments are completed.  Please see
