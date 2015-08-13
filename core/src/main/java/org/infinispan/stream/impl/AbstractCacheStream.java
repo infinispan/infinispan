@@ -78,6 +78,9 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
 
    protected IteratorOperation iteratorOperation = IteratorOperation.NO_MAP;
 
+   protected long timeout = 30;
+   protected TimeUnit timeoutUnit = TimeUnit.SECONDS;
+
    protected AbstractCacheStream(Address localAddress, boolean parallel, DistributionManager dm,
            Supplier<CacheStream<CacheEntry>> supplier, ClusterStreamManager<Object> csm,
            boolean includeLoader, int distributedBatchSize, Executor executor, ComponentRegistry registry) {
@@ -125,6 +128,9 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
       this.segmentCompletionListener = other.segmentCompletionListener;
 
       this.iteratorOperation = other.iteratorOperation;
+
+      this.timeout = other.timeout;
+      this.timeoutUnit = other.timeoutUnit;
    }
 
    protected void markSorted(IntermediateType type) {
@@ -262,8 +268,8 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          remoteResults.onCompletion(null, Collections.emptySet(), localValue);
          try {
             if ((earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
-                    !csm.awaitCompletion(id, 30, TimeUnit.SECONDS)) {
-               throw new CacheException(new TimeoutException());
+                    !csm.awaitCompletion(id, timeout, timeoutUnit)) {
+               throw new TimeoutException();
             }
          } catch (InterruptedException e) {
             throw new CacheException(e);
@@ -316,8 +322,8 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
             }
             try {
                if ((!localRun || earlyTerminatePredicate == null || !earlyTerminatePredicate.test(localValue)) &&
-                       !csm.awaitCompletion(id, 30, TimeUnit.SECONDS)) {
-                  throw new CacheException(new TimeoutException());
+                       !csm.awaitCompletion(id,  timeout, timeoutUnit)) {
+                  throw new TimeoutException();
                }
             } catch (InterruptedException e) {
                throw new CacheException(e);
@@ -386,8 +392,8 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
                }
             }
             try {
-               if (!csm.awaitCompletion(id, 30, TimeUnit.SECONDS)) {
-                  throw new CacheException(new TimeoutException());
+               if (!csm.awaitCompletion(id, timeout, timeoutUnit)) {
+                  throw new TimeoutException();
                }
             } catch (InterruptedException e) {
                throw new CacheException(e);
