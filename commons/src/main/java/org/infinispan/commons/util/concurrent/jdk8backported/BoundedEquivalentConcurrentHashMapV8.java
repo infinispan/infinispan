@@ -13,9 +13,6 @@
 
 package org.infinispan.commons.util.concurrent.jdk8backported;
 
-import static java.util.Collections.singletonMap;
-import static java.util.Collections.unmodifiableMap;
-
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.logging.Log;
@@ -34,12 +31,15 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.*;
+
+import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableMap;
 
 /**
  * A hash table supporting full concurrency of retrievals and
@@ -440,6 +440,13 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       Collection<Node<K, V>> findIfEntriesNeedEvicting();
 
       void onResize(long oldSize, long newSize);
+
+      /**
+       * Invoked when resizing the container.
+       *
+       * @param newSize New Size applied to the container.
+       */
+      void resize(long newSize);
    }
 
    static class NullEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
@@ -491,6 +498,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       public void onResize(long oldSize, long newSize) {
          // Do nothing.
       }
+
+      @Override
+      public void resize(long newSize) {
+         // Do nothing.
+      }
    }
 
    static class LRUNode<K, V> implements EvictionEntry<K, V> {
@@ -513,7 +525,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       final BoundedEquivalentConcurrentHashMapV8<K, V> map;
       final StrippedConcurrentLinkedDeque<Node<K, V>> deque = 
             new StrippedConcurrentLinkedDeque<Node<K,V>>();
-      final long maxSize;
+      volatile long maxSize;
       final AtomicReference<SizeAndEvicting> currentSize = new AtomicReference<>(
             new SizeAndEvicting(0, 0));
       final EntrySizeCalculator<? super K, ? super V> sizeCalculator;
@@ -706,6 +718,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             incrementSizeEviction(currentSize, (newSize - oldSize) * NODE_ARRAY_OFFSET, 0);
          }
       }
+
+      @Override
+      public void resize(long newSize) {
+         this.maxSize = newSize;
+      }
    }
 
    enum Recency {
@@ -810,10 +827,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       final StrippedConcurrentLinkedDeque<LIRSNode<K, V>> queue = new StrippedConcurrentLinkedDeque<>();
 
       /** The maximum number of hot entries (L_lirs in the paper). */
-      private final long maximumHotSize;
+      private volatile long maximumHotSize;
 
       /** The maximum number of resident entries (L in the paper). */
-      private final long maximumSize;
+      private volatile long maximumSize;
 
       /** The actual number of hot entries. */
       private final AtomicLong hotSize = new AtomicLong();
@@ -894,7 +911,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
       @Override
       public void onEntryMiss(Node<K, V> e, V value) {
-         boolean pruneLIR = false;
+         long pruneLIR = 0;
          boolean evictHIR = false;
          boolean skipIncrement;
          LIRSNode<K, V> lirsNode = (LIRSNode<K, V>) e.eviction;
@@ -913,11 +930,15 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         + "newly created evictio node!");
                }
 
-               // This should be the most common case by far 
+               long hotDifference;
+               // This should be the most common case by far
                // (alreadyCreated is implied to be false)
                // If it was added to LIR due to size don't do anymore
                if (addToLIRIfNotFullHot(lirsNode, true)) {
                   return;
+               } else if ((hotDifference = hotSize.get() - maximumHotSize) > 0) {
+                  // This can only happen if we had a resize where the new size is less than the hot max size
+                  pruneLIR = hotDifference;
                }
 
                // This is the (b) example
@@ -949,7 +970,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
                      // This is the (a) example
                      promoteHIRToLIR(lirsNode);
-                     pruneLIR = true;
+                     pruneLIR = 1;
                      // Since we are adding back in a value we set it to increment
                      skipIncrement = false;
                      break;
@@ -987,8 +1008,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             }
          }
 
-         if (pruneLIR) {
-            hotDemotion.incrementAndGet();
+         if (pruneLIR > 0) {
+            hotDemotion.addAndGet(pruneLIR);
          }
 
          // Note only 1 of these can be true
@@ -1534,6 +1555,12 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       @Override
       public void onResize(long oldSize, long newSize) {
          // Do nothing
+      }
+
+      @Override
+      public void resize(long newSize) {
+         this.maximumSize = newSize;
+         this.maximumHotSize = calculateLIRSize(this.maximumSize);
       }
 
    }
@@ -2184,7 +2211,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    Equivalence<? super V> valueEq;
    transient NodeEquivalence<K, V> nodeEq;
 
-   final long maxSize;
+   volatile long maxSize;
 
    final EvictionPolicy<K, V> evictionPolicy;
    final EvictionListener<? super K, ? super V> evictionListener;
@@ -3926,6 +3953,14 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
       return tab;
+   }
+
+   public void resize(int newSize) {
+      if (newSize <= 0) {
+         throw new IllegalArgumentException();
+      }
+      this.maxSize = newSize;
+      this.evictionPolicy.resize(newSize);
    }
 
    /**
