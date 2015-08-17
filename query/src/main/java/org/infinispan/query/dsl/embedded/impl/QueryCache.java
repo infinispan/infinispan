@@ -27,6 +27,8 @@ public class QueryCache {
 
    private static final Log log = LogFactory.getLog(QueryCache.class, Log.class);
 
+   private final boolean trace = log.isTraceEnabled();
+
    /**
     * Users can define a cache configuration with this name if they need to fine tune query caching. If they do not do
     * so a default config is used (see {@link QueryCache#getDefaultQueryCacheConfig()}).
@@ -61,8 +63,8 @@ public class QueryCache {
     */
    public <T> T get(KeyValuePair<String, Class> queryKey) {
       Object cachedResult = getCache().get(queryKey);
-      if (cachedResult != null) {
-         log.debugf("QueryCache hit: %s, %s", queryKey.getKey(), queryKey.getValue());
+      if (trace && cachedResult != null) {
+         log.tracef("QueryCache hit: %s, %s", queryKey.getKey(), queryKey.getValue());
       }
       return (T) cachedResult;
    }
