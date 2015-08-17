@@ -2,23 +2,31 @@ package org.infinispan.persistence.cluster;
 
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.spi.ExternalStore;
 import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+import org.infinispan.persistence.spi.PersistenceException;
+
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.fail;
 
 /**
  * Test cache store, which never store/loads anything (= returns null for all keys).
  *
- *  @author Jakub Markos
+ * @author Jakub Markos
  */
 @ConfiguredBy(MyCustomCacheStoreConfiguration.class)
 public class MyCustomCacheStore implements ExternalStore {
 
-    private static final Log log = LogFactory.getLog(MyCustomCacheStore.class);
-
     private MyCustomCacheStoreConfiguration config;
+
+    public MyCustomCacheStore() {
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            fail("This thread shouldn't get interrupted; " + e.getMessage());
+        }
+    }
 
     @Override
     public void init(InitializationContext ctx) {
