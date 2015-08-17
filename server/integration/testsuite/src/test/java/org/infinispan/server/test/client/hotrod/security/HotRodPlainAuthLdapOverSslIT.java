@@ -31,7 +31,7 @@ public class HotRodPlainAuthLdapOverSslIT extends HotRodSaslAuthTestBase {
 
    @BeforeClass
    public static void kerberosSetup() throws Exception {
-      ldap = new ApacheDSLdapSSL("localhost", ITestUtils.SERVER_CONFIG_DIR + File.separator + KEYSTORE_NAME,
+      ldap = new ApacheDSLdapSSL(ITestUtils.SERVER_CONFIG_DIR + File.separator + KEYSTORE_NAME,
             KEYSTORE_PASSWORD);
       ldap.start();
    }
