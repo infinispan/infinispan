@@ -2,7 +2,6 @@ package org.infinispan.expiration.impl;
 
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.event.CacheEntryExpiredEvent;
 import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.test.TestingUtil;

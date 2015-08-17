@@ -160,8 +160,8 @@ public class EmbeddedMetadata implements Metadata {
             long lifespan, TimeUnit lifespanUnit,
             long maxIdle, TimeUnit maxIdleUnit, EntryVersion version) {
          super(version);
-         this.lifespan = lifespanUnit.toMillis(lifespan);
-         this.maxIdle = maxIdleUnit.toMillis(maxIdle);
+         this.lifespan = lifespan < 0 ? -1 : lifespanUnit.toMillis(lifespan);
+         this.maxIdle = maxIdle < 0 ? -1 : maxIdleUnit.toMillis(maxIdle);
       }
 
       @Override
@@ -220,7 +220,7 @@ public class EmbeddedMetadata implements Metadata {
             long timeout, TimeUnit timeoutUnit,
             EntryVersion version) {
          super(version);
-         this.timeout = timeoutUnit.toMillis(timeout);
+         this.timeout = timeout < 0 ? -1 : timeoutUnit.toMillis(timeout);
       }
 
       @Override
