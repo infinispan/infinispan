@@ -57,7 +57,7 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
    /**
     * Notifies all registered listeners of a CacheEntryExpired event.
     */
-   void notifyCacheEntryExpired(K key, V value, Metadata metadata);
+   void notifyCacheEntryExpired(K key, V value, Metadata metadata, InvocationContext ctx);
 
    /**
     * Notifies all registered listeners of a CacheEntryInvalidated event.

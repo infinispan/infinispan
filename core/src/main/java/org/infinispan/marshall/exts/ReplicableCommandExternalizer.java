@@ -127,7 +127,7 @@ public class ReplicableCommandExternalizer extends AbstractExternalizer<Replicab
             ClearCommand.class, EvictCommand.class, ApplyDeltaCommand.class,
             InvalidateCommand.class, InvalidateL1Command.class,
             PutKeyValueCommand.class,
-            PutMapCommand.class, RemoveCommand.class,
+            PutMapCommand.class, RemoveCommand.class, RemoveExpiredCommand.class,
             ReplaceCommand.class, GetKeysInGroupCommand.class,
             ReadWriteKeyCommand.class, ReadWriteKeyValueCommand.class,
             WriteOnlyKeyCommand.class, WriteOnlyKeyValueCommand.class,

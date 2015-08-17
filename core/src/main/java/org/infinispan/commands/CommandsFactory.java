@@ -125,6 +125,15 @@ public interface CommandsFactory {
    InvalidateCommand buildInvalidateFromL1Command(Address origin, Set<Flag> flags, Collection<Object> keys);
 
    /**
+    * Builds an expired remove command that is used to remove only a specific expired entry
+    * @param key the key of the expired entry
+    * @param value the value of the entry when it was expired
+    * @param lifespan the lifespan that expired from the command
+    * @return a RemovedExpiredCommand
+    */
+   RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan);
+
+   /**
     * Builds a ReplaceCommand
     * @param key key to replace
     * @param oldValue existing value to check for if conditional, null if unconditional.

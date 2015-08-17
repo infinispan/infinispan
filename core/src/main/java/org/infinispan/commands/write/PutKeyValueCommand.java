@@ -216,6 +216,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          // magic
          Delta dv = (Delta) value;
          if (e.isRemoved()) {
+            e.setExpired(false);
             e.setRemoved(false);
             e.setCreated(true);
             e.setValid(true);
@@ -234,6 +235,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          o = e.setValue(value);
          if (e.isRemoved()) {
             e.setCreated(true);
+            e.setExpired(false);
             e.setRemoved(false);
             e.setValid(true);
             o = null;

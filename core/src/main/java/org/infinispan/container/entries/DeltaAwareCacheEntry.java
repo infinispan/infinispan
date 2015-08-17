@@ -188,8 +188,8 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, State
                   if (makeCopy) {
                      //create or update existing entry.
                      newEntry = oldEntry == null ?
-                           factory.create(key, value, extractMetadata(null, metadata)) :
-                           factory.update(oldEntry, value, extractMetadata(oldEntry, metadata));
+                             factory.create(key, value, extractMetadata(null, metadata)) :
+                             factory.update(oldEntry, value, extractMetadata(oldEntry, metadata));
                   }
                   value.commit();
                }

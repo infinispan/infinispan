@@ -310,6 +310,11 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
+   public void removeExpired(K key, V value, Long lifespan) {
+      // TODO: Customise this generated block
+   }
+
+   @Override
    public void putForExternalRead(K key, V value) {
       // TODO: Customise this generated block
    }

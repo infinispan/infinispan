@@ -35,11 +35,32 @@ public interface ExpirationManager<K, V> {
    boolean isEnabled();
 
    /**
-    * This should be invoked passing in an entry that is now expired.  Note this method assumes to not have the
-    * lock for this key and will attempt to acquire it.
+    * This should be invoked passing in an entry that is now expired.  This method may attempt to lock this key to
+    * preserve atomicity.
     * @param entry entry that is now expired
+    * @param currentTime the current time in milliseconds
     */
-   void handleInMemoryExpiration(InternalCacheEntry<K, V> entry);
+   void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime);
 
+   /**
+    * This is to be invoked when a store entry expires.  This method may attempt to lock this key to preserve atomicity.
+    * <p>
+    * Note this method doesn't currently take a {@link InternalCacheEntry} and this is due to a limitation in the
+    * cache store API.  This may cause some values to be removed if they were updated at the same time.
+    * @param key the key of the expired entry
+    */
    void handleInStoreExpiration(K key);
+
+   /**
+    * This is to be invoked with a when a write is known to occur to prevent expiration from happening.  This way we
+    * won't have a swarm of remote calls required.
+    * @param key the key to use
+    */
+   void registerWriteIncoming(K key);
+
+   /**
+    * This should always be invoked after registering write but after performing any operations required.
+    * @param key the key to use
+    */
+   void unregisterWrite(K key);
 }

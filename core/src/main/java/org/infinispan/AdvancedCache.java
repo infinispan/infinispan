@@ -551,4 +551,20 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @return the entry set containing all of the CacheEntries
     */
    CacheSet<CacheEntry<K, V>> cacheEntrySet();
+
+   /**
+    * Attempts to remove the entry if it is expired.  Due to expired entries not being consistent across nodes, this
+    * will still attempt to remove the value if it is not present.  Note that this will raise an expired event
+    * even if the entry is not present.  Normally this method should never be invoked except by the
+    * {@link ExpirationManager}.
+    * <p>
+    * This command will only remove the value if the value and lifespan also match if provided.
+    * <p>
+    * NOTE: This method may be removed at any point including in a minor release and is not supported for external
+    * usage.
+    * @param key the key that is expiring
+    * @param value the value that mapped to the given.  Null means it will match any value
+    * @param lifespan the lifespan that should match.  If null is provided it will match any lifespan value
+    */
+   void removeExpired(K key, V value, Long lifespan);
 }

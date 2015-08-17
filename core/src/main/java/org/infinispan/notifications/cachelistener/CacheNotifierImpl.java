@@ -427,7 +427,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    @Override
-   public void notifyCacheEntryExpired(K key, V value, Metadata metadata) {
+   public void notifyCacheEntryExpired(K key, V value, Metadata metadata, InvocationContext ctx) {
       if (isNotificationAllowed(null, cacheEntryExpiredListeners)) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EXPIRED);
          e.setKey(key);
@@ -436,7 +436,21 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
          e.setOriginLocal(true);
          e.setPre(false);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
-         cacheEntryExpiredListeners.forEach(l -> l.invoke(e, isLocalNodePrimaryOwner));
+
+         boolean sendEvents = ctx == null || !ctx.isInTxScope();
+         try {
+            for (CacheEntryListenerInvocation<K, V> listener : cacheEntryExpiredListeners) {
+               listener.invoke(e, isLocalNodePrimaryOwner);
+            }
+            if (sendEvents) {
+               eventManager.sendEvents();
+               sendEvents = false;
+            }
+         } finally {
+            if (sendEvents) {
+               eventManager.dropEvents();
+            }
+         }
       }
    }
 
@@ -601,6 +615,15 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                      listener.invokeNoChecks(event, false, true);
                   }
                }
+               break;
+            case CACHE_ENTRY_EXPIRED:
+               cacheEntryExpiredListeners.forEach(listener -> {
+                  if (listener.isClustered() && uuid.equals(listener.getIdentifier())) {
+                     // We force invocation, since it means the owning node passed filters already and they
+                     // already converted so don't run converter either
+                     listener.invokeNoChecks(event, false, true);
+                  }
+               });
                break;
             default:
                throw new IllegalArgumentException("Unexpected event type encountered!");
@@ -1229,6 +1252,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
             case CACHE_ENTRY_PASSIVATED:
             case CACHE_ENTRY_REMOVED:
             case CACHE_ENTRY_VISITED:
+            case CACHE_ENTRY_EXPIRED:
                return new EventType(event.isCommandRetried(), event.isPre(), event.getType());
             default:
                return null;

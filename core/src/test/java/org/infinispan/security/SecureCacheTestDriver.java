@@ -666,4 +666,9 @@ public class SecureCacheTestDriver {
    public void testCacheEntrySet(SecureCache<String, String> cache) {
       cache.getAdvancedCache().getAllCacheEntries(Collections.emptySet());
    }
+
+   @TestCachePermission(AuthorizationPermission.WRITE)
+   public void testRemoveExpired_Object_Object_Long(SecureCache<String, String> cache) {
+      cache.getAdvancedCache().removeExpired("a", "a", null);
+   }
 }

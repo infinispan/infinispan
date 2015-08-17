@@ -58,6 +58,10 @@ public class ClusterEvent<K, V> implements CacheEntryCreatedEvent<K, V>, CacheEn
          case CACHE_ENTRY_MODIFIED:
             commandRetried = ((CacheEntryModifiedEvent<K, V>)event).isCommandRetried();
             break;
+         case CACHE_ENTRY_EXPIRED:
+            // Expired doesn't have a retry
+            commandRetried = false;
+            break;
          default:
             throw new IllegalArgumentException("Cluster Event can only be created from a CacheEntryRemoved, CacheEntryCreated or CacheEntryModified event!");
       }

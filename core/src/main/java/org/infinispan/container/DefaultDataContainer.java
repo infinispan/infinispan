@@ -189,7 +189,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       if (e != null && e.canExpire()) {
          long currentTimeMillis = timeService.wallClockTime();
          if (e.isExpired(currentTimeMillis)) {
-            expirationManager.handleInMemoryExpiration(e);
+            expirationManager.handleInMemoryExpiration(e, currentTimeMillis);
             e = null;
          } else {
             e.touch(currentTimeMillis);

@@ -168,6 +168,11 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan) {
+      return actual.buildRemoveExpiredCommand(key, value, lifespan);
+   }
+
+   @Override
    public ReplaceCommand buildReplaceCommand(Object key, Object oldValue, Object newValue, Metadata metadata, Set<Flag> flags) {
       return actual.buildReplaceCommand(key, oldValue, newValue, metadata, flags);
    }
