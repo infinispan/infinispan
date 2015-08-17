@@ -23,6 +23,11 @@ public final class MarshallableFunctionalInterfaces {
    }
 
    @SuppressWarnings("unchecked")
+   public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> setValueReturnView() {
+      return SetValueReturnView.INSTANCE;
+   }
+
+   @SuppressWarnings("unchecked")
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> setValueIfAbsentReturnPrevOrNull() {
       return SetValueIfAbsentReturnPrevOrNull.INSTANCE;
    }
@@ -73,13 +78,18 @@ public final class MarshallableFunctionalInterfaces {
    }
 
    @SuppressWarnings("unchecked")
-   public static <K, V> Function<ReadWriteEntryView<K, V>, Optional<V>> findReadWrite() {
-      return FindReadWrite.INSTANCE;
+   public static <K, V> Function<ReadWriteEntryView<K, V>, Optional<V>> returnReadWriteFind() {
+      return ReturnReadWriteFind.INSTANCE;
    }
 
    @SuppressWarnings("unchecked")
-   public static <K, V> Function<ReadWriteEntryView<K, V>, V> getReadWrite() {
-      return GetReadWrite.INSTANCE;
+   public static <K, V> Function<ReadWriteEntryView<K, V>, V> returnReadWriteGet() {
+      return ReturnReadWriteGet.INSTANCE;
+   }
+
+   @SuppressWarnings("unchecked")
+   public static <K, V> Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> returnReadWriteView() {
+      return ReturnReadWriteView.INSTANCE;
    }
 
    @SerializeWith(value = SetValueReturnPrevOrNull.Externalizer0.class,
@@ -94,6 +104,23 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final SetValueReturnPrevOrNull INSTANCE = new SetValueReturnPrevOrNull<>();
+      public static final class Externalizer0 implements Externalizer<Object> {
+         public void writeObject(ObjectOutput oo, Object o) {}
+         public Object readObject(ObjectInput input) { return INSTANCE; }
+      }
+   }
+
+   @SerializeWith(value = SetValueReturnView.Externalizer0.class,
+      valueMatcher = SerializeValueMatcher.MATCH_ALWAYS)
+   private static final class SetValueReturnView<K, V>
+         implements BiFunction<V, ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> {
+      @Override
+      public ReadWriteEntryView<K, V> apply(V v, ReadWriteEntryView<K, V> rw) {
+         rw.set(v);
+         return rw;
+      }
+
+      private static final SetValueReturnView INSTANCE = new SetValueReturnView<>();
       public static final class Externalizer0 implements Externalizer<Object> {
          public void writeObject(ObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
@@ -304,30 +331,45 @@ public final class MarshallableFunctionalInterfaces {
       }
    }
 
-   @SerializeWith(value = FindReadWrite.Externalizer0.class)
-   private static final class FindReadWrite<K, V>
+   @SerializeWith(value = ReturnReadWriteFind.Externalizer0.class)
+   private static final class ReturnReadWriteFind<K, V>
          implements Function<ReadWriteEntryView<K, V>, Optional<V>> {
       @Override
       public Optional<V> apply(ReadWriteEntryView<K, V> rw) {
          return rw.find();
       }
 
-      private static final FindReadWrite INSTANCE = new FindReadWrite<>();
+      private static final ReturnReadWriteFind INSTANCE = new ReturnReadWriteFind<>();
       public static final class Externalizer0 implements Externalizer<Object> {
          public void writeObject(ObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }
       }
    }
 
-   @SerializeWith(value = GetReadWrite.Externalizer0.class)
-   private static final class GetReadWrite<K, V>
-         implements Function<ReadWriteEntryView<K, V>, V> {
+   @SerializeWith(value = ReturnReadWriteGet.Externalizer0.class)
+   private static final class ReturnReadWriteGet<K, V>
+      implements Function<ReadWriteEntryView<K, V>, V> {
       @Override
       public V apply(ReadWriteEntryView<K, V> rw) {
          return rw.get();
       }
 
-      private static final GetReadWrite INSTANCE = new GetReadWrite<>();
+      private static final ReturnReadWriteGet INSTANCE = new ReturnReadWriteGet<>();
+      public static final class Externalizer0 implements Externalizer<Object> {
+         public void writeObject(ObjectOutput oo, Object o) {}
+         public Object readObject(ObjectInput input) { return INSTANCE; }
+      }
+   }
+
+   @SerializeWith(value = ReturnReadWriteView.Externalizer0.class)
+   private static final class ReturnReadWriteView<K, V>
+      implements Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> {
+      @Override
+      public ReadWriteEntryView<K, V> apply(ReadWriteEntryView<K, V> rw) {
+         return rw;
+      }
+
+      private static final ReturnReadWriteView INSTANCE = new ReturnReadWriteView<>();
       public static final class Externalizer0 implements Externalizer<Object> {
          public void writeObject(ObjectOutput oo, Object o) {}
          public Object readObject(ObjectInput input) { return INSTANCE; }

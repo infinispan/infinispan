@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -192,7 +193,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
     */
    private <K> void doReadWriteGetsEmpty(Supplier<K> keySupplier, ReadWriteMap<K, String> map) {
       K key = keySupplier.get();
-      await(map.eval(key, findReadWrite()).thenAccept(v -> assertEquals(Optional.empty(), v)));
+      await(map.eval(key, returnReadWriteFind()).thenAccept(v -> assertEquals(Optional.empty(), v)));
    }
 
    public void testLocalReadWriteValuesReturnPrevious() {
@@ -224,7 +225,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       K key = keySupplier.get();
       await(
          map2.eval(key, SetStringConstantReturnPrevious.getInstance()).thenCompose(r ->
-               map1.eval(key, getReadWrite()).thenAccept(v -> {
+               map1.eval(key, returnReadWriteGet()).thenAccept(v -> {
                      assertFalse(r.isPresent());
                      assertEquals("one", v);
                   }
@@ -497,6 +498,76 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       Traversable<String> prevTraversable = map2.evalAll(removeReturnPrevOrNull());
       Set<String> prevValues = prevTraversable.collect(HashSet::new, HashSet::add, HashSet::addAll);
       assertEquals(new HashSet<>(data.values()), prevValues);
+   }
+
+   public void testLocalReturnViewFromReadOnlyEval() {
+      doReturnViewFromReadOnlyEval(supplyIntKey(), ro(fmapL1), wo(fmapL2));
+   }
+
+   public void testReplReturnViewFromReadOnlyEvalOnNonOwner() {
+      doReturnViewFromReadOnlyEval(supplyKeyForCache(0, REPL), ro(fmapR1), wo(fmapR2));
+   }
+
+   public void testReplReturnViewFromReadOnlyEvalOnOwner() {
+      doReturnViewFromReadOnlyEval(supplyKeyForCache(1, REPL), ro(fmapR1), wo(fmapR2));
+   }
+
+   public void testDistReturnViewFromReadOnlyEvalOnNonOwner() {
+      doReturnViewFromReadOnlyEval(supplyKeyForCache(0, DIST), ro(fmapD1), wo(fmapD2));
+   }
+
+   public void testDistReturnViewFromReadOnlyEvalOnOwner() {
+      doReturnViewFromReadOnlyEval(supplyKeyForCache(1, DIST), ro(fmapD1), wo(fmapD2));
+   }
+
+   private <K> void doReturnViewFromReadOnlyEval(Supplier<K> keySupplier,
+         ReadOnlyMap<K, String> ro, WriteOnlyMap<K, String> wo) {
+      K k = keySupplier.get();
+      assertReadOnlyViewEmpty(k, await(ro.eval(k, rv -> rv)));
+      await(wo.eval(k, setOneWriteOnly()));
+      assertReadOnlyViewEquals(k, "one", await(ro.eval(k, rv -> rv)));
+   }
+
+   private Consumer<WriteEntryView<String>> setOneWriteOnly() {
+      return (Consumer<WriteEntryView<String>> & Serializable) wv -> wv.set("one");
+   }
+
+   public void testLocalReturnViewFromReadWriteEval() {
+      doReturnViewFromReadWriteEval(supplyIntKey(), rw(fmapL1), rw(fmapL2));
+   }
+
+   public void testReplReturnViewFromReadWriteEvalOnNonOwner() {
+      doReturnViewFromReadWriteEval(supplyKeyForCache(0, REPL), rw(fmapR1), rw(fmapR2));
+   }
+
+   public void testReplReturnViewFromReadWriteEvalOnOwner() {
+      doReturnViewFromReadWriteEval(supplyKeyForCache(1, REPL), rw(fmapR1), rw(fmapR2));
+   }
+
+   public void testDistReturnViewFromReadWriteEvalOnNonOwner() {
+      doReturnViewFromReadWriteEval(supplyKeyForCache(0, DIST), rw(fmapD1), rw(fmapD2));
+   }
+
+   public void testDistReturnViewFromReadWriteEvalOnOwner() {
+      doReturnViewFromReadWriteEval(supplyKeyForCache(1, DIST), rw(fmapD1), rw(fmapD2));
+   }
+
+   private <K> void doReturnViewFromReadWriteEval(Supplier<K> keySupplier,
+         ReadWriteMap<K, String> readMap, ReadWriteMap<K, String> writeMap) {
+      K k = keySupplier.get();
+      assertReadWriteViewEmpty(k, await(readMap.eval(k, returnReadWriteView())));
+      assertReadWriteViewEquals(k, "one", await(writeMap.eval(k, setOneReadWrite())));
+      assertReadWriteViewEquals(k, "one", await(readMap.eval(k, returnReadWriteView())));
+      assertReadWriteViewEquals(k, "uno", await(writeMap.eval(k, "uno", setValueReturnView())));
+      assertReadWriteViewEquals(k, "uno", await(readMap.eval(k, returnReadWriteView())));
+   }
+
+   private <K> Function<ReadWriteEntryView<K, String>, ReadWriteEntryView<K, String>> setOneReadWrite() {
+      return (Function<ReadWriteEntryView<K, String>, ReadWriteEntryView<K, String>> & Serializable)
+         rw -> {
+            rw.set("one");
+            return rw;
+         };
    }
 
 }

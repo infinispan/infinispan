@@ -1,5 +1,8 @@
 package org.infinispan.functional;
 
+import org.infinispan.commons.api.functional.EntryView;
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.functional.impl.FunctionalMapImpl;
@@ -11,6 +14,8 @@ import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Supplier;
+
+import static org.testng.AssertJUnit.*;
 
 public final class FunctionalTestUtils {
 
@@ -42,6 +47,36 @@ public final class FunctionalTestUtils {
          return cf.get();
       } catch (InterruptedException | ExecutionException e) {
          throw new Error(e);
+      }
+   }
+
+   public static <K> void assertReadOnlyViewEmpty(K k, ReadEntryView<K, ?> ro) {
+      assertEquals(k, ro.key());
+      assertFalse(ro.find().isPresent());
+   }
+
+   public static <K, V> void assertReadOnlyViewEquals(K k, V expected, ReadEntryView<K, V> ro) {
+      assertEquals(k, ro.key());
+      assertTrue(ro.find().isPresent());
+      assertEquals(expected, ro.find().get());
+      assertEquals(expected, ro.get());
+   }
+
+   public static <K> void assertReadWriteViewEmpty(K k, ReadWriteEntryView<K, ?> rw) {
+      assertEquals(k, rw.key());
+      assertFalse(rw.find().isPresent());
+   }
+
+   public static <K, V> void assertReadWriteViewEquals(K k, V expected, ReadWriteEntryView<K, V> rw) {
+      assertEquals(k, rw.key());
+      assertTrue(rw.find().isPresent());
+      assertEquals(expected, rw.find().get());
+      assertEquals(expected, rw.get());
+      try {
+         rw.set(null);
+         fail("Expected IllegalStateException since entry view cannot be modified outside lambda");
+      } catch (IllegalStateException e) {
+         // Expected
       }
    }
 

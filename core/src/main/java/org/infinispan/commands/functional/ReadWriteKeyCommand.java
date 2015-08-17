@@ -66,7 +66,25 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
       // Could be that the key is not local, 'null' is how this is signalled
       if (e == null) return null;
 
-      return f.apply(EntryViews.readWrite(e));
+      R ret = f.apply(EntryViews.readWrite(e));
+      // TODO: Apply and verify laundering for all the rest of read-write and write-only commands
+      return launderIfReadWriteView(ret);
+   }
+
+   /**
+    * For convenience, a lambda might decide to return the entry view it
+    * received as parameter, because that makes easy to return both value and
+    * meta parameters back to the client.
+    *
+    * If the lambda function decides to return an writable entry view,
+    * launder it into a read-only entry view to avoid the user trying apply
+    * any modifications to the entry view from outside the lambda function.
+    */
+   private Object launderIfReadWriteView(R ret) {
+      if (ret instanceof ReadWriteEntryView)
+         return EntryViews.immutableReadWrite((ReadWriteEntryView) ret);
+
+      return ret;
    }
 
    @Override

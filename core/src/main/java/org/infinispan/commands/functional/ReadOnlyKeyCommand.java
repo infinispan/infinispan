@@ -48,7 +48,8 @@ public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand imple
    }
 
    public Object perform(CacheEntry<K, V> entry) {
-      ReadEntryView<K, V> ro = EntryViews.readOnly(entry);
+      ReadEntryView<K, V> ro = (entry == null || entry.isNull())
+         ? EntryViews.noValue((K) key) : EntryViews.readOnly(entry);
       return f.apply(ro);
    }
 

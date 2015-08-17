@@ -3,7 +3,9 @@ package org.infinispan.commands.functional;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.marshall.SerializeWith;
+import org.infinispan.functional.impl.EntryViews;
 
 abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand {
 

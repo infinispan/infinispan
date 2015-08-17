@@ -24,33 +24,51 @@ public final class EntryViews {
    }
 
    public static <K, V> ReadEntryView<K, V> readOnly(CacheEntry<K, V> entry) {
-      return new CacheEntryReadEntryView<>(entry);
-   }
-
-   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry) {
-      return new CacheEntryWriteEntryView<>(entry);
-   }
-
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry) {
-      return new CacheEntryReadWriteEntryView<>(entry);
-   }
-
-   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, V prevValue, Metadata prevMetadata) {
-      return new PreviousReadWriteEntryView<>(entry, prevValue, prevMetadata);
-   }
-
-   public static <K, V> ReadEntryView<K, V> noValue(K key) {
-      return new NoValueView<>(key);
+      return new EntryBackedReadOnlyView<>(entry);
    }
 
    public static <K, V> ReadEntryView<K, V> readOnly(K key, V value, Metadata metadata) {
-      return new ReadViewMetadata<>(key, value, metadata);
+      return new StaticReadOnlyView<>(key, value, metadata);
    }
 
-   private static final class CacheEntryReadEntryView<K, V> implements ReadEntryView<K, V> {
+   public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry) {
+      return new EntryBackedWriteOnlyView<>(entry);
+   }
+
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry) {
+      return new EntryBackedReadWriteView<>(entry);
+   }
+
+   public static <K, V> ReadWriteEntryView<K, V> readWrite(CacheEntry<K, V> entry, V prevValue, Metadata prevMetadata) {
+      return new EntryAndPreviousReadWriteView<>(entry, prevValue, prevMetadata);
+   }
+
+   public static <K, V> ReadWriteEntryView<K, V> immutableReadWrite(ReadWriteEntryView<K, V> view) {
+      K key = view.key();
+      Optional<V> maybeV = view.find();
+      Metadata metadata;
+      if (view instanceof EntryBackedReadWriteView)
+         metadata = ((EntryBackedReadWriteView) view).entry.getMetadata();
+      else if (view instanceof EntryAndPreviousReadWriteView)
+         metadata = ((EntryAndPreviousReadWriteView) view).prevMetadata;
+      else
+         throw new IllegalStateException("Unknow read-write view: " + view);
+
+      return new ImmutableReadWriteView<>(key, maybeV, metadata);
+   }
+   public static <K, V> ReadWriteEntryView<K, V> immutableReadWrite(K key, V value, Metadata metadata) {
+      return new ImmutableReadWriteView<>(key, Optional.ofNullable(value), metadata);
+   }
+
+
+   public static <K, V> ReadEntryView<K, V> noValue(K key) {
+      return new NoValueReadOnlyView<>(key);
+   }
+
+   private static final class EntryBackedReadOnlyView<K, V> implements ReadEntryView<K, V> {
       final CacheEntry<K, V> entry;
 
-      private CacheEntryReadEntryView(CacheEntry<K, V> entry) {
+      private EntryBackedReadOnlyView(CacheEntry<K, V> entry) {
          this.entry = entry;
       }
 
@@ -99,12 +117,12 @@ public final class EntryViews {
       }
    }
 
-   private static final class ReadViewMetadata<K, V> implements ReadEntryView<K, V> {
+   private static final class StaticReadOnlyView<K, V> implements ReadEntryView<K, V> {
       final K key;
       final V value;
       final Metadata metadata;
 
-      private ReadViewMetadata(K key, V value, Metadata metadata) {
+      private StaticReadOnlyView(K key, V value, Metadata metadata) {
          this.key = key;
          this.value = value;
          this.metadata = metadata;
@@ -126,6 +144,7 @@ public final class EntryViews {
          return value == null ? Optional.empty() : Optional.ofNullable(value);
       }
 
+      // TODO: Duplication
       @Override
       public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
          if (metadata instanceof MetaParamsInternalMetadata) {
@@ -138,6 +157,7 @@ public final class EntryViews {
          throw new NoSuchElementException("Metadata with type=" + type + " not found");
       }
 
+      // TODO: Duplication
       @Override
       public <T> Optional<T> findMetaParam(Class<T> type) {
          if (metadata instanceof MetaParamsInternalMetadata) {
@@ -149,12 +169,13 @@ public final class EntryViews {
 
          return Optional.empty();
       }
+
    }
 
-   private static final class CacheEntryWriteEntryView<K, V> implements WriteEntryView<V> {
+   private static final class EntryBackedWriteOnlyView<K, V> implements WriteEntryView<V> {
       final CacheEntry<K, V> entry;
 
-      private CacheEntryWriteEntryView(CacheEntry<K, V> entry) {
+      private EntryBackedWriteOnlyView(CacheEntry<K, V> entry) {
          this.entry = entry;
       }
 
@@ -174,10 +195,10 @@ public final class EntryViews {
       }
    }
 
-   private static final class CacheEntryReadWriteEntryView<K, V> implements ReadWriteEntryView<K, V> {
+   private static final class EntryBackedReadWriteView<K, V> implements ReadWriteEntryView<K, V> {
       final CacheEntry<K, V> entry;
 
-      private CacheEntryReadWriteEntryView(CacheEntry<K, V> entry) {
+      private EntryBackedReadWriteView(CacheEntry<K, V> entry) {
          this.entry = entry;
       }
 
@@ -248,13 +269,12 @@ public final class EntryViews {
       }
    }
 
-   private static final class PreviousReadWriteEntryView<K, V> implements ReadWriteEntryView<K, V> {
+   private static final class EntryAndPreviousReadWriteView<K, V> implements ReadWriteEntryView<K, V> {
       final CacheEntry<K, V> entry;
       final V prevValue;
       final Metadata prevMetadata;
 
-      private PreviousReadWriteEntryView(CacheEntry<K, V> entry,
-            V prevValue, Metadata prevMetadata) {
+      private EntryAndPreviousReadWriteView(CacheEntry<K, V> entry, V prevValue, Metadata prevMetadata) {
          this.entry = entry;
          this.prevValue = prevValue;
          this.prevMetadata = prevMetadata;
@@ -324,33 +344,10 @@ public final class EntryViews {
       }
    }
 
-   public static final class ReadWriteViewImplExternalizer extends AbstractExternalizer<CacheEntryReadWriteEntryView> {
-      @Override
-      public void writeObject(ObjectOutput output, CacheEntryReadWriteEntryView object) throws IOException {
-         output.writeObject(object.entry);
-      }
-
-      @Override
-      public CacheEntryReadWriteEntryView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         CacheEntry entry = (CacheEntry) input.readObject();
-         return new CacheEntryReadWriteEntryView(entry);
-      }
-
-      @Override
-      public Set<Class<? extends CacheEntryReadWriteEntryView>> getTypeClasses() {
-         return Util.<Class<? extends CacheEntryReadWriteEntryView>>asSet(CacheEntryReadWriteEntryView.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.READ_WRITE_VIEW_IMPL;
-      }
-   }
-
-   public static final class NoValueView<K, V> implements ReadEntryView<K, V> {
+   private static final class NoValueReadOnlyView<K, V> implements ReadEntryView<K, V> {
       final K key;
 
-      public NoValueView(K key) {
+      public NoValueReadOnlyView(K key) {
          this.key = key;
       }
 
@@ -377,6 +374,71 @@ public final class EntryViews {
       @Override
       public <T> Optional<T> findMetaParam(Class<T> type) {
          return Optional.empty();
+      }
+   }
+
+   private static final class ImmutableReadWriteView<K, V> implements ReadWriteEntryView<K, V> {
+      final K key;
+      final Optional<V> maybeV;
+      final Metadata metadata;
+
+      public ImmutableReadWriteView(K key, Optional<V> maybeV, Metadata metadata) {
+         this.key = key;
+         this.maybeV = maybeV;
+         this.metadata = metadata;
+      }
+
+      @Override
+      public K key() {
+         return key;
+      }
+
+      @Override
+      public V get() throws NoSuchElementException {
+         return maybeV.get();
+      }
+
+      @Override
+      public Optional<V> find() {
+         return maybeV;
+      }
+
+      // TODO: Duplication
+      @Override
+      public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
+         if (metadata instanceof MetaParamsInternalMetadata) {
+            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+            return metaParamsMetadata.getMetaParam(type);
+         }
+
+         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
+
+         throw new NoSuchElementException("Metadata with type=" + type + " not found");
+      }
+
+      // TODO: Duplication
+      @Override
+      public <T> Optional<T> findMetaParam(Class<T> type) {
+         if (metadata instanceof MetaParamsInternalMetadata) {
+            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
+            return metaParamsMetadata.findMetaParam(type);
+         }
+
+         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
+
+         return Optional.empty();
+      }
+
+      @Override
+      public Void set(V value, MetaParam.Writable... metas) {
+         throw new IllegalStateException(
+            "A read-write entry view cannot be modified outside the scope of a lambda");
+      }
+
+      @Override
+      public Void remove() {
+         throw new IllegalStateException(
+            "A read-write entry view cannot be modified outside the scope of a lambda");
       }
    }
 
@@ -411,5 +473,34 @@ public final class EntryViews {
       return MetaParams.empty();
    }
 
+   // Externalizer class defined outside of externalized class to avoid having
+   // to making externalized class public, since that would leak internal impl.
+   public static final class ImmutableReadWriteViewExternalizer
+            extends AbstractExternalizer<ImmutableReadWriteView> {
+      @Override
+      public Integer getId() {
+         return Ids.IMMUTABLE_STATIC_READ_WRITE_VIEW;
+      }
+
+      @Override @SuppressWarnings("unchecked")
+      public Set<Class<? extends ImmutableReadWriteView>> getTypeClasses() {
+         return Util.asSet(ImmutableReadWriteView.class);
+      }
+
+      @Override
+      public void writeObject(ObjectOutput output, ImmutableReadWriteView obj) throws IOException {
+         output.writeObject(obj.key);
+         output.writeObject(obj.maybeV);
+         output.writeObject(obj.metadata);
+      }
+
+      @Override @SuppressWarnings("unchecked")
+      public ImmutableReadWriteView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         Object key = input.readObject();
+         Optional<Object> value = (Optional<Object>) input.readObject();
+         Metadata metadata = (Metadata) input.readObject();
+         return new ImmutableReadWriteView(key, value, metadata);
+      }
+   }
 
 }

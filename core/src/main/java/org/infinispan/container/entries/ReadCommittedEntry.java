@@ -1,20 +1,14 @@
 package org.infinispan.container.entries;
 
 import org.infinispan.atomic.impl.AtomicHashMap;
-import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.DataContainer;
-import org.infinispan.marshall.core.Ids;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Arrays;
-import java.util.Set;
 
 import static org.infinispan.commons.util.Util.toStr;
 import static org.infinispan.container.entries.ReadCommittedEntry.Flags.*;
@@ -325,33 +319,6 @@ public class ReadCommittedEntry implements MVCCEntry {
          return true;
       }
       return false;
-   }
-
-   public static class Externalizer extends AbstractExternalizer<ReadCommittedEntry> {
-      @Override
-      public void writeObject(ObjectOutput output, ReadCommittedEntry object) throws IOException {
-         output.writeObject(object.key);
-         output.writeObject(object.value);
-         output.writeObject(object.metadata);
-      }
-
-      @Override
-      public ReadCommittedEntry readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Object key = input.readObject();
-         Object value = input.readObject();
-         Metadata metadata = (Metadata) input.readObject();
-         return new ReadCommittedEntry(key, value, metadata);
-      }
-
-      @Override
-      public Set<Class<? extends ReadCommittedEntry>> getTypeClasses() {
-         return Util.<Class<? extends ReadCommittedEntry>>asSet(ReadCommittedEntry.class);
-      }
-
-      @Override
-      public Integer getId() {
-         return Ids.READ_COMMITTED_ENTRY;
-      }
    }
 
 }

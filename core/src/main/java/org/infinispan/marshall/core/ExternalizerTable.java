@@ -24,7 +24,6 @@ import org.infinispan.container.entries.ImmortalCacheEntry;
 import org.infinispan.container.entries.ImmortalCacheValue;
 import org.infinispan.container.entries.MortalCacheEntry;
 import org.infinispan.container.entries.MortalCacheValue;
-import org.infinispan.container.entries.ReadCommittedEntry;
 import org.infinispan.container.entries.TransientCacheEntry;
 import org.infinispan.container.entries.TransientCacheValue;
 import org.infinispan.container.entries.TransientMortalCacheEntry;
@@ -368,8 +367,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MetaParamExternalizers.NumericEntryVersionExternalizer());
 
       // TODO: Add other EntryView externalizers
-      addInternalExternalizer(new EntryViews.ReadWriteViewImplExternalizer());
-      addInternalExternalizer(new ReadCommittedEntry.Externalizer());
+      addInternalExternalizer(new EntryViews.ImmutableReadWriteViewExternalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

@@ -159,9 +159,7 @@ public interface Ids extends org.infinispan.commons.marshall.Ids {
    int META_ENTRY_VERSION = 155;
    int NUMERIC_ENTRY_VERSION = 156;
 
-   // TODO: Add other entry views
-   int READ_WRITE_VIEW_IMPL = 157;
-   int READ_COMMITTED_ENTRY = 158;
+   int IMMUTABLE_STATIC_READ_WRITE_VIEW = 157;
 
 }
 
