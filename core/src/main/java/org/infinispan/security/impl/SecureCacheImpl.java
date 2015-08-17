@@ -496,6 +496,12 @@ public final class SecureCacheImpl<K, V> implements SecureCache<K, V> {
    }
 
    @Override
+   public void removeExpired(K key, V value, Long lifespan) {
+      authzManager.checkPermission(AuthorizationPermission.WRITE);
+      delegate.removeExpired(key, value, lifespan);
+   }
+
+   @Override
    public int size() {
       authzManager.checkPermission(AuthorizationPermission.BULK_READ);
       return delegate.size();

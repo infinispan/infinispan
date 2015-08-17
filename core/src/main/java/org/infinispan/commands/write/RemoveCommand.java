@@ -30,7 +30,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
    boolean nonExistent = false;
 
    protected ValueMatcher valueMatcher;
-   private Equivalence valueEquivalence;
+   protected Equivalence valueEquivalence;
 
    /**
     * When not null, value indicates that the entry should only be removed if the key is mapped to this value.
@@ -205,7 +205,7 @@ public class RemoveCommand extends AbstractDataWriteCommand {
       return super.isReturnValueExpected() || isConditional();
    }
 
-   private Object performRemove(CacheEntry e, InvocationContext ctx) {
+   protected Object performRemove(CacheEntry e, InvocationContext ctx) {
       final Object removedValue = e.getValue();
       notify(ctx, removedValue, e.getMetadata(), true);
 

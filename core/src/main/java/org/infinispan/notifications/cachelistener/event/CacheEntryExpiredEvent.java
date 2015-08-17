@@ -8,7 +8,10 @@ package org.infinispan.notifications.cachelistener.event;
  * the entry expired from a cache store
  * <p>
  * This is a post only event
- *
+ * <p>
+ * This event can be raised multiple times in sequence for a single expiration event if concurrent reads for the same
+ * key occur on different nodes.  This should rarely happen though since this window is narrowed internally by the
+ * cache.
  * @author William Burns
  * @since 8.0
  */

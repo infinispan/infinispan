@@ -160,6 +160,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private LocalStreamManager localStreamManager;
    private ClusterStreamManager clusterStreamManager;
    private ClusteringDependentLogic clusteringDependentLogic;
+   private TimeService timeService;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
 
@@ -202,6 +203,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.localStreamManager = localStreamManager;
       this.clusterStreamManager = clusterStreamManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
+      this.timeService = timeService;
    }
 
    @Start(priority = 1)
@@ -235,6 +237,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
    @Override
    public InvalidateCommand buildInvalidateFromL1Command(Address origin, Set<Flag> flags, Collection<Object> keys) {
       return new InvalidateL1Command(origin, dataContainer, distributionManager, notifier, flags, keys, generateUUID());
+   }
+
+   @Override
+   public RemoveExpiredCommand buildRemoveExpiredCommand(Object key, Object value, Long lifespan) {
+      return new RemoveExpiredCommand(key, value, lifespan, notifier, configuration.dataContainer().valueEquivalence(),
+              timeService, generateUUID());
    }
 
    @Override
@@ -515,6 +523,10 @@ public class CommandsFactoryImpl implements CommandsFactory {
          case StreamSegmentResponseCommand.COMMAND_ID:
             StreamSegmentResponseCommand streamSegmentResponseCommand = (StreamSegmentResponseCommand) c;
             streamSegmentResponseCommand.inject(clusterStreamManager);
+            break;
+         case RemoveExpiredCommand.COMMAND_ID:
+            RemoveExpiredCommand removeExpiredCommand = (RemoveExpiredCommand) c;
+            removeExpiredCommand.init(notifier, configuration);
             break;
          default:
             ModuleCommandInitializer mci = moduleCommandInitializers.get(c.getCommandId());

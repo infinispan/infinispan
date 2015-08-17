@@ -79,6 +79,23 @@ public enum ValueMatcher {
          return MATCH_EXPECTED_OR_NEW;
       }
    },
+
+   MATCH_EXPECTED_OR_NULL() {
+      @Override
+      public boolean matches(MVCCEntry existingEntry, Object expectedValue, Object newValue, Equivalence valueEquivalence) {
+         return newValue == null || equal(extractValue(existingEntry), expectedValue, valueEquivalence);
+      }
+
+      @Override
+      public boolean nonExistentEntryCanMatch() {
+         return true;
+      }
+
+      @Override
+      public ValueMatcher matcherForRetry() {
+         return MATCH_EXPECTED_OR_NULL;
+      }
+   },
    /**
     * Match any non-null value. Used for {@link Cache#replace(Object, Object)} and {@link Cache#remove(Object)}.
     */

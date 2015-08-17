@@ -88,7 +88,7 @@ public class AbstractInfinispanTest {
    }
 
    protected void eventually(Condition ec, long timeout, TimeUnit unit) {
-      eventually(null, ec, timeout, 500, unit);
+      eventually(null, ec, unit.toMillis(timeout), 500, TimeUnit.MILLISECONDS);
    }
 
    protected void eventually(Condition ec, long timeout, long pollInterval, TimeUnit unit) {

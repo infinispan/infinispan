@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
 
 /**
  * Base class to be used for cluster listener tests for both tx and nontx caches
@@ -439,7 +440,7 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       verifySimpleModification(cache0, key, newValue, newExpiration, clusterListener,
                                previousValue + previousExpiration + newValue + newExpiration);
    }
-   
+
    @Test
    public void testPreviousValueFilterEventRaisedLocalNode() {
       Cache<Object, String> cache0 = cache(0, CACHE_NAME);
@@ -521,5 +522,143 @@ public abstract class AbstractClusterListenerTest extends AbstractClusterListene
       MagicKey key = new MagicKey(cache1, cache2);
 
       verifySimpleInsertion(cache0, key, "doesn't-matter", null, clusterListener, convertedValue);
+   }
+
+   @Test
+   public void testListenerOnPrimaryNodeReadPrimary() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+
+      MagicKey key = new MagicKey(cache0);
+
+      String expectedValue = key + "-expiring";
+      cache0.put(key, key + "-expiring", 1000, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache0.addListener(clusterListener);
+
+      ts0.advance(1001);
+
+      assertNull(cache0.get(key));
+
+      int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
+      eventually(() -> clusterListener.events.size() >= expectCount, 200000);
+      assertEquals(expectCount, clusterListener.events.size());
+      CacheEntryEvent event = clusterListener.events.get(clusterListener.hasIncludeState() ? 1 : 0);
+
+      assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, event.getType());
+      assertEquals(key, event.getKey());
+      assertEquals(expectedValue, event.getValue());
+   }
+
+   @Test
+   public void testListenerOnPrimaryNodeReadBackup() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+
+      MagicKey key = new MagicKey(cache0, cache1);
+
+      String expectedValue = key + "-expiring";
+      cache0.put(key, key + "-expiring", 1000, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache0.addListener(clusterListener);
+
+      ts1.advance(1001);
+
+      assertNull(cache1.get(key));
+
+      int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
+      eventually(() -> clusterListener.events.size() >= expectCount);
+      assertEquals(expectCount, clusterListener.events.size());
+      CacheEntryEvent event = clusterListener.events.get(clusterListener.hasIncludeState() ? 1 : 0);
+
+      assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, event.getType());
+      assertEquals(key, event.getKey());
+      assertEquals(expectedValue, event.getValue());
+   }
+
+   public void testListenerOnBackupOwnerNodePrimaryRead() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+
+      MagicKey key = new MagicKey(cache0, cache1);
+
+      String expectedValue = key + "-expiring";
+      cache0.put(key, key + "-expiring", 1000, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache1.addListener(clusterListener);
+
+      ts0.advance(1001);
+
+      assertNull(cache0.get(key));
+
+      int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
+      eventually(() -> clusterListener.events.size() >= expectCount);
+      assertEquals(expectCount, clusterListener.events.size());
+      CacheEntryEvent event = clusterListener.events.get(clusterListener.hasIncludeState() ? 1 : 0);
+
+      assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, event.getType());
+      assertEquals(key, event.getKey());
+      assertEquals(expectedValue, event.getValue());
+   }
+
+   public void testListenerOnBackupOwnerNodeBackupRead() {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+
+      MagicKey key = new MagicKey(cache0, cache1);
+
+      String expectedValue = key + "-expiring";
+      cache0.put(key, key + "-expiring", 1000, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache0.addListener(clusterListener);
+
+      ts1.advance(1001);
+
+      assertNull(cache1.get(key));
+
+      int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
+      eventually(() -> clusterListener.events.size() >= expectCount);
+      assertEquals(expectCount, clusterListener.events.size());
+      CacheEntryEvent event = clusterListener.events.get(clusterListener.hasIncludeState() ? 1 : 0);
+
+      assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, event.getType());
+      assertEquals(key, event.getKey());
+      assertEquals(expectedValue, event.getValue());
+   }
+
+   public void testAllExpire() throws InterruptedException {
+      Cache<Object, String> cache0 = cache(0, CACHE_NAME);
+      Cache<Object, String> cache1 = cache(1, CACHE_NAME);
+      Cache<Object, String> cache2 = cache(2, CACHE_NAME);
+
+      MagicKey key = new MagicKey(cache0);
+
+      String expectedValue = key + "-expiring";
+      cache0.put(key, key + "-expiring", 1000, TimeUnit.MILLISECONDS);
+
+      ClusterListener clusterListener = listener();
+      cache0.addListener(clusterListener);
+
+      ts0.advance(1001);
+      ts1.advance(1001);
+      ts2.advance(1001);
+
+      assertNull(cache0.get(key));
+      assertNull(cache1.get(key));
+      assertNull(cache2.get(key));
+
+      int expectCount = clusterListener.hasIncludeState() ? 2 : 1;
+      eventually(() -> clusterListener.events.size() >= expectCount);
+      // We can't assert size here, thiis is because expiration is done asynchronously.  As such you could have more
+      // than 1 expire command come at the same time, although from different nodes.  Currently we assume a null is
+      // okay to say it was expired, so you can get multiple expirations
+      CacheEntryEvent event = clusterListener.events.get(clusterListener.hasIncludeState() ? 1 : 0);
+
+      assertEquals(Event.Type.CACHE_ENTRY_EXPIRED, event.getType());
+      assertEquals(key, event.getKey());
+      assertEquals(expectedValue, event.getValue());
    }
 }

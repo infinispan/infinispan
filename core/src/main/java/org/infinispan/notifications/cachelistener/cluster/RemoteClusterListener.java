@@ -15,6 +15,7 @@ import org.infinispan.distexec.DistributedExecutorService;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.annotation.TransactionCompleted;
@@ -87,6 +88,7 @@ public class RemoteClusterListener {
    @CacheEntryCreated
    @CacheEntryModified
    @CacheEntryRemoved
+   @CacheEntryExpired
    public void handleClusterEvents(CacheEntryEvent event) throws Exception {
       GlobalTransaction transaction = event.getGlobalTransaction();
       if (transaction != null) {

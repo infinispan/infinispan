@@ -12,6 +12,7 @@ import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.context.Flag;
@@ -128,15 +129,19 @@ public interface ClusteringDependentLogic {
 
       protected abstract WriteSkewHelper.KeySpecificLogic initKeySpecificLogic(boolean totalOrder);
 
-      protected void notifyCommitEntry(boolean created, boolean removed, CacheEntry entry, InvocationContext ctx,
-                                       FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
+      protected void notifyCommitEntry(boolean created, boolean removed, boolean expired, CacheEntry entry,
+              InvocationContext ctx, FlagAffectedCommand command, Object previousValue, Metadata previousMetadata) {
          boolean isWriteOnly = (command instanceof WriteCommand) && ((WriteCommand) command).isWriteOnly();
          if (removed) {
             if (command instanceof RemoveCommand) {
                ((RemoveCommand)command).notify(ctx, previousValue, previousMetadata, false);
             } else {
-               notifier.notifyCacheEntryRemoved(
-                  entry.getKey(), previousValue, previousMetadata, false, ctx, command);
+               if (expired) {
+                  notifier.notifyCacheEntryExpired(entry.getKey(), previousValue, previousMetadata, ctx);
+               } else {
+                  notifier.notifyCacheEntryRemoved(
+                          entry.getKey(), previousValue, previousMetadata, false, ctx, command);
+               }
 
                // A write-only command only writes and so can't 100% guarantee
                // to be able to retrieve previous value when removed, so only
@@ -276,6 +281,12 @@ public interface ClusteringDependentLogic {
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
          boolean removed = entry.isRemoved();
+         boolean expired;
+         if (removed && entry instanceof MVCCEntry) {
+            expired = ((MVCCEntry) entry).isExpired();
+         } else {
+            expired = false;
+         }
 
          InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
          Object previousValue = null;
@@ -287,7 +298,7 @@ public interface ClusteringDependentLogic {
          commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
-         notifyCommitEntry(created, removed, entry, ctx, command, previousValue, previousMetadata);
+         notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
       }
 
       @Override
@@ -349,6 +360,12 @@ public interface ClusteringDependentLogic {
          // TODO: Can the reset be done after notification instead?
          boolean created = entry.isCreated();
          boolean removed = entry.isRemoved();
+         boolean expired;
+         if (removed && entry instanceof MVCCEntry) {
+            expired = ((MVCCEntry) entry).isExpired();
+         } else {
+            expired = false;
+         }
 
          InternalCacheEntry previousEntry = dataContainer.peek(entry.getKey());
          Object previousValue = null;
@@ -360,7 +377,7 @@ public interface ClusteringDependentLogic {
          commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
 
          // Notify after events if necessary
-         notifyCommitEntry(created, removed, entry, ctx, command, previousValue, previousMetadata);
+         notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
       }
 
       @Override
@@ -507,9 +524,13 @@ public interface ClusteringDependentLogic {
 
             boolean created = false;
             boolean removed = false;
+            boolean expired = false;
             if (!isForeignOwned) {
                created = entry.isCreated();
                removed = entry.isRemoved();
+               if (removed && entry instanceof MVCCEntry) {
+                  expired = ((MVCCEntry) entry).isExpired();
+               }
             }
 
             if (doCommit) {
@@ -522,7 +543,7 @@ public interface ClusteringDependentLogic {
                }
                commitManager.commit(entry, metadata, trackFlag, l1Invalidation);
                if (!isForeignOwned) {
-                  notifyCommitEntry(created, removed, entry, ctx, command, previousValue, previousMetadata);
+                  notifyCommitEntry(created, removed, expired, entry, ctx, command, previousValue, previousMetadata);
                }
             } else
                entry.rollback();

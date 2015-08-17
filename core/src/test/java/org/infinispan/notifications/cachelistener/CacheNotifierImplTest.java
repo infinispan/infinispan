@@ -161,7 +161,7 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryExpired() {
-      n.notifyCacheEntryExpired("k", "v", null);
+      n.notifyCacheEntryExpired("k", "v", null, null);
 
       assertTrue(cl.isReceivedPost());
       assertEquals(1, cl.getInvocationCount());

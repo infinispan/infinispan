@@ -272,6 +272,11 @@ public class AbstractDelegatingAdvancedCache<K, V> extends AbstractDelegatingCac
       return cache.cacheEntrySet();
    }
 
+   @Override
+   public void removeExpired(K key, V value, Long lifespan) {
+      cache.removeExpired(key, value, lifespan);
+   }
+
    protected final void putForExternalRead(K key, V value, EnumSet<Flag> flags, ClassLoader classLoader) {
       ((CacheImpl<K, V>) cache).putForExternalRead(key, value, flags, classLoader);
    }

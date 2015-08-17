@@ -89,7 +89,7 @@ public class PersistenceUtil {
                                                          final AtomicReference<Boolean> isLoaded) {
       return dataContainer.compute(key, (k, oldEntry, factory) -> {
          //under the lock, check if the entry exists in the DataContainer
-         if (oldEntry != null) {
+         if (oldEntry != null && (!oldEntry.canExpire() || !oldEntry.isExpired(timeService.wallClockTime()))) {
             isLoaded.set(null); //not loaded
             return oldEntry; //no changes in container
          }

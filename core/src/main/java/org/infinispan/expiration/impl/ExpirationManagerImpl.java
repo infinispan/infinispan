@@ -23,25 +23,35 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @ThreadSafe
 public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
-   private static final Log log = LogFactory.getLog(ExpirationManagerImpl.class);
-   private static final boolean trace = log.isTraceEnabled();
-   ScheduledFuture <?> expirationTask;
+   protected static final Log log = LogFactory.getLog(ExpirationManagerImpl.class);
+   protected static final boolean trace = log.isTraceEnabled();
+   protected ScheduledFuture <?> expirationTask;
 
    // components to be injected
-   private ScheduledExecutorService executor;
-   private Configuration configuration;
-   private PersistenceManager persistenceManager;
-   private DataContainer<K, V> dataContainer;
-   private CacheNotifier<K, V> cacheNotifier;
-   private TimeService timeService;
-   private boolean enabled;
-   private String cacheName;
+   protected ScheduledExecutorService executor;
+   protected Configuration configuration;
+   protected PersistenceManager persistenceManager;
+   protected DataContainer<K, V> dataContainer;
+   protected CacheNotifier<K, V> cacheNotifier;
+   protected TimeService timeService;
+   protected boolean enabled;
+   protected String cacheName;
+
+   /**
+    * This map is used for performance reasons.  Essentially when an expiration event should not be raised this
+    * map should be populated first.  The main examples are if an expiration is about to occur for that key or the
+    * key will be removed or updated.  In the latter case we don't want to send an expiration event and then a remove
+    * event when we could do just the removal.
+    */
+   protected final ConcurrentMap<K, Object> expiring = new ConcurrentHashMap<>();
 
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
@@ -96,7 +106,7 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
                  purgeCandidates.hasNext();) {
                InternalCacheEntry<K, V> e = purgeCandidates.next();
                if (e.isExpired(currentTimeMillis)) {
-                  handleInMemoryExpiration(e);
+                  handleInMemoryExpiration(e, currentTimeMillis);
                }
             }
             if (trace) {
@@ -119,13 +129,13 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
    }
 
    @Override
-   public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry) {
+   public void handleInMemoryExpiration(InternalCacheEntry<K, V> entry, long currentTime) {
       dataContainer.compute(entry.getKey(), ((k, oldEntry, factory) -> {
          if (entry == oldEntry) {
             // We have to delete from shared stores as well to make sure there are not multiple expiration events
             persistenceManager.deleteFromAllStores(k, PersistenceManager.AccessMode.BOTH);
             if (cacheNotifier != null) {
-               cacheNotifier.notifyCacheEntryExpired(k, entry.getValue(), entry.getMetadata());
+               cacheNotifier.notifyCacheEntryExpired(k, entry.getValue(), entry.getMetadata(), null);
             }
             return null;
          }
@@ -152,12 +162,22 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
                   value = null;
                   metadata = null;
                }
-               cacheNotifier.notifyCacheEntryExpired(k, value, metadata);
+               cacheNotifier.notifyCacheEntryExpired(k, value, metadata, null);
             }
             return null;
          }
          return oldEntry;
       }));
+   }
+
+   @Override
+   public void registerWriteIncoming(K key) {
+      expiring.put(key, key);
+   }
+
+   @Override
+   public void unregisterWrite(K key) {
+      expiring.remove(key);
    }
 
    @Stop(priority = 5)

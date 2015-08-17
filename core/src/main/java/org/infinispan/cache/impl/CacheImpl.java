@@ -22,6 +22,7 @@ import org.infinispan.commands.write.EvictCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheConfigurationException;
@@ -556,6 +557,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
 
+   @Override
+   public void removeExpired(K key, V value, Long lifespan) {
+      InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, null, 1);
+      RemoveExpiredCommand command = commandsFactory.buildRemoveExpiredCommand(key, value, lifespan);
+      ctx.setLockOwner(command.getKeyLockOwner());
+      // Send an expired remove command to everyone
+      executeCommandAndCommitIfNeeded(ctx, command);
+   }
 
    @ManagedOperation(
          description = "Clears the cache",

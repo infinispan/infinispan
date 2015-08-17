@@ -142,12 +142,22 @@ public class DataContainerStressTest {
                  }
 
                  @Override
-                 public void handleInMemoryExpiration(InternalCacheEntry entry) {
+                 public void handleInMemoryExpiration(InternalCacheEntry entry, long currentTime) {
 
                  }
 
                  @Override
                  public void handleInStoreExpiration(Object key) {
+
+                 }
+
+                 @Override
+                 public void registerWriteIncoming(Object key) {
+
+                 }
+
+                 @Override
+                 public void unregisterWrite(Object key) {
 
                  }
               });

@@ -44,6 +44,7 @@ import org.infinispan.commands.write.InvalidateL1Command;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.factories.ComponentRegistry;
@@ -172,6 +173,9 @@ public class RemoteCommandsFactory {
                break;
             case WriteOnlyManyEntriesCommand.COMMAND_ID:
                command = new WriteOnlyManyEntriesCommand<>();
+               break;
+            case RemoveExpiredCommand.COMMAND_ID:
+               command = new RemoveExpiredCommand();
                break;
             default:
                throw new CacheException("Unknown command id " + id + "!");

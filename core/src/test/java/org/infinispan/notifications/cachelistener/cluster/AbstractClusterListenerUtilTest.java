@@ -11,6 +11,7 @@ import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -25,9 +26,12 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CheckPoint;
 import org.infinispan.transaction.TransactionMode;
+import org.infinispan.util.ControlledTimeService;
+import org.infinispan.util.TimeService;
 import org.mockito.AdditionalAnswers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.testng.annotations.AfterMethod;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -59,6 +63,10 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
    protected final boolean tx;
    protected final CacheMode cacheMode;
 
+   protected ControlledTimeService ts0;
+   protected ControlledTimeService ts1;
+   protected ControlledTimeService ts2;
+
    protected AbstractClusterListenerUtilTest(boolean tx, CacheMode cacheMode) {
       // Have to have cleanup after each method since listeners need to be cleaned up
       cleanup = CleanupPhase.AFTER_METHOD;
@@ -73,7 +81,26 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       if (tx) {
          builderUsed.transaction().transactionMode(TransactionMode.TRANSACTIONAL);
       }
+      // Due to ISPN-5507 we can end up waiting 30 seconds for the test to complete with expiration tests
+      builderUsed.transaction().cacheStopTimeout(100, TimeUnit.MILLISECONDS);
       createClusteredCaches(3, CACHE_NAME, builderUsed);
+      injectTimeServices();
+   }
+
+   protected void injectTimeServices() {
+      ts0 = new ControlledTimeService(0);
+      TestingUtil.replaceComponent(manager(0), TimeService.class, ts0, true);
+      ts1 = new ControlledTimeService(0);
+      TestingUtil.replaceComponent(manager(1), TimeService.class, ts1, true);
+      ts2 = new ControlledTimeService(0);
+      TestingUtil.replaceComponent(manager(2), TimeService.class, ts2, true);
+   }
+
+   @AfterMethod
+   public void resetTimeServices() {
+      ts0.advance(-ts0.wallClockTime());
+      ts1.advance(-ts1.wallClockTime());
+      ts2.advance(-ts2.wallClockTime());
    }
 
    @Listener(clustered = true)
@@ -83,6 +110,7 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
+      @CacheEntryExpired
       public void onCacheEvent(CacheEntryEvent event) {
          log.debugf("Adding new cluster event %s", event);
          events.add(event);

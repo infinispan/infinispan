@@ -48,13 +48,13 @@ public class ReadCommittedEntry implements MVCCEntry {
    // if this or any MVCC entry implementation ever needs to store a boolean, always use a flag instead.  This is far
    // more space-efficient.  Note that this value will be stored in a byte, which means up to 8 flags can be stored in
    // a single byte.  Always start shifting with 0, the last shift cannot be greater than 7.
-   protected static enum Flags {
+   protected enum Flags {
       CHANGED(1), // same as 1 << 0
       CREATED(1 << 1),
       REMOVED(1 << 2),
       VALID(1 << 3),
       EVICTED(1 << 4),
-      LOADED(1 << 5),
+      EXPIRED(1 << 5),
       SKIP_LOOKUP(1 << 6),
       COPIED(1 << 7);
 
@@ -259,6 +259,11 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
+   public boolean isExpired() {
+      return isFlagSet(EXPIRED);
+   }
+
+   @Override
    public final void setRemoved(boolean removed) {
       setFlag(removed, REMOVED);
    }
@@ -269,13 +274,17 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
+   public void setExpired(boolean expired) {
+      setFlag(expired, EXPIRED);
+   }
+
+   @Override
    public boolean isLoaded() {
-      return isFlagSet(LOADED);
+      return false;
    }
 
    @Override
    public void setLoaded(boolean loaded) {
-      setFlag(loaded, LOADED);
    }
 
    protected final void setFlag(boolean enable, Flags flag) {
@@ -304,6 +313,7 @@ public class ReadCommittedEntry implements MVCCEntry {
             ", isChanged=" + isChanged() +
             ", isRemoved=" + isRemoved() +
             ", isValid=" + isValid() +
+            ", isExpired=" + isExpired() +
             ", skipRemoteGet=" + skipLookup() +
             ", metadata=" + metadata +
             '}';
@@ -313,6 +323,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    public boolean undelete(boolean doUndelete) {
       if (isRemoved() && doUndelete) {
          if (trace) log.trace("Entry is deleted in current scope.  Un-deleting.");
+         setExpired(false);
          setRemoved(false);
          setValid(true);
          setValue(null);
