@@ -5,7 +5,6 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
-import org.infinispan.commons.util.CloseableIterator;
 
 import java.util.Map;
 import java.util.Set;
@@ -314,9 +313,9 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
       /**
        * Evaluate a write-only {@link BiConsumer} operation, with a value
        * passed in and a {@link WriteEntryView} of the value associated with
-       * the key, for each of the keys in the set passed in, and
-       * returns a {@link CloseableIterator} that allows navigating completion
-       * of the operation executions.
+       * the key, for each of the keys in the set passed in, and returns a
+       * {@link CompletableFuture} that will be completed when the write-only
+       * operation has been executed against all the entries.
        *
        * This method can be used to implement operations such as:
        *
@@ -334,10 +333,6 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *    <li>Since this is a write-only operation, no entry attributes can be
        *    queried, hence the only reasonable thing can be returned is Void.
        *    </li>
-       *    <li>It still makes sense to return a CloseableIterator<Void> instead of
-       *    CompletableFuture<Void> in case the user wants to do something as each
-       *    operation completes, e.g. keep track of progress.
-       *    </li>
        * </ul>
        *
        * @param entries the key/value pairs associated with each of the
@@ -345,17 +340,18 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * @param f operation that consumes a value associated with a key in the
        *          entries collection and the {@link WriteEntryView} associated
        *          with that key in the cache
-       * @return a {@link CloseableIterator} that can be navigated to follow progress
-       *         as operations get invoked
+       * @return a {@link CompletableFuture} which will be completed the
+       *         the {@link BiConsumer} operation  has been executed against
+       *         all entries
        */
-      CloseableIterator<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f);
+      CompletableFuture<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f);
 
       /**
        * Evaluate a write-only {@link Consumer} operation with the
        * {@link WriteEntryView} of the value associated with the key, for each
        * of the keys in the set passed in, and returns a
-       * {@link CloseableIterator} that allows navigating completion
-       * of the operation executions.
+       * {@link CompletableFuture} that will be completed when the write-only
+       * operation has been executed against all the entries.
        *
        * This method can be used to implement operations such as
        * javax.cache.Cache#removeAll(Set).
@@ -369,27 +365,24 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *    <li>Since this is a write-only operation, no entry attributes can be
        *    queried, hence the only reasonable thing can be returned is Void.
        *    </li>
-       *    <li>It still makes sense to return a CloseableIterator<Void> instead of
-       *    CompletableFuture<Void> in case the user wants to do something as each
-       *    operation completes, e.g. keep track of progress.
-       *    </li>
        * </ul>
        *
        * @param keys the keys associated with each of the {@link WriteEntryView}
        *             passed in the function callbacks
        * @param f operation that the {@link WriteEntryView} associated with
        *          one of the keys passed in
-       * @return a {@link CloseableIterator} that can be navigated to follow progress
-       *         as operations get invoked
+       * @return a {@link CompletableFuture} which will be completed the
+       *         the {@link Consumer} operation has been executed against all
+       *         entries
        */
-      CloseableIterator<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f);
+      CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f);
 
       /**
        * Evaluate a write-only {@link Consumer} operation with the
        * {@link WriteEntryView} of the value associated with the key, for all
-       * existing keys in functional map, and returns a
-       * {@link CloseableIterator} that allows navigating completion
-       * of the operation executions.
+       * existing keys in functional map, and returns a {@link CompletableFuture}
+       * that will be completed when the write-only operation has been executed
+       * against all the entries.
        *
        * This method can be used to implement operations such as
        * javax.cache.Cache#removeAll().
@@ -408,10 +401,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * @param f operation that the {@link WriteEntryView} associated with
        *          one of the keys passed in
-       * @return a {@link CloseableIterator} that can be navigated to follow progress
-       *         as operations get invoked
+       * @return a {@link CompletableFuture} which will be completed the
+       *         the {@link Consumer} operation has been executed against all
+       *         entries
        */
-      CloseableIterator<Void> evalAll(Consumer<WriteEntryView<V>> f);
+      CompletableFuture<Void> evalAll(Consumer<WriteEntryView<V>> f);
 
       /**
        * Truncate the contents of the cache, returning a {@link CompletableFuture}

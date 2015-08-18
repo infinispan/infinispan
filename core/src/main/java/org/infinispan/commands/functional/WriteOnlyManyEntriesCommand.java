@@ -7,8 +7,6 @@ import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
 import org.infinispan.lifecycle.ComponentStatus;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -60,21 +58,15 @@ public final class WriteOnlyManyEntriesCommand<K, V> extends AbstractWriteManyCo
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      // Can't return a lazy stream here because the current code in
-      // EntryWrappingInterceptor expects any changes to be done eagerly,
-      // otherwise they're not applied. So, apply the function eagerly and
-      // return a lazy stream of the void returns.
-      List<Void> returns = new ArrayList<>(entries.size());
       for (Map.Entry<? extends K, ? extends V> entry : entries.entrySet()) {
          CacheEntry<K, V> cacheEntry = ctx.lookupEntry(entry.getKey());
 
          // Could be that the key is not local, 'null' is how this is signalled
-         if (cacheEntry != null) {
+         if (cacheEntry != null)
             f.accept(entry.getValue(), EntryViews.writeOnly(cacheEntry));
-            returns.add(null);
-         }
       }
-      return returns.stream();
+
+      return null;
    }
 
    @Override

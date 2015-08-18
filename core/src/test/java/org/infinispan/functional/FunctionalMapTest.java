@@ -451,7 +451,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       data.put(key1, "one");
       data.put(key2, "two");
       data.put(key3, "three");
-      consume(map2.evalMany(data, setValueConsumer()));
+      await(map2.evalMany(data, setValueConsumer()));
       Traversable<String> currentValues = map1.evalMany(data.keySet(), ro -> ro.get());
       List<String> collectedValues = currentValues.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
       assertEquals(collectedValues, new ArrayList<>(data.values()));
@@ -496,7 +496,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       data.put(key1, "one");
       data.put(key2, "two");
       data.put(key3, "three");
-      consume(map1.evalMany(data, setValueConsumer()));
+      await(map1.evalMany(data, setValueConsumer()));
       Traversable<String> prevTraversable = map2.evalAll(removeReturnPrevOrNull());
       Set<String> prevValues = prevTraversable.collect(HashSet::new, HashSet::add, HashSet::addAll);
       assertEquals(new HashSet<>(data.values()), prevValues);

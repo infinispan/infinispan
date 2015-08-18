@@ -1,5 +1,6 @@
 package org.infinispan.functional.impl;
 
+import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyCommand;
 import org.infinispan.commands.functional.WriteOnlyKeyValueCommand;
 import org.infinispan.commands.functional.WriteOnlyManyCommand;
@@ -9,7 +10,6 @@ import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.WaitMode;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
@@ -20,10 +20,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static org.infinispan.functional.impl.WaitModes.withWaitFuture;
-import static org.infinispan.functional.impl.WaitModes.withWaitIterator;
 
 public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements WriteOnlyMap<K, V> {
    private static final Log log = LogFactory.getLog(WriteOnlyMapImpl.class);
@@ -49,7 +47,7 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
       WriteOnlyKeyCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyCommand(key, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getLockOwner());
-      return withWaitFuture(waitMode, fmap.asyncExec(), () -> (Void) fmap.chain().invoke(ctx, cmd));
+      return futureVoid(waitMode, ctx, cmd);
    }
 
    @Override
@@ -59,35 +57,35 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
       WriteOnlyKeyValueCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyValueCommand(key, value, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getLockOwner());
-      return withWaitFuture(waitMode, fmap.asyncExec(), () -> (Void) fmap.chain().invoke(ctx, cmd));
+      return futureVoid(waitMode, ctx, cmd);
    }
 
    @Override
-   public CloseableIterator<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
+   public CompletableFuture<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
       log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       WriteOnlyManyEntriesCommand cmd = fmap.cmdFactory().buildWriteOnlyManyEntriesCommand(entries, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, entries.size());
-      return withWaitIterator(waitMode, () -> (Stream<Void>) fmap.chain().invoke(ctx, cmd));
+      return futureVoid(waitMode, ctx, cmd);
    }
 
    @Override
-   public CloseableIterator<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
+   public CompletableFuture<Void> evalMany(Set<? extends K> keys, Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
-      return withWaitIterator(waitMode, () -> (Stream<Void>) fmap.chain().invoke(ctx, cmd));
+      return futureVoid(waitMode, ctx, cmd);
    }
 
    @Override
-   public CloseableIterator<Void> evalAll(Consumer<WriteEntryView<V>> f) {
+   public CompletableFuture<Void> evalAll(Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked evalAll(%s)", params);
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       CloseableIteratorSet<K> keys = fmap.cache.keySet();
       WriteOnlyManyCommand cmd = fmap.cmdFactory().buildWriteOnlyManyCommand(keys, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
-      return withWaitIterator(waitMode, () -> (Stream<Void>) fmap.chain().invoke(ctx, cmd));
+      return futureVoid(waitMode, ctx, cmd);
    }
 
    @Override
@@ -96,6 +94,13 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
       Param<WaitMode> waitMode = params.get(WaitMode.ID);
       return withWaitFuture(waitMode, fmap.asyncExec(), () -> {
          fmap.cache.clear();
+         return null;
+      });
+   }
+
+   CompletableFuture<Void> futureVoid(Param<WaitMode> waitMode, InvocationContext ctx, VisitableCommand cmd) {
+      return withWaitFuture(waitMode, fmap.asyncExec(), () -> {
+         fmap.chain().invoke(ctx, cmd);
          return null;
       });
    }

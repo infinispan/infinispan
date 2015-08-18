@@ -1,10 +1,8 @@
 package org.infinispan.functional;
 
-import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap;
-import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
@@ -35,11 +33,6 @@ public final class FunctionalTestUtils {
 
    static Supplier<Integer> supplyIntKey() {
       return () -> R.nextInt(Integer.MAX_VALUE);
-   }
-
-   static void consume(CloseableIterator<Void> it) {
-      while (it.hasNext())
-         it.next();
    }
 
    public static <T> T await(CompletableFuture<T> cf) {
