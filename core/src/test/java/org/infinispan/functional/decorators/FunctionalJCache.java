@@ -6,7 +6,6 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.commons.api.functional.Listeners;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
 import org.infinispan.commons.api.functional.Param;
@@ -274,11 +273,6 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
    public <T> Map<K, EntryProcessorResult<T>> invokeAll(Set<? extends K> keys, EntryProcessor<K, V, T> entryProcessor, Object... arguments) {
       Traversable<EntryProcessorResultWithKey<K, T>> t = readWrite.evalMany(
             keys, new InvokeAllFunction<>(entryProcessor, arguments));
-//      Traversable<EntryProcessorResultWithKey<K, T>> t = readWrite.evalMany(keys, rw -> {
-//            T res = entryProcessor.process(new ReadWriteMutableEntry<>(rw), arguments);
-//            return new EntryProcessorResultWithKey<>(rw.key(), res);
-//         }
-//      );
 
       return t.collect(HashMap::new, (m, res) -> m.put(res.key, res), HashMap::putAll);
    }
