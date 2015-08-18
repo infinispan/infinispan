@@ -91,19 +91,6 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> T getMetaParam(Class<T> type) {
-         Metadata metadata = entry.getMetadata();
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.getMetaParam(type);
-         }
-
-         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
-
-         throw new NoSuchElementException("Metadata with type=" + type + " not found");
-      }
-
-      @Override
       public <T> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
          if (metadata instanceof MetaParamsInternalMetadata) {
@@ -142,19 +129,6 @@ public final class EntryViews {
       @Override
       public Optional<V> find() {
          return value == null ? Optional.empty() : Optional.ofNullable(value);
-      }
-
-      // TODO: Duplication
-      @Override
-      public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.getMetaParam(type);
-         }
-
-         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
-
-         throw new NoSuchElementException("Metadata with type=" + type + " not found");
       }
 
       // TODO: Duplication
@@ -235,19 +209,6 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> T getMetaParam(Class<T> type) {
-         Metadata metadata = entry.getMetadata();
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.getMetaParam(type);
-         }
-
-         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
-
-         throw new NoSuchElementException("Metadata with type=" + type + " not found");
-      }
-
-      @Override
       public <T> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = entry.getMetadata();
          if (metadata instanceof MetaParamsInternalMetadata) {
@@ -313,19 +274,6 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> T getMetaParam(Class<T> type) {
-         Metadata metadata = prevMetadata; // Use previous metadata
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.getMetaParam(type);
-         }
-
-         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
-
-         throw new NoSuchElementException("Metadata with type=" + type + " not found");
-      }
-
-      @Override
       public <T> Optional<T> findMetaParam(Class<T> type) {
          Metadata metadata = prevMetadata; // Use previous metadata
          if (metadata instanceof MetaParamsInternalMetadata) {
@@ -367,11 +315,6 @@ public final class EntryViews {
       }
 
       @Override
-      public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
-         throw new NoSuchElementException("No metadata available for type=" + type);
-      }
-
-      @Override
       public <T> Optional<T> findMetaParam(Class<T> type) {
          return Optional.empty();
       }
@@ -401,19 +344,6 @@ public final class EntryViews {
       @Override
       public Optional<V> find() {
          return maybeV;
-      }
-
-      // TODO: Duplication
-      @Override
-      public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
-         if (metadata instanceof MetaParamsInternalMetadata) {
-            MetaParamsInternalMetadata metaParamsMetadata = (MetaParamsInternalMetadata) metadata;
-            return metaParamsMetadata.getMetaParam(type);
-         }
-
-         // TODO: Add interoperability support, e.g. able to retrieve lifespan for data stored in Cache via lifespan API
-
-         throw new NoSuchElementException("Metadata with type=" + type + " not found");
       }
 
       // TODO: Duplication

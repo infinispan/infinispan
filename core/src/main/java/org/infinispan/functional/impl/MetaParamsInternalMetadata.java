@@ -1,8 +1,8 @@
 package org.infinispan.functional.impl;
 
 import org.infinispan.commons.api.functional.MetaParam;
-import org.infinispan.commons.api.functional.MetaParam.Lifespan;
-import org.infinispan.commons.api.functional.MetaParam.MaxIdle;
+import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
+import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
@@ -13,7 +13,6 @@ import org.infinispan.metadata.Metadata;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -51,14 +50,14 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
 
    @Override
    public long lifespan() {
-      return params.find(Lifespan.class)
-            .orElse(Lifespan.defaultValue()).get();
+      return params.find(MetaLifespan.class)
+            .orElse(MetaLifespan.defaultValue()).get();
    }
 
    @Override
    public long maxIdle() {
-      return params.find(MaxIdle.class)
-            .orElse(MaxIdle.defaultValue()).get();
+      return params.find(MetaMaxIdle.class)
+            .orElse(MetaMaxIdle.defaultValue()).get();
    }
 
    @Override
@@ -69,11 +68,6 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
    @Override
    public Builder builder() {
       return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public <T> T getMetaParam(Class<T> type) throws NoSuchElementException {
-      return params.get(type);
    }
 
    @Override

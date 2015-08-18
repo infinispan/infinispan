@@ -1,16 +1,12 @@
 package org.infinispan.functional.distribution.rehash;
 
 import org.infinispan.AdvancedCache;
-import org.infinispan.commons.api.functional.EntryVersion;
 import org.infinispan.commons.api.functional.EntryVersion.NumericEntryVersion;
-import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.api.functional.FunctionalMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.commons.api.functional.MetaParam;
-import org.infinispan.commons.api.functional.MetaParam.EntryVersionParam;
+import org.infinispan.commons.api.functional.MetaParam.MetaEntryVersion;
 import org.infinispan.distribution.rehash.NonTxBackupOwnerBecomingPrimaryOwnerTest;
 import org.infinispan.distribution.rehash.TestWriteOperation;
 import org.infinispan.functional.FunctionalTestUtils;
@@ -24,7 +20,6 @@ import org.testng.annotations.Test;
 import java.io.Serializable;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
 
@@ -54,7 +49,7 @@ public class FunctionalNonTxBackupOwnerBecomingPrimaryOwnerTest extends NonTxBac
       // TODO: Move initial set and replace with meta logic to TestWriteOperation
       WriteOnlyMap<String, String> wo0 = wo(0);
       Consumer<WriteEntryView<String>> f = (Consumer<WriteEntryView<String>> & Serializable) wo ->
-         wo.set("v0", new EntryVersionParam<>(new NumericEntryVersion(1)));
+         wo.set("v0", new MetaEntryVersion<>(new NumericEntryVersion(1)));
       wo0.eval("testkey", f);
       doTest(TestWriteOperation.REPLACE_META_FUNCTIONAL);
    }
@@ -68,12 +63,13 @@ public class FunctionalNonTxBackupOwnerBecomingPrimaryOwnerTest extends NonTxBac
             case REPLACE_META_FUNCTIONAL:
                BiFunction<Object, ReadWriteEntryView<Object, Object>, Boolean> f =
                   (BiFunction<Object, ReadWriteEntryView<Object, Object>, Boolean> & Serializable) (v, rw) -> {
-                     EntryVersionParam<Long> param = rw.getMetaParam(EntryVersionParam.getType());
-                     if (param.get().compareTo(new NumericEntryVersion(1)) == EQUAL) {
-                        rw.set(v, new EntryVersionParam<>(new NumericEntryVersion(2)));
-                        return true;
-                     }
-                     return false;
+                     Class<MetaEntryVersion<Long>> type = MetaEntryVersion.type();
+                     return rw.findMetaParam(type)
+                        .filter(ver -> ver.get().compareTo(new NumericEntryVersion(1)) == EQUAL)
+                        .map(ver -> {
+                           rw.set(v, new MetaEntryVersion<>(new NumericEntryVersion(2)));
+                           return true;
+                        }).orElse(false);
                   };
                return FunctionalTestUtils.await(rw(cache0).eval(key, "v1", f));
             default:

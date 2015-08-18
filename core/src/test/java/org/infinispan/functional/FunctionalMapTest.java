@@ -8,8 +8,8 @@ import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.commons.api.functional.MetaParam.EntryVersionParam;
-import org.infinispan.commons.api.functional.MetaParam.Lifespan;
+import org.infinispan.commons.api.functional.MetaParam.MetaEntryVersion;
+import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -139,8 +139,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
                      assertNull(r);
                      assertEquals(Optional.of("one"), ro.find());
                      assertEquals("one", ro.get());
-                     assertEquals(Optional.of(new Lifespan(100000)), ro.findMetaParam(Lifespan.class));
-                     assertEquals(new Lifespan(100000), ro.getMetaParam(Lifespan.class));
+                     assertEquals(Optional.of(new MetaLifespan(100000)), ro.findMetaParam(MetaLifespan.class));
                   }
                )
          )
@@ -152,7 +151,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          implements BiConsumer<V, WriteEntryView<V>> {
       @Override
       public void accept(V v, WriteEntryView<V> wo) {
-         wo.set(v, new Lifespan(100000));
+         wo.set(v, new MetaLifespan(100000));
       }
 
       @SuppressWarnings("unchecked")
@@ -291,14 +290,14 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          ReadWriteMap<K, String> map1, ReadWriteMap<K, String> map2) {
       replaceWithVersion(keySupplier, map1, map2, 100, rw -> {
             assertEquals("uno", rw.get());
-            assertEquals(new EntryVersionParam<>(new NumericEntryVersion(200)),
-               rw.getMetaParam(EntryVersionParam.getType()));
+            assertEquals(Optional.of(new MetaEntryVersion<>(new NumericEntryVersion(200))),
+               rw.findMetaParam(MetaEntryVersion.class));
          }
       );
       replaceWithVersion(keySupplier, map1, map2, 900, rw -> {
          assertEquals(Optional.of("one"), rw.find());
-         assertEquals(Optional.of(new EntryVersionParam<>(new NumericEntryVersion(100))),
-            rw.findMetaParam(EntryVersionParam.getType()));
+         assertEquals(Optional.of(new MetaEntryVersion<>(new NumericEntryVersion(100))),
+            rw.findMetaParam(MetaEntryVersion.class));
       });
    }
 
@@ -322,7 +321,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
          implements Function<ReadWriteEntryView<K, String>, Void> {
       @Override
       public Void apply(ReadWriteEntryView<K, String> rw) {
-         rw.set("one", new EntryVersionParam<>(new NumericEntryVersion(100)));
+         rw.set("one", new MetaEntryVersion<>(new NumericEntryVersion(100)));
          return null;
       }
 
@@ -350,9 +349,12 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
 
       @Override
       public ReadWriteEntryView<K, String> apply(ReadWriteEntryView<K, String> rw) {
-         EntryVersionParam<Long> versionParam = rw.getMetaParam(EntryVersionParam.getType());
-         if (versionParam.get().compareTo(new NumericEntryVersion(version)) == EQUAL)
-            rw.set("uno", new EntryVersionParam<>(new NumericEntryVersion(200)));
+         Class<MetaEntryVersion<Long>> clazz = MetaEntryVersion.type();
+         Optional<MetaEntryVersion<Long>> metaParam = rw.findMetaParam(clazz);
+         metaParam.ifPresent(metaVersion -> {
+            if (metaVersion.get().compareTo(new NumericEntryVersion(version)) == EQUAL)
+               rw.set("uno", new MetaEntryVersion<>(new NumericEntryVersion(200)));
+         });
          return rw;
       }
 

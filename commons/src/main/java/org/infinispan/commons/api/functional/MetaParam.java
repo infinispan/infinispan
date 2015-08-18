@@ -1,6 +1,5 @@
 package org.infinispan.commons.api.functional;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
@@ -22,20 +21,16 @@ import java.util.Optional;
  * merely act as ways to tweak how operations are executed, and their contents
  * are never stored permanently.
  *
- * DESIGN RATIONALES:
- * <ul>
- *    <il>This interface replaces Infinispan's Metadata interface providing
- *    a more flexible way to add new metadata parameters to be stored with
- *    the cached entries.
- *    </il>
- *    <il>Another benefit of the design is that it makes a clear separation
- *    between the metadata that can be provided by the user on per-entry basis,
- *    e.g. lifespan, maxIdle, version...etc, versus metadata that's produced
- *    by the internal logic that cannot be modified directly by the user, e.g.
- *    cache entry created time, last time cache entry was modified or accessed
- *    ...etc.
- *    </il>
- * </ul>
+ * @apiNote This interface replaces Infinispan's Metadata interface providing
+ * a more flexible way to add new metadata parameters to be stored with
+ * the cached entries.
+ *
+ * @apiNote {@link MetaParam} design has been geared towards making a clear
+ * separation between the metadata that can be provided by the user on
+ * per-entry basis, e.g. lifespan, maxIdle, version...etc, as opposed to
+ * metadata that's produced by the internal logic that cannot be modified
+ * directly by the user, e.g. cache entry created time, last time cache entry
+ * was modified or accessed ...etc.
  *
  * @param <T> type of MetaParam instance, implementations should assign it to
  * the implementation's type.
@@ -44,30 +39,46 @@ import java.util.Optional;
 public interface MetaParam<T> {
 
    /**
+    * Returns the value of the meta parameter.
+    */
+   T get();
+
+   /**
     * Provides metadata parameter lookup capabilities using {@link Class} as
     * lookup key.
     *
-    * DESIGN RATIONALES:
-    * <ul>
-    *    <li>Why have both getMetaParam() and findMetaParam()? Convenience,
-    *    for exactly the same reasons why {@link EntryView.ReadEntryView}
-    *    exposes {@link EntryView.ReadEntryView#get()} and
-    *    {@link EntryView.ReadEntryView#find()}
-    *    </li>
-    * </ul>
+    * When the {@link MetaParam} type is generic, e.g. {@link MetaEntryVersion},
+    * passing the correct {@link Class} information so that the return of
+    * {@link #findMetaParam} is of the expected type can be a bit tricky.
+    * {@link MetaEntryVersion#type()} offers an easy way to retrieve the
+    * expected {@link MetaParam} type from {@link #findMetaParam} at the
+    * expense of some type safety:
+    *
+    * <pre>{@code
+    *     Class<MetaEntryVersion<Long>> type = MetaEntryVersion.type();
+    *     Optional<MetaEntryVersion<Long>> metaVersion =
+    *          metaParamLookup.findMetaParam(type);
+    * }</pre>
+    *
+    * In the future, the API might be adjusted to provide additional lookup
+    * methods where this situation is improved. Also, if the {@link MetaParam}
+    * type is not generic, e.g. {@link MetaLifespan}, the problem is avoided
+    * altogether:
+    *
+    * <pre>{@code
+    *     Optional<MetaLifespan<Long>> metaLifespan =
+    *          metaParamLookup.findMetaParam(MetaLifespan.class);
+    * }</pre>
+    *
+    * @apiNote A user that queries meta parameters can never assume that the
+    * meta parameter will always exist because there are scenarios, such as
+    * when compatibility mode is enabled, when meta parameters that are
+    * assumed to be present are not due to the API multiplexing that occurs.
+    * For example, when compatibility mode is enabled, REST server can't assume
+    * that MIME metadata will be present since data might have been stored
+    * with embedded or remote (Hot Rod) API.
     */
    interface Lookup {
-      /**
-       * Returns a non-null metadata parameter implementation of the can be
-       * assigned to the type {@link Class} being looked up, or throws
-       * {@link NoSuchElementException} if no metadata parameter exists.
-       *
-       * @throws NoSuchElementException if no metadata parameter exists.
-       *
-       * @param <T> metadata parameter type
-       */
-      <T> T getMetaParam(Class<T> type) throws NoSuchElementException;
-
       /**
        * Returns a non-empty {@link Optional} instance containing a metadata
        * parameter instance that can be assigned to the type {@link Class}
@@ -92,19 +103,19 @@ public interface MetaParam<T> {
    /**
     * Writable metadata parameter representing a cached entry's millisecond lifespan.
     */
-   final class Lifespan extends LongMetadata<Lifespan> implements Writable<Lifespan> {
-      private static final Lifespan DEFAULT = new Lifespan(-1);
+   final class MetaLifespan extends MetaLong implements Writable<Long> {
+      private static final MetaLifespan DEFAULT = new MetaLifespan(-1);
 
-      public Lifespan(long lifespan) {
+      public MetaLifespan(long lifespan) {
          super(lifespan);
       }
 
       @Override
       public String toString() {
-         return "Lifespan=" + value;
+         return "MetaLifespan=" + value;
       }
 
-      public static Lifespan defaultValue() {
+      public static MetaLifespan defaultValue() {
          return DEFAULT;
       }
    }
@@ -113,14 +124,14 @@ public interface MetaParam<T> {
     * Read only metadata parameter representing a cached entry's created time
     * in milliseconds.
     */
-   final class Created extends LongMetadata {
-      public Created(long created) {
+   final class MetaCreated extends MetaLong {
+      public MetaCreated(long created) {
          super(created);
       }
 
       @Override
       public String toString() {
-         return "Created=" + value;
+         return "MetaCreated=" + value;
       }
    }
 
@@ -128,19 +139,19 @@ public interface MetaParam<T> {
     * Writable metadata parameter representing a cached entry's millisecond
     * max idle time.
     */
-   final class MaxIdle extends LongMetadata<MaxIdle> implements Writable<MaxIdle> {
-      private static final MaxIdle DEFAULT = new MaxIdle(-1);
+   final class MetaMaxIdle extends MetaLong implements Writable<Long> {
+      private static final MetaMaxIdle DEFAULT = new MetaMaxIdle(-1);
 
-      public MaxIdle(long maxIdle) {
+      public MetaMaxIdle(long maxIdle) {
          super(maxIdle);
       }
 
       @Override
       public String toString() {
-         return "MaxIdle=" + value;
+         return "MetaMaxIdle=" + value;
       }
 
-      public static MaxIdle defaultValue() {
+      public static MetaMaxIdle defaultValue() {
          return DEFAULT;
       }
    }
@@ -149,34 +160,35 @@ public interface MetaParam<T> {
     * Read only metadata parameter representing a cached entry's last used time
     * in milliseconds.
     */
-   final class LastUsed extends LongMetadata {
-      public LastUsed(long lastUsed) {
+   final class MetaLastUsed extends MetaLong {
+      public MetaLastUsed(long lastUsed) {
          super(lastUsed);
       }
 
       @Override
       public String toString() {
-         return "LastUsed=" + value;
+         return "MetaLastUsed=" + value;
       }
    }
 
    /**
-    * Writable metadata parameter representing a cached entry's version.
+    * Writable metadata parameter representing a cached entry's generic version.
     */
-   final class EntryVersionParam<V> implements Writable<EntryVersionParam<V>> {
-      @SuppressWarnings("unchecked")
-      public static <T> T getType() {
-         return (T) EntryVersionParam.class;
-      }
+   class MetaEntryVersion<T> implements Writable<EntryVersion<T>> {
+      private final EntryVersion<T> entryVersion;
 
-      private final EntryVersion<V> entryVersion;
-
-      public EntryVersionParam(EntryVersion<V> entryVersion) {
+      public MetaEntryVersion(EntryVersion<T> entryVersion) {
          this.entryVersion = entryVersion;
       }
 
-      public EntryVersion<V> get() {
+      @Override
+      public EntryVersion<T> get() {
          return entryVersion;
+      }
+
+      @SuppressWarnings("unchecked")
+      public static <T> T type() {
+         return (T) MetaEntryVersion.class;
       }
 
       @Override
@@ -184,9 +196,10 @@ public interface MetaParam<T> {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
 
-         EntryVersionParam<?> that = (EntryVersionParam<?>) o;
+         MetaEntryVersion<?> that = (MetaEntryVersion<?>) o;
 
          return entryVersion.equals(that.entryVersion);
+
       }
 
       @Override
@@ -196,14 +209,14 @@ public interface MetaParam<T> {
 
       @Override
       public String toString() {
-         return "MetaParam=" + entryVersion;
+         return "MetaEntryVersion{" + entryVersion + '}';
       }
    }
 
-   abstract class LongMetadata<T> implements MetaParam<T> {
+   abstract class MetaLong implements MetaParam<Long> {
       protected final long value;
 
-      public LongMetadata(long value) {
+      public MetaLong(long value) {
          this.value = value;
       }
 
@@ -216,7 +229,7 @@ public interface MetaParam<T> {
          if (this == o) return true;
          if (o == null || getClass() != o.getClass()) return false;
 
-         LongMetadata longMeta = (LongMetadata) o;
+         MetaLong longMeta = (MetaLong) o;
 
          return value == longMeta.value;
       }

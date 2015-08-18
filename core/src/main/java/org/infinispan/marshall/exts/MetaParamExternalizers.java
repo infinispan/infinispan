@@ -2,8 +2,8 @@ package org.infinispan.marshall.exts;
 
 import org.infinispan.commons.api.functional.EntryVersion;
 import org.infinispan.commons.api.functional.EntryVersion.NumericEntryVersion;
-import org.infinispan.commons.api.functional.MetaParam.EntryVersionParam;
-import org.infinispan.commons.api.functional.MetaParam.Lifespan;
+import org.infinispan.commons.api.functional.MetaParam.MetaEntryVersion;
+import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
@@ -19,20 +19,20 @@ public final class MetaParamExternalizers {
       // Do not instantiate
    }
 
-   public static final class LifespanExternalizer extends AbstractExternalizer<Lifespan> {
+   public static final class LifespanExternalizer extends AbstractExternalizer<MetaLifespan> {
       @Override
-      public void writeObject(ObjectOutput output, Lifespan object) throws IOException {
+      public void writeObject(ObjectOutput output, MetaLifespan object) throws IOException {
          output.writeLong(object.get());
       }
 
       @Override
-      public Lifespan readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         return new Lifespan(input.readLong());
+      public MetaLifespan readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         return new MetaLifespan(input.readLong());
       }
 
       @Override
-      public Set<Class<? extends Lifespan>> getTypeClasses() {
-         return Util.<Class<? extends Lifespan>>asSet(Lifespan.class);
+      public Set<Class<? extends MetaLifespan>> getTypeClasses() {
+         return Util.<Class<? extends MetaLifespan>>asSet(MetaLifespan.class);
       }
 
       @Override
@@ -41,21 +41,21 @@ public final class MetaParamExternalizers {
       }
    }
 
-   public static final class EntryVersionParamExternalizer extends AbstractExternalizer<EntryVersionParam> {
+   public static final class EntryVersionParamExternalizer extends AbstractExternalizer<MetaEntryVersion> {
       @Override
-      public void writeObject(ObjectOutput output, EntryVersionParam object) throws IOException {
+      public void writeObject(ObjectOutput output, MetaEntryVersion object) throws IOException {
          output.writeObject(object.get());
       }
 
       @Override
-      public EntryVersionParam readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public MetaEntryVersion readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          EntryVersion entryVersion = (EntryVersion) input.readObject();
-         return new EntryVersionParam(entryVersion);
+         return new MetaEntryVersion(entryVersion);
       }
 
       @Override
-      public Set<Class<? extends EntryVersionParam>> getTypeClasses() {
-         return Util.<Class<? extends EntryVersionParam>>asSet(EntryVersionParam.class);
+      public Set<Class<? extends MetaEntryVersion>> getTypeClasses() {
+         return Util.<Class<? extends MetaEntryVersion>>asSet(MetaEntryVersion.class);
       }
 
       @Override

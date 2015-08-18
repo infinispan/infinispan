@@ -11,47 +11,44 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 /**
  * Represents a {@link MetaParam} collection.
  *
- * DESIGN RATIONALES:
- * <ul>
- *    <il>In {@link org.infinispan.api.v8.impl.Params}, the internal array
- *    where each parameter was stored was indexed by
- *    {@link org.infinispan.api.v8.Param#id()}. This worked fine because the
- *    available parameters are exclusively controlled by the Infinispan.
- *    This is not the case with {@link org.infinispan.api.v8.MetaParam}
- *    instances where we expect users to add their own types.
- *    For MetaParams, an array is still used but each metadata parameters
- *    index has nothing to do with a metadata parameter's id. So, that means
- *    when looking up metadata parameters, the lookup is sequential.
- *    </il>
- *    <il>Metadata parameter lookup is sequential, which is O(n), isn't that a problem?
- *    Not really, we expect that the number of metadata parameters to be stored
- *    along with a cached entry to be small, less than 10 metadata parameters
- *    per collection. So, looking up a metadata parameter array sequentially would
- *    have a small impact performance wise.
- *    </il>
- *    <li>Why are you obsessed with storing Metadata parameters within an array?
- *    Because we want metadata parameter storage to consume as little memory
- *    as possible while retaining flexibility when adding/removing new metadata
- *    parameters. We want to consume as little memory as possible because each
- *    cached entry will have a reference to the metadata parameters.
- *    </li>
- *    <li>Why is metadata parameters class not thread safe? Because we expect
- *    any updates to it to acquire write locks on the entire
- *    {@link org.infinispan.container.entries.CacheEntry} which references the
- *    metadata parameters collection, and hence any updates could be done
- *    without the need to keep metadata parameters concurrently safe. Also,
- *    remember that metadata parameters is internal only. Users can retrieve
- *    or update individual metadata parameters but they cannot act on the
- *    globally at the metadata parameter collection level.</li>
- * </ul>
+ * @implNote In {@link Params}, the internal array where each parameter was
+ * stored is indexed by an integer. This worked fine because the available
+ * parameters are exclusively controlled by the Infinispan. This is not the
+ * case with {@link MetaParam} instances where users are expected to add their
+ * own types. So, for {@link MetaParams}, an array is still used but the lookup
+ * is done sequentially comparing the type of the {@link MetaParam} looked for
+ * against the each individual {@link MetaParam} instance stored in
+ * {@link MetaParams}.
+ *
+ * @implNote Having sequential {@link MetaParam} lookups over an array is O(n),
+ * but this is not problematic since the number of {@link MetaParam} to be
+ * stored with each cached entry is expected to be small, less than 10 per
+ * {@link MetaParams} collection. So, the performance impact is quite small.
+ *
+ * @implNote Storing {@link MetaParam} instances in an array adds the least
+ * amount of overhead to keeping a collection of {@link MetaParam} in memory
+ * along with each cached entry, while retaining flexibility to add or remove
+ * {@link MetaParam} instances.
+ *
+ * @implNote This {@link MetaParams} collection is not thread safe because
+ * it is expected that any updates will be done having acquired write locks
+ * on the entire {@link org.infinispan.container.entries.CacheEntry} which
+ * references the {@link MetaParams} collection. Hence, any updates could be
+ * done without the need to keep {@link MetaParams} concurrently safe.
+ * Also, although users can retrieve or update individual {@link MetaParam}
+ * instances, they cannot act on the globally at the {@link MetaParams} level,
+ * and hence there is no risk of users misusing {@link MetaParams}.
+ *
+ * @since 8.0
  */
 @NotThreadSafe
 public final class MetaParams {
@@ -72,14 +69,6 @@ public final class MetaParams {
 
    public <T> Optional<T> find(Class<T> type) {
       return Optional.ofNullable(findNullable(type));
-   }
-
-   public <T> T get(Class<T> type) throws NoSuchElementException {
-      T param = findNullable(type);
-      if (param == null)
-         throw new NoSuchElementException("Metadata with type=" + type + " not found");
-
-      return param;
    }
 
    @SuppressWarnings("unchecked")
@@ -136,8 +125,17 @@ public final class MetaParams {
       }
    }
 
+   /**
+    * Construct a collection of {@link MetaParam} instances. If multiple
+    * instances of the same {@link MetaParam} are present, the last value is
+    * only considered since there can only be one instance per type in the
+    * {@link MetaParams} collection.
+    *
+    * @param metas Meta parameters to create the collection with
+    * @return a collection of meta parameters without type duplicates
+    */
    static MetaParams of(MetaParam... metas) {
-      return new MetaParams(metas);
+      return new MetaParams(filterDuplicates(metas));
    }
 
    static MetaParams of(MetaParam meta) {
@@ -146,6 +144,14 @@ public final class MetaParams {
 
    static MetaParams empty() {
       return new MetaParams(new MetaParam[]{});
+   }
+
+   private static MetaParam[] filterDuplicates(MetaParam... metas) {
+      Map<Class<?>, MetaParam<?>> all = new HashMap<>();
+      for (MetaParam meta : metas)
+         all.put(meta.getClass(), meta);
+
+      return all.values().toArray(new MetaParam[all.size()]);
    }
 
    public static final class Externalizer extends AbstractExternalizer<MetaParams> {
