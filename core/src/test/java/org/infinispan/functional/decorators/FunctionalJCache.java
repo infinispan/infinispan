@@ -8,7 +8,7 @@ import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
-import org.infinispan.commons.api.functional.Param;
+import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -54,7 +54,7 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
    // Rudimentary constructor, we'll provide more idiomatic construction
    // via main Infinispan class which is still to be defined
    private FunctionalJCache(FunctionalMapImpl<K, V> map) {
-      FunctionalMapImpl<K, V> blockingMap = map.withParams(Param.WaitMode.BLOCKING);
+      FunctionalMapImpl<K, V> blockingMap = map.withParams(FutureMode.COMPLETED);
       this.readOnly = ReadOnlyMapImpl.create(blockingMap);
       this.writeOnly = WriteOnlyMapImpl.create(blockingMap);
       this.readWrite = ReadWriteMapImpl.create(blockingMap);

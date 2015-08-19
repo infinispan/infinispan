@@ -6,11 +6,12 @@ import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
-import org.infinispan.commons.api.functional.Param.WaitMode;
+import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
+import org.infinispan.stream.CacheCollectors;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.*;
 
@@ -38,7 +40,7 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
    // Rudimentary constructor, we'll provide more idiomatic construction
    // via main Infinispan class which is still to be defined
    private FunctionalConcurrentMap(FunctionalMapImpl<K, V> map) {
-      FunctionalMapImpl<K, V> blockingMap = map.withParams(WaitMode.BLOCKING);
+      FunctionalMapImpl<K, V> blockingMap = map.withParams(FutureMode.COMPLETED);
       this.readOnly = ReadOnlyMapImpl.create(blockingMap);
       this.writeOnly = WriteOnlyMapImpl.create(blockingMap);
       this.readWrite = ReadWriteMapImpl.create(blockingMap);
@@ -119,7 +121,7 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public Set<K> keySet() {
-      return readOnly.keys().collect(HashSet::new, HashSet::add, HashSet::addAll);
+      return readOnly.keys().collect(CacheCollectors.serializableCollector(() -> Collectors.toSet()));
    }
 
    @Override

@@ -5,8 +5,12 @@ import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.stream.CacheCollectors;
 
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -14,6 +18,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -91,6 +96,11 @@ public final class Traversables {
       }
 
       @Override
+      public <R, A> R collect(Collector<? super T, A, R> collector) {
+         return stream.collect(collector);
+      }
+
+      @Override
       public long count() {
          return stream.count();
       }
@@ -129,6 +139,7 @@ public final class Traversables {
       public void close() {
          isClosed = true;
       }
+
    }
 
 }

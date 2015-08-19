@@ -12,6 +12,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 
 /**
  * Unsorted traversable stream. Design is inspired on {@link java.util.stream.Stream}.
@@ -145,8 +146,27 @@ public interface Traversable<T> extends AutoCloseable {
     * given consumer. The combiner can be used to combine accumulated results
     * executed in paralell or coming from different nodes in a distributed
     * environment.
+    *
+    * In distributed environments where some keys are remote, the
+    * {@link Supplier} and {@link BiConsumer} instances passed in are sent to
+    * other nodes and hence they need to be marshallable. If the collect
+    * operation can be defined using the helper methods in
+    * {@link java.util.stream.Collectors}, it is recommended that those are
+    * used, which can easily be made marshalled using the
+    * org.infinispan.stream.CacheCollectors#serializableCollector method.
     */
    <R> R collect(Supplier<R> s, BiConsumer<R, ? super T> accumulator, BiConsumer<R, R> combiner);
+
+   /**
+    * Transforms the traversable into a result container using a
+    * {@code Collector}.
+    *
+    * In distributed environments where some keys are remote, the
+    * {@link Collector} instance passed in is sent other nodes and hence it
+    * needs to be marshallable. This can easily be made achieved using the
+    * org.infinispan.stream.CacheCollectors#serializableCollector method.
+    */
+   <R, A> R collect(Collector<? super T, A, R> collector);
 
    /**
     * Returns an optional containing the minimum element of this traversable

@@ -8,7 +8,7 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
 import org.infinispan.commons.api.functional.Param;
-import org.infinispan.commons.api.functional.Param.WaitMode;
+import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.util.CloseableIteratorSet;
 import org.infinispan.context.InvocationContext;
@@ -22,8 +22,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static org.infinispan.functional.impl.WaitModes.withWaitFuture;
-import static org.infinispan.functional.impl.WaitModes.withWaitTraversable;
+import static org.infinispan.functional.impl.Params.withFuture;
 
 public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements ReadWriteMap<K, V> {
    private static final Log log = LogFactory.getLog(ReadWriteMapImpl.class);
@@ -45,49 +44,49 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    @Override
    public <R> CompletableFuture<R> eval(K key, Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
-      Param<WaitMode> waitMode = params.get(WaitMode.ID);
+      Param<FutureMode> futureMode = params.get(FutureMode.ID);
       ReadWriteKeyCommand cmd = fmap.cmdFactory().buildReadWriteKeyCommand(key, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getLockOwner());
-      return withWaitFuture(waitMode, fmap.asyncExec(), () -> (R) fmap.chain().invoke(ctx, cmd));
+      return withFuture(futureMode, fmap.asyncExec(), () -> (R) fmap.chain().invoke(ctx, cmd));
    }
 
    @Override
    public <R> CompletableFuture<R> eval(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
-      Param<WaitMode> waitMode = params.get(WaitMode.ID);
+      Param<FutureMode> futureMode = params.get(FutureMode.ID);
       ReadWriteKeyValueCommand cmd = fmap.cmdFactory().buildReadWriteKeyValueCommand(key, value, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getLockOwner());
-      return withWaitFuture(waitMode, fmap.asyncExec(), () -> (R) fmap.chain().invoke(ctx, cmd));
+      return withFuture(futureMode, fmap.asyncExec(), () -> (R) fmap.chain().invoke(ctx, cmd));
    }
 
    @Override
    public <R> Traversable<R> evalMany(Map<? extends K, ? extends V> entries, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
-      Param<WaitMode> waitMode = params.get(WaitMode.ID);
+      Param<FutureMode> futureMode = params.get(FutureMode.ID);
       ReadWriteManyEntriesCommand cmd = fmap.cmdFactory().buildReadWriteManyEntriesCommand(entries, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, entries.size());
-      return withWaitTraversable(waitMode, () -> ((List<R>) fmap.chain().invoke(ctx, cmd)).stream());
+      return Traversables.of(((List<R>) fmap.chain().invoke(ctx, cmd)).stream());
    }
 
    @Override
    public <R> Traversable<R> evalMany(Set<? extends K> keys, Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked evalMany(keys=%s, %s)", keys, params);
-      Param<WaitMode> waitMode = params.get(WaitMode.ID);
+      Param<FutureMode> futureMode = params.get(FutureMode.ID);
       ReadWriteManyCommand cmd = fmap.cmdFactory().buildReadWriteManyCommand(keys, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
-      return withWaitTraversable(waitMode, () -> ((List<R>) fmap.chain().invoke(ctx, cmd)).stream());
+      return Traversables.of(((List<R>) fmap.chain().invoke(ctx, cmd)).stream());
    }
 
    @Override
    public <R> Traversable<R> evalAll(Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked evalAll(%s)", params);
-      Param<WaitMode> waitMode = params.get(WaitMode.ID);
+      Param<FutureMode> futureMode = params.get(FutureMode.ID);
       CloseableIteratorSet<K> keys = fmap.cache.keySet();
       ReadWriteManyCommand cmd = fmap.cmdFactory().buildReadWriteManyCommand(keys, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, keys.size());
-      return withWaitTraversable(waitMode, () -> ((List<R>) fmap.chain().invoke(ctx, cmd)).stream());
+      return Traversables.of(((List<R>) fmap.chain().invoke(ctx, cmd)).stream());
    }
 
    @Override
