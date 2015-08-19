@@ -27,11 +27,13 @@ final class IndexingTagHandler implements TagHandler {
 
    private static final LuceneOptions NOT_STORED_NOT_ANALYZED = new LuceneOptionsImpl(
          new DocumentFieldMetadata.Builder(null, Store.NO, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
+               .indexNullAs(QueryFacadeImpl.NULL_TOKEN)
                .boost(1.0F)
                .build(), 1.0F, 1.0F);
 
    private static final LuceneOptions STORED_NOT_ANALYZED = new LuceneOptionsImpl(
          new DocumentFieldMetadata.Builder(null, Store.YES, Field.Index.NOT_ANALYZED, Field.TermVector.NO)
+               .indexNullAs(QueryFacadeImpl.NULL_TOKEN)
                .boost(1.0F)
                .build(), 1.0F, 1.0F);
 
@@ -67,6 +69,7 @@ final class IndexingTagHandler implements TagHandler {
       LuceneOptions luceneOptions = isStored ? STORED_NOT_ANALYZED : NOT_STORED_NOT_ANALYZED;
       if (value == null) {
          value = QueryFacadeImpl.NULL_TOKEN;  //todo [anistor] do we need a specific null token for numeric fields?
+         type = Type.STRING;
          luceneOptions = NOT_STORED_NOT_ANALYZED;
       }
 

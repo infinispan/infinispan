@@ -31,10 +31,4 @@ public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslCondit
    public void testInvalidEmbeddedAttributeQuery() throws Exception {
       super.testInvalidEmbeddedAttributeQuery();
    }
-
-   @Test
-   @Override
-   public void testNullOnIntegerField() throws Exception {
-      super.testNullOnIntegerField();
-   }
 }

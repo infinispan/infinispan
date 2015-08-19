@@ -1,7 +1,6 @@
 package org.infinispan.query.dsl.embedded;
 
 import static org.junit.Assert.*;
-import static org.testng.Assert.assertNotEquals;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -778,6 +777,42 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.get(0).getId());
    }
 
+   @Test(enabled = false, description = "https://hibernate.atlassian.net/browse/HSEARCH-1956")
+   public void testIsNullNumericWithProjection1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .setProjection("name", "surname", "age")
+            .orderBy("name", SortOrder.ASC)
+            .orderBy("surname", SortOrder.ASC)
+            .orderBy("age", SortOrder.ASC)  //todo [anistor] sorting by a nullable numeric field causes trouble!
+            .having("age").isNull()
+            .toBuilder().build();
+
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals("Spider", list.get(0)[0]);
+      assertEquals("Man", list.get(0)[1]);
+      assertNull(list.get(0)[2]);
+      assertEquals("Spider", list.get(1)[0]);
+      assertEquals("Woman", list.get(1)[1]);
+      assertNull(list.get(1)[2]);
+   }
+
+   public void testIsNullNumericWithProjection2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .setProjection("name", "age")
+            .not().having("age").isNull()
+            .toBuilder().build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("John", list.get(0)[0]);
+      assertEquals(22, list.get(0)[1]);
+   }
+
    public void testContains1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -1265,7 +1300,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .orderBy("description", SortOrder.ASC)
             .having("accountId").eq(1)
             .and(qf.having("amount").gt(1600)
-                       .or().having("description").like("%rent%")).toBuilder().build();
+                  .or().having("description").like("%rent%")).toBuilder().build();
 
       List<Transaction> list = q.list();
       assertEquals(2, list.size());
@@ -1291,8 +1326,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertNull(list.get(2)[1]);
    }
 
-   //todo [anistor] fix disabled test
-   @Test(enabled = false, description = "Nulls not correctly indexed for numeric properties, see ISPN-4046")
    public void testNullOnIntegerField() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -1302,6 +1335,22 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertEquals(2, list.size());
+      assertNull(list.get(0).getAge());
+      assertNull(list.get(1).getAge());
+   }
+
+   public void testIsNotNullOnIntegerField() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .not().having("age").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("John", list.get(0).getName());
+      assertEquals("Doe", list.get(0).getSurname());
+      assertNotNull(list.get(0).getAge());
    }
 
    public void testSampleDomainQuery19() throws Exception {
