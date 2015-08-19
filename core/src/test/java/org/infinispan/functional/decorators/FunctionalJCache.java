@@ -15,6 +15,7 @@ import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
 import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.functional.impl.Traversables;
 import org.infinispan.functional.impl.WriteOnlyMapImpl;
 
 import javax.cache.Cache;
@@ -191,7 +192,7 @@ public final class FunctionalJCache<K, V> implements Cache<K, V>, FunctionalList
          // adding support for it would be relatively trivial if following
          // similar solution to the one in ConcurrentMapDecorator
       });
-      return t.iterator();
+      return Traversables.asIterator(t);
    }
 
    @Override

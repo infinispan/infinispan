@@ -2,15 +2,11 @@ package org.infinispan.functional.impl;
 
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.commons.util.CloseableSpliterator;
-import org.infinispan.stream.CacheCollectors;
+import org.infinispan.commons.util.Closeables;
 
-import java.io.Serializable;
-import java.util.Collections;
-import java.util.EnumSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -19,7 +15,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class Traversables {
@@ -28,9 +23,13 @@ public final class Traversables {
       return new StreamTraversable<>(stream);
    }
 
-   public static <T> Traversable<T> eager(Stream<T> stream) {
-      List<T> list = stream.collect(CacheCollectors.serializableCollector(() -> Collectors.toList()));
-      return new StreamTraversable<>(list.stream());
+   public static <T> CloseableIterator<T> asIterator(Traversable<T> traversable) {
+      if (traversable instanceof StreamTraversable)
+         return Closeables.iterator(((StreamTraversable<T>) traversable).stream);
+      else {
+         List<T> collected = traversable.collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+         return Closeables.iterator(collected.iterator());
+      }
    }
 
    private Traversables() {
@@ -39,8 +38,6 @@ public final class Traversables {
 
    // TODO: Attention! This is a very rudimentary/simplistic implementation!
    private static final class StreamTraversable<T> implements Traversable<T> {
-      // TODO: How should the rest of operations react to closed traversable?
-      volatile boolean isClosed = false;
       final Stream<T> stream;
 
       private StreamTraversable(Stream<T> stream) {
@@ -124,22 +121,6 @@ public final class Traversables {
       public Optional<T> findAny() {
          return stream.findAny();
       }
-
-      @Override
-      public CloseableIterator<T> iterator() {
-         return Iterators.of(stream);
-      }
-
-      @Override
-      public CloseableSpliterator<T> spliterator() {
-         return Iterators.spliterator(stream);
-      }
-
-      @Override
-      public void close() {
-         isClosed = true;
-      }
-
    }
 
 }
