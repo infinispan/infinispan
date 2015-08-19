@@ -39,11 +39,9 @@ import java.util.Properties;
 /**
  * InfinispanMessages
  *
- * logging id range: 10290 - 10299,10380 - 10389, 11000 - 11099
- *
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  */
-@MessageBundle(projectCode = "JBAS")
+@MessageBundle(projectCode = "DGISPN")
 public interface InfinispanMessages {
 
     /**
@@ -60,10 +58,10 @@ public interface InfinispanMessages {
      *
      * @return a {@link ConfigurationPersistenceException} for the error.
      */
-    @Message(id = 10290, value = "Could not resolve destination address for outbound socket binding named '%s'")
+    @Message(id = 100, value = "Could not resolve destination address for outbound socket binding named '%s'")
     InjectionException failedToInjectSocketBinding(@Cause UnknownHostException cause, OutboundSocketBinding binding);
 
-    @Message(id = 10291, value = "Failed to add %s %s cache to non-clustered %s cache container.")
+    @Message(id = 101, value = "Failed to add %s %s cache to non-clustered %s cache container.")
     StartException transportRequired(CacheMode mode, String cache, String cacheContainer);
 
     /**
@@ -74,7 +72,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link OperationFailedException} for the error.
      */
-    @Message(id = 10292, value = "%s is not a valid cache store")
+    @Message(id = 102, value = "%s is not a valid cache store")
     OperationFailedException invalidCacheStore(@Cause Throwable cause, String cacheStoreName);
 
     /**
@@ -85,7 +83,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link IllegalArgumentException} for the error.
      */
-    @Message(id = 10293, value = "%s is not a valid default cache. The %s cache container does not contain a cache with that name")
+    @Message(id = 103, value = "%s is not a valid default cache. The %s cache container does not contain a cache with that name")
     IllegalArgumentException invalidDefaultCache(String cacheName, String cacheContainerName);
 
     /**
@@ -96,7 +94,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link IllegalStateException} for the error.
      */
-    @Message(id = 10294, value = "No %s property was specified within the executor properties: %s")
+    @Message(id = 104, value = "No %s property was specified within the executor properties: %s")
     IllegalStateException invalidExecutorProperty(String id, Properties properties);
 
     /**
@@ -107,7 +105,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link IllegalStateException} for the error.
      */
-    @Message(id = 10295, value = "No %s property was specified within the transport properties: %s")
+    @Message(id = 105, value = "No %s property was specified within the transport properties: %s")
     IllegalStateException invalidTransportProperty(String id, Properties properties);
 
     /**
@@ -118,7 +116,7 @@ public interface InfinispanMessages {
      *
      * @return a {@link RuntimeException}
      */
-    @Message(id = 10296, value = "Aborting cache operation after %d retries.")
+    @Message(id = 106, value = "Aborting cache operation after %d retries.")
     RuntimeException abortingCacheOperation(@Cause Throwable cause, int numberOfRetries);
 
     /**
@@ -129,7 +127,7 @@ public interface InfinispanMessages {
      *
      * @return the String.
      */
-    @Message(id = 10297, value = "Invalid value for parameter %s. Allowable values: %s")
+    @Message(id = 107, value = "Invalid value for parameter %s. Allowable values: %s")
     String invalidParameterValue(String id, String allowableValues);
 
     /**
@@ -139,7 +137,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link OperationFailedException} for the error.
      */
-    @Message(id = 10298, value = "Cache store cannot be created: cache store %s is already defined")
+    @Message(id = 108, value = "Cache store cannot be created: cache store %s is already defined")
     OperationFailedException cacheStoreAlreadyDefined(String existingStoreName);
 
     /**
@@ -149,7 +147,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link OperationFailedException} for the error.
      */
-    @Message(id = 10299, value = "Value for property with key %s is not defined")
+    @Message(id = 109, value = "Value for property with key %s is not defined")
     OperationFailedException propertyValueNotDefined(String propertyKey);
 
     /**
@@ -159,7 +157,7 @@ public interface InfinispanMessages {
      *
      * @return the String message.
      */
-    @Message(id = 10380, value = "Failed to locate %s")
+    @Message(id = 110, value = "Failed to locate %s")
     String notFound(String resourceName);
 
     /**
@@ -169,7 +167,7 @@ public interface InfinispanMessages {
      *
      * @return IllegalStateException instance.
      */
-    @Message(id = 10381, value = "Failed to parse %s")
+    @Message(id = 111, value = "Failed to parse %s")
     IllegalStateException failedToParse(@Cause Throwable cause, String resourceName);
 
     /**
@@ -179,7 +177,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link OperationFailedException} for the error.
      */
-    @Message(id = 10382, value = "Add operation failed: singleton %s already exists.")
+    @Message(id = 112, value = "Add operation failed: singleton %s already exists.")
     OperationFailedException singletonResourceAlreadyExists(String resourceName);
 
     /**
@@ -189,7 +187,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link OperationFailedException} for the error.
      */
-    @Message(id = 10383, value = "cannot remove alias % from empty list.")
+    @Message(id = 113, value = "cannot remove alias % from empty list.")
     OperationFailedException cannotRemoveAliasFromEmptyList(String aliasName);
 
     /**
@@ -198,10 +196,10 @@ public interface InfinispanMessages {
      * @param attributeName the name of the deprecated attribute
      * @return an {@link OperationFailedException} for the error
      */
-    @Message(id = 10384, value = "Attribute '%s' has been deprecated.")
+    @Message(id = 114, value = "Attribute '%s' has been deprecated.")
     OperationFailedException attributeDeprecated(String attributeName);
 
-    @Message(id = 10385, value = "Attribute 'segments' is an expression and therefore cannot be translated to legacy attribute 'virtual-nodes'. This resource will need to be ignored on that host.")
+    @Message(id = 115, value = "Attribute 'segments' is an expression and therefore cannot be translated to legacy attribute 'virtual-nodes'. This resource will need to be ignored on that host.")
     String virtualNodesDoesNotSupportExpressions();
 
     /**
@@ -210,7 +208,7 @@ public interface InfinispanMessages {
      * @param existingStoreName the loader which already exists.
      * @return an {@link OperationFailedException} for the error
      */
-    @Message(id = 11000, value = "Cache loader cannot be created: cache loader %s is already defined")
+    @Message(id = 116, value = "Cache loader cannot be created: cache loader %s is already defined")
     OperationFailedException cacheLoaderAlreadyDefined(String existingStoreName);
 
     /**
@@ -221,7 +219,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link IllegalArgumentException} for the error.
      */
-    @Message(id = 11001, value = "%s is not a valid cache loader")
+    @Message(id = 117, value = "%s is not a valid cache loader")
     IllegalArgumentException invalidCacheLoader(@Cause Throwable cause, String cacheLoaderName);
 
     /**
@@ -230,7 +228,7 @@ public interface InfinispanMessages {
      * @param message
      * @return
      */
-    @Message(id = 11002, value = "Failed to invoke operation: %s")
+    @Message(id = 118, value = "Failed to invoke operation: %s")
     String failedToInvokeOperation(String message);
 
     /**
@@ -241,7 +239,7 @@ public interface InfinispanMessages {
      *
      * @return an {@link IllegalArgumentException} for the error.
      */
-    @Message(id = 11003, value = "%s is not a valid marshaller")
+    @Message(id = 119, value = "%s is not a valid marshaller")
     IllegalArgumentException invalidCompatibilityMarshaller(@Cause Throwable cause, String marshallerClassName);
 
    /**
@@ -251,7 +249,7 @@ public interface InfinispanMessages {
     * @param secondParameter the second parameter name
     * @return an {@link IllegalArgumentException} for the error.
     */
-   @Message(id = 11004, value = "Parameter %s must be the same size as parameter %s")
+   @Message(id = 120, value = "Parameter %s must be the same size as parameter %s")
    IllegalArgumentException invalidParameterSizes(String firstParameter, String secondParameter);
 
    /**
@@ -261,12 +259,12 @@ public interface InfinispanMessages {
     * @param requiredType the required type of the parameter
     * @return an {@link IllegalArgumentException} for the error.
     */
-   @Message(id = 11005, value = "Parameter %s must be of type %s")
+   @Message(id = 121, value = "Parameter %s must be of type %s")
    IllegalArgumentException invalidParameterType(String name, String requiredType);
 
    /**
     * Error message thrown when Subsystem can't instantiate given class.
     */
-   @Message(id = 11006, value = "Could not instantiate class %s")
+   @Message(id = 122, value = "Could not instantiate class %s")
    IllegalStateException unableToInstantiateClass(String className);
 }

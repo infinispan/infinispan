@@ -32,6 +32,7 @@ import java.util.ResourceBundle;
 
 import org.infinispan.server.commons.controller.descriptions.SubsystemResourceDescriptionResolver;
 import org.jboss.as.clustering.infinispan.subsystem.ClusteredCacheMetricsHandler.ClusteredCacheMetrics;
+import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 
 /**
@@ -228,7 +229,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(MetricKeys.CACHE_LOADER_STORES, "loader");
         sharedAttributeResolver.put(MetricKeys.PASSIVATIONS, "loader");
 
-       // shared children - this avoids having to describe the children for each parent resource
+        // shared children - this avoids having to describe the children for each parent resource
         sharedAttributeResolver.put(ModelKeys.TRANSPORT, null);
         sharedAttributeResolver.put(ModelKeys.SECURITY, "cache");
         sharedAttributeResolver.put(ModelKeys.LOCKING, null);
@@ -253,6 +254,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.IMPLEMENTATION, null);
         sharedAttributeResolver.put(ModelKeys.COMPRESSION, null);
         sharedAttributeResolver.put(ModelKeys.LEVELDB_STORE, null);
+        sharedAttributeResolver.put("thread-pool", null);
 
         for (ClusteredCacheMetrics key : ClusteredCacheMetricsHandler.ClusteredCacheMetrics.values()) {
            sharedAttributeResolver.put(key.definition.getName(), "clustered-cache");

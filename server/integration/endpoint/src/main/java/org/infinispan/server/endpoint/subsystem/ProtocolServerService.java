@@ -36,7 +36,6 @@ import org.infinispan.server.core.configuration.ProtocolServerConfigurationBuild
 import org.infinispan.server.core.transport.Transport;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
-import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfiguration;
 import org.jboss.as.domain.management.AuthMechanism;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.NetworkUtils;

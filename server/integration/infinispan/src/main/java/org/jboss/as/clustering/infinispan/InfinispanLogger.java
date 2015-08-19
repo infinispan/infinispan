@@ -35,12 +35,10 @@ import static org.jboss.logging.Logger.Level.WARN;
 /**
  * InfinispanLogger
  *
- * logging id range: 10280 - 10289
- *
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  * @author Tristan Tarrant
  */
-@MessageLogger(projectCode = "JBAS")
+@MessageLogger(projectCode = "DGISPN")
 public interface InfinispanLogger extends BasicLogger {
     String ROOT_LOGGER_CATEGORY = InfinispanLogger.class.getPackage().getName();
 
@@ -53,7 +51,7 @@ public interface InfinispanLogger extends BasicLogger {
      * Logs an informational message indicating the Infinispan subsystem is being activated.
      */
     @LogMessage(level = INFO)
-    @Message(id = 10280, value = "Activating Infinispan subsystem.")
+    @Message(id = 0, value = "Activating Infinispan subsystem.")
     void activatingSubsystem();
 
     /**
@@ -63,7 +61,7 @@ public interface InfinispanLogger extends BasicLogger {
      * @param containerName the name of the cache container.
      */
     @LogMessage(level = INFO)
-    @Message(id = 10281, value = "Started %s cache from %s container")
+    @Message(id = 1, value = "Started %s cache from %s container")
     void cacheStarted(String cacheName, String containerName);
 
 
@@ -74,7 +72,7 @@ public interface InfinispanLogger extends BasicLogger {
      * @param containerName the name of the cache container.
      */
     @LogMessage(level = INFO)
-    @Message(id = 10282, value = "Stopped %s cache from %s container")
+    @Message(id = 2, value = "Stopped %s cache from %s container")
     void cacheStopped(String cacheName, String containerName);
 
     /**
@@ -82,7 +80,7 @@ public interface InfinispanLogger extends BasicLogger {
      * is no longer valid
      */
     @LogMessage(level = WARN)
-    @Message(id = 10283, value = "The 'eager' attribute specified on the 'transaction' element of a cache is no longer valid")
+    @Message(id = 3, value = "The 'eager' attribute specified on the 'transaction' element of a cache is no longer valid")
     void eagerAttributeDeprecated();
 
     /**
@@ -90,7 +88,7 @@ public interface InfinispanLogger extends BasicLogger {
      * is no longer valid
      */
     @LogMessage(level = WARN)
-    @Message(id = 10284, value = "The '%s' attribute specified on the 'transport' element of a cache container is no longer valid" +
+    @Message(id = 4, value = "The '%s' attribute specified on the 'transport' element of a cache container is no longer valid" +
                 "; use the same attribute specified on the 'transport' element of corresponding JGroups stack instead")
     void topologyAttributeDeprecated(String attribute);
 
@@ -98,34 +96,38 @@ public interface InfinispanLogger extends BasicLogger {
      * Logs a debug message indicating that named cache container has been installed.
      */
     @LogMessage(level = DEBUG)
-    @Message(id = 10285, value = "'%s' cache container installed.")
+    @Message(id = 5, value = "'%s' cache container installed.")
     void cacheContainerInstalled(String containerName);
 
     /**
      * Logs a warning message stating that the 'virtual-nodes' attribute is deprecated.
      */
     @LogMessage(level = WARN)
-    @Message(id = 10286, value = "Attribute 'virtual-nodes' has been deprecated and has no effect.")
+    @Message(id = 6, value = "Attribute 'virtual-nodes' has been deprecated and has no effect.")
     void virtualNodesAttributeDeprecated();
 
    /**
     * Logs an info message about installing implementation service.
     */
     @LogMessage(level = INFO)
-    @Message(id = 10287, value = "Registering Deployed Cache Store service for store '%s'")
+    @Message(id = 7, value = "Registering Deployed Cache Store service for store '%s'")
     void installDeployedCacheStore(String implementationClassName);
 
    /**
     * Logs debug message when starting Deployed Cache service.
     */
     @LogMessage(level = DEBUG)
-    @Message(id = 10288, value = "Started Deployed Cache service for implementation '%s'")
+    @Message(id = 8, value = "Started Deployed Cache service for implementation '%s'")
     void deployedStoreStarted(String className);
 
    /**
     * Logs debug message when stopping Deployed Cache service.
     */
     @LogMessage(level = DEBUG)
-    @Message(id = 10289, value = "Stopped Deployed Cache service for implementation '%s'")
+    @Message(id = 9, value = "Stopped Deployed Cache service for implementation '%s'")
     void deployedStoreStopped(String className);
+
+    @LogMessage(level = WARN)
+    @Message(id = 10, value = "The '%s' attribute has been deprecated and is now ignored. Please use the '%s' configuration element instead")
+    void deprecatedExecutor(String executorAttribute, String threadPoolElement);
 }

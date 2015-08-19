@@ -29,6 +29,7 @@ import javax.xml.stream.XMLStreamException;
 import org.infinispan.security.impl.ClusterRoleMapper;
 import org.infinispan.security.impl.CommonNameRoleMapper;
 import org.infinispan.security.impl.IdentityRoleMapper;
+import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.persistence.SubsystemMarshallingContext;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -64,13 +65,8 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 // AS7-3488 make default-cache a non required attribute
                 // this.writeRequired(writer, Attribute.DEFAULT_CACHE, container, ModelKeys.DEFAULT_CACHE);
                 this.writeListAsAttribute(writer, Attribute.ALIASES, container, ModelKeys.ALIASES);
-                this.writeOptional(writer, Attribute.ASYNC_EXECUTOR, container, ModelKeys.ASYNC_EXECUTOR);
                 this.writeOptional(writer, Attribute.DEFAULT_CACHE, container, ModelKeys.DEFAULT_CACHE);
                 this.writeOptional(writer, Attribute.JNDI_NAME, container, ModelKeys.JNDI_NAME);
-                this.writeOptional(writer, Attribute.EXPIRATION_EXECUTOR, container, ModelKeys.EXPIRATION_EXECUTOR);
-                this.writeOptional(writer, Attribute.LISTENER_EXECUTOR, container, ModelKeys.LISTENER_EXECUTOR);
-                this.writeOptional(writer, Attribute.REPLICATION_QUEUE_EXECUTOR, container, ModelKeys.REPLICATION_QUEUE_EXECUTOR);
-                this.writeOptional(writer, Attribute.STATE_TRANSFER_EXECUTOR, container, ModelKeys.STATE_TRANSFER_EXECUTOR);
                 this.writeOptional(writer, Attribute.START, container, ModelKeys.START);
                 this.writeOptional(writer, Attribute.MODULE, container, ModelKeys.MODULE);
                 this.writeOptional(writer, Attribute.STATISTICS, container, ModelKeys.STATISTICS);
@@ -79,9 +75,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writer.writeStartElement(Element.TRANSPORT.getLocalName());
                     ModelNode transport = container.get(ModelKeys.TRANSPORT, ModelKeys.TRANSPORT_NAME);
                     this.writeOptional(writer, Attribute.CHANNEL, transport, ModelKeys.CHANNEL);
-                    this.writeOptional(writer, Attribute.EXECUTOR, transport, ModelKeys.EXECUTOR);
                     this.writeOptional(writer, Attribute.LOCK_TIMEOUT, transport, ModelKeys.LOCK_TIMEOUT);
-                    this.writeOptional(writer, Attribute.REMOTE_COMMAND_EXECUTOR, transport, ModelKeys.REMOTE_COMMAND_EXECUTOR);
                     this.writeOptional(writer, Attribute.STRICT_PEER_TO_PEER, transport, ModelKeys.STRICT_PEER_TO_PEER);
                     writer.writeEndElement();
                 }
@@ -122,6 +116,18 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writer.writeEndElement();
                 }
 
+                // write any configured thread pools
+                if (container.hasDefined(ThreadPoolResource.WILDCARD_PATH.getKey())) {
+                    writeThreadPoolElements(Element.ASYNC_OPERATIONS_THREAD_POOL, ThreadPoolResource.ASYNC_OPERATIONS, writer, container);
+                    writeThreadPoolElements(Element.LISTENER_THREAD_POOL, ThreadPoolResource.LISTENER, writer, container);
+                    writeThreadPoolElements(Element.PERSISTENCE_THREAD_POOL, ThreadPoolResource.PERSISTENCE, writer, container);
+                    writeThreadPoolElements(Element.REMOTE_COMMAND_THREAD_POOL, ThreadPoolResource.REMOTE_COMMAND, writer, container);
+                    writeThreadPoolElements(Element.STATE_TRANSFER_THREAD_POOL, ThreadPoolResource.STATE_TRANSFER, writer, container);
+                    writeThreadPoolElements(Element.TRANSPORT_THREAD_POOL, ThreadPoolResource.TRANSPORT, writer, container);
+                    writeScheduledThreadPoolElements(Element.EXPIRATION_THREAD_POOL, ScheduledThreadPoolResource.EXPIRATION, writer, container);
+                    writeScheduledThreadPoolElements(Element.REPLICATION_QUEUE_THREAD_POOL, ScheduledThreadPoolResource.REPLICATION_QUEUE, writer, container);
+                }
+
                 ModelNode configurations = container.get(ModelKeys.CONFIGURATIONS, ModelKeys.CONFIGURATIONS_NAME);
 
                 // write any existent cache types
@@ -135,6 +141,29 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         }
         writer.writeEndElement();
     }
+
+    private static void writeThreadPoolElements(Element element, ThreadPoolResource pool, XMLExtendedStreamWriter writer, ModelNode container) throws XMLStreamException {
+        if (container.get(pool.getPathElement().getKey()).hasDefined(pool.getPathElement().getValue())) {
+            ModelNode threadPool = container.get(pool.getPathElement().getKeyValuePair());
+            if (hasDefined(threadPool, pool.getAttributes())) {
+                writer.writeStartElement(element.getLocalName());
+                writeAttributes(writer, threadPool, pool.getAttributes());
+                writer.writeEndElement();
+            }
+        }
+    }
+
+    private static void writeScheduledThreadPoolElements(Element element, ScheduledThreadPoolResource pool, XMLExtendedStreamWriter writer, ModelNode container) throws XMLStreamException {
+        if (container.get(pool.getPathElement().getKey()).hasDefined(pool.getPathElement().getValue())) {
+            ModelNode threadPool = container.get(pool.getPathElement().getKeyValuePair());
+            if (hasDefined(threadPool, pool.getAttributes())) {
+                writer.writeStartElement(element.getLocalName());
+                writeAttributes(writer, threadPool, pool.getAttributes());
+                writer.writeEndElement();
+            }
+        }
+    }
+
 
     /*
      * TODO: first of all output all _CONFIGURATION elements which don't have a single cache associated with them (i.e. cache.configuration = configuration.name)
@@ -660,5 +689,22 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
 
     private void writeRequired(XMLExtendedStreamWriter writer, Attribute attribute, ModelNode model, String key) throws XMLStreamException {
         writer.writeAttribute(attribute.getLocalName(), model.require(key).asString());
+    }
+
+    private static boolean hasDefined(ModelNode model, Iterable<? extends AttributeDefinition> attributes) {
+        for (AttributeDefinition attribute : attributes) {
+            if (model.hasDefined(attribute.getName())) return true;
+        }
+        return false;
+    }
+
+    private static void writeAttributes(XMLExtendedStreamWriter writer, ModelNode model, Iterable<? extends AttributeDefinition> attributes) throws XMLStreamException {
+        for (AttributeDefinition attribute : attributes) {
+            writeAttribute(writer, model, attribute);
+        }
+    }
+
+    private static void writeAttribute(XMLExtendedStreamWriter writer, ModelNode model, AttributeDefinition attribute) throws XMLStreamException {
+        attribute.getAttributeMarshaller().marshallAsAttribute(attribute, model, true, writer);
     }
 }

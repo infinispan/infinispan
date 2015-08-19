@@ -4,6 +4,34 @@
     </cache-container>
     <cache-container name="maximal" aliases="alias1 alias2" default-cache="local" jndi-name="java:global/infinispan/maximal" module="org.infinispan" statistics="false">
         <transport channel="maximal-channel" lock-timeout="120000" strict-peer-to-peer="false"/>
+        <async-operations-thread-pool min-threads="31"
+                                      queue-length="32"
+                                      max-threads="33"
+                                      keepalive-time="34"/>
+        <listener-thread-pool min-threads="21"
+                              queue-length="22"
+                              max-threads="23"
+                              keepalive-time="24"/>
+        <persistence-thread-pool min-threads="31"
+                                 queue-length="32"
+                                 max-threads="33"
+                                 keepalive-time="34"/>
+        <remote-command-thread-pool min-threads="41"
+                               queue-length="42"
+                               max-threads="43"
+                               keepalive-time="44"/>
+        <state-transfer-thread-pool min-threads="31"
+                                    queue-length="32"
+                                    max-threads="33"
+                                    keepalive-time="34"/>
+        <transport-thread-pool min-threads="41"
+                               queue-length="42"
+                               max-threads="43"
+                               keepalive-time="44"/>
+        <expiration-thread-pool max-threads="13"
+                                keepalive-time="14"/>
+        <replication-queue-thread-pool max-threads="13"
+                                keepalive-time="14"/>
         <local-cache-configuration name="local-template">
         </local-cache-configuration>
         <local-cache name="local-instance" configuration="local-template"/>

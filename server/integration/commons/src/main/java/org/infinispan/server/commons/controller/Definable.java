@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2011, Red Hat, Inc., and individual contributors
+ * Copyright 2015, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,38 +19,17 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.management.MBeanServer;
-
-import org.infinispan.server.jgroups.spi.ChannelFactory;
-import org.jboss.modules.ModuleLoader;
-import org.jgroups.Channel;
+package org.infinispan.server.commons.controller;
 
 /**
+ * Implemented by objects with a definition.
  * @author Paul Ferraro
  */
-public class EmbeddedCacheManagerConfigurationService {
-
-    interface TransportConfiguration {
-        Long getLockTimeout();
-        ChannelFactory getChannelFactory();
-        Channel getChannel();
-        boolean isStrictPeerToPeer();
-    }
-
-    interface AuthorizationConfiguration {
-        String getPrincipalMapper();
-        Map<String, List<String>> getRoles();
-    }
-
-    interface Dependencies {
-        ModuleLoader getModuleLoader();
-        TransportConfiguration getTransportConfiguration();
-        AuthorizationConfiguration getAuthorizationConfiguration();
-        MBeanServer getMBeanServer();
-    }
+public interface Definable<D> {
+    /**
+     * Returns the definition of this object.
+     * @return this object's definition
+     */
+    D getDefinition();
 }

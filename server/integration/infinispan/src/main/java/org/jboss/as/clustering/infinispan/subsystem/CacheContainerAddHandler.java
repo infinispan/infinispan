@@ -85,11 +85,7 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
 
         CacheContainerConfigurationBuilder configBuilder = new CacheContainerConfigurationBuilder(name)
                 .setModule(module)
-                .setStatisticsEnabled(CacheContainerResource.STATISTICS.resolveModelAttribute(context, model).asBoolean())
-                .setAsyncExecutor(ModelNodes.asString(CacheContainerResource.ASYNC_EXECUTOR.resolveModelAttribute(context, model)))
-                .setListenerExecutor(ModelNodes.asString(CacheContainerResource.LISTENER_EXECUTOR.resolveModelAttribute(context, model)))
-                .setExpirationExecutor(ModelNodes.asString(CacheContainerResource.EVICTION_EXECUTOR.resolveModelAttribute(context, model)))
-                .setReplicationQueueExecutor(ModelNodes.asString(CacheContainerResource.REPLICATION_QUEUE_EXECUTOR.resolveModelAttribute(context, model)));
+                .setStatisticsEnabled(CacheContainerResource.STATISTICS.resolveModelAttribute(context, model).asBoolean());
 
         if (model.hasDefined(TransportResource.TRANSPORT_PATH.getKey())) {
             ModelNode transport = model.get(TransportResource.TRANSPORT_PATH.getKeyValuePair());
@@ -98,8 +94,6 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
             configBuilder.setTransport()
                     .setLockTimeout(TransportResource.LOCK_TIMEOUT.resolveModelAttribute(context, transport).asLong(), TimeUnit.MILLISECONDS)
                     .setStrictPeerToPeer(TransportResource.STRICT_PEER_TO_PEER.resolveModelAttribute(context, transport).asBoolean())
-                    .setExecutor(ModelNodes.asString(TransportResource.EXECUTOR.resolveModelAttribute(context, transport)))
-                    .setRemoteCommandExecutor(ModelNodes.asString(TransportResource.REMOTE_COMMAND_EXECUTOR.resolveModelAttribute(context, transport)))
                     .build(target).install();
 
             if (!name.equals(channel)) {

@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2011, Red Hat, Inc., and individual contributors
+ * Copyright 2015, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,38 +19,32 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.List;
-import java.util.Map;
+package org.infinispan.server.commons.controller.validation;
 
-import javax.management.MBeanServer;
-
-import org.infinispan.server.jgroups.spi.ChannelFactory;
-import org.jboss.modules.ModuleLoader;
-import org.jgroups.Channel;
+import org.jboss.as.controller.operations.validation.LongRangeValidator;
+import org.jboss.as.controller.operations.validation.ParameterValidator;
 
 /**
  * @author Paul Ferraro
  */
-public class EmbeddedCacheManagerConfigurationService {
+public class LongRangeValidatorBuilder extends AbstractParameterValidatorBuilder {
 
-    interface TransportConfiguration {
-        Long getLockTimeout();
-        ChannelFactory getChannelFactory();
-        Channel getChannel();
-        boolean isStrictPeerToPeer();
+    private volatile long min = Long.MIN_VALUE;
+    private volatile long max = Long.MAX_VALUE;
+
+    public LongRangeValidatorBuilder min(long min) {
+        this.min = min;
+        return this;
     }
 
-    interface AuthorizationConfiguration {
-        String getPrincipalMapper();
-        Map<String, List<String>> getRoles();
+    public LongRangeValidatorBuilder max(long max) {
+        this.max = max;
+        return this;
     }
 
-    interface Dependencies {
-        ModuleLoader getModuleLoader();
-        TransportConfiguration getTransportConfiguration();
-        AuthorizationConfiguration getAuthorizationConfiguration();
-        MBeanServer getMBeanServer();
+    @Override
+    public ParameterValidator build() {
+        return new LongRangeValidator(this.min, this.max, this.allowsUndefined, this.allowsExpressions);
     }
 }

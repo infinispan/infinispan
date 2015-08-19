@@ -1,6 +1,5 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.server.commons.service.Builder;
@@ -8,7 +7,6 @@ import org.infinispan.server.infinispan.spi.service.CacheContainerServiceName;
 import org.infinispan.server.jgroups.spi.ChannelFactory;
 import org.infinispan.server.jgroups.spi.service.ChannelServiceName;
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.TransportConfiguration;
-import org.jboss.msc.inject.Injector;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
@@ -21,9 +19,6 @@ import org.jgroups.Channel;
 public class TransportConfigurationBuilder implements Builder<TransportConfiguration>, Value<TransportConfiguration>, TransportConfiguration {
     private final InjectedValue<Channel> channel = new InjectedValue<>();
     private final InjectedValue<ChannelFactory> factory = new InjectedValue<>();
-    private final InjectedValue<Executor> executor = new InjectedValue<>();
-    private final InjectedValue<Executor> totalOrderExecutor = new InjectedValue<>();
-    private final InjectedValue<Executor> remoteCommandExecutor = new InjectedValue<>();
     private final String name;
 
     private Long lockTimeout;
@@ -43,31 +38,6 @@ public class TransportConfigurationBuilder implements Builder<TransportConfigura
         return this;
     }
 
-    public TransportConfigurationBuilder setExecutor(String name) {
-        return this;
-    }
-
-    public TransportConfigurationBuilder setRemoteCommandExecutor(String name) {
-        return this;
-    }
-
-    @Deprecated
-    public TransportConfigurationBuilder setTotalOrderExecutor(String name) {
-        return this;
-    }
-
-    Injector<Executor> getExecutorInjector() {
-        return this.executor;
-    }
-
-    Injector<Executor> getTotalorderExecutorInjector() {
-        return this.totalOrderExecutor;
-    }
-
-    Injector<Executor> getRemoteCommandExecutorInjector() {
-        return this.remoteCommandExecutor;
-    }
-
     @Override
     public ChannelFactory getChannelFactory() {
         return this.factory.getValue();
@@ -76,21 +46,6 @@ public class TransportConfigurationBuilder implements Builder<TransportConfigura
     @Override
     public Channel getChannel() {
         return this.channel.getValue();
-    }
-
-    @Override
-    public Executor getExecutor() {
-        return this.executor.getOptionalValue();
-    }
-
-    @Override
-    public Executor getTotalOrderExecutor() {
-        return this.totalOrderExecutor.getOptionalValue();
-    }
-
-    @Override
-    public Executor getRemoteCommandExecutor() {
-        return this.remoteCommandExecutor.getOptionalValue();
     }
 
    @Override

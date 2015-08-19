@@ -27,6 +27,7 @@ import org.jboss.as.controller.OperationDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
+import org.jboss.as.controller.ResourceDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleListAttributeDefinition;
@@ -61,13 +62,6 @@ public class CacheContainerResource extends SimpleResourceDefinition {
             setAllowNull(true).
             build();
 
-    static final SimpleAttributeDefinition ASYNC_EXECUTOR =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.ASYNC_EXECUTOR, ModelType.STRING, true)
-                    .setXmlName(Attribute.ASYNC_EXECUTOR.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .build();
-
     static final SimpleAttributeDefinition CACHE_CONTAINER_MODULE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.MODULE, ModelType.STRING, true)
                     .setXmlName(Attribute.MODULE.getLocalName())
@@ -85,21 +79,6 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
-    @Deprecated
-    static final SimpleAttributeDefinition EVICTION_EXECUTOR =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.EVICTION_EXECUTOR, ModelType.STRING, true)
-                    .setXmlName(Attribute.EVICTION_EXECUTOR.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .build();
-
-    static final SimpleAttributeDefinition EXPIRATION_EXECUTOR =
-          new SimpleAttributeDefinitionBuilder(ModelKeys.EXPIRATION_EXECUTOR, ModelType.STRING, true)
-                  .setXmlName(Attribute.EXPIRATION_EXECUTOR.getLocalName())
-                  .setAllowExpression(false)
-                  .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                  .build();
-
     static final SimpleAttributeDefinition JNDI_NAME =
             new SimpleAttributeDefinitionBuilder(ModelKeys.JNDI_NAME, ModelType.STRING, true)
                     .setXmlName(Attribute.JNDI_NAME.getLocalName())
@@ -107,23 +86,9 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
-    static final SimpleAttributeDefinition LISTENER_EXECUTOR =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.LISTENER_EXECUTOR, ModelType.STRING, true)
-                    .setXmlName(Attribute.LISTENER_EXECUTOR.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .build();
-
     static final SimpleAttributeDefinition NAME =
             new SimpleAttributeDefinitionBuilder(ModelKeys.NAME, ModelType.STRING, true)
                     .setXmlName(Attribute.NAME.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .build();
-
-    static final SimpleAttributeDefinition REPLICATION_QUEUE_EXECUTOR =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.REPLICATION_QUEUE_EXECUTOR, ModelType.STRING, true)
-                    .setXmlName(Attribute.REPLICATION_QUEUE_EXECUTOR.getLocalName())
                     .setAllowExpression(false)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
@@ -143,17 +108,9 @@ public class CacheContainerResource extends SimpleResourceDefinition {
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(true))
-                    .build()
-;
+                    .build();
 
-   static final SimpleAttributeDefinition STATE_TRANSFER_EXECUTOR =
-         new SimpleAttributeDefinitionBuilder(ModelKeys.STATE_TRANSFER_EXECUTOR, ModelType.STRING, true)
-               .setXmlName(Attribute.STATE_TRANSFER_EXECUTOR.getLocalName())
-               .setAllowExpression(false)
-               .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-               .build();
-
-    static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, LISTENER_EXECUTOR, ASYNC_EXECUTOR, EVICTION_EXECUTOR, EXPIRATION_EXECUTOR, STATE_TRANSFER_EXECUTOR, REPLICATION_QUEUE_EXECUTOR, CACHE_CONTAINER_MODULE, STATISTICS};
+    static final AttributeDefinition[] CACHE_CONTAINER_ATTRIBUTES = {DEFAULT_CACHE, ALIASES, JNDI_NAME, START, CACHE_CONTAINER_MODULE, STATISTICS};
 
     // operations
     static final OperationDefinition ALIAS_ADD = new SimpleOperationDefinitionBuilder("add-alias", new InfinispanResourceDescriptionResolver("cache-container.alias"))
@@ -232,6 +189,12 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         // child resources
         resourceRegistration.registerSubModel(new TransportResource());
         resourceRegistration.registerSubModel(new CacheContainerSecurityResource());
+        for(ResourceDefinition resource : ThreadPoolResource.values()) {
+            resourceRegistration.registerSubModel(resource);
+        }
+        for(ResourceDefinition resource : ScheduledThreadPoolResource.values()) {
+            resourceRegistration.registerSubModel(resource);
+        }
         resourceRegistration.registerSubModel(new CacheContainerConfigurationsResource(resolvePathHandler, runtimeRegistration));
         resourceRegistration.registerSubModel(new LocalCacheResource(resolvePathHandler, runtimeRegistration));
         resourceRegistration.registerSubModel(new InvalidationCacheResource(resolvePathHandler, runtimeRegistration));
