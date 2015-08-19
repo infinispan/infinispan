@@ -1,14 +1,13 @@
 package org.infinispan.remoting.rpc;
 
-import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
-
 import java.text.NumberFormat;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -21,7 +20,6 @@ import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.jmx.JmxStatisticsExposer;
@@ -44,11 +42,6 @@ import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
-
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
-
 
 /**
  * This component really is just a wrapper around a {@link org.infinispan.remoting.transport.Transport} implementation,
@@ -75,7 +68,6 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    private boolean statisticsEnabled = false; // by default, don't gather statistics.
    private Configuration configuration;
    private ReplicationQueue replicationQueue;
-   private ExecutorService asyncExecutor;
    private CommandsFactory cf;
    private StateTransferManager stateTransferManager;
    private TimeService timeService;
@@ -83,12 +75,10 @@ public class RpcManagerImpl implements RpcManager, JmxStatisticsExposer {
    @Inject
    public void injectDependencies(Transport t, Configuration cfg,
                                   ReplicationQueue replicationQueue, CommandsFactory cf,
-                                  @ComponentName(ASYNC_TRANSPORT_EXECUTOR) ExecutorService e,
                                   StateTransferManager stateTransferManager, TimeService timeService) {
       this.t = t;
       this.configuration = cfg;
       this.replicationQueue = replicationQueue;
-      this.asyncExecutor = e;
       this.cf = cf;
       this.stateTransferManager = stateTransferManager;
       this.timeService = timeService;
