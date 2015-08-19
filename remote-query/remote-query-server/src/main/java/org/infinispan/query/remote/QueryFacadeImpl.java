@@ -72,6 +72,16 @@ public final class QueryFacadeImpl implements QueryFacade {
     */
    public static final String NULL_TOKEN = "_null_";
 
+   private static final FieldBridge DOUBLE_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.DOUBLE_FIELD_BRIDGE, NULL_TOKEN);
+
+   private static final FieldBridge FLOAT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.FLOAT_FIELD_BRIDGE, NULL_TOKEN);
+
+   private static final FieldBridge LONG_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.LONG_FIELD_BRIDGE, NULL_TOKEN);
+
+   private static final FieldBridge INT_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(NumericFieldBridge.INT_FIELD_BRIDGE, NULL_TOKEN);
+
+   private static final FieldBridge STRING_FIELD_BRIDGE = new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), NULL_TOKEN);
+
    private final QueryParser queryParser = new QueryParser();
 
    @Override
@@ -228,15 +238,15 @@ public final class QueryFacadeImpl implements QueryFacade {
                FieldDescriptor fd = getFieldDescriptor(md, propertyPath);
                switch (fd.getType()) {
                   case DOUBLE:
-                     return NumericFieldBridge.DOUBLE_FIELD_BRIDGE;
+                     return DOUBLE_FIELD_BRIDGE;
                   case FLOAT:
-                     return NumericFieldBridge.FLOAT_FIELD_BRIDGE;
+                     return FLOAT_FIELD_BRIDGE;
                   case INT64:
                   case UINT64:
                   case FIXED64:
                   case SFIXED64:
                   case SINT64:
-                     return NumericFieldBridge.LONG_FIELD_BRIDGE;
+                     return LONG_FIELD_BRIDGE;
                   case INT32:
                   case FIXED32:
                   case UINT32:
@@ -244,12 +254,12 @@ public final class QueryFacadeImpl implements QueryFacade {
                   case SINT32:
                   case BOOL:
                   case ENUM:
-                     return NumericFieldBridge.INT_FIELD_BRIDGE;
+                     return INT_FIELD_BRIDGE;
                   case STRING:
                   case BYTES:
                   case GROUP:
                   case MESSAGE:
-                     return new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), NULL_TOKEN);
+                     return STRING_FIELD_BRIDGE;
                }
                return null;
             }

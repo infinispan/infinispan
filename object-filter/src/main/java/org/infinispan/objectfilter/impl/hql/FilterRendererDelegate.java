@@ -26,7 +26,7 @@ public final class FilterRendererDelegate<TypeMetadata> extends SingleEntityQuer
 
    public FilterRendererDelegate(EntityNamesResolver entityNamesResolver, ObjectPropertyHelper<TypeMetadata> propertyHelper,
                                  SingleEntityQueryBuilder<BooleanExpr> builder, Map<String, Object> namedParameters) {
-      super(entityNamesResolver, builder, namedParameters);
+      super(propertyHelper, entityNamesResolver, builder, namedParameters);
       this.propertyHelper = propertyHelper;
    }
 
