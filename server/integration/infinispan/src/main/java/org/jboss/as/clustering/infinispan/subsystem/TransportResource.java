@@ -54,13 +54,6 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
-    static final SimpleAttributeDefinition EXECUTOR =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.EXECUTOR, ModelType.STRING, true)
-                    .setXmlName(Attribute.EXECUTOR.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .build();
-
     static final SimpleAttributeDefinition LOCK_TIMEOUT =
             new SimpleAttributeDefinitionBuilder(ModelKeys.LOCK_TIMEOUT, ModelType.LONG, true)
                     .setXmlName(Attribute.LOCK_TIMEOUT.getLocalName())
@@ -68,13 +61,6 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(240000))
-                    .build();
-
-    static final SimpleAttributeDefinition REMOTE_COMMAND_EXECUTOR =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.REMOTE_COMMAND_EXECUTOR, ModelType.STRING, true)
-                    .setXmlName(Attribute.REMOTE_COMMAND_EXECUTOR.getLocalName())
-                    .setAllowExpression(false)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     static final SimpleAttributeDefinition STRICT_PEER_TO_PEER =
@@ -85,8 +71,7 @@ public class TransportResource extends SimpleResourceDefinition {
                     .setDefaultValue(new ModelNode().set(false))
                     .build();
 
-    static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {CHANNEL, EXECUTOR, LOCK_TIMEOUT,
-            REMOTE_COMMAND_EXECUTOR, STRICT_PEER_TO_PEER};
+    static final AttributeDefinition[] TRANSPORT_ATTRIBUTES = {CHANNEL, LOCK_TIMEOUT, STRICT_PEER_TO_PEER};
 
     public TransportResource() {
         super(TRANSPORT_PATH,

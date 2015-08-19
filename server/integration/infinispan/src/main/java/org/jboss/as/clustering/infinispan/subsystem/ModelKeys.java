@@ -34,6 +34,7 @@ public class ModelKeys {
     static final String ALIASES = "aliases";
     static final String APPEND_CACHE_NAME_TO_PATH = "append-cache-name-to-path";
     static final String ASYNC_EXECUTOR = "async-executor";
+    @Deprecated
     static final String ASYNC_MARSHALLING = "async-marshalling";
     static final String AUDIT_LOGGER = "audit-logger";
     static final String AUTHORIZATION = "authorization";
@@ -114,6 +115,7 @@ public class ModelKeys {
     static final String ISOLATION = "isolation";
     static final String JDBC_STORE = "jdbc-store";
     static final String JDBC_STORE_NAME = "JDBC_STORE";
+    static final String KEEPALIVE_TIME = "keepalive-time";
     static final String LEVELDB_STORE = "leveldb-store";
     static final String LOADER = "loader";
     static final String LOADER_NAME = "LOADER";
@@ -142,8 +144,10 @@ public class ModelKeys {
     static final String MAX_ENTRIES = "max-entries";
     static final String MAX_IDLE = "max-idle";
     static final String MAX_RETRIES = "max-retries";
+    static final String MAX_THREADS = "max-threads";
     static final String MAX_TOTAL_CONNECTIONS = "max-total-connections";
     static final String MIGRATOR_NAME = "migrator-name";
+    static final String MIN_THREADS = "min-threads";
     static final String MODE = "mode";
     static final String MODIFICATION_QUEUE_SIZE = "modification-queue-size";
     static final String MODULE = "module";
@@ -162,6 +166,7 @@ public class ModelKeys {
     static final String PROPERTIES = "properties";
     static final String PURGE = "purge";
     static final String QUEUE_FLUSH_INTERVAL = "queue-flush-interval";
+    static final String QUEUE_LENGTH = "queue-length";
     static final String QUEUE_SIZE = "queue-size";
     static final String RACK = "rack";
     static final String RAW_VALUES = "raw-values";
@@ -220,9 +225,17 @@ public class ModelKeys {
     static final String TRANSPORT_NAME = "TRANSPORT";
     static final String TYPE = "type";
     static final String TX_INTERNAL_ID = "internal-id";
-    @Deprecated static final String VIRTUAL_NODES = "virtual-nodes";
     static final String WAIT = "wait";
     static final String WAIT_TIME = "wait-time";
     static final String WRITE_BEHIND = "write-behind";
     static final String WRITE_BEHIND_NAME = "WRITE_BEHIND";
+
+    static final String ASYNC_OPERATIONS_THREAD_POOL = "async-operations-thread-pool";
+    static final String LISTENER_THREAD_POOL = "listener-thread-pool";
+    static final String EXPIRATION_THREAD_POOL = "expiration-thread-pool";
+    static final String PERSISTENCE_THREAD_POOL = "persistence-thread-pool";
+    static final String REMOTE_COMMAND_THREAD_POOL = "remote-command-thread-pool";
+    static final String REPLICATION_QUEUE_THREAD_POOL = "replication-queue-thread-pool";
+    static final String STATE_TRANSFER_THREAD_POOL = "state-transfer-thread-pool";
+    static final String TRANSPORT_THREAD_POOL = "transport-thread-pool";
 }

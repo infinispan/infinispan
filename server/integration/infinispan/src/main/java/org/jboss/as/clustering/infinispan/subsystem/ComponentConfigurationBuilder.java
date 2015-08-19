@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2011, Red Hat, Inc., and individual contributors
+ * Copyright 2015, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,38 +19,36 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.jboss.as.clustering.infinispan.subsystem;
 
-import java.util.List;
-import java.util.Map;
-
-import javax.management.MBeanServer;
-
-import org.infinispan.server.jgroups.spi.ChannelFactory;
-import org.jboss.modules.ModuleLoader;
-import org.jgroups.Channel;
+import org.infinispan.server.commons.service.Builder;
+import org.jboss.msc.service.ServiceBuilder;
+import org.jboss.msc.service.ServiceController;
+import org.jboss.msc.service.ServiceName;
+import org.jboss.msc.service.ServiceTarget;
+import org.jboss.msc.service.ValueService;
+import org.jboss.msc.value.Value;
 
 /**
+ * Builds a service that provides the configuration of a component.
  * @author Paul Ferraro
  */
-public class EmbeddedCacheManagerConfigurationService {
+public abstract class ComponentConfigurationBuilder<C> implements Builder<C>, Value<C> {
 
-    interface TransportConfiguration {
-        Long getLockTimeout();
-        ChannelFactory getChannelFactory();
-        Channel getChannel();
-        boolean isStrictPeerToPeer();
+    private final ServiceName serviceName;
+
+    ComponentConfigurationBuilder(ServiceName serviceName) {
+        this.serviceName = serviceName;
     }
 
-    interface AuthorizationConfiguration {
-        String getPrincipalMapper();
-        Map<String, List<String>> getRoles();
+    @Override
+    public ServiceName getServiceName() {
+        return serviceName;
     }
 
-    interface Dependencies {
-        ModuleLoader getModuleLoader();
-        TransportConfiguration getTransportConfiguration();
-        AuthorizationConfiguration getAuthorizationConfiguration();
-        MBeanServer getMBeanServer();
+    @Override
+    public ServiceBuilder<C> build(ServiceTarget target) {
+        return target.addService(this.getServiceName(), new ValueService<>(this)).setInitialMode(ServiceController.Mode.ON_DEMAND);
     }
 }

@@ -40,7 +40,9 @@ public enum Attribute {
     ACQUIRE_TIMEOUT(ModelKeys.ACQUIRE_TIMEOUT),
     ALIASES(ModelKeys.ALIASES),
     APPEND_CACHE_NAME_TO_PATH(ModelKeys.APPEND_CACHE_NAME_TO_PATH),
+    @Deprecated
     ASYNC_MARSHALLING(ModelKeys.ASYNC_MARSHALLING),
+    @Deprecated
     ASYNC_EXECUTOR(ModelKeys.ASYNC_EXECUTOR),
     AUDIT_LOGGER(ModelKeys.AUDIT_LOGGER),
     AUTO_CONFIG(ModelKeys.AUTO_CONFIG),
@@ -71,7 +73,9 @@ public enum Attribute {
     ENABLED(ModelKeys.ENABLED),
     @Deprecated
     EVICTION_EXECUTOR(ModelKeys.EVICTION_EXECUTOR),
+    @Deprecated
     EXPIRATION_EXECUTOR(ModelKeys.EXPIRATION_EXECUTOR),
+    @Deprecated
     EXECUTOR(ModelKeys.EXECUTOR),
     FETCH_SIZE(ModelKeys.FETCH_SIZE),
     FETCH_STATE(ModelKeys.FETCH_STATE),
@@ -83,8 +87,10 @@ public enum Attribute {
     INTERVAL(ModelKeys.INTERVAL),
     ISOLATION(ModelKeys.ISOLATION),
     JNDI_NAME(ModelKeys.JNDI_NAME),
+    KEEPALIVE_TIME(ModelKeys.KEEPALIVE_TIME),
     L1_LIFESPAN(ModelKeys.L1_LIFESPAN),
     LIFESPAN(ModelKeys.LIFESPAN),
+    @Deprecated
     LISTENER_EXECUTOR(ModelKeys.LISTENER_EXECUTOR),
     LOCK_TIMEOUT(ModelKeys.LOCK_TIMEOUT),
     LOCKING(ModelKeys.LOCKING),
@@ -95,7 +101,9 @@ public enum Attribute {
     MAX_ENTRIES(ModelKeys.MAX_ENTRIES),
     MAX_IDLE(ModelKeys.MAX_IDLE),
     MAX_RETRIES(ModelKeys.MAX_RETRIES),
+    MAX_THREADS(ModelKeys.MAX_THREADS),
     MAX_TOTAL_CONNECTIONS(ModelKeys.MAX_TOTAL_CONNECTIONS),
+    MIN_THREADS(ModelKeys.MIN_THREADS),
     MODE(ModelKeys.MODE),
     MODIFICATION_QUEUE_SIZE(ModelKeys.MODIFICATION_QUEUE_SIZE),
     MODULE(ModelKeys.MODULE),
@@ -111,15 +119,18 @@ public enum Attribute {
     PRELOAD(ModelKeys.PRELOAD),
     PURGE(ModelKeys.PURGE),
     QUEUE_FLUSH_INTERVAL(ModelKeys.QUEUE_FLUSH_INTERVAL),
+    QUEUE_LENGTH(ModelKeys.QUEUE_LENGTH),
     QUEUE_SIZE(ModelKeys.QUEUE_SIZE),
     RACK(ModelKeys.RACK),
     RAW_VALUES(ModelKeys.RAW_VALUES),
     READ_ONLY(ModelKeys.READ_ONLY),
     RELATIVE_TO(ModelKeys.RELATIVE_TO),
     REMOTE_CACHE(ModelKeys.REMOTE_CACHE),
+    @Deprecated
     REMOTE_COMMAND_EXECUTOR(ModelKeys.REMOTE_COMMAND_EXECUTOR),
     REMOTE_SITE(ModelKeys.REMOTE_SITE),
     REMOTE_TIMEOUT(ModelKeys.REMOTE_TIMEOUT),
+    @Deprecated
     REPLICATION_QUEUE_EXECUTOR(ModelKeys.REPLICATION_QUEUE_EXECUTOR),
     ROLES(ModelKeys.ROLES),
     SEGMENTS(ModelKeys.SEGMENTS),
@@ -131,6 +142,7 @@ public enum Attribute {
     SOCKET_TIMEOUT(ModelKeys.SOCKET_TIMEOUT),
     STACK(ModelKeys.STACK),
     START(ModelKeys.START),
+    @Deprecated
     STATE_TRANSFER_EXECUTOR(ModelKeys.STATE_TRANSFER_EXECUTOR),
     STATISTICS(ModelKeys.STATISTICS),
     STATISTICS_AVAILABLE(ModelKeys.STATISTICS_AVAILABLE),
@@ -143,6 +155,7 @@ public enum Attribute {
     TCP_NO_DELAY(ModelKeys.TCP_NO_DELAY),
     THREAD_POOL_SIZE(ModelKeys.THREAD_POOL_SIZE),
     TIMEOUT(ModelKeys.TIMEOUT),
+    @Deprecated
     TOTAL_ORDER_EXECUTOR(ModelKeys.TOTAL_ORDER_EXECUTOR),
     TYPE(ModelKeys.TYPE),
     WAIT_TIME(ModelKeys.WAIT_TIME),

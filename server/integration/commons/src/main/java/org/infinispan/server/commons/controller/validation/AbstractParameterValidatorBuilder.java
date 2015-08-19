@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2014, Red Hat, Inc., and individual contributors
+ * Copyright 2015, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -19,24 +19,43 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package org.infinispan.server.commons.controller.validation;
 
 import org.jboss.as.controller.AbstractAttributeDefinitionBuilder;
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.operations.validation.ParameterValidator;
 
-public interface ParameterValidatorBuilder {
-    /**
-     * Builds the validator.
-     * @return a parameter validator
-     */
-    ParameterValidator build();
+/**
+ * @author Paul Ferraro
+ */
+public abstract class AbstractParameterValidatorBuilder implements ParameterValidatorBuilder {
 
-   ParameterValidatorBuilder allowUndefined(boolean allowsUndefined);
+    boolean allowsUndefined = false;
+    boolean allowsExpressions = false;
 
-   ParameterValidatorBuilder allowExpression(boolean allowsExpressions);
+    @Override
+    public ParameterValidatorBuilder allowUndefined(boolean allowsUndefined) {
+        this.allowsUndefined = allowsUndefined;
+        return this;
+    }
 
-   ParameterValidatorBuilder configure(AttributeDefinition definition);
+    @Override
+    public ParameterValidatorBuilder allowExpression(boolean allowsExpressions) {
+        this.allowsExpressions = allowsExpressions;
+        return this;
+    }
 
-   ParameterValidatorBuilder configure(AbstractAttributeDefinitionBuilder<?, ?> builder);
+    @Override
+    public ParameterValidatorBuilder configure(AttributeDefinition definition) {
+        this.allowsExpressions = definition.isAllowExpression();
+        this.allowsUndefined = definition.isAllowNull();
+        return this;
+    }
+
+    @Override
+    public ParameterValidatorBuilder configure(AbstractAttributeDefinitionBuilder<?, ?> builder) {
+        this.allowsExpressions = builder.isAllowExpression();
+        this.allowsUndefined = builder.isAllowNull();
+        return this;
+    }
 }

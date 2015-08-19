@@ -24,8 +24,6 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import java.util.List;
 import java.util.ServiceLoader;
 import java.util.Map.Entry;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledExecutorService;
 
 import javax.management.MBeanServer;
 
@@ -34,6 +32,7 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
+import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.security.PrincipalRoleMapper;
 import org.infinispan.security.impl.ClusterRoleMapper;
@@ -47,12 +46,9 @@ import org.infinispan.server.jgroups.spi.RelayConfiguration;
 import org.jboss.as.clustering.infinispan.ChannelTransport;
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.as.clustering.infinispan.MBeanServerProvider;
-import org.jboss.as.clustering.infinispan.ManagedExecutorFactory;
-import org.jboss.as.clustering.infinispan.ManagedScheduledExecutorFactory;
 import org.jboss.as.clustering.infinispan.io.SimpleExternalizer;
 import org.jboss.as.jmx.MBeanServerService;
 import org.jboss.as.server.Services;
-import org.jboss.as.threads.ThreadsServices;
 import org.jboss.marshalling.ModularClassResolver;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
@@ -79,10 +75,14 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private ModuleIdentifier module;
     private AuthorizationConfigurationBuilder authorization = null;
     private ValueDependency<TransportConfiguration> transport = null;
-    private ValueDependency<Executor> asyncExecutor = null;
-    private ValueDependency<Executor> listenerExecutor = null;
-    private ValueDependency<ScheduledExecutorService> expirationExecutor = null;
-    private ValueDependency<ScheduledExecutorService> replicationQueueExecutor = null;
+    private final InjectedValue<ThreadPoolConfiguration> asyncOperationsThreadPool = new InjectedValue<>();
+    private final InjectedValue<ThreadPoolConfiguration> expirationThreadPool = new InjectedValue<>();
+    private final InjectedValue<ThreadPoolConfiguration> listenerThreadPool = new InjectedValue<>();
+    private final InjectedValue<ThreadPoolConfiguration> persistenceThreadPool = new InjectedValue<>();
+    private final InjectedValue<ThreadPoolConfiguration> remoteCommandThreadPool = new InjectedValue<>();
+    private final InjectedValue<ThreadPoolConfiguration> stateTransferThreadPool = new InjectedValue<>();
+    private final InjectedValue<ThreadPoolConfiguration> transportThreadPool = new InjectedValue<>();
+    private final InjectedValue<ThreadPoolConfiguration> replicationQueueThreadPool = new InjectedValue<>();
 
     public CacheContainerConfigurationBuilder(String name) {
         this.name = name;
@@ -98,21 +98,17 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         ServiceBuilder<GlobalConfiguration> builder = target.addService(this.getServiceName(), new ValueService<>(this))
                 .addDependency(Services.JBOSS_SERVICE_MODULE_LOADER, ModuleLoader.class, this.loader)
                 .addDependency(MBeanServerService.SERVICE_NAME, MBeanServer.class, this.server)
+                .addDependency(ThreadPoolResource.ASYNC_OPERATIONS.getServiceName(this.name), ThreadPoolConfiguration.class, this.asyncOperationsThreadPool)
+                .addDependency(ThreadPoolResource.LISTENER.getServiceName(this.name), ThreadPoolConfiguration.class, this.listenerThreadPool)
+                .addDependency(ThreadPoolResource.REMOTE_COMMAND.getServiceName(this.name), ThreadPoolConfiguration.class, this.remoteCommandThreadPool)
+                .addDependency(ThreadPoolResource.STATE_TRANSFER.getServiceName(this.name), ThreadPoolConfiguration.class, this.stateTransferThreadPool)
+                .addDependency(ThreadPoolResource.PERSISTENCE.getServiceName(this.name), ThreadPoolConfiguration.class, this.persistenceThreadPool)
+                .addDependency(ThreadPoolResource.TRANSPORT.getServiceName(this.name), ThreadPoolConfiguration.class, this.transportThreadPool)
+                .addDependency(ScheduledThreadPoolResource.EXPIRATION.getServiceName(this.name), ThreadPoolConfiguration.class, this.expirationThreadPool)
+                .addDependency(ScheduledThreadPoolResource.REPLICATION_QUEUE.getServiceName(this.name), ThreadPoolConfiguration.class, this.replicationQueueThreadPool)
         ;
         if (this.transport != null) {
             this.transport.register(builder);
-        }
-        if (this.asyncExecutor != null) {
-            this.asyncExecutor.register(builder);
-        }
-        if (this.listenerExecutor != null) {
-            this.listenerExecutor.register(builder);
-        }
-        if (this.expirationExecutor != null) {
-            this.expirationExecutor.register(builder);
-        }
-        if (this.replicationQueueExecutor != null) {
-            this.replicationQueueExecutor.register(builder);
         }
         return builder.setInitialMode(ServiceController.Mode.ON_DEMAND);
     }
@@ -175,10 +171,9 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
                 transportBuilder.siteId(topology.getSite()).rackId(topology.getRack()).machineId(topology.getMachine());
             }
 
-            Executor executor = transport.getExecutor();
-            if (executor != null) {
-                transportBuilder.transportThreadPool().threadPoolFactory(new ManagedExecutorFactory(executor));
-            }
+
+            transportBuilder.transportThreadPool().read(this.transportThreadPool.getValue());
+            transportBuilder.remoteCommandThreadPool().read(this.remoteCommandThreadPool.getValue());
 
             RelayConfiguration relay = stack.getRelay();
             if (relay != null) {
@@ -186,22 +181,12 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
             }
         }
 
-        Executor asyncExecutor = (this.asyncExecutor != null) ? this.asyncExecutor.getValue() : null;
-        if (asyncExecutor != null) {
-            builder.asyncThreadPool().threadPoolFactory(new ManagedExecutorFactory(asyncExecutor));
-        }
-        Executor listenerExecutor = (this.listenerExecutor != null) ? this.listenerExecutor.getValue() : null;
-        if (listenerExecutor != null) {
-            builder.listenerThreadPool().threadPoolFactory(new ManagedExecutorFactory(listenerExecutor));
-        }
-        ScheduledExecutorService expirationExecutor = (this.expirationExecutor != null) ? this.expirationExecutor.getValue() : null;
-        if (expirationExecutor != null) {
-            builder.expirationThreadPool().threadPoolFactory(new ManagedScheduledExecutorFactory(expirationExecutor));
-        }
-        ScheduledExecutorService replicationQueueExecutor = (this.replicationQueueExecutor != null) ? this.replicationQueueExecutor.getValue() : null;
-        if (replicationQueueExecutor != null) {
-            builder.replicationQueueThreadPool().threadPoolFactory(new ManagedExecutorFactory(replicationQueueExecutor));
-        }
+        builder.asyncThreadPool().read(this.asyncOperationsThreadPool.getValue());
+        builder.expirationThreadPool().read(this.expirationThreadPool.getValue());
+        builder.listenerThreadPool().read(this.listenerThreadPool.getValue());
+        builder.stateTransferThreadPool().read(this.stateTransferThreadPool.getValue());
+        builder.persistenceThreadPool().read(this.persistenceThreadPool.getValue());
+        builder.replicationQueueThreadPool().read(this.replicationQueueThreadPool.getValue());
 
         builder.globalJmxStatistics()
                 .enabled(this.statisticsEnabled)
@@ -232,33 +217,5 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     public AuthorizationConfigurationBuilder setAuthorization() {
         this.authorization = new AuthorizationConfigurationBuilder();
         return this.authorization;
-    }
-
-    public CacheContainerConfigurationBuilder setAsyncExecutor(String executorName) {
-        if (executorName != null) {
-            this.asyncExecutor = new InjectedValueDependency<>(ThreadsServices.executorName(executorName), Executor.class);
-        }
-        return this;
-    }
-
-    public CacheContainerConfigurationBuilder setListenerExecutor(String executorName) {
-        if (executorName != null) {
-            this.listenerExecutor = new InjectedValueDependency<>(ThreadsServices.executorName(executorName), Executor.class);
-        }
-        return this;
-    }
-
-    public CacheContainerConfigurationBuilder setExpirationExecutor(String executorName) {
-        if (executorName != null) {
-            this.expirationExecutor = new InjectedValueDependency<>(ThreadsServices.executorName(executorName), ScheduledExecutorService.class);
-        }
-        return this;
-    }
-
-    public CacheContainerConfigurationBuilder setReplicationQueueExecutor(String executorName) {
-        if (executorName != null) {
-            this.replicationQueueExecutor = new InjectedValueDependency<>(ThreadsServices.executorName(executorName), ScheduledExecutorService.class);
-        }
-        return this;
     }
 }
