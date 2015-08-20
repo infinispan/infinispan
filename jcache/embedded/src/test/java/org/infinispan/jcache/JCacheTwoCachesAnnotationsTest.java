@@ -4,6 +4,7 @@ import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.jcache.annotation.InjectedCachePutInterceptor;
 import org.infinispan.jcache.embedded.JCache;
 import org.infinispan.jcache.embedded.JCacheManager;
+import org.infinispan.jcache.embedded.annotation.EmbeddedInjectedCacheResolver;
 import org.infinispan.jcache.util.JCacheTestingUtil;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.TestingUtil;
@@ -34,7 +35,7 @@ public class JCacheTwoCachesAnnotationsTest extends AbstractTwoCachesAnnotations
    @Deployment
    public static JavaArchive createDeployment() {
       return ShrinkWrap.create(JavaArchive.class).addPackage(JCacheAnnotatedClass.class.getPackage()).addPackage(JCache.class.getPackage())
-            .addPackage(InjectedCachePutInterceptor.class.getPackage()).addPackage(CacheProducer.class.getPackage()).addPackage(JCacheTestingUtil.class.getPackage())
+            .addPackage(EmbeddedInjectedCacheResolver.class.getPackage()).addPackage(InjectedCachePutInterceptor.class.getPackage()).addPackage(CacheProducer.class.getPackage()).addPackage(JCacheTestingUtil.class.getPackage())
             .addAsResource(JCacheTwoCachesAnnotationsTest.class.getResource("/beans.xml"), "beans.xml");
    }
 

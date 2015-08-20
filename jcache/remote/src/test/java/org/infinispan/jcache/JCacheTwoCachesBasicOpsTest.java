@@ -4,6 +4,7 @@ import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.jcache.util.JCacheTestingUtil;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
@@ -21,11 +22,10 @@ import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheCon
  * @author Matej Cimbora
  */
 @Test(testName = "org.infinispan.jcache.JCacheTwoCachesBasicOpsTest", groups = "functional")
-@CleanupAfterMethod
 public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
 
-   private HotRodServer hotRodServer1;
-   private HotRodServer hotRodServer2;
+   static HotRodServer hotRodServer1;
+   static HotRodServer hotRodServer2;
    private Cache cache1;
    private Cache cache2;
    private ClassLoader testSpecificClassLoader;
@@ -53,9 +53,9 @@ public class JCacheTwoCachesBasicOpsTest extends AbstractTwoCachesBasicOpsTest {
    @AfterClass
    @Override
    protected void destroy() {
-      super.destroy();
       killServers(hotRodServer1, hotRodServer2);
       Caching.getCachingProvider(testSpecificClassLoader).close();
+      super.destroy();
    }
 
    @Override
