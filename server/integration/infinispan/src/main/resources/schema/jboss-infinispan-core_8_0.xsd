@@ -501,7 +501,7 @@
     <xs:complexType name="locking">
         <xs:attribute name="isolation" type="tns:isolation" default="READ_COMMITTED">
             <xs:annotation>
-                <xs:documentation>Sets the cache locking isolation level. Infinispan server currently supports only READ_COMMITTED isolation level. Other values are ignored.</xs:documentation>
+                <xs:documentation>Sets the cache locking isolation level. Defaults to READ_COMMITTED. When using REPEATABLE_READ with optimistic locking, write skew checking will be enabled.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="striping" type="xs:boolean" default="false">
