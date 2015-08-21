@@ -603,11 +603,11 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         }
     }
 
-    private void addCacheForConfiguration(ModelNode cacheConfiguration, PathAddress containerAddress, String type, Map<PathAddress, ModelNode> operations) {
+    private void addCacheForConfiguration(ModelNode cacheConfiguration, String configurationName, PathAddress containerAddress, String type, Map<PathAddress, ModelNode> operations) {
         String name = PathAddress.pathAddress(cacheConfiguration.get(OP_ADDR)).getLastElement().getValue();
         PathAddress cacheAddress = containerAddress.append(type, name);
         ModelNode cache = Util.getEmptyOperation(ADD, cacheAddress.toModelNode());
-        cache.get(ModelKeys.CONFIGURATION).set(name);
+        cache.get(ModelKeys.CONFIGURATION).set(configurationName == null ? name : configurationName);
         operations.put(cacheAddress, cache);
     }
 
@@ -637,13 +637,26 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             Element element = Element.forName(reader.getLocalName());
             this.parseCacheElement(reader, element, cacheConfiguration, additionalConfigurationOperations);
         }
+        addCacheConfiguration(ModelKeys.LOCAL_CACHE, containerAddress, operations, configurationOnly, cacheConfiguration,
+                additionalConfigurationOperations, cacheConfigurationAddress);
+    }
 
-        operations.put(cacheConfigurationAddress, cacheConfiguration);
-        operations.putAll(additionalConfigurationOperations);
-
-        // add an operation to create the concrete cache
-        if (!configurationOnly) {
-            addCacheForConfiguration(cacheConfiguration, containerAddress, ModelKeys.LOCAL_CACHE, operations);
+    private void addCacheConfiguration(String cacheType, PathAddress containerAddress, Map<PathAddress, ModelNode> operations,
+            boolean configurationOnly, ModelNode cacheConfiguration,
+            Map<PathAddress, ModelNode> additionalConfigurationOperations, PathAddress cacheConfigurationAddress) {
+        if (configurationOnly) {
+            // just create the configuration
+            operations.put(cacheConfigurationAddress, cacheConfiguration);
+            operations.putAll(additionalConfigurationOperations);
+        } else {
+            if (cacheConfiguration.hasDefined(ModelKeys.CONFIGURATION) && additionalConfigurationOperations.size() == 0) {
+                // Pure instance
+                addCacheForConfiguration(cacheConfiguration, cacheConfiguration.get(ModelKeys.CONFIGURATION).asString(), containerAddress, cacheType, operations);
+            } else {
+                operations.put(cacheConfigurationAddress, cacheConfiguration);
+                operations.putAll(additionalConfigurationOperations);
+                addCacheForConfiguration(cacheConfiguration, null, containerAddress, cacheType, operations);
+            }
         }
     }
 
@@ -710,13 +723,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             }
         }
 
-        operations.put(cacheConfigurationAddress, cacheConfiguration);
-        operations.putAll(additionalConfigurationOperations);
-
-        // add an operation to create the concrete cache
-        if (!configurationOnly) {
-            addCacheForConfiguration(cacheConfiguration, containerAddress, ModelKeys.DISTRIBUTED_CACHE, operations);
-        }
+        addCacheConfiguration(ModelKeys.DISTRIBUTED_CACHE, containerAddress, operations, configurationOnly, cacheConfiguration,
+                additionalConfigurationOperations, cacheConfigurationAddress);
     }
 
     private void parseReplicatedCache(XMLExtendedStreamReader reader, PathAddress containerAddress, Map<PathAddress, ModelNode> operations, boolean configurationOnly) throws XMLStreamException {
@@ -758,13 +766,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             }
         }
 
-        operations.put(cacheConfigurationAddress, cacheConfiguration);
-        operations.putAll(additionalConfigurationOperations);
-
-        // add an operation to create the concrete cache
-        if (!configurationOnly) {
-            addCacheForConfiguration(cacheConfiguration, containerAddress, ModelKeys.REPLICATED_CACHE, operations);
-        }
+        addCacheConfiguration(ModelKeys.REPLICATED_CACHE, containerAddress, operations, configurationOnly, cacheConfiguration,
+                additionalConfigurationOperations, cacheConfigurationAddress);
     }
 
     private void parseInvalidationCache(XMLExtendedStreamReader reader, PathAddress containerAddress, Map<PathAddress, ModelNode> operations, boolean configurationOnly) throws XMLStreamException {
@@ -798,13 +801,8 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
             }
         }
 
-        operations.put(cacheConfigurationAddress, cacheConfiguration);
-        operations.putAll(additionalConfigurationOperations);
-
-        // add an operation to create the concrete cache
-        if (!configurationOnly) {
-            addCacheForConfiguration(cacheConfiguration, containerAddress, ModelKeys.INVALIDATION_CACHE, operations);
-        }
+        addCacheConfiguration(ModelKeys.INVALIDATION_CACHE, containerAddress, operations, configurationOnly, cacheConfiguration,
+                additionalConfigurationOperations, cacheConfigurationAddress);
     }
 
     private PathAddress addNameToAddress(ModelNode current, PathAddress containerAddress, String type) {

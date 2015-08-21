@@ -44,6 +44,7 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
 
     private final Dependencies dependencies;
     private final String name;
+    private final String configurationName;
 
     private volatile Cache<K, V> cache;
     private volatile XAResourceRecovery recovery;
@@ -56,8 +57,9 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
         CacheStoreFactory getDeployedCacheStoreFactory();
     }
 
-    public CacheService(String name, Dependencies dependencies) {
+    public CacheService(String name, String configurationName, Dependencies dependencies) {
         this.name = name;
+        this.configurationName = configurationName;
         this.dependencies = dependencies;
     }
 
@@ -77,7 +79,7 @@ public class CacheService<K, V> implements Service<Cache<K, V>> {
         CacheStoreFactoryRegistry cacheStoreFactoryRegistry = container.getGlobalComponentRegistry().getComponent(CacheStoreFactoryRegistry.class);
         cacheStoreFactoryRegistry.addCacheStoreFactory(this.dependencies.getDeployedCacheStoreFactory());
 
-        this.cache = SecurityActions.startCache(container, this.name);
+        this.cache = SecurityActions.startCache(container, this.name, this.configurationName);
 
         XAResourceRecoveryRegistry recoveryRegistry = this.dependencies.getRecoveryRegistry();
         if (recoveryRegistry != null) {

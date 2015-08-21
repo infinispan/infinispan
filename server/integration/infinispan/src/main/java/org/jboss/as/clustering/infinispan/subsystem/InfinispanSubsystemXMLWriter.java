@@ -22,7 +22,10 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -164,30 +167,42 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
         }
     }
 
-
-    /*
-     * TODO: first of all output all _CONFIGURATION elements which don't have a single cache associated with them (i.e. cache.configuration = configuration.name)
-     * then loop through the concrete caches. For those which point to a configuration with the same name
-     */
     private void processCacheConfiguration(XMLExtendedStreamWriter writer, ModelNode container, ModelNode configurations, String cacheType)
             throws XMLStreamException {
         String cacheConfigurationType = cacheType + ModelKeys.CONFIGURATION_SUFFIX;
+        Map<String, List<String>> configurationMappings = new HashMap<>();
+        if (container.get(cacheType).isDefined()) {
+            for (Property cacheEntry : container.get(cacheType).asPropertyList()) {
+                String cacheName = cacheEntry.getName();
+                String configurationName = cacheEntry.getValue().get(ModelKeys.CONFIGURATION).asString();
+
+                configurationMappings.compute(configurationName, (k, v) -> {
+                    if (v == null) {
+                        v = new ArrayList<>();
+                    }
+                    v.add(cacheName);
+                    return v;
+                });
+            }
+        }
         if (configurations.get(cacheConfigurationType).isDefined()) {
             for (Property cacheEntry : configurations.get(cacheConfigurationType).asPropertyList()) {
-                String cacheName = cacheEntry.getName();
+                String name = cacheEntry.getName();
                 ModelNode cacheConfiguration = cacheEntry.getValue();
 
                 Element element;
-                // See if there is a cache with the same name
-                if (container.hasDefined(cacheType, cacheName)) {
+                boolean identity = false;
+                List<String> caches = configurationMappings.get(name);
+                if (caches.size() == 1 && caches.get(0).equals(name)) {
                     element = Element.forName(cacheType);
+                    identity = true;
                 } else {
                     element = Element.forName(cacheConfigurationType);
                 }
 
                 writer.writeStartElement(element.getLocalName());
                 // write identifier before other attributes
-                writer.writeAttribute(Attribute.NAME.getLocalName(), cacheName);
+                writer.writeAttribute(Attribute.NAME.getLocalName(), name);
 
                 switch(cacheType) {
                     case ModelKeys.DISTRIBUTED_CACHE:
@@ -200,6 +215,17 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 }
 
                 writer.writeEndElement();
+
+                // Now the concrete instances
+                if (!identity) {
+                    System.err.printf("Writing concrete instances for %s configuration: %s", name, caches);
+                    for (String cache : caches) {
+                        writer.writeStartElement(Element.forName(cacheType).getLocalName());
+                        writer.writeAttribute(Attribute.NAME.getLocalName(), cache);
+                        writer.writeAttribute(Attribute.CONFIGURATION.getLocalName(), name);
+                        writer.writeEndElement();
+                    }
+                }
             }
         }
     }

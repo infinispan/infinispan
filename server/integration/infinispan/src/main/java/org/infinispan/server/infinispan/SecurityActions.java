@@ -120,11 +120,11 @@ public final class SecurityActions {
         doPrivileged(action);
     }
 
-    public static <K, V> Cache<K, V> startCache(final EmbeddedCacheManager container, final String name) {
+    public static <K, V> Cache<K, V> startCache(final EmbeddedCacheManager container, final String name, final String configurationName) {
         PrivilegedAction<Cache<K, V>> action = new PrivilegedAction<Cache<K, V>>() {
             @Override
             public Cache<K, V> run() {
-                Cache<K, V> cache = container.getCache(name);
+                Cache<K, V> cache = container.getCache(name, configurationName);
                 cache.start();
                 return cache;
             }
