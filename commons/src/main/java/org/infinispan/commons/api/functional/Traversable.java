@@ -86,7 +86,7 @@ public interface Traversable<T> {
     * A terminal operation that applies a binary folding operation to a start
     * value and the result of each element having a mapping function applied.
     *
-    * @apiNote This is a map and reduce in one go, which could potentially be
+    * @apiNote This is a combined map/reduce which could potentially be
     * done more efficiently than if a map is executed and then reduce, so leave it in.
     */
    <U> U reduce(U z, BiFunction<U, ? super T, U> mapper, BinaryOperator<U> folder);

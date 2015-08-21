@@ -74,9 +74,9 @@ public interface MetaParam<T> {
     * meta parameter will always exist because there are scenarios, such as
     * when compatibility mode is enabled, when meta parameters that are
     * assumed to be present are not due to the API multiplexing that occurs.
-    * For example, when compatibility mode is enabled, REST server can't assume
-    * that MIME metadata will be present since data might have been stored
-    * with embedded or remote (Hot Rod) API.
+    * For example, when compatibility mode is enabled, the REST server can't
+    * assume that MIME metadata will be present since data might have been
+    * stored with embedded or remote (Hot Rod) API.
     */
    interface Lookup {
       /**

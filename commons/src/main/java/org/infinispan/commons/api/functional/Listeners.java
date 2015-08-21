@@ -30,7 +30,7 @@ public final class Listeners {
    }
 
    /**
-    * Read-write listeners enable user to register listeners for cache
+    * Read-write listeners enable users to register listeners for cache
     * entry created, modified and removed events, and also register listeners
     * for any cache entry write events.
     *

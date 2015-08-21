@@ -274,7 +274,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * @param f operation that takes a user defined value, and a
        *          {@link WriteEntryView} associated with the key, and writes
        *          to the {@link WriteEntryView} passed in without returning anything
-       * @return a {@link CompletableFuture} which will be completed the
+       * @return a {@link CompletableFuture} which will be completed when the
        *         operation completes
        */
       CompletableFuture<Void> eval(K key, V value, BiConsumer<V, WriteEntryView<V>> f);
@@ -305,7 +305,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *            passed to the operation
        * @param f operation that takes a {@link WriteEntryView} associated with
        *          the key and writes to the it without returning anything
-       * @return a {@link CompletableFuture} which will be completed the
+       * @return a {@link CompletableFuture} which will be completed when the
        *         operation completes
        */
       CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<V>> f);
@@ -340,7 +340,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * @param f operation that consumes a value associated with a key in the
        *          entries collection and the {@link WriteEntryView} associated
        *          with that key in the cache
-       * @return a {@link CompletableFuture} which will be completed the
+       * @return a {@link CompletableFuture} which will be completed when
        *         the {@link BiConsumer} operation  has been executed against
        *         all entries
        */
@@ -371,7 +371,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *             passed in the function callbacks
        * @param f operation that the {@link WriteEntryView} associated with
        *          one of the keys passed in
-       * @return a {@link CompletableFuture} which will be completed the
+       * @return a {@link CompletableFuture} which will be completed when
        *         the {@link Consumer} operation has been executed against all
        *         entries
        */
@@ -401,7 +401,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * @param f operation that the {@link WriteEntryView} associated with
        *          one of the keys passed in
-       * @return a {@link CompletableFuture} which will be completed the
+       * @return a {@link CompletableFuture} which will be completed when
        *         the {@link Consumer} operation has been executed against all
        *         entries
        */
