@@ -38,7 +38,7 @@ import static org.jboss.logging.Logger.Level.WARN;
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  * @author Tristan Tarrant
  */
-@MessageLogger(projectCode = "DGISPN")
+@MessageLogger(projectCode = "DGISPN", length = 4)
 public interface InfinispanLogger extends BasicLogger {
     String ROOT_LOGGER_CATEGORY = InfinispanLogger.class.getPackage().getName();
 
