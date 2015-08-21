@@ -146,7 +146,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
    }
 
    @Override
-   public Object getLockOwner() {
+   public Object getKeyLockOwner() {
       return globalTx;
    }
 

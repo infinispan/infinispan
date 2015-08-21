@@ -31,7 +31,7 @@ public interface RemoteLockCommand {
     *
     * @return the lock owner of the key.
     */
-   Object getLockOwner();
+   Object getKeyLockOwner();
 
    /**
     * @return it the locks should be acquire with 0 (zero) acquisition timeout.

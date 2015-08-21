@@ -47,7 +47,7 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
       ReadWriteKeyCommand cmd = fmap.cmdFactory().buildReadWriteKeyCommand(key, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
-      ctx.setLockOwner(cmd.getLockOwner());
+      ctx.setLockOwner(cmd.getKeyLockOwner());
       return withFuture(futureMode, fmap.asyncExec(), () -> (R) fmap.chain().invoke(ctx, cmd));
    }
 
@@ -57,7 +57,7 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
       ReadWriteKeyValueCommand cmd = fmap.cmdFactory().buildReadWriteKeyValueCommand(key, value, f);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
-      ctx.setLockOwner(cmd.getLockOwner());
+      ctx.setLockOwner(cmd.getKeyLockOwner());
       return withFuture(futureMode, fmap.asyncExec(), () -> (R) fmap.chain().invoke(ctx, cmd));
    }
 

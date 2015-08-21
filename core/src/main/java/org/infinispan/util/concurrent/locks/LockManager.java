@@ -60,7 +60,7 @@ public interface LockManager {
    void unlockAll(Collection<?> keys, Object lockOwner);
 
    /**
-    * Same as {@code unlockAll(context.getLockedKeys(), context.getLockOwner();}.
+    * Same as {@code unlockAll(context.getLockedKeys(), context.getKeyLockOwner();}.
     *
     * @param context the context with the locked keys and the lock owner.
     */

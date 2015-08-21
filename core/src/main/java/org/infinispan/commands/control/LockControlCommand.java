@@ -250,7 +250,7 @@ public class LockControlCommand extends AbstractTransactionBoundaryCommand imple
    }
 
    @Override
-   public Object getLockOwner() {
+   public Object getKeyLockOwner() {
       return globalTx;
    }
 
