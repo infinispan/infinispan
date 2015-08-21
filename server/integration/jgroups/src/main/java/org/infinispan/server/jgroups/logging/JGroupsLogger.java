@@ -41,7 +41,7 @@ import org.jboss.logging.annotations.MessageLogger;
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-@MessageLogger(projectCode = "ISPNSRVJG", length = 4)
+@MessageLogger(projectCode = "DGJGRP", length = 4)
 public interface JGroupsLogger extends BasicLogger {
     String ROOT_LOGGER_CATEGORY = "org.infinispan.server.jgroups";
 

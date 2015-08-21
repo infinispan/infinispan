@@ -34,7 +34,7 @@ import org.jboss.msc.service.StartException;
 /**
  * @author Tristan Tarrant
  */
-@MessageLogger(projectCode = "JDGS")
+@MessageLogger(projectCode = "DGENDPT", length = 4)
 public interface EndpointLogger extends BasicLogger {
    String ROOT_LOGGER_CATEGORY = EndpointLogger.class.getPackage().getName();
 

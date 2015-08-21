@@ -41,7 +41,7 @@ import java.util.Properties;
  *
  * @author <a href="mailto:jperkins@redhat.com">James R. Perkins</a>
  */
-@MessageBundle(projectCode = "DGISPN")
+@MessageBundle(projectCode = "DGISPN", length = 4)
 public interface InfinispanMessages {
 
     /**
