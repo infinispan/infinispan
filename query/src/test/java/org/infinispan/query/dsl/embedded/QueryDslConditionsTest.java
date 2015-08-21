@@ -809,7 +809,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(3, list.get(0).getId());
    }
 
-   @Test(enabled = false, description = "https://hibernate.atlassian.net/browse/HSEARCH-1956")
    public void testIsNullNumericWithProjection1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -1358,8 +1357,6 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertNull(list.get(2)[1]);
    }
 
-   //todo [anistor] fix disabled test
-   @Test(enabled = false, description = "Nulls not correctly indexed for numeric properties, see ISPN-4046")
    public void testNullOnIntegerField() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -1369,6 +1366,22 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       List<User> list = q.list();
       assertEquals(2, list.size());
+      assertNull(list.get(0).getAge());
+      assertNull(list.get(1).getAge());
+   }
+
+   public void testIsNotNullOnIntegerField() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .not().having("age").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("John", list.get(0).getName());
+      assertEquals("Doe", list.get(0).getSurname());
+      assertNotNull(list.get(0).getAge());
    }
 
    public void testSampleDomainQuery19() throws Exception {
