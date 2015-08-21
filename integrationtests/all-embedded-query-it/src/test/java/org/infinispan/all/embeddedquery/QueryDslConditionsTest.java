@@ -16,7 +16,6 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
 import org.infinispan.query.dsl.embedded.impl.EmbeddedQueryFactory;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.text.DateFormat;
@@ -860,7 +859,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(3, list.get(0).getId());
    }
 
-   @Ignore(value = "https://hibernate.atlassian.net/browse/HSEARCH-1956")
+   @Test
    public void testIsNullNumericWithProjection1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -1443,8 +1442,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertNull(list.get(2)[1]);
    }
 
-   //todo [anistor] fix disabled test. Nulls not correctly indexed for numeric properties, see ISPN-4046
-   //@Test
+   @Test
    public void testNullOnIntegerField() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -1454,6 +1452,23 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
       List<User> list = q.list();
       assertEquals(2, list.size());
+      assertNull(list.get(0).getAge());
+      assertNull(list.get(1).getAge());
+   }
+
+   @Test
+   public void testIsNotNullOnIntegerField() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .not().having("age").isNull()
+            .toBuilder().build();
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals("John", list.get(0).getName());
+      assertEquals("Doe", list.get(0).getSurname());
+      assertNotNull(list.get(0).getAge());
    }
 
    @Test
@@ -2047,7 +2062,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
               .having("name").eq(Expression.param("param1"))
-            .toBuilder().build();
+              .toBuilder().build();
 
       q.setParameter("param2", "John");
    }

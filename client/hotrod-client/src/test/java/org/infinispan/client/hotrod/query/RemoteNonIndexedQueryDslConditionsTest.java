@@ -24,10 +24,4 @@ public class RemoteNonIndexedQueryDslConditionsTest extends RemoteQueryDslCondit
    public void testIndexPresence() {
       org.infinispan.query.Search.getSearchManager(getEmbeddedCache()).unwrap(SearchIntegrator.class);
    }
-
-   @Test
-   @Override
-   public void testNullOnIntegerField() throws Exception {
-      super.testNullOnIntegerField();
-   }
 }
