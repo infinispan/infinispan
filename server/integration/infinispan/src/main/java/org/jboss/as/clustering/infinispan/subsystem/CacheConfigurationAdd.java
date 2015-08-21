@@ -59,6 +59,7 @@ import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
 import org.infinispan.configuration.cache.SitesConfigurationBuilder;
 import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.parsing.ConfigurationBuilderHolder;
 import org.infinispan.configuration.parsing.ParserRegistry;
 import org.infinispan.eviction.EvictionStrategy;
@@ -374,13 +375,11 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
 
 
         // locking is a child resource
+        IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
         if (cache.hasDefined(ModelKeys.LOCKING) && cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME).isDefined()) {
             ModelNode locking = cache.get(ModelKeys.LOCKING, ModelKeys.LOCKING_NAME);
 
-            final IsolationLevel isolationLevel = IsolationLevel.READ_COMMITTED;
-            if (locking.hasDefined(ModelKeys.ISOLATION)) {
-               log.warn("Ignoring XML attribute " + ModelKeys.ISOLATION + ", please remove from configuration file");
-            }
+            isolationLevel = IsolationLevel.valueOf(LockingConfigurationResource.ISOLATION.resolveModelAttribute(context, locking).asString());
             final boolean striping = LockingConfigurationResource.STRIPING.resolveModelAttribute(context, locking).asBoolean();
             final long acquireTimeout = LockingConfigurationResource.ACQUIRE_TIMEOUT.resolveModelAttribute(context, locking).asLong();
             final int concurrencyLevel = LockingConfigurationResource.CONCURRENCY_LEVEL.resolveModelAttribute(context, locking).asInt();
@@ -412,10 +411,14 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
                 .useSynchronization(!txMode.isXAEnabled())
                 .recovery().enabled(txMode.isRecoveryEnabled())
         ;
+
         if (txMode.isRecoveryEnabled()) {
             builder.transaction().syncCommitPhase(true).syncRollbackPhase(true);
         }
-
+        if (mode.isSynchronous() && lockingMode == LockingMode.OPTIMISTIC && isolationLevel == IsolationLevel.REPEATABLE_READ) {
+            builder.locking().writeSkewCheck(true);
+            builder.versioning().enable().scheme(VersioningScheme.SIMPLE);
+        }
         if (batching) {
             builder.transaction().transactionMode(org.infinispan.transaction.TransactionMode.TRANSACTIONAL).invocationBatching().enable();
         } else {
