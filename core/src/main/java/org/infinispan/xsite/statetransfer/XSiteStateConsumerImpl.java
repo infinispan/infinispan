@@ -128,7 +128,7 @@ public class XSiteStateConsumerImpl implements XSiteStateConsumer {
 
       for (XSiteState siteState : chunk) {
          PutKeyValueCommand command = createPut(siteState);
-         ctx.setLockOwner(command.getLockOwner());
+         ctx.setLockOwner(command.getKeyLockOwner());
          interceptorChain.invoke(ctx, command);
          ctx.resetState(); //re-use same context. Old context is not longer needed
          if (trace) {

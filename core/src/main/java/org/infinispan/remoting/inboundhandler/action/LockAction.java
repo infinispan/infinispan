@@ -72,7 +72,7 @@ public class LockAction extends BaseLockingAction implements LockListener {
       RemoteLockCommand command = state.getCommand();
       return command instanceof TransactionalRemoteLockCommand ?
             ((TransactionalRemoteLockCommand) command).createContext().getLockOwner() :
-            command.getLockOwner();
+            command.getKeyLockOwner();
    }
 
    @Override

@@ -49,7 +49,7 @@ public abstract class AbstractDataWriteCommand extends AbstractDataCommand imple
    }
 
    @Override
-   public final Object getLockOwner() {
+   public final Object getKeyLockOwner() {
       return commandInvocationId;
    }
 

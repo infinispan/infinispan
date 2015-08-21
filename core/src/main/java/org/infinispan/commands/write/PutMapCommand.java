@@ -68,7 +68,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
    }
 
    @Override
-   public Object getLockOwner() {
+   public Object getKeyLockOwner() {
       return commandInvocationId;
    }
 
