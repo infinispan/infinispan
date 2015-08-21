@@ -35,6 +35,7 @@
         <local-cache-configuration name="local-template">
         </local-cache-configuration>
         <local-cache name="local-instance" configuration="local-template"/>
+        <local-cache name="local-instance2" configuration="local-template"/>
         <local-cache name="local" batching="false" start="EAGER" module="org.infinispan" statistics="false">
             <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
             <transaction mode="NON_DURABLE_XA" stop-timeout="60000"  locking="OPTIMISTIC"/>

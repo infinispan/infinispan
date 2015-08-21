@@ -167,7 +167,7 @@ public abstract class CacheAdd extends AbstractAddStepHandler implements Restart
 
         final InjectedValue<EmbeddedCacheManager> container = new InjectedValue<>();
         final CacheDependencies cacheDependencies = new CacheDependencies(container);
-        final Service<Cache<Object, Object>> service = new CacheService<>(cacheName, cacheDependencies);
+        final Service<Cache<Object, Object>> service = new CacheService<>(cacheName, configurationName, cacheDependencies);
         final ServiceBuilder<?> builder = target.addService(CacheServiceName.CACHE.getServiceName(containerName, cacheName), service)
                 .addDependency(CacheServiceName.CONFIGURATION.getServiceName(containerName, configurationName))
                 .addDependency(CacheContainerServiceName.CACHE_CONTAINER.getServiceName(containerName), EmbeddedCacheManager.class, container)
