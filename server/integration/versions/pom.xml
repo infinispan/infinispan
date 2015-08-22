@@ -11,7 +11,7 @@
 
    <groupId>org.infinispan.server</groupId>
    <artifactId>infinispan-server-versions</artifactId>
-   <version>8.0.0-SNAPSHOT</version>
+   <version>8.0.0.CR1</version>
    <packaging>pom</packaging>
 
    <name>Infinispan Server - BOM</name>
@@ -39,15 +39,15 @@
       <version.org.infinispan.arquillian.container>1.2.0.Alpha3</version.org.infinispan.arquillian.container>
       <version.org.slf4j>1.7.2</version.org.slf4j>
 
-      <!-- WildFly dependencies -->
+      
       <version.org.wildfly>9.0.1.Final</version.org.wildfly>
       <version.org.wildfly.arquillian>1.0.0.Final</version.org.wildfly.arquillian>
       <version.org.wildfly.build-tools>1.0.0.Final</version.org.wildfly.build-tools>
 
-      <!-- JavaEE Spec dependencies -->
+      
       <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.0.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
 
-      <!-- Infinispan Server dependencies -->
+      
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
       <version.antrun.maven.plugin>1.8</version.antrun.maven.plugin>
       <version.xml.maven.plugin>1.0</version.xml.maven.plugin>
@@ -73,7 +73,7 @@
             <scope>import</scope>
          </dependency>
 
-         <!-- Core Modules -->
+         
          <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-parent</artifactId>
