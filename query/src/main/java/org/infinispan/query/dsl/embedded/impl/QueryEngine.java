@@ -316,7 +316,8 @@ public class QueryEngine {
             RowPropertyHelper.ColumnMetadata c = columns.get(p);
             if (c == null) {
                int idx = columns.size();
-               c = new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), aggregationExpr.getPropertyPath()));
+               Class<?> propertyType = propertyHelper.getPrimitivePropertyType(parsingResult.getTargetEntityName(), aggregationExpr.getPropertyPath());
+               c = new RowPropertyHelper.ColumnMetadata(idx, "C" + idx, propertyType);
                columns.put(p, c);
             }
             return new PropertyValueExpr(c.getColumnName(), aggregationExpr.isRepeated());

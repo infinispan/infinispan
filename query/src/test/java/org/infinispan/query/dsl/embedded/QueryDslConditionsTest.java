@@ -27,7 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.*;
-import static org.testng.Assert.assertNotEquals;
 
 /**
  * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model.
@@ -1767,5 +1766,61 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .groupBy("name")
             .build();
       q.list();
+   }
+
+   public void testGroupBy6() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.sum("amount"))
+            .groupBy("accountId")
+            .having(Expression.sum("amount")).gt(3324).toBuilder()
+            .orderBy("accountId")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0)[0]);
+      assertEquals(6370.0d, (Double) list.get(0)[1], 0.0001d);
+   }
+
+   public void testGroupBy7() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.avg("amount"))
+            .groupBy("accountId")
+            .having(Expression.avg("amount")).lt(130.0).toBuilder()
+            .orderBy("accountId")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0)[0]);
+      assertEquals(120.188679d, (Double) list.get(0)[1], 0.0001d);
+   }
+
+   public void testGroupBy8() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.min("amount"))
+            .groupBy("accountId")
+            .having(Expression.min("amount")).lt(10).toBuilder()
+            .orderBy("accountId")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0)[0]);
+      assertEquals(5.0d, (Double) list.get(0)[1], 0.0001d);
+   }
+
+   public void testGroupBy9() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.property("accountId"), Expression.max("amount"))
+            .groupBy("accountId")
+            .having(Expression.avg("amount")).lt(150).toBuilder()
+            .orderBy("accountId")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0)[0]);
+      assertEquals(149.0d, (Double) list.get(0)[1], 0.0001d);
    }
 }

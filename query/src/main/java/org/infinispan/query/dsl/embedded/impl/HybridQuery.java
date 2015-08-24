@@ -61,8 +61,10 @@ class HybridQuery extends BaseEmbeddedQuery {
          public ObjectFilter.FilterResult next() {
             update();
             if (nextResult != null) {
+               ObjectFilter.FilterResult next = nextResult;
                isReady = false;
-               return nextResult;
+               nextResult = null;
+               return next;
             } else {
                throw new NoSuchElementException();
             }
@@ -70,11 +72,12 @@ class HybridQuery extends BaseEmbeddedQuery {
 
          private void update() {
             if (!isReady) {
-               if (it.hasNext()) {
+               while (it.hasNext()) {
                   Object next = it.next();
                   nextResult = objectFilter.filter(next);
-               } else {
-                  nextResult = null;
+                  if (nextResult != null) {
+                     break;
+                  }
                }
                isReady = true;
             }

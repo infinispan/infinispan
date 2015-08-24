@@ -69,21 +69,13 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
       primitives.add(java.util.Date.class);
       primitives.add(String.class);
       primitives.add(Character.class);
-      primitives.add(char.class);
       primitives.add(Double.class);
-      primitives.add(double.class);
       primitives.add(Float.class);
-      primitives.add(float.class);
       primitives.add(Long.class);
-      primitives.add(long.class);
       primitives.add(Integer.class);
-      primitives.add(int.class);
       primitives.add(Short.class);
-      primitives.add(short.class);
       primitives.add(Byte.class);
-      primitives.add(byte.class);
       primitives.add(Boolean.class);
-      primitives.add(boolean.class);
    }
 
    private final RowMetadata rowMetadata;

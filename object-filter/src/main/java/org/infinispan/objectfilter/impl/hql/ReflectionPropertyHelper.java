@@ -6,9 +6,9 @@ import org.infinispan.objectfilter.impl.util.ReflectionHelper;
 import org.jboss.logging.Logger;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 /**
  * @author anistor@redhat.com
@@ -18,27 +18,27 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
 
    private static final Log log = Logger.getMessageLogger(Log.class, ReflectionPropertyHelper.class.getName());
 
-   private static final Set<Class<?>> primitives = new HashSet<Class<?>>();
+   private static final Map<Class<?>, Class<?>> primitives = new HashMap<Class<?>, Class<?>>();
 
    static {
-      primitives.add(java.util.Date.class);
-      primitives.add(String.class);
-      primitives.add(Character.class);
-      primitives.add(char.class);
-      primitives.add(Double.class);
-      primitives.add(double.class);
-      primitives.add(Float.class);
-      primitives.add(float.class);
-      primitives.add(Long.class);
-      primitives.add(long.class);
-      primitives.add(Integer.class);
-      primitives.add(int.class);
-      primitives.add(Short.class);
-      primitives.add(short.class);
-      primitives.add(Byte.class);
-      primitives.add(byte.class);
-      primitives.add(Boolean.class);
-      primitives.add(boolean.class);
+      primitives.put(java.util.Date.class, java.util.Date.class);
+      primitives.put(String.class, String.class);
+      primitives.put(Character.class, Character.class);
+      primitives.put(char.class, Character.class);
+      primitives.put(Double.class, Double.class);
+      primitives.put(double.class, Double.class);
+      primitives.put(Float.class, Float.class);
+      primitives.put(float.class, Float.class);
+      primitives.put(Long.class, Long.class);
+      primitives.put(long.class, Long.class);
+      primitives.put(Integer.class, Integer.class);
+      primitives.put(int.class, Integer.class);
+      primitives.put(Short.class, Short.class);
+      primitives.put(short.class, Short.class);
+      primitives.put(Byte.class, Byte.class);
+      primitives.put(byte.class, Byte.class);
+      primitives.put(Boolean.class, Boolean.class);
+      primitives.put(boolean.class, Boolean.class);
    }
 
    public ReflectionPropertyHelper(EntityNamesResolver entityNamesResolver) {
@@ -58,8 +58,11 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
       }
 
       Class<?> propType = getPropertyAccessor(type, propertyPath).getPropertyType();
-      if (propType.isEnum() || primitives.contains(propType)) {
+      if (propType.isEnum()) {
          return propType;
+      }
+      if (primitives.containsKey(propType)) {
+         return primitives.get(propType);
       }
       return null;
    }
@@ -78,7 +81,7 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
 
       try {
          Class<?> propType = getPropertyAccessor(entity, propertyPath).getPropertyType();
-         return propType != null && !propType.isEnum() && !primitives.contains(propType);
+         return propType != null && !propType.isEnum() && !primitives.containsKey(propType);
       } catch (Exception e) {
          return false; // todo [anistor] need clean solution
       }
