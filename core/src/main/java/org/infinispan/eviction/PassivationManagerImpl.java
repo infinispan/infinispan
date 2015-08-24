@@ -114,22 +114,12 @@ public class PassivationManagerImpl implements PassivationManager {
    }
 
    @Override
-   public long getPassivations() {
+   public long getPassivationCount() {
       return passivations.get();
    }
 
    @Override
-   public boolean getStatisticsEnabled() {
-      return isEnabled();
-   }
-
-   @Override
-   public void setStatisticsEnabled(boolean enabled) {
-      this.statsEnabled = enabled;
-    }
-
-    @Override
-   public void resetStatistics() {
+   public void resetPassivationCount() {
       passivations.set(0L);
    }
 }
