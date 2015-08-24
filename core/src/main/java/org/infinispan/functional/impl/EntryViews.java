@@ -28,7 +28,7 @@ public final class EntryViews {
    }
 
    public static <K, V> ReadEntryView<K, V> readOnly(K key, V value, Metadata metadata) {
-      return new StaticReadOnlyView<>(key, value, metadata);
+      return new ReadOnlySnapshotView<>(key, value, metadata);
    }
 
    public static <K, V> WriteEntryView<V> writeOnly(CacheEntry<K, V> entry) {
@@ -43,27 +43,56 @@ public final class EntryViews {
       return new EntryAndPreviousReadWriteView<>(entry, prevValue, prevMetadata);
    }
 
-   public static <K, V> ReadWriteEntryView<K, V> immutableReadWrite(ReadWriteEntryView<K, V> view) {
-      K key = view.key();
-      Optional<V> maybeV = view.find();
-      Metadata metadata;
-      if (view instanceof EntryBackedReadWriteView)
-         metadata = ((EntryBackedReadWriteView) view).entry.getMetadata();
-      else if (view instanceof EntryAndPreviousReadWriteView)
-         metadata = ((EntryAndPreviousReadWriteView) view).prevMetadata;
-      else
-         throw new IllegalStateException("Unknow read-write view: " + view);
-
-      return new ImmutableReadWriteView<>(key, maybeV, metadata);
-   }
-   public static <K, V> ReadWriteEntryView<K, V> immutableReadWrite(K key, V value, Metadata metadata) {
-      return new ImmutableReadWriteView<>(key, Optional.ofNullable(value), metadata);
-   }
-
-
    public static <K, V> ReadEntryView<K, V> noValue(K key) {
       return new NoValueReadOnlyView<>(key);
    }
+
+   /**
+    * For convenience, a lambda might decide to return the entry view it
+    * received as parameter, because that makes easy to return both value and
+    * meta parameters back to the client.
+    *
+    * If the lambda function decides to return an view, launder it into an
+    * immutable view to avoid the user trying apply any modifications to the
+    * entry view from outside the lambda function.
+    *
+    * If the view is read-only, capture its data into a snapshot from the
+    * cached entry and avoid changing underneath.
+    */
+   @SuppressWarnings("unchecked")
+   public static <R> R snapshot(R ret) {
+      if (ret instanceof EntryBackedReadWriteView) {
+         EntryBackedReadWriteView view = (EntryBackedReadWriteView) ret;
+         return (R) new ReadWriteSnapshotView(view.key(), view.entry.getValue(), view.entry.getMetadata());
+      } else if (ret instanceof EntryAndPreviousReadWriteView) {
+         EntryAndPreviousReadWriteView view = (EntryAndPreviousReadWriteView) ret;
+         return (R) new ReadWriteSnapshotView(view.key(), view.entry.getValue(), view.entry.getMetadata());
+      } else if (ret instanceof EntryBackedReadOnlyView) {
+         EntryBackedReadOnlyView view = (EntryBackedReadOnlyView) ret;
+         return (R) new ReadOnlySnapshotView(view.key(), view.entry.getValue(), view.entry.getMetadata());
+      }
+
+      return ret;
+   }
+
+//   public static <K, V> ReadWriteEntryView<K, V> immutableReadWrite(ReadWriteEntryView<K, V> view) {
+//      K key = view.key();
+//      Optional<V> maybeV = view.find();
+//      Metadata metadata;
+//      if (view instanceof EntryBackedReadWriteView)
+//         metadata = ((EntryBackedReadWriteView) view).entry.getMetadata();
+//      else if (view instanceof EntryAndPreviousReadWriteView)
+//         metadata = ((EntryAndPreviousReadWriteView) view).prevMetadata;
+//      else
+//         throw new IllegalStateException("Unknow read-write view: " + view);
+//
+//      return new ImmutableReadWriteView<>(key, maybeV, metadata);
+//   }
+//
+//   public static <K, V> ReadWriteEntryView<K, V> immutableReadWrite(K key, V value, Metadata metadata) {
+//      return new ImmutableReadWriteView<>(key, Optional.ofNullable(value), metadata);
+//   }
+
 
    private static final class EntryBackedReadOnlyView<K, V> implements ReadEntryView<K, V> {
       final CacheEntry<K, V> entry;
@@ -102,14 +131,19 @@ public final class EntryViews {
 
          return Optional.empty();
       }
+
+      @Override
+      public String toString() {
+         return "EntryBackedReadOnlyView{" + "entry=" + entry + '}';
+      }
    }
 
-   private static final class StaticReadOnlyView<K, V> implements ReadEntryView<K, V> {
+   private static final class ReadOnlySnapshotView<K, V> implements ReadEntryView<K, V> {
       final K key;
       final V value;
       final Metadata metadata;
 
-      private StaticReadOnlyView(K key, V value, Metadata metadata) {
+      private ReadOnlySnapshotView(K key, V value, Metadata metadata) {
          this.key = key;
          this.value = value;
          this.metadata = metadata;
@@ -128,7 +162,7 @@ public final class EntryViews {
 
       @Override
       public Optional<V> find() {
-         return value == null ? Optional.empty() : Optional.ofNullable(value);
+         return Optional.ofNullable(value);
       }
 
       // TODO: Duplication
@@ -144,6 +178,14 @@ public final class EntryViews {
          return Optional.empty();
       }
 
+      @Override
+      public String toString() {
+         return "ReadOnlySnapshotView{" +
+            "key=" + key +
+            ", value=" + value +
+            ", metadata=" + metadata +
+            '}';
+      }
    }
 
    private static final class EntryBackedWriteOnlyView<K, V> implements WriteEntryView<V> {
@@ -166,6 +208,11 @@ public final class EntryViews {
          entry.setRemoved(true);
          entry.setChanged(true);
          return null;
+      }
+
+      @Override
+      public String toString() {
+         return "EntryBackedWriteOnlyView{" + "entry=" + entry + '}';
       }
    }
 
@@ -227,6 +274,11 @@ public final class EntryViews {
             throw new NoSuchElementException("No value present");
 
          return entry.getValue();
+      }
+
+      @Override
+      public String toString() {
+         return "EntryBackedReadWriteView{" + "entry=" + entry + '}';
       }
    }
 
@@ -290,6 +342,15 @@ public final class EntryViews {
       public V get() throws NoSuchElementException {
          return prevValue;
       }
+
+      @Override
+      public String toString() {
+         return "EntryAndPreviousReadWriteView{" +
+            "entry=" + entry +
+            ", prevValue=" + prevValue +
+            ", prevMetadata=" + prevMetadata +
+            '}';
+      }
    }
 
    private static final class NoValueReadOnlyView<K, V> implements ReadEntryView<K, V> {
@@ -318,16 +379,21 @@ public final class EntryViews {
       public <T> Optional<T> findMetaParam(Class<T> type) {
          return Optional.empty();
       }
+
+      @Override
+      public String toString() {
+         return "NoValueReadOnlyView{" + "key=" + key + '}';
+      }
    }
 
-   private static final class ImmutableReadWriteView<K, V> implements ReadWriteEntryView<K, V> {
+   private static final class ReadWriteSnapshotView<K, V> implements ReadWriteEntryView<K, V> {
       final K key;
-      final Optional<V> maybeV;
+      final V value;
       final Metadata metadata;
 
-      public ImmutableReadWriteView(K key, Optional<V> maybeV, Metadata metadata) {
+      public ReadWriteSnapshotView(K key, V value, Metadata metadata) {
          this.key = key;
-         this.maybeV = maybeV;
+         this.value = value;
          this.metadata = metadata;
       }
 
@@ -338,12 +404,15 @@ public final class EntryViews {
 
       @Override
       public V get() throws NoSuchElementException {
-         return maybeV.get();
+         if (value == null)
+            throw new NoSuchElementException("No value present");
+
+         return value;
       }
 
       @Override
       public Optional<V> find() {
-         return maybeV;
+         return Optional.ofNullable(value);
       }
 
       // TODO: Duplication
@@ -369,6 +438,15 @@ public final class EntryViews {
       public Void remove() {
          throw new IllegalStateException(
             "A read-write entry view cannot be modified outside the scope of a lambda");
+      }
+
+      @Override
+      public String toString() {
+         return "ReadWriteSnapshotView{" +
+            "key=" + key +
+            ", value=" + value +
+            ", metadata=" + metadata +
+            '}';
       }
    }
 
@@ -405,31 +483,31 @@ public final class EntryViews {
 
    // Externalizer class defined outside of externalized class to avoid having
    // to making externalized class public, since that would leak internal impl.
-   public static final class ImmutableReadWriteViewExternalizer
-            extends AbstractExternalizer<ImmutableReadWriteView> {
+   public static final class ReadWriteSnapshotViewExternalizer
+            extends AbstractExternalizer<ReadWriteSnapshotView> {
       @Override
       public Integer getId() {
-         return Ids.IMMUTABLE_STATIC_READ_WRITE_VIEW;
+         return Ids.READ_WRITE_SNAPSHOT_VIEW;
       }
 
       @Override @SuppressWarnings("unchecked")
-      public Set<Class<? extends ImmutableReadWriteView>> getTypeClasses() {
-         return Util.asSet(ImmutableReadWriteView.class);
+      public Set<Class<? extends ReadWriteSnapshotView>> getTypeClasses() {
+         return Util.asSet(ReadWriteSnapshotView.class);
       }
 
       @Override
-      public void writeObject(ObjectOutput output, ImmutableReadWriteView obj) throws IOException {
+      public void writeObject(ObjectOutput output, ReadWriteSnapshotView obj) throws IOException {
          output.writeObject(obj.key);
-         output.writeObject(obj.maybeV);
+         output.writeObject(obj.value);
          output.writeObject(obj.metadata);
       }
 
       @Override @SuppressWarnings("unchecked")
-      public ImmutableReadWriteView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+      public ReadWriteSnapshotView readObject(ObjectInput input) throws IOException, ClassNotFoundException {
          Object key = input.readObject();
-         Optional<Object> value = (Optional<Object>) input.readObject();
+         Object value = input.readObject();
          Metadata metadata = (Metadata) input.readObject();
-         return new ImmutableReadWriteView(key, value, metadata);
+         return new ReadWriteSnapshotView(key, value, metadata);
       }
    }
 

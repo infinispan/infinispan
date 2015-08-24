@@ -209,7 +209,7 @@ public interface MetaParam<T> {
 
       @Override
       public String toString() {
-         return "MetaEntryVersion{" + entryVersion + '}';
+         return "MetaEntryVersion=" + entryVersion;
       }
    }
 

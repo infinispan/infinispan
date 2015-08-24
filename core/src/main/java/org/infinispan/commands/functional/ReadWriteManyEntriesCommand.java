@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import static org.infinispan.functional.impl.EntryViews.snapshot;
+
 public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand {
 
    public static final byte COMMAND_ID = 53;
@@ -116,7 +118,7 @@ public final class ReadWriteManyEntriesCommand<K, V, R> implements WriteCommand 
          // Could be that the key is not local, 'null' is how this is signalled
          if (entry != null) {
             R r = f.apply(v, EntryViews.readWrite(entry));
-            returns.add(r);
+            returns.add(snapshot(r));
          }
       });
       return returns;

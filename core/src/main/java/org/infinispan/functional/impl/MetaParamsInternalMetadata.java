@@ -75,6 +75,13 @@ public final class MetaParamsInternalMetadata implements InternalMetadata, MetaP
       return params.find(type);
    }
 
+   @Override
+   public String toString() {
+      return "MetaParamsInternalMetadata{" +
+         "params=" + params +
+         '}';
+   }
+
    public static final class Externalizer extends AbstractExternalizer<MetaParamsInternalMetadata> {
       @Override
       public void writeObject(ObjectOutput oo, MetaParamsInternalMetadata o) throws IOException {

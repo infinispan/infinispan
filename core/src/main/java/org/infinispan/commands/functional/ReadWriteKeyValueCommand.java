@@ -3,7 +3,6 @@ package org.infinispan.commands.functional;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
-import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.marshall.SerializeWith;
@@ -19,6 +18,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import static org.infinispan.commons.util.Util.toStr;
+import static org.infinispan.functional.impl.EntryViews.snapshot;
 
 public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCommand<K, V> {
    private static final Log log = LogFactory.getLog(ReadWriteKeyValueCommand.class);
@@ -98,27 +98,12 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
       if (valueUnchanged(e, prevValue, value) || valueRemoved(e, prevValue)) {
          log.tracef("Execute read-write function on previous value %s and previous metadata %s", prevValue, prevMetadata);
          R ret = f.apply(value, EntryViews.readWrite(e, prevValue, prevMetadata));
-         return launderWithCurrentIfReadWriteView(e, ret);
+         return snapshot(ret);
       }
 
       return f.apply(value, EntryViews.readWrite(e, e.getValue(), e.getMetadata()));
    }
 
-   /**
-    * For convenience, a lambda might decide to return the entry view it
-    * received as parameter, because that makes easy to return both value and
-    * meta parameters back to the client.
-    *
-    * If the lambda function decides to return an writable entry view,
-    * launder it into a read-only entry view to avoid the user trying apply
-    * any modifications to the entry view from outside the lambda function.
-    */
-   private Object launderWithCurrentIfReadWriteView(MVCCEntry<K, V> e, R ret) {
-      if (ret instanceof ReadWriteEntryView)
-         return EntryViews.immutableReadWrite(e.getKey(), e.getValue(), e.getMetadata());
-
-      return ret;
-   }
 
    boolean valueRemoved(MVCCEntry<K, V> e, V prevValue) {
       return valueUnchanged(e, prevValue, null);

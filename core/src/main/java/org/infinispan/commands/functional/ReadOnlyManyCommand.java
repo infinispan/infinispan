@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import static org.infinispan.functional.impl.EntryViews.snapshot;
+
 public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand implements LocalCommand {
 
    private Set<? extends K> keys;
@@ -71,7 +73,8 @@ public final class ReadOnlyManyCommand<K, V, R> extends AbstractDataCommand impl
    public Object perform(InvocationContext ctx) throws Throwable {
       return keys.stream().map(k -> {
          CacheEntry<K, V> me = lookupCacheEntry(ctx, k);
-         return f.apply(me == null ? EntryViews.noValue(k) : EntryViews.readOnly(me));
+         R ret = f.apply(me == null ? EntryViews.noValue(k) : EntryViews.readOnly(me));
+         return snapshot(ret);
       });
    }
 

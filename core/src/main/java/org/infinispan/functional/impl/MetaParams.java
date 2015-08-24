@@ -125,6 +125,13 @@ public final class MetaParams {
       }
    }
 
+   @Override
+   public String toString() {
+      return "MetaParams{" +
+         "metas=" + Arrays.toString(metas) +
+         '}';
+   }
+
    /**
     * Construct a collection of {@link MetaParam} instances. If multiple
     * instances of the same {@link MetaParam} are present, the last value is

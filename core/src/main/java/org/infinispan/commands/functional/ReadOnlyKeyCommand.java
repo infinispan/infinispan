@@ -10,6 +10,8 @@ import org.infinispan.functional.impl.EntryViews;
 
 import java.util.function.Function;
 
+import static org.infinispan.functional.impl.EntryViews.snapshot;
+
 public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand implements LocalCommand {
 
    private Function<ReadEntryView<K, V>, R> f;
@@ -50,7 +52,8 @@ public final class ReadOnlyKeyCommand<K, V, R> extends AbstractDataCommand imple
    public Object perform(CacheEntry<K, V> entry) {
       ReadEntryView<K, V> ro = (entry == null || entry.isNull())
          ? EntryViews.noValue((K) key) : EntryViews.readOnly(entry);
-      return f.apply(ro);
+      R ret = f.apply(ro);
+      return snapshot(ret);
    }
 
    @Override
