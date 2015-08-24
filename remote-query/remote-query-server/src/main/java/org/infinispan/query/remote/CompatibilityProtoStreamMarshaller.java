@@ -4,16 +4,17 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.remote.client.BaseProtoStreamMarshaller;
+import org.infinispan.query.remote.impl.ProtobufMetadataManagerImpl;
 
 /**
- * A per EmbeddedCacheManager marshaller that can be used as compatibility mode marshaller (see {@link
- * org.infinispan.interceptors.compat.TypeConverterInterceptor}). An instance cannot be shared between multiple cache
- * managers.
+ * A per {@link EmbeddedCacheManager} marshaller that should be used as compatibility mode marshaller (see {@link
+ * org.infinispan.interceptors.compat.TypeConverterInterceptor}) in embedded mode. An instance cannot be shared between
+ * multiple cache managers.
  *
  * @author anistor@redhat.com
  * @since 6.0
  */
-public class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshaller {
+public final class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshaller {
 
    private EmbeddedCacheManager cacheManager;
 
@@ -21,6 +22,7 @@ public class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshalle
    }
 
    @Inject
+   @SuppressWarnings("unused")
    protected void injectDependencies(EmbeddedCacheManager cacheManager) {
       this.cacheManager = cacheManager;
    }
@@ -30,6 +32,6 @@ public class CompatibilityProtoStreamMarshaller extends BaseProtoStreamMarshalle
       if (cacheManager == null) {
          throw new IllegalStateException("cacheManager not set");
       }
-      return ProtobufMetadataManager.getSerializationContextInternal(cacheManager);
+      return ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
    }
 }
