@@ -367,7 +367,7 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MetaParamExternalizers.NumericEntryVersionExternalizer());
 
       // TODO: Add other EntryView externalizers
-      addInternalExternalizer(new EntryViews.ImmutableReadWriteViewExternalizer());
+      addInternalExternalizer(new EntryViews.ReadWriteSnapshotViewExternalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {
