@@ -164,6 +164,10 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
          command.setKeys(boxedKeys);
       }
       Object ret = invokeNextInterceptor(ctx, command);
+
+      if (ret != null && !needsUnboxing(ctx))
+         return ret;
+
       if (ret != null) {
          if (command.isReturnEntries()) {
             Map<Object, CacheEntry> map = (Map<Object, CacheEntry>) ret;
@@ -188,11 +192,7 @@ public abstract class BaseTypeConverterInterceptor<K, V> extends CommandIntercep
             Map<Object, Object> unboxed = command.createMap();
             for (Map.Entry<Object, Object> entry : map.entrySet()) {
                Object value = entry == null ? null : entry.getValue();
-               if (command.getRemotelyFetched() == null || !command.getRemotelyFetched().containsKey(entry.getKey())) {
-                  unboxed.put(converter.unboxKey(entry.getKey()), entry == null ? null : converter.unboxValue(value));
-               } else {
-                  unboxed.put(converter.unboxKey(entry.getKey()), value);
-               }
+               unboxed.put(converter.unboxKey(entry.getKey()), entry == null ? null : converter.unboxValue(value));
             }
             return unboxed;
          }
