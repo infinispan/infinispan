@@ -22,5 +22,6 @@ public interface Ids {
    // Functional lambdas
    int LAMBDA_CONSTANT = 158;
    int LAMBDA_SET_VALUE_IF_EQUALS_RETURN_BOOLEAN = 159;
+   int LAMBDA_WITH_METAS = 160;
 
 }

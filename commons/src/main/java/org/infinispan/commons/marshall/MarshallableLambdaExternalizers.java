@@ -1,5 +1,6 @@
 package org.infinispan.commons.marshall;
 
+import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.util.Util;
 import org.jboss.marshalling.util.IdentityIntMap;
 
@@ -12,31 +13,31 @@ import static org.infinispan.commons.marshall.MarshallableLambdas.*;
 
 public class MarshallableLambdaExternalizers {
 
+   private static final short VALUE_MATCH_ALWAYS = 0x1000;
+   private static final short VALUE_MATCH_EXPECTED = 0x2000;
+   private static final short VALUE_MATCH_EXPECTED_OR_NEW = 0x3000;
+   private static final short VALUE_MATCH_NON_NULL = 0x4000;
+   private static final short VALUE_MATCH_NEVER = 0x5000;
+
+   private static final int VALUE_MATCH_MASK = 0xF000;
+
+   private static final int SET_VALUE_RETURN_PREV_OR_NULL = 1 | VALUE_MATCH_ALWAYS;
+   private static final int SET_VALUE_RETURN_VIEW = 2 | VALUE_MATCH_ALWAYS;
+   private static final int SET_VALUE_IF_ABSENT_RETURN_PREV_OR_NULL = 3 | VALUE_MATCH_EXPECTED;
+   private static final int SET_VALUE_IF_ABSENT_RETURN_BOOLEAN = 4 | VALUE_MATCH_EXPECTED;
+   private static final int SET_VALUE_IF_PRESENT_RETURN_PREV_OR_NULL = 5 | VALUE_MATCH_NON_NULL;
+   private static final int SET_VALUE_IF_PRESENT_RETURN_BOOLEAN = 6  | VALUE_MATCH_NON_NULL;
+   private static final int REMOVE_RETURN_PREV_OR_NULL = 7 | VALUE_MATCH_ALWAYS;
+   private static final int REMOVE_RETURN_BOOLEAN = 8 | VALUE_MATCH_ALWAYS;
+   private static final int REMOVE_IF_VALUE_EQUALS_RETURN_BOOLEAN = 9 | VALUE_MATCH_EXPECTED;
+   private static final int SET_VALUE_CONSUMER = 10 | VALUE_MATCH_ALWAYS;
+   private static final int REMOVE_CONSUMER = 11  | VALUE_MATCH_ALWAYS;
+   private static final int RETURN_READ_WRITE_FIND = 12 | VALUE_MATCH_ALWAYS;
+   private static final int RETURN_READ_WRITE_GET = 13 | VALUE_MATCH_ALWAYS;
+   private static final int RETURN_READ_WRITE_VIEW = 14 | VALUE_MATCH_ALWAYS;
+
    public static final class ConstantLambdaExternalizer implements LambdaExternalizer<Object> {
-      private static final short VALUE_MATCH_ALWAYS = 0x1000;
-      private static final short VALUE_MATCH_EXPECTED = 0x2000;
-      private static final short VALUE_MATCH_EXPECTED_OR_NEW = 0x3000;
-      private static final short VALUE_MATCH_NON_NULL = 0x4000;
-      private static final short VALUE_MATCH_NEVER = 0x5000;
-
-      private static final int VALUE_MATCH_MASK = 0xF000;
-
-      private static final int SET_VALUE_RETURN_PREV_OR_NULL = 1 | VALUE_MATCH_ALWAYS;
-      private static final int SET_VALUE_RETURN_VIEW = 2 | VALUE_MATCH_ALWAYS;
-      private static final int SET_VALUE_IF_ABSENT_RETURN_PREV_OR_NULL = 3 | VALUE_MATCH_EXPECTED;
-      private static final int SET_VALUE_IF_ABSENT_RETURN_BOOLEAN = 4 | VALUE_MATCH_EXPECTED;
-      private static final int SET_VALUE_IF_PRESENT_RETURN_PREV_OR_NULL = 5 | VALUE_MATCH_NON_NULL;
-      private static final int SET_VALUE_IF_PRESENT_RETURN_BOOLEAN = 6  | VALUE_MATCH_NON_NULL;
-      private static final int REMOVE_RETURN_PREV_OR_NULL = 7 | VALUE_MATCH_ALWAYS;
-      private static final int REMOVE_RETURN_BOOLEAN = 8 | VALUE_MATCH_ALWAYS;
-      private static final int REMOVE_IF_VALUE_EQUALS_RETURN_BOOLEAN = 9 | VALUE_MATCH_EXPECTED;
-      private static final int SET_VALUE_CONSUMER = 10 | VALUE_MATCH_ALWAYS;
-      private static final int REMOVE_CONSUMER = 11  | VALUE_MATCH_ALWAYS;
-      private static final int RETURN_READ_WRITE_FIND = 12 | VALUE_MATCH_ALWAYS;
-      private static final int RETURN_READ_WRITE_GET = 13 | VALUE_MATCH_ALWAYS;
-      private static final int RETURN_READ_WRITE_VIEW = 14 | VALUE_MATCH_ALWAYS;
-
-      private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(12);
+      private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(16);
 
       public ConstantLambdaExternalizer() {
          numbers.put(setValueReturnPrevOrNull().getClass(), SET_VALUE_RETURN_PREV_OR_NULL);
@@ -119,16 +120,100 @@ public class MarshallableLambdaExternalizers {
       }
    }
 
+   public static final class LambdaWithMetasExternalizer implements LambdaExternalizer<LambdaWithMetas> {
+      private final IdentityIntMap<Class<?>> numbers = new IdentityIntMap<>(8);
+
+      public LambdaWithMetasExternalizer() {
+         numbers.put(SetValueMetasReturnPrevOrNull.class, SET_VALUE_RETURN_PREV_OR_NULL);
+         numbers.put(SetValueMetasReturnView.class, SET_VALUE_RETURN_VIEW);
+         numbers.put(SetValueMetasIfAbsentReturnPrevOrNull.class, SET_VALUE_IF_ABSENT_RETURN_PREV_OR_NULL);
+         numbers.put(SetValueMetasIfAbsentReturnBoolean.class, SET_VALUE_IF_ABSENT_RETURN_BOOLEAN);
+         numbers.put(SetValueMetasIfPresentReturnPrevOrNull.class, SET_VALUE_IF_PRESENT_RETURN_PREV_OR_NULL);
+         numbers.put(SetValueMetasIfPresentReturnBoolean.class, SET_VALUE_IF_PRESENT_RETURN_BOOLEAN);
+         numbers.put(SetValueMetas.class, SET_VALUE_CONSUMER);
+      }
+
+      @Override
+      public ValueMatcherMode valueMatcher(Object o) {
+         // TODO: Code duplication
+         int i = numbers.get(o.getClass(), -1);
+         if (i > 0) {
+            int valueMatcherId = ((i & VALUE_MATCH_MASK) >> 12) - 1;
+            return ValueMatcherMode.values()[valueMatcherId];
+         }
+
+         return ValueMatcherMode.MATCH_ALWAYS;
+      }
+
+      @Override
+      public Set<Class<? extends LambdaWithMetas>> getTypeClasses() {
+         return Util.<Class<? extends LambdaWithMetas>>asSet(
+            SetValueMetasReturnPrevOrNull.class,
+            SetValueMetasReturnView.class,
+            SetValueMetasIfAbsentReturnPrevOrNull.class,
+            SetValueMetasIfAbsentReturnBoolean.class,
+            SetValueMetasIfPresentReturnPrevOrNull.class,
+            SetValueMetasIfPresentReturnBoolean.class,
+            SetValueMetas.class
+         );
+      }
+
+      @Override
+      public Integer getId() {
+         return Ids.LAMBDA_WITH_METAS;
+      }
+
+      @Override
+      public void writeObject(ObjectOutput oo, LambdaWithMetas o) throws IOException {
+         int id = numbers.get(o.getClass(), -1);
+         oo.writeShort(id);
+         writeMetas(oo, o);
+      }
+
+      @Override
+      public LambdaWithMetas readObject(ObjectInput input) throws IOException, ClassNotFoundException {
+         short id = input.readShort();
+         MetaParam.Writable[] metas = readMetas(input);
+         switch (id) {
+            case SET_VALUE_RETURN_PREV_OR_NULL: return new SetValueMetasReturnPrevOrNull<>(metas);
+            case SET_VALUE_IF_ABSENT_RETURN_PREV_OR_NULL: return new SetValueMetasIfAbsentReturnPrevOrNull<>(metas);
+            case SET_VALUE_IF_ABSENT_RETURN_BOOLEAN: return new SetValueMetasIfAbsentReturnBoolean<>(metas);
+            case SET_VALUE_RETURN_VIEW: return new SetValueMetasReturnView<>(metas);
+            case SET_VALUE_IF_PRESENT_RETURN_PREV_OR_NULL: return new SetValueMetasIfPresentReturnPrevOrNull<>(metas);
+            case SET_VALUE_IF_PRESENT_RETURN_BOOLEAN: return new SetValueMetasIfPresentReturnBoolean<>(metas);
+            case SET_VALUE_CONSUMER: return new SetValueMetas<>(metas);
+            default:
+               throw new IllegalStateException("Unknown lambda and meta parameters with ID: " + id);
+         }
+      }
+   }
+
+   static MetaParam.Writable[] readMetas(ObjectInput input) throws IOException, ClassNotFoundException {
+      int len = input.readInt();
+      MetaParam.Writable[] metas = new MetaParam.Writable[len];
+      for(int i = 0; i < len; i++)
+         metas[i] = (MetaParam.Writable) input.readObject();
+      return metas;
+   }
+
+   private static void writeMetas(ObjectOutput oo, LambdaWithMetas o) throws IOException {
+      oo.writeInt(o.metas().length);
+      for (MetaParam.Writable meta : o.metas())
+         oo.writeObject(meta);
+   }
+
    public static final class SetValueIfEqualsReturnBooleanExternalizer
             implements LambdaExternalizer<SetValueIfEqualsReturnBoolean> {
       public void writeObject(ObjectOutput oo, SetValueIfEqualsReturnBoolean o) throws IOException {
          oo.writeObject(o.oldValue);
+         writeMetas(oo, o);
       }
 
       public SetValueIfEqualsReturnBoolean readObject(ObjectInput input)
          throws IOException, ClassNotFoundException {
          Object oldValue = input.readObject();
-         return new SetValueIfEqualsReturnBoolean<>(oldValue);
+         MetaParam.Writable[] metas = readMetas(input);
+         return new SetValueIfEqualsReturnBoolean<>(oldValue, metas);
       }
 
       @Override

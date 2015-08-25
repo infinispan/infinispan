@@ -51,7 +51,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testLifespanExpiryInPut() throws InterruptedException {
-      Cache<String, String> cache = cm.getCache();
+      Cache<String, String> cache = getCache();
       long lifespan = EXPIRATION_TIMEOUT;
       cache.put("k", "v", lifespan, MILLISECONDS);
 
@@ -68,8 +68,12 @@ public class ExpiryTest extends AbstractInfinispanTest {
       assert cache.get("k") == null;
    }
 
+   protected Cache<String, String> getCache() {
+      return cm.getCache();
+   }
+
    public void testIdleExpiryInPut() throws InterruptedException {
-      Cache<String, String> cache = cm.getCache();
+      Cache<String, String> cache = getCache();
       long idleTime = IDLE_TIMEOUT;
       cache.put("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS);
 
@@ -87,7 +91,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testLifespanExpiryInPutAll() throws InterruptedException {
-      Cache<String, String> cache = cm.getCache();
+      Cache<String, String> cache = getCache();
       final long lifespan = EXPIRATION_TIMEOUT;
       Map<String, String> m = new HashMap();
       m.put("k1", "v");
@@ -104,7 +108,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testIdleExpiryInPutAll() throws InterruptedException {
-      Cache<String, String> cache = cm.getCache();
+      Cache<String, String> cache = getCache();
       final long idleTime = EXPIRATION_TIMEOUT;
       Map<String, String> m = new HashMap<String, String>();
       m.put("k1", "v");
@@ -120,7 +124,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testLifespanExpiryInPutIfAbsent() throws InterruptedException {
-      Cache<String, String> cache = cm.getCache();
+      Cache<String, String> cache = getCache();
       final long lifespan = EXPIRATION_TIMEOUT;
       assert cache.putIfAbsent("k", "v", lifespan, MILLISECONDS) == null;
       long partial = lifespan / 10;
@@ -136,7 +140,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testIdleExpiryInPutIfAbsent() throws InterruptedException {
-      Cache<String, String> cache = cm.getCache();
+      Cache<String, String> cache = getCache();
       long idleTime = EXPIRATION_TIMEOUT;
       assertNull(cache.putIfAbsent("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS));
       assertEquals("v", cache.get("k"));
@@ -150,7 +154,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testLifespanExpiryInReplace() throws InterruptedException {
-      Cache<String, String> cache = cm.getCache();
+      Cache<String, String> cache = getCache();
       final long lifespan = EXPIRATION_TIMEOUT;
       assertNull(cache.get("k"));
       assertNull(cache.replace("k", "v", lifespan, MILLISECONDS));
@@ -174,7 +178,7 @@ public class ExpiryTest extends AbstractInfinispanTest {
    }
 
    public void testIdleExpiryInReplace() throws InterruptedException {
-      Cache<String, String> cache = cm.getCache();
+      Cache<String, String> cache = getCache();
       long idleTime = EXPIRATION_TIMEOUT;
       assertNull(cache.get("k"));
       assertNull(cache.replace("k", "v", -1, MILLISECONDS, idleTime, MILLISECONDS));
