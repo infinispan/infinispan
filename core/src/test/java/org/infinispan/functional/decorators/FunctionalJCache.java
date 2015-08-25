@@ -38,8 +38,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
-import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.*;
-import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.removeConsumer;
+import static org.infinispan.commons.marshall.MarshallableLambdas.*;
+import static org.infinispan.commons.marshall.MarshallableLambdas.removeConsumer;
 
 /**
  * A {@link Cache} implementation that uses the operations exposed by

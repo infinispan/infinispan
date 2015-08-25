@@ -1,99 +1,76 @@
-package org.infinispan.util.functional;
+package org.infinispan.commons.marshall;
 
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeValueMatcher;
-import org.infinispan.commons.marshall.SerializeWith;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class MarshallableFunctionalInterfaces {
+public final class MarshallableLambdas {
 
-   @SuppressWarnings("unchecked")
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> setValueReturnPrevOrNull() {
-      return SetValueReturnPrevOrNull.INSTANCE;
+      return SetValueReturnPrevOrNull.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> setValueReturnView() {
-      return SetValueReturnView.INSTANCE;
+      return SetValueReturnView.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> setValueIfAbsentReturnPrevOrNull() {
-      return SetValueIfAbsentReturnPrevOrNull.INSTANCE;
+      return SetValueIfAbsentReturnPrevOrNull.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> setValueIfAbsentReturnBoolean() {
-      return SetValueIfAbsentReturnBoolean.INSTANCE;
+      return SetValueIfAbsentReturnBoolean.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> setValueIfPresentReturnPrevOrNull() {
-      return SetValueIfPresentReturnPrevOrNull.INSTANCE;
+      return SetValueIfPresentReturnPrevOrNull.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> setValueIfPresentReturnBoolean() {
-      return SetValueIfPresentReturnBoolean.INSTANCE;
+      return SetValueIfPresentReturnBoolean.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> setValueIfEqualsReturnBoolean(V oldValue) {
       return new SetValueIfEqualsReturnBoolean<>(oldValue);
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> Function<ReadWriteEntryView<K, V>, V> removeReturnPrevOrNull() {
-      return RemoveReturnPrevOrNull.INSTANCE;
+      return RemoveReturnPrevOrNull.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> Function<ReadWriteEntryView<K, V>, Boolean> removeReturnBoolean() {
-      return RemoveReturnBoolean.INSTANCE;
+      return RemoveReturnBoolean.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> removeIfValueEqualsReturnBoolean() {
-      return RemoveIfValueEqualsReturnBoolean.INSTANCE;
+      return RemoveIfValueEqualsReturnBoolean.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <V> BiConsumer<V, WriteEntryView<V>> setValueConsumer() {
-      return SetValue.INSTANCE;
+      return SetValue.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <V> Consumer<WriteEntryView<V>> removeConsumer() {
-      return Remove.INSTANCE;
+      return Remove.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> Function<ReadWriteEntryView<K, V>, Optional<V>> returnReadWriteFind() {
-      return ReturnReadWriteFind.INSTANCE;
+      return ReturnReadWriteFind.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> Function<ReadWriteEntryView<K, V>, V> returnReadWriteGet() {
-      return ReturnReadWriteGet.INSTANCE;
+      return ReturnReadWriteGet.getInstance();
    }
 
-   @SuppressWarnings("unchecked")
    public static <K, V> Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> returnReadWriteView() {
-      return ReturnReadWriteView.INSTANCE;
+      return ReturnReadWriteView.getInstance();
    }
 
-   @SerializeWith(value = SetValueReturnPrevOrNull.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_ALWAYS)
    private static final class SetValueReturnPrevOrNull<K, V>
          implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
       @Override
@@ -104,14 +81,12 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final SetValueReturnPrevOrNull INSTANCE = new SetValueReturnPrevOrNull<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> getInstance() {
+         return SetValueReturnPrevOrNull.INSTANCE;
       }
    }
 
-   @SerializeWith(value = SetValueReturnView.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_ALWAYS)
    private static final class SetValueReturnView<K, V>
          implements BiFunction<V, ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> {
       @Override
@@ -121,14 +96,12 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final SetValueReturnView INSTANCE = new SetValueReturnView<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> getInstance() {
+         return SetValueReturnView.INSTANCE;
       }
    }
 
-   @SerializeWith(value = SetValueIfAbsentReturnPrevOrNull.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_EXPECTED)
    private static final class SetValueIfAbsentReturnPrevOrNull<K, V>
          implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
       @Override
@@ -143,14 +116,12 @@ public final class MarshallableFunctionalInterfaces {
 
       private static final SetValueIfAbsentReturnPrevOrNull INSTANCE =
          new SetValueIfAbsentReturnPrevOrNull<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> getInstance() {
+         return SetValueIfAbsentReturnPrevOrNull.INSTANCE;
       }
    }
 
-   @SerializeWith(value = SetValueIfAbsentReturnBoolean.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_EXPECTED)
    private static final class SetValueIfAbsentReturnBoolean<K, V>
          implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
       @Override
@@ -163,14 +134,12 @@ public final class MarshallableFunctionalInterfaces {
 
       private static final SetValueIfAbsentReturnBoolean INSTANCE =
          new SetValueIfAbsentReturnBoolean<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> getInstance() {
+         return SetValueIfAbsentReturnBoolean.INSTANCE;
       }
    }
 
-   @SerializeWith(value = SetValueIfPresentReturnPrevOrNull.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_NON_NULL)
    private static final class SetValueIfPresentReturnPrevOrNull<K, V>
          implements BiFunction<V, ReadWriteEntryView<K, V>, V> {
       @Override
@@ -183,14 +152,12 @@ public final class MarshallableFunctionalInterfaces {
 
       private static final SetValueIfPresentReturnPrevOrNull INSTANCE =
          new SetValueIfPresentReturnPrevOrNull<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> getInstance() {
+         return SetValueIfPresentReturnPrevOrNull.INSTANCE;
       }
    }
 
-   @SerializeWith(value = SetValueIfPresentReturnBoolean.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_NON_NULL)
    private static final class SetValueIfPresentReturnBoolean<K, V>
          implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
       @Override
@@ -203,17 +170,15 @@ public final class MarshallableFunctionalInterfaces {
 
       private static final SetValueIfPresentReturnBoolean INSTANCE =
          new SetValueIfPresentReturnBoolean<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> getInstance() {
+         return SetValueIfPresentReturnBoolean.INSTANCE;
       }
    }
 
-   @SerializeWith(value = SetValueIfEqualsReturnBoolean.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_EXPECTED)
-   private static final class SetValueIfEqualsReturnBoolean<K, V>
+   static final class SetValueIfEqualsReturnBoolean<K, V>
          implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
-      private final V oldValue;
+      final V oldValue;
 
       public SetValueIfEqualsReturnBoolean(V oldValue) {
          this.oldValue = oldValue;
@@ -229,22 +194,8 @@ public final class MarshallableFunctionalInterfaces {
             return false;
          }).orElse(false);
       }
-
-      public static final class Externalizer0 implements Externalizer<SetValueIfEqualsReturnBoolean<?, ?>> {
-         public void writeObject(ObjectOutput oo, SetValueIfEqualsReturnBoolean<?, ?> o)
-               throws IOException {
-            oo.writeObject(o.oldValue);
-         }
-         public SetValueIfEqualsReturnBoolean<?, ?> readObject(ObjectInput input)
-               throws IOException, ClassNotFoundException {
-            Object oldValue = input.readObject();
-            return new SetValueIfEqualsReturnBoolean<>(oldValue);
-         }
-      }
    }
 
-   @SerializeWith(value = RemoveReturnPrevOrNull.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_ALWAYS)
    private static final class RemoveReturnPrevOrNull<K, V>
          implements Function<ReadWriteEntryView<K, V>, V> {
       @Override
@@ -255,14 +206,12 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final RemoveReturnPrevOrNull INSTANCE = new RemoveReturnPrevOrNull<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> Function<ReadWriteEntryView<K, V>, V> getInstance() {
+         return RemoveReturnPrevOrNull.INSTANCE;
       }
    }
 
-   @SerializeWith(value = RemoveReturnBoolean.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_ALWAYS)
    private static final class RemoveReturnBoolean<K, V>
          implements Function<ReadWriteEntryView<K, V>, Boolean> {
       @Override
@@ -273,14 +222,12 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final RemoveReturnBoolean INSTANCE = new RemoveReturnBoolean<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> Function<ReadWriteEntryView<K, V>, Boolean> getInstance() {
+         return RemoveReturnBoolean.INSTANCE;
       }
    }
 
-   @SerializeWith(value = RemoveIfValueEqualsReturnBoolean.Externalizer0.class,
-      valueMatcher = SerializeValueMatcher.MATCH_EXPECTED)
    private static final class RemoveIfValueEqualsReturnBoolean<K, V>
          implements BiFunction<V, ReadWriteEntryView<K, V>, Boolean> {
       @Override
@@ -297,13 +244,12 @@ public final class MarshallableFunctionalInterfaces {
 
       private static final RemoveIfValueEqualsReturnBoolean INSTANCE =
          new RemoveIfValueEqualsReturnBoolean<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, Boolean> getInstance() {
+         return RemoveIfValueEqualsReturnBoolean.INSTANCE;
       }
    }
 
-   @SerializeWith(value = SetValue.Externalizer0.class)
    private static final class SetValue<V> implements BiConsumer<V, WriteEntryView<V>> {
       @Override
       public void accept(V v, WriteEntryView<V> wo) {
@@ -311,13 +257,12 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final SetValue INSTANCE = new SetValue<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> BiConsumer<V, WriteEntryView<V>> getInstance() {
+         return SetValue.INSTANCE;
       }
    }
 
-   @SerializeWith(value = Remove.Externalizer0.class)
    private static final class Remove<V> implements Consumer<WriteEntryView<V>> {
       @Override
       public void accept(WriteEntryView<V> wo) {
@@ -325,13 +270,12 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final Remove INSTANCE = new Remove<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <V> Consumer<WriteEntryView<V>> getInstance() {
+         return Remove.INSTANCE;
       }
    }
 
-   @SerializeWith(value = ReturnReadWriteFind.Externalizer0.class)
    private static final class ReturnReadWriteFind<K, V>
          implements Function<ReadWriteEntryView<K, V>, Optional<V>> {
       @Override
@@ -340,13 +284,12 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final ReturnReadWriteFind INSTANCE = new ReturnReadWriteFind<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> Function<ReadWriteEntryView<K, V>, Optional<V>> getInstance() {
+         return ReturnReadWriteFind.INSTANCE;
       }
    }
 
-   @SerializeWith(value = ReturnReadWriteGet.Externalizer0.class)
    private static final class ReturnReadWriteGet<K, V>
       implements Function<ReadWriteEntryView<K, V>, V> {
       @Override
@@ -355,13 +298,12 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final ReturnReadWriteGet INSTANCE = new ReturnReadWriteGet<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> Function<ReadWriteEntryView<K, V>, V> getInstance() {
+         return ReturnReadWriteGet.INSTANCE;
       }
    }
 
-   @SerializeWith(value = ReturnReadWriteView.Externalizer0.class)
    private static final class ReturnReadWriteView<K, V>
       implements Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> {
       @Override
@@ -370,13 +312,13 @@ public final class MarshallableFunctionalInterfaces {
       }
 
       private static final ReturnReadWriteView INSTANCE = new ReturnReadWriteView<>();
-      public static final class Externalizer0 implements Externalizer<Object> {
-         public void writeObject(ObjectOutput oo, Object o) {}
-         public Object readObject(ObjectInput input) { return INSTANCE; }
+      @SuppressWarnings("unchecked")
+      private static <K, V> Function<ReadWriteEntryView<K, V>, ReadWriteEntryView<K, V>> getInstance() {
+         return ReturnReadWriteView.INSTANCE;
       }
    }
 
-   private  MarshallableFunctionalInterfaces() {
+   private MarshallableLambdas() {
       // No-op, holds static variables
    }
 

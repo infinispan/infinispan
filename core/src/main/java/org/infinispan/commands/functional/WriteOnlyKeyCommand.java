@@ -4,7 +4,6 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -19,8 +18,9 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
 
    private Consumer<WriteEntryView<V>> f;
 
-   public WriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f, CommandInvocationId id) {
-      super(key, f.getClass().getAnnotation(SerializeWith.class), id);
+   public WriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f,
+         CommandInvocationId id, ValueMatcher valueMatcher) {
+      super(key, valueMatcher, id);
       this.f = f;
    }
 

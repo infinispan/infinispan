@@ -5,6 +5,9 @@ import org.infinispan.commands.functional.*;
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.LambdaExternalizer;
+import org.infinispan.commons.marshall.SerializeLambdaWith;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.context.InvocationContextFactory;
@@ -13,6 +16,7 @@ import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.iteration.impl.EntryRetriever;
+import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.atomic.Delta;
 import org.infinispan.commands.control.LockControlCommand;
@@ -27,10 +31,7 @@ import org.infinispan.commands.read.MapCombineCommand;
 import org.infinispan.commands.read.ReduceCommand;
 import org.infinispan.commands.read.SizeCommand;
 import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.read.*;
 import org.infinispan.commands.remote.ClusteredGetAllCommand;
-import org.infinispan.commands.remote.ClusteredGetCommand;
-import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.commands.remote.MultipleRpcCommand;
 import org.infinispan.commands.remote.SingleRpcCommand;
 import org.infinispan.commands.remote.recovery.CompleteTransactionCommand;
@@ -52,26 +53,18 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.InternalEntryFactory;
-import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distexec.mapreduce.MapReduceManager;
 import org.infinispan.distexec.mapreduce.Mapper;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.distribution.group.GroupManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.filter.Converter;
 import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.functional.impl.FunctionalNotifier;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.iteration.impl.EntryRequestCommand;
-import org.infinispan.iteration.impl.EntryResponseCommand;
-import org.infinispan.iteration.impl.EntryRetriever;
-import org.infinispan.metadata.Metadata;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.transport.Address;
@@ -163,6 +156,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    private TimeService timeService;
 
    private Map<Byte, ModuleCommandInitializer> moduleCommandInitializers;
+   private ExternalizerTable externalizerTable;
 
    @Inject
    public void setupDependencies(DataContainer container, CacheNotifier<Object, Object> notifier, Cache<Object, Object> cache,
@@ -176,7 +170,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
                                  XSiteStateTransferManager xSiteStateTransferManager, EntryRetriever entryRetriever,
                                  GroupManager groupManager, PartitionHandlingManager partitionHandlingManager,
                                  LocalStreamManager localStreamManager, ClusterStreamManager clusterStreamManager,
-                                 ClusteringDependentLogic clusteringDependentLogic) {
+                                 ClusteringDependentLogic clusteringDependentLogic, ExternalizerTable externalizerTable) {
       this.dataContainer = container;
       this.notifier = notifier;
       this.cache = cache;
@@ -204,6 +198,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
       this.clusterStreamManager = clusterStreamManager;
       this.clusteringDependentLogic = clusteringDependentLogic;
       this.timeService = timeService;
+      this.externalizerTable = externalizerTable;
    }
 
    @Start(priority = 1)
@@ -722,12 +717,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteKeyValueCommand<>(key, value, f, generateUUID());
+      return new ReadWriteKeyValueCommand<>(key, value, f, generateUUID(), getValueMatcher(f));
    }
 
    @Override
    public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteKeyCommand<>(key, f, generateUUID());
+      return new ReadWriteKeyCommand<>(key, f, generateUUID(), getValueMatcher(f));
    }
 
    @Override
@@ -742,12 +737,12 @@ public class CommandsFactoryImpl implements CommandsFactory {
 
    @Override
    public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f) {
-      return new WriteOnlyKeyCommand<>(key, f, generateUUID());
+      return new WriteOnlyKeyCommand<>(key, f, generateUUID(), getValueMatcher(f));
    }
 
    @Override
    public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      return new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID());
+      return new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID(), getValueMatcher(f));
    }
 
    @Override
@@ -760,4 +755,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
       return new WriteOnlyManyEntriesCommand<>(entries, f);
    }
 
+   private ValueMatcher getValueMatcher(Object o) {
+      SerializeLambdaWith ann = o.getClass().getAnnotation(SerializeLambdaWith.class);
+      if (ann != null)
+         return ValueMatcher.valueOf(ann.valueMatcher().toString());
+
+      Externalizer ext = externalizerTable.getExternalizer(o);
+      if (ext != null && ext instanceof LambdaExternalizer)
+         return ValueMatcher.valueOf(((LambdaExternalizer) ext).valueMatcher(o).toString());
+
+      return ValueMatcher.MATCH_ALWAYS;
+   }
 }

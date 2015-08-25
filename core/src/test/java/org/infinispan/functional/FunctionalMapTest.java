@@ -12,6 +12,7 @@ import org.infinispan.commons.api.functional.MetaParam.MetaEntryVersion;
 import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.SerializeLambdaWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.functional.impl.FunctionalMapImpl;
 import org.infinispan.functional.impl.ReadOnlyMapImpl;
@@ -41,7 +42,7 @@ import java.util.function.Supplier;
 import static org.infinispan.commons.api.functional.EntryVersion.CompareResult.EQUAL;
 import static org.infinispan.functional.FunctionalTestUtils.*;
 import static org.infinispan.test.TestingUtil.withCacheManager;
-import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.*;
+import static org.infinispan.commons.marshall.MarshallableLambdas.*;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -233,7 +234,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       );
    }
 
-   @SerializeWith(value = SetStringConstantReturnPrevious.Externalizer0.class)
+   @SerializeLambdaWith(value = SetStringConstantReturnPrevious.Externalizer0.class)
    private static final class SetStringConstantReturnPrevious<K>
          implements Function<ReadWriteEntryView<K, String>, Optional<String>> {
       @Override
@@ -316,7 +317,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       );
    }
 
-   @SerializeWith(value = SetStringAndVersionConstant.Externalizer0.class)
+   @SerializeLambdaWith(value = SetStringAndVersionConstant.Externalizer0.class)
    private static final class SetStringAndVersionConstant<K>
          implements Function<ReadWriteEntryView<K, String>, Void> {
       @Override
@@ -338,7 +339,7 @@ public class FunctionalMapTest extends AbstractFunctionalTest {
       }
    }
 
-   @SerializeWith(value = VersionBasedConditionalReplace.Externalizer0.class)
+   @SerializeLambdaWith(value = VersionBasedConditionalReplace.Externalizer0.class)
    private static final class VersionBasedConditionalReplace<K>
       implements Function<ReadWriteEntryView<K, String>, ReadWriteEntryView<K, String>> {
       private final long version;
