@@ -5,6 +5,14 @@ import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.api.functional.FunctionalMap;
+import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
+import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
+import org.infinispan.commons.api.functional.MetaParam;
+import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
+import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
+import org.infinispan.commons.api.functional.Param;
+import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -17,6 +25,9 @@ import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.functional.impl.FunctionalMapImpl;
+import org.infinispan.functional.impl.ReadWriteMapImpl;
+import org.infinispan.functional.impl.WriteOnlyMapImpl;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.iteration.EntryIterable;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -36,17 +47,31 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import static org.infinispan.commons.marshall.MarshallableLambdas.*;
 
 public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> {
 
-   final ConcurrentMap<K, V> map;
    final AdvancedCache<K, V> cache;
+
+   final ConcurrentMap<K, V> map;
+   final ReadWriteMap<K, V> rw;
+   final ReadWriteMap<K, V> rwCompleted;
+   final WriteOnlyMap<K, V> wo;
+   final WriteOnlyMap<K, V> woCompleted;
 
    private FunctionalAdvancedCache(ConcurrentMap<K, V> map, AdvancedCache<K, V> cache) {
       this.map = map;
       this.cache = cache;
+      FunctionalMapImpl<K, V> fmap = FunctionalMapImpl.create(cache);
+      this.rw = ReadWriteMapImpl.create(fmap);
+      this.wo = WriteOnlyMapImpl.create(fmap);
+      this.woCompleted = wo.withParams(FutureMode.COMPLETED);
+      this.rwCompleted = rw.withParams(FutureMode.COMPLETED);
    }
 
    public static <K, V> AdvancedCache<K, V> create(AdvancedCache<K, V> cache) {
@@ -88,6 +113,79 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public boolean remove(Object key, Object value) {
       return map.remove(key, value);
+   }
+
+   @Override
+   public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
+      return await(rwCompleted.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan, metaMaxIdle)));
+   }
+
+   @Override
+   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
+      await(woCompleted.evalMany(map, setValueMetasConsumer(metaLifespan, metaMaxIdle)));
+   }
+
+   @Override
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
+      return await(rwCompleted.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan, metaMaxIdle)));
+   }
+
+   @Override
+   public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
+      return await(rwCompleted.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan, metaMaxIdle)));
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
+      final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
+      return await(rwCompleted.eval(key, value, setValueIfEqualsReturnBoolean(oldValue, metaLifespan, metaMaxIdle)));
+   }
+
+   @Override
+   public V put(K key, V value, long lifespan, TimeUnit unit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      return await(rwCompleted.eval(key, value, setValueMetasReturnPrevOrNull(metaLifespan)));
+   }
+
+   @Override
+   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      await(woCompleted.evalMany(map, setValueMetasConsumer(metaLifespan)));
+   }
+
+   @Override
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      return await(rwCompleted.eval(key, value, setValueMetasIfAbsentReturnPrevOrNull(metaLifespan)));
+   }
+
+   @Override
+   public V replace(K key, V value, long lifespan, TimeUnit unit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      return await(rwCompleted.eval(key, value, setValueMetasIfPresentReturnPrevOrNull(metaLifespan)));
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
+      final MetaLifespan metaLifespan = createMetaLifespan(lifespan, unit);
+      return await(rwCompleted.eval(key, value, setValueIfEqualsReturnBoolean(oldValue, metaLifespan)));
+   }
+
+   private MetaLifespan createMetaLifespan(long lifespan, TimeUnit lifespanUnit) {
+      return new MetaLifespan(lifespanUnit.toMillis(lifespan));
+   }
+
+   private MetaMaxIdle createMetaMaxIdle(long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return new MetaMaxIdle(maxIdleTimeUnit.toMillis(maxIdleTime));
    }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -395,56 +493,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public V put(K key, V value, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public V replace(K key, V value, long lifespan, TimeUnit unit) {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return false;  // TODO: Customise this generated block
-   }
-
-   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       // TODO: Customise this generated block
    }
@@ -587,5 +635,13 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public Set<Object> getListeners() {
       return null;  // TODO: Customise this generated block
+   }
+
+   public static <T> T await(CompletableFuture<T> cf) {
+      try {
+         return cf.get();
+      } catch (InterruptedException | ExecutionException e) {
+         throw new Error(e);
+      }
    }
 }

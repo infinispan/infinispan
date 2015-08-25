@@ -379,6 +379,7 @@ public class ExternalizerTable implements ObjectTable {
 
       addInternalExternalizer(new EntryViews.ReadWriteSnapshotViewExternalizer());
       addInternalExternalizer(new MarshallableLambdaExternalizers.ConstantLambdaExternalizer());
+      addInternalExternalizer(new MarshallableLambdaExternalizers.LambdaWithMetasExternalizer());
       addInternalExternalizer(new MarshallableLambdaExternalizers.SetValueIfEqualsReturnBooleanExternalizer());
    }
 
