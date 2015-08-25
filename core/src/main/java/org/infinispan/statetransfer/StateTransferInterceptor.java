@@ -210,7 +210,7 @@ public class StateTransferInterceptor extends BaseStateTransferInterceptor {
 
          // We increment the topology id so that updateTopologyIdAndWaitForTransactionData waits for the next topology.
          // Without this, we could retry the command too fast and we could get the OutdatedTopologyException again.
-         if (trace) log.tracef("Retrying command because of topology change, current topology is %d: %s", command);
+         if (trace) log.tracef("Retrying command because of topology change, current topology is %d: %s", currentTopologyId(), command);
          int newTopologyId = Math.max(currentTopologyId(), command.getTopologyId() + 1);
          command.setTopologyId(newTopologyId);
          waitForTopology(newTopologyId);
