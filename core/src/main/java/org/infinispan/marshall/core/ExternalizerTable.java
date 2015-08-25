@@ -15,6 +15,9 @@ import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
+import org.infinispan.commons.marshall.Externalizer;
+import org.infinispan.commons.marshall.LambdaExternalizer;
+import org.infinispan.commons.marshall.MarshallableLambdaExternalizers;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
@@ -228,6 +231,14 @@ public class ExternalizerTable implements ObjectTable {
       return adapter.readObject(input);
    }
 
+   public Externalizer getExternalizer(Object o) {
+      ExternalizerAdapter adapter = writers.get(o.getClass());
+      if (adapter != null && adapter.externalizer instanceof LambdaExternalizer)
+         return adapter.externalizer;
+
+      return null;
+   }
+
    boolean isMarshallableCandidate(Object o) {
       return writers.containsKey(o.getClass());
    }
@@ -366,8 +377,9 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MetaParamExternalizers.EntryVersionParamExternalizer());
       addInternalExternalizer(new MetaParamExternalizers.NumericEntryVersionExternalizer());
 
-      // TODO: Add other EntryView externalizers
       addInternalExternalizer(new EntryViews.ReadWriteSnapshotViewExternalizer());
+      addInternalExternalizer(new MarshallableLambdaExternalizers.ConstantLambdaExternalizer());
+      addInternalExternalizer(new MarshallableLambdaExternalizers.SetValueIfEqualsReturnBooleanExternalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

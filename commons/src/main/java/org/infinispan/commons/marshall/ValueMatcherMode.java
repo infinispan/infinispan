@@ -1,9 +1,9 @@
 package org.infinispan.commons.marshall;
 
 /**
- * TODO
+ * Value matcher mode.
  */
-public enum SerializeValueMatcher {
+public enum ValueMatcherMode {
 
    MATCH_ALWAYS,
    MATCH_EXPECTED,

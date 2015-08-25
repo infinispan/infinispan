@@ -1,5 +1,6 @@
 package org.infinispan.commons.marshall.jboss;
 
+import org.infinispan.commons.marshall.SerializeLambdaWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.jboss.marshalling.AnnotationClassExternalizerFactory;
 import org.jboss.marshalling.ClassExternalizerFactory;
@@ -20,13 +21,17 @@ public class SerializeWithExtFactory implements ClassExternalizerFactory {
 
    @Override
    public Externalizer getExternalizer(Class<?> type) {
-      SerializeWith ann = type.getAnnotation(SerializeWith.class);
-      if (ann == null) {
+      SerializeWith serialWithAnn = type.getAnnotation(SerializeWith.class);
+      SerializeLambdaWith lambdaSerialWithAnn = type.getAnnotation(SerializeLambdaWith.class);
+      if (serialWithAnn == null && lambdaSerialWithAnn == null) {
          // Check for JBoss Marshaller's @Externalize
          return jbmarExtFactory.getExternalizer(type);
       } else {
          try {
-            return new JBossExternalizerAdapter(ann.value().newInstance());
+            org.infinispan.commons.marshall.Externalizer ext = serialWithAnn != null
+               ? serialWithAnn.value().newInstance()
+               : lambdaSerialWithAnn.value().newInstance();
+            return new JBossExternalizerAdapter(ext);
          } catch (Exception e) {
             throw new IllegalArgumentException(String.format(
                   "Cannot instantiate externalizer for %s", type), e);

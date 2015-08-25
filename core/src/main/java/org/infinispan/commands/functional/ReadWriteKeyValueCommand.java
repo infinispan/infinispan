@@ -5,7 +5,6 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.equivalence.AnyEquivalence;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -31,8 +30,8 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    private Metadata prevMetadata;
 
    public ReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f,
-         CommandInvocationId id) {
-      super(key, f.getClass().getAnnotation(SerializeWith.class), id);
+         CommandInvocationId id, ValueMatcher valueMatcher) {
+      super(key, valueMatcher, id);
       this.value = value;
       this.f = f;
    }

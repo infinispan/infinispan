@@ -4,7 +4,6 @@ import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
-import org.infinispan.commons.marshall.SerializeWith;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
@@ -21,8 +20,9 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
 
    private Function<ReadWriteEntryView<K, V>, R> f;
 
-   public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f, CommandInvocationId id) {
-      super(key, f.getClass().getAnnotation(SerializeWith.class), id);
+   public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f,
+         CommandInvocationId id, ValueMatcher valueMatcher) {
+      super(key, valueMatcher, id);
       this.f = f;
    }
 

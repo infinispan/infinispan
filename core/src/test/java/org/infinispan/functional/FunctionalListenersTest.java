@@ -1,7 +1,6 @@
 package org.infinispan.functional;
 
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
-import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners.ReadWriteListener;
@@ -20,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static org.infinispan.functional.FunctionalTestUtils.*;
-import static org.infinispan.util.functional.MarshallableFunctionalInterfaces.*;
+import static org.infinispan.commons.marshall.MarshallableLambdas.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
