@@ -582,9 +582,13 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
    private void shutDownGracefully() {
       if (log.isDebugEnabled())
          log.debugf("Wait for on-going transactions to finish for %s.", Util.prettyPrintTime(configuration.transaction().cacheStopTimeout(), TimeUnit.MILLISECONDS));
-      long failTime = timeService.expectedEndTime(configuration.transaction().cacheStopTimeout(), TimeUnit.MILLISECONDS);
+      // TODO: we can't use TimeService for this since some tests replace the time service and there is a bug
+      // ISPN-5507 that makes it so a tx misses the completion.  When this is combined with a replaced timeService
+      // this will never time out.
+      long now = System.nanoTime();
+      long failTime = now + TimeUnit.MILLISECONDS.toNanos(configuration.transaction().cacheStopTimeout());
       boolean txsOnGoing = areTxsOnGoing();
-      while (txsOnGoing && !timeService.isTimeExpired(failTime)) {
+      while (txsOnGoing && System.nanoTime() - failTime < 0) {
          try {
             Thread.sleep(30);
             txsOnGoing = areTxsOnGoing();
