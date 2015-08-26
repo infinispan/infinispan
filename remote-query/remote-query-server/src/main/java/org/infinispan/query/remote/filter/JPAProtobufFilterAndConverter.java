@@ -22,7 +22,7 @@ import java.util.Set;
  * @author anistor@redhat.com
  * @since 7.2
  */
-public final class JPAProtobufFilterAndConverter<Object> extends JPAFilterAndConverter<Object, Object> {
+public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<Object, Object> {
 
    private boolean usesValueWrapper;
 
