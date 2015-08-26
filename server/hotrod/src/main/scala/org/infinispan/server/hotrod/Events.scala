@@ -13,10 +13,11 @@ object Events {
    case class KeyEvent(
            override val version: Byte,
            override val messageId: Long,
+           override val op: OperationResponse,
            override val listenerId: Bytes,
            override val isRetried: Boolean,
            key: Bytes)
-         extends Event(version, messageId, CacheEntryRemovedEventResponse, listenerId, isRetried) {
+         extends Event(version, messageId, op, listenerId, isRetried) {
       override def toString: String = {
          new StringBuilder().append("KeyEvent").append("{")
                  .append("version=").append(version)

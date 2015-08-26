@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientCacheFailover;
@@ -46,6 +47,7 @@ public class ClientListenerNotifier {
       allowedListeners.put(ClientCacheEntryCreated.class, new Class[]{ClientCacheEntryCreatedEvent.class, ClientCacheEntryCustomEvent.class});
       allowedListeners.put(ClientCacheEntryModified.class, new Class[]{ClientCacheEntryModifiedEvent.class, ClientCacheEntryCustomEvent.class});
       allowedListeners.put(ClientCacheEntryRemoved.class, new Class[]{ClientCacheEntryRemovedEvent.class, ClientCacheEntryCustomEvent.class});
+      allowedListeners.put(ClientCacheEntryExpired.class, new Class[]{ClientCacheEntryExpiredEvent.class, ClientCacheEntryCustomEvent.class});
       allowedListeners.put(ClientCacheFailover.class, new Class[]{ClientCacheFailoverEvent.class});
    }
 
@@ -285,6 +287,9 @@ public class ClientListenerNotifier {
                break;
             case CLIENT_CACHE_ENTRY_REMOVED:
                invokeCallbacks(clientEvent, ClientCacheEntryRemoved.class);
+               break;
+            case CLIENT_CACHE_ENTRY_EXPIRED:
+               invokeCallbacks(clientEvent, ClientCacheEntryExpired.class);
                break;
          }
       }

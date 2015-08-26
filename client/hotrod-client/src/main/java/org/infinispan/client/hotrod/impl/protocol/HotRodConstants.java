@@ -83,6 +83,7 @@ public interface HotRodConstants {
    static final byte CACHE_ENTRY_CREATED_EVENT_RESPONSE = 0x60;
    static final byte CACHE_ENTRY_MODIFIED_EVENT_RESPONSE = 0x61;
    static final byte CACHE_ENTRY_REMOVED_EVENT_RESPONSE = 0x62;
+   static final byte CACHE_ENTRY_EXPIRED_EVENT_RESPONSE = 0x63;
 
    //response status
    static final byte NO_ERROR_STATUS = 0x00;

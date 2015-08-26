@@ -40,6 +40,7 @@ object OperationResponse extends Enumeration {
    val CacheEntryCreatedEventResponse = Value(0x60)
    val CacheEntryModifiedEventResponse = Value(0x61)
    val CacheEntryRemovedEventResponse = Value(0x62)
+   val CacheEntryExpiredEventResponse = Value(0x63)
    
    // 2.1
    val ExecResponse = Value(0x2C)
