@@ -16,9 +16,9 @@ import javax.transaction.TransactionManager;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -27,12 +27,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import javax.transaction.TransactionManager;
 
 import org.hibernate.FlushMode;
-import org.hibernate.Session;
-import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
-import org.hibernate.engine.transaction.jta.platform.spi.JtaPlatform;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -47,6 +43,7 @@ import org.junit.Test;
 >>>>>>> HHH-7197 reimport imports
 =======
 
+<<<<<<< HEAD
 >>>>>>> HHH-9490 - Migrate from dom4j to jaxb for XML processing;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeConnectionProviderImpl;
 import org.hibernate.test.cache.infinispan.functional.cluster.DualNodeJtaTransactionManagerImpl;
@@ -68,6 +65,10 @@ import org.infinispan.util.logging.LogFactory;
  * 
 =======
 =======
+=======
+import org.hibernate.test.cache.infinispan.functional.entities.Contact;
+import org.hibernate.test.cache.infinispan.functional.entities.Customer;
+>>>>>>> HHH-10030 Add read-write cache concurrency strategy to Infinispan 2LC
 import org.junit.Test;
 
 import org.infinispan.util.logging.Log;
@@ -83,7 +84,7 @@ import static org.junit.Assert.assertNull;
  * @author nikita_tovstoles@mba.berkeley.edu
  * @author Galder Zamarreño
  */
-public class ConcurrentWriteTest extends SingleNodeTestCase {
+public class ConcurrentWriteTest extends SingleNodeTest {
 	private static final Log log = LogFactory.getLog( ConcurrentWriteTest.class );
 	private static final boolean trace = log.isTraceEnabled();
 	/**
@@ -105,35 +106,9 @@ public class ConcurrentWriteTest extends SingleNodeTestCase {
 	 */
 	private Set<Integer> customerIDs = new HashSet<Integer>();
 
-	private TransactionManager tm;
-
 	@Override
-	@SuppressWarnings("unchecked")
-	protected void addSettings(Map settings) {
-		super.addSettings( settings );
-
-		settings.put( DualNodeTestCase.NODE_ID_PROP, DualNodeTestCase.LOCAL );
-		settings.put( DualNodeTestCase.NODE_ID_FIELD, DualNodeTestCase.LOCAL );
-	}
-
-	@Override
-	protected boolean getUseQueryCache() {
-		return true;
-	}
-
-	@Override
-	protected TransactionManager getTransactionManager() {
-		return DualNodeJtaTransactionManagerImpl.getInstance( DualNodeTestCase.LOCAL );
-	}
-
-	@Override
-	protected Class<? extends ConnectionProvider> getConnectionProviderClass() {
-		return DualNodeConnectionProviderImpl.class;
-	}
-
-	@Override
-	protected Class<? extends JtaPlatform> getJtaPlatform() {
-		return DualNodeJtaPlatformImpl.class;
+	public List<Object[]> getParameters() {
+		return Arrays.asList(TRANSACTIONAL, READ_WRITE);
 	}
 
 <<<<<<< HEAD
@@ -229,34 +204,18 @@ public class ConcurrentWriteTest extends SingleNodeTestCase {
 		}
 		finally {
 			cleanup();
-			// DualNodeJtaTransactionManagerImpl.cleanupTransactions();
-			// DualNodeJtaTransactionManagerImpl.cleanupTransactionManagers();
 		}
 	}
 
 	@Test
 	public void testPingDb() throws Exception {
-		try {
-			beginTx();
-			sessionFactory()
-					.getCurrentSession()
-					.createQuery( "from " + Customer.class.getName() )
-					.list();
-		}
-		catch (Exception e) {
-			setRollbackOnlyTx( e );
-//         setRollbackOnly();
-//         fail("failed to query DB; exception=" + e);
-		}
-		finally {
-			commitOrRollbackTx();
-		}
+		withTxSession(s -> s.createQuery( "from " + Customer.class.getName() ).list());
 	}
 
 	@Test
 	public void testSingleUser() throws Exception {
 		// setup
-sessionFactory().getStatistics().clear();
+		sessionFactory().getStatistics().clear();
 		Customer customer = createCustomer( 0 );
 		final Integer customerId = customer.getId();
 		getCustomerIDs().add( customerId );
@@ -333,36 +292,20 @@ sessionFactory().getStatistics().clear();
 		getCustomerIDs().clear();
 		String deleteContactHQL = "delete from Contact";
 		String deleteCustomerHQL = "delete from Customer";
-		beginTx();
-		try {
-			Session session = sessionFactory().getCurrentSession();
-			session.createQuery( deleteContactHQL ).setFlushMode( FlushMode.AUTO ).executeUpdate();
-			session.createQuery( deleteCustomerHQL ).setFlushMode( FlushMode.AUTO ).executeUpdate();
-		}
-		catch (Exception e) {
-			setRollbackOnlyTx( e );
-		}
-		finally {
-			commitOrRollbackTx();
-		}
+		withTxSession(s -> {
+			s.createQuery(deleteContactHQL).setFlushMode(FlushMode.AUTO).executeUpdate();
+			s.createQuery(deleteCustomerHQL).setFlushMode(FlushMode.AUTO).executeUpdate();
+		});
 	}
 
 	private Customer createCustomer(int nameSuffix) throws Exception {
-		Customer customer = null;
-		beginTx();
-		try {
-			customer = new Customer();
+		return withTxSessionApply(s -> {
+			Customer customer = new Customer();
 			customer.setName( "customer_" + nameSuffix );
 			customer.setContacts( new HashSet<Contact>() );
-			sessionFactory().getCurrentSession().persist( customer );
-		}
-		catch (Exception e) {
-			setRollbackOnlyTx( e );
-		}
-		finally {
-			commitOrRollbackTx();
-		}
-		return customer;
+			s.persist( customer );
+			return customer;
+		});
 	}
 
 <<<<<<< HEAD
@@ -402,31 +345,23 @@ sessionFactory().getStatistics().clear();
 	 * @throws java.lang.Exception
 	 */
 	private void readEveryonesFirstContact() throws Exception {
-		beginTx();
-		try {
+		withTxSession(s -> {
 			for ( Integer customerId : getCustomerIDs() ) {
 				if ( TERMINATE_ALL_USERS ) {
-					setRollbackOnlyTx();
+					markRollbackOnly(s);
 					return;
 				}
-				Customer customer = (Customer) sessionFactory()
-						.getCurrentSession()
-						.load( Customer.class, customerId );
+				Customer customer = s.load( Customer.class, customerId );
 				Set<Contact> contacts = customer.getContacts();
 				if ( !contacts.isEmpty() ) {
 					contacts.iterator().next();
 				}
 			}
-		}
-		catch (Exception e) {
-			setRollbackOnlyTx( e );
-		}
-		finally {
-			commitOrRollbackTx();
-		}
+		});
 	}
 >>>>>>> HHH-5942 - Migrate to JUnit 4
 
+<<<<<<< HEAD
    /**
     * -load existing Customer -get customer's contacts; return 1st one
     * 
@@ -498,6 +433,62 @@ sessionFactory().getStatistics().clear();
 			Customer customer = (Customer) sessionFactory()
 					.getCurrentSession()
 					.load( Customer.class, customerId );
+=======
+	/**
+	 * -load existing Customer -get customer's contacts; return 1st one
+	 *
+	 * @param customerId
+	 * @return first Contact or null if customer has none
+	 */
+	private Contact getFirstContact(Integer customerId) throws Exception {
+		assert customerId != null;
+		return withTxSessionApply(s -> {
+			Customer customer = s.load(Customer.class, customerId);
+			Set<Contact> contacts = customer.getContacts();
+			Contact firstContact = contacts.isEmpty() ? null : contacts.iterator().next();
+			if (TERMINATE_ALL_USERS) {
+				markRollbackOnly(s);
+			}
+			return firstContact;
+		});
+	}
+
+	/**
+	 * -load existing Customer -create a new Contact and add to customer's contacts
+	 *
+	 * @param customerId
+	 * @return added Contact
+	 */
+	private Contact addContact(Integer customerId) throws Exception {
+		assert customerId != null;
+		return withTxSessionApply(s -> {
+			final Customer customer = s.load(Customer.class, customerId);
+			Contact contact = new Contact();
+			contact.setName("contact name");
+			contact.setTlf("wtf is tlf?");
+			contact.setCustomer(customer);
+			customer.getContacts().add(contact);
+			// assuming contact is persisted via cascade from customer
+			if (TERMINATE_ALL_USERS) {
+				markRollbackOnly(s);
+			}
+			return contact;
+		});
+	}
+
+	/**
+	 * remove existing 'contact' from customer's list of contacts
+	 *
+	 * @param customerId
+	 * @throws IllegalStateException
+	 *            if customer does not own a contact
+	 */
+	private void removeContact(Integer customerId) throws Exception {
+		assert customerId != null;
+
+		withTxSession(s -> {
+			Customer customer = s.load( Customer.class, customerId );
+>>>>>>> HHH-10030 Add read-write cache concurrency strategy to Infinispan 2LC
 			Set<Contact> contacts = customer.getContacts();
 			if ( contacts.size() != 1 ) {
 				throw new IllegalStateException(
@@ -517,15 +508,9 @@ sessionFactory().getStatistics().clear();
 			// assuming contact is persisted via cascade from customer
 
 			if ( TERMINATE_ALL_USERS ) {
-				setRollbackOnlyTx();
+				markRollbackOnly(s);
 			}
-		}
-		catch (Exception e) {
-			setRollbackOnlyTx( e );
-		}
-		finally {
-			commitOrRollbackTx();
-		}
+		});
 	}
 
 	/**
@@ -571,7 +556,6 @@ sessionFactory().getStatistics().clear();
 			Thread.currentThread().setName( "UserRunnerThread-" + getCustomerId() );
 			log.info( "Wait for all executions paths to be ready to perform calls" );
 			try {
-//            barrier.await();
 				for ( int i = 0; i < ITERATION_COUNT && !TERMINATE_ALL_USERS; i++ ) {
 					contactExists();
 					if ( trace ) {
@@ -612,17 +596,6 @@ sessionFactory().getStatistics().clear();
 				TERMINATE_ALL_USERS = true;
 				log.error( "Error", t );
 				throw new Exception( t );
-				// rollback current transaction if any
-				// really should not happen since above methods all follow begin-commit-rollback pattern
-				// try {
-				// if
-				// (DualNodeJtaTransactionManagerImpl.getInstance(DualNodeTestUtil.LOCAL).getTransaction()
-				// != null) {
-				// DualNodeJtaTransactionManagerImpl.getInstance(DualNodeTestUtil.LOCAL).rollback();
-				// }
-				// } catch (SystemException ex) {
-				// throw new RuntimeException("failed to rollback tx", ex);
-				// }
 			}
 			finally {
 				log.info( "Wait for all execution paths to finish" );
