@@ -193,7 +193,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 Element element;
                 boolean identity = false;
                 List<String> caches = configurationMappings.get(name);
-                if (caches.size() == 1 && caches.get(0).equals(name)) {
+                if (caches != null && caches.size() == 1 && caches.get(0).equals(name)) {
                     element = Element.forName(cacheType);
                     identity = true;
                 } else {
@@ -217,8 +217,7 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                 writer.writeEndElement();
 
                 // Now the concrete instances
-                if (!identity) {
-                    System.err.printf("Writing concrete instances for %s configuration: %s", name, caches);
+                if (!identity && caches!= null) {
                     for (String cache : caches) {
                         writer.writeStartElement(Element.forName(cacheType).getLocalName());
                         writer.writeAttribute(Attribute.NAME.getLocalName(), cache);
