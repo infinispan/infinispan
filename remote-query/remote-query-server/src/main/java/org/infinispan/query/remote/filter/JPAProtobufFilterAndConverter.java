@@ -44,7 +44,7 @@ public final class JPAProtobufFilterAndConverter extends JPAFilterAndConverter<O
          return null;
       }
       if (usesValueWrapper) {
-         value = (Object) ((ProtobufValueWrapper) value).getBinary();
+         value = ((ProtobufValueWrapper) value).getBinary();
       }
       return getObjectFilter().filter(value);
    }
