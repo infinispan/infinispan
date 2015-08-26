@@ -12,6 +12,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
@@ -29,6 +30,7 @@ public abstract class CustomEventLogListener<E> {
    BlockingQueue<E> createdCustomEvents = new ArrayBlockingQueue<>(128);
    BlockingQueue<E> modifiedCustomEvents = new ArrayBlockingQueue<>(128);
    BlockingQueue<E> removedCustomEvents = new ArrayBlockingQueue<>(128);
+   BlockingQueue<E> expiredCustomEvents = new ArrayBlockingQueue<>(128);
 
    public E pollEvent(ClientEvent.Type type) {
       try {
@@ -45,6 +47,7 @@ public abstract class CustomEventLogListener<E> {
          case CLIENT_CACHE_ENTRY_CREATED: return createdCustomEvents;
          case CLIENT_CACHE_ENTRY_MODIFIED: return modifiedCustomEvents;
          case CLIENT_CACHE_ENTRY_REMOVED: return removedCustomEvents;
+         case CLIENT_CACHE_ENTRY_EXPIRED: return expiredCustomEvents;
          default: throw new IllegalArgumentException("Unknown event type: " + type);
       }
    }
@@ -57,6 +60,7 @@ public abstract class CustomEventLogListener<E> {
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
    }
 
    public void expectSingleCustomEvent(ClientEvent.Type type, E expected) {
@@ -68,18 +72,28 @@ public abstract class CustomEventLogListener<E> {
       expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, expected);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
    }
 
    public void expectModifiedEvent(E expected) {
       expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED, expected);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
    }
 
    public void expectRemovedEvent(E expected) {
       expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, expected);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
+   }
+
+   public void expectExpiredEvent(E expected) {
+      expectSingleCustomEvent(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED, expected);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
    }
 
    @ClientCacheEntryCreated
@@ -101,6 +115,13 @@ public abstract class CustomEventLogListener<E> {
    public void handleCustomRemovedEvent(ClientCacheEntryCustomEvent<E> e) {
       assertEquals(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, e.getType());
       removedCustomEvents.add(e.getEventData());
+   }
+
+   @ClientCacheEntryExpired
+   @SuppressWarnings("unused")
+   public void handleCustomExpiredEvent(ClientCacheEntryCustomEvent<E> e) {
+      assertEquals(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED, e.getType());
+      expiredCustomEvents.add(e.getEventData());
    }
 
    public static final class CustomEvent implements Serializable {

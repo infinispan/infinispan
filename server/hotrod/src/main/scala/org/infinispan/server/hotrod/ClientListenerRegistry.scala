@@ -14,7 +14,7 @@ import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurren
 import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.metadata.Metadata
 import org.infinispan.notifications._
-import org.infinispan.notifications.cachelistener.annotation.{CacheEntryCreated, CacheEntryModified, CacheEntryRemoved}
+import org.infinispan.notifications.cachelistener.annotation.{CacheEntryExpired, CacheEntryCreated, CacheEntryModified, CacheEntryRemoved}
 import org.infinispan.notifications.cachelistener.event._
 import org.infinispan.notifications.cachelistener.filter._
 import org.infinispan.notifications.cachelistener.event.Event.Type
@@ -180,6 +180,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
+      @CacheEntryExpired
       def onCacheEvent(event: CacheEntryEvent[Bytes, Bytes]) {
          if (isSendEvent(event)) {
             val dataVersion = event.getMetadata.version().asInstanceOf[NumericVersion].getVersion
@@ -198,6 +199,8 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
                case Type.CACHE_ENTRY_REMOVED =>
                   val removedEvent = event.asInstanceOf[CacheEntryRemovedEvent[_, _]]
                   !event.isPre && removedEvent.getOldValue != null
+               case Type.CACHE_ENTRY_EXPIRED =>
+                  true;
                case _ =>
                   throw unexpectedEvent(event)
             }
@@ -225,8 +228,9 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
                   case Type.CACHE_ENTRY_CREATED | Type.CACHE_ENTRY_MODIFIED =>
                      val (op, isRetried) = getEventResponseType(event)
                      keyWithVersionEvent(key, dataVersion, op, isRetried)
-                  case Type.CACHE_ENTRY_REMOVED =>
-                     KeyEvent(version, messageId.get(), listenerId, getEventResponseType(event)._2, key)
+                  case Type.CACHE_ENTRY_REMOVED | Type.CACHE_ENTRY_EXPIRED =>
+                     val (op, isRetried) = getEventResponseType(event)
+                     KeyEvent(version, messageId.get(), op, listenerId, isRetried, key)
                   case _ =>
                      throw unexpectedEvent(event)
                }
@@ -247,6 +251,8 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
                (CacheEntryModifiedEventResponse, event.asInstanceOf[CacheEntryModifiedEvent[_, _]].isCommandRetried)
             case Type.CACHE_ENTRY_REMOVED =>
                (CacheEntryRemovedEventResponse, event.asInstanceOf[CacheEntryRemovedEvent[_, _]].isCommandRetried)
+            case Type.CACHE_ENTRY_EXPIRED =>
+               (CacheEntryExpiredEventResponse, false)
             case _ => throw unexpectedEvent(event)
          }
       }
@@ -291,6 +297,7 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       @CacheEntryCreated
       @CacheEntryModified
       @CacheEntryRemoved
+      @CacheEntryExpired
       def onCacheEvent(event: CacheEntryEvent[AnyRef, AnyRef]) {
          val key = converter.unboxKey(event.getKey)
          val value = converter.unboxValue(event.getValue)

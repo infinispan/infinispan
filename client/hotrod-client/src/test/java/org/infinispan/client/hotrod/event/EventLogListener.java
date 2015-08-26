@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.Cache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
@@ -33,6 +34,7 @@ public class EventLogListener<K> {
          new ArrayBlockingQueue<ClientCacheEntryModifiedEvent>(128);
    public BlockingQueue<ClientCacheEntryRemovedEvent> removedEvents =
          new ArrayBlockingQueue<ClientCacheEntryRemovedEvent>(128);
+   public BlockingQueue<ClientCacheEntryExpiredEvent> expiredEvents = new ArrayBlockingQueue<>(128);
 
    private final boolean compatibility;
 
@@ -61,6 +63,7 @@ public class EventLogListener<K> {
          case CLIENT_CACHE_ENTRY_CREATED: return (BlockingQueue<E>) createdEvents;
          case CLIENT_CACHE_ENTRY_MODIFIED: return (BlockingQueue<E>) modifiedEvents;
          case CLIENT_CACHE_ENTRY_REMOVED: return (BlockingQueue<E>) removedEvents;
+         case CLIENT_CACHE_ENTRY_EXPIRED: return (BlockingQueue<E>) expiredEvents;
          default: throw new IllegalArgumentException("Unknown event type: " + type);
       }
    }
@@ -81,10 +84,16 @@ public class EventLogListener<K> {
       removedEvents.add(e);
    }
 
+   @ClientCacheEntryExpired @SuppressWarnings("unused")
+   public void handleExpiriedEvent(ClientCacheEntryExpiredEvent e) {
+      expiredEvents.add(e);
+   }
+
    public void expectNoEvents() {
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
    }
 
    public void expectNoEvents(ClientEvent.Type type) {
@@ -98,6 +107,9 @@ public class EventLogListener<K> {
          case CLIENT_CACHE_ENTRY_REMOVED:
             assertEquals(0, removedEvents.size());
             break;
+         case CLIENT_CACHE_ENTRY_EXPIRED:
+            assertEquals(0, expiredEvents.size());
+            break;
       }
    }
 
@@ -105,18 +117,28 @@ public class EventLogListener<K> {
       expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED, cache);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
    }
 
    public void expectOnlyModifiedEvent(K key, Cache cache) {
       expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED, cache);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
    }
 
    public void expectOnlyRemovedEvent(K key, Cache cache) {
       expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED, cache);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
       expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED);
+   }
+
+   public void expectOnlyExpiredEvent(K key, Cache cache) {
+      expectSingleEvent(key, ClientEvent.Type.CLIENT_CACHE_ENTRY_EXPIRED, cache);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_CREATED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_MODIFIED);
+      expectNoEvents(ClientEvent.Type.CLIENT_CACHE_ENTRY_REMOVED);
    }
 
    public void expectSingleEvent(K key, ClientEvent.Type type, Cache cache) {
@@ -134,6 +156,10 @@ public class EventLogListener<K> {
          case CLIENT_CACHE_ENTRY_REMOVED:
             ClientCacheEntryRemovedEvent removedEvent = pollEvent(type);
             assertAnyEquals(key, removedEvent.getKey());
+            break;
+         case CLIENT_CACHE_ENTRY_EXPIRED:
+            ClientCacheEntryExpiredEvent expiredEvent = pollEvent(type);
+            assertAnyEquals(key, expiredEvent.getKey());
             break;
       }
       Assert.assertEquals(0, queue(type).size());
@@ -167,6 +193,9 @@ public class EventLogListener<K> {
                   break;
                case CLIENT_CACHE_ENTRY_REMOVED:
                   eventKey = ((ClientCacheEntryRemovedEvent<K>) event).getKey();
+                  break;
+               case CLIENT_CACHE_ENTRY_EXPIRED:
+                  eventKey = ((ClientCacheEntryExpiredEvent<K>) event).getKey();
                   break;
             }
             checkUnorderedKeyEvent(assertedKeys, key, eventKey);
