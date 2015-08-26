@@ -25,7 +25,6 @@
       <module>cli</module>
       <module>feature-pack</module>
       <module>build</module>
-      <module>management/server-rhq-plugin</module>
    </modules>
 
    <profiles>
@@ -45,7 +44,6 @@
             <module>cli</module>
             <module>feature-pack</module>
             <module>build</module>
-            <module>management/server-rhq-plugin</module>
             <module>testsuite</module>
          </modules>
       </profile>
