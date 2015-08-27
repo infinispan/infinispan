@@ -8,6 +8,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 
 import java.util.Set;
 import java.util.function.Consumer;
@@ -19,8 +20,8 @@ public final class WriteOnlyKeyCommand<K, V> extends AbstractWriteKeyCommand<K, 
    private Consumer<WriteEntryView<V>> f;
 
    public WriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f,
-         CommandInvocationId id, ValueMatcher valueMatcher) {
-      super(key, valueMatcher, id);
+         CommandInvocationId id, ValueMatcher valueMatcher, Params params) {
+      super(key, valueMatcher, id, params);
       this.f = f;
    }
 

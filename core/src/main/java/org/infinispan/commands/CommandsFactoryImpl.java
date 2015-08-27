@@ -12,6 +12,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.distribution.group.GroupManager;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
@@ -716,13 +717,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteKeyValueCommand<>(key, value, f, generateUUID(), getValueMatcher(f));
+   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(
+         K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params) {
+      return new ReadWriteKeyValueCommand<>(key, value, f, generateUUID(), getValueMatcher(f), params);
    }
 
    @Override
-   public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f) {
-      return new ReadWriteKeyCommand<>(key, f, generateUUID(), getValueMatcher(f));
+   public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(
+         K key, Function<ReadWriteEntryView<K, V>, R> f, Params params) {
+      return new ReadWriteKeyCommand<>(key, f, generateUUID(), getValueMatcher(f), params);
    }
 
    @Override
@@ -736,13 +739,15 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f) {
-      return new WriteOnlyKeyCommand<>(key, f, generateUUID(), getValueMatcher(f));
+   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
+         K key, Consumer<WriteEntryView<V>> f, Params params) {
+      return new WriteOnlyKeyCommand<>(key, f, generateUUID(), getValueMatcher(f), params);
    }
 
    @Override
-   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
-      return new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID(), getValueMatcher(f));
+   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(
+         K key, V value, BiConsumer<V, WriteEntryView<V>> f, Params params) {
+      return new WriteOnlyKeyValueCommand<>(key, value, f, generateUUID(), getValueMatcher(f), params);
    }
 
    @Override
@@ -751,8 +756,11 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    @Override
-   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
-      return new WriteOnlyManyEntriesCommand<>(entries, f);
+   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(
+         Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params) {
+      WriteOnlyManyEntriesCommand<K, V> cmd = new WriteOnlyManyEntriesCommand<>(entries, f);
+      cmd.setParams(params);
+      return cmd;
    }
 
    private ValueMatcher getValueMatcher(Object o) {

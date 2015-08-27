@@ -44,7 +44,7 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
    public CompletableFuture<Void> eval(K key, Consumer<WriteEntryView<V>> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      WriteOnlyKeyCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyCommand(key, f);
+      WriteOnlyKeyCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyCommand(key, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getKeyLockOwner());
       return futureVoid(futureMode, ctx, cmd);
@@ -54,7 +54,7 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
    public CompletableFuture<Void> eval(K key, V value, BiConsumer<V, WriteEntryView<V>> f) {
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      WriteOnlyKeyValueCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyValueCommand(key, value, f);
+      WriteOnlyKeyValueCommand cmd = fmap.cmdFactory().buildWriteOnlyKeyValueCommand(key, value, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getKeyLockOwner());
       return futureVoid(futureMode, ctx, cmd);
@@ -64,7 +64,7 @@ public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implemen
    public CompletableFuture<Void> evalMany(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f) {
       log.tracef("Invoked evalMany(entries=%s, %s)", entries, params);
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      WriteOnlyManyEntriesCommand cmd = fmap.cmdFactory().buildWriteOnlyManyEntriesCommand(entries, f);
+      WriteOnlyManyEntriesCommand cmd = fmap.cmdFactory().buildWriteOnlyManyEntriesCommand(entries, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, entries.size());
       return futureVoid(futureMode, ctx, cmd);
    }

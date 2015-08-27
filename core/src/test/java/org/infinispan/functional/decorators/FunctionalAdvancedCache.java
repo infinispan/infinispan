@@ -3,6 +3,7 @@ package org.infinispan.functional.decorators;
 import org.infinispan.AdvancedCache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commons.api.functional.FunctionalMap;
@@ -13,6 +14,10 @@ import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.FutureMode;
+import org.infinispan.commons.api.functional.Param.PersistenceMode;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.CloseableSpliterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
@@ -44,6 +49,7 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -116,6 +122,31 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
+   public int size() {
+      return map.size();
+   }
+
+   @Override
+   public CacheSet<Entry<K, V>> entrySet() {
+      return new SetAsCacheSet<>(map.entrySet());
+   }
+
+   @Override
+   public CacheCollection<V> values() {
+      return new CollectionAsCacheCollection<>(map.values());
+   }
+
+   @Override
+   public void clear() {
+      map.clear();
+   }
+
+   @Override
+   public void putAll(Map<? extends K, ? extends V> m) {
+      map.putAll(m);
+   }
+
+   @Override
    public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
       final MetaLifespan metaLifespan = createMetaLifespan(lifespan, lifespanUnit);
       final MetaMaxIdle metaMaxIdle = createMetaMaxIdle(maxIdleTime, maxIdleTimeUnit);
@@ -180,6 +211,16 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
       return await(rwCompleted.eval(key, value, setValueIfEqualsReturnBoolean(oldValue, metaLifespan)));
    }
 
+   @Override
+   public void evict(K key) {
+      await(woCompleted.withParams(PersistenceMode.SKIP).eval(key, removeConsumer()));
+   }
+
+   @Override
+   public void putForExternalRead(K key, V value) {
+      map.putIfAbsent(key, value);
+   }
+
    private MetaLifespan createMetaLifespan(long lifespan, TimeUnit lifespanUnit) {
       return new MetaLifespan(lifespanUnit.toMillis(lifespan));
    }
@@ -218,6 +259,21 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public AdvancedCache<K, V> withFlags(Flag... flags) {
       return cache.withFlags(flags);
+   }
+
+   @Override
+   public Configuration getCacheConfiguration() {
+      return cache.getCacheConfiguration();
+   }
+
+   @Override
+   public void stop() {
+      cache.stop();
+   }
+
+   @Override
+   public void start() {
+      cache.start();
    }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -413,11 +469,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public void putForExternalRead(K key, V value) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
    public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
       // TODO: Customise this generated block
    }
@@ -428,23 +479,8 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public void evict(K key) {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public Configuration getCacheConfiguration() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
    public ComponentStatus getStatus() {
       return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public int size() {
-      return 0;  // TODO: Customise this generated block
    }
 
    @Override
@@ -468,21 +504,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public CacheCollection<V> values() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public CacheSet<Entry<K, V>> entrySet() {
-      return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void clear() {
-      // TODO: Customise this generated block
-   }
-
-   @Override
    public String getName() {
       return null;  // TODO: Customise this generated block
    }
@@ -490,11 +511,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    @Override
    public String getVersion() {
       return null;  // TODO: Customise this generated block
-   }
-
-   @Override
-   public void putAll(Map<? extends K, ? extends V> m) {
-      // TODO: Customise this generated block
    }
 
    @Override
@@ -613,16 +629,6 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
    }
 
    @Override
-   public void start() {
-      // TODO: Customise this generated block
-   }
-
-   @Override
-   public void stop() {
-      // TODO: Customise this generated block
-   }
-
-   @Override
    public void addListener(Object listener) {
       // TODO: Customise this generated block
    }
@@ -642,6 +648,189 @@ public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> 
          return cf.get();
       } catch (InterruptedException | ExecutionException e) {
          throw new Error(e);
+      }
+   }
+
+   private static final class SetAsCacheSet<E> implements CacheSet<E> {
+      final Set<E> set;
+
+      private SetAsCacheSet(Set<E> set) {
+         this.set = set;
+      }
+
+      @Override
+      public CacheStream<E> stream() {
+         return null;
+      }
+
+      @Override
+      public CacheStream<E> parallelStream() {
+         return null;
+      }
+
+      @Override
+      public int size() {
+         return set.size();
+      }
+
+      @Override
+      public boolean isEmpty() {
+         return set.isEmpty();
+      }
+
+      @Override
+      public boolean contains(Object o) {
+         return set.contains(o);
+      }
+
+      @Override
+      public CloseableIterator<E> iterator() {
+         return Closeables.iterator(set.iterator());
+      }
+
+      @Override
+      public Object[] toArray() {
+         return set.toArray();
+      }
+
+      @Override
+      public <T> T[] toArray(T[] a) {
+         return set.toArray(a);
+      }
+
+      @Override
+      public boolean add(E e) {
+         return set.add(e);
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         return set.remove(o);
+      }
+
+      @Override
+      public boolean containsAll(Collection<?> c) {
+         return set.containsAll(c);
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends E> c) {
+         return set.addAll(c);
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         return set.removeAll(c);
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         return set.retainAll(c);
+      }
+
+      @Override
+      public void clear() {
+         set.clear();
+      }
+
+      @Override
+      public CloseableSpliterator<E> spliterator() {
+         return null;
+      }
+
+      @Override
+      public String toString() {
+         return "SetAsCacheSet{" +
+            "set=" + set +
+            '}';
+      }
+   }
+
+   private static class CollectionAsCacheCollection<E> implements CacheCollection<E> {
+      private final Collection<E> col;
+
+      public CollectionAsCacheCollection(Collection<E> col) {
+         this.col = col;
+      }
+
+      @Override
+      public int size() {
+         return col.size();
+      }
+
+      @Override
+      public boolean isEmpty() {
+         return col.isEmpty();
+      }
+
+      @Override
+      public boolean contains(Object o) {
+         return col.contains(o);
+      }
+
+      @Override
+      public CloseableIterator<E> iterator() {
+         return Closeables.iterator(col.iterator());
+      }
+
+      @Override
+      public CloseableSpliterator<E> spliterator() {
+         return null;  // TODO: Customise this generated block
+      }
+
+      @Override
+      public Object[] toArray() {
+         return col.toArray();
+      }
+
+      @Override
+      public <T> T[] toArray(T[] a) {
+         return col.toArray(a);
+      }
+
+      @Override
+      public boolean add(E e) {
+         return col.add(e);
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         return col.remove(o);
+      }
+
+      @Override
+      public boolean containsAll(Collection<?> c) {
+         return col.containsAll(c);
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends E> c) {
+         return col.addAll(c);
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         return col.removeAll(c);
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         return col.retainAll(c);
+      }
+
+      @Override
+      public void clear() {
+         col.clear();
+      }
+
+      @Override
+      public CacheStream<E> stream() {
+         return null;
+      }
+
+      @Override
+      public CacheStream<E> parallelStream() {
+         return null;
       }
    }
 }

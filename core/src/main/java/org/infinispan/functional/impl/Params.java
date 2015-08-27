@@ -2,6 +2,7 @@ package org.infinispan.functional.impl;
 
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.FutureMode;
+import org.infinispan.commons.api.functional.Param.PersistenceMode;
 
 import java.util.Arrays;
 import java.util.List;
@@ -26,10 +27,11 @@ import java.util.function.Supplier;
  *
  * @since 8.0
  */
-final class Params {
+public final class Params {
 
    private static final Param<?>[] DEFAULTS = new Param<?>[]{
       FutureMode.defaultValue(),
+      PersistenceMode.defaultValue(),
    };
 
    final Param<?>[] params;
@@ -67,6 +69,7 @@ final class Params {
     */
    @SuppressWarnings("unchecked")
    public <T> Param<T> get(int index) {
+      // TODO: Provide a more type safe API. E.g. make index a pojo typed on T which is aligned with the Param<T>
       return (Param<T>) params[index];
    }
 

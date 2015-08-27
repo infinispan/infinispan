@@ -45,7 +45,7 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    public <R> CompletableFuture<R> eval(K key, Function<ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked eval(k=%s, %s)", key, params);
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      ReadWriteKeyCommand cmd = fmap.cmdFactory().buildReadWriteKeyCommand(key, f);
+      ReadWriteKeyCommand cmd = fmap.cmdFactory().buildReadWriteKeyCommand(key, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getKeyLockOwner());
       return withFuture(futureMode, fmap.asyncExec(), () -> (R) fmap.chain().invoke(ctx, cmd));
@@ -55,7 +55,7 @@ public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> im
    public <R> CompletableFuture<R> eval(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f) {
       log.tracef("Invoked eval(k=%s, v=%s, %s)", key, value, params);
       Param<FutureMode> futureMode = params.get(FutureMode.ID);
-      ReadWriteKeyValueCommand cmd = fmap.cmdFactory().buildReadWriteKeyValueCommand(key, value, f);
+      ReadWriteKeyValueCommand cmd = fmap.cmdFactory().buildReadWriteKeyValueCommand(key, value, f, params);
       InvocationContext ctx = fmap.invCtxFactory().createInvocationContext(true, 1);
       ctx.setLockOwner(cmd.getKeyLockOwner());
       return withFuture(futureMode, fmap.asyncExec(), () -> (R) fmap.chain().invoke(ctx, cmd));

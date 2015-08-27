@@ -72,18 +72,31 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
    @BeforeMethod(alwaysRun = true)
    public void setUp() {
-      cfg = new ConfigurationBuilder();
-      cfg.persistence()
-            .addStore(DummyInMemoryStoreConfigurationBuilder.class)
-               .storeName(this.getClass().getName()) // in order to use the same store
-            .transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      cfg = getConfiguration();
       configure(cfg);
       cm = TestCacheManagerFactory.createCacheManager(cfg);
-      cache = cm.getCache();
+      cache = getCache(cm);
       store = (AdvancedLoadWriteStore<String, String>) TestingUtil.getFirstLoader(cache);
       writer = (AdvancedCacheWriter<String, String>) TestingUtil.getFirstLoader(cache);
       tm = TestingUtil.getTransactionManager(cache);
       sm = cache.getAdvancedCache().getComponentRegistry().getCacheMarshaller();
+   }
+
+   protected ConfigurationBuilder getConfiguration() {
+      ConfigurationBuilder cfg = new ConfigurationBuilder();
+      cfg.persistence()
+         .addStore(DummyInMemoryStoreConfigurationBuilder.class)
+         .storeName(this.getClass().getName()) // in order to use the same store
+         .transaction().transactionMode(TransactionMode.TRANSACTIONAL);
+      return cfg;
+   }
+
+   protected Cache<String, String> getCache(EmbeddedCacheManager cm) {
+      return cm.getCache();
+   }
+
+   protected Cache<String, String> getCache(EmbeddedCacheManager cm, String name) {
+      return cm.getCache(name);
    }
 
    protected void configure(ConfigurationBuilder cb) { }
@@ -329,7 +342,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
       purgingCfg.persistence().clearStores().addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .storeName("purgingCache").purgeOnStartup(true);
       cm.defineConfiguration("purgingCache", purgingCfg.build());
-      Cache<String, String> purgingCache = cm.getCache("purgingCache");
+      Cache<String, String> purgingCache = getCache(cm, "purgingCache");
       AdvancedCacheLoader purgingLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(purgingCache);
 
       assertNotInCacheAndStore(purgingCache, purgingLoader, "k1", "k2", "k3", "k4");
@@ -540,7 +553,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
    protected void doPreloadingTest(Configuration preloadingCfg, String cacheName) throws Exception {
       assertTrue("Preload not enabled for preload test", preloadingCfg.persistence().preload());
       cm.defineConfiguration(cacheName, preloadingCfg);
-      Cache<String, String> preloadingCache = cm.getCache(cacheName);
+      Cache<String, String> preloadingCache = getCache(cm, cacheName);
       AdvancedCacheLoader preloadingCacheLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(preloadingCache);
 
       assert preloadingCache.getCacheConfiguration().persistence().preload();
@@ -587,7 +600,7 @@ public class CacheLoaderFunctionalTest extends AbstractInfinispanTest {
 
       cm.defineConfiguration(cacheName, preloadingCfg);
 
-      final Cache<String, String> preloadingCache = cm.getCache(cacheName);
+      final Cache<String, String> preloadingCache = getCache(cm, cacheName);
       final long expectedEntriesInContainer = Math.min(4l, preloadingCfg.eviction().maxEntries());
       AdvancedCacheLoader preloadingCacheLoader = (AdvancedCacheLoader) TestingUtil.getCacheLoader(preloadingCache);
 

@@ -7,6 +7,7 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.metadata.Metadata;
@@ -515,15 +516,20 @@ public interface CommandsFactory {
 
    <K, V, R> ReadOnlyManyCommand<K, V, R> buildReadOnlyManyCommand(Set<? extends K> keys, Function<ReadEntryView<K, V>, R> f);
 
-   <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<WriteEntryView<V>> f);
+   <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(
+      K key, Consumer<WriteEntryView<V>> f, Params params);
 
-   <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f);
+   <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(
+      K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f, Params params);
 
-   <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f);
+   <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(
+      K key, Function<ReadWriteEntryView<K, V>, R> f, Params params);
 
-   <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f);
+   <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(
+      Map<? extends K, ? extends V> entries, BiConsumer<V, WriteEntryView<V>> f, Params params);
 
-   <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, WriteEntryView<V>> f);
+   <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(
+      K key, V value, BiConsumer<V, WriteEntryView<V>> f, Params params);
 
    <K, V> WriteOnlyManyCommand<K, V> buildWriteOnlyManyCommand(Set<? extends K> keys, Consumer<WriteEntryView<V>> f);
 

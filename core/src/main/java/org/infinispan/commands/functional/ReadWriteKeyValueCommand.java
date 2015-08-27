@@ -9,6 +9,7 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -30,8 +31,8 @@ public final class ReadWriteKeyValueCommand<K, V, R> extends AbstractWriteKeyCom
    private Metadata prevMetadata;
 
    public ReadWriteKeyValueCommand(K key, V value, BiFunction<V, ReadWriteEntryView<K, V>, R> f,
-         CommandInvocationId id, ValueMatcher valueMatcher) {
-      super(key, valueMatcher, id);
+         CommandInvocationId id, ValueMatcher valueMatcher, Params params) {
+      super(key, valueMatcher, id, params);
       this.value = value;
       this.f = f;
    }
