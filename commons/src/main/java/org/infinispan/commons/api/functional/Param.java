@@ -61,18 +61,7 @@ public interface Param<P> {
     * asynchronous, hence using the {@link #ASYNC} future mode.
     */
    enum FutureMode implements Param<FutureMode> {
-      ASYNC {
-         @Override
-         public FutureMode get() {
-            return ASYNC;
-         }
-      },
-      COMPLETED {
-         @Override
-         public FutureMode get() {
-            return COMPLETED;
-         }
-      };
+      ASYNC, COMPLETED;
 
       public static final int ID = ParamIds.FUTURE_MODE_ID;
 
@@ -81,11 +70,54 @@ public interface Param<P> {
          return ID;
       }
 
+      @Override
+      public FutureMode get() {
+         return this;
+      }
+
       /**
        * Provides default future mode.
        */
       public static FutureMode defaultValue() {
          return ASYNC;
+      }
+   }
+
+   /**
+    * When a persistence store is attached to a cache, by default all write
+    * operations, regardless of whether they are inserts, updates or removes,
+    * are persisted to the store. Using {@link #SKIP}, the write operations
+    * can skip the persistence store modification, applying the effects of
+    * the write operation only in the in-memory contents of the caches in
+    * the cluster.
+    *
+    * @apiNote Amongst the old flags, there's one that allows cache store
+    * to be skipped for loading or reading. There's no need for such
+    * per-invocation parameter here, because to avoid loading or reading from
+    * the store, {@link org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap}
+    * operations can be called which do not read previous values from the
+    * persistence store.
+    */
+   enum PersistenceMode implements Param<PersistenceMode> {
+      PERSIST, SKIP;
+
+      public static final int ID = ParamIds.PERSISTENCE_MODE_ID;
+
+      @Override
+      public int id() {
+         return ID;
+      }
+
+      @Override
+      public PersistenceMode get() {
+         return this;
+      }
+
+      /**
+       * Provides default persistence mode.
+       */
+      public static PersistenceMode defaultValue() {
+         return PERSIST;
       }
    }
 

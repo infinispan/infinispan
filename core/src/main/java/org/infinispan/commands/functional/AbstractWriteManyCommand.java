@@ -5,14 +5,16 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.FunctionalNotifier;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.metadata.Metadata;
 
 import java.util.Set;
 
-abstract class AbstractWriteManyCommand<K, V> implements WriteCommand {
+abstract class AbstractWriteManyCommand<K, V> implements WriteCommand, ParamsCommand {
 
    boolean isForwarded = false;
-   private int topologyId = -1;
+   int topologyId = -1;
+   Params params;
 
    @Override
    public int getTopologyId() {
@@ -87,4 +89,12 @@ abstract class AbstractWriteManyCommand<K, V> implements WriteCommand {
       return false;  // TODO: Customise this generated block
    }
 
+   @Override
+   public Params getParams() {
+      return params;
+   }
+
+   public void setParams(Params params) {
+      this.params = params;
+   }
 }

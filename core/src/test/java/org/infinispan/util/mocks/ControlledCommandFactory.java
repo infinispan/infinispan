@@ -6,6 +6,7 @@ import org.infinispan.commands.functional.*;
 import org.infinispan.commons.api.functional.EntryView;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
+import org.infinispan.functional.impl.Params;
 import org.infinispan.iteration.impl.EntryRequestCommand;
 import org.infinispan.iteration.impl.EntryResponseCommand;
 import org.infinispan.metadata.Metadata;
@@ -421,28 +422,29 @@ public class ControlledCommandFactory implements CommandsFactory {
    }
 
    @Override
-   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<EntryView.WriteEntryView<V>> f) {
-      return actual.buildWriteOnlyKeyCommand(key, f);
+   public <K, V> WriteOnlyKeyCommand<K, V> buildWriteOnlyKeyCommand(K key, Consumer<EntryView.WriteEntryView<V>> f, Params params) {
+      return actual.buildWriteOnlyKeyCommand(key, f, params);
    }
 
    @Override
-   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f) {
-      return actual.buildReadWriteKeyValueCommand(key, value, f);
+   public <K, V, R> ReadWriteKeyValueCommand<K, V, R> buildReadWriteKeyValueCommand(K key, V value, BiFunction<V, EntryView.ReadWriteEntryView<K, V>, R> f, Params params) {
+      return actual.buildReadWriteKeyValueCommand(key, value, f, params);
    }
 
    @Override
-   public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<EntryView.ReadWriteEntryView<K, V>, R> f) {
-      return actual.buildReadWriteKeyCommand(key, f);
+   public <K, V, R> ReadWriteKeyCommand<K, V, R> buildReadWriteKeyCommand(K key, Function<EntryView.ReadWriteEntryView<K, V>, R> f, Params params) {
+      return actual.buildReadWriteKeyCommand(key, f, params);
    }
 
    @Override
-   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(Map<? extends K, ? extends V> entries, BiConsumer<V, EntryView.WriteEntryView<V>> f) {
-      return actual.buildWriteOnlyManyEntriesCommand(entries, f);
+   public <K, V> WriteOnlyManyEntriesCommand<K, V> buildWriteOnlyManyEntriesCommand(
+         Map<? extends K, ? extends V> entries, BiConsumer<V, EntryView.WriteEntryView<V>> f, Params params) {
+      return actual.buildWriteOnlyManyEntriesCommand(entries, f, params);
    }
 
    @Override
-   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, EntryView.WriteEntryView<V>> f) {
-      return actual.buildWriteOnlyKeyValueCommand(key, value, f);
+   public <K, V> WriteOnlyKeyValueCommand<K, V> buildWriteOnlyKeyValueCommand(K key, V value, BiConsumer<V, EntryView.WriteEntryView<V>> f, Params params) {
+      return actual.buildWriteOnlyKeyValueCommand(key, value, f, params);
    }
 
    @Override

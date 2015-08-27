@@ -1,6 +1,7 @@
 package org.infinispan.functional.decorators;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadOnlyMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
@@ -131,42 +132,8 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
 
    @Override
    public Set<Entry<K, V>> entrySet() {
-      return readOnly.entries().collect(HashSet::new, (s, ro) -> s.add(new Entry<K, V>() {
-         @Override
-         public K getKey() {
-            return ro.key();
-         }
-
-         @Override
-         public V getValue() {
-            return ro.get();
-         }
-
-         @Override
-         public V setValue(V value) {
-            V prev = ro.get();
-            writeOnly.eval(ro.key(), value, setValueConsumer());
-            return prev;
-         }
-
-         @Override
-         public boolean equals(Object o) {
-            if (o == this)
-               return true;
-            if (o instanceof Entry) {
-               Entry<?, ?> e = (Entry<?, ?>) o;
-               if (Objects.equals(ro.key(), e.getKey()) &&
-                  Objects.equals(ro.get(), e.getValue()))
-                  return true;
-            }
-            return false;
-         }
-
-         @Override
-         public int hashCode() {
-            return ro.hashCode();
-         }
-      }), HashSet::addAll);
+      return readOnly.entries().collect(HashSet::new, (s, ro) ->
+         s.add(new FunctionalMapEntry<>(ro, writeOnly)), HashSet::addAll);
    }
 
    @Override
@@ -197,4 +164,55 @@ public final class FunctionalConcurrentMap<K, V> implements ConcurrentMap<K, V>,
       }
    }
 
+   private static final class FunctionalMapEntry<K, V> implements Entry<K, V> {
+      final ReadEntryView<K, V> view;
+      final WriteOnlyMap<K, V> writeOnly;
+
+      private FunctionalMapEntry(ReadEntryView<K, V> view, WriteOnlyMap<K, V> writeOnly) {
+         this.view = view;
+         this.writeOnly = writeOnly;
+      }
+
+      @Override
+      public K getKey() {
+         return view.key();
+      }
+
+      @Override
+      public V getValue() {
+         return view.get();
+      }
+
+      @Override
+      public V setValue(V value) {
+         V prev = view.get();
+         writeOnly.eval(view.key(), value, setValueConsumer());
+         return prev;
+      }
+
+      @Override
+      public boolean equals(Object o) {
+         if (o == this)
+            return true;
+         if (o instanceof Entry) {
+            Entry<?, ?> e = (Entry<?, ?>) o;
+            if (Objects.equals(view.key(), e.getKey()) &&
+               Objects.equals(view.get(), e.getValue()))
+               return true;
+         }
+         return false;
+      }
+
+      @Override
+      public int hashCode() {
+         return view.hashCode();
+      }
+
+      @Override
+      public String toString() {
+         return "FunctionalMapEntry{" +
+            "view=" + view +
+            '}';
+      }
+   }
 }

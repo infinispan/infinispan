@@ -3,15 +3,19 @@ package org.infinispan.commands.functional;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.write.AbstractDataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
+import org.infinispan.functional.impl.Params;
 
-abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand {
+abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand implements ParamsCommand {
 
+   Params params;
    ValueMatcher valueMatcher;
    boolean successful = true;
 
-   public AbstractWriteKeyCommand(K key, ValueMatcher valueMatcher, CommandInvocationId id) {
+   public AbstractWriteKeyCommand(K key, ValueMatcher valueMatcher,
+         CommandInvocationId id, Params params) {
       super(key, null, id);
       this.valueMatcher = valueMatcher;
+      this.params = params;
    }
 
    public AbstractWriteKeyCommand() {
@@ -33,4 +37,8 @@ abstract class AbstractWriteKeyCommand<K, V> extends AbstractDataWriteCommand {
       return successful;
    }
 
+   @Override
+   public Params getParams() {
+      return params;
+   }
 }

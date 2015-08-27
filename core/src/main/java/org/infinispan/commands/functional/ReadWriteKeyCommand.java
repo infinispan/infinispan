@@ -8,6 +8,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.functional.impl.EntryViews;
+import org.infinispan.functional.impl.Params;
 
 import java.util.Set;
 import java.util.function.Function;
@@ -21,8 +22,8 @@ public final class ReadWriteKeyCommand<K, V, R> extends AbstractWriteKeyCommand<
    private Function<ReadWriteEntryView<K, V>, R> f;
 
    public ReadWriteKeyCommand(K key, Function<ReadWriteEntryView<K, V>, R> f,
-         CommandInvocationId id, ValueMatcher valueMatcher) {
-      super(key, valueMatcher, id);
+         CommandInvocationId id, ValueMatcher valueMatcher, Params params) {
+      super(key, valueMatcher, id, params);
       this.f = f;
    }
 
