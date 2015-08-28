@@ -107,6 +107,7 @@ public enum Attribute {
     SHUTDOWN_HOOK("shutdown-hook"),
     @Deprecated
     SHUTDOWN_TIMEOUT("shutdown-timeout"),
+    SIMPLE_CACHE("simple-cache"),
     SINGLETON("singleton"),
     SITE("site"),
     SIZE("size"),

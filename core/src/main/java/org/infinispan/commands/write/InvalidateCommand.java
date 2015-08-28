@@ -76,7 +76,7 @@ public class InvalidateCommand extends RemoveCommand {
    @Override
    public void notify(InvocationContext ctx, Object removedValue, Metadata removedMetadata,
          boolean isPre) {
-      notifier.notifyCacheEntryInvalidated(key, removedValue, isPre, ctx, this);
+      notifier.notifyCacheEntryInvalidated(key, removedValue, removedMetadata, isPre, ctx, this);
    }
 
    @Override

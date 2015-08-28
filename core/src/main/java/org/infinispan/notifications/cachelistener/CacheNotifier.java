@@ -26,30 +26,30 @@ import java.util.Collection;
 public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable<K, V>, ClassLoaderAwareListenable {
 
    /**
-    * Notifies all registered listeners of a CacheEntryCreated event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent} event.
     */
-   void notifyCacheEntryCreated(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command);
+   void notifyCacheEntryCreated(K key, V value, Metadata metadata, boolean pre, InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a CacheEntryModified event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent} event.
     */
-   void notifyCacheEntryModified(K key, V value, V previousValue, Metadata previousMetadata, boolean pre,
+   void notifyCacheEntryModified(K key, V value, Metadata metadata, V previousValue, Metadata previousMetadata, boolean pre,
                                  InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a CacheEntryRemoved event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent} event.
     */
    void notifyCacheEntryRemoved(K key, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx,
                                 FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a CacheEntryVisited event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryVisitedEvent} event.
     */
    void notifyCacheEntryVisited(K key, V value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a CacheEntriesEvicted event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntriesEvictedEvent} event.
     */
    void notifyCacheEntriesEvicted(Collection<InternalCacheEntry<? extends K, ? extends V>> entries,
          InvocationContext ctx, FlagAffectedCommand command);
@@ -60,25 +60,25 @@ public interface CacheNotifier<K, V> extends ClassLoaderAwareFilteringListenable
    void notifyCacheEntryExpired(K key, V value, Metadata metadata, InvocationContext ctx);
 
    /**
-    * Notifies all registered listeners of a CacheEntryInvalidated event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryInvalidatedEvent} event.
     */
-   void notifyCacheEntryInvalidated(K key, V value, boolean pre,
+   void notifyCacheEntryInvalidated(K key, V value, Metadata metadata, boolean pre,
          InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a CacheEntryLoaded event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryLoadedEvent} event.
     */
    void notifyCacheEntryLoaded(K key, V value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a CacheEntryActivated event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryActivatedEvent} event.
     */
    void notifyCacheEntryActivated(K key, V value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand command);
 
    /**
-    * Notifies all registered listeners of a CacheEntryPassivated event.
+    * Notifies all registered listeners of a {@link org.infinispan.notifications.cachelistener.event.CacheEntryPassivatedEvent} event.
     */
    void notifyCacheEntryPassivated(K key, V value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand command);

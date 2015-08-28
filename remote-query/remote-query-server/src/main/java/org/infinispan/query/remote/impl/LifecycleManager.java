@@ -168,6 +168,9 @@ public final class LifecycleManager extends AbstractModuleLifecycle {
 
    private boolean verifyChainContainsRemoteValueWrapperInterceptor(ComponentRegistry cr) {
       InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
+      if (interceptorChain == null) {
+         return false;
+      }
       return interceptorChain.containsInterceptorType(RemoteValueWrapperInterceptor.class, true);
    }
 

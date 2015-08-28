@@ -1,0 +1,1779 @@
+package org.infinispan.cache.impl;
+
+import org.infinispan.AdvancedCache;
+import org.infinispan.CacheCollection;
+import org.infinispan.CacheSet;
+import org.infinispan.CacheStream;
+import org.infinispan.Version;
+import org.infinispan.atomic.Delta;
+import org.infinispan.batch.BatchContainer;
+import org.infinispan.commons.api.BasicCacheContainer;
+import org.infinispan.commons.equivalence.AnyEquivalence;
+import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.util.*;
+import org.infinispan.commons.util.concurrent.NoOpFuture;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.format.PropertyFormatter;
+import org.infinispan.container.DataContainer;
+import org.infinispan.container.InternalEntryFactory;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.context.Flag;
+import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.impl.ImmutableContext;
+import org.infinispan.distribution.DistributionManager;
+import org.infinispan.eviction.EvictionManager;
+import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.factories.annotations.Inject;
+import org.infinispan.filter.Converter;
+import org.infinispan.filter.KeyFilter;
+import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.iteration.EntryIterable;
+import org.infinispan.jmx.annotations.DataType;
+import org.infinispan.jmx.annotations.DisplayType;
+import org.infinispan.jmx.annotations.MBean;
+import org.infinispan.jmx.annotations.ManagedAttribute;
+import org.infinispan.jmx.annotations.ManagedOperation;
+import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.metadata.EmbeddedMetadata;
+import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.notifications.cachelistener.annotation.*;
+import org.infinispan.notifications.cachelistener.filter.CacheEventConverter;
+import org.infinispan.notifications.cachelistener.filter.CacheEventFilter;
+import org.infinispan.partitionhandling.AvailabilityMode;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.security.AuthorizationManager;
+import org.infinispan.stats.Stats;
+import org.infinispan.stream.impl.local.LocalEntryCacheStream;
+import org.infinispan.stream.impl.local.LocalKeyCacheStream;
+import org.infinispan.stream.impl.local.LocalValueCacheStream;
+import org.infinispan.util.TimeService;
+import org.infinispan.util.concurrent.locks.LockManager;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+
+import javax.transaction.TransactionManager;
+import javax.transaction.xa.XAResource;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+/**
+ * Simple local cache without interceptor stack.
+ * The cache still implements {@link AdvancedCache} since it is too troublesome to omit that.
+ *
+ * @author Radim Vansa &lt;rvansa@redhat.com&gt;
+ */
+@MBean(objectName = CacheImpl.OBJECT_NAME, description = "Component that represents a simplified cache instance.")
+public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
+   private final static Log log = LogFactory.getLog(SimpleCacheImpl.class);
+
+   private final static String NULL_KEYS_NOT_SUPPORTED = "Null keys are not supported!";
+   private final static String NULL_VALUES_NOT_SUPPORTED = "Null values are not supported!";
+   private final static Class<? extends Annotation>[] FIRED_EVENTS = new Class[] {
+         CacheEntryCreated.class, CacheEntryRemoved.class, CacheEntryVisited.class,
+         CacheEntryModified.class, CacheEntriesEvicted.class, CacheEntryInvalidated.class,
+         CacheEntryExpired.class };
+
+   private final String name;
+   private ComponentRegistry componentRegistry;
+   private Configuration configuration;
+   private EmbeddedCacheManager cacheManager;
+   private DataContainer<K, V> dataContainer;
+   private CacheNotifier<K, V> cacheNotifier;
+   private TimeService timeService;
+   private InternalEntryFactory entryFactory;
+
+   private Metadata defaultMetadata;
+   private Equivalence<Object> keyEquivalence;
+   private Equivalence<Object> valueEquivalence;
+
+   private boolean hasListeners = false;
+
+   public SimpleCacheImpl(String cacheName) {
+      this.name = cacheName;
+   }
+
+   @Inject
+   public void injectDependencies(ComponentRegistry componentRegistry,
+                                  Configuration configuration,
+                                  EmbeddedCacheManager cacheManager,
+                                  DataContainer dataContainer,
+                                  CacheNotifier cacheNotifier,
+                                  TimeService timeService,
+                                  InternalEntryFactory entryFactory) {
+      this.componentRegistry = componentRegistry;
+      this.configuration = configuration;
+      this.cacheManager = cacheManager;
+      this.dataContainer = dataContainer;
+      this.cacheNotifier = cacheNotifier;
+      this.timeService = timeService;
+      this.entryFactory = entryFactory;
+   }
+
+   @Override
+   @ManagedOperation(
+         description = "Starts the cache.",
+         displayName = "Starts cache."
+   )
+   public void start() {
+      this.defaultMetadata = new EmbeddedMetadata.Builder()
+            .lifespan(configuration.expiration().lifespan())
+            .maxIdle(configuration.expiration().maxIdle()).build();
+      this.keyEquivalence = configuration.dataContainer().keyEquivalence();
+      this.valueEquivalence = configuration.dataContainer().valueEquivalence();
+      componentRegistry.start();
+   }
+
+   @Override
+   @ManagedOperation(
+         description = "Stops the cache.",
+         displayName = "Stops cache."
+   )
+   public void stop() {
+      dataContainer = null;
+      componentRegistry.stop();
+   }
+
+
+   @Override
+   public void putForExternalRead(K key, V value) {
+      ByRef.Boolean isCreatedRef = new ByRef.Boolean(false);
+      putForExternalReadInternal(key, value, defaultMetadata, isCreatedRef);
+   }
+
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit unit) {
+      Metadata metadata = createMetadata(lifespan, unit);
+      ByRef.Boolean isCreatedRef = new ByRef.Boolean(false);
+      putForExternalReadInternal(key, value, metadata, isCreatedRef);
+   }
+
+   @Override
+   public void putForExternalRead(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      Metadata metadata = createMetadata(lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      ByRef.Boolean isCreatedRef = new ByRef.Boolean(false);
+      putForExternalReadInternal(key, value, metadata, isCreatedRef);
+   }
+
+   @Override
+   public void putForExternalRead(K key, V value, Metadata metadata) {
+      ByRef.Boolean isCreatedRef = new ByRef.Boolean(false);
+      putForExternalReadInternal(key, value, applyDefaultMetadata(metadata), isCreatedRef);
+   }
+
+   protected void putForExternalReadInternal(K key, V value, Metadata metadata, ByRef.Boolean isCreatedRef) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         // entry cannot be marked for removal in DC but it compute does not deal with expiration
+         if (isNull(oldEntry)) {
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryCreated(k, value, metadata, true, ImmutableContext.INSTANCE, null);
+            }
+            isCreatedRef.set(true);
+            return factory.create(k, value, metadata);
+         } else {
+            return oldEntry;
+         }
+      });
+      if (hasListeners && isCreatedRef.get()) {
+         cacheNotifier.notifyCacheEntryCreated(key, value, metadata, false, ImmutableContext.INSTANCE, null);
+      }
+   }
+
+   @Override
+   public NotifyingFuture<V> putAsync(K key, V value, Metadata metadata) {
+      return new NoOpFuture<V>(getAndPutInternal(key, value, applyDefaultMetadata(metadata)));
+   }
+
+   @Override
+   public Map<K, V> getAll(Set<?> keys) {
+      Map<K, V> map = CollectionFactory.makeMap(keys.size(), keyEquivalence, valueEquivalence);
+      for (Object k : keys) {
+         Objects.requireNonNull(k, NULL_KEYS_NOT_SUPPORTED);
+         InternalCacheEntry<K, V> entry = getDataContainer().get(k);
+         if (entry != null) {
+            K key = entry.getKey();
+            V value = entry.getValue();
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryVisited(key, value, true, ImmutableContext.INSTANCE, null);
+               cacheNotifier.notifyCacheEntryVisited(key, value, false, ImmutableContext.INSTANCE, null);
+            }
+            map.put(key, value);
+         }
+      }
+      return map;
+   }
+
+   @Override
+   public CacheEntry<K, V> getCacheEntry(Object k) {
+      InternalCacheEntry<K, V> entry = getDataContainer().get(k);
+      if (entry != null) {
+         K key = entry.getKey();
+         V value = entry.getValue();
+         if (hasListeners) {
+            cacheNotifier.notifyCacheEntryVisited(key, value, true, ImmutableContext.INSTANCE, null);
+            cacheNotifier.notifyCacheEntryVisited(key, value, false, ImmutableContext.INSTANCE, null);
+         }
+      }
+      return entry;
+   }
+
+   @Override
+   public Map<K, CacheEntry<K, V>> getAllCacheEntries(Set<?> keys) {
+      Map<K, CacheEntry<K, V>> map = CollectionFactory.makeMap(keys.size(), keyEquivalence, AnyEquivalence.getInstance());
+      for (Object key : keys) {
+         Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+         InternalCacheEntry<K, V> entry = getDataContainer().get(key);
+         if (entry != null) {
+            V value = entry.getValue();
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryVisited((K) key, value, true, ImmutableContext.INSTANCE, null);
+               cacheNotifier.notifyCacheEntryVisited((K) key, value, false, ImmutableContext.INSTANCE, null);
+            }
+            map.put(entry.getKey(), entry);
+         }
+      }
+      return map;
+   }
+
+   @Override
+   public EntryIterable<K, V> filterEntries(KeyValueFilter<? super K, ? super V> filter) {
+      if (filter != null) {
+         componentRegistry.wireDependencies(filter);
+      }
+      return new FilteredEntryIterable(filter);
+   }
+
+   @Override
+   public Map<K, V> getGroup(String groupName) {
+      return Collections.EMPTY_MAP;
+   }
+
+   @Override
+   public void removeGroup(String groupName) {
+   }
+
+   @Override
+   public AvailabilityMode getAvailability() {
+      return AvailabilityMode.AVAILABLE;
+   }
+
+   @Override
+   public void setAvailability(AvailabilityMode availabilityMode) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void evict(K key) {
+      ByRef<InternalCacheEntry<K, V>> oldEntryRef = new ByRef<>(null);
+      getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         if (!isNull(oldEntry)) {
+            oldEntryRef.set(oldEntry);
+         }
+         return null;
+      });
+      InternalCacheEntry<K, V> oldEntry = oldEntryRef.get();
+      if (hasListeners && oldEntry != null) {
+         cacheNotifier.notifyCacheEntriesEvicted(Collections.singleton(oldEntry), ImmutableContext.INSTANCE, null);
+      }
+   }
+
+   @Override
+   public Configuration getCacheConfiguration() {
+      return configuration;
+   }
+
+   @Override
+   public EmbeddedCacheManager getCacheManager() {
+      return cacheManager;
+   }
+
+   @Override
+   public AdvancedCache<K, V> getAdvancedCache() {
+      return this;
+   }
+
+   @Override
+   public ComponentStatus getStatus() {
+      return componentRegistry.getStatus();
+   }
+
+   @ManagedAttribute(
+         description = "Returns the cache status",
+         displayName = "Cache status",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
+   public String getCacheStatus() {
+      return getStatus().toString();
+   }
+
+   protected boolean checkExpiration(InternalCacheEntry<K, V> entry, long now) {
+      if (entry.isExpired(now)) {
+         // we have to check the expiration under lock
+         return null == dataContainer.compute(entry.getKey(), (key, oldEntry, factory) -> {
+            if (entry.isExpired(now)) {
+               cacheNotifier.notifyCacheEntryExpired(key, oldEntry.getValue(), oldEntry.getMetadata(), ImmutableContext.INSTANCE);
+               return null;
+            }
+            return oldEntry;
+         });
+      }
+      return false;
+   }
+
+   @Override
+   public int size() {
+      // we have to iterate in order to provide precise result in case of expiration
+      long now = Long.MIN_VALUE;
+      int size = 0;
+      DataContainer<K, V> dataContainer = getDataContainer();
+      for (InternalCacheEntry<K, V> entry : dataContainer) {
+         if (entry.canExpire()) {
+            if (now == Long.MIN_VALUE) now = timeService.wallClockTime();
+            if (!checkExpiration(entry, now)) {
+               ++size;
+               if (size < 0) {
+                  return Integer.MAX_VALUE;
+               }
+            }
+         } else {
+            ++size;
+            if (size < 0) {
+               return Integer.MAX_VALUE;
+            }
+         }
+      }
+      return size;
+   }
+
+   @Override
+   public boolean isEmpty() {
+      long now = Long.MIN_VALUE;
+      DataContainer<K, V> dataContainer = getDataContainer();
+      for (InternalCacheEntry<K, V> entry : dataContainer) {
+         if (entry.canExpire()) {
+            if (now == Long.MIN_VALUE) now = timeService.wallClockTime();
+            if (!checkExpiration(entry, now)) {
+               return false;
+            }
+         } else {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   @Override
+   public boolean containsKey(Object key) {
+      return get(key) != null;
+   }
+
+   @Override
+   public boolean containsValue(Object value) {
+      Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
+      for (V v : getDataContainer().values()) {
+         if (valueEquivalence.equals(v, value)) return true;
+      }
+      return false;
+   }
+
+   @Override
+   public V get(Object key) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      InternalCacheEntry<K, V> entry = getDataContainer().get(key);
+      if (entry == null) {
+         return null;
+      } else {
+         if (hasListeners) {
+            cacheNotifier.notifyCacheEntryVisited(entry.getKey(), entry.getValue(), true, ImmutableContext.INSTANCE, null);
+            cacheNotifier.notifyCacheEntryVisited(entry.getKey(), entry.getValue(), false, ImmutableContext.INSTANCE, null);
+         }
+         return entry.getValue();
+      }
+   }
+
+   @Override
+   public CacheSet<K> keySet() {
+      return new KeySet();
+   }
+
+   @Override
+   public CacheCollection<V> values() {
+      return new Values();
+   }
+
+   @Override
+   public CacheSet<Entry<K, V>> entrySet() {
+      return new EntrySet();
+   }
+
+   @Override
+   public CacheSet<CacheEntry<K, V>> cacheEntrySet() {
+      return new CacheEntrySet();
+   }
+
+   @Override
+   public void removeExpired(K key, V value, Long lifespan) {
+      checkExpiration(getDataContainer().get(key), timeService.wallClockTime());
+   }
+
+   @Override
+   @ManagedOperation(
+         description = "Clears the cache",
+         displayName = "Clears the cache", name = "clear"
+   )
+   public void clear() {
+      DataContainer<K, V> dataContainer = getDataContainer();
+      boolean hasListeners = this.hasListeners;
+      ArrayList<InternalCacheEntry<K, V>> copyEntries = null;
+      if (hasListeners) {
+         copyEntries = new ArrayList<>(dataContainer.size());
+         for (InternalCacheEntry<K, V> entry : dataContainer.entrySet()) {
+            copyEntries.add(entry);
+            cacheNotifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+         }
+      }
+      dataContainer.clear();
+      if (hasListeners) {
+         for (InternalCacheEntry<K, V> entry : copyEntries) {
+            cacheNotifier.notifyCacheEntryRemoved(entry.getKey(), entry.getValue(), entry.getMetadata(), false, ImmutableContext.INSTANCE, null);
+         }
+      }
+   }
+
+   @Override
+   public String getName() {
+      return name;
+   }
+
+   @ManagedAttribute(
+         description = "Returns the cache name",
+         displayName = "Cache name",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
+   public String getCacheName() {
+      String name = getName().equals(BasicCacheContainer.DEFAULT_CACHE_NAME) ? "Default Cache" : getName();
+      return name + "(" + getCacheConfiguration().clustering().cacheMode().toString().toLowerCase() + ")";
+   }
+
+   @Override
+   @ManagedAttribute(
+         description = "Returns the version of Infinispan",
+         displayName = "Infinispan version",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
+   public String getVersion() {
+      return Version.getVersion();
+   }
+
+   @ManagedAttribute(
+         description = "Returns the cache configuration in form of properties",
+         displayName = "Cache configuration properties",
+         dataType = DataType.TRAIT,
+         displayType = DisplayType.SUMMARY
+   )
+   public Properties getConfigurationAsProperties() {
+      return new PropertyFormatter().format(configuration);
+   }
+
+   @Override
+   public V put(K key, V value) {
+      return getAndPutInternal(key, value, defaultMetadata);
+   }
+
+   @Override
+   public V put(K key, V value, long lifespan, TimeUnit unit) {
+      Metadata metadata = createMetadata(lifespan, unit);
+      return getAndPutInternal(key, value, metadata);
+   }
+
+   protected V getAndPutInternal(K key, V value, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
+      ValueAndMetadata<V> oldRef = new ValueAndMetadata<>();
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         if (isNull(oldEntry)) {
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ImmutableContext.INSTANCE, null);
+            }
+         } else {
+            oldRef.set(oldEntry.getValue(), oldEntry.getMetadata());
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldEntry.getValue(), oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+            }
+         }
+         if (oldEntry == null) {
+            return factory.create(k, value, metadata);
+         } else {
+            return factory.update(oldEntry, value, metadata);
+         }
+      });
+      V oldValue = oldRef.getValue();
+      if (hasListeners) {
+         if (oldValue == null) {
+            cacheNotifier.notifyCacheEntryCreated(key, value, metadata, false, ImmutableContext.INSTANCE, null);
+         } else {
+            cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldValue, oldRef.getMetadata(), false, ImmutableContext.INSTANCE, null);
+         }
+      }
+      return oldValue;
+   }
+
+   @Override
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit unit) {
+      Metadata metadata = createMetadata(lifespan, unit);
+      return putIfAbsentInternal(key, value, metadata);
+   }
+
+   public V putIfAbsent(K key, V value, Metadata metadata) {
+      return putIfAbsentInternal(key, value, applyDefaultMetadata(metadata));
+   }
+
+   protected V putIfAbsentInternal(K key, V value, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
+      ByRef<V> oldValueRef = new ByRef<>(null);
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         if (isNull(oldEntry)) {
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryCreated(key, value, metadata, true, ImmutableContext.INSTANCE, null);
+            }
+            return factory.create(k, value, metadata);
+         } else {
+            oldValueRef.set(oldEntry.getValue());
+            return oldEntry;
+         }
+      });
+      V oldValue = oldValueRef.get();
+      if (hasListeners && oldValue == null) {
+         cacheNotifier.notifyCacheEntryCreated(key, value, metadata, false, ImmutableContext.INSTANCE, null);
+      }
+      return oldValue;
+   }
+
+   @Override
+   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit unit) {
+      putAllInternal(map, createMetadata(lifespan, unit));
+   }
+
+   @Override
+   public V replace(K key, V value, long lifespan, TimeUnit unit) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
+      Metadata metadata = createMetadata(lifespan, unit);
+      return getAndReplaceInternal(key, value, metadata);
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit unit) {
+      return replaceInternal(key, oldValue, value, createMetadata(lifespan, unit));
+   }
+
+   protected V getAndReplaceInternal(K key, V value, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
+      ValueAndMetadata<V> oldRef = new ValueAndMetadata<>();
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         if (!isNull(oldEntry)) {
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldEntry.getValue(), oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+            }
+            oldRef.set(oldEntry.getValue(), oldEntry.getMetadata());
+            return factory.update(oldEntry, value, metadata);
+         } else {
+            return oldEntry;
+         }
+      });
+      V oldValue = oldRef.getValue();
+      if (hasListeners && oldValue != null) {
+         cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldValue, oldRef.getMetadata(), false, ImmutableContext.INSTANCE, null);
+      }
+      return oldValue;
+   }
+
+   @Override
+   public V put(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = createMetadata(lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return getAndPutInternal(key, value, metadata);
+   }
+
+   @Override
+   public V putIfAbsent(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = createMetadata(lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return putIfAbsentInternal(key, value, metadata);
+   }
+
+   @Override
+   public void putAll(Map<? extends K, ? extends V> map, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      putAllInternal(map, createMetadata(lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit));
+   }
+
+   @Override
+   public V replace(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = createMetadata(lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return getAndReplaceInternal(key, value, metadata);
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V value, long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      Metadata metadata = createMetadata(lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
+      return replaceInternal(key, oldValue, value, metadata);
+   }
+
+   public boolean replace(K key, V oldValue, V value, Metadata metadata) {
+      return replaceInternal(key, oldValue, value, applyDefaultMetadata(metadata));
+   }
+
+   protected boolean replaceInternal(K key, V oldValue, V value, Metadata metadata) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
+      Objects.requireNonNull(oldValue, NULL_VALUES_NOT_SUPPORTED);
+      ValueAndMetadata<V> oldRef = new ValueAndMetadata<>();
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         V prevValue = getValue(oldEntry);
+         if (valueEquivalence.equals(prevValue, oldValue)) {
+            oldRef.set(prevValue, oldEntry.getMetadata());
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryModified(key, value, metadata, prevValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+            }
+            return factory.update(oldEntry, value, metadata);
+         } else {
+            return oldEntry;
+         }
+      });
+      if (oldRef.getValue() != null) {
+         if (hasListeners) {
+            cacheNotifier.notifyCacheEntryModified(key, value, metadata, oldRef.getValue(), oldRef.getMetadata(), false, ImmutableContext.INSTANCE, null);
+         }
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   @Override
+   public V remove(Object key) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      ByRef<InternalCacheEntry<K, V>> oldEntryRef = new ByRef<>(null);
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute((K) key, (k, oldEntry, factory) -> {
+         if (!isNull(oldEntry)) {
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryRemoved(oldEntry.getKey(), oldEntry.getValue(), oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+            }
+            oldEntryRef.set(oldEntry);
+         }
+         return null;
+      });
+      InternalCacheEntry<K, V> oldEntry = oldEntryRef.get();
+      if (oldEntry != null) {
+         if (hasListeners) {
+            cacheNotifier.notifyCacheEntryRemoved(oldEntry.getKey(), oldEntry.getValue(), oldEntry.getMetadata(), false, ImmutableContext.INSTANCE, null);
+         }
+         return oldEntry.getValue();
+      } else {
+         return null;
+      }
+   }
+
+   @Override
+   public void putAll(Map<? extends K, ? extends V> map) {
+      putAllInternal(map, defaultMetadata);
+   }
+
+   @Override
+   public NotifyingFuture<V> putAsync(K key, V value) {
+      return new NoOpFuture<>(put(key, value));
+   }
+
+   @Override
+   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return new NoOpFuture<>(put(key, value, lifespan, unit));
+   }
+
+   @Override
+   public NotifyingFuture<V> putAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return new NoOpFuture<>(put(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   }
+
+   @Override
+   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data) {
+      putAll(data);
+      return new NoOpFuture<Void>((Void) null);
+   }
+
+   @Override
+   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit unit) {
+      putAll(data, lifespan, unit);
+      return new NoOpFuture<>((Void) null);
+   }
+
+   @Override
+   public NotifyingFuture<Void> putAllAsync(Map<? extends K, ? extends V> data, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      putAll(data, lifespan, lifespanUnit, maxIdle, maxIdleUnit);
+      return new NoOpFuture<>((Void) null);
+   }
+
+   @Override
+   public NotifyingFuture<Void> clearAsync() {
+      clear();
+      return new NoOpFuture<>((Void) null);
+   }
+
+   @Override
+   public NotifyingFuture<V> putIfAbsentAsync(K key, V value) {
+      return new NoOpFuture<>(putIfAbsent(key, value));
+   }
+
+   @Override
+   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return new NoOpFuture<>(putIfAbsent(key, value, lifespan, unit));
+   }
+
+   @Override
+   public NotifyingFuture<V> putIfAbsentAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return new NoOpFuture<>(putIfAbsent(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   }
+
+   @Override
+   public NotifyingFuture<V> removeAsync(Object key) {
+      return new NoOpFuture<>(remove(key));
+   }
+
+   @Override
+   public NotifyingFuture<Boolean> removeAsync(Object key, Object value) {
+      return new NoOpFuture<>(remove(key, value));
+   }
+
+   @Override
+   public NotifyingFuture<V> replaceAsync(K key, V value) {
+      return new NoOpFuture<>(replace(key, value));
+   }
+
+   @Override
+   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit unit) {
+      return new NoOpFuture<>(replace(key, value, lifespan, unit));
+   }
+
+   @Override
+   public NotifyingFuture<V> replaceAsync(K key, V value, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return new NoOpFuture<>(replace(key, value, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   }
+
+   @Override
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue) {
+      return new NoOpFuture<>(replace(key, oldValue, newValue));
+   }
+
+   @Override
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit unit) {
+      return new NoOpFuture<>(replace(key, oldValue, newValue, lifespan, unit));
+   }
+
+   @Override
+   public NotifyingFuture<Boolean> replaceAsync(K key, V oldValue, V newValue, long lifespan, TimeUnit lifespanUnit, long maxIdle, TimeUnit maxIdleUnit) {
+      return new NoOpFuture<>(replace(key, oldValue, newValue, lifespan, lifespanUnit, maxIdle, maxIdleUnit));
+   }
+
+   @Override
+   public NotifyingFuture<V> getAsync(K key) {
+      return new NoOpFuture<>(get(key));
+   }
+
+   @Override
+   public boolean startBatch() {
+      // invocation batching implies CacheImpl
+      throw log.invocationBatchingNotEnabled();
+   }
+
+   @Override
+   public void endBatch(boolean successful) {
+      // invocation batching implies CacheImpl
+      throw log.invocationBatchingNotEnabled();
+   }
+
+   @Override
+   public V putIfAbsent(K key, V value) {
+      return putIfAbsentInternal(key, value, defaultMetadata);
+   }
+
+   @Override
+   public boolean remove(Object key, Object value) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      Objects.requireNonNull(value, NULL_VALUES_NOT_SUPPORTED);
+      ByRef<InternalCacheEntry<K, V>> oldEntryRef = new ByRef<>(null);
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute((K) key, (k, oldEntry, factory) -> {
+         V oldValue = getValue(oldEntry);
+         if (valueEquivalence.equals(oldValue, value)) {
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryRemoved(oldEntry.getKey(), oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+            }
+            oldEntryRef.set(oldEntry);
+            return null;
+         } else {
+            return oldEntry;
+         }
+      });
+      InternalCacheEntry<K, V> oldEntry = oldEntryRef.get();
+      if (oldEntry != null) {
+         if (hasListeners) {
+            cacheNotifier.notifyCacheEntryRemoved(oldEntry.getKey(), oldEntry.getValue(), oldEntry.getMetadata(), false, ImmutableContext.INSTANCE, null);
+         }
+         return true;
+      } else {
+         return false;
+      }
+   }
+
+   @Override
+   public boolean replace(K key, V oldValue, V newValue) {
+      return replaceInternal(key, oldValue, newValue, defaultMetadata);
+   }
+
+   @Override
+   public V replace(K key, V value) {
+      return getAndReplaceInternal(key, value, defaultMetadata);
+   }
+
+   @Override
+   public void addListener(Object listener, KeyFilter<? super K> filter) {
+      cacheNotifier.addListener(listener, filter);
+      if (!hasListeners && canFire(listener)) {
+         hasListeners = true;
+      }
+   }
+
+   @Override
+   public <C> void addListener(Object listener, CacheEventFilter<? super K, ? super V> filter, CacheEventConverter<? super K, ? super V, C> converter) {
+      cacheNotifier.addListener(listener, filter, converter);
+      if (!hasListeners && canFire(listener)) {
+         hasListeners = true;
+      }
+   }
+
+   @Override
+   public void addListener(Object listener) {
+      cacheNotifier.addListener(listener);
+      if (!hasListeners && canFire(listener)) {
+         hasListeners = true;
+      }
+   }
+
+   @Override
+   public void removeListener(Object listener) {
+      cacheNotifier.removeListener(listener);
+   }
+
+   @Override
+   public Set<Object> getListeners() {
+      return cacheNotifier.getListeners();
+   }
+
+   private boolean canFire(Object listener) {
+      for (Method m : listener.getClass().getMethods()) {
+         for (Class<? extends Annotation> annotation : FIRED_EVENTS) {
+            if (m.isAnnotationPresent(annotation)) {
+               return true;
+            }
+         }
+      }
+      return false;
+   }
+
+   private Metadata applyDefaultMetadata(Metadata metadata) {
+      Metadata.Builder builder = metadata.builder();
+      return builder != null ? builder.merge(defaultMetadata).build() : metadata;
+   }
+
+   private Metadata createMetadata(long lifespan, TimeUnit unit) {
+      return new EmbeddedMetadata.Builder().lifespan(lifespan, unit).maxIdle(configuration.expiration().maxIdle()).build();
+   }
+
+   private Metadata createMetadata(long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
+      return new EmbeddedMetadata.Builder()
+            .lifespan(lifespan, lifespanUnit)
+            .maxIdle(maxIdleTime, maxIdleTimeUnit)
+            .build();
+   }
+
+   @Override
+   public AdvancedCache<K, V> withFlags(Flag... flags) {
+      // the flags are mostly ignored
+      return this;
+   }
+
+   @Override
+   public void addInterceptor(CommandInterceptor i, int position) {
+      throw log.interceptorStackNotSupported();
+   }
+
+   @Override
+   public boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor) {
+      throw log.interceptorStackNotSupported();
+   }
+
+   @Override
+   public boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor) {
+      throw log.interceptorStackNotSupported();
+   }
+
+   @Override
+   public void removeInterceptor(int position) {
+      throw log.interceptorStackNotSupported();
+   }
+
+   @Override
+   public void removeInterceptor(Class<? extends CommandInterceptor> interceptorType) {
+      throw log.interceptorStackNotSupported();
+   }
+
+   @Override
+   public List<CommandInterceptor> getInterceptorChain() {
+      return Collections.EMPTY_LIST;
+   }
+
+   @Override
+   public EvictionManager getEvictionManager() {
+      return getComponentRegistry().getComponent(EvictionManager.class);
+   }
+
+   @Override
+   public ExpirationManager<K, V> getExpirationManager() {
+      return getComponentRegistry().getComponent(ExpirationManager.class);
+   }
+
+   @Override
+   public ComponentRegistry getComponentRegistry() {
+      return componentRegistry;
+   }
+
+   @Override
+   public DistributionManager getDistributionManager() {
+      return getComponentRegistry().getComponent(DistributionManager.class);
+   }
+
+   @Override
+   public AuthorizationManager getAuthorizationManager() {
+      return getComponentRegistry().getComponent(AuthorizationManager.class);
+   }
+
+   @Override
+   public boolean lock(K... keys) {
+      throw log.lockOperationsNotSupported();
+   }
+
+   @Override
+   public boolean lock(Collection<? extends K> keys) {
+      throw log.lockOperationsNotSupported();
+   }
+
+   @Override
+   public void applyDelta(K deltaAwareValueKey, Delta delta, Object... locksToAcquire) {
+      throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public RpcManager getRpcManager() {
+      return null;
+   }
+
+   @Override
+   public BatchContainer getBatchContainer() {
+      return null;
+   }
+
+   @Override
+   public InvocationContextContainer getInvocationContextContainer() {
+      return null;
+   }
+
+   @Override
+   public DataContainer<K, V> getDataContainer() {
+      DataContainer<K, V> dataContainer = this.dataContainer;
+      if (dataContainer == null) {
+         ComponentStatus status = getStatus();
+         switch (status) {
+            case STOPPING:
+               throw log.cacheIsStopping(name);
+            case TERMINATED:
+            case FAILED:
+               throw log.cacheIsTerminated(name);
+            default:
+               throw new IllegalStateException("Status: " + status);
+         }
+      }
+      return dataContainer;
+   }
+
+   @Override
+   public TransactionManager getTransactionManager() {
+      return null;
+   }
+
+   @Override
+   public LockManager getLockManager() {
+      return null;
+   }
+
+   @Override
+   public Stats getStats() {
+      return null;
+   }
+
+   @Override
+   public XAResource getXAResource() {
+      return null;
+   }
+
+   @Override
+   public ClassLoader getClassLoader() {
+      return null;
+   }
+
+   @Override
+   public AdvancedCache<K, V> with(ClassLoader classLoader) {
+      return this;
+   }
+
+   @Override
+   public V put(K key, V value, Metadata metadata) {
+      return getAndPutInternal(key, value, applyDefaultMetadata(metadata));
+   }
+
+   @Override
+   public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
+      putAllInternal(map, applyDefaultMetadata(metadata));
+   }
+
+   protected void putAllInternal(Map<? extends K, ? extends V> map, Metadata metadata) {
+      for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
+         Objects.requireNonNull(entry.getKey(), NULL_KEYS_NOT_SUPPORTED);
+         Objects.requireNonNull(entry.getValue(), NULL_VALUES_NOT_SUPPORTED);
+      }
+      for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
+         getAndPutInternal(entry.getKey(), entry.getValue(), metadata);
+      }
+   }
+
+   @Override
+   public V replace(K key, V value, Metadata metadata) {
+      return getAndReplaceInternal(key, value, applyDefaultMetadata(metadata));
+   }
+
+   @Override
+   public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      ByRef<V> newValueRef = new ByRef<>(null);
+      return computeIfAbsentInternal(key, mappingFunction, newValueRef);
+   }
+
+   protected V computeIfAbsentInternal(K key, Function<? super K, ? extends V> mappingFunction, ByRef<V> newValueRef) {
+      boolean hasListeners = this.hasListeners;
+      InternalCacheEntry<K, V> returnEntry = getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         V oldValue = getValue(oldEntry);
+         if (oldValue == null) {
+            V newValue = mappingFunction.apply(k);
+            if (newValue == null) {
+               return null;
+            } else {
+               if (hasListeners) {
+                  cacheNotifier.notifyCacheEntryCreated(k, newValue, defaultMetadata, true, ImmutableContext.INSTANCE, null);
+               }
+               newValueRef.set(newValue);
+               return factory.create(k, newValue, defaultMetadata);
+            }
+         } else {
+            return oldEntry;
+         }
+      });
+      V newValue = newValueRef.get();
+      if (hasListeners && newValue != null) {
+         cacheNotifier.notifyCacheEntryCreated(key, newValueRef.get(), defaultMetadata, false, ImmutableContext.INSTANCE, null);
+      }
+      return returnEntry.getValue();
+   }
+
+   @Override
+   public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      Objects.requireNonNull(key, NULL_KEYS_NOT_SUPPORTED);
+      CacheEntryChange<K, V> ref = new CacheEntryChange<>();
+      return computeIfPresentInternal(key, remappingFunction, ref);
+   }
+
+   protected V computeIfPresentInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref) {
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         V oldValue = getValue(oldEntry);
+         if (oldValue != null) {
+            V newValue = remappingFunction.apply(k, oldValue);
+            if (newValue == null) {
+               if (hasListeners) {
+                  cacheNotifier.notifyCacheEntryRemoved(k, oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+               }
+               ref.set(k, null, oldValue, oldEntry.getMetadata());
+               return null;
+            } else {
+               if (hasListeners) {
+                  cacheNotifier.notifyCacheEntryModified(k, newValue, defaultMetadata, oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+               }
+               ref.set(k, newValue, oldValue, oldEntry.getMetadata());
+               return factory.update(oldEntry, newValue, defaultMetadata);
+            }
+         } else {
+            return null;
+         }
+      });
+      V newValue = ref.getNewValue();
+      if (hasListeners) {
+         if (newValue != null) {
+            cacheNotifier.notifyCacheEntryModified(ref.getKey(), newValue, defaultMetadata, ref.getOldValue(), ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
+         } else {
+            cacheNotifier.notifyCacheEntryRemoved(ref.getKey(), ref.getOldValue(), ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
+         }
+      }
+      return newValue;
+   }
+
+   @Override
+   public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+      CacheEntryChange<K, V> ref = new CacheEntryChange<>();
+      return computeInternal(key, remappingFunction, ref);
+   }
+
+   protected V computeInternal(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref) {
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         V oldValue = getValue(oldEntry);
+         V newValue = remappingFunction.apply(k, oldValue);
+         return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, ref, hasListeners);
+      });
+      return notifyAndReturn(ref, hasListeners);
+   }
+
+   @Override
+   public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+      CacheEntryChange<K, V> ref = new CacheEntryChange<>();
+      return mergeInternal(key, value, remappingFunction, ref);
+   }
+
+   protected V mergeInternal(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction, CacheEntryChange<K, V> ref) {
+      boolean hasListeners = this.hasListeners;
+      getDataContainer().compute(key, (k, oldEntry, factory) -> {
+         V oldValue = getValue(oldEntry);
+         V newValue = remappingFunction.apply(oldValue, value);
+         return getUpdatedEntry(k, oldEntry, factory, oldValue, newValue, ref, hasListeners);
+      });
+      return notifyAndReturn(ref, hasListeners);
+   }
+
+   private V notifyAndReturn(CacheEntryChange<K, V> ref, boolean hasListeners) {
+      K key = ref.getKey();
+      V newValue = ref.getNewValue();
+      if (key != null) {
+         V oldValue = ref.getOldValue();
+         if (hasListeners) {
+            if (newValue == null) {
+               cacheNotifier.notifyCacheEntryRemoved(key, oldValue, ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
+            } else if (oldValue == null) {
+               cacheNotifier.notifyCacheEntryCreated(key, newValue, defaultMetadata, false, ImmutableContext.INSTANCE, null);
+            } else {
+               cacheNotifier.notifyCacheEntryModified(key, newValue, defaultMetadata, oldValue, ref.getOldMetadata(), false, ImmutableContext.INSTANCE, null);
+            }
+         }
+      }
+      return newValue;
+   }
+
+   private InternalCacheEntry<K, V> getUpdatedEntry(K k, InternalCacheEntry<K, V> oldEntry, InternalEntryFactory factory, V oldValue, V newValue, CacheEntryChange<K, V> ref, boolean hasListeners) {
+      if (newValue == null) {
+         if (oldValue != null) {
+            if (hasListeners) {
+               cacheNotifier.notifyCacheEntryRemoved(k, oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+            }
+            ref.set(k, null, oldValue, oldEntry.getMetadata());
+         }
+         return null;
+      } else if (oldValue == null) {
+         if (hasListeners) {
+            cacheNotifier.notifyCacheEntryCreated(k, newValue, defaultMetadata, true, ImmutableContext.INSTANCE, null);
+         }
+         ref.set(k, newValue, null, null);
+         return factory.create(k, newValue, defaultMetadata);
+      } else if (valueEquivalence.equals(oldValue, newValue)) {
+         return oldEntry;
+      } else {
+         if (hasListeners) {
+            cacheNotifier.notifyCacheEntryModified(k, newValue, defaultMetadata, oldValue, oldEntry.getMetadata(), true, ImmutableContext.INSTANCE, null);
+         }
+         ref.set(k, newValue, oldValue, oldEntry.getMetadata());
+         return factory.update(oldEntry, newValue, defaultMetadata);
+      }
+   }
+
+   // This method can be called only from dataContainer.compute()'s action;
+   // as we'll replace the old value when it's expired
+   private boolean isNull(InternalCacheEntry<K, V> entry) {
+      if (entry == null) {
+         return true;
+      } else if (entry.canExpire()) {
+         if (entry.isExpired(timeService.wallClockTime())) {
+            cacheNotifier.notifyCacheEntryExpired(entry.getKey(), entry.getValue(), entry.getMetadata(), ImmutableContext.INSTANCE);
+            return true;
+         }
+      }
+      return false;
+   }
+
+   // This method can be called only from dataContainer.compute()'s action!
+   private V getValue(InternalCacheEntry<K, V> entry) {
+      return isNull(entry) ? null : entry.getValue();
+   }
+
+   protected static class ValueAndMetadata<V> {
+      private V value;
+      private Metadata metadata;
+
+      public void set(V value, Metadata metadata) {
+         this.value = value;
+         this.metadata = metadata;
+      }
+
+      public V getValue() {
+         return value;
+      }
+
+      public Metadata getMetadata() {
+         return metadata;
+      }
+   }
+
+   protected static class CacheEntryChange<K, V> {
+      private K key;
+      private V newValue;
+      private V oldValue;
+      private Metadata oldMetadata;
+
+      public void set(K key, V newValue, V oldValue, Metadata oldMetadata) {
+         this.key = key;
+         this.newValue = newValue;
+         this.oldValue = oldValue;
+         this.oldMetadata = oldMetadata;
+      }
+
+      public K getKey() {
+         return key;
+      }
+
+      public V getNewValue() {
+         return newValue;
+      }
+
+      public V getOldValue() {
+         return oldValue;
+      }
+
+      public Metadata getOldMetadata() {
+         return oldMetadata;
+      }
+   }
+
+   protected abstract class EntrySetBase<T extends Entry<K, V>> implements CacheSet<T> {
+      private final Set<? extends Entry<K, V>> delegate = getDataContainer().entrySet();
+
+      @Override
+      public int size() {
+         return SimpleCacheImpl.this.size();
+      }
+
+      @Override
+      public boolean isEmpty() {
+         return SimpleCacheImpl.this.isEmpty();
+      }
+
+      @Override
+      public boolean contains(Object o) {
+         return delegate.contains(o);
+      }
+
+      @Override
+      public Object[] toArray() {
+         return delegate.toArray();
+      }
+
+      @Override
+      public <T> T[] toArray(T[] a) {
+         return delegate.toArray(a);
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         if (o instanceof Entry) {
+            Entry<K, V> entry = (Entry<K, V>) o;
+            return SimpleCacheImpl.this.remove(entry.getKey(), entry.getValue());
+         }
+         return false;
+      }
+
+      @Override
+      public boolean containsAll(Collection<?> c) {
+         return delegate.containsAll(c);
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         boolean changed = false;
+         for (InternalCacheEntry<K, V> entry : getDataContainer()) {
+            if (!c.contains(entry)) {
+               changed |= SimpleCacheImpl.this.remove(entry.getKey(), entry.getValue());
+            }
+         }
+         return changed;
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         boolean changed = false;
+         for (Object o : c) {
+            if (o instanceof Entry) {
+               Entry<K, V> entry = (Entry<K, V>) o;
+               changed |= SimpleCacheImpl.this.remove(entry.getKey(), entry.getValue());
+            }
+         }
+         return changed;
+      }
+
+      @Override
+      public void clear() {
+         SimpleCacheImpl.this.clear();
+      }
+   }
+
+   protected class EntrySet extends EntrySetBase<Entry<K, V>> implements CacheSet<Entry<K, V>> {
+      @Override
+      public CloseableIterator<Entry<K, V>> iterator() {
+         return new CloseableIterator<Entry<K, V>>() {
+            private final Iterator<? extends Entry<K, V>> iterator = new FilteringIterator((key, value, metadata) -> true);
+
+            @Override
+            public boolean hasNext() {
+               return iterator.hasNext();
+            }
+
+            @Override
+            public Entry<K, V> next() {
+               return iterator.next();
+            }
+
+            @Override
+            public void remove() {
+               iterator.remove();
+            }
+
+            @Override
+            public void close() {
+            }
+         };
+      }
+
+      @Override
+      public CloseableSpliterator<Entry<K, V>> spliterator() {
+         return Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
+               Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+      }
+
+      @Override
+      public boolean add(Entry<K, V> entry) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends Entry<K, V>> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public CacheStream<Entry<K, V>> stream() {
+         return new LocalEntryCacheStream(SimpleCacheImpl.this, false, null, getStreamSupplier(false), getComponentRegistry());
+      }
+
+      @Override
+      public CacheStream<Entry<K, V>> parallelStream() {
+         return new LocalEntryCacheStream(SimpleCacheImpl.this, true, null, getStreamSupplier(true), getComponentRegistry());
+      }
+   }
+
+   protected class CacheEntrySet extends EntrySetBase<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
+      @Override
+      public CloseableIterator<CacheEntry<K, V>> iterator() {
+         return new CloseableIterator<CacheEntry<K, V>>() {
+            private final Iterator<? extends CacheEntry<K, V>> iterator = new FilteringIterator((key, value, metadata) -> true);
+
+            @Override
+            public boolean hasNext() {
+               return iterator.hasNext();
+            }
+
+            @Override
+            public CacheEntry<K, V> next() {
+               return iterator.next();
+            }
+
+            @Override
+            public void remove() {
+               iterator.remove();
+            }
+
+            @Override
+            public void close() {
+            }
+         };
+      }
+
+      @Override
+      public CloseableSpliterator<CacheEntry<K, V>> spliterator() {
+         return Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
+               Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+      }
+
+      @Override
+      public boolean add(CacheEntry<K, V> entry) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public boolean addAll(Collection<? extends CacheEntry<K, V>> c) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public CacheStream<CacheEntry<K, V>> stream() {
+         Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(false);
+         return new LocalEntryCacheStream<>(SimpleCacheImpl.this, false, null, supplier, getComponentRegistry());
+      }
+
+      @Override
+      public CacheStream<CacheEntry<K, V>> parallelStream() {
+         Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(false);
+         return new LocalEntryCacheStream<>(SimpleCacheImpl.this, true, null, supplier, getComponentRegistry());
+      }
+   }
+
+   protected class Values extends CloseableIteratorCollectionAdapter<V> implements CacheCollection<V> {
+      public Values() {
+         super(getDataContainer().values());
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         Set<Object> retained = CollectionFactory.makeSet(c.size(), valueEquivalence);
+         retained.addAll(c);
+         boolean changed = false;
+         for (InternalCacheEntry<K, V> entry : getDataContainer()) {
+            if (!retained.contains(entry.getValue())) {
+               changed |= SimpleCacheImpl.this.remove(entry.getKey(), entry.getValue());
+            }
+         }
+         return changed;
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         int removeSize = c.size();
+         if (removeSize == 0) {
+            return false;
+         } else if (removeSize == 1) {
+            return remove(c.iterator().next());
+         }
+         Set<Object> removed = CollectionFactory.makeSet(removeSize, valueEquivalence);
+         removed.addAll(c);
+         boolean changed = false;
+         for (InternalCacheEntry<K, V> entry : getDataContainer()) {
+            if (removed.contains(entry.getValue())) {
+               changed |= SimpleCacheImpl.this.remove(entry.getKey(), entry.getValue());
+            }
+         }
+         return changed;
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         for (InternalCacheEntry<K, V> entry : getDataContainer()) {
+            if (valueEquivalence.equals(entry.getValue(), o)) {
+               if (SimpleCacheImpl.this.remove(entry.getKey(), entry.getValue())) {
+                  return true;
+               }
+            }
+         }
+         return false;
+      }
+
+      @Override
+      public void clear() {
+         SimpleCacheImpl.this.clear();
+      }
+
+      @Override
+      public CloseableIterator<V> iterator() {
+         return new CloseableIterator<V>() {
+            FilteringIterator iterator = new FilteringIterator((key, value, metadata) -> true);
+
+            @Override
+            public void close() {
+            }
+
+            @Override
+            public boolean hasNext() {
+               return iterator.hasNext();
+            }
+
+            @Override
+            public V next() {
+               return iterator.next().getValue();
+            }
+         };
+      }
+
+      @Override
+      public int size() {
+         return SimpleCacheImpl.this.size();
+      }
+
+      @Override
+      public boolean isEmpty() {
+         return SimpleCacheImpl.this.isEmpty();
+      }
+
+      @Override
+      public CacheStream<V> stream() {
+         return new LocalValueCacheStream<>(SimpleCacheImpl.this, false, null, getStreamSupplier(false), getComponentRegistry());
+      }
+
+      @Override
+      public CacheStream<V> parallelStream() {
+         return new LocalValueCacheStream<>(SimpleCacheImpl.this, true, null, getStreamSupplier(true), getComponentRegistry());
+      }
+   }
+
+   protected class KeySet extends CloseableIteratorSetAdapter<K> implements CacheSet<K> {
+      public KeySet() {
+         super(getDataContainer().keySet());
+      }
+
+      @Override
+      public boolean retainAll(Collection<?> c) {
+         Set<Object> retained = CollectionFactory.makeSet(c.size(), keyEquivalence);
+         retained.addAll(c);
+         boolean changed = false;
+         for (InternalCacheEntry<K, V> entry : getDataContainer()) {
+            if (!retained.contains(entry.getKey())) {
+               changed |= SimpleCacheImpl.this.remove(entry.getKey()) != null;
+            }
+         }
+         return changed;
+      }
+
+      @Override
+      public boolean remove(Object o) {
+         return SimpleCacheImpl.this.remove(o) != null;
+      }
+
+      @Override
+      public boolean removeAll(Collection<?> c) {
+         boolean changed = false;
+         for (Object key : c) {
+            changed |= SimpleCacheImpl.this.remove(key) != null;
+         }
+         return changed;
+      }
+
+      @Override
+      public void clear() {
+         SimpleCacheImpl.this.clear();
+      }
+
+      @Override
+      public CloseableIterator<K> iterator() {
+         return new CloseableIterator<K>() {
+            private final FilteringIterator iterator = new FilteringIterator((key, value, metadata) -> true);
+
+            @Override
+            public void close() {
+            }
+
+            @Override
+            public boolean hasNext() {
+               return iterator.hasNext();
+            }
+
+            @Override
+            public K next() {
+               return iterator.next().getKey();
+            }
+         };
+      }
+
+      @Override
+      public int size() {
+         return SimpleCacheImpl.this.size();
+      }
+
+      @Override
+      public boolean isEmpty() {
+         return SimpleCacheImpl.this.isEmpty();
+      }
+
+      @Override
+      public CacheStream<K> stream() {
+         Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(false);
+         return new LocalKeyCacheStream<>(SimpleCacheImpl.this, false, null, supplier, getComponentRegistry());
+      }
+
+      @Override
+      public CacheStream<K> parallelStream() {
+         Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(true);
+         return new LocalKeyCacheStream<>(SimpleCacheImpl.this, true, null, supplier, getComponentRegistry());
+      }
+   }
+
+   protected Supplier<Stream<CacheEntry<K, V>>> getStreamSupplier(boolean parallel) {
+      CloseableSpliterator<CacheEntry<K, V>> spliterator = Closeables.spliterator(Closeables.iterator(dataContainer.iterator()), dataContainer.size(),
+            Spliterator.CONCURRENT | Spliterator.NONNULL | Spliterator.DISTINCT);
+      return () -> StreamSupport.stream(spliterator, parallel);
+   }
+
+   protected class FilteredEntryIterable implements EntryIterable<K, V> {
+      private final KeyValueFilter filter;
+
+      public FilteredEntryIterable(KeyValueFilter<? super K, ? super V> filter) {
+         this.filter = filter;
+      }
+
+      @Override
+      public void close() {
+      }
+
+      @Override
+      public CloseableIterator<CacheEntry<K, V>> iterator() {
+         return new FilteringIterator(filter);
+      }
+
+      @Override
+      public <C> CloseableIterable<CacheEntry<K, C>> converter(Converter<? super K, ? super V, C> converter) {
+         Objects.requireNonNull(converter);
+         if (converter != filter) {
+            componentRegistry.wireDependencies(converter);
+         }
+         return new ConvertedIterable<>(iterator(), converter);
+      }
+   }
+
+   protected class FilteringIterator implements CloseableIterator<CacheEntry<K, V>> {
+      private final KeyValueFilter filter;
+      private Iterator<InternalCacheEntry<K, V>> iterator = getDataContainer().iterator();
+      private InternalCacheEntry<K, V> last = null;
+
+      private FilteringIterator(KeyValueFilter filter) {
+         this.filter = filter;
+      }
+
+      @Override
+      public boolean hasNext() {
+         if (last == null) {
+            while (iterator.hasNext()) {
+               last = iterator.next();
+               if (last.canExpire() && checkExpiration(last, timeService.wallClockTime())) continue;
+               if (filter == null || filter.accept(last.getKey(), last.getValue(), last.getMetadata())) {
+                  return true;
+               }
+            }
+            last = null;
+            return false;
+         }
+         return true;
+      }
+
+      @Override
+      public CacheEntry<K, V> next() {
+         if (last == null) {
+            if (!hasNext()) {
+               throw new NoSuchElementException();
+            }
+         }
+         CacheEntry<K, V> tmp = last;
+         last = null;
+         return tmp;
+      }
+
+      @Override
+      public void close() {
+      }
+   }
+
+   protected class ConvertedIterable<C> implements CloseableIterable<CacheEntry<K, C>> {
+      private final Iterator<CacheEntry<K, V>> iterator;
+      private final Converter<? super K, ? super V, ? extends C> converter;
+
+
+      public ConvertedIterable(Iterator<CacheEntry<K, V>> iterator, Converter<? super K, ? super V, ? extends C> converter) {
+         this.iterator = iterator;
+         this.converter = converter;
+      }
+
+      @Override
+      public void close() {
+      }
+
+      @Override
+      public CloseableIterator<CacheEntry<K, C>> iterator() {
+         return new ConvertingIterator<C>(iterator, converter);
+      }
+   }
+
+   protected class ConvertingIterator<C> implements CloseableIterator<CacheEntry<K, C>> {
+      private final Iterator<CacheEntry<K, V>> iterator;
+      private final Converter<? super K, ? super V, ? extends C> converter;
+
+      private ConvertingIterator(Iterator<CacheEntry<K, V>> iterator, Converter<? super K, ? super V, ? extends C> converter) {
+         this.iterator = iterator;
+         this.converter = converter;
+      }
+
+      @Override
+      public void close() {
+      }
+
+      @Override
+      public boolean hasNext() {
+         return iterator.hasNext();
+      }
+
+      @Override
+      public CacheEntry<K, C> next() {
+         CacheEntry<K, V> entry = iterator.next();
+         return entryFactory.create(entry.getKey(), converter.convert(entry.getKey(), entry.getValue(), entry.getMetadata()), entry.getMetadata());
+      }
+   }
+}

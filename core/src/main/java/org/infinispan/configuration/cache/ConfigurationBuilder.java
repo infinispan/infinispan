@@ -1,6 +1,7 @@
 package org.infinispan.configuration.cache;
 
 import static java.util.Arrays.asList;
+import static org.infinispan.configuration.cache.Configuration.SIMPLE_CACHE;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -10,9 +11,13 @@ import java.util.List;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.configuration.Builder;
 import org.infinispan.commons.configuration.ConfigurationUtils;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 public class ConfigurationBuilder implements ConfigurationChildBuilder {
+   private static final Log log = LogFactory.getLog(ConfigurationBuilder.class, Log.class);
 
    private final ClusteringConfigurationBuilder clustering;
    private final CustomInterceptorsConfigurationBuilder customInterceptors;
@@ -33,10 +38,12 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
    private final SitesConfigurationBuilder sites;
    private final CompatibilityModeConfigurationBuilder compatibility;
+   private final AttributeSet attributes;
 
    private boolean template = false;
 
    public ConfigurationBuilder() {
+      this.attributes = Configuration.attributeDefinitionSet();
       this.clustering = new ClusteringConfigurationBuilder(this);
       this.customInterceptors = new CustomInterceptorsConfigurationBuilder(this);
       this.dataContainer = new DataContainerConfigurationBuilder(this);
@@ -55,6 +62,17 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       this.unsafe = new UnsafeConfigurationBuilder(this);
       this.sites = new SitesConfigurationBuilder(this);
       this.compatibility = new CompatibilityModeConfigurationBuilder(this);
+   }
+
+   @Override
+   public ConfigurationBuilder simpleCache(boolean simpleCache) {
+      attributes.attribute(SIMPLE_CACHE).set(simpleCache);
+      return this;
+   }
+
+   @Override
+   public boolean simpleCache() {
+      return attributes.attribute(SIMPLE_CACHE).get();
    }
 
    @Override
@@ -175,6 +193,9 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
 
    @SuppressWarnings("unchecked")
    public void validate() {
+      if (attributes.attribute(SIMPLE_CACHE).get()) {
+         validateSimpleCacheConfiguration();
+      }
       for (Builder<?> validatable:
             asList(clustering, customInterceptors, dataContainer, deadlockDetection, eviction, expiration, indexing,
                    invocationBatching, jmxStatistics, persistence, locking, storeAsBinary, transaction,
@@ -183,6 +204,18 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       }
       for (Builder<?> m : modules) {
          m.validate();
+      }
+   }
+
+   private void validateSimpleCacheConfiguration() {
+      if ((transaction.transactionMode() != null && transaction.transactionMode().isTransactional())
+            || !customInterceptors.create().interceptors().isEmpty()
+            || !persistence.stores().isEmpty()
+            || invocationBatching.isEnabled()
+            || indexing.enabled()
+            || storeAsBinary.create().enabled()
+            || compatibility.create().enabled()) {
+         throw log.notSupportedInSimpleCache();
       }
    }
 
@@ -214,7 +247,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
       List<Object> modulesConfig = new LinkedList<Object>();
       for (Builder<?> module : modules)
          modulesConfig.add(module.create());
-      return new Configuration(template, clustering.create(), customInterceptors.create(),
+      return new Configuration(template, attributes.protect(), clustering.create(), customInterceptors.create(),
                dataContainer.create(), deadlockDetection.create(), eviction.create(),
                expiration.create(), indexing.create(), invocationBatching.create(),
                jmxStatistics.create(), persistence.create(), locking.create(), security.create(),
@@ -224,6 +257,7 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder {
    }
 
    public ConfigurationBuilder read(Configuration template) {
+      this.attributes.read(template.attributes());
       this.clustering.read(template.clustering());
       this.customInterceptors.read(template.customInterceptors());
       this.dataContainer.read(template.dataContainer());

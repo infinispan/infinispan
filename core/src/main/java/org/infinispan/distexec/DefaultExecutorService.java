@@ -30,6 +30,7 @@ import org.infinispan.distexec.spi.DistributedTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.remoting.responses.Response;
@@ -177,6 +178,7 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
 
       ensureAccessPermissions(masterCacheNode.getAdvancedCache());
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
+      ensureFullCache(masterCacheNode.getAdvancedCache());
 
       this.cache = masterCacheNode.getAdvancedCache();
       ComponentRegistry registry = SecurityActions.getCacheComponentRegistry(cache);
@@ -655,6 +657,13 @@ public class DefaultExecutorService extends AbstractExecutorService implements D
       // {@link Start} annotation
       if (cache.getStatus() != ComponentStatus.RUNNING && cache.getStatus() != ComponentStatus.INITIALIZING)
          throw new IllegalStateException("Invalid cache state " + cache.getStatus());
+   }
+
+   private void ensureFullCache(AdvancedCache<?, ?> advancedCache) {
+      List<CommandInterceptor> interceptorChain = SecurityActions.getInterceptorChain(advancedCache);
+      if (interceptorChain == null || interceptorChain.isEmpty()) {
+         throw log.distributedExecutorsNotSupported();
+      }
    }
 
    private static class RandomNodeTaskFailoverPolicy implements DistributedTaskFailoverPolicy {

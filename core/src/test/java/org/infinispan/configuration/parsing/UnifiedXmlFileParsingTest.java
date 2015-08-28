@@ -6,6 +6,7 @@ import static org.testng.AssertJUnit.*;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.infinispan.Version;
 import org.infinispan.commons.CacheConfigurationException;
@@ -16,15 +17,7 @@ import org.infinispan.commons.executors.ScheduledThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.configuration.QueryableDataContainer;
-import org.infinispan.configuration.cache.BackupConfiguration;
-import org.infinispan.configuration.cache.BackupFailurePolicy;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ClusterLoaderConfiguration;
-import org.infinispan.configuration.cache.Configuration;
-import org.infinispan.configuration.cache.Index;
-import org.infinispan.configuration.cache.InterceptorConfiguration;
-import org.infinispan.configuration.cache.SingleFileStoreConfiguration;
-import org.infinispan.configuration.cache.VersioningScheme;
+import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.distribution.ch.impl.SyncConsistentHashFactory;
@@ -297,9 +290,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertFalse(c.clustering().stateTransfer().fetchInMemoryState());
       assertEquals(60000, c.clustering().stateTransfer().timeout());
       assertEquals(10000, c.clustering().stateTransfer().chunkSize());
-      ClusterLoaderConfiguration clusterLoader = (ClusterLoaderConfiguration) c.persistence().stores().get(1);
+      ClusterLoaderConfiguration clusterLoader = getStoreConfiguration(c, ClusterLoaderConfiguration.class);
       assertEquals(35000, clusterLoader.remoteCallTimeout());
-      assertTrue(clusterLoader.preload());
+      assertFalse(clusterLoader.preload());
       assertEquals(Index.NONE, c.indexing().index());
 
       c = cm.getCache("dist").getCacheConfiguration();
@@ -365,7 +358,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.eviction().maxEntries());
-      fileStore = (SingleFileStoreConfiguration) c.persistence().stores().get(1);
+      fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
 
@@ -378,7 +371,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.eviction().maxEntries());
-      DummyInMemoryStoreConfiguration dummyStore = (DummyInMemoryStoreConfiguration) c.persistence().stores().get(1);
+      DummyInMemoryStoreConfiguration dummyStore = getStoreConfiguration(c, DummyInMemoryStoreConfiguration.class);
       assertFalse(dummyStore.preload());
       assertFalse(dummyStore.purgeOnStartup());
 
@@ -402,7 +395,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.eviction().maxEntries());
-      fileStore = (SingleFileStoreConfiguration) c.persistence().stores().get(0);
+      fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
       assertEquals(Index.NONE, c.indexing().index());
@@ -417,7 +410,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.eviction().maxEntries());
       assertEquals(LockingMode.PESSIMISTIC, c.transaction().lockingMode());
-      fileStore = (SingleFileStoreConfiguration) c.persistence().stores().get(0);
+      fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
 
@@ -430,7 +423,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.LIRS, c.eviction().strategy());
       assertEquals(10000, c.eviction().maxEntries());
-      fileStore = (SingleFileStoreConfiguration) c.persistence().stores().get(1);
+      fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
       assertEquals(Index.NONE, c.indexing().index());
@@ -445,7 +438,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.eviction().maxEntries());
-      fileStore = (SingleFileStoreConfiguration) c.persistence().stores().get(1);
+      fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
 
@@ -459,7 +452,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       assertTrue(c.transaction().syncRollbackPhase()); // Non XA - side effect of cache manager creation
       assertEquals(EvictionStrategy.NONE, c.eviction().strategy());
       assertEquals(-1, c.eviction().maxEntries());
-      fileStore = (SingleFileStoreConfiguration) c.persistence().stores().get(1);
+      fileStore = getStoreConfiguration(c, SingleFileStoreConfiguration.class);
       assertTrue(fileStore.preload());
       assertFalse(fileStore.purgeOnStartup());
 
@@ -524,6 +517,15 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
       Configuration configuration = cm.getCacheConfiguration(name);
       assertNotNull("Configuration " + name + " expected", configuration);
       assertFalse("Configuration " + name + " should not be a template", configuration.isTemplate());
+   }
+
+   private static <T> T getStoreConfiguration(Configuration c, Class<T> configurationClass) {
+      for (StoreConfiguration pc : c.persistence().stores()) {
+         if (configurationClass.isInstance(pc)) {
+            return (T) pc;
+         }
+      }
+      throw new NoSuchElementException("There is no store of type " + configurationClass);
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)

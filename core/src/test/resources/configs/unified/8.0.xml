@@ -62,7 +62,7 @@
          <eviction max-entries="21000" strategy="FIFO"/>
          <expiration interval="11000" lifespan="12" max-idle="12"/>
          <persistence>
-            <cluster-loader remote-timeout="35000" preload="true"/>
+            <cluster-loader remote-timeout="35000" preload="false"/>
          </persistence>
          <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
       </replicated-cache>
@@ -171,7 +171,12 @@
       <local-cache name="store-as-binary">
          <store-as-binary keys="true" values="false"/>
       </local-cache>
-      
+      <local-cache name="simple-cache" simple-cache="true">
+         <transaction mode="NONE"/>
+         <persistence>
+         </persistence>
+      </local-cache>
+
       <!-- template configurations -->
       <local-cache-configuration name="local-template" start="EAGER" module="org.infinispan" statistics="true">
          <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
@@ -185,7 +190,7 @@
          </persistence>
       </local-cache-configuration>
       <local-cache name="local-instance" configuration="local-template"/>
-      
+
       <invalidation-cache-configuration name="invalidation-template" mode="ASYNC" queue-flush-interval="10" queue-size="1000" start="LAZY" statistics="true">
          <locking acquire-timeout="30500" concurrency-level="2500" isolation="READ_UNCOMMITTED" striping="true"/>
          <transaction mode="BATCH" stop-timeout="60500"  locking="OPTIMISTIC"/>
@@ -193,7 +198,7 @@
          <expiration interval="10500" lifespan="11" max-idle="11"/>
       </invalidation-cache-configuration>
       <invalidation-cache name="invalidation-instance" configuration="invalidation-template" />
-      
+
       <replicated-cache-configuration name="repl-template" mode="ASYNC" queue-flush-interval="11" queue-size="1500" start="EAGER" statistics="true">
          <locking acquire-timeout="31000" concurrency-level="3000" isolation="SERIALIZABLE" striping="true"/>
          <transaction mode="BATCH" stop-timeout="61000" locking="PESSIMISTIC"/>
@@ -207,7 +212,7 @@
       <replicated-cache name="repl-instance" configuration="repl-template">
          <locking acquire-timeout="32000"/>
       </replicated-cache>
-      
+
       <distributed-cache-configuration name="dist-template" mode="SYNC" l1-lifespan="1200000" owners="4"
                          remote-timeout="35000" start="EAGER" segments="2" statistics="true"
                          consistent-hash-factory="org.infinispan.distribution.ch.impl.SyncConsistentHashFactory">

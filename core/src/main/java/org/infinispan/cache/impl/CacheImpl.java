@@ -977,7 +977,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public boolean startBatch() {
       if (!config.invocationBatching().enabled()) {
-         throw new CacheConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
+         throw log.invocationBatchingNotEnabled();
       }
       return batchContainer.startBatch();
    }
@@ -985,7 +985,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @Override
    public void endBatch(boolean successful) {
       if (!config.invocationBatching().enabled()) {
-         throw new CacheConfigurationException("Invocation batching not enabled in current configuration! Please enable it.");
+         throw log.invocationBatchingNotEnabled();
       }
       batchContainer.endBatch(successful);
    }

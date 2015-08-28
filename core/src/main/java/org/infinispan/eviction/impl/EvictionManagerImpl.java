@@ -18,7 +18,7 @@ public class EvictionManagerImpl<K, V> implements EvictionManager<K, V> {
    private CacheNotifier<K, V> cacheNotifier;
 
    @Inject
-   public void initialize(CacheNotifier<K, V> cacheNotifier, ExpirationManager<K, V> expirationManager) {
+   public void initialize(CacheNotifier<K, V> cacheNotifier) {
       this.cacheNotifier = cacheNotifier;
    }
 

@@ -289,7 +289,7 @@ public class EntryFactoryImpl implements EntryFactory {
          newValue = null;
       }
 
-      notifier.notifyCacheEntryCreated(key, newValue, true, ctx, cmd);
+      notifier.notifyCacheEntryCreated(key, newValue, providedMetadata, true, ctx, cmd);
       mvccEntry = createWrappedEntry(key, null, ctx, providedMetadata, true, false, skipRead);
       mvccEntry.setCreated(true);
       ctx.putLookedUpEntry(key, mvccEntry);

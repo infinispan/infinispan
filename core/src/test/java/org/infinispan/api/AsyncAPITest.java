@@ -1,12 +1,13 @@
 package org.infinispan.api;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.DefaultTimeService;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -14,17 +15,19 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
+import static org.testng.AssertJUnit.assertTrue;
 
 @Test(groups = "functional", testName = "api.AsyncAPITest")
 public class AsyncAPITest extends SingleCacheManagerTest {
 
    private Cache<String, String> c;
-
+   private ControlledTimeService timeService = new ControlledTimeService();
    private Long startTime;
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(false);
+      TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
       c = cm.getCache();
       return cm;
    }
@@ -149,7 +152,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f.isCancelled();
       assert f.get() == null;
       assert f.isDone();
-      verifyEviction("k", "v", 1000, true);
+      verifyEviction("k", "v", 1000, 500, true);
 
       log.warn("STARTING FAILING ONE");
 
@@ -160,7 +163,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f.isCancelled();
       assert f.get() == null;
       assert f.isDone();
-      verifyEviction("k", "v", 1000, false);
+      verifyEviction("k", "v", 1000, 500, false);
 
       // lifespan and max idle (test lifespan)
       f = c.putAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
@@ -169,7 +172,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f.isCancelled();
       assert f.get() == null;
       assert f.isDone();
-      verifyEviction("k", "v", 3000, true);
+      verifyEviction("k", "v", 3000, 500, true);
 
       // putAll lifespan only
       Future<Void> f2 = c.putAllAsync(Collections.singletonMap("k", "v3"), 1000, TimeUnit.MILLISECONDS);
@@ -178,7 +181,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f2.isCancelled();
       assert f2.get() == null;
       assert f2.isDone();
-      verifyEviction("k", "v3", 1000, true);
+      verifyEviction("k", "v3", 1000, 500, true);
 
       // putAll lifespan and max idle (test max idle)
       f2 = c.putAllAsync(Collections.singletonMap("k", "v4"), 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
@@ -187,7 +190,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f2.isCancelled();
       assert f2.get() == null;
       assert f2.isDone();
-      verifyEviction("k", "v4", 1000, false);
+      verifyEviction("k", "v4", 1000, 500, false);
 
       // putAll lifespan and max idle (test lifespan)
       f2 = c.putAllAsync(Collections.singletonMap("k", "v5"), 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
@@ -196,7 +199,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f2.isCancelled();
       assert f2.get() == null;
       assert f2.isDone();
-      verifyEviction("k", "v5", 3000, true);
+      verifyEviction("k", "v5", 3000, 500, true);
 
       // putIfAbsent lifespan only
       f = c.putAsync("k", "v3");
@@ -222,7 +225,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f.isCancelled();
       assert f.get() == null;
       assert f.isDone();
-      verifyEviction("k", "v", 1000, true);
+      verifyEviction("k", "v", 1000, 500, true);
 
       // putIfAbsent lifespan and max idle (test max idle)
       f = c.putIfAbsentAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
@@ -231,7 +234,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f.isCancelled();
       assert f.get() == null;
       assert f.isDone();
-      verifyEviction("k", "v", 1000, false);
+      verifyEviction("k", "v", 1000, 500, false);
 
       // putIfAbsent lifespan and max idle (test lifespan)
       f = c.putIfAbsentAsync("k", "v", 3000, TimeUnit.MILLISECONDS, 1000, TimeUnit.MILLISECONDS);
@@ -240,7 +243,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f.isCancelled();
       assert f.get() == null;
       assert f.isDone();
-      verifyEviction("k", "v", 3000, true);
+      verifyEviction("k", "v", 3000, 500, true);
 
       // replace
       f = c.replaceAsync("k", "v5", 1000, TimeUnit.MILLISECONDS);
@@ -259,7 +262,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f.isCancelled();
       assert f.get().equals("v");
       assert f.isDone();
-      verifyEviction("k", "v5", 1000, true);
+      verifyEviction("k", "v5", 1000, 500, true);
 
       // replace lifespan and max idle (test max idle)
       c.put("k", "v");
@@ -269,7 +272,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f.isCancelled();
       assert f.get().equals("v");
       assert f.isDone();
-      verifyEviction("k", "v5", 1000, false);
+      verifyEviction("k", "v5", 1000, 500, false);
 
       // replace lifespan and max idle (test lifespan)
       c.put("k", "v");
@@ -279,7 +282,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f.isCancelled();
       assert f.get().equals("v");
       assert f.isDone();
-      verifyEviction("k", "v5", 3000, true);
+      verifyEviction("k", "v5", 3000, 500, true);
 
       //replace2
       c.put("k", "v5");
@@ -299,7 +302,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f3.isCancelled();
       assert f3.get().equals(true);
       assert f3.isDone();
-      verifyEviction("k", "v6", 1000, true);
+      verifyEviction("k", "v6", 1000, 500, true);
 
       // replace2 lifespan and max idle (test max idle)
       c.put("k", "v5");
@@ -309,7 +312,7 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f3.isCancelled();
       assert f3.get().equals(true);
       assert f3.isDone();
-      verifyEviction("k", "v6", 1000, false);
+      verifyEviction("k", "v6", 1000, 500, false);
 
       // replace2 lifespan and max idle (test lifespan)
       c.put("k", "v5");
@@ -319,49 +322,72 @@ public class AsyncAPITest extends SingleCacheManagerTest {
       assert !f3.isCancelled();
       assert f3.get().equals(true);
       assert f3.isDone();
-      verifyEviction("k", "v6", 3000, true);
+      verifyEviction("k", "v6", 3000, 500, true);
    }
 
    private void markStartTime() {
-      startTime = Util.currentMillisFromNanotime();
+      startTime = timeService.wallClockTime();
    }
 
    /**
     * Verifies if a key is evicted after a certain time.
-    *
-    * @param key the key to check
+    *  @param key the key to check
     * @param expectedValue expected key value at the beginning
     * @param expectedLifetime expected life of the key
+    * @param checkPeriod period between executing checks. If the check modifies the idle time. this is important to block idle expiration.
     * @param touchKey indicates if the poll for key existence should read the key and cause idle time to be reset
     */
-   private void verifyEviction(final String key, final String expectedValue, final long expectedLifetime, final boolean touchKey) {
+   private void verifyEviction(final String key, final String expectedValue, final long expectedLifetime, long checkPeriod, final boolean touchKey) {
       if (startTime == null) {
          throw new IllegalStateException("markStartTime() must be called before verifyEviction(..)");
       }
 
-      final long pollInterval = 50;
       try {
-         assertTrue(expectedValue.equals(c.get(key)) || TestingUtil.moreThanDurationElapsed(startTime, expectedLifetime));
-         eventually(new Condition() {
-            @Override
-            public boolean isSatisfied() {
-               if (touchKey) {
-                  return !c.containsKey(key);        //this check DOES read the key so it resets the idle time
-               } else {
-                  //this check DOES NOT read the key so it does not interfere with idle time
-                  InternalCacheEntry entry = c.getAdvancedCache().getDataContainer().peek(key);
-                  return entry == null || entry.isExpired(System.currentTimeMillis());
-               }
+         long expectedEndTime = startTime + expectedLifetime;
+         Condition condition = () -> {
+            if (touchKey) {
+               return !c.containsKey(key);        //this check DOES read the key so it resets the idle time
+            } else {
+               //this check DOES NOT read the key so it does not interfere with idle time
+               InternalCacheEntry entry = c.getAdvancedCache().getDataContainer().peek(key);
+               return entry == null || entry.isExpired(timeService.wallClockTime());
             }
-         }, 3 * expectedLifetime, pollInterval, TimeUnit.MILLISECONDS);
-         long waitTime = Util.currentMillisFromNanotime() - startTime;
+         };
+         assertTrue(expectedValue.equals(c.get(key)) || timeService.wallClockTime() > expectedEndTime);
+         // we need to loop to keep touching the entry and protect against idle expiration
+         while (timeService.wallClockTime() <= expectedEndTime) {
+            assertFalse("Entry evicted too soon!", condition.isSatisfied());
+            timeService.advance(checkPeriod);
+         }
+         assertTrue(timeService.wallClockTime() > expectedEndTime);
+         assertTrue(condition.isSatisfied());
          Object value = c.get(key);
          assertNull(value);
 
-         long lowerBound = expectedLifetime - expectedLifetime / 4;
-         assertTrue("Entry evicted too soon!", lowerBound <= waitTime);
+      } catch (RuntimeException e) {
+         throw e;
+      } catch (Exception e) {
+         throw new RuntimeException(e);
       } finally {
          startTime = null;
+      }
+   }
+
+   private static class ControlledTimeService extends DefaultTimeService {
+      private long time = super.wallClockTime();
+
+      @Override
+      public long wallClockTime() {
+         return time;
+      }
+
+      @Override
+      public long time() {
+         return TimeUnit.MILLISECONDS.toNanos(time);
+      }
+
+      public void advance(long millis) {
+         time += millis;
       }
    }
 }

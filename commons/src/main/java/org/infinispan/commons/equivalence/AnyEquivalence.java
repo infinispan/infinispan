@@ -32,7 +32,7 @@ public final class AnyEquivalence<T> implements Equivalence<T> {
 
    @Override
    public int hashCode(Object obj) {
-      return obj.hashCode();
+      return obj == null ? 0 : obj.hashCode();
    }
 
    @Override
@@ -42,7 +42,7 @@ public final class AnyEquivalence<T> implements Equivalence<T> {
 
    @Override
    public String toString(Object obj) {
-      return obj.toString();
+      return String.valueOf(obj);
    }
 
    @Override

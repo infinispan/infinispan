@@ -50,7 +50,7 @@
          <eviction max-entries="21000" strategy="FIFO"/>
          <expiration interval="11000" lifespan="12" max-idle="12"/>
          <persistence>
-            <cluster-loader remote-timeout="35000" preload="true"/>
+            <cluster-loader remote-timeout="35000" preload="false"/>
          </persistence>
          <state-transfer enabled="false" timeout="60000" chunk-size="10000" />
       </replicated-cache>

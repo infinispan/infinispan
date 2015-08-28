@@ -66,8 +66,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          @Override
          public void raiseEvent(CacheNotifier notifier, Object key, Object prevValue, Object newValue,
                                 InvocationContext ctx) {
-            notifier.notifyCacheEntryModified(key, newValue, prevValue, null, true, ctx, null);
-            notifier.notifyCacheEntryModified(key, newValue, prevValue, null, false, ctx, null);
+            notifier.notifyCacheEntryModified(key, newValue, null, prevValue, null, true, ctx, null);
+            notifier.notifyCacheEntryModified(key, newValue, null, prevValue, null, false, ctx, null);
          }
       }, REMOVE(Event.Type.CACHE_ENTRY_REMOVED) {
          @Override
@@ -80,8 +80,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          @Override
          public void raiseEvent(CacheNotifier notifier, Object key, Object prevValue, Object newValue,
                                 InvocationContext ctx) {
-            notifier.notifyCacheEntryCreated(key, newValue, true, ctx, null);
-            notifier.notifyCacheEntryCreated(key, newValue, false, ctx, null);
+            notifier.notifyCacheEntryCreated(key, newValue, null, true, ctx, null);
+            notifier.notifyCacheEntryCreated(key, newValue, null, false, ctx, null);
          }
       };
 
@@ -315,8 +315,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
          case CREATE:
             key = "new-key";
             String value = "new-value";
-            n.notifyCacheEntryCreated(key, value, true, ctx, null);
-            n.notifyCacheEntryCreated(key, value, false, ctx, null);
+            n.notifyCacheEntryCreated(key, value, null, true, ctx, null);
+            n.notifyCacheEntryCreated(key, value, null, false, ctx, null);
 
             // Need to add a new value to the end
             initialValues.add(new ImmortalCacheEntry(key, value));
@@ -325,8 +325,8 @@ public abstract class BaseCacheNotifierImplInitialTransferTest extends AbstractI
             key = "key-3";
             value = "value-3-changed";
 
-            n.notifyCacheEntryModified(key, initialValues.get(3).getValue(), value, null, true, ctx, null);
-            n.notifyCacheEntryModified(key, initialValues.get(3).getValue(), value, null, false, ctx, null);
+            n.notifyCacheEntryModified(key, initialValues.get(3).getValue(), null, value, null, true, ctx, null);
+            n.notifyCacheEntryModified(key, initialValues.get(3).getValue(), null, value, null, false, ctx, null);
 
             // Now remove the old value and put in the new one
             initialValues.remove(3);

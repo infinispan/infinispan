@@ -43,7 +43,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private CacheManagerNotifier cacheManagerNotifier;
 
    //Cached fields:
-   private StreamingMarshaller cacheMarshaler;
+   protected StreamingMarshaller cacheMarshaler;
    private StateTransferManager stateTransferManager;
    private ResponseGenerator responseGenerator;
    private CommandsFactory commandsFactory;

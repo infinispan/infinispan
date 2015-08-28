@@ -71,8 +71,8 @@ public class SyncReplPessimisticLockingTest extends MultipleCacheManagersTest {
       cache1.get(k);
       mgr.commit();
 
-      assertNotLocked(cache1);
-      assertNotLocked(cache2);
+      assertNotLocked(cache1.getName(), k);
+      assertNotLocked(cache2.getName(), k);
       cache1.clear();
       cache2.clear();
    }
@@ -97,8 +97,8 @@ public class SyncReplPessimisticLockingTest extends MultipleCacheManagersTest {
 
       mgr.commit();
 
-      assertNotLocked(cache1);
-      assertNotLocked(cache2);
+      assertNotLocked(cache1.getName(), k);
+      assertNotLocked(cache2.getName(), k);
       cache1.clear();
       cache2.clear();
    }

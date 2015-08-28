@@ -494,7 +494,13 @@
 
     <xs:complexType name="local-cache">
         <xs:complexContent>
-            <xs:extension base="tns:cache"></xs:extension>
+            <xs:extension base="tns:cache">
+                <xs:attribute name="simple-cache" type="xs:boolean" default="false">
+                    <xs:annotation>
+                        <xs:documentation>This cache will be using optimized (faster) implementation that does not support transactions/invocation batching, persistence, custom interceptors, indexing, store-as-binary or compatibility. Also, this type of cache does not support Map-Reduce jobs or Distributed Executor framework.</xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
         </xs:complexContent>
     </xs:complexType>
 

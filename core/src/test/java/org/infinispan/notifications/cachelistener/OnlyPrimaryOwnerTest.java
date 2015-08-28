@@ -112,8 +112,8 @@ public class OnlyPrimaryOwnerTest {
       // Is not owner nor primary owner
       cdl.isOwner = false;
       cdl.isPrimaryOwner = false;
-      n.notifyCacheEntryCreated("reject", "v1", true, ctx, null);
-      n.notifyCacheEntryCreated("reject", "v1", false, ctx, null);
+      n.notifyCacheEntryCreated("reject", "v1", null, true, ctx, null);
+      n.notifyCacheEntryCreated("reject", "v1", null, false, ctx, null);
 
       assert !cl.isReceivedPost();
       assert !cl.isReceivedPre();
@@ -122,8 +122,8 @@ public class OnlyPrimaryOwnerTest {
       // Is an owner but not primary owner
       cdl.isOwner = true;
       cdl.isPrimaryOwner = false;
-      n.notifyCacheEntryCreated("reject", "v1", true, ctx, null);
-      n.notifyCacheEntryCreated("reject", "v1", false, ctx, null);
+      n.notifyCacheEntryCreated("reject", "v1", null, true, ctx, null);
+      n.notifyCacheEntryCreated("reject", "v1", null, false, ctx, null);
 
       assert !cl.isReceivedPost();
       assert !cl.isReceivedPre();
@@ -132,8 +132,8 @@ public class OnlyPrimaryOwnerTest {
       // Is primary owner
       cdl.isOwner = true;
       cdl.isPrimaryOwner = true;
-      n.notifyCacheEntryCreated("accept", "v1", true, ctx, null);
-      n.notifyCacheEntryCreated("accept", "v1", false, ctx, null);
+      n.notifyCacheEntryCreated("accept", "v1", null, true, ctx, null);
+      n.notifyCacheEntryCreated("accept", "v1", null, false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();

@@ -324,11 +324,11 @@ public abstract class AbstractClusterListenerUtilTest extends MultipleCacheManag
             }
          }
       };
-      doAnswer(answer).when(mockNotifier).notifyCacheEntryCreated(any(), any(), eq(false), any(InvocationContext.class),
-                                                                  any(FlagAffectedCommand.class));
-      doAnswer(answer).when(mockNotifier).notifyCacheEntryModified(any(), any(), any(), any(Metadata.class),
-                                                                   anyBoolean(), any(InvocationContext.class),
-                                                                   any(FlagAffectedCommand.class));
+      doAnswer(answer).when(mockNotifier).notifyCacheEntryCreated(any(), any(), any(Metadata.class), eq(false),
+            any(InvocationContext.class), any(FlagAffectedCommand.class));
+      doAnswer(answer).when(mockNotifier).notifyCacheEntryModified(any(), any(), any(Metadata.class), any(),
+            any(Metadata.class), anyBoolean(),
+            any(InvocationContext.class), any(FlagAffectedCommand.class));
       doAnswer(answer).when(mockNotifier).notifyCacheEntryRemoved(any(), any(), any(Metadata.class), eq(false),
                                                                   any(InvocationContext.class),
                                                                   any(FlagAffectedCommand.class));

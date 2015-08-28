@@ -237,6 +237,9 @@ public class LifecycleManager extends AbstractModuleLifecycle {
 
    private boolean verifyChainContainsQueryInterceptor(ComponentRegistry cr) {
       InterceptorChain interceptorChain = cr.getComponent(InterceptorChain.class);
+      if (interceptorChain == null) {
+         return false;
+      }
       return interceptorChain.containsInterceptorType(QueryInterceptor.class, true);
    }
 

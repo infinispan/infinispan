@@ -29,10 +29,12 @@ public class StatsImpl implements Stats {
    final long averageWriteTime;
    final long averageRemoveTime;
    final CacheMgmtInterceptor mgmtInterceptor;
+   final Stats source;
 
    public StatsImpl(InterceptorChain chain) {
       mgmtInterceptor = (CacheMgmtInterceptor) chain
             .getInterceptorsWhichExtend(CacheMgmtInterceptor.class).get(0);
+      source = null;
 
       if (mgmtInterceptor.getStatisticsEnabled()) {
          timeSinceReset = mgmtInterceptor.getTimeSinceReset();
@@ -49,6 +51,42 @@ public class StatsImpl implements Stats {
          averageReadTime = mgmtInterceptor.getAverageReadTime();
          averageWriteTime = mgmtInterceptor.getAverageWriteTime();
          averageRemoveTime = mgmtInterceptor.getAverageRemoveTime();
+      } else {
+         timeSinceReset = -1;
+         timeSinceStart = -1;
+         currentNumberOfEntries = -1;
+         totalNumberOfEntries = -1;
+         retrievals = -1;
+         stores = -1;
+         hits = -1;
+         misses = -1;
+         removeHits = -1;
+         removeMisses = -1;
+         evictions = -1;
+         averageReadTime = -1;
+         averageWriteTime = -1;
+         averageRemoveTime = -1;
+      }
+   }
+
+   public StatsImpl(Stats other) {
+      mgmtInterceptor = null;
+      source = other;
+      if (other != null) {
+         timeSinceReset = other.getTimeSinceReset();
+         timeSinceStart = other.getTimeSinceStart();
+         currentNumberOfEntries = other.getCurrentNumberOfEntries();
+         totalNumberOfEntries = other.getTotalNumberOfEntries();
+         retrievals = other.getRetrievals();
+         stores = other.getStores();
+         hits = other.getHits();
+         misses = other.getMisses();
+         removeHits = other.getRemoveHits();
+         removeMisses = other.getRemoveMisses();
+         evictions = other.getEvictions();
+         averageReadTime = other.getAverageReadTime();
+         averageWriteTime = other.getAverageWriteTime();
+         averageRemoveTime = other.getAverageRemoveTime();
       } else {
          timeSinceReset = -1;
          timeSinceStart = -1;
@@ -139,11 +177,19 @@ public class StatsImpl implements Stats {
 
    @Override
    public void reset() {
-      mgmtInterceptor.resetStatistics();
+      if (mgmtInterceptor != null) {
+         mgmtInterceptor.resetStatistics();
+      } else if (source != null) {
+         source.reset();
+      }
    }
 
    @Override
    public void setStatisticsEnabled(boolean enabled) {
-      mgmtInterceptor.setStatisticsEnabled(enabled);
+      if (mgmtInterceptor != null) {
+         mgmtInterceptor.setStatisticsEnabled(enabled);
+      } else if (source != null) {
+         source.setStatisticsEnabled(enabled);
+      }
    }
 }

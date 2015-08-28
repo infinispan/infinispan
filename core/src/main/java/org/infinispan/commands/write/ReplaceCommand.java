@@ -100,7 +100,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       Object previousValue = oldValue == null ? beingReplaced : oldValue;
 
       if (successful) {
-         notifier.notifyCacheEntryModified(key, newValue, previousValue, previousMetadata, true, ctx, this);
+         notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue, previousMetadata, true, ctx, this);
       }
 
       if (oldValue == null) {

@@ -60,15 +60,15 @@ public class KeyFilterTest extends AbstractInfinispanTest {
    }
 
    public void testFilters() {
-      n.notifyCacheEntryCreated("reject", "v1", true, ctx, null);
-      n.notifyCacheEntryCreated("reject", "v1", false, ctx, null);
+      n.notifyCacheEntryCreated("reject", "v1", null, true, ctx, null);
+      n.notifyCacheEntryCreated("reject", "v1", null, false, ctx, null);
 
       assert !cl.isReceivedPost();
       assert !cl.isReceivedPre();
       assert cl.getInvocationCount() == 0;
 
-      n.notifyCacheEntryCreated("accept", "v1", true, ctx, null);
-      n.notifyCacheEntryCreated("accept", "v1", false, ctx, null);
+      n.notifyCacheEntryCreated("accept", "v1", null, true, ctx, null);
+      n.notifyCacheEntryCreated("accept", "v1", null, false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
