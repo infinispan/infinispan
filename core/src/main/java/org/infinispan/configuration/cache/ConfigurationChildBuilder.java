@@ -4,6 +4,10 @@ import org.infinispan.configuration.global.GlobalConfiguration;
 
 public interface ConfigurationChildBuilder {
 
+   ConfigurationChildBuilder simpleCache(boolean simpleCache);
+
+   boolean simpleCache();
+
    ClusteringConfigurationBuilder clustering();
 
    CustomInterceptorsConfigurationBuilder customInterceptors();

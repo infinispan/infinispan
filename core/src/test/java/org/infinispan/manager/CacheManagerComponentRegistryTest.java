@@ -90,7 +90,7 @@ public class CacheManagerComponentRegistryTest extends AbstractCacheTest {
    }
 
    public void testOverridingComponents() {
-      cm = TestCacheManagerFactory.createClusteredCacheManager();
+      cm = TestCacheManagerFactory.createClusteredCacheManager(new ConfigurationBuilder());
 
       // default cache with no overrides
       Cache c = cm.getCache();

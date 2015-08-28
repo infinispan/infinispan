@@ -840,6 +840,9 @@ public class Parser80 implements ConfigurationParser {
             log.ignoreXmlAttribute(attribute);
             break;
          }
+         case SIMPLE_CACHE:
+            builder.simpleCache(Boolean.valueOf(value));
+            break;
          case STATISTICS: {
             builder.jmxStatistics().enabled(Boolean.valueOf(value));
             break;
@@ -1674,7 +1677,8 @@ public class Parser80 implements ConfigurationParser {
                throw ParseUtils.unexpectedAttribute(reader, i);
          }
       }
-
+      // clear in order to override any configuration defined in default cache
+      builder.persistence().clearStores();
       while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
          Element element = Element.forName(reader.getLocalName());
          switch (element) {

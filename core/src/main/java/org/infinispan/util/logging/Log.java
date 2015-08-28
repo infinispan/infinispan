@@ -1337,7 +1337,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Statistics are enabled while attribute 'available' is set to false.", id = 372)
    CacheConfigurationException statisticsEnabledNotAvailable();
-   
+
    @Message(value = "Attempted to start a cache using configuration template '%s'", id = 373)
    CacheConfigurationException templateConfigurationStartAttempt(String cacheName);
 
@@ -1346,4 +1346,22 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Cannot use configuration '%s' as a template", id = 375)
    CacheConfigurationException noConfiguration(String extend);
+
+   @Message(value = "Interceptor stack is not supported in simple cache", id = 376)
+   UnsupportedOperationException interceptorStackNotSupported();
+
+   @Message(value = "Explicit lock operations are not supported in simple cache", id = 377)
+   UnsupportedOperationException lockOperationsNotSupported();
+
+   @Message(value = "Invocation batching not enabled in current configuration! Please enable it.", id = 378)
+   CacheConfigurationException invocationBatchingNotEnabled();
+
+   @Message(value = "Map Reduce Framework is not supported in simple cache", id = 379)
+   CacheConfigurationException mapReduceNotSupported();
+
+   @Message(value = "Distributed Executors Framework is not supported in simple cache", id = 380)
+   CacheConfigurationException distributedExecutorsNotSupported();
+
+   @Message(value = "This configuration is not supported for simple cache", id = 381)
+   CacheConfigurationException notSupportedInSimpleCache();
 }

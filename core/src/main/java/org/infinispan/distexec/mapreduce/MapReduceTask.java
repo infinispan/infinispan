@@ -17,6 +17,7 @@ import org.infinispan.distexec.mapreduce.MapReduceManagerImpl.IntermediateKey;
 import org.infinispan.distexec.mapreduce.spi.MapReduceTaskLifecycleService;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -210,6 +211,7 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
          throw new IllegalArgumentException("Can not use null cache for MapReduceTask");
       ensureAccessPermissions(masterCacheNode.getAdvancedCache());
       ensureProperCacheState(masterCacheNode.getAdvancedCache());
+      ensureFullCache(masterCacheNode.getAdvancedCache());
       this.cache = masterCacheNode.getAdvancedCache();
       this.keys = new LinkedList<KIn>();
       ComponentRegistry componentRegistry = SecurityActions.getCacheComponentRegistry(cache);
@@ -909,6 +911,13 @@ public class MapReduceTask<KIn, VIn, KOut, VOut> {
 
       if (SecurityActions.getCacheRpcManager(cache) != null && SecurityActions.getCacheDistributionManager(cache) == null) {
          throw log.requireDistOrReplCache(cache.getCacheConfiguration().clustering().cacheModeString());
+      }
+   }
+
+   private void ensureFullCache(AdvancedCache<KIn, VIn> advancedCache) {
+      List<CommandInterceptor> interceptorChain = SecurityActions.getInterceptorChain(advancedCache);
+      if (interceptorChain == null || interceptorChain.isEmpty()) {
+         throw log.mapReduceNotSupported();
       }
    }
 

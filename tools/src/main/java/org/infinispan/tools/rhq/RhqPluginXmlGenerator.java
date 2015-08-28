@@ -3,9 +3,9 @@ package org.infinispan.tools.rhq;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -123,7 +123,7 @@ public class RhqPluginXmlGenerator {
    }
 
    private static void populateMetricsAndOperations(List<Class<?>> classes, Element root, String parentName, boolean withNamePrefix) throws Exception {
-      Set<String> uniqueOperations = new HashSet<String>();
+      Map<String, List<Class<?>>> managedOperations = new HashMap<>();
       Document doc = root.getOwnerDocument();
       Element parent = doc.createElement(parentName);
       for (Class<?> clazz : classes) {
@@ -187,10 +187,21 @@ public class RhqPluginXmlGenerator {
                   }
                }
 
-               if (uniqueOperations.contains(name)) {
-                  throw new RuntimeException("Duplicate operation name: " + name);
+               List<Class<?>> managedClasses = managedOperations.get(name);
+               if (managedClasses != null) {
+                  // operation defined in two non-related implementation is likely a polymorphic variant,
+                  // not an override
+                  for (Class<?> managedClazz : managedClasses) {
+                     if (managedClazz.isAssignableFrom(clazz) || clazz.isAssignableFrom(managedClazz)) {
+                        throw new RuntimeException("Duplicate operation name: " + name
+                              + ", defined both in " + clazz + " and " + managedClazz);
+                     }
+                  }
                }
-               uniqueOperations.add(name);
+               if (managedClasses == null) {
+                  managedOperations.put(name, managedClasses = new ArrayList<>());
+               }
+               managedClasses.add(clazz);
 
                String opDisplayName = managedOp.displayName();
                if (opDisplayName.length() == 0) {

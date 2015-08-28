@@ -3,7 +3,6 @@ package org.infinispan.notifications.cachelistener;
 import org.infinispan.Cache;
 import org.infinispan.CacheStream;
 import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commons.CacheListenerException;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ServiceFinder;
@@ -25,6 +24,7 @@ import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.CacheFilters;
 import org.infinispan.filter.KeyFilter;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
@@ -187,7 +187,10 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public void start() {
       super.start();
-      this.distExecutorService = SecurityActions.getDefaultExecutorService(cache);
+      List<CommandInterceptor> interceptorChain = SecurityActions.getInterceptorChain(cache);
+      if (interceptorChain != null && !interceptorChain.isEmpty()) {
+         this.distExecutorService = SecurityActions.getDefaultExecutorService(cache);
+      }
       componentRegistry = cache.getAdvancedCache().getComponentRegistry();
       //TODO This is executed twice because component CacheNotifier is also ClusterCacheNotifier (see https://issues.jboss.org/browse/ISPN-5353)
       if (filterIndexingServiceProviders == null) {
@@ -279,11 +282,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    @Override
-   public void notifyCacheEntryCreated(K key, V value, boolean pre,
-         InvocationContext ctx, FlagAffectedCommand command) {
+   public void notifyCacheEntryCreated(K key, V value, Metadata metadata, boolean pre,
+                                       InvocationContext ctx, FlagAffectedCommand command) {
       if (!cacheEntryCreatedListeners.isEmpty()) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_CREATED);
-         configureEvent(e, key, value, pre, ctx, command, null, null);
+         configureEvent(e, key, value, metadata, pre, ctx, command, null, null);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          boolean sendEvents = !ctx.isInTxScope();
          try {
@@ -303,11 +306,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    @Override
-   public void notifyCacheEntryModified(K key, V value, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx,
-         FlagAffectedCommand command) {
+   public void notifyCacheEntryModified(K key, V value, Metadata metadata, V previousValue, Metadata previousMetadata, boolean pre, InvocationContext ctx,
+                                        FlagAffectedCommand command) {
       if (!cacheEntryModifiedListeners.isEmpty()) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_MODIFIED);
-         configureEvent(e, key, value, pre, ctx, command, previousValue, previousMetadata);
+         configureEvent(e, key, value, metadata, pre, ctx, command, previousValue, previousMetadata);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          boolean sendEvents = !ctx.isInTxScope();
          try {
@@ -331,7 +334,14 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
                                        InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryRemovedListeners)) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_REMOVED);
-         configureEvent(e, key, null, pre, ctx, command, previousValue, previousMetadata);
+         if (pre) {
+            configureEvent(e, key, previousValue, previousMetadata, pre, ctx, command, previousValue, previousMetadata);
+         } else {
+            // to be consistent it would be better to pass null as previousMetadata but certain server code
+            // depends on ability to retrieve these metadata when pre=false from CacheEntryEvent.getMetadata
+            // instead of having proper method getOldMetadata() there.
+            configureEvent(e, key, null, previousMetadata, pre, ctx, command, previousValue, previousMetadata);
+         }
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          boolean sendEvents = !ctx.isInTxScope();
@@ -351,7 +361,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       }
    }
 
-   private void configureEvent(EventImpl<K, V> e, K key, V value, boolean pre, InvocationContext ctx,
+   private void configureEvent(EventImpl<K, V> e, K key, V value, Metadata metadata, boolean pre, InvocationContext ctx,
                                FlagAffectedCommand command, V previousValue, Metadata previousMetadata) {
       if (typeConverter != null) {
          key = (K) typeConverter.unboxKey(key);
@@ -364,12 +374,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       e.setPre(pre);
       e.setOldValue(previousValue);
       e.setOldMetadata(previousMetadata);
-      CacheEntry entry = ctx.lookupEntry(key);
-      if (entry != null) {
-         e.setMetadata(entry.getMetadata());
-      } else if (command instanceof ClearCommand) {
-         e.setMetadata(previousMetadata);
-      }
+      e.setMetadata(metadata);
       Set<Flag> flags;
       if (command != null && (flags = command.getFlags()) != null && flags.contains(Flag.COMMAND_RETRY)) {
          e.setCommandRetried(true);
@@ -455,11 +460,11 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    }
 
    @Override
-   public void notifyCacheEntryInvalidated(final K key, V value,
-         final boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
+   public void notifyCacheEntryInvalidated(final K key, V value, Metadata metadata,
+                                           final boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryInvalidatedListeners)) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_INVALIDATED);
-         configureEvent(e, key, value, pre, ctx, command, value, null);
+         configureEvent(e, key, value, metadata, pre, ctx, command, value, metadata);
          setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryInvalidatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);

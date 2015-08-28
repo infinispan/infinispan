@@ -3,10 +3,23 @@ package org.infinispan.factories;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
+import org.infinispan.cache.impl.SimpleCacheImpl;
+import org.infinispan.cache.impl.StatsCollectingCache;
 import org.infinispan.commons.CacheConfigurationException;
-import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.commons.marshall.StreamingMarshaller;
+import org.infinispan.configuration.cache.*;
+import org.infinispan.eviction.ActivationManager;
+import org.infinispan.eviction.PassivationManager;
+import org.infinispan.eviction.impl.ActivationManagerStub;
+import org.infinispan.eviction.impl.PassivationManagerStub;
+import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.jmx.CacheJmxRegistration;
 import org.infinispan.manager.DefaultCacheManager;
+import org.infinispan.notifications.cachelistener.cluster.ClusterEventManager;
+import org.infinispan.notifications.cachelistener.cluster.impl.ClusterEventManagerStub;
+import org.infinispan.persistence.manager.PersistenceManagerStub;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.stats.impl.StatsCollector;
 import org.infinispan.upgrade.RollingUpgradeManager;
 import org.infinispan.transaction.xa.recovery.RecoveryAdminOperations;
 import org.infinispan.xsite.XSiteAdminOperations;
@@ -31,13 +44,17 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
     * @param globalComponentRegistry global component registry to attach the cache to
     * @param cacheName               name of the cache
     * @return a cache
-    * @throws ConfigurationException if there are problems with the cfg
+    * @throws CacheConfigurationException if there are problems with the cfg
     */
    public Cache<K, V> createCache(Configuration configuration,
                                   GlobalComponentRegistry globalComponentRegistry,
                                   String cacheName) throws CacheConfigurationException {
       try {
-         return createAndWire(configuration, globalComponentRegistry, cacheName);
+         if (configuration.simpleCache()) {
+            return createSimpleCache(configuration, globalComponentRegistry, cacheName);
+         } else {
+            return createAndWire(configuration, globalComponentRegistry, cacheName);
+         }
       }
       catch (CacheConfigurationException ce) {
          throw ce;
@@ -56,6 +73,40 @@ public class InternalCacheFactory<K, V> extends AbstractNamedCacheComponentFacto
       bootstrap(cacheName, cache, configuration, globalComponentRegistry);
       return cache;
    }
+
+   private AdvancedCache<K, V> createSimpleCache(Configuration configuration, GlobalComponentRegistry globalComponentRegistry,
+                                         String cacheName) {
+      AdvancedCache<K, V> cache;
+
+      JMXStatisticsConfiguration jmxStatistics = configuration.jmxStatistics();
+      boolean statisticsAvailable = jmxStatistics != null && jmxStatistics.available();
+      if (statisticsAvailable) {
+         cache = new StatsCollectingCache<>(cacheName);
+      } else {
+         cache = new SimpleCacheImpl<>(cacheName);
+      }
+      this.configuration = configuration;
+      componentRegistry = new ComponentRegistry(cacheName, configuration, cache, globalComponentRegistry, globalComponentRegistry.getClassLoader()) {
+         @Override
+         public void cacheComponents() {
+            cacheMarshaler = getOrCreateComponent(StreamingMarshaller.class, KnownComponentNames.CACHE_MARSHALLER);
+            getOrCreateComponent(ExpirationManager.class);
+         }
+      };
+
+      if (statisticsAvailable) {
+         componentRegistry.registerComponent(new StatsCollector.Factory(), StatsCollector.Factory.class);
+      }
+      componentRegistry.registerComponent(new CacheJmxRegistration(), CacheJmxRegistration.class.getName(), true);
+      componentRegistry.registerComponent(new ClusterEventManagerStub<K, V>(), ClusterEventManager.class);
+      componentRegistry.registerComponent(new PassivationManagerStub(), PassivationManager.class);
+      componentRegistry.registerComponent(new ActivationManagerStub(), ActivationManager.class);
+      componentRegistry.registerComponent(new PersistenceManagerStub(), PersistenceManager.class);
+      componentRegistry.registerComponent(new RollingUpgradeManager(), RollingUpgradeManager.class.getName(), true);
+      componentRegistry.registerComponent(cache, Cache.class.getName(), true);
+      return cache;
+   }
+
 
    /**
     * Bootstraps this factory with a Configuration and a ComponentRegistry.

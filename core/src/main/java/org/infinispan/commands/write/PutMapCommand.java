@@ -96,7 +96,7 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
          if (me != null) {
             Object value = me.getValue();
             previousValues.put(key, value);
-            notifier.notifyCacheEntryModified(key, e.getValue(), value, me.getMetadata(), true, ctx, this);
+            notifier.notifyCacheEntryModified(key, e.getValue(), metadata, value, me.getMetadata(), true, ctx, this);
             me.setValue(e.getValue());
             me.setChanged(true);
          }

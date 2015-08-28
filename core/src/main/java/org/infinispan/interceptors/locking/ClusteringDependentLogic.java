@@ -155,7 +155,7 @@ public interface ClusteringDependentLogic {
             // Notify entry event after container has been updated
             if (created) {
                notifier.notifyCacheEntryCreated(
-                  entry.getKey(), entry.getValue(), false, ctx, command);
+                  entry.getKey(), entry.getValue(), entry.getMetadata(), false, ctx, command);
 
                // A write-only command only writes and so can't 100% guarantee
                // that an entry has been created, so only send create event
@@ -165,7 +165,7 @@ public interface ClusteringDependentLogic {
 
                functionalNotifier.notifyOnWrite(() -> EntryViews.readOnly(entry));
             } else {
-               notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), previousValue, previousMetadata,
+               notifier.notifyCacheEntryModified(entry.getKey(), entry.getValue(), entry.getMetadata(), previousValue, previousMetadata,
                                                  false, ctx, command);
 
                // A write-only command only writes and so can't 100% guarantee

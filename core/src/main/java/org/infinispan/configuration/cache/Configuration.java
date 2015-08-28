@@ -1,12 +1,22 @@
 package org.infinispan.configuration.cache;
 
+import org.infinispan.commons.configuration.attributes.Attribute;
+import org.infinispan.commons.configuration.attributes.AttributeDefinition;
+import org.infinispan.commons.configuration.attributes.AttributeSet;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Configuration {
+   public static final AttributeDefinition<Boolean> SIMPLE_CACHE = AttributeDefinition.builder("simpleCache", false).immutable().build();
 
+   public static AttributeSet attributeDefinitionSet() {
+      return new AttributeSet(Configuration.class, SIMPLE_CACHE);
+   }
+
+   private final Attribute<Boolean> simpleCache;
    private final ClusteringConfiguration clusteringConfiguration;
    private final CustomInterceptorsConfiguration customInterceptorsConfiguration;
    private final DataContainerConfiguration dataContainerConfiguration;
@@ -26,9 +36,11 @@ public class Configuration {
    private final SecurityConfiguration securityConfiguration;
    private final SitesConfiguration sitesConfiguration;
    private final CompatibilityModeConfiguration compatibilityConfiguration;
+   private final AttributeSet attributes;
    private final boolean template;
 
-   Configuration(boolean template, ClusteringConfiguration clusteringConfiguration,
+   Configuration(boolean template, AttributeSet attributes,
+                 ClusteringConfiguration clusteringConfiguration,
                  CustomInterceptorsConfiguration customInterceptorsConfiguration,
                  DataContainerConfiguration dataContainerConfiguration, DeadlockDetectionConfiguration deadlockDetectionConfiguration,
                  EvictionConfiguration evictionConfiguration, ExpirationConfiguration expirationConfiguration,
@@ -44,6 +56,8 @@ public class Configuration {
                  CompatibilityModeConfiguration compatibilityConfiguration,
                  List<?> modules) {
       this.template = template;
+      this.attributes = attributes.checkProtection();
+      this.simpleCache = attributes.attribute(SIMPLE_CACHE);
       this.clusteringConfiguration = clusteringConfiguration;
       this.customInterceptorsConfiguration = customInterceptorsConfiguration;
       this.dataContainerConfiguration = dataContainerConfiguration;
@@ -67,6 +81,14 @@ public class Configuration {
          modulesMap.put(module.getClass(), module);
       }
       this.moduleConfiguration = Collections.unmodifiableMap(modulesMap);
+   }
+
+   public AttributeSet attributes() {
+      return attributes;
+   }
+
+   public boolean simpleCache() {
+      return simpleCache.get();
    }
 
    public ClusteringConfiguration clustering() {
@@ -157,7 +179,8 @@ public class Configuration {
    @Override
    public String toString() {
       return "Configuration{" +
-            "clustering=" + clusteringConfiguration +
+            "simpleCache=" + simpleCache +
+            ", clustering=" + clusteringConfiguration +
             ", customInterceptors=" + customInterceptorsConfiguration +
             ", dataContainer=" + dataContainerConfiguration +
             ", deadlockDetection=" + deadlockDetectionConfiguration +
@@ -183,6 +206,7 @@ public class Configuration {
    public int hashCode() {
       final int prime = 31;
       int result = 1;
+      result = prime * result + (simpleCache.get() ? 0 : 1);
       result = prime * result + (template ? 1231 : 1237);
       result = prime * result + ((clusteringConfiguration == null) ? 0 : clusteringConfiguration.hashCode());
       result = prime * result + ((compatibilityConfiguration == null) ? 0 : compatibilityConfiguration.hashCode());
@@ -219,6 +243,9 @@ public class Configuration {
          return false;
       Configuration other = (Configuration) obj;
       if (template != other.template) {
+         return false;
+      }
+      if (!simpleCache.get().equals(other.simpleCache.get())) {
          return false;
       }
       if (clusteringConfiguration == null) {

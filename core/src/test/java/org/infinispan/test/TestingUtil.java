@@ -1284,7 +1284,9 @@ public class TestingUtil {
     */
    public static void assertNoLocks(Cache<?,?> cache) {
       LockManager lm = TestingUtil.extractLockManager(cache);
-      for (Object key : cache.keySet()) assert !lm.isLocked(key);
+      if (lm != null) {
+         for (Object key : cache.keySet()) assert !lm.isLocked(key);
+      }
    }
 
    /**

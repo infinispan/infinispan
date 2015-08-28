@@ -89,7 +89,7 @@ public class DataContainerTest extends AbstractInfinispanTest {
 
          cache.put("name", "Pete");
 
-         Assert.assertTrue(checkLoggedOperations(dataContainer.getLoggedOperations(), "put(name, Pete"));
+         Assert.assertTrue(checkLoggedOperations(dataContainer.getLoggedOperations(), "put(name, Pete", "compute(name,"));
       } finally {
       	TestingUtil.killCacheManagers(cm);
       }
@@ -123,16 +123,18 @@ public class DataContainerTest extends AbstractInfinispanTest {
 
          cache.put("name", "Pete");
 
-         Assert.assertTrue(checkLoggedOperations(dataContainer.getLoggedOperations(), "put(name, Pete"));
+         Assert.assertTrue(checkLoggedOperations(dataContainer.getLoggedOperations(), "put(name, Pete", "compute(name,"));
       } finally {
       	TestingUtil.killCacheManagers(cm);
       }
    }
 
-   boolean checkLoggedOperations(Collection<String> loggedOperations, String prefix) {
+   boolean checkLoggedOperations(Collection<String> loggedOperations, String... prefixes) {
       for (String loggedOperation : loggedOperations) {
-         if (loggedOperation.startsWith(prefix)) {
-            return true;
+         for (String prefix : prefixes) {
+            if (loggedOperation.startsWith(prefix)) {
+               return true;
+            }
          }
       }
       return false;

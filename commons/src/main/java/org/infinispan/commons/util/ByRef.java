@@ -25,4 +25,24 @@ public class ByRef<T> {
    public void set(T t) {
       ref = t;
    }
+
+	/**
+    * Implementation for primitive type
+    */
+   public static class Boolean {
+      boolean ref;
+
+      public Boolean(boolean b) {
+         ref = b;
+      }
+
+      public boolean get() {
+         return ref;
+      }
+
+      public void set(boolean b) {
+         this.ref = b;
+      }
+   }
+
 }

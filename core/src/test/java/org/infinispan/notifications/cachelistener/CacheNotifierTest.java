@@ -15,16 +15,14 @@ import java.util.Map;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.manager.CacheContainer;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -43,11 +41,8 @@ import org.testng.annotations.Test;
 @Test(groups = "functional", testName = "notifications.cachelistener.CacheNotifierTest")
 public class CacheNotifierTest extends AbstractInfinispanTest {
 
-   private Cache<Object, Object> cache;
-   private CacheNotifier mockNotifier;
-   private CacheNotifier origNotifier;
-   private CacheContainer cm;
-   private AdvancedCache<Object, Object> skipListenerCache;
+   protected Cache<Object, Object> cache;
+   protected EmbeddedCacheManager cm;
 
    @BeforeMethod
    public void setUp() throws Exception {
@@ -57,16 +52,17 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
          .clustering().cacheMode(CacheMode.LOCAL)
          .locking().isolationLevel(IsolationLevel.REPEATABLE_READ);
       cm = TestCacheManagerFactory.createCacheManager(c);
+      cache = getCache();
+      CacheNotifier mockNotifier = mock(CacheNotifier.class);
+      TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
+   }
 
-      cache = cm.getCache();
-      skipListenerCache = cm.getCache().getAdvancedCache().withFlags(Flag.SKIP_LISTENER_NOTIFICATION);
-      mockNotifier = mock(CacheNotifier.class);
-      origNotifier = TestingUtil.replaceComponent(cache, CacheNotifier.class, mockNotifier, true);
+   protected Cache<Object, Object> getCache() {
+      return cm.getCache();
    }
 
    @AfterMethod
    public void tearDown() throws Exception {
-      TestingUtil.replaceComponent(cache, CacheNotifier.class, origNotifier, true);
       TestingUtil.killCaches(cache);
       cm.stop();
    }
@@ -76,122 +72,108 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
       TestingUtil.killCacheManagers(cache.getCacheManager());
    }
 
+
+   private CacheNotifier getMockNotifier(Cache cache) {
+      return cache.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
+   }
+
+   protected Matcher<FlagAffectedCommand> getFlagMatcher() {
+      return new BaseMatcher<FlagAffectedCommand>() {
+         @Override
+         public boolean matches(Object o) {
+            boolean expected = o instanceof FlagAffectedCommand;
+            boolean isSkipListener = ((FlagAffectedCommand) o).hasFlag(Flag.SKIP_LISTENER_NOTIFICATION);
+            return expected && !isSkipListener;
+         }
+
+         @Override
+         public void describeTo(Description description) {
+         }
+      };
+   }
+
+
    public void testVisit() throws Exception {
-      visit(cache, new SkipListenerFlagMatcher(false));
-   }
-
-   public void testSkipVisit() throws Exception {
-      visit(skipListenerCache, new SkipListenerFlagMatcher(true));
-   }
-
-   private void visit(Cache<Object, Object> cache, Matcher<FlagAffectedCommand> matcher) {
-      initCacheData(Collections.singletonMap("key", "value"));
+      Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
+      initCacheData(cache, Collections.singletonMap("key", "value"));
 
       cache.get("key");
 
-      verify(mockNotifier).notifyCacheEntryVisited(eq("key"), eq("value"),
+      verify(getMockNotifier(cache)).notifyCacheEntryVisited(eq("key"), eq("value"),
             eq(true), isA(InvocationContext.class), argThat(matcher));
-      verify(mockNotifier).notifyCacheEntryVisited(eq("key"), eq("value"),
+      verify(getMockNotifier(cache)).notifyCacheEntryVisited(eq("key"), eq("value"),
             eq(false), isA(InvocationContext.class), argThat(matcher));
    }
 
    public void testRemoveData() throws Exception {
-      removeData(cache, new SkipListenerFlagMatcher(false));
-   }
-
-   public void testSkipRemoveData() throws Exception {
-      removeData(skipListenerCache, new SkipListenerFlagMatcher(true));
-   }
-
-   private void removeData(Cache<Object, Object> cache, Matcher<FlagAffectedCommand> matcher) {
+      Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
       Map<String, String> data = new HashMap<String, String>();
       data.put("key", "value");
       data.put("key2", "value2");
-      initCacheData(data);
+      initCacheData(cache, data);
 
       cache.remove("key2");
 
-      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"),
+      verify(getMockNotifier(cache)).notifyCacheEntryRemoved(eq("key2"), eq("value2"),
             any(Metadata.class), eq(true), isA(InvocationContext.class), argThat(matcher));
-      verify(mockNotifier).notifyCacheEntryRemoved(eq("key2"), eq("value2"), any(Metadata.class), eq(false),
+      verify(getMockNotifier(cache)).notifyCacheEntryRemoved(eq("key2"), eq("value2"), any(Metadata.class), eq(false),
                                                    isA(InvocationContext.class), argThat(matcher));
    }
 
    public void testPutMap() throws Exception {
-      putMap(cache, new SkipListenerFlagMatcher(false));
-   }
-
-   public void testSkipPutMap() throws Exception {
-      putMap(skipListenerCache, new SkipListenerFlagMatcher(true));
-   }
-
-   private void putMap(Cache<Object, Object> cache, Matcher<FlagAffectedCommand> matcher) {
+      Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
       Map<Object, Object> data = new HashMap<Object, Object>();
       data.put("key", "value");
       data.put("key2", "value2");
 
       cache.putAll(data);
 
-      expectSingleEntryCreated("key", "value", matcher);
-      expectSingleEntryCreated("key2", "value2", matcher);
+      expectSingleEntryCreated(cache, "key", "value", matcher);
+      expectSingleEntryCreated(cache, "key2", "value2", matcher);
    }
 
    public void testOnlyModification() throws Exception {
-      onlyModifications(cache, new SkipListenerFlagMatcher(false));
-   }
-
-   public void testSkipOnlyModification() throws Exception {
-      onlyModifications(skipListenerCache, new SkipListenerFlagMatcher(true));
-   }
-
-   private void onlyModifications(Cache<Object, Object> cache, Matcher<FlagAffectedCommand> matcher) {
-      initCacheData(Collections.singletonMap("key", "value"));
+      Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
+      initCacheData(cache, Collections.singletonMap("key", "value"));
 
       cache.put("key", "value2");
 
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class), eq(true),
-                                                    isA(InvocationContext.class), argThat(matcher));
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class),
-                                                    eq(false), isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value"),
+            any(Metadata.class), eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value"),
+            any(Metadata.class), eq(false), isA(InvocationContext.class), argThat(matcher));
 
       cache.put("key", "value2");
 
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value2"), any(Metadata.class),
-                                                    eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value2"),
+            any(Metadata.class), eq(true), isA(InvocationContext.class), argThat(matcher));
 
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value2"), any(Metadata.class),
-                                                    eq(false), isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value2"),
+            any(Metadata.class), eq(false), isA(InvocationContext.class), argThat(matcher));
    }
 
    public void testReplaceNotification() throws Exception {
-      replaceNotification(cache, new SkipListenerFlagMatcher(false));
-   }
-
-   public void testSkipReplaceNotification() throws Exception {
-      replaceNotification(skipListenerCache, new SkipListenerFlagMatcher(true));
-   }
-
-   private void replaceNotification(Cache<Object, Object> cache,
-         Matcher<FlagAffectedCommand> matcher) {
-      initCacheData(Collections.singletonMap("key", "value"));
+      Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
+      initCacheData(cache, Collections.singletonMap("key", "value"));
 
       cache.replace("key", "value", "value2");
 
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class),
-            eq(true), isA(InvocationContext.class), argThat(matcher));
-      verify(mockNotifier).notifyCacheEntryModified(eq("key"), eq("value2"), eq("value"), any(Metadata.class),
-            eq(false), isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value"),
+            any(Metadata.class), eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryModified(eq("key"), eq("value2"), any(Metadata.class), eq("value"),
+            any(Metadata.class), eq(false), isA(InvocationContext.class), argThat(matcher));
    }
 
    public void testReplaceNoNotificationOnNoChange() throws Exception {
-      initCacheData(Collections.singletonMap("key", "value"));
+      initCacheData(cache, Collections.singletonMap("key", "value"));
 
       cache.replace("key", "value2", "value3");
 
-      verify(mockNotifier, never()).notifyCacheEntryModified(eq("key"), eq("value3"), eq("value3"), any(Metadata.class),
-            eq(true), any(InvocationContext.class), argThat(new SkipListenerFlagMatcher(false)));
-      verify(mockNotifier, never()).notifyCacheEntryModified(eq("key"), eq("value3"), eq("value3"), any(Metadata.class),
-            eq(false), any(InvocationContext.class), argThat(new SkipListenerFlagMatcher(false)));
+      Matcher<FlagAffectedCommand> matcher = getFlagMatcher();
+      verify(getMockNotifier(cache), never()).notifyCacheEntryModified(eq("key"), eq("value3"), any(Metadata.class), eq("value3"),
+            any(Metadata.class), eq(true), any(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache), never()).notifyCacheEntryModified(eq("key"), eq("value3"), any(Metadata.class), eq("value3"),
+            any(Metadata.class), eq(false), any(InvocationContext.class), argThat(matcher));
    }
 
    public void testNonexistentVisit() throws Exception {
@@ -203,61 +185,30 @@ public class CacheNotifierTest extends AbstractInfinispanTest {
    }
 
    public void testCreation() throws Exception {
-      creation(cache, new SkipListenerFlagMatcher(false));
-   }
-
-   public void testSkipCreation() throws Exception {
-      creation(skipListenerCache, new SkipListenerFlagMatcher(true));
+      creation(cache, getFlagMatcher());
    }
 
    private void creation(Cache<Object, Object> cache, Matcher<FlagAffectedCommand> matcher) {
       cache.put("key", "value");
-      expectSingleEntryCreated("key", "value", matcher);
+      expectSingleEntryCreated(cache, "key", "value", matcher);
    }
 
-   private void initCacheData(Map<String, String> data) {
+   private void initCacheData(Cache cache, Map<String, String> data) {
       cache.putAll(data);
-      verify(mockNotifier, atLeastOnce()).notifyCacheEntryCreated(anyObject(),
-            anyObject(), anyBoolean(), isA(InvocationContext.class),
-            isA(PutMapCommand.class));
-      verify(mockNotifier, atLeastOnce()).notifyCacheEntryModified(anyObject(),
-            anyObject(), anyObject(), any(Metadata.class), anyBoolean(), isA(InvocationContext.class),
-            isA(PutMapCommand.class));
+      verify(getMockNotifier(cache), atLeastOnce()).notifyCacheEntryCreated(anyObject(),
+            anyObject(), any(Metadata.class), anyBoolean(),
+            isA(InvocationContext.class), getExpectedPutMapCommand());
    }
 
-   private void expectSingleEntryCreated(Object key, Object value,
+   protected PutMapCommand getExpectedPutMapCommand() {
+      return isA(PutMapCommand.class);
+   }
+
+   private void expectSingleEntryCreated(Cache cache, Object key, Object value,
          Matcher<FlagAffectedCommand> matcher) {
-      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), eq(true),
-            isA(InvocationContext.class), argThat(matcher));
-      verify(mockNotifier).notifyCacheEntryCreated(eq(key), eq(value), eq(false),
-            isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryCreated(eq(key), eq(value), isNotNull(Metadata.class),
+            eq(true), isA(InvocationContext.class), argThat(matcher));
+      verify(getMockNotifier(cache)).notifyCacheEntryCreated(eq(key), eq(value), isNotNull(Metadata.class),
+            eq(false), isA(InvocationContext.class), argThat(matcher));
    }
-
-   private static class SkipListenerFlagMatcher
-         extends BaseMatcher<FlagAffectedCommand> {
-
-      private final boolean hasFlag;
-
-      private SkipListenerFlagMatcher(boolean hasFlag) {
-         this.hasFlag = hasFlag;
-      }
-
-      @Override
-      public boolean matches(Object item) {
-         boolean expected = item instanceof FlagAffectedCommand;
-         boolean isSkipListener = ((FlagAffectedCommand) item).hasFlag(Flag.SKIP_LISTENER_NOTIFICATION);
-
-         if (hasFlag)
-            return expected && isSkipListener;
-         else
-            return expected && !isSkipListener;
-      }
-
-      @Override
-      public void describeTo(Description description) {
-         // no-op
-      }
-
-   }
-
 }

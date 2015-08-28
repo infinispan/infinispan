@@ -62,8 +62,8 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryCreated() {
-      n.notifyCacheEntryCreated("k", "v1", true, ctx, null);
-      n.notifyCacheEntryCreated("k", "v1", false, ctx, null);
+      n.notifyCacheEntryCreated("k", "v1", null, true, ctx, null);
+      n.notifyCacheEntryCreated("k", "v1", null, false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
@@ -79,8 +79,8 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryModified() {
-      n.notifyCacheEntryModified("k", "v2", "v1", null, true, ctx, null);
-      n.notifyCacheEntryModified("k", "v2", "v1", null, false, ctx, null);
+      n.notifyCacheEntryModified("k", "v2", null, "v1", null, true, ctx, null);
+      n.notifyCacheEntryModified("k", "v2", null, "v1", null, false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();
@@ -173,8 +173,8 @@ public class CacheNotifierImplTest extends AbstractInfinispanTest {
    }
 
    public void testNotifyCacheEntryInvalidated() {
-      n.notifyCacheEntryInvalidated("k", "v", true, ctx, null);
-      n.notifyCacheEntryInvalidated("k", "v", false, ctx, null);
+      n.notifyCacheEntryInvalidated("k", "v", null, true, ctx, null);
+      n.notifyCacheEntryInvalidated("k", "v", null, false, ctx, null);
 
       assert cl.isReceivedPost();
       assert cl.isReceivedPre();

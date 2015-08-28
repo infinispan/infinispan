@@ -155,7 +155,7 @@ public class CacheEventTest extends Arquillian {
 
    public void testFiringEntryInvalidatedWhenUsingCacheNotifier() throws Exception {
       //when
-      cache1Notifier.notifyCacheEntryInvalidated("pete", "Edinburgh", true, invocationContext, null);
+      cache1Notifier.notifyCacheEntryInvalidated("pete", "Edinburgh", null, true, invocationContext, null);
 
       //then
       assertThat(cacheObserver, Cache1.class).hasEntryInvalidatedEvent("pete");

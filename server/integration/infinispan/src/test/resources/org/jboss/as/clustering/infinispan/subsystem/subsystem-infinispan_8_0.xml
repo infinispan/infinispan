@@ -72,6 +72,9 @@
         <local-cache name="short-stack-tx" statistics-available="false">
             <transaction mode="NON_DURABLE_XA" notifications="false"/>
         </local-cache>
+        <local-cache name="simple-cache" simple-cache="true">
+            <transaction mode="NONE"/>
+        </local-cache>
         <invalidation-cache-configuration name="invalidation-template" mode="ASYNC">
         </invalidation-cache-configuration>
         <invalidation-cache name="invalidation-instance" configuration="invalidation-template"/>

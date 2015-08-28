@@ -14,8 +14,6 @@ import java.lang.annotation.Target;
  * <p/>
  *  Locking: notification is performed WITH locks on the given key.
  * <p/>
- * Any exceptions thrown by the listener will abort the call. Any other listeners not yet called will not be called,
- * and any transactions in progress will be rolled back.
  *
  * @author Manik Surtani
  * @author Galder Zamarreño

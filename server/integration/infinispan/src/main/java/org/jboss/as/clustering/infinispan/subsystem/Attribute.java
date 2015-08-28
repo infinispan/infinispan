@@ -136,6 +136,7 @@ public enum Attribute {
     SEGMENTS(ModelKeys.SEGMENTS),
     SHARED(ModelKeys.SHARED),
     SHUTDOWN_TIMEOUT(ModelKeys.SHUTDOWN_TIMEOUT),
+    SIMPLE_CACHE(ModelKeys.SIMPLE_CACHE),
     SINGLETON(ModelKeys.SINGLETON),
     SITE(ModelKeys.SITE),
     SIZE(ModelKeys.SIZE),

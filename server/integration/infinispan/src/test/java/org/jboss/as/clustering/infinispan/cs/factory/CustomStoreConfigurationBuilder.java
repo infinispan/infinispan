@@ -47,6 +47,16 @@ public class CustomStoreConfigurationBuilder implements StoreConfigurationBuilde
    }
 
    @Override
+   public ConfigurationChildBuilder simpleCache(boolean simpleCache) {
+      return null;
+   }
+
+   @Override
+   public boolean simpleCache() {
+      return false;
+   }
+
+   @Override
    public AsyncStoreConfigurationBuilder async() {
       return null;
    }

@@ -13,6 +13,15 @@ abstract class AbstractConfigurationChildBuilder implements ConfigurationChildBu
       return builder.template(template);
    }
 
+   public ConfigurationChildBuilder simpleCache(boolean simpleCache) {
+      return builder.simpleCache(simpleCache);
+   }
+
+   @Override
+   public boolean simpleCache() {
+      return builder.simpleCache();
+   }
+
    @Override
    public ClusteringConfigurationBuilder clustering() {
       return builder.clustering();

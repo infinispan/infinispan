@@ -130,6 +130,7 @@
       <local-cache name="statisticsDisabled" statistics="false" statistics-available="false">
          <transaction notifications="false" />
       </local-cache>
+      <local-cache name="simplCache" simple-cache="true"/>
    </cache-container>
 
 </infinispan>
