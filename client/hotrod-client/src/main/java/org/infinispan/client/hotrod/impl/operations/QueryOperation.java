@@ -46,8 +46,12 @@ public class QueryOperation extends RetryOnFailureOperation<QueryResponse> {
       HeaderParams params = writeHeader(transport, QUERY_REQUEST);
       QueryRequest queryRequest = new QueryRequest();
       queryRequest.setJpqlString(remoteQuery.getJPAQuery());
-      queryRequest.setStartOffset(remoteQuery.getStartOffset());
-      queryRequest.setMaxResults(remoteQuery.getMaxResults());
+      if (remoteQuery.getStartOffset() > 0) {
+         queryRequest.setStartOffset(remoteQuery.getStartOffset());
+      }
+      if (remoteQuery.getMaxResults() >= 0) {
+         queryRequest.setMaxResults(remoteQuery.getMaxResults());
+      }
       queryRequest.setNamedParameters(getNamedParameters());
 
       SerializationContext serCtx = remoteQuery.getSerializationContext();

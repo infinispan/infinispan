@@ -18,12 +18,12 @@ message QueryRequest {
    /**
     * The number of matching results to skip before the first returned result.
     */
-   required int64 startOffset = 3;
+   optional int64 startOffset = 3;
 
    /**
     * Maximum number of matching results to return.
     */
-   required int32 maxResults = 4;
+   optional int32 maxResults = 4;
 
    /**
     * Multiple, optional named parameters. Each name must occur only once.

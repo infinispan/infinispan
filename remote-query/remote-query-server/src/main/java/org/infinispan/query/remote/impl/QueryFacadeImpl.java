@@ -54,9 +54,12 @@ public final class QueryFacadeImpl implements QueryFacade {
          boolean isIndexed = cacheConfiguration.indexing().index().isEnabled();
          boolean isCompatMode = cacheConfiguration.compatibility().enabled();
          SearchManager searchManager = isIndexed ? Search.getSearchManager(cache) : null;  // this also checks access permissions
+         RemoteQueryEngine queryEngine = new RemoteQueryEngine(cache, searchManager, isCompatMode, serCtx);
 
-         Query q = new RemoteQueryEngine(cache, searchManager, isCompatMode, serCtx)
-               .buildQuery(null, request.getJpqlString(), getNamedParameters(request), request.getStartOffset(), request.getMaxResults());
+         long startOffset = request.getStartOffset() == null ? -1 : request.getStartOffset();
+         int maxResults = request.getMaxResults() == null ? -1 : request.getMaxResults();
+         Map<String, Object> namedParameters = getNamedParameters(request);
+         Query q = queryEngine.buildQuery(null, request.getJpqlString(), namedParameters, startOffset, maxResults);
 
          QueryResponse response = makeResponse(q);
          return ProtobufUtil.toByteArray(serCtx, response);

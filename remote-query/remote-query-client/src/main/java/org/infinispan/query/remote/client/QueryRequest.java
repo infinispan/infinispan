@@ -17,9 +17,9 @@ public final class QueryRequest {
 
    private List<NamedParameter> namedParameters;
 
-   private long startOffset;
+   private Long startOffset;
 
-   private int maxResults;
+   private Integer maxResults;
 
    public String getJpqlString() {
       return jpqlString;
@@ -29,19 +29,19 @@ public final class QueryRequest {
       this.jpqlString = jpqlString;
    }
 
-   public long getStartOffset() {
+   public Long getStartOffset() {
       return startOffset;
    }
 
-   public void setStartOffset(long startOffset) {
+   public void setStartOffset(Long startOffset) {
       this.startOffset = startOffset;
    }
 
-   public int getMaxResults() {
+   public Integer getMaxResults() {
       return maxResults;
    }
 
-   public void setMaxResults(int maxResults) {
+   public void setMaxResults(Integer maxResults) {
       this.maxResults = maxResults;
    }
 
