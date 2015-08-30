@@ -152,7 +152,7 @@ public final class BooleShannonExpansion {
                }
             }
          }
-         PredicateOptimisations.optimizePredicates(newChildren, true);
+         PredicateOptimisations.optimizePredicates(newChildren, false);
          if (newChildren.size() == 1) {
             return newChildren.get(0);
          }

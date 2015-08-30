@@ -290,6 +290,21 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
    }
 
    @Test
+   public void testEqHybridQueryWithPredicateOptimisation() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("notes").like("%ipsum%")
+            .and(qf.having("name").eq("John").or().having("name").eq("Jane"))
+            .toBuilder().build();
+
+      List<User> list = q.list();
+
+      assertEquals(1, list.size());
+      assertEquals("Lorem ipsum dolor sit amet", list.get(0).getNotes());
+   }
+
+   @Test
    public void testEqInNested1() throws Exception {
       QueryFactory qf = getQueryFactory();
 
