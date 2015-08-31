@@ -17,6 +17,7 @@ import java.io.Serializable;
 
 import static org.infinispan.test.TestingUtil.metadata;
 import static org.mockito.Mockito.mock;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNull;
 
 /**
@@ -96,6 +97,22 @@ public class JdbcBinaryStoreTest extends BaseStoreTest {
       assertContains(k1, true);
       assertContains(k2, false);
       UnitTestDatabaseManager.verifyConnectionLeaks(((JdbcBinaryStore) cl).getConnectionFactory());
+   }
+
+
+   public void testCacheSize() {
+      long lifespan = 3000;
+      for (int i = 0; i < 240; i++) {
+         if (i % 2 == 0) {
+            cl.write(marshalledEntry(internalCacheEntry("key" + i, "v1", lifespan)));
+         } else {
+            cl.write(marshalledEntry(internalCacheEntry("key" + i, "v1", -1)));
+         }
+      }
+      assertEquals(cl.size(), 240);
+      timeService.advance(lifespan + 1);
+      assertEquals(cl.size(), 120);
+
    }
 
    private static final class FixedHashKey implements Serializable {
