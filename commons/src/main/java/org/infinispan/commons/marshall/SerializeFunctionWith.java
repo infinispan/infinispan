@@ -8,7 +8,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicate that this lambda function should be serialized with an instance of
+ * Indicate that this function should be serialized with an instance of
  * the given {@link Externalizer} class.
  *
  * Any externalizer type referred by this annotation must be either
@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Inherited
 @Documented
-public @interface SerializeLambdaWith {
+public @interface SerializeFunctionWith {
 
    /**
     * Specify the externalizer class to be used by the annotated class.
@@ -33,7 +33,7 @@ public @interface SerializeLambdaWith {
    Class<? extends Externalizer<?>> value();
 
    /**
-    * Specify the value matching capabilities of this lambda.
+    * Specify the value matching capabilities of this function.
     *
     * @return a value matcher mode
     */

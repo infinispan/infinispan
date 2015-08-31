@@ -5,6 +5,7 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
+import org.infinispan.commons.marshall.MarshallableFunctions;
 import org.infinispan.commons.util.Experimental;
 
 import java.util.Map;
@@ -42,7 +43,7 @@ import java.util.function.Function;
  * drastically reduces the payload size. Marshallable lambdas for some of
  * the most popular lambda functions used by {@link ConcurrentMap} and
  * javax.cache.Cache are available via the
- * {@link org.infinispan.commons.marshall.MarshallableLambdas} helper class.
+ * {@link MarshallableFunctions} helper class.
  *
  * <p>Being an asynchronous API, all methods that return a single result,
  * return a {@link CompletableFuture} which wraps the result. To avoid

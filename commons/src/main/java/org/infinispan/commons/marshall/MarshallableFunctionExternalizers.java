@@ -9,9 +9,9 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Set;
 
-import static org.infinispan.commons.marshall.MarshallableLambdas.*;
+import static org.infinispan.commons.marshall.MarshallableFunctions.*;
 
-public class MarshallableLambdaExternalizers {
+public class MarshallableFunctionExternalizers {
 
    private static final short VALUE_MATCH_ALWAYS = 0x1000;
    private static final short VALUE_MATCH_EXPECTED = 0x2000;

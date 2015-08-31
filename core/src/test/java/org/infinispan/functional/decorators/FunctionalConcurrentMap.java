@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-import static org.infinispan.commons.marshall.MarshallableLambdas.*;
+import static org.infinispan.commons.marshall.MarshallableFunctions.*;
 
 /**
  * A {@link ConcurrentMap} implementation that uses the operations exposed by
