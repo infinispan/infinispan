@@ -13,6 +13,7 @@ import static org.infinispan.commons.marshall.MarshallableFunctions.*;
 
 public class MarshallableFunctionExternalizers {
 
+   // TODO: Should really rely on ValuteMatcherMode enumeration ordering
    private static final short VALUE_MATCH_ALWAYS = 0x1000;
    private static final short VALUE_MATCH_EXPECTED = 0x2000;
    private static final short VALUE_MATCH_EXPECTED_OR_NEW = 0x3000;
