@@ -21,12 +21,6 @@ public interface KeyFilter<K> {
       }
    };
 
-   //TODO remove this in 8.0
-   /**
-    * @deprecated Use {@code ACCEPT_ALL_FILTER} instead
-    */
-   KeyFilter LOAD_ALL_FILTER = ACCEPT_ALL_FILTER;
-
    /**
     * @param key key to test
     * @return true if the given key is accepted by this filter.
