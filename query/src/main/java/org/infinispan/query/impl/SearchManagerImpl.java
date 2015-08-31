@@ -14,9 +14,6 @@ import org.infinispan.query.MassIndexer;
 import org.infinispan.query.Transformer;
 import org.infinispan.query.backend.QueryInterceptor;
 import org.infinispan.query.clustered.ClusteredCacheQueryImpl;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.embedded.LuceneQuery;
-import org.infinispan.query.dsl.embedded.impl.EmbeddedLuceneQueryFactory;
 import org.infinispan.query.dsl.embedded.impl.QueryEngine;
 import org.infinispan.query.impl.massindex.DistributedExecutorMassIndexer;
 import org.infinispan.query.spi.SearchManagerImplementor;
@@ -45,12 +42,6 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       this.searchFactory = ComponentRegistryUtils.getComponent(cache, SearchIntegrator.class);
       this.queryInterceptor = ComponentRegistryUtils.getQueryInterceptor(cache);
       queryEngine = new QueryEngine(cache, this);
-   }
-
-   //TODO remove in 8.0
-   @Override
-   public QueryFactory<LuceneQuery> getQueryFactory() {
-      return new EmbeddedLuceneQueryFactory(queryEngine);
    }
 
    /* (non-Javadoc)

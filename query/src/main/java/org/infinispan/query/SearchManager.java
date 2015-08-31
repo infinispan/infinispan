@@ -5,8 +5,6 @@ import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.EntityContext;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.stat.Statistics;
-import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.embedded.LuceneQuery;
 
 /**
  * The SearchManager is the entry point to create full text queries on top of a cache.
@@ -15,15 +13,6 @@ import org.infinispan.query.dsl.embedded.LuceneQuery;
  * @author Marko Luksa
  */
 public interface SearchManager {
-
-   //TODO [anistor] remove this method in infinispan-8.0.0.Final
-   /**
-    * Experimental! Obtains the factory for DSL-based queries backed by Lucene indexes.
-    *
-    * @return a factory capable of building queries for the cache this SearchManager belongs to
-    * @deprecated see alternative {@link Search#getQueryFactory}. This method will be removed in Infinispan 8.0.
-    */
-   QueryFactory<LuceneQuery> getQueryFactory();
 
    /**
     * This is a simple method that will just return a {@link CacheQuery}, filtered according to a set of classes passed

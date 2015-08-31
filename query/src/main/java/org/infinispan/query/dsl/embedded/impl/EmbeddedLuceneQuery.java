@@ -1,10 +1,7 @@
 package org.infinispan.query.dsl.embedded.impl;
 
 import org.infinispan.query.CacheQuery;
-import org.infinispan.query.FetchOptions;
-import org.infinispan.query.ResultIterator;
 import org.infinispan.query.dsl.QueryFactory;
-import org.infinispan.query.dsl.embedded.LuceneQuery;
 import org.infinispan.query.dsl.impl.BaseQuery;
 
 import java.util.List;
@@ -17,7 +14,7 @@ import java.util.Map;
  * @author anistor@redhat.com
  * @since 6.0
  */
-final class EmbeddedLuceneQuery extends BaseQuery implements LuceneQuery {
+final class EmbeddedLuceneQuery extends BaseQuery {
 
    private final QueryEngine queryEngine;
 
@@ -50,16 +47,6 @@ final class EmbeddedLuceneQuery extends BaseQuery implements LuceneQuery {
    @SuppressWarnings("unchecked")
    public <T> List<T> list() {
       return (List<T>) createQuery().list();
-   }
-
-   @Override
-   public ResultIterator iterator(FetchOptions fetchOptions) {
-      return createQuery().iterator(fetchOptions);
-   }
-
-   @Override
-   public ResultIterator iterator() {
-      return createQuery().iterator();
    }
 
    @Override
