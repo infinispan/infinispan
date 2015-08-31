@@ -1,10 +1,13 @@
 package org.infinispan.commons.api.functional;
 
+import org.infinispan.commons.util.Experimental;
+
 /**
  * Parameter identifiers.
  *
  * @since 8.0
  */
+@Experimental
 public final class ParamIds {
 
    public static final int FUTURE_MODE_ID = 0;

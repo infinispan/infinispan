@@ -2,11 +2,14 @@ package org.infinispan.commons.api.functional;
 
 //TODO: Component status is in core/, not commons :(
 
+import org.infinispan.commons.util.Experimental;
+
 /**
  * Different states a component may be in.
  *
  * @since 8.0
  */
+@Experimental
 public enum Status {
    /**
     * Object has been instantiated, but start() has not been called.

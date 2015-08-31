@@ -1,31 +1,33 @@
 package org.infinispan.commons.api.functional;
 
+import org.infinispan.commons.util.Experimental;
+
 import java.util.Optional;
 
 /**
  * An easily extensible metadata parameter that's stored along with the value
  * in the the functional map.
  *
- * Some metadata parameters can be provided by the user in which case they
+ * <p>Some metadata parameters can be provided by the user in which case they
  * need to implement {@link MetaParam.Writable}. Examples of writable metadata
  * parameters are version information, lifespan of the cached value...etc.
  *
- * Those metadata parameters not extending {@link MetaParam.Writable} are
+ * <p>Those metadata parameters not extending {@link MetaParam.Writable} are
  * created by internal logic and hence can only be queried, for example:
  * time when value was added into the functional map, or last time value
  * was accessed or modified.
  *
- * What makes {@link MetaParam} different from {@link Param} is that {@link MetaParam}
+ * <p>What makes {@link MetaParam} different from {@link Param} is that {@link MetaParam}
  * values are designed to be stored along with key/value pairs in the functional map,
  * to provide extra information. On the other hand, {@link Param} instances
  * merely act as ways to tweak how operations are executed, and their contents
  * are never stored permanently.
  *
- * @apiNote This interface replaces Infinispan's Metadata interface providing
+ * <p>This interface replaces Infinispan's Metadata interface providing
  * a more flexible way to add new metadata parameters to be stored with
  * the cached entries.
  *
- * @apiNote {@link MetaParam} design has been geared towards making a clear
+ * <p>{@link MetaParam} design has been geared towards making a clear
  * separation between the metadata that can be provided by the user on
  * per-entry basis, e.g. lifespan, maxIdle, version...etc, as opposed to
  * metadata that's produced by the internal logic that cannot be modified
@@ -36,6 +38,7 @@ import java.util.Optional;
  * the implementation's type.
  * @since 8.0
  */
+@Experimental
 public interface MetaParam<T> {
 
    /**
@@ -47,7 +50,7 @@ public interface MetaParam<T> {
     * Provides metadata parameter lookup capabilities using {@link Class} as
     * lookup key.
     *
-    * When the {@link MetaParam} type is generic, e.g. {@link MetaEntryVersion},
+    * <p>When the {@link MetaParam} type is generic, e.g. {@link MetaEntryVersion},
     * passing the correct {@link Class} information so that the return of
     * {@link #findMetaParam} is of the expected type can be a bit tricky.
     * {@link MetaEntryVersion#type()} offers an easy way to retrieve the
@@ -70,14 +73,17 @@ public interface MetaParam<T> {
     *          metaParamLookup.findMetaParam(MetaLifespan.class);
     * }</pre>
     *
-    * @apiNote A user that queries meta parameters can never assume that the
+    * <p>A user that queries meta parameters can never assume that the
     * meta parameter will always exist because there are scenarios, such as
     * when compatibility mode is enabled, when meta parameters that are
     * assumed to be present are not due to the API multiplexing that occurs.
     * For example, when compatibility mode is enabled, the REST server can't
     * assume that MIME metadata will be present since data might have been
     * stored with embedded or remote (Hot Rod) API.
+    *
+    * @since 8.0
     */
+   @Experimental
    interface Lookup {
       /**
        * Returns a non-empty {@link Optional} instance containing a metadata
@@ -97,12 +103,17 @@ public interface MetaParam<T> {
     *
     * @param <T> type of MetaParam instance, implementations should assign it to
     * the implementation's type.
+    * @since 8.0
     */
+   @Experimental
    interface Writable<T> extends MetaParam<T> {}
 
    /**
     * Writable metadata parameter representing a cached entry's millisecond lifespan.
+    *
+    * @since 8.0
     */
+   @Experimental
    final class MetaLifespan extends MetaLong implements Writable<Long> {
       private static final MetaLifespan DEFAULT = new MetaLifespan(-1);
 
@@ -123,7 +134,10 @@ public interface MetaParam<T> {
    /**
     * Read only metadata parameter representing a cached entry's created time
     * in milliseconds.
+    *
+    * @since 8.0
     */
+   @Experimental
    final class MetaCreated extends MetaLong {
       public MetaCreated(long created) {
          super(created);
@@ -138,7 +152,10 @@ public interface MetaParam<T> {
    /**
     * Writable metadata parameter representing a cached entry's millisecond
     * max idle time.
+    *
+    * @since 8.0
     */
+   @Experimental
    final class MetaMaxIdle extends MetaLong implements Writable<Long> {
       private static final MetaMaxIdle DEFAULT = new MetaMaxIdle(-1);
 
@@ -159,7 +176,10 @@ public interface MetaParam<T> {
    /**
     * Read only metadata parameter representing a cached entry's last used time
     * in milliseconds.
+    *
+    * @since 8.0
     */
+   @Experimental
    final class MetaLastUsed extends MetaLong {
       public MetaLastUsed(long lastUsed) {
          super(lastUsed);
@@ -173,7 +193,10 @@ public interface MetaParam<T> {
 
    /**
     * Writable metadata parameter representing a cached entry's generic version.
+    *
+    * @since 8.0
     */
+   @Experimental
    class MetaEntryVersion<T> implements Writable<EntryVersion<T>> {
       private final EntryVersion<T> entryVersion;
 
@@ -213,6 +236,12 @@ public interface MetaParam<T> {
       }
    }
 
+   /**
+    * Abstract class for numeric long-based metadata parameter instances.
+    *
+    * @since 8.0
+    */
+   @Experimental
    abstract class MetaLong implements MetaParam<Long> {
       protected final long value;
 

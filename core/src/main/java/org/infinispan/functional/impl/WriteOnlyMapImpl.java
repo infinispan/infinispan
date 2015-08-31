@@ -11,6 +11,7 @@ import org.infinispan.commons.api.functional.Listeners.WriteListeners;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -23,7 +24,13 @@ import java.util.function.Consumer;
 
 import static org.infinispan.functional.impl.Params.withFuture;
 
-public class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements WriteOnlyMap<K, V> {
+/**
+ * Write-only map implementation.
+ *
+ * @since 8.0
+ */
+@Experimental
+public final class WriteOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements WriteOnlyMap<K, V> {
    private static final Log log = LogFactory.getLog(WriteOnlyMapImpl.class);
    private final Params params;
 

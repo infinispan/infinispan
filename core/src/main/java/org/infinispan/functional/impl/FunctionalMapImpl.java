@@ -5,6 +5,7 @@ import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commons.api.functional.FunctionalMap;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Status;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -14,8 +15,11 @@ import java.util.concurrent.ExecutorService;
 import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
 
 /**
+ * Functional map implementation.
+ *
  * @since 8.0
  */
+@Experimental
 public final class FunctionalMapImpl<K, V> implements FunctionalMap<K, V> {
 
    final Params params;

@@ -1,5 +1,7 @@
 package org.infinispan.commons.api.functional;
 
+import org.infinispan.commons.util.Experimental;
+
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.function.BiConsumer;
@@ -14,7 +16,7 @@ import java.util.stream.Collector;
 /**
  * Unsorted traversable stream for sequential and aggregating operations.
  *
- * Traversable contains two type of operations:
+ * <p>Traversable contains two type of operations:
  * <ol>
  *    <li>Intermediate operations which transform a traversable, into another,
  *    e.g. {@link #filter(Predicate)}.
@@ -25,10 +27,10 @@ import java.util.stream.Collector;
  *    </li>
  * </ol>
  *
- * Traversable cannot be reused and hence is designed to be used only once
+ * <p>Traversable cannot be reused and hence is designed to be used only once
  * via its intermediate and terminal operations.
  *
- * In distributed environments, unless individually specified, all lambdas
+ * <p>In distributed environments, unless individually specified, all lambdas
  * passed to methods are executed where data is located. For example, if
  * executing {@link #forEach(Consumer)}, the {@link Consumer} function is
  * executed wherever a particular key resides. To execute a for-each operation
@@ -38,6 +40,7 @@ import java.util.stream.Collector;
  * @param <T>
  * @since 8.0
  */
+@Experimental
 public interface Traversable<T> {
 
    /**
@@ -58,7 +61,7 @@ public interface Traversable<T> {
     * results of replacing each element of this traversable with the contents
     * of a traversable produced by applying the provided function to each element.
     *
-    * From a functional map perspective, this operation is particularly handy
+    * <p>From a functional map perspective, this operation is particularly handy
     * when the values are collections.
     */
    <R> Traversable<R> flatMap(Function<? super T, ? extends Traversable<? extends R>> f);
@@ -86,8 +89,8 @@ public interface Traversable<T> {
     * A terminal operation that applies a binary folding operation to a start
     * value and the result of each element having a mapping function applied.
     *
-    * @apiNote This is a combined map/reduce which could potentially be
-    * done more efficiently than if a map is executed and then reduce, so leave it in.
+    * <p>This is a combined map/reduce which could potentially be done more
+    * efficiently than if a map is executed and then reduce.
     */
    <U> U reduce(U z, BiFunction<U, ? super T, U> mapper, BinaryOperator<U> folder);
 
@@ -96,17 +99,16 @@ public interface Traversable<T> {
     * container, first constructed with the given supplier, and then
     * accumulating elements over it with the given consumer.
     *
-    * The combiner can be used to combine accumulated results executed in
+    * <p>The combiner can be used to combine accumulated results executed in
     * parallel or coming from different nodes in a distributed environment.
     *
-    * In distributed environments where some keys are remote, the
+    * <p>In distributed environments where some keys are remote, the
     * {@link Supplier} and {@link BiConsumer} instances passed in are sent to
     * other nodes and hence they need to be marshallable. If the collect
     * operation can be defined using the helper methods in
     * {@link java.util.stream.Collectors}, it is recommended that those are
     * used, which can easily be made marshalled using the
-    * org.infinispan.stream.CacheCollectors#serializableCollector method.
-    *
+    * {@code org.infinispan.stream.CacheCollectors#serializableCollector} method.
     */
    <R> R collect(Supplier<R> s, BiConsumer<R, ? super T> accumulator, BiConsumer<R, R> combiner);
 
@@ -114,10 +116,10 @@ public interface Traversable<T> {
     * A terminal operation that transforms the traversable into a result
     * container using a {@code Collector}.
     *
-    * In distributed environments where some keys are remote, the
+    * <p>In distributed environments where some keys are remote, the
     * {@link Collector} instance passed in is sent other nodes and hence it
     * needs to be marshallable. This can easily be made achieved using the
-    * org.infinispan.stream.CacheCollectors#serializableCollector method.
+    * {@code org.infinispan.stream.CacheCollectors#serializableCollector} method.
     */
    <R, A> R collect(Collector<? super T, A, R> collector);
 
@@ -148,7 +150,7 @@ public interface Traversable<T> {
     * A terminal operation that returns whether any elements of this
     * traversable match the provided predicate.
     *
-    * @apiNote An important reason to keep this method is the fact as opposed
+    * <p>An important reason to keep this method is the fact as opposed
     * to a reduction which must evaluate all elements in the traversable, this
     * method could stop as soon as it has found an element that matches.
     */
@@ -158,7 +160,7 @@ public interface Traversable<T> {
     * A terminal operation that returns whether all elements of this
     * traversable match the provided predicate.
     *
-    * @apiNote An important reason to keep this method is the fact as opposed
+    * <p>An important reason to keep this method is the fact as opposed
     * to a reduction which must evaluate all elements in the traversable, this
     * method could stop as soon as it has found an element that does not match
     * the predicate.
@@ -169,7 +171,7 @@ public interface Traversable<T> {
     * A terminal operation that returns whether no elements of this
     * traversable match the provided predicate.
     *
-    * @apiNote An important reason to keep this method is the fact as opposed
+    * <p>An important reason to keep this method is the fact as opposed
     * to a reduction which must evaluate all elements in the traversable, this
     * method could stop as soon as it has found an element that does matches
     * the predicate.

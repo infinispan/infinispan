@@ -3,6 +3,7 @@ package org.infinispan.functional.impl;
 import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Param.PersistenceMode;
+import org.infinispan.commons.util.Experimental;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,19 +15,16 @@ import java.util.function.Supplier;
  * Internal class that encapsulates collection of parameters used to tweak
  * functional map operations.
  *
- * DESIGN RATIONALES:
- * <ul>
- *    <il>Internally, parameters are stored in an array which is indexed by a
- *    parameter's {@link Param#id()}
- *    </il>
- *    <il>All parameters have default values which are stored in a static
- *    array field in {@link Params} class, which are used to as base collection
- *    when adding or overriding parameters.
- *    </il>
- * </ul>
+ * <p>Internally, parameters are stored in an array which is indexed by
+ * a parameter's {@link Param#id()}
+ *
+ * <p>All parameters have default values which are stored in a static
+ * array field in {@link Params} class, which are used to as base collection
+ * when adding or overriding parameters.
  *
  * @since 8.0
  */
+@Experimental
 public final class Params {
 
    private static final Param<?>[] DEFAULTS = new Param<?>[]{

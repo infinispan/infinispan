@@ -5,6 +5,7 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.marshall.core.Ids;
@@ -17,6 +18,12 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Entry views implementation class holder.
+ *
+ * @since 8.0
+ */
+@Experimental
 public final class EntryViews {
 
    private EntryViews() {
@@ -74,25 +81,6 @@ public final class EntryViews {
 
       return ret;
    }
-
-//   public static <K, V> ReadWriteEntryView<K, V> immutableReadWrite(ReadWriteEntryView<K, V> view) {
-//      K key = view.key();
-//      Optional<V> maybeV = view.find();
-//      Metadata metadata;
-//      if (view instanceof EntryBackedReadWriteView)
-//         metadata = ((EntryBackedReadWriteView) view).entry.getMetadata();
-//      else if (view instanceof EntryAndPreviousReadWriteView)
-//         metadata = ((EntryAndPreviousReadWriteView) view).prevMetadata;
-//      else
-//         throw new IllegalStateException("Unknow read-write view: " + view);
-//
-//      return new ImmutableReadWriteView<>(key, maybeV, metadata);
-//   }
-//
-//   public static <K, V> ReadWriteEntryView<K, V> immutableReadWrite(K key, V value, Metadata metadata) {
-//      return new ImmutableReadWriteView<>(key, Optional.ofNullable(value), metadata);
-//   }
-
 
    private static final class EntryBackedReadOnlyView<K, V> implements ReadEntryView<K, V> {
       final CacheEntry<K, V> entry;

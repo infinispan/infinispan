@@ -1,28 +1,17 @@
 package org.infinispan.commons.api.functional;
 
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.util.Experimental;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
- * Listener definitions.
- *
- * DESIGN RATIONALE:
- * <ul>
- *    <li>The current set of listener events that can be fired are related
- *    to modifications, and deciding between create or modify, or providing
- *    removed entry information, require reading the previous value. Hence,
- *    the current set of listeners can only be provided for read-write maps.
- *    In the future, if for example cache entry visited events are to be
- *    supported, those would need to be associated with either a read or
- *    read-write map, and hence the listeners interface would most likely
- *    be split up.
- *    </li>
- * </ul>
+ * Holder class for functional listener definitions.
  *
  * @since 8.0
  */
+@Experimental
 public final class Listeners {
 
    private Listeners() {
@@ -34,19 +23,22 @@ public final class Listeners {
     * entry created, modified and removed events, and also register listeners
     * for any cache entry write events.
     *
-    * Entry created, modified and removed events can only be fired when these
+    * <p>Entry created, modified and removed events can only be fired when these
     * originate on a read-write functional map, since this is the only one
     * that guarantees that the previous value has been read, and hence the
     * differentiation between create, modified and removed can be fully
     * guaranteed.
+    *
+    * @since 8.0
     */
+   @Experimental
    public interface ReadWriteListeners<K, V> extends WriteListeners<K, V> {
       /**
        * Add a create event specific listener by passing in a
        * {@link Consumer} to be called back each time a new cache entry is
        * created, passing in a {@link ReadEntryView} of that new entry.
        *
-       * This method is shortcut for users who are only interested in
+       * <p>This method is shortcut for users who are only interested in
        * create events. If interested in multiple event types, calling
        * {@link #add(ReadWriteListener)} is recommended instead.
        *
@@ -63,7 +55,7 @@ public final class Listeners {
        * previous entry as first parameter, and a {@link ReadEntryView} of the
        * new value as second parameter.
        *
-       * This method is shortcut for users who are only interested in
+       * <p>This method is shortcut for users who are only interested in
        * update events. If interested in multiple event types, calling
        * {@link #add(ReadWriteListener)} is recommended instead.
        *
@@ -80,7 +72,7 @@ public final class Listeners {
        * {@link Consumer} to be called back each time an entry is
        * removed, passing in the {@link ReadEntryView} of the removed entry.
        *
-       * This method is shortcut for users who are only interested in
+       * <p>This method is shortcut for users who are only interested in
        * remove events. If interested in multiple event types, calling
        * {@link #add(ReadWriteListener)} is recommended instead.
        *
@@ -138,27 +130,30 @@ public final class Listeners {
     * write events that happen in either a read-write or write-only
     * functional map.
     *
-    * Listeners for write events cannot distinguish between cache entry
+    * <p>Listeners for write events cannot distinguish between cache entry
     * created and cache entry modify/update events because they don't have
     * access to the previous value. All they know is that a new non-null
     * entry has been written.
     *
-    * However, write event listeners can distinguish between entry removals
+    * <p>However, write event listeners can distinguish between entry removals
     * and cache entry create/modify-update events because they can query
     * what the new entry's value via {@link ReadEntryView#find()}.
+    *
+    * @since 8.0
     */
+   @Experimental
    public interface WriteListeners<K, V> {
       /**
        * Add a write event listener by passing in a {@link Consumer} to be
        * called each time a cache entry is created, modified/updated or
        * removed.
        *
-       * For created or modified/updated events, the
+       * <p>For created or modified/updated events, the
        * {@link ReadEntryView} passed in will represent the newly stored
        * entry, hence implementations will not be available to differentiate
        * between created events vs modified/updated events.
        *
-       * For removed events, {@link ReadEntryView} passed in will represent
+       * <p>For removed events, {@link ReadEntryView} passed in will represent
        * an empty entry view, hence {@link ReadEntryView#find()} will return
        * an empty {@link java.util.Optional} instance, and
        * {@link ReadEntryView#get()} will throw
@@ -182,18 +177,21 @@ public final class Listeners {
 
       /**
        * Write-only listener.
+       *
+       * @since 8.0
        */
+      @Experimental
       interface WriteListener<K, V> {
          /**
           * Entry write event callback that receives a {@link ReadEntryView}
           * of the written entry.
           *
-          * For created or modified/updated events, the
+          * <p>For created or modified/updated events, the
           * {@link ReadEntryView} passed in will represent the newly stored
           * entry, hence implementations will not be available to differentiate
           * between created events vs modified/updated events.
           *
-          * For removed events, {@link ReadEntryView} passed in will represent
+          * <p>For removed events, {@link ReadEntryView} passed in will represent
           * an empty entry view, hence {@link ReadEntryView#find()} will return
           * an empty {@link java.util.Optional} instance, and
           * {@link ReadEntryView#get()} will throw
