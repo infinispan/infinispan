@@ -1,6 +1,7 @@
 package org.infinispan.functional.impl;
 
 import org.infinispan.commons.api.functional.EntryView.ReadEntryView;
+import org.infinispan.commons.util.Experimental;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -11,6 +12,7 @@ import java.util.function.Supplier;
 /**
  * @since 8.0
  */
+@Experimental
 public final class FunctionalNotifierImpl<K, V> implements FunctionalNotifier<K, V> {
 
    final List<Consumer<ReadEntryView<K, V>>> onCreates = new CopyOnWriteArrayList<>();

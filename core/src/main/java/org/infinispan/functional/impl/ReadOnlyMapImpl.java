@@ -8,6 +8,7 @@ import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.filter.AcceptAllKeyValueFilter;
@@ -24,6 +25,12 @@ import java.util.stream.StreamSupport;
 
 import static org.infinispan.functional.impl.Params.withFuture;
 
+/**
+ * Read-only map implementation.
+ *
+ * @since 8.0
+ */
+@Experimental
 public final class ReadOnlyMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements ReadOnlyMap<K, V> {
    private static final Log log = LogFactory.getLog(ReadOnlyMapImpl.class);
    private final Params params;

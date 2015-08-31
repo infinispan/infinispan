@@ -2,9 +2,14 @@ package org.infinispan.commons.api.functional;
 
 // TODO: Entry version defined in core/ and does not expose internal entry
 
+import org.infinispan.commons.util.Experimental;
+
 /**
  * Entry version.
+ *
+ * @since 8.0
  */
+@Experimental
 public interface EntryVersion<T> {
 
    /**

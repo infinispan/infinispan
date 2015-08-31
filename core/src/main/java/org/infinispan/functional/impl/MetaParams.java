@@ -3,6 +3,7 @@ package org.infinispan.functional.impl;
 import net.jcip.annotations.NotThreadSafe;
 import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.marshall.core.Ids;
 
@@ -20,7 +21,7 @@ import java.util.Set;
 /**
  * Represents a {@link MetaParam} collection.
  *
- * @implNote In {@link Params}, the internal array where each parameter was
+ * <p>In {@link Params}, the internal array where each parameter was
  * stored is indexed by an integer. This worked fine because the available
  * parameters are exclusively controlled by the Infinispan. This is not the
  * case with {@link MetaParam} instances where users are expected to add their
@@ -29,17 +30,17 @@ import java.util.Set;
  * against the each individual {@link MetaParam} instance stored in
  * {@link MetaParams}.
  *
- * @implNote Having sequential {@link MetaParam} lookups over an array is O(n),
+ * <p>Having sequential {@link MetaParam} lookups over an array is O(n),
  * but this is not problematic since the number of {@link MetaParam} to be
  * stored with each cached entry is expected to be small, less than 10 per
  * {@link MetaParams} collection. So, the performance impact is quite small.
  *
- * @implNote Storing {@link MetaParam} instances in an array adds the least
+ * <p>Storing {@link MetaParam} instances in an array adds the least
  * amount of overhead to keeping a collection of {@link MetaParam} in memory
  * along with each cached entry, while retaining flexibility to add or remove
  * {@link MetaParam} instances.
  *
- * @implNote This {@link MetaParams} collection is not thread safe because
+ * <p>This {@link MetaParams} collection is not thread safe because
  * it is expected that any updates will be done having acquired write locks
  * on the entire {@link org.infinispan.container.entries.CacheEntry} which
  * references the {@link MetaParams} collection. Hence, any updates could be
@@ -51,6 +52,7 @@ import java.util.Set;
  * @since 8.0
  */
 @NotThreadSafe
+@Experimental
 public final class MetaParams {
 
    private MetaParam<?>[] metas;

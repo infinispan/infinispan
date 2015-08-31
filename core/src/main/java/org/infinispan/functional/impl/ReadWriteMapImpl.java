@@ -11,6 +11,7 @@ import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Traversable;
 import org.infinispan.commons.util.CloseableIteratorSet;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -24,6 +25,12 @@ import java.util.function.Function;
 
 import static org.infinispan.functional.impl.Params.withFuture;
 
+/**
+ * Read-write map implementation.
+ *
+ * @since 8.0
+ */
+@Experimental
 public final class ReadWriteMapImpl<K, V> extends AbstractFunctionalMap<K, V> implements ReadWriteMap<K, V> {
    private static final Log log = LogFactory.getLog(ReadWriteMapImpl.class);
    private final Params params;

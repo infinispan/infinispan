@@ -4,6 +4,7 @@ import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.Experimental;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.marshall.core.Ids;
@@ -16,6 +17,12 @@ import java.io.ObjectOutput;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Metadata parameters backed internal metadata representation.
+ *
+ * @since 8.0
+ */
+@Experimental
 public final class MetaParamsInternalMetadata implements InternalMetadata, MetaParam.Lookup {
 
    final MetaParams params;

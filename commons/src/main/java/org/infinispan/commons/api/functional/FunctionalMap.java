@@ -5,6 +5,7 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.api.functional.Listeners.ReadWriteListeners;
 import org.infinispan.commons.api.functional.Listeners.WriteListeners;
+import org.infinispan.commons.util.Experimental;
 
 import java.util.Map;
 import java.util.Set;
@@ -18,53 +19,49 @@ import java.util.function.Function;
 /**
  * Top level functional map interface offering common functionality for the
  * read-only, read-write, and write-only operations that can be run against a
- * functional map.
+ * functional map asynchronously.
  *
- * DESIGN RATIONALES:
- * <ul>
- *    <li>Originally, I tried to come up with a single functional map interface
- *    that would encompass read-only, read-write and write-only operations, but
- *    it felt quite bloated. By separating each major type of operations to its
- *    own interface, it becomes easier to figure out which are all the read-only
- *    operations, which are write-only...etc, which also helps the user quickly
- *    see what they can do without being obstructed by other operation types.
- *    </li>
- *    <li>The conscious decision to separate read-only, write-only and
- *    read-write interfaces helps massively with type safety. So, if a user
- *    gets a read-only map, it can't write to it by mistake since no such
- *    APIs are exposed. The same happens with write-only maps, the user can
- *    only write and cannot make the mistake of reading from the entry view
- *    because read operations are not exposed. The previous design did not
- *    have this level of type safety and hence it relied on runtime exceptions
- *    to catch these wrong combinations.</li>
- *    <li>In the original design, we defined custom functional interfaces that
- *    were serializable. By doing this, we could ship them around and apply
- *    them remotely. However, for a function to be serializable, it can't
- *    capture non-serializable objects which these days can only be detected
- *    at runtime, hence it's not very type safe. On top of that, using foreign
- *    function definitions would have made the code harder to read. For all
- *    these reasons, we've gone for the approach of using standard lambda
- *    functions. When these have to run in a clustered environment, instead of
- *    shipping the lambda function around, necessary elements are brought to
- *    the node where the function is passed, and the functions gets executed
- *    locally. This way of working has also the benefit of matching how
- *    Infinispan works internally, bringing necessary elements from other
- *    nodes, executing operations locally and shipping results around. In the
- *    future, we might decide to make these functions marshallable, but
- *    outside the standard.
- *    </li>
- *    <li>For those operations that act on multiple keys, or return more than
- *    one result, functional map uses a pull-based API whose main entry point
- *    is {@link Traversable}. Alternative designs based on push-based
- *    approaches, e.g. Rx Java or similar, have been considered but it has
- *    been decided against it. The main reason is usability, pull-based API
- *    are easier from the user perspective. Even though it's a pull-based API,
- *    it can be asynchronous underneath since the user can decide to work on
- *    the traversable or iterator at a later stage.</li>
- * </ul>
+ * <p>Lambdas passed in as parameters to functional map methods define the
+ * type of operation that is executed, but since lambdas are transparent to
+ * the internal logic, it was decided to separate the API into three types
+ * of operation: read-only, write-only, and read-write. This separation helps
+ * the user understand the group of functions and their possibilities.
+ *
+ * <p>This conscious decision to separate read-only, write-only and
+ * read-write interfaces helps type safety. So, if a user gets a read-only
+ * map, it can't write to it by mistake since no such APIs are exposed.
+ * The same happens with write-only maps, the user can only write and cannot
+ * make the mistake of reading from the entry view because read operations
+ * are not exposed.
+ *
+ * <p>Lambdas passed in to read-write and write-only operations, when
+ * running in a cluster, must be marshallable. One option to do so is to
+ * mark them as being {@link java.io.Serializable} but this is expensive
+ * in terms of payload size. Alternatively, you can provide an Infinispan
+ * {@link org.infinispan.commons.marshall.Externalizer} for it which
+ * drastically reduces the payload size. Marshallable lambdas for some of
+ * the most popular lambda functions used by {@link ConcurrentMap} and
+ * javax.cache.Cache are available via the
+ * {@link org.infinispan.commons.marshall.MarshallableLambdas} helper class.
+ *
+ * <p>Being an asynchronous API, all methods that return a single result,
+ * return a {@link CompletableFuture} which wraps the result. To avoid
+ * blocking, it offers the possibility to receive callbacks when the
+ * {@link CompletableFuture} has completed, or it can be chained or composes
+ * with other {@link CompletableFuture} instances.
+ *
+ * <p>For those operations that return multiple results, the API returns
+ * instances of a {@link Traversable} interface which offers a lazy pull­style
+ * API for working with multiple results. Although push­style interfaces for
+ * handling multiple results, such as RxJava, are fully asynchronous, they're
+ * harder to use from a user’s perspective. {@link Traversable},​ being a lazy
+ * pull­style API, can still be asynchronous underneath since the user can
+ * decide to work on the {@link Traversable} at a later stage, and the
+ * implementation itself can decide when to compute those results.
  *
  * @since 8.0
  */
+@Experimental
 public interface FunctionalMap<K, V> extends AutoCloseable {
 
    /**
@@ -87,21 +84,23 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
     * The information that can be read per entry in the functional map is
     * exposed by {@link ReadEntryView}.
     *
-    * DESIGN RATIONALES:
-    * <ul>
-    *    <li>Why does it make sense to expose read-only operations?
-    *    Because read-only operations don't acquired locks, and hence all sorts
-    *    of optimizations can be carried out by the internal logic.
-    *    </li>
-    *    <li>Why no values() method? Having keys() makes sense since that way
-    *    we can have an observe all keys without having to bring values.
-    *    Having entries() makes sense since it allows you to observe on both
-    *    keys and values, but this is no extra cost to exposing just values
-    *    since keys are the main index and hence will always be available.
-    *    Hence, adding values() offers nothing extra to the API.
-    *    </li>
-    * </ul>
+    * <p>Read-only operations have the advantage that no locks are acquired
+    * for the duration of the operation and so it makes sense to have them
+    * a top-level interface dedicated to them.
+    *
+    * <p>Browsing methods that provide a read-only view of the cached data
+    * are available via {@link #keys()} and {@link #entries()}.
+    * Having {@link #keys()} makes sense since that way keys can be traversed
+    * without having to bring values. Having {@link #entries()} makes sense
+    * since it allows traversing both keys, values and any meta parameters
+    * associated with them, but this is no extra cost to exposing just values
+    * since keys are the main index and hence will always be available.
+    * Hence, adding a method to only browse values offers nothing extra to
+    * the API.
+    *
+    * @since 8.0
     */
+   @Experimental
    interface ReadOnlyMap<K, V> extends FunctionalMap<K, V> {
       /**
        * Tweak read-only functional map executions providing {@link Param} instances.
@@ -116,20 +115,20 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * would return value or {@link MetaParam} information from the cache
        * entry in the functional map.
        *
-       * By returning {@link CompletableFuture} instead of the function's
+       * <p>By returning {@link CompletableFuture} instead of the function's
        * return type directly, the method hints at the possibility that to
-       * executing the function might require remote data present in either
-       * a persistent store or a remote clustered node.
+       * execute the function might require to go remote to retrieve data in
+       * persistent store or another clustered node.
        *
-       * This method can be used to implement read-only single-key based
+       * <p>This method can be used to implement read-only single-key based
        * operations in {@link ConcurrentMap} and javax.cache.Cache
        * such as:
        *
        * <ul>
        *    <li>{@link ConcurrentMap#get(Object)}</li>
        *    <li>{@link ConcurrentMap#containsKey(Object)}</li>
-       *    <li>javax.cache.Cache#get(Object)</li>
-       *    <li>javax.cache.Cache#containsKey(Object)</li>
+       *    <li>{@code javax.cache.Cache#get(Object)}</li>
+       *    <li>{@code javax.cache.Cache#containsKey(Object)}</li>
        * </ul>
        *
        * @param key the key associated with the {@link ReadEntryView} to be
@@ -147,13 +146,13 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * the functional map, for each of the keys in the set passed in, and
        * returns an {@link Traversable} to work on each computed function's result.
        *
-       * The function passed in will be executed for as many keys
+       * <p>The function passed in will be executed for as many keys
        * present in keys collection set. Similar to {@link #eval(Object, Function)},
        * if the user is not sure whether a particular key is present,
        * {@link ReadEntryView#find()} can be used to find out for sure.
        *
-       * This method can be used to implement operations such as
-       * javax.cache.Cache#getAll(Set).
+       * <p>This method can be used to implement operations such as
+       * {@code javax.cache.Cache#getAll(Set)}.
        *
        * DESIGN RATIONALE:
        * <ul>
@@ -177,7 +176,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
       /**
        * Provides a {@link Traversable} that allows clients to navigate all cached keys.
        *
-       * This method can be used to implement operations such as:
+       * <p>This method can be used to implement operations such as:
        * <ul>
        *    <li>{@link ConcurrentMap#size()}</li>
        *    <li>{@link ConcurrentMap#keySet()}</li>
@@ -191,12 +190,12 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
       /**
        * Provides a {@link Traversable} that allows clients to navigate all cached entries.
        *
-       * This method can be used to implement operations such as:
+       * <p>This method can be used to implement operations such as:
        * <ul>
        *    <li>{@link ConcurrentMap#containsValue(Object)}</li>
        *    <li>{@link ConcurrentMap#values()}</li>
        *    <li>{@link ConcurrentMap#entrySet()}</li>
-       *    <li>javax.cache.Cache#iterator()</li>
+       *    <li>{@code javax.cache.Cache#iterator()}</li>
        * </ul>
        *
        * @return a sequential {@link Traversable} to navigate each cached entry
@@ -209,20 +208,19 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
     * The write operations that can be applied per entry are exposed by
     * {@link WriteEntryView}.
     *
-    * DESIGN RATIONALES:
-    * <ul>
-    *    <li>Why does it make sense to expose write-only operations?
-    *    Because write-only operations do not need to read. In other words,
-    *    since write-only operations do not read or query the previous value,
-    *    these read/query operations, which sometimes can be expensive since
-    *    they involve talking to a remote node in the cluster or the
-    *    persistence layer, can be avoided optimising write-only operations.
-    *    </li>
-    *    <li>When ported over to the main Infinispan code base, write-only
-    *    maps would be expected to acquire locks on keys before executing
-    *    functions.</li>
-    * </ul>
+    * <p>Write-only operations require locks to be acquired but crucially
+    * they do not require reading previous value or metadata parameter
+    * information associated with the cached entry, which sometimes can be
+    * expensive since they involve talking to a remote node in the cluster
+    * or the persistence layer So, exposing write-only operations makes it
+    * easy to take advantage of this important optimisation.
+    *
+    * <p>Method parameters for write-only operations, including lambdas,
+    * must be marshallable when running in a cluster.
+    *
+    * @since 8.0
     */
+   @Experimental
    interface WriteOnlyMap<K, V> extends FunctionalMap<K, V> {
       /**
        * Tweak write-only functional map executions providing {@link Param} instances.
@@ -235,37 +233,25 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * the key, and return a {@link CompletableFuture} which will be
        * completed when the operation completes.
        *
-       * By returning {@link CompletableFuture} instead of the function's
-       * return type directly, the method hints at the possibility that to
-       * executing the function might require remote data present in either
-       * a persistent store or a remote clustered node.
+       * <p>Since this is a write-only operation, no entry attributes can be
+       * queried, hence the only reasonable thing can be returned is Void.
        *
-       * This method can be used to implement single-key write-only operations
-       * which do not need to query previous value, such as:
+       * <p>This method can be used to implement single-key write-only operations
+       * which do not need to query previous value, such as
+       * {@code javax.cache.Cache#put(Object, Object)}
        *
-       * <ul>
-       * <li>javax.cache.Cache#put(Object, Object)</li>
-       * </ul>
-       *
-       * DESIGN RATIONALES:
-       * <ul>
-       *    <li>Since this is a write-only operation, no entry attributes can be
-       *    queried, hence the only reasonable thing can be returned is Void.
-       *    </li>
-       *    <li>Why provide this operation? Isn't {@link #eval(Object, Consumer)} enough?
-       *    The functionality provided by this function could indeed be implemented
-       *    with {@link #eval(Object, Consumer)}, but there's a crucial difference.
-       *    If you want to store a value and reference the value to be stored
-       *    from the passed in operation, {@link #eval(Object, Consumer)} needs
-       *    to capture that value. Capturing means that each time the operation
-       *    is called, a new lambda needs to be instantiated. By offering a
-       *    {@link BiConsumer} that takes user provided value as first parameter,
-       *    the operation does not capture any external objects when implementing
-       *    simple operations such as javax.cache.Cache#put(Object, Object),
-       *    and hence, the {@link BiConsumer} could be cached and reused each
-       *    time it's invoked.
-       *    </li>
-       * </ul>
+       * <p>This operation is very similar to {@link #eval(Object, Consumer)}
+       * and in fact, the functionality provided by this function could indeed
+       * be implemented with {@link #eval(Object, Consumer)}, but there's a
+       * crucial difference. If you want to store a value and reference the
+       * value to be stored from the passed in operation,
+       * {@link #eval(Object, Consumer)} needs to capture that value.
+       * Capturing means that each time the operation is called, a new lambda
+       * needs to be instantiated. By offering a {@link BiConsumer} that
+       * takes user provided value as first parameter, the operation does not
+       * capture any external objects when implementing simple operations
+       * such as {@code javax.cache.Cache#put(Object, Object)}, and hence, the
+       * {@link BiConsumer} could be cached and reused each time it's invoked.
        *
        * @param key the key associated with the {@link WriteEntryView} to be
        *            passed to the operation
@@ -285,21 +271,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * and return a {@link CompletableFuture} which will be
        * completed with the object returned by the operation.
        *
-       * By returning {@link CompletableFuture} instead of the function's
-       * return type directly, the method hints at the possibility that to
-       * executing the function might require remote data present in either
-       * a persistent store or a remote clustered node.
+       * <p>Since this is a write-only operation, no entry attributes can be
+       * queried, hence the only reasonable thing can be returned is Void.
        *
-       * DESIGN RATIONALES:
-       * <ul>
-       *    <li>Since this is a write-only operation, no entry attributes can be
-       *    queried, hence the only reasonable thing can be returned is Void.
-       *    </li>
-       *    <li>Why provide this operation? Isn't {@link #eval(Object, Object, BiConsumer)} enough?
-       *    Possibly, this operation makes a bit simpler to write constant
-       *    values along with optional metadata parameters.
-       *    </li>
-       * </ul>
+       * <p>This operation can be used to either remove a cached entry,
+       * or to write a constant value along with optional metadata parameters.
        *
        * @param key the key associated with the {@link WriteEntryView} to be
        *            passed to the operation
@@ -321,19 +297,15 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * <ul>
        *    <li>{@link ConcurrentMap#putAll(Map)}</li>
-       *    <li>javax.cache.Cache#putAll(Map)</li>
+       *    <li>{@code javax.cache.Cache#putAll(Map)}</li>
        * </ul>
        *
-       * DESIGN RATIONALE:
-       * <ul>
-       *    <li>It makes sense to expose global operation like this
-       *    instead of forcing users to iterate over the keys to lookup and call
-       *    get individually since Infinispan can do things more efficiently.
-       *    </li>
-       *    <li>Since this is a write-only operation, no entry attributes can be
-       *    queried, hence the only reasonable thing can be returned is Void.
-       *    </li>
-       * </ul>
+       * <p>These kind of operations are preferred to traditional end user
+       * iterations because the internal logic can often iterate more
+       * efficiently since it knows more about the system.
+       *
+       * <p>Since this is a write-only operation, no entry attributes can be
+       * queried, hence the only reasonable thing can be returned is Void.
        *
        * @param entries the key/value pairs associated with each of the
        *             {@link WriteEntryView} passed in the function callbacks
@@ -353,19 +325,15 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * {@link CompletableFuture} that will be completed when the write-only
        * operation has been executed against all the entries.
        *
-       * This method can be used to implement operations such as
-       * javax.cache.Cache#removeAll(Set).
+       * <p>This method can be used to implement operations such as
+       * {@code javax.cache.Cache#removeAll(Set)}.
        *
-       * DESIGN RATIONALE:
-       * <ul>
-       *    <li>It makes sense to expose global operation like this
-       *    instead of forcing users to iterate over the keys to lookup and call
-       *    get individually since Infinispan can do things more efficiently.
-       *    </li>
-       *    <li>Since this is a write-only operation, no entry attributes can be
-       *    queried, hence the only reasonable thing can be returned is Void.
-       *    </li>
-       * </ul>
+       * <p>These kind of operations are preferred to traditional end user
+       * iterations because the internal logic can often iterate more
+       * efficiently since it knows more about the system.
+       *
+       * <p>Since this is a write-only operation, no entry attributes can be
+       * queried, hence the only reasonable thing can be returned is Void.
        *
        * @param keys the keys associated with each of the {@link WriteEntryView}
        *             passed in the function callbacks
@@ -384,20 +352,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * that will be completed when the write-only operation has been executed
        * against all the entries.
        *
-       * This method can be used to implement operations such as
-       * javax.cache.Cache#removeAll().
-       *
-       * DESIGN RATIONALE:
-       * <ul>
-       *    <li>In the original design, this method would have taken no
-       *    parameters and returned a CloseableIterator<WriteEntryView<V>>,
-       *    but doing so would have created encapsulation problems, since any
-       *    changes to the entry view would need to be committed, and that
-       *    would happen outside of the interceptor stack scope. To avoid this
-       *    problem, simply pass in a consumer with the desired operation and
-       *    then, the interceptor stack can control how the consumer gets
-       *    executed and make sure it's committed.</li>
-       * </ul>
+       * <p>This method can be used to implement operations such as
+       * {@code javax.cache.Cache#removeAll()}.
        *
        * @param f operation that the {@link WriteEntryView} associated with
        *          one of the keys passed in
@@ -415,7 +371,7 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        *
        * <ul>
        *    <li>{@link ConcurrentMap#clear()}</li>
-       *    <li>javax.cache.Cache#clear()</li>
+       *    <li>{@code javax.cache.Cache#clear()}</li>
        * </ul>
        *
        * @return a {@link CompletableFuture} that completes when the truncat
@@ -434,19 +390,19 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
     * The read-write operations that can be applied per entry are exposed by
     * {@link ReadWriteEntryView}.
     *
-    * DESIGN RATIONALES:
-    * <ul>
-    *    <li>Why does it make sense to expose read-write operations?
-    *    Read-write operations offer the possibility of writing values or
-    *    metadata parameters, and returning previously stored information.
-    *    Read-write operations are also crucial for implementing conditional,
-    *    compare-and-swap (CAS) like operations.
-    *    </li>
-    *    <li>When ported over to the main Infinispan code base, read-write
-    *    maps would be expected to acquire locks on keys before executing
-    *    functions.</li>
-    * </ul>
+    * <p>Read-write operations offer the possibility of writing values or
+    * metadata parameters, and returning previously stored information.
+    * Read-write operations are also crucial for implementing conditional,
+    * compare-and-swap (CAS) like operations.
+    *
+    * <p>Locks are acquired before executing the read-write lambda.
+    *
+    * <p>Method parameters for read-write operations, including lambdas,
+    * must be marshallable when running in a cluster.
+    *
+    * @since 8.0
     */
+   @Experimental
    interface ReadWriteMap<K, V> extends FunctionalMap<K, V> {
       /**
        * Tweak read-write functional map executions providing {@link Param} instances.
@@ -459,20 +415,15 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * type of the function. If the user is not sure if the key is present,
        * {@link ReadWriteEntryView#find()} can be used to find out for sure.
        *
-       * By returning {@link CompletableFuture} instead of the function's
-       * return type directly, the method hints at the possibility that to
-       * executing the function might require remote data present in either
-       * a persistent store or a remote clustered node.
-       *
        * This method can be used to implement single-key read-write operations
-       * in {@link ConcurrentMap} and javax.cache.Cache that do not
+       * in {@link ConcurrentMap} and {@code javax.cache.Cache} that do not
        * depend on value information given by the user such as:
        *
        * <ul>
-       * <li>{@link ConcurrentMap#remove(Object)}</li>
-       * <li>javax.cache.Cache#remove(Object)</li>
-       * <li>javax.cache.Cache#getAndRemove(Object)</li>
-       * <li>javax.cache.Cache#invoke(Object, EntryProcessor, Object...)</li>
+       *    <li>{@link ConcurrentMap#remove(Object)}</li>
+       *    <li>{@code javax.cache.Cache#remove(Object)}</li>
+       *    <li>{@code javax.cache.Cache#getAndRemove(Object)}</li>
+       *    <li>{@code javax.cache.Cache#invoke(Object, EntryProcessor, Object...)}</li>
        * </ul>
        *
        * @param key the key associated with the {@link ReadWriteEntryView} to be
@@ -491,16 +442,11 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * return a {@link CompletableFuture} which will be completed with the
        * returned value by the function.
        *
-       * This method provides the the capability to both update the value and
+       * <p>This method provides the the capability to both update the value and
        * metadata associated with that key, and return previous value or metadata.
        *
-       * By returning {@link CompletableFuture} instead of the function's
-       * return type directly, the method hints at the possibility that to
-       * executing the function might require remote data present in either
-       * a persistent store or a remote clustered node.
-       *
-       * This method can be used to implement the vast majority of single-key
-       * read-write operations in {@link ConcurrentMap} and javax.cache.Cache
+       * <p>This method can be used to implement the vast majority of single-key
+       * read-write operations in {@link ConcurrentMap} and {@code javax.cache.Cache}
        * such as:
        *
        * <ul>
@@ -509,30 +455,26 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * <li>{@link ConcurrentMap#replace(Object, Object)}</li>
        * <li>{@link ConcurrentMap#replace(Object, Object, Object)}</li>
        * <li>{@link ConcurrentMap#remove(Object, Object)}</li>
-       * <li>javax.cache.Cache#getAndPut(Object, Object)</li>
-       * <li>javax.cache.Cache#putIfAbsent(Object, Object)</li>
-       * <li>javax.cache.Cache#remove(Object, Object)</li>
-       * <li>javax.cache.Cache#replace(Object, Object, Object)</li>
-       * <li>javax.cache.Cache#replace(Object, Object)</li>
-       * <li>javax.cache.Cache#getAndReplace(Object, Object)</li>
+       * <li>{@code javax.cache.Cache#getAndPut(Object, Object)}</li>
+       * <li>{@code javax.cache.Cache#putIfAbsent(Object, Object)}</li>
+       * <li>{@code javax.cache.Cache#remove(Object, Object)}</li>
+       * <li>{@code javax.cache.Cache#replace(Object, Object, Object)}</li>
+       * <li>{@code javax.cache.Cache#replace(Object, Object)}</li>
+       * <li>{@code javax.cache.Cache#getAndReplace(Object, Object)}</li>
        * </ul>
        *
-       * DESIGN RATIONALES:
-       * <ul>
-       *    <li>Why provide this operation? Isn't {@link #eval(Object, Function)} enough?
-       *    The functionality provided by this function could indeed be implemented
-       *    with {@link #eval(Object, Function)}, but there's a crucial difference.
-       *    If you want to store a value and reference the value to be stored
-       *    from the passed in operation, {@link #eval(Object, Function)} needs
-       *    to capture that value. Capturing means that each time the operation
-       *    is called, a new lambda needs to be instantiated. By offering a
-       *    {@link BiFunction} that takes user provided value as first parameter,
-       *    the operation does not capture any external objects when implementing
-       *    simple operations such as javax.cache.Cache#getAndPut(Object, Object),
-       *    and hence, the {@link BiFunction} could be cached and reused each
-       *    time it's invoked.
-       *    </li>
-       * </ul>
+       * <p> The functionality provided by this function could indeed be
+       * implemented with {@link #eval(Object, Function)}, but there's a
+       * crucial difference. If you want to store a value and reference the
+       * value to be stored from the passed in operation,
+       * {@link #eval(Object, Function)} needs to capture that value.
+       * Capturing means that each time the operation is called, a new lambda
+       * needs to be instantiated. By offering a {@link BiFunction} that
+       * takes user provided value as first parameter, the operation does
+       * not capture any external objects when implementing
+       * simple operations such as {@code javax.cache.Cache#getAndPut(Object, Object)},
+       * and hence, the {@link BiFunction} could be cached and reused each
+       * time it's invoked.
        *
        * @param key the key associated with the {@link ReadWriteEntryView} to be
        *            passed to the operation
@@ -554,16 +496,12 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * returns an {@link Traversable} to navigate each of the
        * {@link BiFunction} invocation returns.
        *
-       * This method can be used to implement operations that store a set of
+       * <p>This method can be used to implement operations that store a set of
        * keys and return previous values or metadata parameters.
        *
-       * DESIGN RATIONALE:
-       * <ul>
-       *    <li>It makes sense to expose global operation like this
-       *    instead of forcing users to iterate over the keys to lookup and call
-       *    get individually since Infinispan can do things more efficiently.
-       *    </li>
-       * </ul>
+       * <p>These kind of operations are preferred to traditional end user
+       * iterations because the internal logic can often iterate more
+       * efficiently since it knows more about the system.
        *
        * @param entries the key/value pairs associated with each of the
        *             {@link ReadWriteEntryView} passed in the function callbacks
@@ -580,8 +518,8 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * of the keys in the set passed in, and returns a {@link Traversable}
        * to navigate each of the {@link Function} invocation returns.
        *
-       * This method can be used to implement operations such as
-       * javax.cache.Cache#invokeAll(Set, EntryProcessor, Object...),
+       * <p>This method can be used to implement operations such as
+       * {@code javax.cache.Cache#invokeAll(Set, EntryProcessor, Object...)},
        * or a remove a set of keys returning previous values or metadata
        * parameters.
        *
@@ -599,21 +537,9 @@ public interface FunctionalMap<K, V> extends AutoCloseable {
        * existing keys, and returns a {@link Traversable} to navigate each of
        * the {@link Function} invocation returns.
        *
-       * This method can be used to an operation that removes all cached
+       * <p>This method can be used to an operation that removes all cached
        * entries individually, and returns previous value and/or metadata
        * parameters.
-       *
-       * DESIGN RATIONALE:
-       * <ul>
-       *    <li>In the original design, this method would have taken no
-       *    parameters and returned a Traversable<ReadWriteEntryView<K, V>>,
-       *    but doing so would have created encapsulation problems, since any
-       *    changes to the entry view would need to be committed, and that
-       *    would happen outside of the interceptor stack scope. To avoid this
-       *    problem, simply pass in a consumer with the desired operation and
-       *    then, the interceptor stack can control how the consumer gets
-       *    executed and make sure it's committed.</li>
-       * </ul>
        *
        * @return a {@link Traversable} to navigate each {@link Function} return
        */
