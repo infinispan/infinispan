@@ -1840,6 +1840,58 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(149.0d, (Double) list.get(0)[1], 0.0001d);
    }
 
+   public void testGlobalMin() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.min("name"))
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("John", list.get(0)[0]);
+   }
+
+   public void testMin() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.min("surname"))
+            .groupBy("name")
+            .orderBy("name")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(1, list.get(1).length);
+      assertEquals("Doe", list.get(0)[0]);
+      assertEquals("Man", list.get(1)[0]);
+   }
+
+   public void testGlobalMax() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.max("name"))
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("Spider", list.get(0)[0]);
+   }
+
+   public void testMax() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.max("surname"))
+            .groupBy("name")
+            .orderBy("name")
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(2, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(1, list.get(1).length);
+      assertEquals("Doe", list.get(0)[0]);
+      assertEquals("Woman", list.get(1)[0]);
+   }
+
    public void testParam() throws Exception {
       QueryFactory qf = getQueryFactory();
 
