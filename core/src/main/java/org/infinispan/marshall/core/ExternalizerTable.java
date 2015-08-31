@@ -17,7 +17,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.LambdaExternalizer;
-import org.infinispan.commons.marshall.MarshallableLambdaExternalizers;
+import org.infinispan.commons.marshall.MarshallableFunctionExternalizers;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.Immutables;
@@ -378,9 +378,9 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new MetaParamExternalizers.NumericEntryVersionExternalizer());
 
       addInternalExternalizer(new EntryViews.ReadWriteSnapshotViewExternalizer());
-      addInternalExternalizer(new MarshallableLambdaExternalizers.ConstantLambdaExternalizer());
-      addInternalExternalizer(new MarshallableLambdaExternalizers.LambdaWithMetasExternalizer());
-      addInternalExternalizer(new MarshallableLambdaExternalizers.SetValueIfEqualsReturnBooleanExternalizer());
+      addInternalExternalizer(new MarshallableFunctionExternalizers.ConstantLambdaExternalizer());
+      addInternalExternalizer(new MarshallableFunctionExternalizers.LambdaWithMetasExternalizer());
+      addInternalExternalizer(new MarshallableFunctionExternalizers.SetValueIfEqualsReturnBooleanExternalizer());
    }
 
    void addInternalExternalizer(AdvancedExternalizer<?> ext) {

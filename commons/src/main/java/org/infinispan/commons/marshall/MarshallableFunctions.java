@@ -10,7 +10,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public final class MarshallableLambdas {
+public final class MarshallableFunctions {
 
    public static <K, V> BiFunction<V, ReadWriteEntryView<K, V>, V> setValueReturnPrevOrNull() {
       return SetValueReturnPrevOrNull.getInstance();
@@ -529,7 +529,7 @@ public final class MarshallableLambdas {
       }
    }
 
-   private MarshallableLambdas() {
+   private MarshallableFunctions() {
       // No-op, holds static variables
    }
 

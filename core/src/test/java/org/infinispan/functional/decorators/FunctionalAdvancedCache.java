@@ -6,13 +6,10 @@ import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
-import org.infinispan.commons.api.functional.FunctionalMap;
 import org.infinispan.commons.api.functional.FunctionalMap.ReadWriteMap;
 import org.infinispan.commons.api.functional.FunctionalMap.WriteOnlyMap;
-import org.infinispan.commons.api.functional.MetaParam;
 import org.infinispan.commons.api.functional.MetaParam.MetaLifespan;
 import org.infinispan.commons.api.functional.MetaParam.MetaMaxIdle;
-import org.infinispan.commons.api.functional.Param;
 import org.infinispan.commons.api.functional.Param.FutureMode;
 import org.infinispan.commons.api.functional.Param.PersistenceMode;
 import org.infinispan.commons.util.CloseableIterator;
@@ -49,7 +46,6 @@ import org.infinispan.util.concurrent.locks.LockManager;
 import javax.transaction.TransactionManager;
 import javax.transaction.xa.XAResource;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,7 +54,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.infinispan.commons.marshall.MarshallableLambdas.*;
+import static org.infinispan.commons.marshall.MarshallableFunctions.*;
 
 public final class FunctionalAdvancedCache<K, V> implements AdvancedCache<K, V> {
 

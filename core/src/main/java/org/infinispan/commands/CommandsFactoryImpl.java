@@ -7,7 +7,7 @@ import org.infinispan.commons.api.functional.EntryView.ReadWriteEntryView;
 import org.infinispan.commons.api.functional.EntryView.WriteEntryView;
 import org.infinispan.commons.marshall.Externalizer;
 import org.infinispan.commons.marshall.LambdaExternalizer;
-import org.infinispan.commons.marshall.SerializeLambdaWith;
+import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.commands.remote.GetKeysInGroupCommand;
 import org.infinispan.context.InvocationContextFactory;
@@ -764,7 +764,7 @@ public class CommandsFactoryImpl implements CommandsFactory {
    }
 
    private ValueMatcher getValueMatcher(Object o) {
-      SerializeLambdaWith ann = o.getClass().getAnnotation(SerializeLambdaWith.class);
+      SerializeFunctionWith ann = o.getClass().getAnnotation(SerializeFunctionWith.class);
       if (ann != null)
          return ValueMatcher.valueOf(ann.valueMatcher().toString());
 

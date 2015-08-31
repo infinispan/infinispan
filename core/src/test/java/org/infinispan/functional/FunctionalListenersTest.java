@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static org.infinispan.functional.FunctionalTestUtils.*;
-import static org.infinispan.commons.marshall.MarshallableLambdas.*;
+import static org.infinispan.commons.marshall.MarshallableFunctions.*;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;

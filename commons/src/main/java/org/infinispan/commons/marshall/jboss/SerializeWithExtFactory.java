@@ -1,6 +1,6 @@
 package org.infinispan.commons.marshall.jboss;
 
-import org.infinispan.commons.marshall.SerializeLambdaWith;
+import org.infinispan.commons.marshall.SerializeFunctionWith;
 import org.infinispan.commons.marshall.SerializeWith;
 import org.jboss.marshalling.AnnotationClassExternalizerFactory;
 import org.jboss.marshalling.ClassExternalizerFactory;
@@ -22,7 +22,7 @@ public class SerializeWithExtFactory implements ClassExternalizerFactory {
    @Override
    public Externalizer getExternalizer(Class<?> type) {
       SerializeWith serialWithAnn = type.getAnnotation(SerializeWith.class);
-      SerializeLambdaWith lambdaSerialWithAnn = type.getAnnotation(SerializeLambdaWith.class);
+      SerializeFunctionWith lambdaSerialWithAnn = type.getAnnotation(SerializeFunctionWith.class);
       if (serialWithAnn == null && lambdaSerialWithAnn == null) {
          // Check for JBoss Marshaller's @Externalize
          return jbmarExtFactory.getExternalizer(type);
