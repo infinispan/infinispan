@@ -25,6 +25,7 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.TaskContextImpl;
+import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
@@ -36,7 +37,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 @ConfiguredBy(DummyInMemoryStoreConfiguration.class)
-public class DummyInMemoryStore implements AdvancedLoadWriteStore {
+public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCacheExpirationWriter {
    private static final Log log = LogFactory.getLog(DummyInMemoryStore.class);
    private static final boolean trace = log.isTraceEnabled();
    private static final boolean debug = log.isDebugEnabled();
@@ -121,7 +122,21 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
          MarshalledEntry se = deserialize(next.getKey(), next.getValue(), false, true);
          if (isExpired(se, currentTimeMillis)) {
             if (task != null) task.entryPurged(next.getKey());
-            // TODO: need to call to expiration manager
+            i.remove();
+            expired.add(next.getKey());
+         }
+      }
+   }
+
+   @Override
+   public void purge(Executor executor, ExpirationPurgeListener listener) {
+      long currentTimeMillis = timeService.wallClockTime();
+      Set expired = new HashSet();
+      for (Iterator<Map.Entry<Object, byte[]>> i = store.entrySet().iterator(); i.hasNext();) {
+         Map.Entry<Object, byte[]> next = i.next();
+         MarshalledEntry se = deserialize(next.getKey(), next.getValue(), true, true);
+         if (isExpired(se, currentTimeMillis)) {
+            if (listener != null) listener.marshalledEntryPurged(se);
             i.remove();
             expired.add(next.getKey());
          }
@@ -330,5 +345,4 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore {
          throw new CacheException(e);
       }
    }
-
 }

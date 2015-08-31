@@ -148,7 +148,9 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
     * The {@code key} must be activate by invoking {@link org.infinispan.eviction.ActivationManager#onRemove(Object,
     * boolean)} or {@link org.infinispan.eviction.ActivationManager#onUpdate(Object, boolean)} depending if the value
     * returned by the {@link org.infinispan.container.DataContainer.ComputeAction} is null or not respectively.
-    *
+    * <p>
+    * Note the entry provided to {@link org.infinispan.container.DataContainer.ComputeAction} may be expired as these
+    * entries are not filtered as many other methods do.
     * @param key    The key.
     * @param action The action that will compute the new value.
     * @return The {@link org.infinispan.container.entries.InternalCacheEntry} associated to the key.

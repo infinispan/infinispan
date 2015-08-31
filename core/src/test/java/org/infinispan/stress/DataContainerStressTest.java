@@ -9,6 +9,7 @@ import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.expiration.ExpirationManager;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.container.*;
 import org.infinispan.metadata.Metadata;
@@ -148,6 +149,11 @@ public class DataContainerStressTest {
 
                  @Override
                  public void handleInStoreExpiration(Object key) {
+
+                 }
+
+                 @Override
+                 public void handleInStoreExpiration(MarshalledEntry marshalledEntry) {
 
                  }
 

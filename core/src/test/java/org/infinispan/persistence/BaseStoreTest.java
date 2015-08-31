@@ -23,6 +23,7 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.marshall.core.MarshalledValue;
 import org.infinispan.metadata.InternalMetadata;
+import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
 import org.infinispan.persistence.spi.InitializationContext;
@@ -208,17 +209,37 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    protected void purgeExpired(String... expiredKeys) throws Exception {
       final Set<String> expired = new HashSet<>(Arrays.asList(expiredKeys));
       final Set<Object> incorrect = new HashSet<>();
-      final AdvancedCacheWriter.PurgeListener purgeListener = new AdvancedCacheWriter.PurgeListener<String>() {
-         @Override
-         public void entryPurged(String key) {
-            if (!expired.remove(key)) {
-               incorrect.add(key);
+      if (cl instanceof AdvancedCacheExpirationWriter) {
+         final AdvancedCacheExpirationWriter.ExpirationPurgeListener purgeListener = new AdvancedCacheExpirationWriter.ExpirationPurgeListener() {
+            @Override
+            public void marshalledEntryPurged(MarshalledEntry entry) {
+               Object key = entry.getKey();
+               if (!expired.remove(key)) {
+                  incorrect.add(key);
+               }
             }
-         }
-      };
 
-      //noinspection unchecked
-      cl.purge(new WithinThreadExecutor(), purgeListener);
+            @Override
+            public void entryPurged(Object key) {
+               if (!expired.remove(key)) {
+                  incorrect.add(key);
+               }
+            }
+         };
+         ((AdvancedCacheExpirationWriter) cl).purge(new WithinThreadExecutor(), purgeListener);
+      } else {
+         final AdvancedCacheWriter.PurgeListener purgeListener = new AdvancedCacheWriter.PurgeListener<String>() {
+            @Override
+            public void entryPurged(String key) {
+               if (!expired.remove(key)) {
+                  incorrect.add(key);
+               }
+            }
+         };
+
+         //noinspection unchecked
+         cl.purge(new WithinThreadExecutor(), purgeListener);
+      }
 
       assertEmpty(incorrect, true);
       assertTrue(expired.isEmpty() || !storePurgesAllExpired());
