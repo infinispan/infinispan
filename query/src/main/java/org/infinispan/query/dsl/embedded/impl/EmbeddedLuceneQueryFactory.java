@@ -21,7 +21,7 @@ public final class EmbeddedLuceneQueryFactory extends BaseQueryFactory<LuceneQue
 
    @Override
    public QueryBuilder<LuceneQuery> from(Class type) {
-      return new EmbeddedLuceneQueryBuilder(this, queryEngine, type.getCanonicalName());
+      return new EmbeddedLuceneQueryBuilder(this, queryEngine, type.getName());
    }
 
    @Override

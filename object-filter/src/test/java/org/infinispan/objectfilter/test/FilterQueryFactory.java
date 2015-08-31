@@ -34,7 +34,7 @@ public final class FilterQueryFactory extends BaseQueryFactory<Query> {
       if (serializationContext != null) {
          serializationContext.getMarshaller(entityType);
       }
-      return new FilterQueryBuilder(this, entityType.getCanonicalName());
+      return new FilterQueryBuilder(this, entityType.getName());
    }
 
    @Override
