@@ -7,6 +7,7 @@ import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.marshall.core.MarshalledEntry;
 
 /**
  * Central component that deals with expiration of cache entries.
@@ -50,6 +51,14 @@ public interface ExpirationManager<K, V> {
     * @param key the key of the expired entry
     */
    void handleInStoreExpiration(K key);
+
+   /**
+    * This is to be invoked when a store entry expires and the value and/or metadata is available to be used.  This
+    * method is preferred over {@link ExpirationManager#handleInStoreExpiration(Object)} as it allows for more
+    * specific expiration to possibly occur.
+    * @param marshalledEntry the entry that can be unmarshalled as needed
+    */
+   void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry);
 
    /**
     * This is to be invoked with a when a write is known to occur to prevent expiration from happening.  This way we

@@ -37,7 +37,7 @@ public interface AdvancedCacheWriter<K, V> extends CacheWriter<K, V> {
       /**
        * Optional. If possible, {@link AdvancedCacheWriter} implementors should invoke this method for every entry that
        * is purged from the store. One of the side effects of not implementing this method is that listeners do not
-       * receive {@link org.infinispan.notifications.cachelistener.annotation.CacheEntriesEvicted} for the entries that
+       * receive {@link org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired} for the entries that
        * are removed from the persistent store directly.
        */
       void entryPurged(K key);

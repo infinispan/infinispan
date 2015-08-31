@@ -6,6 +6,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
+import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.KnownComponentNames;
@@ -14,6 +15,7 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.locking.ClusteringDependentLogic;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
@@ -168,6 +170,40 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
          }
          return oldEntry;
       }));
+   }
+
+   @Override
+   public void handleInStoreExpiration(final MarshalledEntry<K, V> marshalledEntry) {
+      dataContainer.compute(marshalledEntry.getKey(), (key, oldEntry, factory) -> {
+         V value;
+         Metadata metadata;
+         boolean shouldRemove;
+         if (oldEntry == null) {
+            shouldRemove = true;
+            value = marshalledEntry.getValue();
+            metadata = marshalledEntry.getMetadata();
+         } else if (oldEntry.canExpire()) {
+            metadata = marshalledEntry.getMetadata();
+            value = marshalledEntry.getValue();
+            // Even though we were provided marshalled entry - they may only provide metadata or value possibly
+            // so we have to check for null on either
+            shouldRemove = (metadata == null || oldEntry.getMetadata().equals(metadata)) &&
+                    (value == null || value.equals(oldEntry.getValue()));
+         } else {
+            shouldRemove = false;
+            value = null;
+            metadata = null;
+         }
+         if (shouldRemove) {
+            // We have to delete from shared stores as well to make sure there are not multiple expiration events
+            persistenceManager.deleteFromAllStores(key, PersistenceManager.AccessMode.BOTH);
+            if (cacheNotifier != null) {
+               cacheNotifier.notifyCacheEntryExpired(key, value, metadata, null);
+            }
+            return null;
+         }
+         return oldEntry;
+      });
    }
 
    @Override

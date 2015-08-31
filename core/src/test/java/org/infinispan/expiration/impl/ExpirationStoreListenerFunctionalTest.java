@@ -61,9 +61,9 @@ public class ExpirationStoreListenerFunctionalTest extends ExpirationStoreFuncti
       assertEquals(cache, event.getCache());
       assertFalse(event.isPre());
       assertNotNull(event.getKey());
-      // Unfortunately we don't guarantee value or metadata from store
-      assertNull(event.getValue());
-      assertNull(event.getMetadata());
+      // The dummy store produces value and metadata so lets make sure
+      assertEquals("v", event.getValue());
+      assertNotNull(event.getMetadata());
    }
 
    private void assertExpiredEvents(int count) {

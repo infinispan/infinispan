@@ -14,6 +14,8 @@ import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -125,6 +127,18 @@ public class ClusterExpirationManager<K, V> extends ExpirationManagerImpl<K, V> 
       // the entire value.  Unfortunately this could cause a concurrent write to be undone
       try {
          removeExpired(key, null, null);
+      } finally {
+         expiring.remove(key);
+      }
+   }
+
+   @Override
+   public void handleInStoreExpiration(MarshalledEntry<K, V> marshalledEntry) {
+      K key = marshalledEntry.getKey();
+      expiring.put(key, key);
+      try {
+         InternalMetadata metadata = marshalledEntry.getMetadata();
+         removeExpired(key, marshalledEntry.getValue(), metadata.lifespan() == -1 ? null : metadata.lifespan());
       } finally {
          expiring.remove(key);
       }

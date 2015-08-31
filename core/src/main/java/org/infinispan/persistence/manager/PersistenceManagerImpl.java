@@ -36,6 +36,7 @@ import org.infinispan.persistence.async.AsyncCacheLoader;
 import org.infinispan.persistence.async.AsyncCacheWriter;
 import org.infinispan.persistence.async.State;
 import org.infinispan.persistence.factory.CacheStoreFactoryRegistry;
+import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
 import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.persistence.spi.AdvancedCacheWriter;
 import org.infinispan.persistence.spi.CacheLoader;
@@ -88,6 +89,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
    private CacheStoreFactoryRegistry cacheStoreFactoryRegistry;
    private ExpirationManager expirationManager;
 
+   private AdvancedPurgeListener advanedListener;
+
+
    /**
     * making it volatile as it might change after @Start, so it needs the visibility.
     */
@@ -113,6 +117,8 @@ public class PersistenceManagerImpl implements PersistenceManager {
       this.marshalledEntryFactory = marshalledEntryFactory;
       this.cacheStoreFactoryRegistry = cacheStoreFactoryRegistry;
       this.expirationManager = expirationManager;
+
+      this.advanedListener = new AdvancedPurgeListener(expirationManager);
    }
 
    @Override
@@ -327,6 +333,24 @@ public class PersistenceManagerImpl implements PersistenceManager {
       }
    }
 
+   private static class AdvancedPurgeListener<K, V> implements AdvancedCacheExpirationWriter.ExpirationPurgeListener<K, V> {
+      private final ExpirationManager<K, V> expirationManager;
+
+      private AdvancedPurgeListener(ExpirationManager<K, V> expirationManager) {
+         this.expirationManager = expirationManager;
+      }
+
+      @Override
+      public void marshalledEntryPurged(MarshalledEntry<K, V> entry) {
+         expirationManager.handleInStoreExpiration(entry);
+      }
+
+      @Override
+      public void entryPurged(K key) {
+         expirationManager.handleInStoreExpiration(key);
+      }
+   }
+
    @Override
    public void purgeExpired() {
       if (!enabled)
@@ -342,7 +366,9 @@ public class PersistenceManagerImpl implements PersistenceManager {
          storesMutex.readLock().lock();
          try {
             for (CacheWriter w : writers) {
-               if (w instanceof AdvancedCacheWriter) {
+               if (w instanceof AdvancedCacheExpirationWriter) {
+                  ((AdvancedCacheExpirationWriter)w).purge(persistenceExecutor, advanedListener);
+               } else if (w instanceof AdvancedCacheWriter) {
                   ((AdvancedCacheWriter)w).purge(persistenceExecutor, key -> {
                      expirationManager.handleInStoreExpiration(key);
                   });
