@@ -104,10 +104,14 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends A
       return getObjectFilter().filter(value);
    }
 
-   private ContinuousQueryResult filterAndConvert(Object key, Object oldValue, Object newValue) {
+   private ContinuousQueryResult filterAndConvert(Object key, Object oldValue, Object newValue, EventType eventType) {
       ObjectFilter.FilterResult f1 = filterAndConvert(oldValue);
       ObjectFilter.FilterResult f2 = filterAndConvert(newValue);
 
+      if (f2 != null && eventType.isExpired()) {  // expired events return expired value as newValue
+         return new ContinuousQueryResult(false, (byte[]) key, null);
+      }
+      
       if (f1 == null && f2 != null) {
          return new ContinuousQueryResult(true, (byte[]) key, (byte[]) newValue);
       }
@@ -129,7 +133,7 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends A
             newValue = ((ProtobufValueWrapper) newValue).getBinary();
          }
       }
-      ContinuousQueryResult continuousQueryResult = filterAndConvert(key, oldValue, newValue);
+      ContinuousQueryResult continuousQueryResult = filterAndConvert(key, oldValue, newValue, eventType);
       if (continuousQueryResult != null) {
          try {
             return ProtobufUtil.toByteArray(serCtx, continuousQueryResult);

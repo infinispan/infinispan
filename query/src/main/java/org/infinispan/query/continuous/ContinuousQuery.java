@@ -3,6 +3,7 @@ package org.infinispan.query.continuous;
 import org.infinispan.Cache;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
+import org.infinispan.notifications.cachelistener.annotation.CacheEntryExpired;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryEvent;
@@ -61,6 +62,7 @@ public final class ContinuousQuery<K, V> {
       @CacheEntryRemoved
       @CacheEntryCreated
       @CacheEntryModified
+      @CacheEntryExpired
       public void handleEvent(CacheEntryEvent<K, ?> event) {
          ContinuousQueryResult<V> cqr = (ContinuousQueryResult<V>) event.getValue();
          if (cqr.isJoining()) {
