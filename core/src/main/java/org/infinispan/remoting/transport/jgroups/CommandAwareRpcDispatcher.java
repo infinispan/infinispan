@@ -224,8 +224,16 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       msg.setBuffer(buf);
       encodeDeliverMode(msg, deliverOrder);
       //some issues with the new bundler. put back the DONT_BUNDLE flag.
-      if (deliverOrder == DeliverOrder.NONE || mode != ResponseMode.GET_NONE) msg.setFlag(Message.Flag.DONT_BUNDLE);
-      if (rsvp) msg.setFlag(Message.Flag.RSVP);
+      if (deliverOrder == DeliverOrder.NONE || mode != ResponseMode.GET_NONE) {
+         msg.setFlag(Message.Flag.DONT_BUNDLE);
+      }
+      // Only the commands in total order must be received by the originator.
+      if (deliverOrder != DeliverOrder.TOTAL) {
+         msg.setTransientFlag(Message.TransientFlag.DONT_LOOPBACK);
+      }
+      if (rsvp) {
+         msg.setFlag(Message.Flag.RSVP);
+      }
 
       if (recipient != null) msg.setDest(recipient);
       return msg;
@@ -282,17 +290,7 @@ public class CommandAwareRpcDispatcher extends RpcDispatcher {
       } else if (broadcast || FORCE_MCAST) {
          msg = constructMessage(buf, null, mode, rsvp, deliverOrder);
          opts = new RequestOptions(mode, timeout, false, filter);
-
-         //Only the commands in total order must be received...
-         //For correctness, ispn doesn't need their own message, so add own address to exclusion list
-         opts.setExclusionList(local_addr);
       } else {
-         //Only the commands in total order must be received...
-         //For correctness, ispn doesn't need their own message, so remove it from the dests collection
-         if (dests.contains(local_addr)) {
-            throw new IllegalArgumentException("Local address is not allowed in the recipients list at this point");
-         }
-
          msg = constructMessage(buf, null, mode, rsvp, deliverOrder);
          opts = new RequestOptions(mode, timeout, true, filter);
       }
