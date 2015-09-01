@@ -276,6 +276,21 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.get(0).getId());
    }
 
+   public void testEqHybridQueryWithParam() throws Exception {
+      QueryFactory qf = getQueryFactory();
+
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .having("notes").eq("Lorem ipsum dolor sit amet")
+            .and().having("surname").eq(Expression.param("surnameParam"))
+            .toBuilder().build();
+
+      q.setParameter("surnameParam", "Doe");
+
+      List<User> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).getId());
+   }
+
    public void testEqHybridQueryWithPredicateOptimisation() throws Exception {
       QueryFactory qf = getQueryFactory();
 

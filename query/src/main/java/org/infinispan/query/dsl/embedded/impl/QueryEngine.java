@@ -377,11 +377,7 @@ public class QueryEngine {
       // some fields are indexed, run a hybrid query
       String expandedJpaOut = JPATreePrinter.printTree(parsingResult.getTargetEntityName(), expansion, null);
       Query expandedQuery = new EmbeddedLuceneQuery(this, queryFactory, expandedJpaOut, namedParameters, parsingResult.getProjections(), -1, -1);
-      HybridQuery hybridQuery = new HybridQuery(queryFactory, cache, jpqlString, namedParameters, getObjectFilter(getSecondPhaseMatcher(), jpqlString, namedParameters), startOffset, maxResults, expandedQuery);
-      if (namedParameters != null) {
-         hybridQuery.setParameters(namedParameters);
-      }
-      return hybridQuery;
+      return new HybridQuery(queryFactory, cache, jpqlString, namedParameters, getObjectFilter(getSecondPhaseMatcher(), jpqlString, namedParameters), startOffset, maxResults, expandedQuery);
    }
 
    protected BaseMatcher getFirstPhaseMatcher() {
@@ -496,7 +492,7 @@ public class QueryEngine {
    }
 
    protected LuceneProcessingChain makeProcessingChain(Map<String, Object> namedParameters) {
-      EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
+      final EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
          @Override
          public Class<?> getClassFromName(String entityName) {
             try {
