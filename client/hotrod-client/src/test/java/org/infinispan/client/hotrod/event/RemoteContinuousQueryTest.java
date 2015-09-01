@@ -17,6 +17,7 @@ import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.embedded.testdomain.User;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
 import org.infinispan.query.remote.impl.filter.JPAContinuousQueryCacheEventFilterConverterFactory;
+import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -78,7 +79,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
             .marshaller(new ProtoStreamMarshaller());
    }
 
-   public void testContinuousQuery() throws Exception {
+   public void testContinuousQuery() {
       User user1 = new UserPB();
       user1.setId(1);
       user1.setName("John");
@@ -154,6 +155,24 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
 
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 3);
+
+      remoteCache.clear();
+      user1.setAge(21);
+      user2.setAge(22);
+      remoteCache.put("expiredUser1", user1, 5, TimeUnit.MILLISECONDS);
+      remoteCache.put("expiredUser2", user2, 5, TimeUnit.MILLISECONDS);
+      
+      expectElementsInQueue(joined, 2);
+      expectElementsInQueue(left, 0);
+      joined.clear();
+      
+      TestingUtil.sleepThread(6);
+      assertNull(remoteCache.get("expiredUser1"));
+      assertNull(remoteCache.get("expiredUser2"));
+      
+      expectElementsInQueue(joined, 0);
+      expectElementsInQueue(left, 2);
+      joined.clear();
 
       remoteCache.removeClientListener(clientListener);
 

@@ -6,6 +6,7 @@ import org.infinispan.commons.io.UnsignedNumeric;
 import org.infinispan.commons.marshall.AbstractExternalizer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.notifications.cachelistener.event.Event;
 import org.infinispan.notifications.cachelistener.filter.AbstractCacheEventFilterConverter;
 import org.infinispan.notifications.cachelistener.filter.EventType;
 import org.infinispan.objectfilter.Matcher;
@@ -111,6 +112,10 @@ public final class JPAContinuousQueryCacheEventFilterConverter<K, V> extends Abs
       ObjectFilter.FilterResult f1 = filterAndConvert(oldValue);
       ObjectFilter.FilterResult f2 = filterAndConvert(newValue);
 
+      if (f2 != null && eventType.isExpired()) {  // expired events return expired value as newValue
+         return new ContinuousQueryResult<V>(false, null);
+      }
+      
       if (f1 == null && f2 != null) {
          return new ContinuousQueryResult<V>(true, newValue);
       }

@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.event;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
@@ -107,6 +108,7 @@ public class ClientEvents {
       @ClientCacheEntryCreated
       @ClientCacheEntryModified
       @ClientCacheEntryRemoved
+      @ClientCacheEntryExpired
       public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) throws IOException {
          ContinuousQueryResult cqresult = ProtobufUtil.fromByteArray(serializationContext, (byte[]) event.getEventData(), ContinuousQueryResult.class);
          Object key = ProtobufUtil.fromWrappedByteArray(serializationContext, cqresult.getKey());

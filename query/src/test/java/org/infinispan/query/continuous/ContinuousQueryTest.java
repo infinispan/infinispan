@@ -1,5 +1,11 @@
 package org.infinispan.query.continuous;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.Search;
@@ -7,13 +13,11 @@ import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ControlledTimeService;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
-
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
 
 
 /**
@@ -23,11 +27,15 @@ import static org.junit.Assert.assertEquals;
 @Test(groups = "functional", testName = "query.continuous.ContinuousQueryTest")
 public class ContinuousQueryTest extends SingleCacheManagerTest {
 
+   protected ControlledTimeService timeService = new ControlledTimeService(0);
+
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder cacheConfiguration = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       //cacheConfiguration.transaction().lockingMode(LockingMode.PESSIMISTIC);
-      return TestCacheManagerFactory.createCacheManager(cacheConfiguration);
+      EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(cacheConfiguration);
+      TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
+      return cm;
    }
 
    public void testContinuousQuery() {
@@ -101,6 +109,25 @@ public class ContinuousQueryTest extends SingleCacheManagerTest {
 
       cache().clear(); //todo [anistor] Does this generate MODIFY instead of REMOVE ???
 
+      assertEquals(0, joined.size());
+      assertEquals(2, left.size());
+      left.clear();
+
+      for (int i = 0; i < 2; i++) {
+         Person value = new Person();
+         value.setName("John");
+         value.setAge(i + 20);
+         cache().put(i, value, 5, TimeUnit.MILLISECONDS);
+      }
+      
+      assertEquals(2, joined.size());
+      assertEquals(0, left.size());
+      joined.clear();
+      
+      timeService.advance(6);
+      cache.getAdvancedCache().getExpirationManager().processExpiration();
+      assertEquals(0, cache().size());
+      
       assertEquals(0, joined.size());
       assertEquals(2, left.size());
       left.clear();
