@@ -111,25 +111,6 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends A
       return getObjectFilter().filter(value);
    }
 
-   private ContinuousQueryResult filterAndConvert(Object key, Object oldValue, Object newValue, EventType eventType) {
-      ObjectFilter.FilterResult f1 = filterAndConvert(oldValue);
-      ObjectFilter.FilterResult f2 = filterAndConvert(newValue);
-
-      if (f2 != null && eventType.isExpired()) {  // expired events return expired value as newValue
-         return new ContinuousQueryResult(false, (byte[]) key, null);
-      }
-      
-      if (f1 == null && f2 != null) {
-         return new ContinuousQueryResult(true, (byte[]) key, (byte[]) newValue);
-      }
-
-      if (f1 != null && f2 == null) {
-         return new ContinuousQueryResult(false, (byte[]) key, null);
-      }
-
-      return null;
-   }
-
    @Override
    public byte[] filterAndConvert(Object key, Object oldValue, Metadata oldMetadata, Object newValue, Metadata newMetadata, EventType eventType) {
       if (usesValueWrapper) {
@@ -140,15 +121,28 @@ public final class JPAContinuousQueryProtobufCacheEventFilterConverter extends A
             newValue = ((ProtobufValueWrapper) newValue).getBinary();
          }
       }
-      ContinuousQueryResult continuousQueryResult = filterAndConvert(key, oldValue, newValue, eventType);
-      if (continuousQueryResult != null) {
-         try {
-            return ProtobufUtil.toByteArray(serCtx, continuousQueryResult);
-         } catch (IOException e) {
-            throw new RuntimeException(e);
-         }
+
+      if (eventType.isExpired()) {  // expired events have the expired value as newValue
+         oldValue = newValue;
+         newValue = null;
       }
-      return null;
+
+      ObjectFilter.FilterResult f1 = filterAndConvert(oldValue);
+      ObjectFilter.FilterResult f2 = filterAndConvert(newValue);
+      ContinuousQueryResult result;
+      if (f1 == null && f2 != null) {
+         result = new ContinuousQueryResult(true, (byte[]) key, (byte[]) newValue);
+      }
+      else if (f1 != null && f2 == null) {
+         result = new ContinuousQueryResult(false, (byte[]) key, null);
+      } else {
+         return null;
+      }
+      try {
+         return ProtobufUtil.toByteArray(serCtx, result);
+      } catch (IOException e) {
+         throw new RuntimeException(e);
+      }
    }
 
    public static final class Externalizer extends AbstractExternalizer<JPAContinuousQueryProtobufCacheEventFilterConverter> {
