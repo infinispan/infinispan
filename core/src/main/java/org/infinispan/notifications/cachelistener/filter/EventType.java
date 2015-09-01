@@ -42,4 +42,8 @@ public class EventType {
    public boolean isRemove() {
       return type == Event.Type.CACHE_ENTRY_REMOVED;
    }
+   
+   public boolean isExpired() {
+      return type == Event.Type.CACHE_ENTRY_EXPIRED;
+   }
 }
