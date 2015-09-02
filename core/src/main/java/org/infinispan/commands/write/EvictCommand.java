@@ -52,7 +52,7 @@ public class EvictCommand extends RemoveCommand implements LocalCommand {
       // with non-null values, so we should do the same here as an ugly workaround.
       if (!isPre) {
          if (log.isTraceEnabled())
-            log.tracef("Notify eviction listeners for key=%", key);
+            log.tracef("Notify eviction listeners for key=%s", key);
 
          notifier.notifyCacheEntriesEvicted(Collections.singleton(factory.create(key, value, previousMetadata)), ctx,
                  this);

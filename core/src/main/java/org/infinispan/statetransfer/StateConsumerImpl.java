@@ -496,8 +496,8 @@ public class StateConsumerImpl implements StateConsumer {
          return;
       }
       if (topologyId < rebalanceTopologyId) {
-         log.debugf("Discarding state response with old topology id %d for cache %s, state transfer request topology was %d",
-               (Object)topologyId, cacheName, waitingForState.get());
+         log.debugf("Discarding state response with old topology id %d for cache %s, state transfer request topology was %b",
+               topologyId, cacheName, waitingForState);
          return;
       }
 

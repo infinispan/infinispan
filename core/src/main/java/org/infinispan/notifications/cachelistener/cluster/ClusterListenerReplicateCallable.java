@@ -109,7 +109,7 @@ public class ClusterListenerReplicateCallable<K, V> implements DistributedCallab
                                 origin, identifier);
                   }
                } else if (log.isTraceEnabled()) {
-                  log.tracef("Local cluster listener from origin %s with id % was already installed, ignoring",
+                  log.tracef("Local cluster listener from origin %s with id %s was already installed, ignoring",
                              origin, identifier);
                }
             }

@@ -126,7 +126,7 @@ public class ConcurrentOperationsTest extends MultipleCacheManagersTest {
                   InternalCacheEntry entry1 = advancedCache(owners.get(1)).getDataContainer().get("k");
                   Object mainOwnerValue = entry0 == null ? null : entry0.getValue();
                   Object otherOwnerValue = entry1 == null ? null : entry1.getValue();
-                  log.tracef("Main owner value is %, other Owner Value is %s", mainOwnerValue, otherOwnerValue);
+                  log.tracef("Main owner value is %s, other Owner Value is %s", mainOwnerValue, otherOwnerValue);
                   boolean equals = mainOwnerValue == null? otherOwnerValue == null : mainOwnerValue.equals(otherOwnerValue);
                   if (!equals) {
                      print("Consistency error. On main owner(" + owners.get(0) + ") we had " +
