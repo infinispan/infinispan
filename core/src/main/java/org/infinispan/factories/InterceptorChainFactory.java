@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.CustomInterceptorsConfiguration;
 import org.infinispan.configuration.cache.InterceptorConfiguration;
 import org.infinispan.configuration.cache.StoreConfiguration;
 import org.infinispan.expiration.impl.ExpirationInterceptor;
+import org.infinispan.expiration.impl.OptimisticTxExpirationInterceptor;
 import org.infinispan.factories.annotations.DefaultFactoryFor;
 import org.infinispan.interceptors.ActivationInterceptor;
 import org.infinispan.interceptors.BatchingInterceptor;
@@ -104,8 +105,9 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
    public InterceptorChain buildInterceptorChain() {
-      boolean needsVersionAwareComponents = configuration.transaction().transactionMode().isTransactional() &&
-            Configurations.isVersioningEnabled(configuration);
+      TransactionMode transactionMode = configuration.transaction().transactionMode();
+      boolean needsVersionAwareComponents = transactionMode.isTransactional() &&
+              Configurations.isVersioningEnabled(configuration);
 
       InterceptorChain interceptorChain = new InterceptorChain(componentRegistry.getComponentMetadataRepo());
       // add the interceptor chain to the registry first, since some interceptors may ask for it.
@@ -156,7 +158,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          } else {
             interceptorChain.appendInterceptor(createInterceptor(new StateTransferInterceptor(), StateTransferInterceptor.class), false);
          }
-         if (configuration.transaction().transactionMode().isTransactional()) {
+         if (transactionMode.isTransactional()) {
             interceptorChain.appendInterceptor(createInterceptor(new TransactionSynchronizerInterceptor(), TransactionSynchronizerInterceptor.class), false);
          }
       }
@@ -174,7 +176,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
 
       // load the tx interceptor
-      if (configuration.transaction().transactionMode().isTransactional())
+      if (transactionMode.isTransactional())
          interceptorChain.appendInterceptor(createInterceptor(new TxInterceptor(), TxInterceptor.class), false);
 
       if (isUsingMarshalledValues(configuration)) {
@@ -186,7 +188,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
 
       // NotificationInterceptor is used only for Prepare/Commit/Rollback notifications
-      if (configuration.transaction().transactionMode().isTransactional() && configuration.transaction().notifications()) {
+      if (transactionMode.isTransactional() && configuration.transaction().notifications()) {
          interceptorChain.appendInterceptor(createInterceptor(new NotificationInterceptor(), NotificationInterceptor.class), false);
       }
 
@@ -196,7 +198,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       //the total order protocol doesn't need locks
       if (!isTotalOrder) {
-         if (configuration.transaction().transactionMode().isTransactional()) {
+         if (transactionMode.isTransactional()) {
             if (configuration.transaction().lockingMode() == LockingMode.PESSIMISTIC) {
                interceptorChain.appendInterceptor(createInterceptor(new PessimisticLockingInterceptor(), PessimisticLockingInterceptor.class), false);
             } else {
@@ -208,7 +210,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
 
       if (configuration.sites().hasEnabledBackups() && !configuration.sites().disableBackups()) {
-         if ((configuration.transaction().transactionMode() == TransactionMode.TRANSACTIONAL)) {
+         if (transactionMode == TransactionMode.TRANSACTIONAL) {
             if (configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
                interceptorChain.appendInterceptor(createInterceptor(new OptimisticBackupInterceptor(), OptimisticBackupInterceptor.class), false);
             } else {
@@ -230,7 +232,13 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
 
       // The expiration interceptor must come before the entry wrapping interceptor as it can stop data container
       // access from expiring things.
-      interceptorChain.appendInterceptor(createInterceptor(new ExpirationInterceptor(), ExpirationInterceptor.class), false);
+      if (transactionMode.isTransactional() && configuration.transaction().lockingMode() == LockingMode.OPTIMISTIC) {
+         interceptorChain.appendInterceptor(createInterceptor(new OptimisticTxExpirationInterceptor<>(),
+                 ExpirationInterceptor.class), false);
+      } else {
+         interceptorChain.appendInterceptor(createInterceptor(new ExpirationInterceptor<>(),
+                 ExpirationInterceptor.class), false);
+      }
 
       if (needsVersionAwareComponents && cacheMode.isClustered()) {
          if (isTotalOrder) {
@@ -272,7 +280,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       }
 
       if (configuration.clustering().l1().enabled()) {
-         if (configuration.transaction().transactionMode().isTransactional()) {
+         if (transactionMode.isTransactional()) {
             interceptorChain.appendInterceptor(createInterceptor(new L1TxInterceptor(), L1TxInterceptor.class), false);
          }
          else {
@@ -298,7 +306,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             }
          case DIST_ASYNC:
          case REPL_ASYNC:
-            if (configuration.transaction().transactionMode().isTransactional()) {
+            if (transactionMode.isTransactional()) {
                if (isTotalOrder) {
                   interceptorChain.appendInterceptor(createInterceptor(new TotalOrderDistributionInterceptor(), TotalOrderDistributionInterceptor.class), false);
                } else {

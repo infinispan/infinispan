@@ -18,7 +18,7 @@ import java.util.Set;
  * overwritten.
  */
 public class ExpirationInterceptor<K, V> extends CommandInterceptor {
-   private ExpirationManager<K, V> expirationManager;
+   protected ExpirationManager<K, V> expirationManager;
 
    @Inject
    public void inject(ExpirationManager<K, V> expirationManager) {
