@@ -44,7 +44,7 @@ public class ClusteredActivationInterceptor extends ActivationInterceptor {
       if (!cmd.alwaysReadsExistingValues()) {
          if (transactional) {
             if (!ctx.isOriginLocal()) {
-               if (trace) log.tracef("Skip load for remote tx write command %s.");
+               if (trace) log.tracef("Skip load for remote tx write command %s.", cmd);
                return true;
             }
          } else {
