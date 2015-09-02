@@ -5,7 +5,7 @@ data which takes advantage of the functional programming additions and
 improved asynchronous programming capabilities available in Java 8.
 
 Infinispan's link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/FunctionalMap.html[Functional Map API]
-is a distilled map-like asynchronous API which uses lambdas to interact with data.
+is a distilled map-like asynchronous API which uses functions to interact with data.
 
 === Asynchronous and Lazy
 
@@ -29,9 +29,9 @@ link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/fu
 implementation itself can decide when to compute
 those results.
 
-=== Lambda transparency
+=== Function transparency
 
-Since the content of the lambdas is transparent to Infinispan, the API
+Since the content of the functions is transparent to Infinispan, the API
 has been split into 3 interfaces for read­-only (
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/FunctionalMap.ReadOnlyMap.html[`R​eadOnlyMap`]
 )​, read­-write (
@@ -39,7 +39,7 @@ link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/fu
 )​ and write­-only (
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html[`W​riteOnlyMap`]
 )​ operations respectively, in order to provide hints to the Infinispan
-internals on the type of work needed to support lambdas.
+internals on the type of work needed to support functions.
 
 === Constructing Functional Maps
 
@@ -113,12 +113,12 @@ as entries, which include both key and value information.
 [[_read_only_entry_view]]
 ==== Read-Only Entry View
 
-The lambda parameters for read-only maps provide the user with a
+The function parameters for read-only maps provide the user with a
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html[read-only entry view]
 to interact with the data in the cache, which include these operations:
 
 * link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#key--[`key()`]
-method returns the key for which this lambda is being executed.
+method returns the key for which this function is being executed.
 * link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/EntryView.ReadEntryView.html#find--[`find()`]
 returns a Java 8 `Optional` wrapping the value if present,
 otherwise it returns an empty optional. Unless the value is guaranteed to
@@ -189,7 +189,7 @@ writerAllFuture.thenAccept(x -> "Write completed");
 To remove all contents of the cache, there are two possibilities with
 different semantics. If using
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#evalAll-java.util.function.Consumer-[`evalAll`]
-each cached entry is iterated over and the lambda function is called
+each cached entry is iterated over and the function is called
 with that entry's information. Using this method also results in listeners
 (see <<_functional_listeners, functional listeners section>> for more information)
 being invoked:
@@ -217,14 +217,14 @@ truncateFuture.thenAccept(x -> "Cache contents cleared");
 
 [[_write_only_entry_view]]
 ==== Write-Only Entry View
-The lambda parameters for write-only maps provide the user with a
+The function parameters for write-only maps provide the user with a
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html[write-only entry view]
 to modify the data in the cache, which include these
 operations:
 
 * link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/EntryView.WriteEntryView.html#set-V-org.infinispan.commons.api.functional.MetaParam.Writable...-[`set(V, MetaParam.Writable...)`]
 method allows for a new value to be
-associated with the cache entry for which this lambda is executed, and it
+associated with the cache entry for which this function is executed, and it
 optionally takes zero or more metadata parameters to be stored along with
 the value (see <<_meta_parameter, Metadata Parameter Handling section>> to
 find out more).
@@ -237,7 +237,7 @@ parameters associated with this key.
 The final type of operations we have are read­write operations, and within
 this category CAS-like (Compare­And­Swap) operations can be found.
 This type of operations require previous value associated with the key
-to be read and for locks to be acquired before executing the lambda.
+to be read and for locks to be acquired before executing the function.
 The vast majority of operations within
 link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 and
@@ -294,8 +294,8 @@ CompletableFuture<Boolean> replaceFuture = readWriteMap.eval("key1", "value1", (
 replaceFuture.thenAccept(replaced -> System.out.printf("Value was replaced? %s%n", replaced));
 ----
 
-NOTE: The lambda in the example above captures `oldValue` which is an
-external value to the lambda which is valid use case.
+NOTE: The function in the example above captures `oldValue` which is an
+external value to the function which is valid use case.
 
 Read-write map API contains `evalMany` and `evalAll` operations which behave
 similar to the write-only map offerings, except that they enable previous
@@ -303,7 +303,7 @@ value and metadata parameters to be read.
 
 [[_read_write_entry_view]]
 ==== Read-Write Entry View
-The lambda parameters for read-write maps provide the user with the
+The function parameters for read-write maps provide the user with the
 possibility to query the information associated with the key, including
 value and metadata parameters, and the user can also use this
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/EntryView.ReadWriteEntryView.html[read-write entry view]
@@ -330,13 +330,13 @@ interface, and implement the methods to allow the
 internal logic to extra the data. Storing is done via the
 `set(V, MetaParam.Writable...)` method in
 <<_write_only_entry_view, write-only entry view>> or
-<<_read_write_entry_view, read-write entry view>> lambda parameters.
+<<_read_write_entry_view, read-write entry view>> function parameters.
 
 Querying metadata parameters is available via the
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/MetaParam.Lookup.html#findMetaParam-java.lang.Class-[`findMetaParam(Class)`]
 method
 available via <<_read_write_entry_view, read-write entry view>> or
-<<_read_only_entry_view, read-only entry view>> or lambda parameters.
+<<_read_only_entry_view, read-only entry view>> or function parameters.
 
 Here is an example showing how to store metadata parameters and how to query
 them:
@@ -504,7 +504,7 @@ and
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/FunctionalMap.WriteOnlyMap.html#listeners--[`WriteOnlyMap.listeners()`]
  method.
 
-A write listener implementation can be defined either passing a lambda
+A write listener implementation can be defined either passing a function
 to
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/Listeners.WriteListeners.html#onWrite-java.util.function.Consumer-[`onWrite(Consumer<ReadEntryView<K, V>>)`]
 method, or passing a
@@ -513,7 +513,7 @@ link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/fu
 method.
 Either way, all these methods return an
 link:https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html[AutoCloseable]
-instance that can be used to de-register the lambda listener:
+instance that can be used to de-register the function listener:
 
 [source,java]
 ----
@@ -523,7 +523,7 @@ import org.infinispan.commons.api.functional.Listeners.WriteListeners.WriteListe
 
 WriteOnlyMap<String, String> woMap = ...
 
-AutoCloseable writeLambdaCloseHandler = woMap.listeners().onWrite(written -> {
+AutoCloseable writeFunctionCloseHandler = woMap.listeners().onWrite(written -> {
    // `written` is a ReadEntryView of the written entry
    System.out.printf("Written: %s%n", written.get());
 });
@@ -535,7 +535,7 @@ AutoCloseable writeCloseHanlder = woMap.listeners.add(new WriteListener<String, 
 });
 
 // Either wrap handler in a try section to have it auto close...
-try(writeLambdaCloseHandler) {
+try(writeFunctionCloseHandler) {
    // Write entries using read-write or write-only functional map API
    ...
 }
@@ -562,14 +562,14 @@ link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/fu
 method.
 
 If interested in only one of the event types, the simplest way to add a
-listener is to pass a lambda to either
+listener is to pass a function to either
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onCreate-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onCreate`]
 ,
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onModify-org.infinispan.commons.api.functional.EntryView.ReadEntryView-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onModify`]
 or
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/api/functional/Listeners.ReadWriteListeners.ReadWriteListener.html#onRemove-org.infinispan.commons.api.functional.EntryView.ReadEntryView-[`onRemove`]
 methods. All these methods return an AutoCloseable instance that can be
-used to de-register the lambda listener:
+used to de-register the function listener:
 
 [source,java]
 ----
@@ -653,17 +653,17 @@ try(readWriteClose) {
 writeClose.close();
 ----
 
-=== Marshalling of Lambdas
+=== Marshalling of Functions
 Running functional map in a cluster of nodes involves marshalling and
 replication of the operation parameters under certain circumstances.
 
 To be more precise, when write operations are executed in a cluster,
 regardless of read-write or write-only operations, all the parameters
-to the method and the lambdas are replicated to other nodes.
+to the method and the functions are replicated to other nodes.
 
-There are multiple ways in which a lambda can be marshalled. The simplest
+There are multiple ways in which a function can be marshalled. The simplest
 way, which is also the most costly option in terms of payload size, is
-to mark the lambda as
+to mark the function as
 link:http://docs.oracle.com/javase/8/docs/api/java/io/Serializable.html[`Serializable`]
 :
 
@@ -674,14 +674,14 @@ import org.infinispan.commons.api.functional.FunctionalMap.*;
 
 WriteOnlyMap<String, String> writeOnlyMap = ...
 
-// Force a lambda to be Serializable
-Consumer<WriteEntryView<String>> lambda =
+// Force a function to be Serializable
+Consumer<WriteEntryView<String>> function =
    (Consumer<WriteEntryView<String>> & Serializable) wv -> wv.set("one");
 
-CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", lambda);
+CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", function);
 ----
 
-A more economical way to marshall a lambda is to provide an Infinispan
+A more economical way to marshall a function is to provide an Infinispan
 link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/marshall/Externalizer.html[`Externalizer`]
 for it:
 
@@ -690,15 +690,15 @@ for it:
 import org.infinispan.commons.api.functional.EntryView.*;
 import org.infinispan.commons.api.functional.FunctionalMap.*;
 import org.infinispan.commons.marshall.Externalizer;
-import org.infinispan.commons.marshall.SerializeLambdaWith;
+import org.infinispan.commons.marshall.SerializeFunctionWith;
 
 WriteOnlyMap<String, String> writeOnlyMap = ...
 
-// Force a lambda to be Serializable
-Consumer<WriteEntryView<String>> lambda = new SetStringConstant<>();
-CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", lambda);
+// Force a function to be Serializable
+Consumer<WriteEntryView<String>> function = new SetStringConstant<>();
+CompletableFuture<Void> writeFuture = writeOnlyMap.eval("key1", function);
 
-@SerializeLambdaWith(value = SetStringConstant.Externalizer0.class)
+@SerializeFunctionWith(value = SetStringConstant.Externalizer0.class)
 class SetStringConstant implements Consumer<WriteEntryView<String>> {
    @Override
    public void accept(WriteEntryView<String> view) {
@@ -717,17 +717,18 @@ class SetStringConstant implements Consumer<WriteEntryView<String>> {
 ----
 
 To help users take advantage of the tiny payloads generated by
-`Externalizer`-based lambdas, the functional API comes with a helper
+`Externalizer`-based functions, the functional API comes with a helper
 class called
-`org.infinispan.commons.marshall.MarshallableLambdas`
-which provides marshallable lambdas for some of the most commonly user
-lambda functions.
+link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/marshall/MarshallableFunctions.html[`org.infinispan.commons.marshall.MarshallableFunctions`]
+which provides marshallable functions for some of the most commonly user
+functions.
 
-In fact, all the lambdas required to implement
+In fact, all the functions required to implement
 link:https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`]
 and
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java[`JCache`]
-using the functional map API have been defined in MarshallableLambdas.
+using the functional map API have been defined in
+link:https://docs.jboss.org/infinispan/8.0/apidocs/org/infinispan/commons/marshall/MarshallableFunctions.html[`MarshallableFunctions`].
 For example, here is an implementation of JCache's
 link:https://github.com/jsr107/jsr107spec/blob/v1.0.0/src/main/java/javax/cache/Cache.java#L283[`boolean putIfAbsent(K, V)`]
 using functional map API which can be run in a cluster:
@@ -736,12 +737,12 @@ using functional map API which can be run in a cluster:
 ----
 import org.infinispan.commons.api.functional.EntryView.*;
 import org.infinispan.commons.api.functional.FunctionalMap.*;
-import org.infinispan.commons.marshall.MarshallableLambdas;
+import org.infinispan.commons.marshall.MarshallableFunctions;
 
 ReadWriteMap<String, String> readWriteMap = ...
 
 CompletableFuture<Boolean> future = readWriteMap.eval("key1,
-   MarshallableLambdas.setValueIfAbsentReturnBoolean());
+   MarshallableFunctions.setValueIfAbsentReturnBoolean());
 future.thenAccept(stored -> System.out.printf("Value was put? %s%n", stored));
 ----
 
