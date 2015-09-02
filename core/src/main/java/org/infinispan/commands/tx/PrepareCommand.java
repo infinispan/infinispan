@@ -6,6 +6,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
+import org.infinispan.commands.write.RemoveExpiredCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -127,6 +128,7 @@ public class PrepareCommand extends AbstractTransactionBoundaryCommand implement
          switch (writeCommand.getCommandId()) {
             case PutKeyValueCommand.COMMAND_ID:
             case RemoveCommand.COMMAND_ID:
+            case RemoveExpiredCommand.COMMAND_ID:
             case ReplaceCommand.COMMAND_ID:
                set.add(((DataWriteCommand) writeCommand).getKey());
                break;
