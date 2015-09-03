@@ -39,8 +39,7 @@ public class InfinispanNativeLockFactoryTest {
          .withProperty("hibernate.search.default.directory_provider", "infinispan")
          .withProperty("hibernate.search.default.locking_strategy", "native")
          .withProperty("hibernate.search.infinispan.configuration_resourcename", "localonly-infinispan.xml")
-         .withProperty("hibernate.search.default.indexBase", indexBase.getAbsolutePath())
-         .withService(DirectoryProviderService.class, new DirectoryServiceForTest());
+         .withProperty("hibernate.search.default.indexBase", indexBase.getAbsolutePath());
 
 
    @Test

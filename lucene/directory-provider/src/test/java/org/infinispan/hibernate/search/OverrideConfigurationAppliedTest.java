@@ -34,8 +34,6 @@ public class OverrideConfigurationAppliedTest {
             .addProperty(DefaultCacheManagerService.INFINISPAN_TRANSPORT_OVERRIDE_RESOURCENAME, "not existing")
             .addClass(Dvd.class);
 
-      cfg.addProvidedService(DirectoryProviderService.class, new DirectoryServiceForTest());
-
       //The most practical way to figure out if the property was applied is to provide it with
       //an illegal value to then verify the failure.
       exceptions.expect(SearchException.class);

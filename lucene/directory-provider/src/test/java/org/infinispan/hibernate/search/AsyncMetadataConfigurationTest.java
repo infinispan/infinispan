@@ -75,7 +75,7 @@ public class AsyncMetadataConfigurationTest {
    private void buildSearchFactoryWithAsyncOption(Boolean backendAsync, Boolean async) {
       SearchConfigurationForTest configuration = new HibernateManualConfiguration()
             .addClass(SimpleEmail.class)
-            .addProperty("hibernate.search.default.directory_provider", "org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider")
+            .addProperty("hibernate.search.default.directory_provider", "infinispan")
             .addProperty("hibernate.search.infinispan.configuration_resourcename", "localonly-infinispan.xml");
 
       if (backendAsync != null) {

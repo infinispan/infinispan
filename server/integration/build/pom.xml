@@ -216,6 +216,11 @@
          <groupId>org.apache.lucene</groupId>
          <artifactId>lucene-grouping</artifactId>
       </dependency>
+
+      <dependency>
+         <groupId>org.apache.lucene</groupId>
+         <artifactId>lucene-facet</artifactId>
+      </dependency>
       
    </dependencies>
 
