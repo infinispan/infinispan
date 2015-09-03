@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class RemoteNonIndexedQueryIT extends RemoteQueryIT {
 
-   @InfinispanResource("remote-query")
+   @InfinispanResource("remote-query-1")
    protected RemoteInfinispanServer server;
 
    public RemoteNonIndexedQueryIT() {

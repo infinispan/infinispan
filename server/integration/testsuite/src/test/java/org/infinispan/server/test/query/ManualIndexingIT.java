@@ -35,7 +35,7 @@ public class ManualIndexingIT extends RemoteQueryBaseIT {
     private static final String CACHE_CONTAINER_NAME = "clustered";
     private static final String CACHE_NAME = "localtestcache_manual";
 
-    @InfinispanResource("remote-query")
+    @InfinispanResource("remote-query-1")
     protected RemoteInfinispanServer server;
 
     private MBeanServerConnectionProvider jmxConnectionProvider;

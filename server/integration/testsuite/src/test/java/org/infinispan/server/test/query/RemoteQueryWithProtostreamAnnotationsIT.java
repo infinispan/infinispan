@@ -43,7 +43,7 @@ public class RemoteQueryWithProtostreamAnnotationsIT {
    private RemoteCache<Integer, AnnotatedUser> remoteCache;
    private RemoteCacheManagerFactory rcmFactory;
 
-   @InfinispanResource("remote-query")
+   @InfinispanResource("remote-query-1")
    protected RemoteInfinispanServer server;
 
    @ProtoDoc("@Indexed")

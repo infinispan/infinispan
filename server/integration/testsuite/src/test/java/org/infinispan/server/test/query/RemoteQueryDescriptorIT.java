@@ -40,13 +40,13 @@ import static org.junit.Assert.assertTrue;
 
 @Category({ Queries.class })
 @RunWith(Arquillian.class)
-@WithRunningServer({@RunningServer(name = "clustered-indexless-descriptor-2")})
+@WithRunningServer({@RunningServer(name = "remote-query-2")})
 public class RemoteQueryDescriptorIT {
 
-   @InfinispanResource("remote-query")
+   @InfinispanResource("remote-query-1")
    RemoteInfinispanServer server1;
 
-   @InfinispanResource("clustered-indexless-descriptor-2")
+   @InfinispanResource("remote-query-2")
    RemoteInfinispanServer server2;
 
    public static final String MBEAN = "jboss." + InfinispanSubsystem.SUBSYSTEM_NAME + ":type=RemoteQuery,name=\"clustered\",component=ProtobufMetadataManager";
