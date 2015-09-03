@@ -7,7 +7,7 @@
     <major-minor version="${project.version}" property="infinispan.slot" prefix="ispn-"/>
     <major-minor version="${version.lucene}" property="lucene4.slot"/>
     <major-minor version="${version.hibernate.search}" property="hibernate.search.slot"/>
-    <major-minor version="${version.hibernate_dep.infinispan}" prefix="ispn-" property="hibernate_dep.infinispan.slot"/>
+    <property name="hibernate-search-directory-provider-ref" value="for-hibernatesearch-${hibernate.search.slot}"/>
 
     <target name="clean">
         <delete dir="${output.dir}" />
@@ -29,7 +29,7 @@
             <filter token="infinispan.slot" value="${infinispan.slot}" />
             <filter token="lucene4.slot" value="${lucene4.slot}" />
             <filter token="hibernate.search.slot" value="${hibernate.search.slot}" />
-            <filter token="hibernate_dep.infinispan.slot" value="${hibernate_dep.infinispan.slot}" />
+            <filter token="hibernate-search-directory-provider-ref" value="${hibernate-search-directory-provider-ref}" />
         </filterset>
 
         <module-def name="org.antlr.antlr-runtime" slot="${infinispan.slot}">
@@ -106,6 +106,8 @@
         <module-def name="org.infinispan.hibernate-search.directory-provider" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-directory-provider" />
         </module-def>
+
+        <module-def name="org.infinispan.hibernate-search.directory-provider" slot="${hibernate-search-directory-provider-ref}"  module.src="org.infinispan.for-hibernatesearch-alias"/>
 
         <module-def name="org.infinispan.objectfilter" slot="${infinispan.slot}">
             <maven-resource group="org.infinispan" artifact="infinispan-objectfilter" />

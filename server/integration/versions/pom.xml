@@ -496,6 +496,12 @@
             <artifactId>lucene-grouping</artifactId>
             <version>${version.lucene}</version>
          </dependency>
+
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-facet</artifactId>
+            <version>${version.lucene}</version>
+         </dependency>
       </dependencies>
 
    </dependencyManagement>

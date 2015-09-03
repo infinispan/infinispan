@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -98,7 +99,7 @@ public class StoredIndexTest {
     */
    private void startNode(boolean createSchema) {
       node = new FullTextSessionBuilder()
-            .setProperty("hibernate.search.default.directory_provider", "org.infinispan.hibernate.search.spi.InfinispanDirectoryProvider")
+            .setProperty("hibernate.search.default.directory_provider", "infinispan")
             .setProperty(DefaultCacheManagerService.INFINISPAN_CONFIGURATION_RESOURCENAME, "filesystem-loading-infinispan.xml")
                   // avoid killing the schema when you still have to run the second node:
             .setProperty(Environment.HBM2DDL_AUTO, createSchema ? "create" : "validate")
@@ -160,7 +161,7 @@ public class StoredIndexTest {
     * releases.
     */
    @AfterClass
-   public static void removeFileSystemStoredIndexes() {
+   public static void removeFileSystemStoredIndexes() throws IOException {
       File targetDir = TestConstants.getTargetDir(StoredIndexTest.class);
       FileHelper.delete(new File(targetDir, "LuceneIndexesData"));
       FileHelper.delete(new File(targetDir, "LuceneIndexesMetaData"));

@@ -73,11 +73,6 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
       HashMap map = new HashMap(2);
       map.put(ComponentRegistryService.class, loopService);
       map.put(CacheManagerService.class, loopService);
-      
-      // Register the DirectoryProvider service
-      DirectoryProviderService directoryProviderService = new DirectoryProviderService();
-      map.put(org.hibernate.search.cfg.spi.DirectoryProviderService.class, directoryProviderService);
-
       return Collections.unmodifiableMap(map);
    }
 
