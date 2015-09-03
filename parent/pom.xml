@@ -117,15 +117,15 @@
       <version.geronimo.tm>3.1.1</version.geronimo.tm>
       <version.h2.driver>1.4.180</version.h2.driver>
       <version.hibernate.annotations>3.5.6-Final</version.hibernate.annotations>
-      <version.hibernate.core>4.3.6.Final</version.hibernate.core>
+      <version.hibernate.core>5.0.0.Final</version.hibernate.core>
       <version.hibernate.entitymanager>${version.hibernate.core}</version.hibernate.entitymanager>
       <version.hibernate.hql.parser>1.2.2.Final</version.hibernate.hql.parser>
       <version.hibernate.osgi>${version.hibernate.core}</version.hibernate.osgi>
       <version.hibernate_dep.antlr>2.7.7_5</version.hibernate_dep.antlr>
       <version.hibernate_dep.classmate>0.5.4</version.hibernate_dep.classmate>
       <version.hibernate_dep.dom4j>1.6.1_5</version.hibernate_dep.dom4j>
-      <version.hibernate_dep.hibernate-commons-annotations>4.0.5.Final</version.hibernate_dep.hibernate-commons-annotations>
-      <version.hibernate_dep.jandex>1.1.0.Final</version.hibernate_dep.jandex>
+      <version.hibernate_dep.hibernate-commons-annotations>5.0.0.Final</version.hibernate_dep.hibernate-commons-annotations>
+      <version.hibernate_dep.jandex>1.2.2.Final</version.hibernate_dep.jandex>
       <version.hibernate_dep.javaassist>3.18.1-GA</version.hibernate_dep.javaassist>
       <version.httpclient>4.2.4</version.httpclient>
       <version.howl>1.0.1-1</version.howl>
@@ -177,7 +177,7 @@
       <version.maven.source>2.3</version.maven.source>
       <version.maven.genjavadoc>0.8</version.maven.genjavadoc>
       <version.maven.scala>2.15.2</version.maven.scala>
-      <version.maven.surefire>2.17</version.maven.surefire>
+      <version.maven.surefire>2.18.1</version.maven.surefire>
       <version.maven.invoker>1.8</version.maven.invoker>
       <version.metainf-services>1.5</version.metainf-services>
       <version.jacoco>0.5.10.201208310627</version.jacoco>
@@ -1186,7 +1186,7 @@
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
                <artifactId>maven-javadoc-plugin</artifactId>
-               <version>2.10</version>
+               <version>2.10.3</version>
             </plugin>
             <plugin>
                <groupId>org.apache.maven.plugins</groupId>
@@ -1638,7 +1638,7 @@
          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-report-plugin</artifactId>
-            <version>2.12.2</version>
+            <version>2.18.1</version>
          </plugin>
          
          <plugin>
