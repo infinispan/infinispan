@@ -892,7 +892,7 @@
     </group>
 
     <group qualifier="queries">
-        <container qualifier="remote-query" mode="suite">
+        <container qualifier="remote-query-1" mode="suite">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server1.dist}</property>
@@ -904,8 +904,7 @@
                 <property name="jmxDomain">${server.jmx.domain}</property>
             </configuration>
         </container>
-        <!-- used only in RemoteQueryDescriptorIT -->
-        <container qualifier="clustered-indexless-descriptor-2" mode="manual">
+        <container qualifier="remote-query-2" mode="manual">
             <configuration>
                 <property name="javaHome">${server.jvm}</property>
                 <property name="jbossHome">${server2.dist}</property>

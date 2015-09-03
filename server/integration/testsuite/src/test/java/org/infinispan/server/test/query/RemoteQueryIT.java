@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
 @RunWith(Arquillian.class)
 public class RemoteQueryIT extends RemoteQueryBaseIT {
 
-    @InfinispanResource("remote-query")
+    @InfinispanResource("remote-query-1")
     protected RemoteInfinispanServer server;
 
     public RemoteQueryIT() {
