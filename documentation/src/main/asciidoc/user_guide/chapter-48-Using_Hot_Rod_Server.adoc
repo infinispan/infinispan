@@ -1282,3 +1282,6 @@ embedded mode which is covered in link:#_infinispan_s_query_dsl[this] section.
 ===== Running in Compatibility Mode
 TODO
 
+
+include::chapter-78-Scripting.adoc[]
+
