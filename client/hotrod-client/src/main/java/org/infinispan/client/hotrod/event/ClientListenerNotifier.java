@@ -33,6 +33,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Galder Zamarreño
@@ -74,7 +76,7 @@ public class ClientListenerNotifier {
 
    public void addClientListener(AddClientListenerOperation op) {
       Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables = findMethods(op.listener);
-      EventDispatcher eventDispatcher = new EventDispatcher(op, invocables);
+      EventDispatcher eventDispatcher = new EventDispatcher(op, invocables, op.getCacheName());
       clientListeners.put(op.listenerId, eventDispatcher);
       if (log.isTraceEnabled())
          log.tracef("Add client listener with id %s, for listener %s and invocable methods %s",
@@ -210,6 +212,13 @@ public class ClientListenerNotifier {
 
          removeClientListener(listenerId);
       }
+
+      executor.shutdown();
+      try {
+         executor.awaitTermination(5, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+      }
    }
 
    public void invokeEvent(byte[] listenerId, ClientEvent clientEvent) {
@@ -221,18 +230,21 @@ public class ClientListenerNotifier {
       final Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables;
       final AddClientListenerOperation op;
       final Transport transport;
+      final String cacheName;
       volatile boolean stopped = false;
 
       private EventDispatcher(AddClientListenerOperation op,
-            Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables) {
+            Map<Class<? extends Annotation>, List<ClientListenerInvocation>> invocables,
+            String cacheName) {
          this.op = op;
          this.transport = op.getDedicatedTransport();
          this.invocables = invocables;
+         this.cacheName = cacheName;
       }
 
       @Override
       public void run() {
-         Thread.currentThread().setName("Client-Listener-" + Util.toHexString(op.listenerId, 8));
+         Thread.currentThread().setName(getThreadName());
          while (!Thread.currentThread().isInterrupted()) {
             ClientEvent clientEvent = null;
             try {
@@ -272,6 +284,13 @@ public class ClientListenerNotifier {
                }
             }
          }
+      }
+
+      String getThreadName() {
+         String listenerId = Util.toHexString(op.listenerId, 8);
+         return cacheName.isEmpty()
+            ? "Client-Listener-" + listenerId
+            : "Client-Listener-" + cacheName + "-" + listenerId;
       }
 
       void invokeClientEvent(ClientEvent clientEvent) {
