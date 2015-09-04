@@ -84,19 +84,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Properties;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -1590,6 +1578,17 @@ public class TestingUtil {
             t = cause;
          }
       }
+   }
+
+   public static void detectThreadLeaks(String regexp) {
+      List<Thread> leakedThreads = new ArrayList<>();
+      for (Map.Entry<Thread, StackTraceElement[]> s : Thread.getAllStackTraces().entrySet()) {
+         Thread thread = s.getKey();
+         if (thread.getName().matches(regexp)) leakedThreads.add(thread);
+      }
+
+      if (!leakedThreads.isEmpty())
+         throw new AssertionError("Leaked threads: " + leakedThreads);
    }
 
 }
