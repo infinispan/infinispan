@@ -35,7 +35,7 @@ public class UserHS implements User, Serializable {
    @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
    private String surname;
 
-   @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
+   @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = "-1")
    @NumericField
    private Integer age;  // yes, not the birth date :)
 
