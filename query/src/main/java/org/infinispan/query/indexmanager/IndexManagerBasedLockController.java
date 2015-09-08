@@ -54,28 +54,18 @@ final class IndexManagerBasedLockController implements IndexLockController {
     */
    private boolean waitForAvailabilityInternal() {
       final Directory directory = indexManager.getDirectoryProvider().getDirectory();
-      final Lock lock = directory.makeLock(IndexWriter.WRITE_LOCK_NAME);
       try {
-         if (! lock.isLocked()) {
-            return true;
-         }
-         else {
-            try {
-               final boolean obtained = lock.obtain(10000);
-               if (obtained) {
-                  lock.close();
-                  return true;
-               }
-            }
-            catch (LockObtainFailedException lofe) {
-               return false;
-            }
-         }
-      } catch (IOException e) {
+         Lock lock = directory.obtainLock(IndexWriter.WRITE_LOCK_NAME);
+         lock.close();
+         return true;
+      }
+      catch (LockObtainFailedException lofe) {
+         return false;
+      }
+      catch (IOException e) {
          log.error(e);
          return false;
       }
-      return false;
    }
 
    private void resumeTx(final Transaction tx) {
@@ -93,7 +83,7 @@ final class IndexManagerBasedLockController implements IndexLockController {
          return null;
       }
       try {
-         Transaction tx = null;
+         Transaction tx;
          if ((tx = tm.getTransaction()) != null) {
             tm.suspend();
          }
