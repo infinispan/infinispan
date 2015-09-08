@@ -10,9 +10,9 @@ public final class AvgAccumulator extends FieldAccumulator {
 
    private static class Avg {
       double sum;
-      int count;
+      long count;
 
-      Avg(double sum, int count) {
+      Avg(double sum, long count) {
          this.sum = sum;
          this.count = count;
       }
