@@ -291,8 +291,8 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(2, list.get(0).length);
-      assertEquals(3, list.get(0)[0]);
-      assertEquals(3, list.get(0)[1]);
+      assertEquals(3L, list.get(0)[0]);
+      assertEquals(2L, list.get(0)[1]);
    }
 
    public void testGlobalAvg() {
@@ -332,9 +332,9 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
       List<Object[]> list = q.list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(1, list.get(0)[0]);
+      assertEquals(1L, list.get(0)[0]);
       assertEquals(1, list.get(1).length);
-      assertEquals(2, list.get(1)[0]);
+      assertEquals(2L, list.get(1)[0]);
    }
 
    public void testAggregateEmbedded1() {
