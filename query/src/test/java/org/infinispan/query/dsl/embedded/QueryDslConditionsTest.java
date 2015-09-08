@@ -1920,6 +1920,18 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals("Woman", list.get(1)[0]);
    }
 
+   public void testOrderBySum() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.sum("age"))
+            .orderBy(Expression.sum("age"))
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(22, list.get(0)[0]);
+   }
+
    public void testParam() throws Exception {
       QueryFactory qf = getQueryFactory();
 

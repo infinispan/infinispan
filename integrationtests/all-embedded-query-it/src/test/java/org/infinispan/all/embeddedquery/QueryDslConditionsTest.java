@@ -1415,7 +1415,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
             .orderBy("description", SortOrder.ASC)
             .having("accountId").eq(1)
             .and(qf.having("amount").gt(1600)
-                       .or().having("description").like("%rent%")).toBuilder().build();
+                  .or().having("description").like("%rent%")).toBuilder().build();
 
       List<Transaction> list = q.list();
       assertEquals(2, list.size());
@@ -2037,6 +2037,19 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(1, list.get(1).length);
       assertEquals("Doe", list.get(0)[0]);
       assertEquals("Woman", list.get(1)[0]);
+   }
+
+   @Test
+   public void testOrderBySum() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select(Expression.sum("age"))
+            .orderBy(Expression.sum("age"))
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(22, list.get(0)[0]);
    }
 
    @Test
