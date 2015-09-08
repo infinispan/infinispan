@@ -74,7 +74,7 @@ public class DirectoryImplementerTests extends SingleCacheManagerTest {
          dir = DirectoryBuilder.newDirectoryInstance(cache, cache, cache,  INDEX_NAME).chunkSize(BUFFER_SIZE)
                .overrideWriteLocker(new LockFactory() {
                   @Override
-                  public Lock makeLock(Directory dir, String lockName) {
+                  public Lock obtainLock(Directory dir, String lockName) throws IOException {
                      return null;
                   }
                })

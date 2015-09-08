@@ -25,7 +25,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Lock
  */
 @SuppressWarnings("unchecked")
-class TransactionalSharedLuceneLock extends Lock implements Closeable {
+class TransactionalSharedLuceneLock extends Lock implements Closeable, ObtainableLock {
 
    private static final Log log = LogFactory.getLog(TransactionalSharedLuceneLock.class, Log.class);
 
@@ -43,9 +43,6 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable {
       this.keyOfLock = new FileCacheKey(indexName, lockName);
    }
 
-   /**
-    * {@inheritDoc}
-    */
    @Override
    public boolean obtain() throws IOException {
       Object previousValue = noCacheStoreCache.putIfAbsent(keyOfLock, keyOfLock);
@@ -76,7 +73,6 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable {
       }
    }
 
-   @Override
    public boolean isLocked() {
       boolean locked = false;
       Transaction tx = null;
@@ -183,6 +179,13 @@ class TransactionalSharedLuceneLock extends Lock implements Closeable {
          commitTransactions();
       } finally {
          clearLock();
+      }
+   }
+
+   @Override
+   public void ensureValid() throws IOException {
+      if (!isLocked()) {
+         throw new IOException("This lock is no longer being held");
       }
    }
 

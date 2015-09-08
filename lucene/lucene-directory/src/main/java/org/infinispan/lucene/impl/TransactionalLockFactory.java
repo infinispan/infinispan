@@ -5,8 +5,8 @@ import org.apache.lucene.store.LockFactory;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
 import org.infinispan.lifecycle.ComponentStatus;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
+
+import java.io.IOException;
 
 import javax.transaction.TransactionManager;
 
@@ -26,18 +26,15 @@ import javax.transaction.TransactionManager;
  * @see org.apache.lucene.index.SerialMergeScheduler
  * @since 4.0
  */
-@SuppressWarnings("unchecked")
 public class TransactionalLockFactory extends LockFactory {
 
    public static final TransactionalLockFactory INSTANCE = new TransactionalLockFactory();
-
-   private static final Log log = LogFactory.getLog(TransactionalLockFactory.class);
 
    /**
     * {@inheritDoc}
     */
    @Override
-   public TransactionalSharedLuceneLock makeLock(Directory dir, String lockName) {
+   public TransactionalSharedLuceneLock obtainLock(Directory dir, String lockName) throws IOException {
       if (!(dir instanceof DirectoryLucene)) {
          throw new UnsupportedOperationException("TransactionalSharedLuceneLock can only be used with DirectoryLucene, got: " + dir);
       }
@@ -57,10 +54,7 @@ public class TransactionalLockFactory extends LockFactory {
       }
 
       TransactionalSharedLuceneLock lock = new TransactionalSharedLuceneLock(cache, indexName, lockName, tm);
-
-      if (log.isTraceEnabled()) {
-         log.tracef("Lock prepared, not acquired: %s for index %s", lockName, indexName);
-      }
+      CommonLockObtainUtils.attemptObtain(lock);
       return lock;
    }
 

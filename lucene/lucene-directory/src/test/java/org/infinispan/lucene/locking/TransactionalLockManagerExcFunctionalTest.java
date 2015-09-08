@@ -31,7 +31,7 @@ public class TransactionalLockManagerExcFunctionalTest extends TransactionalLock
 
       LockFactory lockFactory = makeLockFactory();
 
-      lockFactory.makeLock(new DirectoryBuilderImpl(cache1,cache1,cache1,commonIndexName).create(),"myLock");
+      lockFactory.obtainLock(new DirectoryBuilderImpl(cache1,cache1,cache1,commonIndexName).create(),"myLock");
    }
 
    @Test(expectedExceptions = CacheException.class, expectedExceptionsMessageRegExp = "Failed looking up TransactionManager. Check if any transaction manager is associated with Infinispan cache: 'lucene'")
@@ -41,11 +41,11 @@ public class TransactionalLockManagerExcFunctionalTest extends TransactionalLock
       Cache cache1 = cache(0, "lucene");
       LockFactory lockFactory = makeLockFactory();
 
-      lockFactory.makeLock(new DirectoryBuilderImpl(cache1,cache1,cache1,commonIndexName).create(),"myLock");
+      lockFactory.obtainLock(new DirectoryBuilderImpl(cache1,cache1,cache1,commonIndexName).create(),"myLock");
    }
 
-   @Test(dataProvider = "writeLockNameProvider", enabled=false) @Override
-   public void testLuceneIndexLocking(final String writeLockProvider) throws IOException {
+   @Test @Override
+   public void testLuceneIndexLocking() throws IOException {
       //do nothing
    }
 

@@ -141,8 +141,8 @@ class DirectoryLucene extends Directory implements DirectoryExtensions {
    }
 
    @Override
-   public Lock makeLock(String lockName) {
-      return lockFactory.makeLock(this, lockName);
+   public Lock obtainLock(String lockName) throws IOException {
+      return lockFactory.obtainLock(this, lockName);
    }
 
    @Override

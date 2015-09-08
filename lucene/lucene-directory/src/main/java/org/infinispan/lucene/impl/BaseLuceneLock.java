@@ -1,6 +1,8 @@
 package org.infinispan.lucene.impl;
 
 import java.io.Closeable;
+import java.io.IOException;
+
 import org.apache.lucene.store.Lock;
 import org.infinispan.Cache;
 import org.infinispan.context.Flag;
@@ -18,7 +20,7 @@ import org.infinispan.util.logging.LogFactory;
  * @see org.apache.lucene.store.Lock
  */
 @SuppressWarnings("unchecked")
-class BaseLuceneLock extends Lock implements Closeable {
+class BaseLuceneLock extends Lock implements Closeable, ObtainableLock {
 
    private static final Log log = LogFactory.getLog(BaseLuceneLock.class);
 
@@ -34,9 +36,6 @@ class BaseLuceneLock extends Lock implements Closeable {
       this.keyOfLock = new FileCacheKey(indexName, lockName);
    }
 
-   /**
-    * {@inheritDoc}
-    */
    @Override
    public boolean obtain() {
       Object previousValue = noCacheStoreCache.putIfAbsent(keyOfLock, keyOfLock);
@@ -64,7 +63,6 @@ class BaseLuceneLock extends Lock implements Closeable {
       }
    }
 
-   @Override
    public boolean isLocked() {
       return noCacheStoreCache.containsKey(keyOfLock);
    }
@@ -75,6 +73,13 @@ class BaseLuceneLock extends Lock implements Closeable {
    @Override
    public void close() {
       clearLock();
+   }
+
+   @Override
+   public void ensureValid() throws IOException {
+      if (!isLocked()) {
+         throw new IOException("This lock is no longer being held");
+      }
    }
 
 }

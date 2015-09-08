@@ -11,7 +11,6 @@ import org.infinispan.lucene.directory.DirectoryBuilder;
 import org.infinispan.lucene.impl.BaseLockFactory;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.transaction.TransactionMode;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -54,30 +53,19 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
       return TransactionMode.NON_TRANSACTIONAL;
    }
 
-   @Test(dataProvider = "writeLockNameProvider")
-   public void testLuceneIndexLocking(final String writeLockProvider) throws IOException {
+   @Test
+   public void testLuceneIndexLocking() throws IOException {
       BaseLockFactory baseLockFactory = BaseLockFactory.INSTANCE;
-      Lock luceneLockA = baseLockFactory.makeLock(directory1, writeLockProvider);
-      Lock luceneLockB = baseLockFactory.makeLock(directory1, writeLockProvider);
-      Lock anotherLock = baseLockFactory.makeLock(directory3, writeLockProvider);
-
-      assertTrue(luceneLockA.obtain());
-      assertTrue(luceneLockB.isLocked());
-      assertFalse(anotherLock.isLocked());
-      assertFalse(luceneLockA.obtain());
-      assertFalse(luceneLockB.obtain());
-
-      luceneLockA.close();
-      assertFalse(luceneLockB.isLocked());
-      assertTrue(luceneLockB.obtain());
-
-      luceneLockA.close();
-      assertFalse(luceneLockB.isLocked());
-   }
-
-   @DataProvider(name = "writeLockNameProvider")
-   public Object[][] provideWriteLockName() {
-      return new Object[][] {{IndexWriter.WRITE_LOCK_NAME}, {"SomeTestLockName"}};
+      assertFalse(IndexWriter.isLocked(directory1));
+      Lock obtainedLock = directory1.obtainLock(IndexWriter.WRITE_LOCK_NAME);
+      assertTrue(IndexWriter.isLocked(directory1));
+      assertTrue(IndexWriter.isLocked(directory2));
+      assertFalse(IndexWriter.isLocked(directory3));
+      obtainedLock.ensureValid(); //will throw an exception on failure
+      obtainedLock.close();
+      assertFalse(IndexWriter.isLocked(directory1));
+      assertFalse(IndexWriter.isLocked(directory2));
+      assertFalse(IndexWriter.isLocked(directory3));
    }
 
    protected LockFactory makeLockFactory() {
