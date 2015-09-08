@@ -156,7 +156,7 @@ final class RemoteQueryEngine extends QueryEngine {
                   case BYTES:
                   case GROUP:
                   case MESSAGE:
-                     return new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), QueryFacadeImpl.NULL_TOKEN);
+                     return new NullEncodingTwoWayFieldBridge(new TwoWayString2FieldBridgeAdaptor(StringBridge.INSTANCE), QueryFacadeImpl.NULL_TOKEN_CODEC);
                }
                return null;
             }

@@ -1,5 +1,7 @@
 package org.infinispan.query.remote.impl;
 
+import org.hibernate.search.engine.impl.nullencoding.KeywordBasedNullCodec;
+import org.hibernate.search.engine.impl.nullencoding.NullMarkerCodec;
 import org.infinispan.AdvancedCache;
 import org.infinispan.commons.logging.LogFactory;
 import org.infinispan.configuration.cache.Configuration;
@@ -43,6 +45,8 @@ public final class QueryFacadeImpl implements QueryFacade {
     * Lucene does not index null values.
     */
    public static final String NULL_TOKEN = "_null_";
+
+   public static final NullMarkerCodec NULL_TOKEN_CODEC = new KeywordBasedNullCodec(NULL_TOKEN);
 
    @Override
    public byte[] query(AdvancedCache<byte[], byte[]> cache, byte[] query) {
