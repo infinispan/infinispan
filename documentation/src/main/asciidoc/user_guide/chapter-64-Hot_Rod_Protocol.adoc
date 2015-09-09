@@ -6,7 +6,6 @@ the custom TCP client/server Hot Rod protocol.
 * link:$$#_hot_rod_protocol_1_1$$[Hot Rod Protocol 1.1]
 * link:$$#_hot_rod_protocol_1_2$$[Hot Rod Protocol 1.2]
 * link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.3]
-* link:$$#_hot_rod_protocol_1_3$$[Hot Rod Protocol 1.4]
 * link:$$#_hot_rod_protocol_2_0$$[Hot Rod Protocol 2.0]
 * link:$$#_hot_rod_protocol_2_1$$[Hot Rod Protocol 2.1]
 * link:$$#_hot_rod_protocol_2_2$$[Hot Rod Protocol 2.2]
