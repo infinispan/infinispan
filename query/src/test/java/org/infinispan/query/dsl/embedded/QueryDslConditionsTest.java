@@ -1331,7 +1331,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
             .orderBy("description", SortOrder.ASC)
             .having("accountId").eq(1)
             .and(qf.having("amount").gt(1600)
-                       .or().having("description").like("%rent%")).toBuilder().build();
+                  .or().having("description").like("%rent%")).toBuilder().build();
 
       List<Transaction> list = q.list();
       assertEquals(2, list.size());
@@ -1930,6 +1930,20 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals(22, list.get(0)[0]);
+   }
+
+   public void testGroupingWithFilter() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("name")
+            .having("name").eq("John").toBuilder()
+            .groupBy("name")
+            .having("name").eq("John").toBuilder()
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("John", list.get(0)[0]);
    }
 
    public void testCountNull() {

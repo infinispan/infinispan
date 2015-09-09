@@ -280,7 +280,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("notes").eq("Lorem ipsum dolor sit amet")
-               .and().having("surname").eq("Doe")
+            .and().having("surname").eq("Doe")
             .toBuilder().build();
 
       List<User> list = q.list();
@@ -1570,8 +1570,8 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getAccountImplClass())
-          .having("creationDate").eq(makeDate("2013-01-20"))
-          .toBuilder().build();
+            .having("creationDate").eq(makeDate("2013-01-20"))
+            .toBuilder().build();
 
       List<Account> list = q.list();
       assertEquals(1, list.size());
@@ -2050,6 +2050,21 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
       assertEquals(22, list.get(0)[0]);
+   }
+
+   @Test
+   public void testGroupingWithFilter() {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getUserImplClass())
+            .select("name")
+            .having("name").eq("John").toBuilder()
+            .groupBy("name")
+            .having("name").eq("John").toBuilder()
+            .build();
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals("John", list.get(0)[0]);
    }
 
    @Test
