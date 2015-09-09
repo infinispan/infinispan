@@ -57,9 +57,7 @@
                      <value>${testNGListener}</value>
                   </property>
                </properties>
-               
-               <argLine>-Xmx1024m -XX:MaxPermSize=256m
-                  -Dsun.nio.ch.bugLevel</argLine>
+               <argLine>-Xmx2G -Dsun.nio.ch.bugLevel</argLine>
             </configuration>
          </plugin>
       </plugins>

@@ -101,7 +101,7 @@
                   <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
                <trimStackTrace combine.self="override">false</trimStackTrace>
-               <argLine combine.self="override">-Xmx512m -XX:MaxPermSize=128m</argLine>
+               <argLine combine.self="override">-Xmx768m</argLine>
                <properties combine.self="override">
                   <property>
                      <name>usedefaultlisteners</name>
