@@ -149,28 +149,27 @@
         </xs:attribute>
         <xs:attribute name="listener-executor" type="xs:string">
             <xs:annotation>
-                <xs:documentation>Defines the executor used for asynchronous cache listener notifications.</xs:documentation>
+                <xs:documentation>Defines the executor used for asynchronous cache listener notifications. Deprecated: please use the listener-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="async-executor" type="xs:string">
             <xs:annotation>
-                <xs:documentation>Defines the executor used for asynchronous cache operations.
-                </xs:documentation>
+                <xs:documentation>Defines the executor used for asynchronous cache operations. Deprecated: please use the async-operations-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="eviction-executor" type="xs:string">
             <xs:annotation>
-                <xs:documentation>Defines the scheduled executor used for evictions.</xs:documentation>
+                <xs:documentation>Defines the scheduled executor used for evictions. Deprecated: please use the expiration-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="replication-queue-executor" type="xs:string">
             <xs:annotation>
-                <xs:documentation>Defines the scheduled executor used by the asynchronous replication queue.</xs:documentation>
+                <xs:documentation>Defines the scheduled executor used by the asynchronous replication queue.  Deprecated: please use the replication-queue-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="state-transfer-executor" type="xs:string">
             <xs:annotation>
-                <xs:documentation>Defines the executor used by the state transfer.</xs:documentation>
+                <xs:documentation>Defines the executor used by the state transfer. Deprecated: please use the state-transfer-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="module" type="xs:string" default="org.jboss.as.clustering.infinispan">
@@ -186,19 +185,24 @@
     </xs:complexType>
 
     <xs:complexType name="transport">
+        <xs:attribute name="channel" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>Defines the channel used for this transport.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
         <xs:attribute name="stack" type="xs:string">
             <xs:annotation>
-                <xs:documentation>Defines the jgroups stack used by the transport.</xs:documentation>
+                <xs:documentation>Defines the jgroups stack used by the transport. Deprecated: please use the channel attribute instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="cluster" type="xs:string" >
             <xs:annotation>
-                <xs:documentation>Defines the name for the underlying group communication cluster.</xs:documentation>
+                <xs:documentation>Defines the name for the underlying group communication cluster. Deprecated: please use the channel attribute instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="executor" type="xs:string" >
             <xs:annotation>
-                <xs:documentation>Defines the executor used for asynchronous transport communication.</xs:documentation>
+                <xs:documentation>Defines the executor used for asynchronous transport communication.  Deprecated: please use the transport-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="lock-timeout" type="xs:long" default="240000">
@@ -210,9 +214,9 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="remote-command-executor" type="xs:string" >
+        <xs:attribute name="remote-command-executor" type="xs:string">
             <xs:annotation>
-                <xs:documentation>Defines the executor used for processing remote (non-total order) commands.</xs:documentation>
+                <xs:documentation>Defines the executor used for processing remote (non-total order) commands. Deprecated: please use the remote-command-thread-pool element instead.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="strict-peer-to-peer" type="xs:boolean" default="false">
@@ -227,7 +231,7 @@
         </xs:attribute>
         <xs:attribute name="total-order-executor" type="xs:string" >
             <xs:annotation>
-                <xs:documentation>Defines the executor used for processing remote total order commands.</xs:documentation>
+                <xs:documentation>Defines the executor used for processing remote total order commands. Deprecated.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>
