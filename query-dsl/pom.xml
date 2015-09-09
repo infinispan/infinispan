@@ -38,7 +38,7 @@
                   <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
-               <argLine>-Xmx512m -XX:MaxPermSize=128m</argLine>
+               <argLine>-Xmx768m</argLine>
             </configuration>
             <dependencies>
                <dependency>

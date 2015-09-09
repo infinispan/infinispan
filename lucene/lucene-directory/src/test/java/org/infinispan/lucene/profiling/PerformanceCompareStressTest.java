@@ -263,10 +263,10 @@ public class PerformanceCompareStressTest extends AbstractInfinispanTest {
     * -Dlucene.profiling.tests=profileInfinispanLocalDirectory,profileTestInfinispanDirectoryWithNetworkDelayZero
     *
     * Suggested test switches:
-    * -Xmx4G -Xms4G -XX:MaxPermSize=128M -XX:+HeapDumpOnOutOfMemoryError -Xss512k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -XX:+UseLargePages -XX:LargePageSizeInBytes=2m
+    * -Xmx4G -Xms4G -XX:+HeapDumpOnOutOfMemoryError -Xss512k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -XX:+UseLargePages -XX:LargePageSizeInBytes=2m
     *
     * With detailed GC logging:
-    * -Xmx4G -Xms4G -XX:MaxPermSize=32M -XX:+HeapDumpOnOutOfMemoryError -Xss256k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -Xloggc:gc-full.log -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -XX:+PrintGCApplicationStoppedTime
+    * -Xmx4G -Xms4G XX:+HeapDumpOnOutOfMemoryError -Xss256k -XX:HeapDumpPath=/tmp/java_heap -Djava.net.preferIPv4Stack=true -Djgroups.bind_addr=127.0.0.1 -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -XX:+UseLargePages -XX:LargePageSizeInBytes=2m -Xloggc:gc-full.log -XX:+PrintGCDetails -XX:+PrintTenuringDistribution -XX:+PrintGCApplicationStoppedTime
     *
     * To enable flight recorder:
     * -XX:+UnlockCommercialFeatures -XX:+FlightRecorder

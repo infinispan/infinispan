@@ -83,7 +83,7 @@
       <defaultTestGroup>functional,unit,arquillian</defaultTestGroup>
       
       <defaultExcludedTestGroup>unstable,stress,unstable_xsite</defaultExcludedTestGroup>
-      <forkJvmArgs>-Xmx1024m -XX:MaxPermSize=256m</forkJvmArgs>
+      <forkJvmArgs>-Xmx2G</forkJvmArgs>
       <testNGListener>org.infinispan.test.fwk.UnitTestTestNGListener</testNGListener>
       <infinispan.test.parallel.threads>15</infinispan.test.parallel.threads>
       <infinispan.test.jgroups.protocol>tcp</infinispan.test.jgroups.protocol>
@@ -1937,7 +1937,7 @@
                   <groupId>org.apache.maven.plugins</groupId>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
-                     <argLine combine.self="override">-Xmx1024m -XX:MaxPermSize=1024m ${jacocoAgent}</argLine>
+                     <argLine combine.self="override">-Xmx2G ${jacocoAgent}</argLine>
                      <parallel combine.self="override">tests</parallel>
                      <threadCount combine.self="override">${infinispan.test.parallel.threads}</threadCount>
                      <groups combine.self="override">${defaultTestGroup}</groups>

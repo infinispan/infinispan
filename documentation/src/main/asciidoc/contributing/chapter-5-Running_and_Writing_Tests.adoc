@@ -4,7 +4,7 @@ Tests are written using the link:$$http://testng.org/$$[TestNG] framework.
 === Running the tests
 Before running the actual tests it is highly recommended to configure adjust suite's memory setting by updating the `MAVEN_OPTS` variables. E.g.
 
- $ export MAVEN_OPTS="-Xms512m -Xmx2048m -XX:MaxPermSize=384m"
+ $ export MAVEN_OPTS="-Xms512m -Xmx2048m"
 
 The default run executes all tests in the functional and unit groups. To just run the tests with txt and xml output the command is:
 
