@@ -139,6 +139,8 @@ public abstract class BaseQueryBuilder<T extends Query> implements QueryBuilder<
          throw new IllegalStateException("Grouping can be specified only once");
       }
       this.groupBy = groupBy;
+      // reset this so we can start a new filter for havingFilterCondition
+      filterCondition = null;
       return this;
    }
 
