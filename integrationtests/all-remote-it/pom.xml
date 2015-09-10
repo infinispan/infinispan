@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.infinispan</groupId>
       <artifactId>infinispan-integrationtests-parent</artifactId>
-      <version>7.2.5-SNAPSHOT</version>
+      <version>7.2.5.Final</version>
    </parent>
 
    <artifactId>infinispan-remote-it</artifactId>
