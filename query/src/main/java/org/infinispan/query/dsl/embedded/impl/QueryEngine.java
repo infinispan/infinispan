@@ -439,7 +439,6 @@ public class QueryEngine {
       });
    }
 
-   //todo [anistor] test this method with non-indexed fields and see if a proper exception is thrown
    /**
     * Build a Lucene index query.
     */

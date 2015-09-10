@@ -3,6 +3,7 @@ package org.infinispan.query.dsl.embedded.impl;
 import org.hibernate.hql.ParsingException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
+import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
@@ -37,7 +38,7 @@ import static org.junit.Assert.assertEquals;
  * @author anistor@redhat.com
  * @since 8.0
  */
-@Test(groups = "functional", testName = "query.dsl.embedded.impl.QueryDslConditionsTest")
+@Test(groups = "functional", testName = "query.dsl.embedded.impl.QueryEngineTest")
 @CleanupAfterTest
 public class QueryEngineTest extends MultipleCacheManagersTest {
 
@@ -272,6 +273,17 @@ public class QueryEngineTest extends MultipleCacheManagersTest {
    public void testDisallowNonAggregatedProjectionWithGlobalAggregation() {
       Query q = qe.buildQuery(null, "select name, count(name) from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", null, -1, -1);
       q.list();
+   }
+
+   public void testBuildLuceneQuery() {
+      CacheQuery q = qe.buildLuceneQuery("select name from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", null, -1, -1);
+      List<Object> list = q.list();
+      assertEquals(3, list.size());
+   }
+
+   @Test(expectedExceptions = ParsingException.class, expectedExceptionsMessageRegExp = "HQL100002: The type org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS has no indexed property named notes.")
+   public void testBuildLuceneQueryOnNonIndexedField() {
+      CacheQuery q = qe.buildLuceneQuery("select notes from org.infinispan.query.dsl.embedded.testdomain.hsearch.UserHS", null, -1, -1);
    }
 
    public void testGlobalCount() {
