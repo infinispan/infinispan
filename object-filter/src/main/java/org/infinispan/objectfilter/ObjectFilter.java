@@ -30,7 +30,7 @@ public interface ObjectFilter {
    /**
     * The comparator corresponding to the 'order by' clause, if any.
     *
-    * @return the Comparator or {@code null} if no 'order by' was specified
+    * @return the Comparator or {@code null} if no 'order by' was specified ({@link #getSortFields()} returns {@code null})
     */
    Comparator<Comparable[]> getComparator();
 

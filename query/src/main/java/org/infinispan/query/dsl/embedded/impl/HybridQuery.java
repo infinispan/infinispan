@@ -13,7 +13,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * An embedded non-indexed query on top of the results returned by another query (usually Lucene based).
+ * A non-indexed query performed on top of the results returned by another query (usually a Lucene based query). This
+ * mechanism is used to implement hybrid two-stage queries that perform an index query using a partial query using only
+ * the indexed fields and then filter the result again in memory with the full filter.
  *
  * @author anistor@redhat.com
  * @since 8.0
@@ -49,18 +51,23 @@ class HybridQuery extends BaseEmbeddedQuery {
          private boolean isReady = false;
 
          @Override
+         public void remove() {
+            throw new UnsupportedOperationException("remove");
+         }
+
+         @Override
          public void close() {
          }
 
          @Override
          public boolean hasNext() {
-            update();
+            updateNext();
             return nextResult != null;
          }
 
          @Override
          public ObjectFilter.FilterResult next() {
-            update();
+            updateNext();
             if (nextResult != null) {
                ObjectFilter.FilterResult next = nextResult;
                isReady = false;
@@ -71,7 +78,7 @@ class HybridQuery extends BaseEmbeddedQuery {
             }
          }
 
-         private void update() {
+         private void updateNext() {
             if (!isReady) {
                while (it.hasNext()) {
                   Object next = it.next();

@@ -34,8 +34,8 @@ final class AggregatingQuery extends HybridQuery {
 
    @Override
    protected Iterator<?> getBaseIterator() {
-      List<Object[]> list = baseQuery.list();
       Grouper grouper = new Grouper(groupFieldPositions, accumulators);
+      List<Object[]> list = baseQuery.list();
       for (Object[] row : list) {
          grouper.addRow(row);
       }

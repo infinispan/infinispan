@@ -6,13 +6,16 @@ import org.infinispan.objectfilter.FilterCallback;
 import org.infinispan.objectfilter.FilterSubscription;
 import org.infinispan.objectfilter.Matcher;
 import org.infinispan.objectfilter.ObjectFilter;
+import org.infinispan.objectfilter.SortField;
 import org.infinispan.objectfilter.impl.hql.FilterParsingResult;
 import org.infinispan.objectfilter.impl.hql.FilterProcessingChain;
 import org.infinispan.objectfilter.impl.hql.ObjectPropertyHelper;
 import org.infinispan.objectfilter.impl.predicateindex.MatcherEvalContext;
+import org.infinispan.objectfilter.impl.syntax.ConstantBooleanExpr;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.impl.BaseQuery;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
@@ -55,7 +58,7 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
       read.lock();
       try {
-         MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startContext(userContext, instance, eventType);
+         MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> ctx = startMultiTypeContext(userContext, instance, eventType);
          if (ctx != null) {
             ctx.match();
          }
@@ -77,12 +80,88 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
 
    @Override
    public ObjectFilter getObjectFilter(String jpaQuery, Map<String, Object> namedParameters) {
-      //todo [anistor] possible optimisation: if jpaQuery is a contradiction or a tautology just return a special instance that rejects/accepts anything. how do we handle projections then?
-      FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, namedParameters);
+      final FilterParsingResult<TypeMetadata> parsingResult = parse(jpaQuery, namedParameters);
       disallowGroupingAndAggregations(parsingResult);
-      MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter = createMetadataAdapter(parsingResult.getTargetEntityMetadata());
+
+      // if the query is a contradiction just return an ObjectFilter that rejects everything
+      if (parsingResult.getWhereClause() == ConstantBooleanExpr.FALSE) {
+         return new ObjectFilter() {
+
+            @Override
+            public String getEntityTypeName() {
+               return parsingResult.getTargetEntityName();
+            }
+
+            @Override
+            public String[] getProjection() {
+               return null;
+            }
+
+            @Override
+            public SortField[] getSortFields() {
+               return null;
+            }
+
+            @Override
+            public Comparator<Comparable[]> getComparator() {
+               return null;
+            }
+
+            @Override
+            public FilterResult filter(Object instance) {
+               if (instance == null) {
+                  throw new IllegalArgumentException("argument cannot be null");
+               }
+               return null;
+            }
+         };
+      }
+
+      final MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter = createMetadataAdapter(parsingResult.getTargetEntityMetadata());
+
+      // if the query is a tautology or there is no query at all and there is no sorting or projections just return a special instance that accepts anything
+      // in case we have sorting and projections we cannot take this shortcut because the computation of projections or sort projections is a bit more involved
+      if ((parsingResult.getWhereClause() == null || parsingResult.getWhereClause() == ConstantBooleanExpr.TRUE)
+            && parsingResult.getSortFields() == null && parsingResult.getProjectedPaths() == null) {
+         return new ObjectFilter() {
+
+            @Override
+            public String getEntityTypeName() {
+               return parsingResult.getTargetEntityName();
+            }
+
+            @Override
+            public String[] getProjection() {
+               return null;
+            }
+
+            @Override
+            public SortField[] getSortFields() {
+               return null;
+            }
+
+            @Override
+            public Comparator<Comparable[]> getComparator() {
+               return null;
+            }
+
+            @Override
+            public FilterResult filter(Object instance) {
+               if (instance == null) {
+                  throw new IllegalArgumentException("argument cannot be null");
+               }
+               MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = startSingleTypeContext(null, instance, metadataAdapter, null);
+               if (matcherEvalContext != null) {
+                  // once we have a successfully created context we already have a match as there are no filter conditions except for entity type
+                  return new FilterResultImpl(convert(instance), null, null);
+               }
+               return null;
+            }
+         };
+      }
+
       return new ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId>(this, metadataAdapter, jpaQuery, namedParameters,
-                                                                                parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields());
+            parsingResult.getWhereClause(), parsingResult.getProjections(), parsingResult.getSortFields());
    }
 
    @Override
@@ -152,23 +231,37 @@ public abstract class BaseMatcher<TypeMetadata, AttributeMetadata, AttributeId e
    }
 
    /**
-    * Creates a new MatcherEvalContext only if the given instance is of a type that has some filters registered. This
-    * method is called while holding the internal write lock.
+    * Creates a new {@link MatcherEvalContext} capable of dealing with multiple filters. The context is created only if
+    * the given instance is recognized to be of a type that has some filters registered. If there are no filters, {@code
+    * null} is returned to signal this condition and make the evaluation faster. This method is called while holding the
+    * internal write lock.
     *
-    * @param instance the instance to filter; never null
-    * @return the context or null if no filter was registered for the instance
+    * @param userContext an opaque value, possibly null, the is received from the caller and is to be handed to the
+    *                    {@link FilterCallback} in case a match is detected
+    * @param instance    the instance to filter; never {@code null}
+    * @return the MatcherEvalContext or {@code null} if no filter was registered for the instance
     */
-   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startContext(Object userContext, Object instance, Object eventType);
+   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startMultiTypeContext(Object userContext, Object instance, Object eventType);
 
-   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startContext(Object userContext, Object instance, FilterSubscriptionImpl<TypeMetadata, AttributeMetadata, AttributeId> filterSubscription, Object eventType);
-
-   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> createContext(Object userContext, Object instance, Object eventType);
+   /**
+    * Creates a new {@link MatcherEvalContext} capable of dealing with a single filter for a single type. The context is
+    * created only if the given instance is recognized to be of a type that has some filters registered. If there are no
+    * filters, {@code null} is returned to signal this condition and make the evaluation faster. This method is called
+    * while holding the internal write lock.
+    *
+    * @param userContext     an opaque value, possibly null, the is received from the caller and is to be handed to the
+    *                        {@link FilterCallback} in case a match is detected
+    * @param instance        the instance to filter; never {@code null}
+    * @param metadataAdapter the metadata adapter of expected instance type
+    * @return the MatcherEvalContext or {@code null} if no filter was registered for the instance
+    */
+   protected abstract MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> startSingleTypeContext(Object userContext, Object instance, MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> metadataAdapter, Object eventType);
 
    protected abstract FilterProcessingChain<TypeMetadata> createFilterProcessingChain(Map<String, Object> namedParameters);
 
    public abstract ObjectPropertyHelper<TypeMetadata> getPropertyHelper();
 
-   protected abstract MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> createMetadataAdapter(TypeMetadata typeMetadata);
+   protected abstract MetadataAdapter<TypeMetadata, AttributeMetadata, AttributeId> createMetadataAdapter(TypeMetadata entityType);
 
    protected abstract FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> getFilterRegistryForType(TypeMetadata entityType);
 

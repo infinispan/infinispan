@@ -20,7 +20,7 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
 
    private final QueryEngine queryEngine;
 
-   private JPAFilterAndConverter filter;
+   private JPAFilterAndConverter<?, ?> filter;
 
    EmbeddedQuery(QueryEngine queryEngine, QueryFactory queryFactory, AdvancedCache<?, ?> cache,
                  String jpaQuery, Map<String, Object> namedParameters, String[] projection,
@@ -35,15 +35,18 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
       filter = null;
    }
 
-   private JPAFilterAndConverter createFilter() {
+   private JPAFilterAndConverter<?, ?> createFilter() {
       // filter is created first time only
       if (filter == null) {
          filter = queryEngine.makeFilter(jpaQuery, namedParameters);
+
+         // force early validation!
+         filter.getObjectFilter();
       }
       return filter;
    }
 
-   private CloseableIterator createFilteredIterator() {
+   private CloseableIterator<Map.Entry<?, ObjectFilter.FilterResult>> createFilteredIterator() {
       JPAFilterAndConverter f = createFilter();
       return cache.filterEntries(f).converter(f).iterator();
    }
@@ -58,6 +61,11 @@ final class EmbeddedQuery extends BaseEmbeddedQuery {
       return new CloseableIterator<ObjectFilter.FilterResult>() {
 
          private final CloseableIterator<Map.Entry<?, ObjectFilter.FilterResult>> it = createFilteredIterator();
+
+         @Override
+         public void remove() {
+            throw new UnsupportedOperationException("remove");
+         }
 
          @Override
          public boolean hasNext() {

@@ -67,7 +67,7 @@ final class ObjectFilterImpl<TypeMetadata, AttributeMetadata, AttributeId extend
          throw new IllegalArgumentException("argument cannot be null");
       }
 
-      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startContext(null, instance, filterSubscription, null);
+      MatcherEvalContext<TypeMetadata, AttributeMetadata, AttributeId> matcherEvalContext = matcher.startSingleTypeContext(null, instance, filterSubscription.getMetadataAdapter(), null);
       if (matcherEvalContext != null) {
          FilterEvalContext filterEvalContext = matcherEvalContext.initSingleFilterContext(filterSubscription);
          matcherEvalContext.process(root);

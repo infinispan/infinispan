@@ -29,25 +29,20 @@ public final class ProtobufMatcherEvalContext extends MatcherEvalContext<Descrip
    private MessageContext messageContext;
 
    private final SerializationContext serializationContext;
-   private final Descriptor wrappedMessageDescriptor;
 
    public ProtobufMatcherEvalContext(Object userContext, Object instance, Object eventType, Descriptor wrappedMessageDescriptor, SerializationContext serializationContext) {
       super(userContext, instance, eventType);
-      this.wrappedMessageDescriptor = wrappedMessageDescriptor;
       this.serializationContext = serializationContext;
-   }
-
-   @Override
-   public Descriptor getEntityType() {
-      return payloadMessageDescriptor;
-   }
-
-   public void unwrapPayload() {
       try {
          ProtobufParser.INSTANCE.parse(this, wrappedMessageDescriptor, (byte[]) getInstance());
       } catch (IOException e) {
          throw new RuntimeException(e);  // TODO [anistor] proper exception handling needed
       }
+   }
+
+   @Override
+   public Descriptor getEntityType() {
+      return payloadMessageDescriptor;
    }
 
    @Override

@@ -33,10 +33,10 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
    }
 
    @Override
-   protected RowMatcherEvalContext startContext(Object userContext, Object instance, Object eventType) {
+   protected RowMatcherEvalContext startMultiTypeContext(Object userContext, Object instance, Object eventType) {
       FilterRegistry<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> filterRegistry = getFilterRegistryForType(rowMetadata);
       if (filterRegistry != null) {
-         RowMatcherEvalContext context = createContext(userContext, instance, eventType);
+         RowMatcherEvalContext context = new RowMatcherEvalContext(userContext, instance, rowMetadata, eventType);
          context.initMultiFilterContext(filterRegistry);
          return context;
       }
@@ -44,17 +44,12 @@ public final class RowMatcher extends BaseMatcher<RowPropertyHelper.RowMetadata,
    }
 
    @Override
-   protected RowMatcherEvalContext startContext(Object userContext, Object instance, FilterSubscriptionImpl<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> filterSubscription, Object eventType) {
+   protected RowMatcherEvalContext startSingleTypeContext(Object userContext, Object instance, MetadataAdapter<RowPropertyHelper.RowMetadata, RowPropertyHelper.ColumnMetadata, Integer> metadataAdapter, Object eventType) {
       if (Object[].class == instance.getClass()) {
-         return createContext(userContext, instance, eventType);
+         return new RowMatcherEvalContext(userContext, instance, rowMetadata, eventType);
       } else {
          return null;
       }
-   }
-
-   @Override
-   protected RowMatcherEvalContext createContext(Object userContext, Object instance, Object eventType) {
-      return new RowMatcherEvalContext(userContext, instance, rowMetadata, eventType);
    }
 
    @Override

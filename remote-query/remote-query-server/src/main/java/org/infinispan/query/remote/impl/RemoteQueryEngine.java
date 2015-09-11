@@ -30,7 +30,6 @@ import org.infinispan.query.remote.impl.indexing.IndexingMetadata;
 import org.infinispan.query.remote.impl.indexing.ProtobufValueWrapper;
 import org.infinispan.query.remote.impl.logging.Log;
 
-import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -86,19 +85,9 @@ final class RemoteQueryEngine extends QueryEngine {
    }
 
    @Override
-   protected JPAFilterAndConverter makeFilter(final String jpaQuery, final Map<String, Object> namedParameters) {
-      return SecurityActions.doPrivileged(new PrivilegedAction<JPAFilterAndConverter>() {
-         @Override
-         public JPAFilterAndConverter run() {
-            JPAFilterAndConverter filter = searchManager != null && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery, namedParameters) :
-                  new JPAFilterAndConverter(jpaQuery, namedParameters, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
-            filter.injectDependencies(cache);
-
-            // force early validation!
-            filter.getObjectFilter();
-            return filter;
-         }
-      });
+   protected JPAFilterAndConverter createFilter(String jpaQuery, Map<String, Object> namedParameters) {
+      return searchManager != null && !isCompatMode ? new JPAProtobufFilterAndConverter(jpaQuery, namedParameters) :
+               new JPAFilterAndConverter(jpaQuery, namedParameters, isCompatMode ? CompatibilityReflectionMatcher.class : ProtobufMatcher.class);
    }
 
    @Override
@@ -111,7 +100,7 @@ final class RemoteQueryEngine extends QueryEngine {
    protected LuceneProcessingChain makeProcessingChain(Map<String, Object> namedParameters) {
       LuceneProcessingChain processingChain;
       if (isCompatMode) {
-         EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
+         final EntityNamesResolver entityNamesResolver = new EntityNamesResolver() {
             @Override
             public Class<?> getClassFromName(String entityName) {
                return serCtx.canMarshall(entityName) ? serCtx.getMarshaller(entityName).getJavaClass() : null;
