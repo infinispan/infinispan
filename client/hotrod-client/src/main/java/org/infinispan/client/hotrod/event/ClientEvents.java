@@ -67,6 +67,14 @@ public class ClientEvents {
       remoteCache.addClientListener(listener, factoryParams, null);
    }
 
+   /**
+    * Register a continuous query listener that uses a query DSL based filter. The listener will receive notifications
+    * when a cache entry joins or leaves the matching set.
+    *
+    * @param remoteCache   the remote cache to attach the listener
+    * @param queryListener the listener instance
+    * @param query         the query to be used for determining the matching set
+    */
    public static Object addContinuousQueryListener(RemoteCache<?, ?> remoteCache, ContinuousQueryListener queryListener, Query query) {
       SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCache.getRemoteCacheManager());
       ClientEntryListener eventListener = new ClientEntryListener(serCtx, queryListener);
@@ -94,7 +102,7 @@ public class ClientEvents {
    @ClientListener(filterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          converterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,
          useRawData = true, includeCurrentState = true)
-   public static class ClientEntryListener {
+   private static final class ClientEntryListener {
 
       private final SerializationContext serializationContext;
 

@@ -25,6 +25,9 @@ import java.util.PriorityQueue;
  */
 abstract class BaseEmbeddedQuery extends BaseQuery {
 
+   /**
+    * Initial capacity of the collection used for collecting results when performing internal sorting.
+    */
    private static final int INITIAL_CAPACITY = 1000;
 
    protected final AdvancedCache<?, ?> cache;
@@ -34,6 +37,9 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
     */
    private List<Object> results;
 
+   /**
+    * The total number of results matching the query, ignoring pagination. This is lazily evaluated.
+    */
    private int resultSize;
 
    protected BaseEmbeddedQuery(QueryFactory queryFactory, AdvancedCache<?, ?> cache, String jpaQuery, Map<String, Object> namedParameters,
@@ -132,8 +138,17 @@ abstract class BaseEmbeddedQuery extends BaseQuery {
       return results;
    }
 
+   /**
+    * Create a comparator to be used for ordering the results returned by {@link #getIterator()}.
+    *
+    * @return the comparator or {@code null} if no sorting needs to be applied
+    */
    protected abstract Comparator<Comparable[]> getComparator();
 
+   /**
+    * Create an iterator over the results of the query, in no particular order. Ordering will be provided if {@link
+    * #getComparator()} returns a non-null {@link Comparator}.
+    */
    protected abstract CloseableIterator<ObjectFilter.FilterResult> getIterator();
 
    @Override

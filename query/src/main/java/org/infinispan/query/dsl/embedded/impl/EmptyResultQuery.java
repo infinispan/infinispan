@@ -33,6 +33,11 @@ final class EmptyResultQuery extends BaseEmbeddedQuery {
       return new CloseableIterator<ObjectFilter.FilterResult>() {
 
          @Override
+         public void remove() {
+            throw new UnsupportedOperationException("remove");
+         }
+
+         @Override
          public void close() {
          }
 

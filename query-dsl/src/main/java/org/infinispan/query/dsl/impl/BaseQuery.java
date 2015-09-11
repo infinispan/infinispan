@@ -81,6 +81,10 @@ public abstract class BaseQuery implements Query {
       return this;
    }
 
+   /**
+    * Reset internal state after query parameters are modified. This is needed to ensure the next execution of the query
+    * uses the new parameter values.
+    */
    public abstract void resetQuery();
 
    public Map<String, Object> getNamedParameters() {

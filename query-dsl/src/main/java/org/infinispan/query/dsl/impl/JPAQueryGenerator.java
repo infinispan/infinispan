@@ -21,9 +21,9 @@ import java.util.TimeZone;
  */
 public class JPAQueryGenerator implements Visitor<String> {
 
-   private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
+   public static final String DEFAULT_ALIAS = "_gen0";
 
-   private static final String alias = "_gen0";
+   private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
 
    private DateFormat dateFormat;
 
@@ -54,7 +54,7 @@ public class JPAQueryGenerator implements Visitor<String> {
          sb.append(' ');
       }
 
-      sb.append("FROM ").append(baseQueryBuilder.getRootTypeName()).append(' ').append(alias);
+      sb.append("FROM ").append(baseQueryBuilder.getRootTypeName()).append(' ').append(DEFAULT_ALIAS);
 
       if (baseQueryBuilder.getWhereFilterCondition() != null) {
          BaseCondition baseCondition = baseQueryBuilder.getWhereFilterCondition().getRoot();
@@ -73,7 +73,7 @@ public class JPAQueryGenerator implements Visitor<String> {
             } else {
                sb.append(", ");
             }
-            sb.append(alias).append('.').append(groupBy);
+            sb.append(DEFAULT_ALIAS).append('.').append(groupBy);
          }
          sb.append(' ');
       }
@@ -296,7 +296,7 @@ public class JPAQueryGenerator implements Visitor<String> {
       if (pathExpression.getAggregationType() != null) {
          sb.append(pathExpression.getAggregationType().name()).append('(');
       }
-      sb.append(alias).append('.').append(pathExpression.getPath());
+      sb.append(DEFAULT_ALIAS).append('.').append(pathExpression.getPath());
       if (pathExpression.getAggregationType() != null) {
          sb.append(')');
       }
