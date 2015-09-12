@@ -200,7 +200,7 @@
                   <domainJar>${domain-lib-dir}/${domain-jar}</domainJar>
                   <javax.management.builder.initial>${tck.mbean.builder}</javax.management.builder.initial>
                   <org.jsr107.tck.management.agentId>${tck.mbean.server}</org.jsr107.tck.management.agentId>
-                  <log4j.configuration>${log4j.configuration}</log4j.configuration>
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                </systemPropertyVariables>
                <properties>

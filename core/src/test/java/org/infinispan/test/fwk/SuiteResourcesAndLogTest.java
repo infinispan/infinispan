@@ -36,7 +36,7 @@ public class SuiteResourcesAndLogTest {
       String preferIpV4 = System.getProperty("java.net.preferIPv4Stack");
       log("java.net.preferIPv4Stack = " + preferIpV4);
       log("java.net.preferIPv6Stack = " + System.getProperty("java.net.preferIPv6Stack"));
-      log("log4.configuration = " + System.getProperty("log4j.configuration"));
+      log("log4.configurationFile = " + System.getProperty("log4j.configurationFile"));
       log("MAVEN_OPTS = " + System.getProperty("MAVEN_OPTS"));
       log("~~~~~~~~~~~~~~~~~~~~~~~~~ ENVIRONMENT INFO ~~~~~~~~~~~~~~~~~~~~~~~~~~");
       

@@ -97,7 +97,7 @@
                 <configuration combine.self="override">
                     <excludedGroups>${suite.exclude.groups}</excludedGroups>
                     <systemPropertyVariables>
-                        <log4j.configuration>${log4j.configuration}</log4j.configuration>
+                        <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                         <build.directory>${project.build.directory}</build.directory>
                     </systemPropertyVariables>
                     <trimStackTrace>false</trimStackTrace>

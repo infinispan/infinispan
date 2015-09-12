@@ -34,7 +34,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration combine.self="override">
                <systemPropertyVariables>
-                  <log4j.configuration>${log4j.configuration}</log4j.configuration>
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
                </systemPropertyVariables>
                <trimStackTrace>false</trimStackTrace>
