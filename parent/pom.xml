@@ -437,6 +437,11 @@
          </dependency>
          <dependency>
             <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-jcl</artifactId>
+            <version>${version.log4j}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>${version.log4j}</version>
          </dependency>
@@ -1522,7 +1527,7 @@
                   <jgroups.bind_addr>127.0.0.1</jgroups.bind_addr>
                   <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                   <infinispan.unsafe.allow_jdk8_chm>true</infinispan.unsafe.allow_jdk8_chm>
-                  <log4j.configuration>${log4j.configuration}</log4j.configuration>
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                   <build.directory>${project.build.directory}</build.directory>
                  
                  <infinispan.module-name>${project.artifactId}</infinispan.module-name>

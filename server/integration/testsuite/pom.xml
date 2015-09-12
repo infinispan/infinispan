@@ -91,13 +91,13 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-slf4j-impl</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -269,7 +269,7 @@
             -Djboss.default.multicast.address=${mcast.ip}
         </jvm.ip.stack>
         <server.jvm.args>${jvm.ip.stack} ${jvm.memory.args} ${transport.stack} ${jvm.x64.args}</server.jvm.args>
-        <log4j.configuration>log4j.xml</log4j.configuration>
+        <log4j.configurationFile>log4j2.xml</log4j.configurationFile>
         <suite.manual.phase>integration-test</suite.manual.phase>
         <suite.queries.phase>integration-test</suite.queries.phase>
         <suite.rollups.manual.phase>none</suite.rollups.manual.phase>
@@ -500,7 +500,7 @@
                         <server.jvm>${server.jvm}</server.jvm>
                         <server.jvm.args>${server.jvm.args}</server.jvm.args>
                         <hotrod.protocol.version>${hotrod.protocol.version}</hotrod.protocol.version>
-                        <log4j.configuration>${log4j.configuration}</log4j.configuration>
+                        <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                         <java.util.logging.config.file>${resources.dir}/jul.properties</java.util.logging.config.file>
                         <suite.client.local.config>${suite.client.local.config}</suite.client.local.config>
                         <suite.client.dist.config>${suite.client.dist.config}</suite.client.dist.config>

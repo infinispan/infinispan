@@ -19,7 +19,7 @@ import org.testng.annotations.Test;
 /**
  * Starts writing a lot of data in a loop. Used to measure ingestion rate.
  *
- * -server -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+UseParNewGC -Xss500k -Xmx12G -Xms12G -Dlog4j.configuration=file:/opt/infinispan-log4j.xml
+ * -server -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+UseParNewGC -Xss500k -Xmx12G -Xms12G -Dlog4j.configurationFile=log4j2.xml
  *
  * @author Sanne Grinovero
  * @since 5.3

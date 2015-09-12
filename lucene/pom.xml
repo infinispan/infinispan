@@ -37,7 +37,7 @@
                <reuseForks>true</reuseForks>
                <groups>${defaultTestGroup}</groups>
                <systemPropertyVariables>
-                  <log4j.configuration>custom-lucene-log4j.xml</log4j.configuration>
+                  <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                </systemPropertyVariables>
             </configuration>
          </plugin>
