@@ -392,7 +392,10 @@ By default Infinispan uses JBoss Logging 3.0 as logging framework. JBoss Logging
 . otherwise, checking if link:$$http://logback.qos.ch/$$[LogBack] in the classpath (JBoss Logging checks if the class ch.qos.logback.classic.Logger is available) and if it is, using it 
 . finally, if none of the above are available, using link:$$http://docs.oracle.com/javase/8/docs/technotes/guides/logging/overview.html$$[JDK logging]
 
-You can use this link:$$https://github.com/infinispan/infinispan/blob/master/core/src/test/resources/log4j2.xml$$[log4j2.xml] as base for any Infinispan related logging, and you can pass it to your system via system parameter (e.g., `-Dlog4j.configuration=file:/path/to/log4j2.xml`).
+You can use this
+link:$$https://github.com/infinispan/infinispan/blob/master/core/src/test/resources/log4j2.xml$$[log4j2.xml]
+as base for any Infinispan related logging, and you can pass it to your system via system parameter (e.g.,
+`-Dlog4j.configurationFile=file:/path/to/log4j2.xml`).
 
 === Third Party Container questions
 ==== Can I run my own Infinispan cache within JBoss Application Server 5 or 4?

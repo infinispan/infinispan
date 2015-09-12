@@ -125,8 +125,8 @@
          <scope>test</scope>
       </dependency>
       <dependency>
-         <groupId>org.slf4j</groupId>
-         <artifactId>slf4j-jdk14</artifactId>
+         <groupId>org.apache.logging.log4j</groupId>
+         <artifactId>log4j-slf4j-impl</artifactId>
          <scope>test</scope>
       </dependency>
       <dependency>
@@ -238,7 +238,7 @@
                    <skipTests>${skipTests}</skipTests>
                    
                    
-                   <log4j.configuration>${log4j.configuration}</log4j.configuration>
+                   <log4j.configurationFile>${log4j.configurationFile}</log4j.configurationFile>
                 </properties>
              </configuration>
              <executions>
