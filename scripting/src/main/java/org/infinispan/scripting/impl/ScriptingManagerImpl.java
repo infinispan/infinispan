@@ -65,7 +65,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
       this.cacheManager = cacheManager;
       ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
       this.scriptEngineManager = new ScriptEngineManager(classLoader);
-      internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(InternalCacheRegistry.Flag.USER));
+      internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PERSISTENT));
    }
 
    Cache<String, String> getScriptCache() {

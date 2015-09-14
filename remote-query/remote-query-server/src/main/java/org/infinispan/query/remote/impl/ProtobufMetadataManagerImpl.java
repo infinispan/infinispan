@@ -81,7 +81,7 @@ public final class ProtobufMetadataManagerImpl implements ProtobufMetadataManage
       this.cacheManager = cacheManager;
       internalCacheRegistry.registerInternalCache(PROTOBUF_METADATA_CACHE_NAME,
                                                   getProtobufMetadataCacheConfig().build(),
-                                                  EnumSet.of(InternalCacheRegistry.Flag.USER));
+                                                  EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PERSISTENT));
    }
 
    /**
