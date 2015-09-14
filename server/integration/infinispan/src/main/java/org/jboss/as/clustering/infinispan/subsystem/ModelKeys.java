@@ -201,6 +201,8 @@ public class ModelKeys {
     static final String SOCKET_TIMEOUT = "socket-timeout";
     static final String STACK = "stack";
     static final String START = "start";
+    static final String STATE_PERSISTENCE = "state-persistence";
+    static final String STATE_PERSISTENCE_NAME = "STATE_PERSISTENCE";
     static final String STATE_TRANSFER = "state-transfer";
     static final String STATE_TRANSFER_NAME = "STATE_TRANSFER";
     static final String STATE_TRANSFER_EXECUTOR = "state-transfer-executor";

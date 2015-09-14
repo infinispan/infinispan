@@ -31,4 +31,18 @@ public interface XMLExtendedStreamReader extends XMLStreamReader {
     */
    String[] getListAttributeValue(int i);
 
+   /**
+    * Returns the schema of currently being processed
+    *
+    * @return schema the current schema
+    */
+   Schema getSchema();
+
+   /**
+    * Sets the current schema
+    *
+    * @param schema
+    */
+   void setSchema(Schema schema);
+
 }

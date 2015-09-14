@@ -232,6 +232,14 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     }
                     break;
                 }
+                case STATE_PERSISTENCE: {
+                   if (namespace.since(Namespace.INFINISPAN_SERVER_8_1)) {
+                      parseGlobalStatePersistence(reader, containerAddress, operations);
+                   } else {
+                      ParseUtils.unexpectedElement(reader);
+                   }
+                   break;
+                }
                 case LOCAL_CACHE: {
                     parseLocalCache(reader, containerAddress, operations, false);
                     break;
@@ -334,6 +342,34 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                 }
             }
         }
+    }
+
+    private void parseGlobalStatePersistence(XMLExtendedStreamReader reader, PathAddress containerAddress,
+            Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+        PathAddress statePersistenceAddress = containerAddress.append(ModelKeys.STATE_PERSISTENCE, ModelKeys.STATE_PERSISTENCE_NAME);
+        ModelNode statePersistence = Util.createAddOperation(statePersistenceAddress);
+
+        for (int i = 0; i < reader.getAttributeCount(); i++) {
+            String value = reader.getAttributeValue(i);
+            Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case RELATIVE_TO: {
+                    FileStoreResource.RELATIVE_TO.parseAndSetParameter(value, statePersistence, reader);
+                    break;
+                }
+                case PATH: {
+                    FileStoreResource.PATH.parseAndSetParameter(value, statePersistence, reader);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedAttribute(reader, i);
+                }
+            }
+        }
+
+        ParseUtils.requireNoContent(reader);
+
+        operations.put(statePersistenceAddress, statePersistence);
     }
 
    private void parseTransport(XMLExtendedStreamReader reader, PathAddress containerAddress, Map<PathAddress, ModelNode> operations) throws XMLStreamException {

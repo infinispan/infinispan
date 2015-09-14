@@ -46,7 +46,7 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
 
    @DataProvider(name = "configurationFiles")
    public Object[][] configurationFiles() {
-      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"} };
+      return new Object[][] { {"7.0.xml"}, {"7.1.xml"}, {"7.2.xml"}, {"8.0.xml"}, {"8.1.xml" } };
    }
 
    @Test(dataProvider="configurationFiles")
@@ -60,6 +60,9 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             switch (version) {
+               case 81:
+                  configurationCheck81(cm);
+                  break;
                case 80:
                   configurationCheck80(cm);
                   break;
@@ -73,6 +76,13 @@ public class UnifiedXmlFileParsingTest extends AbstractInfinispanTest {
             }
          }
       });
+   }
+
+   private static void configurationCheck81(EmbeddedCacheManager cm) {
+      configurationCheck80(cm);
+      GlobalConfiguration globalConfiguration = cm.getCacheManagerConfiguration();
+      assertTrue(globalConfiguration.statePersistence().enabled());
+      assertEquals("path", globalConfiguration.statePersistence().location());
    }
 
    private static void configurationCheck80(EmbeddedCacheManager cm) {

@@ -68,6 +68,7 @@ public class SubsystemParsingTestCase extends ClusteringSubsystemTest {
                                          { Namespace.INFINISPAN_SERVER_7_1, 126 },
                                          { Namespace.INFINISPAN_SERVER_7_2, 126 },
                                          { Namespace.INFINISPAN_SERVER_8_0, 138 },
+                                         { Namespace.INFINISPAN_SERVER_8_1, 139 },
                                        };
       return Arrays.asList(data);
     }

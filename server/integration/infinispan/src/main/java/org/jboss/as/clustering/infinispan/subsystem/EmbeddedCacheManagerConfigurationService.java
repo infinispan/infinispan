@@ -47,6 +47,11 @@ public class EmbeddedCacheManagerConfigurationService {
         Map<String, List<String>> getRoles();
     }
 
+    interface StatePersistenceConfiguration {
+        String getPath();
+        String getRelativeTo();
+    }
+
     interface Dependencies {
         ModuleLoader getModuleLoader();
         TransportConfiguration getTransportConfiguration();

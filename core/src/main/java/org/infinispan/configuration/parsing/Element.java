@@ -73,6 +73,7 @@ public enum Element {
     SITES("sites"),
     STATE_TRANSFER("state-transfer"),
     STACK_FILE("stack-file"),
+    STATE_PERSISTENCE("state-persistence"),
     STORE("store"),
     STORE_AS_BINARY("store-as-binary"),
     SYNC("sync"),

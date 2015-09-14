@@ -22,6 +22,7 @@
 
 package org.jboss.as.clustering.infinispan.subsystem;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -103,6 +104,13 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
                 new ChannelConnectorBuilder(name).build(target).install();
                 new AliasServiceBuilder<>(ChannelServiceName.FACTORY.getServiceName(name), ProtocolStackServiceName.CHANNEL_FACTORY.getServiceName(channel), ChannelFactory.class).build(target).install();
             }
+        }
+
+        if (model.hasDefined(StatePersistenceResource.STATE_PERSISTENCE_PATH.getKey())) {
+            ModelNode statePersistence = model.get(StatePersistenceResource.STATE_PERSISTENCE_PATH.getKeyValuePair());
+            final String path = ModelNodes.asString(StatePersistenceResource.PATH.resolveModelAttribute(context, statePersistence), InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + name);
+            final String relativeTo = ModelNodes.asString(StatePersistenceResource.RELATIVE_TO.resolveModelAttribute(context, statePersistence));
+            configBuilder.setStatePersistence().setPath(path).setRelativeTo(relativeTo);
         }
 
         AuthorizationConfigurationBuilder authorizationConfig = null;

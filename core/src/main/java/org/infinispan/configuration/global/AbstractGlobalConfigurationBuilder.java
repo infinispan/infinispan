@@ -24,6 +24,13 @@ abstract class AbstractGlobalConfigurationBuilder implements GlobalConfiguration
    }
 
    @Override
+   public GlobalStatePersistenceConfigurationBuilder statePersistence() {
+      globalConfig.statePersistence().enable();
+      return globalConfig.statePersistence();
+
+   }
+
+   @Override
    public SerializationConfigurationBuilder serialization() {
       return globalConfig.serialization();
    }

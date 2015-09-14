@@ -119,6 +119,14 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writer.writeEndElement();
                 }
 
+                if (container.hasDefined(ModelKeys.STATE_PERSISTENCE)) {
+                    writer.writeStartElement(Element.STATE_PERSISTENCE.getLocalName());
+                    ModelNode statePersistence = container.get(ModelKeys.STATE_PERSISTENCE, ModelKeys.STATE_PERSISTENCE_NAME);
+                    this.writeOptional(writer, Attribute.RELATIVE_TO, statePersistence, ModelKeys.RELATIVE_TO);
+                    this.writeOptional(writer, Attribute.PATH, statePersistence, ModelKeys.PATH);
+                    writer.writeEndElement();
+                }
+
                 // write any configured thread pools
                 if (container.hasDefined(ThreadPoolResource.WILDCARD_PATH.getKey())) {
                     writeThreadPoolElements(Element.ASYNC_OPERATIONS_THREAD_POOL, ThreadPoolResource.ASYNC_OPERATIONS, writer, container);
@@ -238,8 +246,6 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
 
     private void processCommonClusteredCacheAttributes(XMLExtendedStreamWriter writer, ModelNode cache)
             throws XMLStreamException {
-
-        this.writeOptional(writer, Attribute.ASYNC_MARSHALLING, cache, ModelKeys.ASYNC_MARSHALLING);
         this.writeOptional(writer, Attribute.MODE, cache, ModelKeys.MODE);
         this.writeOptional(writer, Attribute.QUEUE_SIZE, cache, ModelKeys.QUEUE_SIZE);
         this.writeOptional(writer, Attribute.QUEUE_FLUSH_INTERVAL, cache, ModelKeys.QUEUE_FLUSH_INTERVAL);
