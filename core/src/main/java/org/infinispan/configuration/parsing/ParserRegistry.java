@@ -146,6 +146,9 @@ public class ParserRegistry implements NamespaceMappingParser {
       if (parser == null) {
          throw log.unsupportedConfiguration(name.getLocalPart(), name.getNamespaceURI());
       }
+      Schema oldSchema = reader.getSchema();
+      reader.setSchema(Schema.fromNamespaceURI(name.getNamespaceURI()));
       parser.readElement(reader, holder);
+      reader.setSchema(oldSchema);
    }
 }

@@ -14,6 +14,7 @@ import org.infinispan.configuration.cache.*;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalStatePersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
@@ -48,11 +49,9 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ThreadFactory;
 
 import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
@@ -68,6 +67,7 @@ import static org.infinispan.factories.KnownComponentNames.*;
 @MetaInfServices
 @Namespaces({
    @Namespace(uri = "urn:infinispan:config:8.0", root = "infinispan"),
+   @Namespace(uri = "urn:infinispan:config:8.1", root = "infinispan"),
    @Namespace(root = "infinispan")
 })
 public class Parser80 implements ConfigurationParser {
@@ -578,6 +578,14 @@ public class Parser80 implements ConfigurationParser {
                parseGlobalSecurity(reader, holder);
                break;
             }
+            case STATE_PERSISTENCE: {
+               if (reader.getSchema().since(8, 1)) {
+                  parseGlobalStatePersistence(reader, holder);
+               } else {
+                  ParseUtils.unexpectedElement(reader);
+               }
+               break;
+            }
             default: {
                throw ParseUtils.unexpectedElement(reader);
             }
@@ -789,6 +797,29 @@ public class Parser80 implements ConfigurationParser {
             case SITE: {
                globalBuilder.transport().siteId(value);
                globalBuilder.site().localSite(value);
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedAttribute(reader, i);
+            }
+         }
+      }
+      ParseUtils.requireNoContent(reader);
+   }
+
+   private void parseGlobalStatePersistence(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      GlobalStatePersistenceConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().statePersistence().enable();
+      String path = ParseUtils.requireAttributes(reader, Attribute.PATH.getLocalName())[0];
+      builder.location(replaceProperties(path));
+      for (int i = 0; i < reader.getAttributeCount(); i++) {
+         Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
+         switch (attribute) {
+            case RELATIVE_TO: {
+               log.ignoreXmlAttribute(attribute);
+               break;
+            }
+            case PATH: {
+               // Handled above
                break;
             }
             default: {

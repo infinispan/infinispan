@@ -174,7 +174,11 @@ public class ConfigurationUnitTest extends AbstractInfinispanTest {
    @Test
    public void testSchema() throws Exception {
       FileLookup lookup = FileLookupFactory.newInstance();
-      URL schemaFile = lookup.lookupFileLocation(String.format("schema/infinispan-config-%s.xsd", Version.getMajorMinor()), Thread.currentThread().getContextClassLoader());
+      String schemaFilename = String.format("schema/infinispan-config-%s.xsd", Version.getMajorMinor());
+      URL schemaFile = lookup.lookupFileLocation(schemaFilename, Thread.currentThread().getContextClassLoader());
+      if (schemaFile == null) {
+         throw new NullPointerException("Failed to find a schema file " + schemaFilename);
+      }
       Source xmlFile = new StreamSource(lookup.lookupFile(String.format("configs/unified/%s.xml", Version.getMajorMinor()), Thread.currentThread().getContextClassLoader()));
       SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI).newSchema(schemaFile).newValidator().validate(xmlFile);
    }

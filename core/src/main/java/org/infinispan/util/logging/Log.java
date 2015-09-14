@@ -1364,4 +1364,7 @@ public interface Log extends BasicLogger {
 
    @Message(value = "This configuration is not supported for simple cache", id = 381)
    CacheConfigurationException notSupportedInSimpleCache();
+
+   @Message(value = "Global state persistence was enabled without specifying a location", id = 382)
+   CacheConfigurationException missingGlobalPersistentStateLocation();
 }

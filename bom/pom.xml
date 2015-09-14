@@ -53,7 +53,7 @@
 
    <properties>
       <infinispan.codename>Mahou</infinispan.codename>
-      <infinispan.core.schema.version>8.0</infinispan.core.schema.version>
+      <infinispan.core.schema.version>8.1</infinispan.core.schema.version>
 
       <version.java>1.8</version.java>
       

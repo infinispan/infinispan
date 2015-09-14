@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified"
-           version="1.0" targetNamespace="urn:infinispan:config:8.0"
-           xmlns:tns="urn:infinispan:config:8.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+           version="1.0" targetNamespace="urn:infinispan:config:8.1"
+           xmlns:tns="urn:infinispan:config:8.1" xmlns:xs="http://www.w3.org/2001/XMLSchema">
 
   <xs:element name="infinispan" type="tns:infinispan">
     <xs:annotation>
@@ -189,6 +189,11 @@
       <xs:element name="jmx" type="tns:jmx" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Defines JMX management details.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="state-persistence" type="tns:state-persistence" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation>Defines the global state persistence configuration. If this element is not present, global state persistence will be disabled.</xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:choice maxOccurs="unbounded">
@@ -525,6 +530,21 @@
       <xs:annotation>
         <xs:documentation>
           If true, multiple cache manager instances could be configured under the same configured JMX domain. Each cache manager will in practice use a different JMX domain that has been calculated based on the configured one by adding an incrementing index to it.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+  
+  <xs:complexType name="state-persistence">
+    <xs:attribute name="relative-to" type="xs:string" default="jboss.server.data.dir">
+        <xs:annotation>
+            <xs:documentation>Ignored in embedded mode.</xs:documentation>
+        </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="path" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          Defines the path where global state for this cache-container will be stored.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>

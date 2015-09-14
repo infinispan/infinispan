@@ -2,8 +2,6 @@ package org.infinispan.configuration.parsing;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.List;
-
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;
@@ -20,6 +18,7 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
    private final NamespaceMappingParser parser;
    private final XMLStreamReader streamReader;
    private final Deque<Context> stack = new ArrayDeque<Context>();
+   private Schema schema;
 
    XMLExtendedStreamReaderImpl(final NamespaceMappingParser parser, final XMLStreamReader streamReader) {
       this.parser = parser;
@@ -305,6 +304,16 @@ final class XMLExtendedStreamReaderImpl implements XMLExtendedStreamReader {
    @Override
    public String[] getListAttributeValue(int i) {
       return getAttributeValue(i).split("\\s+");
+   }
+
+   @Override
+   public Schema getSchema() {
+      return schema;
+   }
+
+   @Override
+   public void setSchema(Schema schema) {
+      this.schema = schema;
    }
 
    // private members

@@ -31,6 +31,7 @@ import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuild
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalStatePersistenceConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.marshall.core.Ids;
@@ -61,7 +62,10 @@ import org.jboss.msc.service.ValueService;
 import org.jboss.msc.value.InjectedValue;
 import org.jboss.msc.value.Value;
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.AuthorizationConfiguration;
+import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.StatePersistenceConfiguration;
 import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.TransportConfiguration;
+import org.jboss.as.controller.services.path.PathManager;
+import org.jboss.as.controller.services.path.PathManagerService;
 
 /**
  * @author Paul Ferraro
@@ -75,6 +79,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private ModuleIdentifier module;
     private AuthorizationConfigurationBuilder authorization = null;
     private ValueDependency<TransportConfiguration> transport = null;
+    private StatePersistenceConfigurationBuilder statePersistence = null;
     private final InjectedValue<ThreadPoolConfiguration> asyncOperationsThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> expirationThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> listenerThreadPool = new InjectedValue<>();
@@ -83,6 +88,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private final InjectedValue<ThreadPoolConfiguration> stateTransferThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> transportThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> replicationQueueThreadPool = new InjectedValue<>();
+    private final InjectedValue<PathManager> pathManager = new InjectedValue<>();
 
     public CacheContainerConfigurationBuilder(String name) {
         this.name = name;
@@ -109,6 +115,9 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         ;
         if (this.transport != null) {
             this.transport.register(builder);
+        }
+        if (this.statePersistence != null) {
+            builder.addDependency(PathManagerService.SERVICE_NAME, PathManager.class, this.pathManager);
         }
         return builder.setInitialMode(ServiceController.Mode.ON_DEMAND);
     }
@@ -181,6 +190,13 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
             }
         }
 
+        StatePersistenceConfiguration statePersistence = (this.statePersistence != null) ? this.statePersistence.getValue() : null;
+        if (statePersistence != null) {
+            GlobalStatePersistenceConfigurationBuilder statePersistenceBuilder = builder.statePersistence().enable();
+            String location = pathManager.getValue().resolveRelativePathEntry(statePersistence.getPath(), statePersistence.getRelativeTo());
+            statePersistenceBuilder.location(location);
+        }
+
         builder.asyncThreadPool().read(this.asyncOperationsThreadPool.getValue());
         builder.expirationThreadPool().read(this.expirationThreadPool.getValue());
         builder.listenerThreadPool().read(this.listenerThreadPool.getValue());
@@ -217,5 +233,10 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     public AuthorizationConfigurationBuilder setAuthorization() {
         this.authorization = new AuthorizationConfigurationBuilder();
         return this.authorization;
+    }
+
+    public StatePersistenceConfigurationBuilder setStatePersistence() {
+        this.statePersistence = new StatePersistenceConfigurationBuilder();
+        return this.statePersistence;
     }
 }

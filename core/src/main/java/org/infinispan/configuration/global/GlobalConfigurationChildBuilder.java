@@ -20,7 +20,7 @@ public interface GlobalConfigurationChildBuilder {
    ThreadPoolConfigurationBuilder expirationThreadPool();
 
    ThreadPoolConfigurationBuilder persistenceThreadPool();
-   
+
    ThreadPoolConfigurationBuilder stateTransferThreadPool();
 
    ThreadPoolConfigurationBuilder asyncThreadPool();
@@ -32,4 +32,6 @@ public interface GlobalConfigurationChildBuilder {
    SiteConfigurationBuilder site();
 
    GlobalConfiguration build();
+
+   GlobalStatePersistenceConfigurationBuilder statePersistence();
 }
