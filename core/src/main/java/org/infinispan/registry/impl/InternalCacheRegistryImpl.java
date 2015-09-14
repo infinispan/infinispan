@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
@@ -43,7 +44,11 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       }
       ConfigurationBuilder builder = new ConfigurationBuilder().read(configuration);
       builder.jmxStatistics().disable(); // Internal caches must not be included in stats counts
-      SecurityActions.defineConfiguration(cacheManager, name, configuration);
+      GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
+      if (flags.contains(Flag.PERSISTENT) && globalConfiguration.statePersistence().enabled()) {
+         builder.persistence().addSingleFileStore().location(globalConfiguration.statePersistence().location()).purgeOnStartup(false).preload(true);
+      }
+      SecurityActions.defineConfiguration(cacheManager, name, builder.build());
       internalCaches.add(name);
       if (!flags.contains(Flag.USER)) {
          privateCaches.add(name);

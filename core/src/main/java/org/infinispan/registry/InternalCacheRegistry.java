@@ -18,7 +18,8 @@ import org.infinispan.factories.scopes.Scopes;
 public interface InternalCacheRegistry {
    enum Flag {
       EXCLUSIVE, // means that the cache must be declared only once
-      USER, // means that this cache is visible to users
+      USER,  // means that this cache is visible to users
+      PERSISTENT, // means the cache should be made persistent across restarts if global state persistence is enabled
    }
 
    void registerInternalCache(String name, Configuration configuration);
