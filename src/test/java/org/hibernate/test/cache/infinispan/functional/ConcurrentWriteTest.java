@@ -16,7 +16,6 @@ import javax.transaction.TransactionManager;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -29,6 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.hibernate.FlushMode;
+import org.hibernate.LockMode;
 import org.hibernate.stat.SecondLevelCacheStatistics;
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -108,7 +108,7 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 
 	@Override
 	public List<Object[]> getParameters() {
-		return getParameters(true, true, false);
+		return getParameters(true, true, false, true);
 	}
 
 <<<<<<< HEAD
@@ -505,6 +505,9 @@ public class ConcurrentWriteTest extends SingleNodeTest {
 			}
 
 			Contact contact = contacts.iterator().next();
+			// H2 version 1.3 (without MVCC fails with deadlock on Contacts/Customers modification, therefore,
+			// we have to enforce locking Contacts first
+			s.lock(contact, LockMode.PESSIMISTIC_WRITE);
 			contacts.remove( contact );
 			contact.setCustomer( null );
 
