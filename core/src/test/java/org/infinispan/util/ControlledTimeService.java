@@ -17,7 +17,7 @@ public class ControlledTimeService extends DefaultTimeService {
 
    @Override
    public long time() {
-      return currentMillis * 1000;
+      return currentMillis * 1000000;
    }
 
    public void advance(long time) {
