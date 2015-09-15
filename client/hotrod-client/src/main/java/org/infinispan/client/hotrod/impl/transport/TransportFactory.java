@@ -65,4 +65,6 @@ public interface TransportFactory {
    SSLContext getSSLContext();
 
    void reset(byte[] cacheName);
+
+   boolean trySwitchCluster(byte[] cacheName);
 }

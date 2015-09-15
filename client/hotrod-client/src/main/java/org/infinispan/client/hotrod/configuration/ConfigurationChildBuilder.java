@@ -24,6 +24,11 @@ public interface ConfigurationChildBuilder {
    ServerConfigurationBuilder addServer();
 
    /**
+    * Adds a new remote server cluster
+    */
+   ClusterConfigurationBuilder addCluster(String clusterName);
+
+   /**
     * Adds a list of remote servers in the form: host1[:port][;host2[:port]]...
     */
    ConfigurationBuilder addServers(String servers);
