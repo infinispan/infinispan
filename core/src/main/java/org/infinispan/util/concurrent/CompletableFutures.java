@@ -2,12 +2,16 @@ package org.infinispan.util.concurrent;
 
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
+import static java.util.Objects.requireNonNull;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
-import static java.util.Objects.requireNonNull;
+import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
 
 import java.util.Map;
 
@@ -34,6 +38,23 @@ public class CompletableFutures {
          }
       });
       sink.setFuture(compoundSource);
+   }
+
+   public static <T> CompletableFuture<T> connect(NotifyingFuture<T> source) {
+      final CompletableFuture<T> result = new CompletableFuture<>();
+      source.attachListener(f -> {
+         try {
+            result.complete(f.get());
+         } catch (Exception e) {
+            result.cancel(false);
+         }
+      });
+      return result;
+   }
+
+   public static <T> CompletableFuture<List<T>> combine(List<CompletableFuture<T>> futures) {
+      CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
+      return all.thenApply(v -> futures.stream().map(future -> future.join()).collect(Collectors.<T> toList()));
    }
 
    /**

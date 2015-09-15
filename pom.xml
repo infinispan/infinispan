@@ -62,6 +62,7 @@
       <module>spring/spring4/spring4-remote</module>
       <module>cli/cli-interpreter</module>
       <module>cli/cli-client</module>
+      <module>tasks</module>
       <module>scripting</module>
       <module>demos/gui</module>
       <module>demos/distexec</module>
