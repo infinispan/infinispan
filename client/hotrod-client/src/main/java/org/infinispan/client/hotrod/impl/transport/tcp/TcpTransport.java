@@ -14,7 +14,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -35,6 +34,7 @@ import org.infinispan.commons.util.Util;
  * @since 4.1
  */
 public class TcpTransport extends AbstractTransport {
+   private static final int SOCKET_STREAM_BUFFER = 8 * 1024;
 
    //needed for debugging
    private static AtomicLong ID_COUNTER = new AtomicLong(0);
@@ -69,9 +69,9 @@ public class TcpTransport extends AbstractTransport {
          socket.setTcpNoDelay(transportFactory.isTcpNoDelay());
          socket.setKeepAlive(transportFactory.isTcpKeepAlive());
          socket.setSoTimeout(transportFactory.getSoTimeout());
-         socketInputStream = new BufferedInputStream(socket.getInputStream(), socket.getReceiveBufferSize());
+         socketInputStream = new BufferedInputStream(socket.getInputStream(), SOCKET_STREAM_BUFFER);
          // ensure we don't send a packet for every output byte
-         socketOutputStream = new BufferedOutputStream(socket.getOutputStream(), socket.getSendBufferSize());
+         socketOutputStream = new BufferedOutputStream(socket.getOutputStream(), SOCKET_STREAM_BUFFER);
       } catch (Exception e) {
          String message = String.format("Could not connect to server: %s", serverAddress);
          log.tracef(e, "Could not connect to server: %s", serverAddress);
