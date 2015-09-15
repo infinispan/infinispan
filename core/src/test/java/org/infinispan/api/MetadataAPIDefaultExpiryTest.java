@@ -5,7 +5,10 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.test.SingleCacheManagerTest;
+import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ControlledTimeService;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
@@ -17,14 +20,17 @@ import static org.testng.AssertJUnit.assertNull;
 @Test(groups = "functional", testName = "api.MetadataAPIDefaultExpiryTest")
 public class MetadataAPIDefaultExpiryTest extends SingleCacheManagerTest {
 
-   public static final int EXPIRATION_TIMEOUT = 3000;
-   public static final int EVICTION_CHECK_TIMEOUT = 2000;
+   public static final int EXPIRATION_TIMEOUT = 1000;
+
+   private final ControlledTimeService controlledTimeService = new ControlledTimeService(0);
 
    @Override
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.expiration().lifespan(EXPIRATION_TIMEOUT);
-      return TestCacheManagerFactory.createCacheManager(builder);
+      EmbeddedCacheManager manager = TestCacheManagerFactory.createCacheManager(builder);
+      TestingUtil.replaceComponent(manager, TimeService.class, controlledTimeService, true);
+      return manager;
    }
 
    public void testDefaultLifespanPut() {
@@ -76,21 +82,13 @@ public class MetadataAPIDefaultExpiryTest extends SingleCacheManagerTest {
    }
 
    private void expectCachedThenExpired(Integer key, String value) {
-      final long startTime = now();
-      final long expiration = EXPIRATION_TIMEOUT;
-      while (true) {
-         String v = this.<Integer, String>cache().get(key);
-         if (moreThanDurationElapsed(startTime, expiration))
-            break;
-         assertEquals(value, v);
-         sleepThread(100);
-      }
+      // Check that it doesn't expire too early
+      controlledTimeService.advance(EXPIRATION_TIMEOUT - 1);
+      String v = this.<Integer, String>cache().get(key);
+      assertEquals(value, v);
 
-      // Make sure that in the next X secs data is removed
-      while (!moreThanDurationElapsed(startTime, expiration + EVICTION_CHECK_TIMEOUT)) {
-         if (cache.get(key) == null) return;
-      }
-
+      // But not too late either
+      controlledTimeService.advance(2);
       assertNull(cache.get(key));
    }
 }
