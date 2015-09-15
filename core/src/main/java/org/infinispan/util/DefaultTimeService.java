@@ -1,5 +1,7 @@
 package org.infinispan.util;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -11,6 +13,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultTimeService implements TimeService {
 
+   private final Clock clock;
+
+   public DefaultTimeService() {
+      this.clock = Clock.systemUTC();
+   }
+
    @Override
    public long wallClockTime() {
       return System.currentTimeMillis();
@@ -19,6 +27,11 @@ public class DefaultTimeService implements TimeService {
    @Override
    public long time() {
       return System.nanoTime();
+   }
+
+   @Override
+   public Instant instant() {
+      return clock.instant();
    }
 
    @Override
