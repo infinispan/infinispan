@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
@@ -48,6 +50,7 @@ import org.infinispan.commons.util.Util;
 public class TcpTransportFactory implements TransportFactory {
 
    private static final Log log = LogFactory.getLog(TcpTransportFactory.class, Log.class);
+   public static final String DEFAULT_CLUSTER_NAME = "___DEFAULT-CLUSTER___";
 
    /**
     * We need synchronization as the thread that calls {@link TransportFactory#start(org.infinispan.client.hotrod.impl.protocol.Codec, org.infinispan.client.hotrod.configuration.Configuration, java.util.concurrent.atomic.AtomicInteger, org.infinispan.client.hotrod.event.ClientListenerNotifier)}
@@ -71,6 +74,9 @@ public class TcpTransportFactory implements TransportFactory {
    @GuardedBy("lock")
    private volatile TopologyInfo topologyInfo;
 
+   private volatile int clustersViewed = 0;
+   private List<ClusterInfo> clusters = new ArrayList<>();
+
    @Override
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier) {
       synchronized (lock) {
@@ -83,6 +89,17 @@ public class TcpTransportFactory implements TransportFactory {
             servers.add(new InetSocketAddress(server.host(), server.port()));
          }
          initialServers.addAll(servers);
+         if (!configuration.clusters().isEmpty()) {
+            configuration.clusters().stream().forEach(cluster -> {
+               Collection<SocketAddress> clusterAddresses = cluster.getCluster().stream()
+                  .map(server -> new InetSocketAddress(server.host(), server.port()))
+                  .collect(Collectors.toList());
+               ClusterInfo clusterInfo = new ClusterInfo(cluster.getClusterName(), clusterAddresses);
+               log.debugf("Add secondary cluster: %s", clusterInfo);
+               clusters.add(clusterInfo);
+            });
+            clusters.add(new ClusterInfo(DEFAULT_CLUSTER_NAME, initialServers));
+         }
          topologyInfo = new TopologyInfo(defaultCacheTopologyId, Collections.unmodifiableCollection(servers), configuration);
          tcpNoDelay = configuration.tcpNoDelay();
          tcpKeepAlive = configuration.tcpKeepAlive();
@@ -350,7 +367,10 @@ public class TcpTransportFactory implements TransportFactory {
       // The borrowObject() call could take a long time, so we hold the lock only until we get the connection pool reference
       KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
       try {
-         return pool.borrowObject(server);
+         TcpTransport tcpTransport = pool.borrowObject(server);
+         // If transport was successfully retrieved, reset viewed clusters
+         clustersViewed = 0;
+         return tcpTransport;
       } catch (Exception e) {
          String message = "Could not fetch transport";
          log.debug(message, e);
@@ -414,6 +434,32 @@ public class TcpTransportFactory implements TransportFactory {
       topologyInfo.setTopologyId(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
    }
 
+   @Override
+   public boolean trySwitchCluster(byte[] cacheName) {
+      if (clusters.isEmpty()) {
+         log.debugf("No alternative clusters configured, so can't switch cluster");
+         return false;
+      }
+
+      if (clustersViewed >= clusters.size()) {
+         log.debugf("All cluster addresses viewed (number=%d) and none worked: %s", clustersViewed, clusters);
+         return false;
+      }
+
+      ClusterInfo cluster = clusters.get(clustersViewed++);
+      updateServers(cluster.clusterAddresses, cacheName, true);
+      topologyInfo.setTopologyId(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
+
+      if (log.isInfoEnabled()) {
+         if (!cluster.clusterName.equals(DEFAULT_CLUSTER_NAME))
+            log.switchedToCluster(cluster.clusterName);
+         else
+            log.switchedBackToMainCluster();
+      }
+
+      return true;
+   }
+
    /**
     * Note that the returned <code>RequestBalancingStrategy</code> may not be thread-safe.
     */
@@ -449,6 +495,24 @@ public class TcpTransportFactory implements TransportFactory {
       @Override
       public SocketAddress nextServer(Set<SocketAddress> failedServers) {
          return delegate.nextServer();
+      }
+   }
+
+   private static final class ClusterInfo {
+      final Collection<SocketAddress> clusterAddresses;
+      final String clusterName;
+
+      private ClusterInfo(String clusterName, Collection<SocketAddress> clusterAddresses) {
+         this.clusterAddresses = clusterAddresses;
+         this.clusterName = clusterName;
+      }
+
+      @Override
+      public String toString() {
+         return "ClusterInfo{" +
+            "name='" + clusterName + '\'' +
+            ", addresses=" + clusterAddresses +
+            '}';
       }
    }
 }

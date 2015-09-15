@@ -201,4 +201,12 @@ public interface Log extends BasicLogger {
    @LogMessage(level = WARN)
    @Message(value = "No consistent hash is available in the client, starting iteration using the configured request balancing strategy", id = 4049)
    void noConsistentHashAvailable();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Switched to cluster '%s'", id = 4050)
+   void switchedToCluster(String clusterName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Switched back to main cluster", id = 4051)
+   void switchedBackToMainCluster();
 }

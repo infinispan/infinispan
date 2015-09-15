@@ -899,6 +899,35 @@ use conditional operations, or operations whose previous value is required,
 it's important that the cache is configured to be transactional in order to
 avoid incorrect conditional operations or return values.
 
+===== Site Cluster Failover
+
+On top of the in-cluster failover, Hot Rod clients are also able to failover
+to different clusters, which could be represented as an independent site.
+
+NOTE: This feature was introduced in Infinispan 8.1.
+
+The way site cluster failover works is that if all the main cluster nodes
+are not available, the client checks to see if any other clusters have been
+defined in which cases it tries to failover to the alternative cluster.
+If the failover succeeds, the client will remain connected to the alternative
+cluster until this becomes unavailable, in which case it'll try any other
+clusters defined, and ultimately, it'll try the original server settings.
+
+To configure a cluster in the Hot Rod client, one host/port pair details
+must be provided for each of the clusters configured. For example:
+
+[source,java]
+----
+org.infinispan.client.hotrod.configuration.ConfigurationBuilder cb
+      = new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+cb.addCluster().addClusterNode("remote-cluster-host", 11222);
+RemoteCacheManager rmc = new RemoteCacheManager(cb.build());
+----
+
+NOTE: Remember that regardless of the cluster definitions, the initial
+server(s) configuration must be provided unless the initial servers can
+be resolved using the default server host and port details.
+
 ====  Consistent Concurrent Updates With Hot Rod Versioned Operations
 Data structures, such as Infinispan link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html[Cache] , that are accessed and modified concurrently can suffer from data consistency issues unless there're mechanisms to guarantee data correctness. Infinispan Cache, since it implements link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html[ConcurrentMap] , provides operations such as link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#replace(K, V, V)[conditional replace] , link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#putIfAbsent(K, V)[putIfAbsent] , and link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#remove(java.lang.Object, java.lang.Object)[conditional remove] to its clients in order to guarantee data correctness. It even allows clients to operate against cache instances within JTA transactions, hence providing the necessary data consistency guarantees.
 

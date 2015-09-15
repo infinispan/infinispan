@@ -113,4 +113,5 @@ public interface HotRodConstants {
    static final byte INFINITE_MAXIDLE = 0x02;
 
    static final int DEFAULT_CACHE_TOPOLOGY = -1;
+   static final int SWITCH_CLUSTER_TOPOLOGY = -2;
 }

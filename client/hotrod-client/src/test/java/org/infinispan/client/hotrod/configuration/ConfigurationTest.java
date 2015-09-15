@@ -4,12 +4,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
-import java.io.IOException;
-
 import javax.security.auth.Subject;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.UnsupportedCallbackException;
 
 import org.infinispan.client.hotrod.SomeAsyncExecutorFactory;
 import org.infinispan.client.hotrod.SomeCustomConsistentHashV1;
@@ -111,6 +106,18 @@ public class ConfigurationTest {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.security().authentication().enable().saslMechanism("PLAIN").callbackHandler(SaslTransportObjectFactory.NoOpCallbackHandler.INSTANCE);
       builder.build();
+   }
+
+   public void testClusters() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addServers("1.1.1.1:9999");
+      builder.addCluster("my-cluster").addClusterNode("localhost", 8382);
+      Configuration cfg = builder.build();
+      assertEquals(1, cfg.servers().size());
+      assertServer("1.1.1.1", 9999, cfg.servers().get(0));
+      assertEquals(1, cfg.clusters().size());
+      assertEquals(1, cfg.clusters().get(0).getCluster().size());
+      assertServer("localhost", 8382, cfg.clusters().get(0).getCluster().get(0));
    }
 
    private void assertServer(String host, int port, ServerConfiguration serverCfg) {

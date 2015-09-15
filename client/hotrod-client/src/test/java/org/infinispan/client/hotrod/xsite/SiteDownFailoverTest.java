@@ -1,0 +1,49 @@
+package org.infinispan.client.hotrod.xsite;
+
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.RemoteCacheManager;
+import org.infinispan.test.TestingUtil;
+import org.testng.annotations.Test;
+
+import java.util.Optional;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNull;
+
+@Test(groups = "functional", testName = "xsite.SiteDownFailoverTest")
+public class SiteDownFailoverTest extends AbstractHotRodSiteFailoverTest {
+
+   public void testFailoverAfterSiteShutdown() {
+      RemoteCacheManager clientA = client(SITE_A, Optional.of(SITE_B));
+      RemoteCacheManager clientB = client(SITE_B, Optional.empty());
+      RemoteCache<Integer, String> cacheA = clientA.getCache();
+      RemoteCache<Integer, String> cacheB = clientB.getCache();
+
+      assertNull(cacheA.put(1, "v1"));
+      assertEquals("v1", cacheA.get(1));
+      assertEquals("v1", cacheB.get(1));
+
+      int portServerSiteA = findServerPort(SITE_A);
+      killSite(SITE_A);
+
+      // Client connected with surviving site should find data
+      assertEquals("v1", cacheB.get(1));
+
+      // Client connected to crashed site should failover
+      assertEquals("v1", cacheA.get(1));
+
+      // Restart previously shut down site
+      createHotRodSite(SITE_A, SITE_B, Optional.of(portServerSiteA));
+
+      killSite(SITE_B);
+
+      TestingUtil.sleepThread(10000);
+
+      // Client that had details for site A should failover back
+      // There is no data in original site since state transfer is not enabled
+      assertNull(cacheA.get(1));
+      assertNull(cacheA.put(2, "v2"));
+      assertEquals("v2", cacheA.get(2));
+   }
+
+}

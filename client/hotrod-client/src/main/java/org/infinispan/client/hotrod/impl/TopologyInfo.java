@@ -5,6 +5,7 @@ import org.infinispan.client.hotrod.configuration.Configuration;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.consistenthash.SegmentConsistentHash;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.equivalence.AnyEquivalence;
@@ -91,14 +92,22 @@ public final class TopologyInfo {
 
    public Optional<SocketAddress> getHashAwareServer(byte[] key, byte[] cacheName) {
       Optional<SocketAddress> server = Optional.empty();
-      ConsistentHash consistentHash = consistentHashes.get(cacheName);
-      if (consistentHash != null) {
-         server = Optional.of(consistentHash.getServer(key));
-         if (log.isTraceEnabled()) {
-            log.tracef("Using consistent hash for determining the server: " + server);
+      if (isTopologyValid()) {
+         ConsistentHash consistentHash = consistentHashes.get(cacheName);
+         if (consistentHash != null) {
+            server = Optional.of(consistentHash.getServer(key));
+            if (log.isTraceEnabled()) {
+               log.tracef("Using consistent hash for determining the server: " + server);
+            }
          }
+         return server;
       }
-      return server;
+
+      return Optional.empty();
+   }
+
+   private boolean isTopologyValid() {
+      return topologyId.get() != HotRodConstants.SWITCH_CLUSTER_TOPOLOGY;
    }
 
    public void updateServers(Collection<SocketAddress> updatedServers) {

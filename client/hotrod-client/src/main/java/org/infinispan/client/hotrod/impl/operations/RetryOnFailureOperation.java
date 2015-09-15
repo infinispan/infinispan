@@ -107,7 +107,10 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
    protected int logTransportErrorAndThrowExceptionIfNeeded(int i, HotRodClientException e) {
       String message = "Exception encountered. Retry %d out of %d";
       if (i >= transportFactory.getMaxRetries() || transportFactory.getMaxRetries() < 0) {
-         if (!triedCompleteRestart) {
+         if (transportFactory.trySwitchCluster(cacheName)){
+            triedCompleteRestart = true;
+            return -1; // reset retry count
+         }  else if (!triedCompleteRestart) {
             log.debug("Cluster might have completely shut down, try resetting transport layer and topology id", e);
             transportFactory.reset(cacheName);
             triedCompleteRestart = true;
