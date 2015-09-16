@@ -583,9 +583,6 @@ public class FastCopyHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V
       @Override
       public Map.Entry<K, V> next() {
          Entry<K, V> e = nextEntry();
-         if (trace)
-            log.tracef("Next entry: key=%s, value=%s", e.key, e.value);
-
          return new WriteThroughEntry(e.key, e.value);
       }
    }

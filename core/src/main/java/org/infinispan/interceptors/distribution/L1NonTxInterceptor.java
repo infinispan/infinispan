@@ -254,7 +254,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
          // may not have the value - if so we need to add it then now that we know we waited for the get response
          // to complete
          if (ctx.lookupEntry(key) == null) {
-            entryFactory.wrapEntryForRemove(ctx, key, true, true, false);
+            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, true, true);
          }
       }
       return super.visitInvalidateL1Command(ctx, invalidateL1Command);
@@ -317,7 +317,7 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor {
       }
       abortL1UpdateOrWait(key);
       ctx.removeLookedUpEntry(key);
-      entryFactory.wrapEntryForRemove(ctx, key, true, true, false);
+      entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, true, true);
 
       InvalidateCommand command = commandsFactory.buildInvalidateFromL1Command(null, Collections.singleton(key));
       invokeNextInterceptor(ctx, command);

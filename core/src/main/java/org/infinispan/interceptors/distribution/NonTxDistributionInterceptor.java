@@ -11,6 +11,7 @@ import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
@@ -83,16 +84,16 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                remoteEntry = retrieveFromRemoteSource(key, ctx, false, command, false);
                command.setRemotelyFetchedValue(remoteEntry);
                if (remoteEntry != null) {
-                  wrapInternalCacheEntry(remoteEntry, ctx, key, false, command);
+                  entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.STORE, false);
                }
             }
             if (remoteEntry == null) {
                // Then search for the entry in the local data container, in case we became an owner after
-               // EntryWrappingInterceptor
+               // EntryWrappingInterceptor and the local node is now the only owner.
                // TODO Check fails if the entry was passivated
                InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
                if (localEntry != null) {
-                  wrapInternalCacheEntry(localEntry, ctx, key, false, command);
+                  entryFactory.wrapExternalEntry(ctx, key, localEntry, EntryFactory.Wrap.STORE, false);
                }
             }
          }
@@ -236,17 +237,17 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
                // TODO Do we need to do something else instead of setRemotelyFetchedValue?
                // command.setRemotelyFetchedValue(remoteEntry);
                if (remoteEntry != null) {
-                  wrapInternalCacheEntry(remoteEntry, ctx, key, false, command);
+                  entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.STORE, false);
                }
                return command.perform(remoteEntry);
             }
 
             // Then search for the entry in the local data container, in case we became an owner after
-            // EntryWrappingInterceptor
+            // EntryWrappingInterceptor and the local node is now the only owner.
             // TODO Check fails if the entry was passivated
             InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
             if (localEntry != null) {
-               wrapInternalCacheEntry(localEntry, ctx, key, false, command);
+               entryFactory.wrapExternalEntry(ctx, key, localEntry, EntryFactory.Wrap.STORE, false);
             }
             return command.perform(localEntry);
          }
@@ -686,28 +687,24 @@ public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
       if (!valueIsMissing(entry)) {
          return;
       }
-      // First try to fetch from remote owners
       InternalCacheEntry remoteEntry = null;
       if (writeNeedsRemoteValue(ctx, command, key)) {
-         // Normally looking the value up in the local data container doesn't help, because we already
-         // tried to read it in the EntryWrappingInterceptor.
-         // But if we became an owner in the read CH after EntryWrappingInterceptor, we may not find the value
-         // on the remote nodes (e.g. because the local node is now the only owner).
+         // First try to fetch from remote owners
          if (!isValueAvailableLocally(dm.getReadConsistentHash(), key)) {
             if (trace) log.tracef("Doing a remote get for key %s", key);
             remoteEntry = retrieveFromRemoteSource(key, ctx, false, command, false);
             if (remoteEntry != null) {
-               wrapInternalCacheEntry(remoteEntry, ctx, key, false, command);
+               entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.STORE, false);
             }
          }
          if (remoteEntry == null) {
             // Then search for the entry in the local data container, in case we became an owner after
-            // EntryWrappingInterceptor
+            // EntryWrappingInterceptor and the local node is now the only owner.
             // We can skip the local lookup if the operation doesn't need the previous values
             // TODO Check fails if the entry was passivated
             InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
             if (localEntry != null) {
-               wrapInternalCacheEntry(localEntry, ctx, key, false, command);
+               entryFactory.wrapExternalEntry(ctx, key, localEntry, EntryFactory.Wrap.STORE, false);
             }
          }
       }

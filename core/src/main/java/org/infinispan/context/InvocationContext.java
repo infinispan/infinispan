@@ -2,6 +2,8 @@ package org.infinispan.context;
 
 import java.util.Set;
 
+import org.infinispan.container.EntryFactory;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.remoting.transport.Address;
 
@@ -21,8 +23,7 @@ public interface InvocationContext extends EntryLookup, Cloneable {
    boolean isOriginLocal();
    
    /**
-    * Get the origin of the command, or null if the command originated locally
-    * @return
+    * @return the origin of the command, or null if the command originated locally
     */
    Address getOrigin();
 
@@ -65,8 +66,6 @@ public interface InvocationContext extends EntryLookup, Cloneable {
 
    /**
     * Sets the class loader associated for this invocation
-    *
-    * @param classLoader
     */
    void setClassLoader(ClassLoader classLoader);
 
@@ -83,11 +82,12 @@ public interface InvocationContext extends EntryLookup, Cloneable {
    boolean hasLockedKey(Object key);
 
    /**
-    * Tries to replace the value of the wrapped entry associated with the given key in the context, if one exists.
-    *
-    * @return true if the context already contained a wrapped entry for which this value was changed, false otherwise.
+    * @deprecated Since 8.1, use {@link EntryFactory#wrapExternalEntry(InvocationContext, Object, CacheEntry, EntryFactory.Wrap, boolean)} instead.
     */
-   boolean replaceValue(Object key, InternalCacheEntry cacheEntry);
+   @Deprecated
+   default boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {
+      return false;
+   }
 
    boolean isEntryRemovedInContext(Object key);
 }

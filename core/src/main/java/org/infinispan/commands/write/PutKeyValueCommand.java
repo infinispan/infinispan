@@ -12,6 +12,7 @@ import org.infinispan.commands.Visitor;
 import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Set;
@@ -91,10 +92,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
          return null;
       }
       MVCCEntry e = (MVCCEntry) ctx.lookupEntry(key);
-      if (e == null && hasFlag(Flag.PUT_FOR_EXTERNAL_READ)) {
-         successful = false;
-         return null;
-      }
+
       //possible as in certain situations (e.g. when locking delegation is used) we don't wrap
       if (e == null) return null;
 
@@ -219,8 +217,12 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
       Object entryValue = e.getValue();
       Object o;
 
-      if (!e.isCreated()) {
-         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, this);
+      if (e.isCreated()) {
+         notifier.notifyCacheEntryCreated(key, value, metadata, true, ctx, 
+                                           this);
+      } else {
+         notifier.notifyCacheEntryModified(key, value, metadata, entryValue, e.getMetadata(), true, ctx, 
+                                           this);
       }
 
       if (value instanceof Delta) {
@@ -232,6 +234,7 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
             e.setCreated(true);
             e.setValid(true);
             e.setValue(dv.merge(null));
+            Metadatas.updateMetadata(e, metadata);
          } else {
             DeltaAware toMergeWith = null;
             if (entryValue instanceof CopyableDeltaAware) {
@@ -240,10 +243,12 @@ public class PutKeyValueCommand extends AbstractDataWriteCommand implements Meta
                toMergeWith = (DeltaAware) entryValue;
             }
             e.setValue(dv.merge(toMergeWith));
+            Metadatas.updateMetadata(e, metadata);
          }
          o = entryValue;
       } else {
          o = e.setValue(value);
+         Metadatas.updateMetadata(e, metadata);
          if (e.isRemoved()) {
             e.setCreated(true);
             e.setExpired(false);

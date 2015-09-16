@@ -2,7 +2,6 @@ package org.infinispan.context.impl;
 
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ClearCacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -63,11 +62,6 @@ public class ClearInvocationContext extends AbstractInvocationContext implements
    public boolean hasLockedKey(Object key) {
       //ClearCommand does not acquire locks
       return false;
-   }
-
-   @Override
-   public boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {
-      return true;
    }
 
    @Override

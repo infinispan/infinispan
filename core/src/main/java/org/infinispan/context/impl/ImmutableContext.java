@@ -3,7 +3,6 @@ package org.infinispan.context.impl;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.remoting.transport.Address;
 
@@ -108,11 +107,6 @@ public final class ImmutableContext implements InvocationContext {
 
    @Override
    public void clearLockedKeys() {
-      throw newUnsupportedMethod();
-   }
-
-   @Override
-   public boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {
       throw newUnsupportedMethod();
    }
 

@@ -169,7 +169,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          for (Object key : command.getKeys()) {
             //for the invalidate command, we need to try to fetch the key from the data container
             //otherwise it may be not removed
-            entryFactory.wrapEntryForRemove(ctx, key, false, true, false);
+            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, true);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
@@ -185,8 +185,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       for (Object key : command.getKeys()) {
          //for the invalidate command, we need to try to fetch the key from the data container
          //otherwise it may be not removed
-        entryFactory.wrapEntryForRemove(ctx, key, false, true, false);
-        if (trace)
+         entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, true);
+         if (trace)
            log.tracef("Entry to be removed: %s", toStr(key));
       }
       return setSkipRemoteGetsAndInvokeNextForDataCommand(ctx, command, null);
@@ -200,8 +200,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private void wrapEntryForPutIfNeeded(InvocationContext ctx, AbstractDataWriteCommand command) throws Throwable {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isConditional(), command,
-            command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional());
+         boolean skipRead = command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional();
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), EntryFactory.Wrap.WRAP_ALL, skipRead, false);
       }
    }
 
@@ -258,11 +258,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    private void wrapEntryForRemoveIfNeeded(InvocationContext ctx, RemoveCommand command) throws InterruptedException {
       if (shouldWrap(command.getKey(), ctx, command)) {
          boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
-         // Should use wrapEntryForPut, but it doesn't work for now because of AtomicMap
-         // AtomicMap put leaves a DeltaAwareCacheEntry in the context, and wrapEntryForPut
-         // always expects a RepeatableReadEntry when repeatable read is enabled.
-         entryFactory.wrapEntryForRemove(ctx, command.getKey(),
-               command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional(), false, forceWrap);
+         EntryFactory.Wrap wrap = forceWrap ? EntryFactory.Wrap.WRAP_ALL : EntryFactory.Wrap.WRAP_NON_NULL;
+         boolean skipRead = command.hasFlag(Flag.IGNORE_RETURN_VALUES) && !command.isConditional();
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, skipRead, false);
       }
    }
 
@@ -274,13 +272,11 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
 
    private void wrapEntryForReplaceIfNeeded(InvocationContext ctx, ReplaceCommand command) throws InterruptedException {
       if (shouldWrap(command.getKey(), ctx, command)) {
-         if (command.getValueMatcher().nonExistentEntryCanMatch()) {
-            // wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
-            // but we still need to apply the new value.
-            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
-         } else  {
-            entryFactory.wrapEntryForReplace(ctx, command);
-         }
+         // When retrying, we might still need to perform the command even if the previous value was removed
+         EntryFactory.Wrap wrap =
+               command.getValueMatcher().nonExistentEntryCanMatch() ? EntryFactory.Wrap.WRAP_ALL :
+               EntryFactory.Wrap.WRAP_NON_NULL;
+         entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, false, false);
       }
    }
 
@@ -289,7 +285,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       for (Object key : command.getMap().keySet()) {
          if (shouldWrap(key, ctx, command)) {
             //the put map never reads the keys
-            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
+            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
@@ -312,7 +308,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       dataContainer.executeTask(keyFilter, (o, internalCacheEntry) -> {
          synchronized (ctx) {
             //the process can be made in multiple threads, so we need to synchronize in the context.
-            entryFactory.wrapEntryForReading(ctx, o, internalCacheEntry).setSkipLookup(true);
+            entryFactory.wrapExternalEntry(ctx, internalCacheEntry.getKey(), internalCacheEntry,
+                                           EntryFactory.Wrap.STORE, false);
          }
       });
       return invokeNextInterceptor(ctx, command);
@@ -326,8 +323,9 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          // locally, but if there's no need to get remote, the read-only
          // function needs to be executed, so force a non-null entry in
          // context with null content
-         if (entry == null && cdl.localNodeIsOwner(command.getKey()))
-            ctx.putLookedUpEntry(command.getKey(), NullCacheEntry.getInstance());
+         if (entry == null && cdl.localNodeIsOwner(command.getKey())) {
+            entryFactory.wrapEntryForReading(ctx, command.getKey(), NullCacheEntry.getInstance());
+         }
 
          return invokeNextInterceptor(ctx, command);
       } finally {
@@ -385,7 +383,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       for (Object key : command.getEntries().keySet()) {
          if (shouldWrap(key, ctx, command)) {
             //the put map never reads the keys
-            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
+            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
@@ -396,7 +394,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       for (Object key : command.getKeys()) {
          if (shouldWrap(key, ctx, command)) {
             //the put map never reads the keys
-            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
+            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
@@ -412,8 +410,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    public Object visitReadWriteManyCommand(InvocationContext ctx, ReadWriteManyCommand command) throws Throwable {
       for (Object key : command.getKeys()) {
          if (shouldWrap(key, ctx, command)) {
-            //the put map never reads the keys
-            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
+            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, false, false);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
@@ -423,8 +420,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
    public Object visitReadWriteManyEntriesCommand(InvocationContext ctx, ReadWriteManyEntriesCommand command) throws Throwable {
       for (Object key : command.getEntries().keySet()) {
          if (shouldWrap(key, ctx, command)) {
-            //the put map never reads the keys
-            entryFactory.wrapEntryForPut(ctx, key, null, true, command, true);
+            entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, false, false);
          }
       }
       return setSkipRemoteGetsAndInvokeNextForPutMapCommand(ctx, command);
@@ -579,7 +575,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          for (Map.Entry<Object, Object> e : command.getMap().entrySet()) {
             Object key = e.getKey();
             if (cdl.localNodeIsOwner(key)) {
-               entryFactory.wrapEntryForPut(ctx, key, null, true, command, false);
+               entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_ALL, true, false);
                newMap.put(key, e.getValue());
             }
          }
@@ -596,7 +592,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
          if (command.getKeys() != null) {
             for (Object key : command.getKeys()) {
                if (cdl.localNodeIsOwner(key)) {
-                  entryFactory.wrapEntryForRemove(ctx, key, false, false, false);
+                  entryFactory.wrapEntryForWriting(ctx, key, EntryFactory.Wrap.WRAP_NON_NULL, false, false);
                   invokeNextInterceptor(ctx, command);
                }
             }
@@ -608,7 +604,8 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
             boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
-            entryFactory.wrapEntryForRemove(ctx, command.getKey(), false, false, forceWrap);
+            EntryFactory.Wrap wrap = forceWrap ? EntryFactory.Wrap.WRAP_ALL : EntryFactory.Wrap.WRAP_NON_NULL;
+            entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, false, false);
             invokeNextInterceptor(ctx, command);
          }
          return null;
@@ -617,7 +614,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            entryFactory.wrapEntryForPut(ctx, command.getKey(), null, !command.isConditional(), command, false);
+            entryFactory.wrapEntryForWriting(ctx, command.getKey(), EntryFactory.Wrap.WRAP_ALL, false, false);
             invokeNextInterceptor(ctx, command);
          }
          return null;
@@ -635,13 +632,10 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       @Override
       public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
          if (cdl.localNodeIsOwner(command.getKey())) {
-            if (command.getValueMatcher().nonExistentEntryCanMatch()) {
-               //wrap it for put, as the previous value might not be present by now (e.g. might have been deleted)
-               // but we still need to apply the new value.
-               entryFactory.wrapEntryForPut(ctx, command.getKey(), null, false, command, false);
-            } else  {
-               entryFactory.wrapEntryForReplace(ctx, command);
-            }
+            // When retrying, we need to perform the command even if the previous value was deleted.
+            boolean forceWrap = command.getValueMatcher().nonExistentEntryCanMatch();
+            EntryFactory.Wrap wrap = forceWrap ? EntryFactory.Wrap.WRAP_ALL : EntryFactory.Wrap.WRAP_NON_NULL;
+            entryFactory.wrapEntryForWriting(ctx, command.getKey(), wrap, false, false);
             invokeNextInterceptor(ctx, command);
          }
          return null;
@@ -655,7 +649,7 @@ public class EntryWrappingInterceptor extends CommandInterceptor {
       }
       final boolean l1Invalidation = command instanceof InvalidateL1Command;
 
-      if (entry.isChanged() || entry.isLoaded()) {
+      if (entry.isChanged()) {
          log.tracef("About to commit entry %s", entry);
          commitContextEntry(entry, ctx, command, metadata, stateTransferFlag, l1Invalidation);
 

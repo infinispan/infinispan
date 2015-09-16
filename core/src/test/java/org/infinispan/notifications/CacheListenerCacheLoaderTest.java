@@ -33,7 +33,7 @@ public class CacheListenerCacheLoaderTest extends AbstractInfinispanTest {
          .storeName("no_passivation");
       cm.defineConfiguration("no_passivation", c.build());
 
-      new ConfigurationBuilder();
+      c = new ConfigurationBuilder();
       c.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class)
          .storeName("passivation");
       cm.defineConfiguration("passivation", c.build());

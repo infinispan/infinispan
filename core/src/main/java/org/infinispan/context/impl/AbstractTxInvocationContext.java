@@ -2,7 +2,6 @@ package org.infinispan.context.impl;
 
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -115,12 +114,6 @@ public abstract class AbstractTxInvocationContext<T extends AbstractCacheTransac
    @Override
    public final void clearLockedKeys() {
       cacheTransaction.clearLockedKeys();
-   }
-
-   @Override
-   protected final void onEntryValueReplaced(Object key, InternalCacheEntry cacheEntry) {
-      //the value to be returned was read from remote node. We need to update the version seen.
-      cacheTransaction.replaceVersionRead(key, cacheEntry.getMetadata().version());
    }
 
    @Override

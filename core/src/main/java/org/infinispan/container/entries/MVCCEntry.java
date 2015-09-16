@@ -9,13 +9,18 @@ import org.infinispan.container.DataContainer;
  * @since 4.0
  */
 public interface MVCCEntry<K, V> extends CacheEntry<K, V>, StateChangingEntry {
+   /**
+    * @deprecated Since 8.0, use {@link #copyForUpdate()} instead.
+    */
+   @Deprecated
+   default void copyForUpdate(DataContainer<? super K, ? super V> container) {
+      copyForUpdate();
+   }
 
    /**
     * Makes internal copies of the entry for updates
-    *
-    * @param container      data container
     */
-   void copyForUpdate(DataContainer<? super K, ? super V> container);
+   void copyForUpdate();
 
    void setChanged(boolean isChanged);
 

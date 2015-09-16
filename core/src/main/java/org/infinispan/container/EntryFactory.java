@@ -20,6 +20,14 @@ import org.infinispan.context.InvocationContext;
  * @since 4.0
  */
 public interface EntryFactory {
+   enum Wrap {
+      /** Store values in the context without wrapping */
+      STORE,
+      /** Wrap any value */
+      WRAP_ALL,
+      /** Only wrap non-null values */
+      WRAP_NON_NULL,
+   }
 
    /**
     * Wraps an entry for reading.  Usually this is just a raw {@link CacheEntry} but certain combinations of isolation
@@ -36,13 +44,18 @@ public interface EntryFactory {
    /**
     * Used for wrapping individual keys when clearing the cache. The wrapped entry is added to the
     * supplied InvocationContext.
+    * @deprecated Clear no longer wraps entries.
     */
+   @Deprecated
    MVCCEntry wrapEntryForClear(InvocationContext ctx, Object key) throws InterruptedException;
 
    /**
     * Used for wrapping a cache entry for replacement. The wrapped entry is added to the
     * supplied InvocationContext.
+    * @deprecated Since 8.1, use
+    * {@link #wrapEntryForWriting(InvocationContext, Object, Wrap, boolean, boolean)} instead.
     */
+   @Deprecated
    MVCCEntry wrapEntryForReplace(InvocationContext ctx, ReplaceCommand cmd) throws InterruptedException;
 
    /**
@@ -50,7 +63,10 @@ public interface EntryFactory {
     *
     * @param skipRead if {@code true}, if the key is not read during the remove operation. Only used with Repeatable
     *                 Read + Write Skew + Versioning + Cluster.
+    * @deprecated Since 8.1, use
+    * {@link #wrapEntryForWriting(InvocationContext, Object, Wrap, boolean, boolean)} instead.
     */
+   @Deprecated
    MVCCEntry wrapEntryForRemove(InvocationContext ctx, Object key, boolean skipRead, boolean forInvalidation,
                                 boolean forceWrap) throws InterruptedException;
    
@@ -64,9 +80,34 @@ public interface EntryFactory {
     * Used for wrapping a cache entry for addition to cache. The wrapped entry is added to the supplied
     * InvocationContext.
     *
+    * @param undeleteIfNeeded Ignored
     * @param skipRead if {@code true}, if the key is not read during the put operation. Only used with Repeatable Read +
-    *                 Write Skew + Versioning + Cluster.
+    * @deprecated Since 8.1, use
+    * {@link #wrapEntryForWriting(InvocationContext, Object, Wrap, boolean, boolean)} instead.
     */
+   @Deprecated
    MVCCEntry wrapEntryForPut(InvocationContext ctx, Object key, InternalCacheEntry ice,
                              boolean undeleteIfNeeded, FlagAffectedCommand cmd, boolean skipRead);
-}
+
+   /**
+    * Insert an entry that exists in the data container into the context.
+    *
+    * Doesn't do anything if the key was already wrapped.
+    *
+    * @return The wrapped entry.
+    * @since 8.1
+    */
+   MVCCEntry wrapEntryForWriting(InvocationContext ctx, Object key, Wrap wrap, boolean skipRead,
+                                 boolean ignoreOwnership);
+
+   /**
+    * Insert an external entry (e.g. loaded from a cache loader or from a remote node) into the context.
+    *
+    * Will not replace an existing InternalCacheEntry.
+    *
+    * @return {@code true} if the context entry was modified, {@code false} otherwise.
+    * @since 8.1
+    */
+   boolean wrapExternalEntry(InvocationContext ctx, Object key, CacheEntry externalEntry, Wrap wrap,
+                             boolean skipRead);
+   }

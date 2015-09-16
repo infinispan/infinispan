@@ -17,6 +17,7 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.configuration.cache.Configurations;
+import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
@@ -141,7 +142,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             remoteEntry = remoteGet(ctx, key, false, command);
          }
          if (remoteEntry == null) {
-            localGet(ctx, key, false, command);
+            localGet(ctx, key, false);
          }
       }
 
@@ -303,11 +304,13 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       }
    }
 
-   private void localGet(InvocationContext ctx, Object key, boolean isWrite, FlagAffectedCommand command)
+   private void localGet(InvocationContext ctx, Object key, boolean isWrite)
          throws Throwable {
+      // TODO Check fails if the entry was passivated
       InternalCacheEntry ice = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
       if (ice != null) {
-         wrapInternalCacheEntry(ice, ctx, key, isWrite, command);
+         EntryFactory.Wrap wrap = isWrite ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
+         entryFactory.wrapExternalEntry(ctx, key, ice, wrap, false);
       }
    }
 
@@ -327,11 +330,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             remoteEntry = remoteGet(ctx, key, true, command);
          }
          if (remoteEntry == null) {
-            // TODO Check fails if the entry was passivated
-            InternalCacheEntry localEntry = fetchValueLocallyIfAvailable(dm.getReadConsistentHash(), key);
-            if (localEntry != null) {
-               wrapInternalCacheEntry(localEntry, ctx, key, true, command);
-            }
+            localGet(ctx, key, true);
          }
       }
    }
@@ -357,16 +356,8 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
             ((TxInvocationContext) ctx).getCacheTransaction().putLookedUpRemoteVersion(key, ice.getMetadata().version());
          }
 
-         if (!ctx.replaceValue(key, ice)) {
-            if (isWrite)
-               entryFactory.wrapEntryForPut(ctx, key, ice, false, command, false);
-            else {
-               ctx.putLookedUpEntry(key, ice);
-               if (ctx.isInTxScope()) {
-                  ((TxInvocationContext) ctx).getCacheTransaction().replaceVersionRead(key, ice.getMetadata().version());
-               }
-            }
-         }
+         EntryFactory.Wrap wrap = isWrite ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
+         entryFactory.wrapExternalEntry(ctx, key, ice, wrap, false);
          return ice;
       }
       return null;

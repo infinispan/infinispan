@@ -63,7 +63,9 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, State
 
    public void appendDelta(Delta d) {
       deltas.add(d);
-      d.merge(uncommittedChanges);
+      if (uncommittedChanges != null) {
+         uncommittedChanges = (AtomicHashMap<K, ?>) d.merge(uncommittedChanges);
+      }
       setChanged(true);
    }
 
@@ -77,7 +79,6 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, State
       REMOVED(1 << 2),
       VALID(1 << 3),
       EVICTED(1 << 4),
-      LOADED(1 << 5),
       SKIP_LOOKUP(1 << 6);
 
       final byte mask;
@@ -147,6 +148,9 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, State
    public final DeltaAware setValue(DeltaAware value) {
       DeltaAware oldValue = this.value;
       this.value = (DeltaAware) value;
+      if (value instanceof AtomicHashMap) {
+         this.uncommittedChanges = (AtomicHashMap<K, ?>) value;
+      }
       return oldValue;
    }
 
@@ -296,12 +300,11 @@ public class DeltaAwareCacheEntry<K> implements CacheEntry<K, DeltaAware>, State
 
    @Override
    public boolean isLoaded() {
-      return isFlagSet(LOADED);
+      return false;
    }
 
    @Override
    public void setLoaded(boolean loaded) {
-      setFlag(loaded, LOADED);
    }
 
    @Override
