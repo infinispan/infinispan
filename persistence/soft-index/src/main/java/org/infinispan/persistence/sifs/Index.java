@@ -59,6 +59,12 @@ class Index {
       }
    }
 
+   public void start() {
+      for (int i = 0; i < segments.length; ++i) {
+         segments[i].start();
+      }
+   }
+
    public EntryRecord getRecord(Object key, byte[] serializedKey) throws IOException {
       int segment = Math.abs(keyEquivalence.hashCode(key)) % segments.length;
       lock.readLock().lock();
@@ -133,8 +139,6 @@ class Index {
          this.indexFileFile = new File(indexDir, "index." + id);
          this.indexFile = new RandomAccessFile(indexFileFile, "rw").getChannel();
          this.indexFile.truncate(0);
-
-         start();
       }
 
       @Override
