@@ -29,7 +29,8 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 /**
- * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model.
+ * Test for query conditions (filtering). Exercises the whole query DSL on the sample domain model. Uses indexing,
+ * although some fields are not indexed in order to test hybrid queries too.
  *
  * @author anistor@redhat.com
  * @author rvansa@redhat.com
@@ -1769,7 +1770,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<Object[]> list = q.list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(22, list.get(0)[0]);
+      assertEquals(22L, list.get(0)[0]);
       assertEquals(1, list.get(1).length);
       assertEquals(null, list.get(1)[0]);
    }
@@ -1929,7 +1930,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(22, list.get(0)[0]);
+      assertEquals(22L, list.get(0)[0]);
    }
 
    public void testGroupingWithFilter() {

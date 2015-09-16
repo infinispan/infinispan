@@ -1879,7 +1879,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       List<Object[]> list = q.list();
       assertEquals(2, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(22, list.get(0)[0]);
+      assertEquals(22L, list.get(0)[0]);
       assertEquals(1, list.get(1).length);
       assertEquals(null, list.get(1)[0]);
    }
@@ -2049,7 +2049,7 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       List<Object[]> list = q.list();
       assertEquals(1, list.size());
       assertEquals(1, list.get(0).length);
-      assertEquals(22, list.get(0)[0]);
+      assertEquals(22L, list.get(0)[0]);
    }
 
    @Test
@@ -2113,8 +2113,8 @@ public class QueryDslConditionsTest extends AbstractQueryTest {
       QueryFactory qf = getQueryFactory();
 
       Query q = qf.from(getModelFactory().getUserImplClass())
-              .having("name").eq(Expression.param("param1"))
-              .toBuilder().build();
+            .having("name").eq(Expression.param("param1"))
+            .toBuilder().build();
 
       q.setParameter("param2", "John");
    }
