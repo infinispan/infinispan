@@ -32,6 +32,8 @@ import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.IsMarshallableInterceptor;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
 import org.infinispan.interceptors.NotificationInterceptor;
+import org.infinispan.interceptors.SequentialInterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChainImpl;
 import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -73,7 +75,7 @@ import java.util.List;
  * @author Pedro Ruivo
  * @since 4.0
  */
-@DefaultFactoryFor(classes = InterceptorChain.class)
+@DefaultFactoryFor(classes = {SequentialInterceptorChain.class, InterceptorChain.class})
 public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory implements AutoInstantiableFactory {
 
    private static final Log log = LogFactory.getLog(InterceptorChainFactory.class);
@@ -104,14 +106,17 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return c.storeAsBinary().enabled() && (c.storeAsBinary().storeKeysAsBinary() || c.storeAsBinary().storeValuesAsBinary());
    }
 
-   public InterceptorChain buildInterceptorChain() {
+   public SequentialInterceptorChain buildInterceptorChain() {
       TransactionMode transactionMode = configuration.transaction().transactionMode();
       boolean needsVersionAwareComponents = transactionMode.isTransactional() &&
               Configurations.isVersioningEnabled(configuration);
 
-      InterceptorChain interceptorChain = new InterceptorChain(componentRegistry.getComponentMetadataRepo());
+      SequentialInterceptorChain interceptorChain =
+            new SequentialInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());
       // add the interceptor chain to the registry first, since some interceptors may ask for it.
+      // Add both the old class and the new interface
       componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);
+      componentRegistry.registerComponent(interceptorChain, SequentialInterceptorChain.class);
 
       boolean invocationBatching = configuration.invocationBatching().enabled();
       boolean isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
@@ -327,7 +332,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return interceptorChain;
    }
 
-   private void buildCustomInterceptors(InterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {
+   private void buildCustomInterceptors(SequentialInterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {
       for (InterceptorConfiguration config : customInterceptors.interceptors()) {
          if (interceptorChain.containsInterceptorType(config.interceptor().getClass())) continue;
 
