@@ -2,6 +2,7 @@ package org.infinispan.persistence.sifs;
 
 import static org.infinispan.persistence.PersistenceUtil.internalMetadata;
 import static org.infinispan.test.TestingUtil.recursiveFileRemove;
+import static org.junit.Assert.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -30,6 +31,7 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
 
    SoftIndexFileStore store;
    String tmpDirectory;
+   boolean startIndex = true;
 
    @BeforeClass
    protected void setUpTempDir() {
@@ -44,7 +46,14 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
    @Override
    protected AdvancedLoadWriteStore createStore() throws Exception {
       clearTempDir();
-      store = new SoftIndexFileStore();
+      store = new SoftIndexFileStore() {
+         @Override
+         protected void startIndex() {
+            if (startIndex) {
+               super.startIndex();
+            }
+         }
+      };
       ConfigurationBuilder builder = TestCacheManagerFactory
             .getDefaultCacheConfiguration(false);
       builder.persistence()
@@ -52,7 +61,6 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
                   .indexLocation(tmpDirectory).dataLocation(tmpDirectory + "/data");
 
       store.init(createContext(builder.build()));
-      store.start();
       return store;
    }
 
@@ -104,6 +112,32 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
       store.start();
 
       assertEquals("v2", store.load("k1").getValue());
+   }
+
+   // test for ISPN-5743
+   public void testStopStartWithRemoves() {
+      String KEY = "k1";
+      MarshalledEntry<Object, Object> entry1 = marshalledEntry(internalCacheEntry(KEY, "v1", -1));
+      MarshalledEntry<Object, Object> entry2 = marshalledEntry(internalCacheEntry(KEY, "v2", -1));
+
+      store.write(entry1);
+      store.delete(KEY);
+
+      store.stop();
+      store.start();
+
+      assertNull(store.load(KEY));
+      store.write(entry2);
+      store.delete(KEY);
+      store.write(entry1);
+
+      store.stop();
+      startIndex = false;
+      store.start();
+
+      assertEquals(entry1.getValue(), store.load(KEY).getValue());
+      startIndex = true;
+      store.startIndex();
    }
 
    private String key(int i) {
