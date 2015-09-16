@@ -221,7 +221,7 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
       }
 
       if (trace)
-         log.tracef("Store %s in container", e);
+         log.tracef("Store %s in container", copy);
 
       entries.compute(copy.getKey(), (key, entry) -> {
          activator.onUpdate(key, entry == null);

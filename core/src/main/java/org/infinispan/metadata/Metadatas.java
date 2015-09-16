@@ -1,5 +1,7 @@
 package org.infinispan.metadata;
 
+import org.infinispan.container.entries.CacheEntry;
+
 /**
  * Utility method for Metadata classes.
  *
@@ -31,4 +33,20 @@ public class Metadatas {
       return target;
    }
 
+   /**
+    * Set the {@code providedMetadata} on the cache entry.
+    *
+    * If the entry already has a version, copy the version in the new metadata.
+    */
+   public static void updateMetadata(CacheEntry entry, Metadata providedMetadata) {
+      if (entry != null && providedMetadata != null) {
+         Metadata mergedMetadata;
+         if (entry.getMetadata() == null) {
+            mergedMetadata = providedMetadata;
+         } else {
+            mergedMetadata = applyVersion(entry.getMetadata(), providedMetadata);
+         }
+         entry.setMetadata(mergedMetadata);
+      }
+   }
 }

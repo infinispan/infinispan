@@ -9,6 +9,7 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 
 import java.util.Set;
@@ -74,6 +75,7 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       if (e != null && valueMatcher.matches(e, oldValue, newValue, valueEquivalence)) {
          e.setChanged(true);
          Object old = e.setValue(newValue);
+         Metadatas.updateMetadata(e, metadata);
          if (valueMatcher != ValueMatcher.MATCH_EXPECTED_OR_NEW) {
             return returnValue(old, e.getMetadata(), true, ctx);
          } else {
@@ -83,14 +85,6 @@ public class ReplaceCommand extends AbstractDataWriteCommand implements Metadata
       }
 
       return returnValue(null, null, false, ctx);
-   }
-
-   @SuppressWarnings("unchecked")
-   private boolean isValueEquals(Object oldValue, Object newValue) {
-      if (valueEquivalence != null)
-         return valueEquivalence.equals(oldValue, newValue);
-
-      return oldValue.equals(newValue);
    }
 
    private Object returnValue(Object beingReplaced, Metadata previousMetadata, boolean successful,

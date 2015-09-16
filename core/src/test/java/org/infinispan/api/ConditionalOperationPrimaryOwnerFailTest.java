@@ -78,9 +78,8 @@ public class ConditionalOperationPrimaryOwnerFailTest extends MultipleCacheManag
             assertFalse("Entry should not be wrapped!", context.isOriginLocal());
             return invocation.callRealMethod();
          }
-      }).when(spyEntryFactory).wrapEntryForPut(any(InvocationContext.class), anyObject(),
-                                               any(InternalCacheEntry.class), anyBoolean(),
-                                               any(FlagAffectedCommand.class), anyBoolean());
+      }).when(spyEntryFactory).wrapEntryForWriting(any(InvocationContext.class), anyObject(),
+                                                   any(EntryFactory.Wrap.class), anyBoolean(), anyBoolean());
 
       Future<?> killMemberResult = fork(new Runnable() {
          @Override

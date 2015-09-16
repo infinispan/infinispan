@@ -4,6 +4,8 @@ import org.infinispan.atomic.Delta;
 import org.infinispan.atomic.DeltaCompositeKey;
 import org.infinispan.commands.CommandInvocationId;
 import org.infinispan.commands.Visitor;
+import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.container.entries.DeltaAwareCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
@@ -50,7 +52,11 @@ public class ApplyDeltaCommand extends AbstractDataWriteCommand {
     */
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      //nothing to do here
+      CacheEntry contextEntry = ctx.lookupEntry(key);
+      if (contextEntry instanceof DeltaAwareCacheEntry) {
+         DeltaAwareCacheEntry deltaAwareCacheEntry = (DeltaAwareCacheEntry) contextEntry;
+         deltaAwareCacheEntry.appendDelta(delta);
+      }
       return null;
    }
 

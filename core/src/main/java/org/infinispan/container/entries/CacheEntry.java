@@ -49,8 +49,9 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
    boolean isValid();
 
    /**
-    * @return true if the entry was loaded from a cache store.
+    * @deprecated Always returns false.
     */
+   @Deprecated
    boolean isLoaded();
 
    /**
@@ -115,6 +116,10 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
 
    void setValid(boolean valid);
 
+   /**
+    * @deprecated Does nothing.
+    */
+   @Deprecated
    void setLoaded(boolean loaded);
 
    /**
@@ -127,6 +132,7 @@ public interface CacheEntry<K, V> extends Cloneable, Map.Entry<K, V>, MetadataAw
     * If the entry is marked as removed and doUndelete==true then the "valid" flag is set to true and "removed"
     * flag is set to false.
     */
+   @Deprecated
    boolean undelete(boolean doUndelete);
 
    public CacheEntry<K, V> clone();

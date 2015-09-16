@@ -56,27 +56,15 @@ public abstract class AbstractInvocationContext implements InvocationContext {
    }
 
    @Override
-   public boolean replaceValue(final Object key, final InternalCacheEntry cacheEntry) {
-      CacheEntry ce = lookupEntry(key);
-      if (ce == null || ce.isNull() || ce.getValue() == null) {
-         if (ce != null) {
-            ce.setValue(cacheEntry.getValue());
-            ce.setMetadata(cacheEntry.getMetadata());
-            onEntryValueReplaced(key, cacheEntry);
-         } else {
-            return false;
-         }
-      }
-      return true;
-   }
-
-   @Override
    public boolean isEntryRemovedInContext(final Object key) {
       CacheEntry ce = lookupEntry(key);
       return ce != null && ce.isRemoved() && ce.isChanged();
    }
 
+   /**
+    * @deprecated Since 8.1, no longer used.
+    */
+   @Deprecated
    protected void onEntryValueReplaced(final Object key, final InternalCacheEntry cacheEntry) {
-      //no-op. used in tx mode with write skew check.
    }
 }

@@ -49,7 +49,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    // more space-efficient.  Note that this value will be stored in a byte, which means up to 8 flags can be stored in
    // a single byte.  Always start shifting with 0, the last shift cannot be greater than 7.
    protected enum Flags {
-      CHANGED(1), // same as 1 << 0
+      CHANGED(1 << 0),
       CREATED(1 << 1),
       REMOVED(1 << 2),
       VALID(1 << 3),
@@ -127,7 +127,7 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
-   public void copyForUpdate(DataContainer container) {
+   public void copyForUpdate() {
       if (isFlagSet(COPIED)) return; // already copied
 
       setFlag(COPIED); //mark as copied
@@ -141,10 +141,10 @@ public class ReadCommittedEntry implements MVCCEntry {
       // TODO: No tombstones for now!!  I'll only need them for an eventually consistent cache
 
       // only do stuff if there are changes.
-      if (isChanged() || isLoaded()) {
+      if (isChanged()) {
          if (trace)
-            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s loaded=%s value=%s metadata=%s, providedMetadata=%s)",
-                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), isLoaded(), toStr(value), getMetadata(), providedMetadata);
+            log.tracef("Updating entry (key=%s removed=%s valid=%s changed=%s created=%s value=%s metadata=%s, providedMetadata=%s)",
+                  toStr(getKey()), isRemoved(), isValid(), isChanged(), isCreated(), toStr(value), getMetadata(), providedMetadata);
 
          // Ugh!
          if (value instanceof AtomicHashMap) {
@@ -279,11 +279,13 @@ public class ReadCommittedEntry implements MVCCEntry {
    }
 
    @Override
+   @Deprecated
    public boolean isLoaded() {
       return false;
    }
 
    @Override
+   @Deprecated
    public void setLoaded(boolean loaded) {
    }
 

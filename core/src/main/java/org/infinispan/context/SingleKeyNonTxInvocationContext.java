@@ -3,7 +3,6 @@ package org.infinispan.context;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -148,20 +147,6 @@ public final class SingleKeyNonTxInvocationContext implements InvocationContext 
    @Override
    public boolean hasLockedKey(final Object key) {
       return isLocked && keyEquivalence.equals(this.key, key);
-   }
-
-   @Override
-   public boolean replaceValue(final Object key, final InternalCacheEntry cacheEntry) {
-      CacheEntry ce = lookupEntry(key);
-      if (ce == null || ce.isNull() || ce.getValue() == null) {
-         if (ce != null) {
-            ce.setValue(cacheEntry.getValue());
-            ce.setMetadata(cacheEntry.getMetadata());
-         } else {
-            return false;
-         }
-      }
-      return true;
    }
 
    @Override

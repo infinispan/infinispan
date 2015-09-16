@@ -41,33 +41,49 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
 
    @Override
    public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+      VersionedPrepareCommand versionedPrepareCommand = (VersionedPrepareCommand) command;
       if (ctx.isOriginLocal()) {
-         ((VersionedPrepareCommand) command).setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
+         versionedPrepareCommand.setVersionsSeen(ctx.getCacheTransaction().getVersionsRead());
       }
       wrapEntriesForPrepare(ctx, command);
       EntryVersionsMap newVersionData= null;
-      if (ctx.isOriginLocal() && !ctx.getCacheTransaction().isFromStateTransfer()) newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
+      if (ctx.isOriginLocal() && !ctx.getCacheTransaction().isFromStateTransfer()) {
+         newVersionData =
+               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, versionedPrepareCommand);
+      }
 
       Object retval = invokeNextInterceptor(ctx, command);
 
-      if (!ctx.isOriginLocal()) newVersionData = cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, (VersionedPrepareCommand) command);
-      if (command.isOnePhaseCommit()) ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedPrepareCommand) command).getVersionsSeen());
+      if (!ctx.isOriginLocal()) {
+         newVersionData =
+               cdl.createNewVersionsAndCheckForWriteSkews(versionGenerator, ctx, versionedPrepareCommand);
+      }
+      if (command.isOnePhaseCommit()) {
+         ctx.getCacheTransaction().setUpdatedEntryVersions(versionedPrepareCommand.getVersionsSeen());
+      }
 
-      if (newVersionData != null) retval = newVersionData;
-      if (command.isOnePhaseCommit()) commitContextEntries(ctx, null, null);
+      if (newVersionData != null) {
+         retval = newVersionData;
+      }
+      if (command.isOnePhaseCommit()) {
+         commitContextEntries(ctx, null, null);
+      }
       return retval;
    }
 
    @Override
    public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+      VersionedCommitCommand versionedCommitCommand = (VersionedCommitCommand) command;
       try {
-         if (ctx.isOriginLocal())
-            ((VersionedCommitCommand) command).setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
+         if (ctx.isOriginLocal()) {
+            versionedCommitCommand.setUpdatedVersions(ctx.getCacheTransaction().getUpdatedEntryVersions());
+         }
 
          return invokeNextInterceptor(ctx, command);
       } finally {
-         if (!ctx.isOriginLocal())
-            ctx.getCacheTransaction().setUpdatedEntryVersions(((VersionedCommitCommand) command).getUpdatedVersions());
+         if (!ctx.isOriginLocal()) {
+            ctx.getCacheTransaction().setUpdatedEntryVersions(versionedCommitCommand.getUpdatedVersions());
+         }
          commitContextEntries(ctx, null, null);
       }
    }
@@ -80,12 +96,13 @@ public class VersionedEntryWrappingInterceptor extends EntryWrappingInterceptor 
                .getCacheTransaction().getUpdatedEntryVersions().get(entry.getKey());
          Metadata commitMetadata;
          if (updatedEntryVersion != null) {
-            if (metadata == null && entry.getMetadata() == null)
+            if (metadata == null && entry.getMetadata() == null) {
                commitMetadata = new EmbeddedMetadata.Builder().version(updatedEntryVersion).build();
-            else if (metadata != null)
+            } else if (metadata != null) {
                commitMetadata = metadata.builder().version(updatedEntryVersion).build();
-            else
+            } else {
                commitMetadata = entry.getMetadata().builder().version(updatedEntryVersion).build();
+            }
          } else {
             commitMetadata = metadata != null ? metadata : entry.getMetadata();
          }

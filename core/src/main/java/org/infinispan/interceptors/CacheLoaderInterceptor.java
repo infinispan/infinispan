@@ -60,8 +60,6 @@ import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.metadata.Metadata;
-import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.persistence.PersistenceUtil;
 import org.infinispan.persistence.manager.PersistenceManager;
@@ -195,7 +193,9 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
          public void processEntry(MarshalledEntry marshalledEntry, AdvancedCacheLoader.TaskContext taskContext) throws InterruptedException {
             synchronized (ctx) {
                //the process can be made in multiple threads, so we need to synchronize in the context.
-               entryFactory.wrapEntryForReading(ctx, marshalledEntry.getKey(), convert(marshalledEntry, iceFactory)).setSkipLookup(true);
+               entryFactory.wrapExternalEntry(ctx, marshalledEntry.getKey(),
+                                              convert(marshalledEntry, iceFactory), EntryFactory.Wrap.STORE,
+                                              false);
             }
          }
       }, true, true);
@@ -376,9 +376,15 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       }
 
       if (entry != null) {
-         CacheEntry wrappedEntry = wrapInternalCacheEntry(ctx, key, cmd, entry);
-         if (isLoadedValue != null && isLoadedValue.booleanValue() && wrappedEntry != null) {
-            recordLoadedEntry(ctx, key, wrappedEntry, entry, cmd);
+         EntryFactory.Wrap wrap =
+               cmd instanceof WriteCommand ? EntryFactory.Wrap.WRAP_NON_NULL : EntryFactory.Wrap.STORE;
+         entryFactory.wrapExternalEntry(ctx, key, entry, wrap, !cmd.readsExistingValues());
+
+         if (isLoadedValue != null && isLoadedValue.booleanValue()) {
+            Object value = entry.getValue();
+            // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
+            sendNotification(key, value, true, ctx, cmd);
+            sendNotification(key, value, false, ctx, cmd);
          }
       }
       return isLoadedValue;
@@ -429,50 +435,12 @@ public class CacheLoaderInterceptor<K, V> extends JmxStatsCommandInterceptor {
       return true;
    }
 
-   private CacheEntry wrapInternalCacheEntry(InvocationContext ctx, Object key, FlagAffectedCommand cmd,
-                                             InternalCacheEntry ice) {
-      if (cmd instanceof ApplyDeltaCommand) {
-         ctx.putLookedUpEntry(key, ice);
-         return entryFactory.wrapEntryForDelta(ctx, key, ((ApplyDeltaCommand) cmd).getDelta());
-      } else {
-         return entryFactory.wrapEntryForPut(ctx, key, ice, false, cmd, false);
-      }
-   }
-
    /**
     * Only perform if context doesn't have a value found (Read Committed) or if we can do a remote
     * get only if the value is null (Repeatable Read)
     */
    private boolean shouldAttemptLookup(CacheEntry e) {
       return e == null || (e.isNull() || e.getValue() == null) && !e.skipLookup();
-   }
-
-   /**
-    * This method records a loaded entry, performing the following steps: <ol>
-    * <li>updates the 'entry' reference (an entry in the current thread's InvocationContext) with the contents
-    * of 'loadedEntry' (freshly loaded from the CacheStore) so that the loaded details will be flushed to the
-    * DataContainer when the call returns (in the LockingInterceptor, when locks are released)</li>
-    * <li>notifies listeners</li> </ol>
-    */
-   private void recordLoadedEntry(InvocationContext ctx, Object key,
-                                  CacheEntry entry, InternalCacheEntry loadedEntry, FlagAffectedCommand cmd) {
-      final Object value = loadedEntry.getValue();
-      // FIXME: There's no point to trigger the entryLoaded/Activated event twice.
-      sendNotification(key, value, true, ctx, cmd);
-      entry.setValue(value);
-
-      Metadata metadata = cmd.getMetadata();
-      Metadata loadedMetadata = loadedEntry.getMetadata();
-      if (metadata != null && loadedMetadata != null)
-         metadata = Metadatas.applyVersion(loadedMetadata, metadata);
-      else if (metadata == null)
-         metadata = loadedMetadata;
-
-      entry.setMetadata(metadata);
-      // TODO shouldn't we also be setting last used and created timestamps?
-      entry.setValid(true);
-
-      sendNotification(key, value, false, ctx, cmd);
    }
 
    protected void sendNotification(Object key, Object value, boolean pre,

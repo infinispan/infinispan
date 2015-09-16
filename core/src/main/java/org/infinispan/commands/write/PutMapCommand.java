@@ -9,6 +9,7 @@ import org.infinispan.container.entries.MVCCEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.lifecycle.ComponentStatus;
+import org.infinispan.metadata.Metadatas;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.util.concurrent.locks.RemoteLockCommand;
 
@@ -92,13 +93,26 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
       Map<Object, Object> previousValues = new HashMap<>();
       for (Entry<Object, Object> e : map.entrySet()) {
          Object key = e.getKey();
-         MVCCEntry me = lookupMvccEntry(ctx, key);
-         if (me != null) {
-            Object value = me.getValue();
-            previousValues.put(key, value);
-            notifier.notifyCacheEntryModified(key, e.getValue(), metadata, value, me.getMetadata(), true, ctx, this);
-            me.setValue(e.getValue());
-            me.setChanged(true);
+         MVCCEntry contextEntry = lookupMvccEntry(ctx, key);
+         if (contextEntry != null) {
+            Object newValue = e.getValue();
+            Object previousValue = contextEntry.getValue();
+            Metadata previousMetadata = contextEntry.getMetadata();
+
+            // Even though putAll() returns void, QueryInterceptor reads the previous values
+            // TODO The previous values are not correct if the entries exist only in a store
+            previousValues.put(key, previousValue);
+
+            if (contextEntry.isCreated()) {
+               notifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, this);
+            }
+            // TODO Only invoke the modified listener if the entry was not created?
+            notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue, previousMetadata, true,
+                                              ctx, this);
+
+            contextEntry.setValue(newValue);
+            Metadatas.updateMetadata(contextEntry, metadata);
+            contextEntry.setChanged(true);
          }
       }
       return previousValues;
@@ -252,7 +266,6 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
     * - the command is send to the main owner (B)
     * - B tries to acquire lock on the keys it owns, then forwards the commands to the other owners as well
     * - at this last stage, the command has the "isForwarded" flag set to true.
-    * @return
     */
    public boolean isForwarded() {
       return isForwarded;

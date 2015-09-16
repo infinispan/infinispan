@@ -23,7 +23,7 @@ public class RepeatableReadEntry extends ReadCommittedEntry {
    }
 
    @Override
-   public void copyForUpdate(DataContainer container) {
+   public void copyForUpdate() {
       if (isFlagSet(COPIED)) return; // already copied
 
       setFlag(COPIED); //mark as copied
