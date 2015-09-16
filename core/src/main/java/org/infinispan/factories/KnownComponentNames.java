@@ -30,6 +30,7 @@ public class KnownComponentNames {
    public static final String TRANSACTION_VERSION_GENERATOR = "org.infinispan.transaction.versionGenerator";
    public static final String ASYNC_OPERATIONS_EXECUTOR = "org.infinispan.executors.async";
    public static final String TIMEOUT_SCHEDULE_EXECUTOR = "org.infinispan.executors.timeout";
+   public static final String CACHE_DEPENDENCY_GRAPH = "org.infinispan.CacheDependencyGraph";
 
    // Please make sure this is kept up to date
    public static final Collection<String> ALL_KNOWN_COMPONENT_NAMES = Arrays.asList(

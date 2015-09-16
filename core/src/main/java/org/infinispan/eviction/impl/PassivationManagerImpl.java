@@ -10,7 +10,6 @@ import org.infinispan.distribution.DistributionManager;
 import org.infinispan.eviction.PassivationManager;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
-import org.infinispan.factories.annotations.Stop;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryFactory;
 import org.infinispan.persistence.spi.PersistenceException;
@@ -31,6 +30,7 @@ public class PassivationManagerImpl implements PassivationManager {
    PersistenceManager persistenceManager;
    CacheNotifier notifier;
    Configuration cfg;
+   private volatile boolean skipOnStop = false;
 
    boolean statsEnabled = false;
    boolean enabled = false;
@@ -94,9 +94,8 @@ public class PassivationManagerImpl implements PassivationManager {
    }
 
    @Override
-   @Stop(priority = 9)
    public void passivateAll() throws PersistenceException {
-      if (enabled) {
+      if (enabled && !skipOnStop) {
          long start = timeService.time();
          log.passivatingAllEntries();
          for (InternalCacheEntry e : container) {
@@ -107,6 +106,11 @@ public class PassivationManagerImpl implements PassivationManager {
          log.passivatedEntries(container.size(),
                                Util.prettyPrintTime(timeService.timeDuration(start, TimeUnit.MILLISECONDS)));
       }
+   }
+
+   @Override
+   public void skipPassivationOnStop(boolean skip) {
+      this.skipOnStop = skip;
    }
 
    @Override

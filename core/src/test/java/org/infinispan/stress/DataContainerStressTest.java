@@ -13,7 +13,6 @@ import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.container.*;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
@@ -94,6 +93,11 @@ public class DataContainerStressTest {
                        @Override
                        public void passivateAll() throws PersistenceException {
 
+                       }
+
+                       @Override
+                       public void skipPassivationOnStop(boolean skip) {
+                          /*no-op*/
                        }
 
                        @Override

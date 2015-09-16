@@ -3,13 +3,17 @@ package org.infinispan.commands;
 import org.infinispan.Cache;
 import org.infinispan.commands.remote.BaseRpcCommand;
 import org.infinispan.commons.util.Util;
+import org.infinispan.configuration.ConfigurationManager;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.eviction.PassivationManager;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.GlobalComponentRegistry;
 import org.infinispan.jmx.CacheJmxRegistration;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.persistence.manager.PersistenceManager;
+import org.infinispan.util.DependencyGraph;
 
-import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
+import static org.infinispan.factories.KnownComponentNames.CACHE_DEPENDENCY_GRAPH;
 
 /**
  * Command to stop a cache and remove all its contents from both
@@ -23,31 +27,35 @@ public class RemoveCacheCommand extends BaseRpcCommand {
    public static final byte COMMAND_ID = 18;
 
    private EmbeddedCacheManager cacheManager;
-   private GlobalComponentRegistry registry;
-   private PersistenceManager persistenceManager;
-   private CacheJmxRegistration cacheJmxRegistration;
 
    private RemoveCacheCommand() {
       super(null); // For command id uniqueness test
    }
 
-   public RemoveCacheCommand(String cacheName, EmbeddedCacheManager cacheManager,
-         GlobalComponentRegistry registry, PersistenceManager persistenceManager,
-         CacheJmxRegistration cacheJmxRegistration) {
+   public RemoveCacheCommand(String cacheName, EmbeddedCacheManager cacheManager) {
       super(cacheName);
       this.cacheManager = cacheManager;
-      this.registry = registry;
-      this.persistenceManager = persistenceManager;
-      this.cacheJmxRegistration = cacheJmxRegistration;
    }
 
    @Override
    public Object perform(InvocationContext ctx) throws Throwable {
-      persistenceManager.setClearOnStop(true);
-      cacheJmxRegistration.setUnregisterCacheMBean(true);
-      Cache<Object, Object> cache = cacheManager.getCache(cacheName);
-      cache.stop();
-      registry.removeCache(cacheName);
+      GlobalComponentRegistry globalComponentRegistry = cacheManager.getGlobalComponentRegistry();
+      ComponentRegistry cacheComponentRegistry = globalComponentRegistry.getNamedComponentRegistry(cacheName);
+      if (cacheComponentRegistry != null) {
+         cacheComponentRegistry.getComponent(PersistenceManager.class).setClearOnStop(true);
+         cacheComponentRegistry.getComponent(CacheJmxRegistration.class).setUnregisterCacheMBean(true);
+         cacheComponentRegistry.getComponent(PassivationManager.class).skipPassivationOnStop(true);
+         Cache<?, ?> cache = cacheManager.getCache(cacheName, false);
+         if (cache != null) {
+            cache.stop();
+         }
+      }
+      globalComponentRegistry.removeCache(cacheName);
+      // Remove cache configuration and remove it from the computed cache name list
+      globalComponentRegistry.getComponent(ConfigurationManager.class).removeConfiguration(cacheName);
+      // Remove cache from dependency graph
+      //noinspection unchecked
+      globalComponentRegistry.getComponent(DependencyGraph.class, CACHE_DEPENDENCY_GRAPH).remove(cacheName);
       return null;
    }
 
