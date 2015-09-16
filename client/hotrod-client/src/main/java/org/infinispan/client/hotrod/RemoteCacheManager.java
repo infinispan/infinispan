@@ -519,7 +519,7 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
    /**
     * Retrieves a named cache from the remote server if the cache has been
-    * defined, otherwise if the cache name is underfined, it will return null.
+    * defined, otherwise if the cache name is undefined, it will return null.
     *
     * @param cacheName name of cache to retrieve
     * @return a cache instance identified by cacheName or null if the cache
