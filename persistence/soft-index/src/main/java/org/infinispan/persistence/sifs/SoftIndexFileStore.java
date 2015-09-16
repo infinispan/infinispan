@@ -103,6 +103,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    private static final boolean trace = log.isTraceEnabled();
 
    private SoftIndexFileStoreConfiguration configuration;
+   private boolean started = false;
    private TemporaryTable temporaryTable;
    private IndexQueue indexQueue;
    private SyncProcessingQueue<LogRequest> storeQueue;
@@ -130,6 +131,10 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
 
    @Override
    public void start() {
+      if (started) {
+         throw new IllegalStateException("This store is already started!");
+      }
+      started = true;
       log.info("Starting using configuration " + configuration);
       temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments(), keyEquivalence);
       storeQueue = new SyncProcessingQueue<LogRequest>();
@@ -145,6 +150,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          throw new PersistenceException("Cannot open index file in " + configuration.indexLocation(), e);
       }
       compactor.setIndex(index);
+      startIndex();
       final AtomicLong maxSeqId = new AtomicLong(0);
       if (configuration.purgeOnStartup()) {
          log.debug("Not building the index - purge will be executed");
@@ -163,7 +169,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                   if (entry == null) {
                      entry = index.getPosition(key, serializedKey);
                   }
-                  if (entry != null) {
+                  // when the offset is < 0, the entry was deleted and we can't load its seqId
+                  // TODO: ISPN-5753 SIFS can reincarnate deleted entries during startup
+                  if (entry != null && entry.offset >= 0) {
                      FileProvider.Handle handle = fileProvider.getFile(entry.file);
                      try {
                         EntryHeader header = EntryRecord.readEntryHeader(handle, entry.offset);
@@ -196,6 +204,11 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       logAppender.setSeqId(maxSeqId.get() + 1);
    }
 
+   protected void startIndex() {
+      // this call is extracted for better testability
+      index.start();
+   }
+
    @Override
    public void stop() {
       try {
@@ -212,6 +225,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          storeQueue = null;
       } catch (InterruptedException e) {
          throw new PersistenceException("Cannot stop cache store", e);
+      } finally {
+         started = false;
       }
    }
 
