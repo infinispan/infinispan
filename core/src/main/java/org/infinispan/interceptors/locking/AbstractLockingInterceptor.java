@@ -168,6 +168,11 @@ public abstract class AbstractLockingInterceptor extends CommandInterceptor {
       return visitDataWriteCommand(ctx, command);
    }
 
+   @Override
+   protected boolean hasSkipLocking(LocalFlagAffectedCommand command) {
+      return command.hasFlag(Flag.SKIP_LOCKING);
+   }
+
    protected final Throwable cleanLocksAndRethrow(InvocationContext ctx, Throwable te) {
       lockManager.unlockAll(ctx);
       return te;
