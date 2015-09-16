@@ -1,7 +1,9 @@
 package org.infinispan.objectfilter.impl.aggregation;
 
 /**
- * Computes average of Numbers. The output is always a Double.
+ * Computes the average of {@link Number}s. The output type is always a {@link Double}. Nulls are excluded from the
+ * computation. If there are no remaining non-null values to which the aggregate function can be applied, the result of
+ * the aggregate function is {@code null}.
  *
  * @author anistor@redhat.com
  * @since 8.0
@@ -35,22 +37,22 @@ public final class AvgAccumulator extends FieldAccumulator {
    }
 
    @Override
-   public void init(Object[] row) {
-      Number value = (Number) row[pos];
-      row[pos] = value != null ? new Avg(value.doubleValue(), 1) : new Avg(0, 0);
+   public void init(Object[] accRow) {
+      Number value = (Number) accRow[pos];
+      accRow[pos] = value != null ? new Avg(value.doubleValue(), 1) : new Avg(0, 0);
    }
 
    @Override
-   public void update(Object[] srcRow, Object[] destRow) {
+   public void update(Object[] srcRow, Object[] accRow) {
       Number value = (Number) srcRow[pos];
       if (value != null) {
-         Avg avg = (Avg) destRow[pos];
+         Avg avg = (Avg) accRow[pos];
          avg.update(value.doubleValue());
       }
    }
 
    @Override
-   public void finish(Object[] row) {
-      row[pos] = ((Avg) row[pos]).getValue();
+   public void finish(Object[] accRow) {
+      accRow[pos] = ((Avg) accRow[pos]).getValue();
    }
 }
