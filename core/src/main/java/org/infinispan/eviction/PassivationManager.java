@@ -2,6 +2,7 @@ package org.infinispan.eviction;
 
 import net.jcip.annotations.ThreadSafe;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.jmx.JmxStatisticsExposer;
@@ -26,7 +27,13 @@ public interface PassivationManager extends JmxStatisticsExposer {
 
    void passivate(InternalCacheEntry entry);
 
+   @Stop(priority = 9)
    void passivateAll() throws PersistenceException;
+
+   /**
+    * Skips the passivation when the cache is stopped.
+    */
+   void skipPassivationOnStop(boolean skip);
 
    @ManagedAttribute(
          description = "Number of passivation events",

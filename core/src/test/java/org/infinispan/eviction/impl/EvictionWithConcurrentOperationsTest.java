@@ -535,6 +535,11 @@ public class EvictionWithConcurrentOperationsTest extends SingleCacheManagerTest
       }
 
       @Override
+      public void skipPassivationOnStop(boolean skip) {
+         delegate.skipPassivationOnStop(skip);
+      }
+
+      @Override
       public long getPassivations() {
          return delegate.getPassivations();
       }
