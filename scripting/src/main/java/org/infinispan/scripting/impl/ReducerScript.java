@@ -5,6 +5,7 @@ import java.util.Iterator;
 import javax.script.SimpleBindings;
 
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.distexec.mapreduce.Reducer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.scripting.ScriptingManager;
@@ -14,7 +15,9 @@ import org.infinispan.scripting.ScriptingManager;
  *
  * @author Tristan Tarrant
  * @since 7.2
+ * @deprecated Use the streaming API within a local script instead
  */
+@Deprecated
 public class ReducerScript<KOut, VOut> implements Reducer<KOut, VOut>, EnvironmentAware {
    private final ScriptMetadata metadata;
    private transient ScriptingManagerImpl scriptManager;
@@ -36,10 +39,11 @@ public class ReducerScript<KOut, VOut> implements Reducer<KOut, VOut>, Environme
    }
 
    @Override
-   public void setEnvironment(EmbeddedCacheManager cacheManager) {
+   public void setEnvironment(EmbeddedCacheManager cacheManager, Marshaller marshaller) {
       scriptManager = (ScriptingManagerImpl) SecurityActions.getGlobalComponentRegistry(cacheManager).getComponent(ScriptingManager.class);
       bindings = new SimpleBindings();
       bindings.put(SystemBindings.CACHE_MANAGER.toString(), cacheManager);
+      bindings.put(SystemBindings.MARSHALLER.toString(), marshaller);
    }
 
 }

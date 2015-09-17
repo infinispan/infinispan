@@ -1,11 +1,11 @@
 package org.infinispan.scripting;
 
-import javax.script.Bindings;
+import java.util.concurrent.CompletableFuture;
+
 import javax.script.ScriptEngine;
 
-import org.infinispan.Cache;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.tasks.TaskContext;
 
 /**
  * ScriptingManager. Defines the operations that can be performed on scripts. Scripts are stored in
@@ -39,52 +39,20 @@ public interface ScriptingManager {
    void removeScript(String name);
 
    /**
-    * Configures a custom marshaller to be exposed to scripts
-    * as a binding variable
-    *
-    * @param marshaller
-    */
-   void setMarshaller(Marshaller marshaller);
-
-   /**
-    * @return configured marshaller
-    */
-   Marshaller getMarshaller();
-
-   /**
     * Runs a named script
     *
     * @param scriptName The name of the script to run. Use {@link #addScript(String, String)} to add a script
     * @return a {@link NotifyingFuture} which will return the result of the script execution
     */
-   <T> NotifyingFuture<T> runScript(String scriptName);
+   <T> CompletableFuture<T> runScript(String scriptName);
 
    /**
-    * Runs a named script using the specified user bindings
+    * Runs a named script using the specified {@link TaskContext}
     *
     * @param scriptName The name of the script to run. Use {@link #addScript(String, String)} to add a script
-    * @param parameters The user parameters that will be combined with the system bindings and made available to the script
-    * @return a {@link NotifyingFuture} which will return the result of the script execution
+    * @param context A {@link TaskContext} within which the script will be executed
+    * @return a {@link CompletableFuture} which will return the result of the script execution
     */
-   <T> NotifyingFuture<T> runScript(String scriptName, Bindings parameters);
-
-   /**
-    * Runs a named script using the specified cache as a "driver". Use this form when invoking clustered scripts (i.e. distributed, map/reduce)
-    *
-    * @param scriptName The name of the script to run. Use {@link #addScript(String, String)} to add a script
-    * @param cache A cache to add to the system bindings. The parameter is compulsory if running clustered scripts
-    * @return a {@link NotifyingFuture} which will return the result of the script execution
-    */
-   <T> NotifyingFuture<T> runScript(String scriptName, Cache<?, ?> cache);
-
-   /**
-    * Runs a named script using the specified user bindings and the specified cache as a "driver". Use this form when invoking clustered scripts (i.e. distributed, map/reduce)
-    *
-    * @param scriptName The name of the script to run. Use {@link #addScript(String, String)} to add a script
-    * @param cache A cache to add to the system bindings. The parameter is compulsory if running clustered scripts
-    * @param parameters The user parameters that will be combined with the system bindings and made available to the script
-    * @return a {@link NotifyingFuture} which will return the result of the script execution
-    */
-   <T> NotifyingFuture<T> runScript(String scriptName, Cache<?, ?> cache, Bindings parameters);
+   <T> CompletableFuture<T> runScript(String scriptName, TaskContext context);
 
 }

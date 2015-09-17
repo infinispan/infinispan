@@ -1,5 +1,6 @@
 package org.infinispan.scripting.impl;
 
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
@@ -9,5 +10,5 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * @since 7.2
  */
 public interface EnvironmentAware {
-   void setEnvironment(EmbeddedCacheManager cacheManager);
+   void setEnvironment(EmbeddedCacheManager cacheManager, Marshaller marshaller);
 }

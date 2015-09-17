@@ -13,15 +13,15 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -52,7 +52,7 @@ public class ClusteredScriptingTest extends MultipleCacheManagersTest {
    public void testDistExecScript() throws InterruptedException, ExecutionException, IOException {
       ScriptingManager scriptingManager = getScriptingManager(manager(0));
       loadScript(scriptingManager, "/distExec.js");
-      Future<List<Address>> resultsFuture = scriptingManager.runScript("distExec.js", cache(0));
+      CompletableFuture<List<Address>> resultsFuture = scriptingManager.runScript("distExec.js", new TaskContext().cache(cache(0)));
       List<Address> results = resultsFuture.get();
       assertEquals(2, results.size());
       Set<Address> addresses = new HashSet<>();
@@ -73,8 +73,8 @@ public class ClusteredScriptingTest extends MultipleCacheManagersTest {
       loadScript(scriptingManager, "/wordCountMapper.js");
       loadScript(scriptingManager, "/wordCountReducer.js");
       loadScript(scriptingManager, "/wordCountCollator.js");
-      NotifyingFuture<Object> resultFuture = scriptingManager.runScript("wordCountMapper.js", cache);
-      LinkedHashMap<String, Double> results = (LinkedHashMap<String, Double>)resultFuture.get();
+      CompletableFuture<Object> future = scriptingManager.runScript("wordCountMapper.js", new TaskContext().cache(cache));
+      LinkedHashMap<String, Double> results = (LinkedHashMap<String, Double>)future.get();
       assertEquals(20, results.size());
       assertTrue(results.get("macbeth").equals(Double.valueOf(287)));
    }
