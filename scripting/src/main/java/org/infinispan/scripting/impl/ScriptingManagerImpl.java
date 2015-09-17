@@ -1,6 +1,8 @@
-package org.infinispan.scripting.impl;
+   package org.infinispan.scripting.impl;
 
 import java.util.EnumSet;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
 
 import javax.script.Bindings;
@@ -12,11 +14,8 @@ import javax.script.ScriptException;
 import javax.script.SimpleBindings;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller;
 import org.infinispan.commons.util.CollectionFactory;
-import org.infinispan.commons.util.concurrent.NoOpFuture;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfiguration;
@@ -28,11 +27,14 @@ import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.registry.InternalCacheRegistry;
 import org.infinispan.scripting.ScriptingManager;
-import org.infinispan.scripting.impl.ScriptMetadata.MetadataProperties;
 import org.infinispan.scripting.logging.Log;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.security.AuthorizationPermission;
+import org.infinispan.security.impl.AuthorizationHelper;
 import org.infinispan.security.impl.CacheRoleImpl;
+import org.infinispan.tasks.TaskContext;
+import org.infinispan.tasks.TaskManager;
+import org.infinispan.tasks.impl.TaskManagerImpl;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -44,8 +46,6 @@ import org.infinispan.util.logging.LogFactory;
 @Scope(Scopes.GLOBAL)
 public class ScriptingManagerImpl implements ScriptingManager {
    public static final String SCRIPT_MANAGER_ROLE = "___script_manager";
-   public static final String SCRIPT_CACHE = "___script_cache";
-   private static final String DEFAULT_SCRIPT_EXTENSION = "js";
    private static final Log log = LogFactory.getLog(ScriptingManagerImpl.class, Log.class);
    EmbeddedCacheManager cacheManager;
    private ScriptEngineManager scriptEngineManager;
@@ -53,19 +53,18 @@ public class ScriptingManagerImpl implements ScriptingManager {
    private ConcurrentMap<String, ScriptEngine> scriptEnginesByLanguage = CollectionFactory.makeConcurrentMap(2);
    Cache<String, String> scriptCache;
    ConcurrentMap<String, CompiledScript> compiledScripts = CollectionFactory.makeConcurrentMap();
-   private AuthorizationManager authzManager;
-   private Marshaller marshaller;
-
+   private AuthorizationHelper globalAuthzHelper;
 
    public ScriptingManagerImpl() {
    }
 
    @Inject
-   public void initialize(final EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry) {
+   public void initialize(final EmbeddedCacheManager cacheManager, InternalCacheRegistry internalCacheRegistry, TaskManager taskManager) {
       this.cacheManager = cacheManager;
       ClassLoader classLoader = cacheManager.getCacheManagerConfiguration().classLoader();
       this.scriptEngineManager = new ScriptEngineManager(classLoader);
       internalCacheRegistry.registerInternalCache(SCRIPT_CACHE, getScriptCacheConfiguration().build(), EnumSet.of(InternalCacheRegistry.Flag.USER, InternalCacheRegistry.Flag.PERSISTENT));
+      ((TaskManagerImpl)taskManager).registerTaskEngine(new ScriptingTaskEngine(this));
    }
 
    Cache<String, String> getScriptCache() {
@@ -85,12 +84,13 @@ public class ScriptingManagerImpl implements ScriptingManager {
       if (globalConfiguration.security().authorization().enabled()) {
          globalConfiguration.security().authorization().roles().put(SCRIPT_MANAGER_ROLE, new CacheRoleImpl(SCRIPT_MANAGER_ROLE, AuthorizationPermission.ALL));
          cfg.security().authorization().enable().role(SCRIPT_MANAGER_ROLE);
+         globalAuthzHelper = cacheManager.getGlobalComponentRegistry().getComponent(AuthorizationHelper.class);
       }
       return cfg;
    }
 
    ScriptMetadata compileScript(String name, String script) {
-      ScriptMetadata metadata = extractMetadataFromScript(name, script);
+      ScriptMetadata metadata = ScriptMetadataParser.parse(name, script);
       ScriptEngine engine = getEngineForScript(metadata);
       if (engine instanceof Compilable) {
          try {
@@ -107,7 +107,7 @@ public class ScriptingManagerImpl implements ScriptingManager {
 
    @Override
    public void addScript(String name, String script) {
-      ScriptMetadata metadata = extractMetadataFromScript(name, script);
+      ScriptMetadata metadata = ScriptMetadataParser.parse(name, script);
       ScriptEngine engine = getEngineForScript(metadata);
       if (engine == null) {
          throw log.noScriptEngineForScript(name);
@@ -122,48 +122,46 @@ public class ScriptingManagerImpl implements ScriptingManager {
       }
    }
 
-   @Override
-   public void setMarshaller(Marshaller marshaller) {
-      this.marshaller = marshaller;
+   public boolean containsScript(String taskName) {
+      return getScriptCache().containsKey(taskName);
    }
 
    @Override
-   public Marshaller getMarshaller() {
-         return this.marshaller;
+   public <T> CompletableFuture<T> runScript(String scriptName) {
+      return runScript(scriptName, new TaskContext());
    }
 
    @Override
-   public <T> NotifyingFuture<T> runScript(String scriptName, Bindings parameters) {
-      return runScript(scriptName, null, parameters);
-   }
-
-   @Override
-   public <T> NotifyingFuture<T> runScript(String scriptName) {
-      return runScript(scriptName, null, new SimpleBindings());
-   }
-
-   @Override
-   public <T> NotifyingFuture<T> runScript(String scriptName, Cache<?, ?> cache) {
-      return runScript(scriptName, cache, new SimpleBindings());
-   }
-
-   @Override
-   public <T> NotifyingFuture<T> runScript(String scriptName, Cache<?, ?> cache, Bindings parameters) {
-      if (authzManager != null) {
-         authzManager.checkPermission(AuthorizationPermission.EXEC);
-      }
+   public <T> CompletableFuture<T> runScript(String scriptName, TaskContext context) {
       ScriptMetadata metadata = getScriptMetadata(scriptName);
+      if (globalAuthzHelper != null) {
+         if (context.getCache().isPresent()) {
+            AuthorizationManager authorizationManager = SecurityActions.getAuthorizationManager(context.getCache().get().getAdvancedCache());
+            authorizationManager.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
+         } else {
+            globalAuthzHelper.checkPermission(AuthorizationPermission.EXEC, metadata.role().orElse(null));
+         }
+
+      }
+
+      Bindings userBindings = context.getParameters()
+            .map(p -> new SimpleBindings((Map<String, Object>) p))
+            .orElseGet(() -> new SimpleBindings());
 
       SimpleBindings systemBindings = new SimpleBindings();
       systemBindings.put(SystemBindings.CACHE_MANAGER.toString(), cacheManager);
       systemBindings.put(SystemBindings.SCRIPTING_MANAGER.toString(), this);
-      if (cache != null) {
+      context.getCache().ifPresent(cache -> {
          systemBindings.put(SystemBindings.CACHE.toString(), cache);
-      }
-      CacheScriptBindings bindings = new CacheScriptBindings(systemBindings, parameters);
+      });
 
-      String mode = metadata.property(MetadataProperties.MODE);
-      ScriptRunner runner = ExecutionMode.valueOf(mode.toUpperCase()).getRunner();
+      context.getMarshaller().ifPresent(marshaller -> {
+         systemBindings.put(SystemBindings.MARSHALLER.toString(), marshaller);
+      });
+
+      CacheScriptBindings bindings = new CacheScriptBindings(systemBindings, userBindings);
+
+      ScriptRunner runner = metadata.mode().getRunner();
 
       return runner.runScript(this, metadata, bindings);
    }
@@ -177,109 +175,35 @@ public class ScriptingManagerImpl implements ScriptingManager {
       return metadata;
    }
 
-   <T> NotifyingFuture<T> execute(ScriptMetadata metadata, Bindings bindings) {
+   <T> CompletableFuture<T> execute(ScriptMetadata metadata, Bindings bindings) {
       CompiledScript compiled = compiledScripts.get(metadata.name());
       try {
          if (compiled != null) {
             T result = (T) compiled.eval(bindings);
-            return new NoOpFuture<T>(result);
+            return CompletableFuture.completedFuture(result);
          } else {
             ScriptEngine engine = getEngineForScript(metadata);
             T result = (T) engine.eval(getScriptCache().get(metadata.name()), bindings);
-            return new NoOpFuture<T>(result);
+            return CompletableFuture.completedFuture(result);
          }
       } catch (ScriptException e) {
          throw log.scriptExecutionError(e);
       }
    }
 
-   private ScriptMetadata extractMetadataFromScript(String name, String script) {
-      ScriptMetadata.Builder metadataBuilder = new ScriptMetadata.Builder();
-
-      metadataBuilder.property(MetadataProperties.NAME, name);
-      metadataBuilder.property(MetadataProperties.MODE, ExecutionMode.LOCAL.toString().toLowerCase());
-      int s = name.lastIndexOf(".") + 1;
-      if (s == 0 || s == name.length())
-         metadataBuilder.property(MetadataProperties.EXTENSION, DEFAULT_SCRIPT_EXTENSION);
-      else
-         metadataBuilder.property(MetadataProperties.EXTENSION, name.substring(s));
-      if (script.startsWith("//")) {
-         int state = KEY;
-         String key = null;
-         String value = null;
-         StringBuilder sb = new StringBuilder();
-         char ch = 0;
-         for (int pos = 2; ch != 10 && ch != 13 && pos < script.length(); pos++) {
-            ch = script.charAt(pos);
-            switch (state) {
-            case KEY:
-               switch (ch) {
-               case '=':
-                  key = sb.toString().toUpperCase();
-                  sb = new StringBuilder();
-                  state = VALUE;
-                  break;
-               case ' ':
-                  break;
-               default:
-                  sb.append(ch);
-               }
-               break;
-            case VALUE:
-               switch (ch) {
-               case ',':
-               case 10:
-               case 13:
-                  value = sb.toString();
-                  metadataBuilder.property(MetadataProperties.valueOf(key), value);
-                  sb = new StringBuilder();
-                  state = KEY;
-                  break;
-               case ' ':
-                  break;
-               default:
-                  sb.append(ch);
-               }
-               break;
-            }
-         }
-      }
-
-      return metadataBuilder.build();
-   }
-
    ScriptEngine getEngineForScript(ScriptMetadata metadata) {
-      String language = metadata.property(MetadataProperties.LANGUAGE);
-      if (language != null) {
-         if (scriptEnginesByLanguage.containsKey(language)) {
-            return scriptEnginesByLanguage.get(language);
-         } else {
-            ScriptEngine engine = scriptEngineManager.getEngineByName(language);
-            if (engine == null) {
-               throw log.noEngineForScript(metadata.name());
-            } else {
-               scriptEnginesByLanguage.put(language, engine);
-               return engine;
-            }
-         }
+      ScriptEngine engine;
+      if (metadata.language().isPresent()) {
+         engine = scriptEnginesByLanguage.computeIfAbsent(metadata.language().get(),
+               scriptEngineManager::getEngineByName);
       } else {
-         String extension = metadata.property(MetadataProperties.EXTENSION);
-         if (scriptEnginesByExtension.containsKey(extension)) {
-            return scriptEnginesByExtension.get(extension);
-         } else {
-            ScriptEngine engine = scriptEngineManager.getEngineByExtension(extension);
-            if (engine == null) {
-               throw log.noEngineForScript(metadata.name());
-            } else {
-               scriptEnginesByExtension.put(extension, engine);
-               return engine;
-            }
-         }
+         engine = scriptEnginesByExtension.computeIfAbsent(metadata.extension(),
+               scriptEngineManager::getEngineByExtension);
       }
-
+      if (engine == null) {
+         throw log.noEngineForScript(metadata.name());
+      } else {
+         return engine;
+      }
    }
-
-   private static final int KEY = 0;
-   private static final int VALUE = 1;
-
 }

@@ -11,8 +11,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
-import org.infinispan.commons.util.concurrent.NotifyingNotifiableFuture;
-
 import java.util.Map;
 
 /**
@@ -26,7 +24,7 @@ public class CompletableFutures {
    private static final CompletableFuture completedEmptyMapFuture = CompletableFuture.completedFuture(InfinispanCollections.emptyMap());
 
    public static <K,V> CompletableFuture<Map<K, V>> returnEmptyMap() {
-      return (CompletableFuture<Map<K, V>>) completedEmptyMapFuture;
+      return completedEmptyMapFuture;
    }
 
    public static <T> void connect(NotifyingNotifiableFuture<T> sink, CompletableFuture<T> source) {
@@ -40,7 +38,7 @@ public class CompletableFutures {
       sink.setFuture(compoundSource);
    }
 
-   public static <T> CompletableFuture<T> connect(NotifyingFuture<T> source) {
+   public static <T> CompletableFuture<T> toCompletableFuture(NotifyingFuture<T> source) {
       final CompletableFuture<T> result = new CompletableFuture<>();
       source.attachListener(f -> {
          try {
@@ -52,7 +50,7 @@ public class CompletableFutures {
       return result;
    }
 
-   public static <T> CompletableFuture<List<T>> combine(List<CompletableFuture<T>> futures) {
+   public static <T> CompletableFuture<List<T>> sequence(List<CompletableFuture<T>> futures) {
       CompletableFuture<Void> all = CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));
       return all.thenApply(v -> futures.stream().map(future -> future.join()).collect(Collectors.<T> toList()));
    }

@@ -1,8 +1,5 @@
 package org.infinispan.tasks.impl;
 
-import static org.infinispan.commons.io.OptionalObjectInputOutput.readOptionalUTF;
-import static org.infinispan.commons.io.OptionalObjectInputOutput.writeOptional;
-
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -24,19 +21,19 @@ public class TaskExecutionImplExternalizer implements Externalizer<TaskExecution
       output.writeLong(object.uuid.getMostSignificantBits());
       output.writeLong(object.uuid.getLeastSignificantBits());
       output.writeUTF(object.name);
-      writeOptional(output, object.what);
+      output.writeObject(object.what);
       output.writeUTF(object.where);
-      writeOptional(output, object.who);
+      output.writeObject(object.who);
    }
 
    @Override
-   public TaskExecutionImpl readObject(ObjectInput input) throws IOException {
+   public TaskExecutionImpl readObject(ObjectInput input) throws IOException, ClassNotFoundException {
       long uuidMSB = input.readLong();
       long uuidLSB = input.readLong();
       String name = input.readUTF();
-      Optional<String> what = readOptionalUTF(input);
+      Optional<String> what = (Optional<String>) input.readObject();
       String where = input.readUTF();
-      Optional<String> who = readOptionalUTF(input);
+      Optional<String> who = (Optional<String>) input.readObject();
 
       TaskExecutionImpl event = new TaskExecutionImpl(new UUID(uuidMSB, uuidLSB), name, what, where, who);
 

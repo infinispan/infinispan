@@ -9,19 +9,16 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.Buffer;
 import java.nio.CharBuffer;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.remoting.transport.Address;
+import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
@@ -38,7 +35,7 @@ public class ClusteredScriptingTest extends MultipleCacheManagersTest {
 
    private void executeScriptOnManager(int num, String scriptName) throws InterruptedException, ExecutionException {
       ScriptingManager scriptingManager = getScriptingManager(manager(num));
-      String s = (String) scriptingManager.runScript(scriptName).get();
+      String s = (String) scriptingManager.runScript(scriptName, new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", s);
    }
 
@@ -49,17 +46,22 @@ public class ClusteredScriptingTest extends MultipleCacheManagersTest {
       executeScriptOnManager(1, "test.js");
    }
 
+   public void testClusteredScriptStream() throws IOException, InterruptedException, ExecutionException {
+      ScriptingManager scriptingManager = getScriptingManager(manager(0));
+      loadScript(scriptingManager, "/test.js");
+      executeScriptOnManager(0, "test.js");
+      executeScriptOnManager(1, "test.js");
+   }
+
    public void testDistExecScript() throws InterruptedException, ExecutionException, IOException {
       ScriptingManager scriptingManager = getScriptingManager(manager(0));
-      loadScript(scriptingManager, "/distExec.js");
-      Future<List<Address>> resultsFuture = scriptingManager.runScript("distExec.js", cache(0));
-      List<Address> results = resultsFuture.get();
-      assertEquals(2, results.size());
-      Set<Address> addresses = new HashSet<>();
-      for (Address result : results) {
-         addresses.add(result);
-      }
-      assertTrue(addresses.containsAll(manager(0).getMembers()));
+      Cache<String, String> cache = cache(0);
+      loadData(cache, "/macbeth.txt");
+      loadScript(scriptingManager, "/wordCountStream.js");
+      CompletableFuture<Map<String, Long>> resultsFuture = scriptingManager.runScript("wordCountStream.js", new TaskContext().cache(cache(0)));
+      Map<String, Long> results = resultsFuture.get();
+      assertEquals(3209, results.size());
+      assertEquals(results.get("macbeth"), Long.valueOf(287));
    }
 
    private ScriptingManager getScriptingManager(EmbeddedCacheManager manager) {
@@ -73,8 +75,8 @@ public class ClusteredScriptingTest extends MultipleCacheManagersTest {
       loadScript(scriptingManager, "/wordCountMapper.js");
       loadScript(scriptingManager, "/wordCountReducer.js");
       loadScript(scriptingManager, "/wordCountCollator.js");
-      NotifyingFuture<Object> resultFuture = scriptingManager.runScript("wordCountMapper.js", cache);
-      LinkedHashMap<String, Double> results = (LinkedHashMap<String, Double>)resultFuture.get();
+      CompletableFuture<Object> future = scriptingManager.runScript("wordCountMapper.js", new TaskContext().cache(cache));
+      LinkedHashMap<String, Double> results = (LinkedHashMap<String, Double>)future.get();
       assertEquals(20, results.size());
       assertTrue(results.get("macbeth").equals(Double.valueOf(287)));
    }

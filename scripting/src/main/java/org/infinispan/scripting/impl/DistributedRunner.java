@@ -3,13 +3,14 @@ package org.infinispan.scripting.impl;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 import org.infinispan.Cache;
-import org.infinispan.commons.util.concurrent.Futures;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.distexec.DefaultExecutorService;
 import org.infinispan.scripting.logging.Log;
+import org.infinispan.util.concurrent.CompletableFutures;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -26,7 +27,7 @@ public class DistributedRunner implements ScriptRunner {
    }
 
    @Override
-   public <T> NotifyingFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings binding) {
+   public <T> CompletableFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings binding) {
       Cache<?, ?> masterCacheNode = (Cache<?, ?>) binding.get(SystemBindings.CACHE.toString());
       if (masterCacheNode == null) {
          throw log.distributedTaskNeedCacheInBinding(metadata.name());
@@ -34,13 +35,10 @@ public class DistributedRunner implements ScriptRunner {
       DefaultExecutorService des = new DefaultExecutorService(masterCacheNode);
       try {
          List<Future<T>> tasks = des.submitEverywhere(new DistributedScript<T>(metadata));
-         List<NotifyingFuture<T>> notifyingTasks = new ArrayList<>(tasks.size());
-         for (Future<T> task : tasks) {
-               notifyingTasks.add((NotifyingFuture<T>) task);
-         }
-         NotifyingFuture<List<T>> combinedFutures = Futures.combine(notifyingTasks);
+         List<CompletableFuture<T>> all = new ArrayList<>(tasks.size());
+         tasks.forEach(task -> all.add(CompletableFutures.toCompletableFuture((NotifyingFuture<T>) task)));
 
-         return (NotifyingFuture<T>) combinedFutures;
+         return (CompletableFuture<T>) CompletableFutures.sequence(all);
       } finally {
          des.shutdown();
       }

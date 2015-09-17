@@ -56,6 +56,10 @@ public class AuthorizationHelper {
       checkPermission(null, perm, null);
    }
 
+   public void checkPermission(AuthorizationPermission perm, String role) {
+      checkPermission(null, perm, role);
+   }
+
    public void checkPermission(AuthorizationConfiguration configuration, AuthorizationPermission perm) {
       checkPermission(configuration, perm, null);
    }

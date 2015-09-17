@@ -12,7 +12,9 @@ import org.infinispan.distexec.mapreduce.Collator;
  *
  * @author Tristan Tarrant
  * @since 7.2
+ * @deprecated Use the streaming API within a local script instead
  */
+@Deprecated
 public class CollatorScript<KOut, VOut, R> implements Collator<KOut, VOut, R> {
    private final ScriptMetadata metadata;
    private final ScriptingManagerImpl scriptManager;

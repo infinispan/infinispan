@@ -32,9 +32,7 @@ import static org.junit.Assert.assertTrue;
 public class ScriptExecIT {
 
    private static final String SCRIPT_CACHE_NAME = "___script_cache";
-   private static final String MAPPER = "mapper.js";
-   private static final String REDUCER = "reducer.js";
-   private static final String COLLATOR = "collator.js";
+   private static final String STREAM = "stream.js";
 
    static RemoteCacheManager remoteCacheManager;
    RemoteCache<Integer, String> remoteCache;
@@ -68,14 +66,14 @@ public class ScriptExecIT {
       remoteCache.put(2, "word1 word2");
       remoteCache.put(3, "word1");
 
-      addScripts(MAPPER, REDUCER, COLLATOR);
+      addScripts(STREAM);
 
-      Map<String, Double> results = remoteCache.execute(MAPPER, emptyMap());
+      Map<String, Long> results = remoteCache.execute(STREAM, emptyMap());
 
       assertEquals(3, results.size());
-      assertTrue(results.get("word1").equals(Double.valueOf(3)));
-      assertTrue(results.get("word2").equals(Double.valueOf(2)));
-      assertTrue(results.get("word3").equals(Double.valueOf(1)));
+      assertTrue(results.get("word1").equals(Long.valueOf(3)));
+      assertTrue(results.get("word2").equals(Long.valueOf(2)));
+      assertTrue(results.get("word3").equals(Long.valueOf(1)));
    }
 
    private void addScripts(String... scripts) throws IOException {
