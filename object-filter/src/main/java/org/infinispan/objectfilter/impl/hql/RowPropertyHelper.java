@@ -67,6 +67,7 @@ public final class RowPropertyHelper extends ObjectPropertyHelper<RowPropertyHel
 
    static {
       primitives.add(java.util.Date.class);
+      primitives.add(java.time.Instant.class);
       primitives.add(String.class);
       primitives.add(Character.class);
       primitives.add(Double.class);
