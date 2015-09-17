@@ -5,6 +5,7 @@ import org.infinispan.query.dsl.Query;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -374,6 +375,11 @@ public class JPAQueryGenerator implements Visitor<String> {
 
       if (argument instanceof Date) {
          sb.append('\'').append(renderDate((Date) argument)).append('\'');
+         return;
+      }
+
+      if (argument instanceof Instant) {
+         sb.append('\'').append(argument).append('\'');
          return;
       }
 

@@ -22,6 +22,7 @@ public final class ReflectionPropertyHelper extends ObjectPropertyHelper<Class<?
 
    static {
       primitives.put(java.util.Date.class, java.util.Date.class);
+      primitives.put(java.time.Instant.class, java.time.Instant.class);
       primitives.put(String.class, String.class);
       primitives.put(Character.class, Character.class);
       primitives.put(char.class, Character.class);

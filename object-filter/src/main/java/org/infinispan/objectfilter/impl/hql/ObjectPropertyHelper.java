@@ -9,6 +9,7 @@ import org.jboss.logging.Logger;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
@@ -62,6 +63,10 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
          } catch (ParseException e) {
             throw log.getInvalidDateLiteralException(value);
          }
+      }
+
+      if (Instant.class.isAssignableFrom(propertyType)) {
+         return Instant.parse(value);
       }
 
       if (Enum.class.isAssignableFrom(propertyType)) {
