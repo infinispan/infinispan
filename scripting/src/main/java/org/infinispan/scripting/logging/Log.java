@@ -48,4 +48,7 @@ public interface Log extends org.infinispan.util.logging.Log {
 
    @Message(value = "Cannot find an appropriate script engine for script '%s'", id = 21010)
    IllegalArgumentException noEngineForScript(String name);
+
+   @Message(value = "Script parameters must be declared using the array notation, e.g. [a,b,c]", id = 21011)
+   IllegalArgumentException parametersNotArray();
 }

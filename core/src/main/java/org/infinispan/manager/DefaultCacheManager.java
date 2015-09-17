@@ -216,6 +216,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       this.globalComponentRegistry.registerComponent(configurationManager, ConfigurationManager.class);
       this.globalComponentRegistry.registerComponent(cacheDependencyGraph, CACHE_DEPENDENCY_GRAPH, false);
       this.authzHelper = new AuthorizationHelper(globalConfiguration.security(), AuditContext.CACHEMANAGER, globalConfiguration.globalJmxStatistics().cacheManagerName());
+      this.globalComponentRegistry.registerComponent(authzHelper, AuthorizationHelper.class);
       this.stats = new CacheContainerStatsImpl(this);
       if (start)
          start();

@@ -82,6 +82,9 @@ public class TaskManagerImpl implements TaskManager {
             CompletableFuture<T> task = engine.runTask(name, context);
             return task.whenComplete((r, e) -> {
                // TODO: hook up to the event logger, once that is implemented
+               if (e != null) {
+                  e.printStackTrace();
+               }
                runningTasks.remove(exec.getUUID());
             });
          }

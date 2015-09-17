@@ -3,57 +3,83 @@ package org.infinispan.scripting.impl;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Collections;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.container.versioning.EntryVersion;
 import org.infinispan.metadata.Metadata;
 
 /**
- * ScriptMetadata.
+ * ScriptMetadata. Holds meta information about a script obtained either implicitly by the script
+ * name and extension, or explictly by its header. See the "Script metadata" chapter in the User Guide for
+ * the syntax and format.
  *
  * @author Tristan Tarrant
  * @since 7.2
  */
 public class ScriptMetadata implements Metadata {
+   private final String name;
+   private final ExecutionMode mode;
+   private final String extension;
+   private final Set<String> parameters;
+   private final Optional<String> language;
+   private final Optional<String> role;
+   private final Optional<String> reducer;
+   private final Optional<String> collator;
+   private final Optional<String> combiner;
 
-   public static enum MetadataProperties {
-      NAME("name"), LANGUAGE("language"), MODE("mode"), REDUCER("reducer"), COLLATOR("collator"), COMBINER("combiner"), EXTENSION("extension");
-
-      private final String s;
-
-      MetadataProperties(String s) {
-         this.s = s;
-      }
-
-      @Override
-      public String toString() {
-         return s;
-      }
+   ScriptMetadata(String name, Optional<String> language, String extension, ExecutionMode mode, Set<String> parameters,
+         Optional<String> role, Optional<String> reducer, Optional<String> collator, Optional<String> combiner) {
+      this.name = name;
+      this.language = language;
+      this.extension = extension;
+      this.mode = mode;
+      this.parameters = Collections.unmodifiableSet(parameters);
+      this.role = role;
+      this.reducer = reducer;
+      this.collator = collator;
+      this.combiner = combiner;
    }
 
-   final private Map<MetadataProperties, String> properties;
-
-   private ScriptMetadata(Map<MetadataProperties, String> properties) {
-      this.properties = properties;
+   public Optional<String> language() {
+      return language;
    }
 
-   public String property(MetadataProperties property) {
-      return properties.get(property);
+   public String extension() {
+      return extension;
    }
 
+   public Set<String> parameters() {
+      return parameters;
+   }
+
+   public Optional<String> role() {
+      return role;
+   }
 
    public String name() {
-      return properties.get(MetadataProperties.NAME);
+      return name;
    }
 
    public ExecutionMode mode() {
-      return ExecutionMode.valueOf(properties.get(MetadataProperties.MODE));
+      return mode;
+   }
+
+   public Optional<String> reducer() {
+      return reducer;
+   }
+
+   public Optional<String> combiner() {
+      return combiner;
+   }
+
+   public Optional<String> collator() {
+      return collator;
    }
 
    @Override
@@ -73,24 +99,69 @@ public class ScriptMetadata implements Metadata {
 
    @Override
    public Builder builder() {
-      return new Builder().properties(properties);
+      return new Builder().name(name).extension(extension).mode(mode).parameters(parameters);
    }
 
    @Override
    public String toString() {
-      return "ScriptMetadata [properties=" + properties + "]";
+      return "ScriptMetadata [name=" + name + ", language=" + language + ", mode=" + mode + ", extension=" + extension
+            + ", parameters=" + parameters + ", role=" + role + ", reducer=" + reducer + ", collator=" + collator
+            + ", combiner=" + combiner + "]";
    }
 
    public static class Builder implements Metadata.Builder {
-      private Map<MetadataProperties, String> properties = new HashMap<>(4);
+      String name;
+      String extension;
+      Optional<String> language = Optional.empty();
+      ExecutionMode mode;
+      Set<String> parameters = InfinispanCollections.emptySet();
+      Optional<String> role = Optional.empty();
+      Optional<String> combiner = Optional.empty();
+      Optional<String> collator = Optional.empty();
+      Optional<String> reducer = Optional.empty();
 
-      public ScriptMetadata.Builder property(MetadataProperties property, String value) {
-         properties.put(property, value);
+      public ScriptMetadata.Builder name(String name) {
+         this.name = name;
          return this;
       }
 
-      ScriptMetadata.Builder properties(Map<MetadataProperties, String> properties) {
-         this.properties = properties;
+      public ScriptMetadata.Builder mode(ExecutionMode mode) {
+         this.mode = mode;
+         return this;
+      }
+
+      public ScriptMetadata.Builder extension(String extension) {
+         this.extension = extension;
+         return this;
+      }
+
+      public ScriptMetadata.Builder language(String language) {
+         this.language = Optional.of(language);
+         return this;
+      }
+
+      public ScriptMetadata.Builder parameters(Set<String> parameters) {
+         this.parameters = parameters;
+         return this;
+      }
+
+      public ScriptMetadata.Builder role(String role) {
+         this.role = Optional.of(role);
+         return this;
+      }
+
+      public ScriptMetadata.Builder reducer(String reducer) {
+         this.reducer = Optional.of(reducer);
+         return this;
+      }
+
+      public ScriptMetadata.Builder collator(String collator) {
+         this.collator = Optional.of(collator);
+         return this;
+      }
+
+      public ScriptMetadata.Builder combiner(String combiner) {
+         this.combiner = Optional.of(combiner);
          return this;
       }
 
@@ -121,7 +192,7 @@ public class ScriptMetadata implements Metadata {
 
       @Override
       public ScriptMetadata build() {
-         return new ScriptMetadata(properties);
+         return new ScriptMetadata(name, language, extension, mode, parameters, role, reducer, collator, combiner);
       }
 
       @Override
@@ -139,8 +210,6 @@ public class ScriptMetadata implements Metadata {
       public Externalizer() {
       }
 
-
-
       @Override
       public Integer getId() {
          return ExternalizerIds.SCRIPT_METADATA;
@@ -148,31 +217,36 @@ public class ScriptMetadata implements Metadata {
 
       @Override
       public Set<Class<? extends ScriptMetadata>> getTypeClasses() {
-         return Util.<Class<? extends ScriptMetadata>>asSet(ScriptMetadata.class);
+         return Util.<Class<? extends ScriptMetadata>> asSet(ScriptMetadata.class);
       }
 
       @Override
       public void writeObject(ObjectOutput output, ScriptMetadata object) throws IOException {
-         output.writeInt(object.properties.size());
-         for(Entry<MetadataProperties, String> e : object.properties.entrySet()) {
-            output.writeUTF(e.getKey().name());
-            output.writeUTF(e.getValue());
-         }
+         output.writeUTF(object.name);
+         output.writeUTF(object.extension);
+         output.writeUTF(object.mode.name());
+         output.writeObject(object.parameters);
+         output.writeObject(object.language);
+         output.writeObject(object.role);
+         output.writeObject(object.reducer);
+         output.writeObject(object.collator);
+         output.writeObject(object.combiner);
       }
 
       @Override
       public ScriptMetadata readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-         Builder builder = new ScriptMetadata.Builder();
-         int size = input.readInt();
-         for(int i = 0; i < size; i++) {
-            String key = input.readUTF();
-            String value = input.readUTF();
-            builder.property(MetadataProperties.valueOf(key), value);
-         }
-         return builder.build();
+         String name = input.readUTF();
+         String extension = input.readUTF();
+         ExecutionMode mode = ExecutionMode.valueOf(input.readUTF());
+         Set<String> parameters = (Set<String>) input.readObject();
+
+         Optional<String> language = (Optional<String>) input.readObject();
+         Optional<String> role = (Optional<String>) input.readObject();
+         Optional<String> reducer = (Optional<String>) input.readObject();
+         Optional<String> collator = (Optional<String>) input.readObject();
+         Optional<String> combiner = (Optional<String>) input.readObject();
+
+         return new ScriptMetadata(name, language, extension, mode, parameters, role, reducer, collator, combiner);
       }
-
    }
-
-
 }
