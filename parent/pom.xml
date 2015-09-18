@@ -173,8 +173,8 @@
       
       <version.wildfly>10.0.0.Beta1</version.wildfly>
       <version.wildfly.arquillian>1.0.0.Final</version.wildfly.arquillian>
-      <version.wildfly.core>1.0.1.Final</version.wildfly.core>
-      <version.wildfly.maven.plugin>1.1.0.Alpha2</version.wildfly.maven.plugin>
+      <version.wildfly.core>2.0.0.CR1</version.wildfly.core>
+      <version.wildfly.maven.plugin>1.1.0.Alpha3</version.wildfly.maven.plugin>
       <version.javassist>3.18.1-GA</version.javassist>
       <version.maven.buildhelper>1.8</version.maven.buildhelper>
       <version.maven.bundle>2.4.0</version.maven.bundle>
@@ -1003,6 +1003,11 @@
          <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-analyzers-common</artifactId>
+            <version>${version.lucene}</version>
+         </dependency>
+         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-memory</artifactId>
             <version>${version.lucene}</version>
          </dependency>
           <dependency>

@@ -93,6 +93,7 @@ import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.PathManagerService;
+import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.as.network.OutboundSocketBinding;
 import org.jboss.as.server.ServerEnvironment;
 import org.jboss.as.server.Services;
@@ -687,8 +688,7 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             AbstractJdbcStoreConfigurationBuilder<?, ?> builder = buildJdbcStore(persistenceBuilder, context, store, databaseType);
 
             final String datasource = BaseJDBCStoreConfigurationResource.DATA_SOURCE.resolveModelAttribute(context, store).asString();
-
-            dependencies.add(new Dependency<>(ServiceName.JBOSS.append("data-source", datasource)));
+            dependencies.add(new Dependency<>(ServiceName.JBOSS.append("data-source", ContextNames.bindInfoFor(datasource).getBinderServiceName().getCanonicalName())));
             builder.dataSource().jndiUrl(datasource);
             return builder;
         } else if (storeKey.equals(ModelKeys.REMOTE_STORE)) {
