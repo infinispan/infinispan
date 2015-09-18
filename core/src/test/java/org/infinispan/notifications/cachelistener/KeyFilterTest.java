@@ -56,7 +56,7 @@ public class KeyFilterTest extends AbstractInfinispanTest {
       cl = new CacheListener();
       n.start();
       n.addListener(cl, kf);
-      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance());
+      ctx = new NonTxInvocationContext(null, AnyEquivalence.getInstance(), null);
    }
 
    public void testFilters() {

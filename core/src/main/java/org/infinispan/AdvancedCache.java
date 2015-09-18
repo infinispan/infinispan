@@ -113,10 +113,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
    void removeInterceptor(Class<? extends CommandInterceptor> interceptorType);
 
    /**
-    * Retrieves the current Interceptor chain.
-    *
-    * @return an immutable {@link java.util.List} of {@link org.infinispan.interceptors.base.CommandInterceptor}s
-    *         configured for this cache
+    * @deprecated Since 8.1, returns {@code null} because not all interceptors are {@link CommandInterceptor}s.
     */
    List<CommandInterceptor> getInterceptorChain();
 

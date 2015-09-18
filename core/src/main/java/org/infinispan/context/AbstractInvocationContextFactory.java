@@ -5,6 +5,7 @@ import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.context.impl.ClearInvocationContext;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
 
@@ -18,11 +19,13 @@ import org.infinispan.remoting.transport.Address;
 public abstract class AbstractInvocationContextFactory implements InvocationContextFactory {
 
    protected Configuration config;
+   protected SequentialInterceptorChain interceptorChain;
    protected Equivalence keyEq;
 
    // Derived classes must call init() in their @Inject methods, to keep only one @Inject method per class.
-   public void init(Configuration config) {
+   public void init(Configuration config, SequentialInterceptorChain interceptorChain) {
       this.config = config;
+      this.interceptorChain = interceptorChain;
       keyEq = config.dataContainer().keyEquivalence();
    }
 
@@ -39,7 +42,7 @@ public abstract class AbstractInvocationContextFactory implements InvocationCont
    }
 
    private ClearInvocationContext createClearInvocationContext(Address origin) {
-      ClearInvocationContext context = new ClearInvocationContext(origin);
+      ClearInvocationContext context = new ClearInvocationContext(origin, interceptorChain);
       return context;
    }
 }

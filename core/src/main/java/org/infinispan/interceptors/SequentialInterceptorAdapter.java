@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 
 /**
  * @author Dan Berindei
@@ -50,18 +51,16 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
 
    @Override
    public CompletableFuture<Object> visitCommand(InvocationContext ctx, VisitableCommand command) {
-      SequentialInvocationContext sctx = (SequentialInvocationContext) ctx;
-      AdapterContext actx = new AdapterContext(sctx);
-      CompletableFuture<Object> adaptedFuture = CompletableFuture.supplyAsync(() -> {
+      AdapterContext actx = new AdapterContext(ctx);
+      actx.adaptedFuture = CompletableFuture.supplyAsync(() -> {
          try {
             Object returnValue = command.acceptVisitor(actx, adaptedInterceptor);
-            actx.beforeFuture.complete(sctx.shortCircuit(returnValue));
+            actx.beforeFuture.complete(ctx.shortCircuit(returnValue));
             return returnValue;
          } catch (Throwable throwable) {
             throw new CacheException(throwable);
          }
       }, executor);
-      actx.adaptedFuture = adaptedFuture;
       return actx.beforeFuture;
    }
 
@@ -106,7 +105,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
    }
 
    private class AdapterContext implements InvocationContext {
-      private final SequentialInvocationContext sctx;
+      private final InvocationContext sctx;
       // Done when the command was passed to the next SequentialInterceptor in the chain
       CompletableFuture<Object> beforeFuture = new CompletableFuture<>();
       // Done when the next SequentialInterceptor returns
@@ -114,7 +113,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       // Done when the adapted interceptor finished executing
       public CompletableFuture<Object> adaptedFuture;
 
-      public AdapterContext(SequentialInvocationContext sctx) {
+      public AdapterContext(InvocationContext sctx) {
          this.sctx = sctx;
       }
 
@@ -206,6 +205,32 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       @Override
       public void removeLookedUpEntry(Object key) {
          sctx.removeLookedUpEntry(key);
+      }
+
+      @Override
+      public VisitableCommand getCommand() {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public void onReturn(BiFunction<Object, Throwable, Object> returnHandler) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public CompletableFuture<Object> shortCircuit(Object returnValue) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand,
+                                                      BiFunction<Object, Throwable, Object> returnHandler) {
+         throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public CompletableFuture<Object> execute(VisitableCommand command) {
+         throw new UnsupportedOperationException();
       }
    }
 }

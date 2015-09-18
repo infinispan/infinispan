@@ -4,6 +4,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.BaseSequentialInvocationContext;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
 /**
@@ -18,7 +19,8 @@ public abstract class AbstractInvocationContext extends BaseSequentialInvocation
    // Class loader associated with this invocation which supports AdvancedCache.with() functionality
    private ClassLoader classLoader;
 
-   protected AbstractInvocationContext(Address origin) {
+   protected AbstractInvocationContext(Address origin, SequentialInterceptorChain interceptorChain) {
+      super(interceptorChain);
       this.origin = origin;
    }
 
@@ -35,15 +37,6 @@ public abstract class AbstractInvocationContext extends BaseSequentialInvocation
    @Override
    public boolean hasLockedKey(Object key) {
       return getLockedKeys().contains(key);
-   }
-
-   @Override
-   public AbstractInvocationContext clone() {
-      try {
-         return (AbstractInvocationContext) super.clone();
-      } catch (CloneNotSupportedException e) {
-         throw new IllegalStateException("Impossible!");
-      }
    }
 
    @Override

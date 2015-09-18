@@ -3,6 +3,8 @@ package org.infinispan.context;
 import org.infinispan.commons.equivalence.Equivalence;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.container.entries.CacheEntry;
+import org.infinispan.interceptors.BaseSequentialInvocationContext;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
 import java.util.Collections;
@@ -35,7 +37,9 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
 
    private Object lockOwner;
 
-   public SingleKeyNonTxInvocationContext(final Address origin, final Equivalence<Object> keyEquivalence) {
+   public SingleKeyNonTxInvocationContext(final Address origin, final Equivalence<Object> keyEquivalence,
+                                          SequentialInterceptorChain interceptorChain) {
+      super(interceptorChain);
       this.origin = origin;
       this.keyEquivalence = keyEquivalence;
    }
@@ -153,15 +157,6 @@ public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocat
    public boolean isEntryRemovedInContext(final Object key) {
       CacheEntry ce = lookupEntry(key);
       return ce != null && ce.isRemoved() && ce.isChanged();
-   }
-
-   @Override
-   public SingleKeyNonTxInvocationContext clone() {
-      try {
-         return (SingleKeyNonTxInvocationContext) super.clone();
-      } catch (CloneNotSupportedException e) {
-         throw new IllegalStateException("Impossible!");
-      }
    }
 
    public void resetState() {

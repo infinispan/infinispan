@@ -31,7 +31,7 @@ public class InterceptorChainTest {
    public void testConcurrentAddRemove() throws Exception {
       ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
       componentMetadataRepo.initialize(Collections.<ModuleMetadataFileFinder>emptyList(), InterceptorChainTest.class.getClassLoader());
-      InterceptorChain ic = new InterceptorChain(componentMetadataRepo);
+      InterceptorChain ic = new SequentialInterceptorChainImpl(componentMetadataRepo);
       ic.setFirstInChain(new CallInterceptor());
       ic.addInterceptor(new ActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);
