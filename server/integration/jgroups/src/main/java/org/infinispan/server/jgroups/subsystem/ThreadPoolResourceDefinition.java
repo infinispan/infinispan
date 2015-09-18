@@ -153,6 +153,11 @@ public enum ThreadPoolResourceDefinition implements ResourceDefinition {
         return false;
     }
 
+    @Override
+    public boolean isOrderedChild() {
+        return false;
+    }
+
     AttributeDefinition[] getAttributes() {
         return new AttributeDefinition[] { this.minThreads, this.maxThreads, this.queueLength, this.keepaliveTime };
     }

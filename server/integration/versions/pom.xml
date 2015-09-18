@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.jboss</groupId>
       <artifactId>jboss-parent</artifactId>
-      <version>17</version>
+      <version>19</version>
       <relativePath />
    </parent>
 
@@ -30,7 +30,7 @@
       <version.com.thoughtworks.paranamer>2.3</version.com.thoughtworks.paranamer>
       <version.commons.logging>1.1.1</version.commons.logging>
       <version.net.jcip.annotations>1.0</version.net.jcip.annotations>
-      <version.org.jboss.jandex>1.2.1.Final</version.org.jboss.jandex>
+      <version.org.jboss.jandex>2.0.0.CR1</version.org.jboss.jandex>
       <version.org.jboss.jbossts.jbossjts>4.16.2.Final</version.org.jboss.jbossts.jbossjts>
       <version.org.jboss.modules>1.4.3.Final</version.org.jboss.modules>
       <version.junit>4.11</version.junit>
@@ -40,14 +40,12 @@
       <version.org.slf4j>1.7.2</version.org.slf4j>
       <version.org.apache.logging.log4j>2.3</version.org.apache.logging.log4j>
 
-
-      <version.org.wildfly>9.0.1.Final</version.org.wildfly>
-      <version.org.wildfly.arquillian>1.0.0.Final</version.org.wildfly.arquillian>
-      <version.org.wildfly.build-tools>1.0.0.Final</version.org.wildfly.build-tools>
-
+      <version.org.wildfly>10.0.0.CR1</version.org.wildfly>
+      <version.wildfly.core>2.0.0.CR1</version.wildfly.core>
+      <version.org.wildfly.arquillian>1.0.1.Final</version.org.wildfly.arquillian>
+      <version.org.wildfly.build-tools>1.1.0.CR1</version.org.wildfly.build-tools>
       
       <version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>1.0.0.Final</version.org.jboss.spec.javax.servlet.jboss-servlet-api_3.1_spec>
-
       
       <version.org.xerial.snappy>1.0.5</version.org.xerial.snappy>
       <version.antrun.maven.plugin>1.8</version.antrun.maven.plugin>
@@ -122,6 +120,12 @@
             <version>${version.org.wildfly}</version>
             <scope>test</scope>
             <classifier>tests</classifier>
+         </dependency>
+
+         <dependency>
+            <groupId>org.wildfly.core</groupId>
+            <artifactId>wildfly-controller</artifactId>
+            <version>${version.wildfly.core}</version>
          </dependency>
 
          <dependency>

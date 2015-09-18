@@ -146,6 +146,11 @@ public enum ScheduledThreadPoolResource implements ResourceDefinition, Scheduled
         return false;
     }
 
+    @Override
+    public boolean isOrderedChild() {
+        return false;
+    }
+
     public void register(ManagementResourceRegistration registration) {
         registration.registerSubModel(this);
     }

@@ -153,6 +153,11 @@ public enum ThreadPoolResource implements ResourceDefinition, ThreadPoolDefiniti
         return false;
     }
 
+    @Override
+    public boolean isOrderedChild() {
+        return false;
+    }
+
     public void register(ManagementResourceRegistration registration) {
         registration.registerSubModel(this);
     }
