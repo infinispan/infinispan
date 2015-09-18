@@ -55,7 +55,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       buf.writeByte(MAGIC_RES.byteValue)
       writeUnsignedLong(r.messageId, buf)
       buf.writeByte(r.operation.id.byteValue)
-      buf.writeByte(r.status.id.byteValue)
+      writeStatus(r, buf, server)
       newTopology match {
          case Some(topology) => topology match {
             case t: TopologyAwareResponse =>
@@ -69,6 +69,18 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          case None =>
             trace("Write topology response header with no change")
             buf.writeByte(0)
+      }
+   }
+
+   private def writeStatus(r: Response, buf: ByteBuf, server: HotRodServer): Unit = {
+      if (server == null || Constants.isVersionPre24(r.version))
+         buf.writeByte(r.status.id.byteValue)
+      else {
+         val cfg =
+            if (r.cacheName.isEmpty) server.getCacheManager.getDefaultCacheConfiguration
+            else server.getCacheManager.getCacheConfiguration(r.cacheName)
+         val st = OperationStatus.withCompatibility(r.status, cfg.compatibility().enabled())
+         buf.writeByte(st.id.byteValue)
       }
    }
 

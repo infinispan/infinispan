@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.1
  */
 @Immutable
-public class RemoveIfUnmodifiedOperation extends AbstractKeyOperation<VersionedOperationResponse> {
+public class RemoveIfUnmodifiedOperation<V> extends AbstractKeyOperation<VersionedOperationResponse<V>> {
 
    private final long version;
 
@@ -29,7 +29,7 @@ public class RemoveIfUnmodifiedOperation extends AbstractKeyOperation<VersionedO
    }
 
    @Override
-   protected VersionedOperationResponse executeOperation(Transport transport) {
+   protected VersionedOperationResponse<V> executeOperation(Transport transport) {
       // 1) write header
       HeaderParams params = writeHeader(transport, REMOVE_IF_UNMODIFIED_REQUEST);
 

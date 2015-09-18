@@ -16,6 +16,10 @@ object OperationStatus extends Enumeration {
    val NotExecutedWithPrevious = Value(0x04)
    val InvalidIteration = Value(0x05)
 
+   val SuccessCompat = Value(0x06)
+   val SuccessWithPreviousCompat = Value(0x07)
+   val NotExecutedWithPreviousCompat = Value(0x08)
+
    val InvalidMagicOrMsgId = Value(0x81)
    val UnknownOperation = Value(0x82)
    val UnknownVersion = Value(0x83) // todo: test
@@ -25,4 +29,12 @@ object OperationStatus extends Enumeration {
    val NodeSuspected = Value(0x87)
    val IllegalLifecycleState = Value(0x88)
 
+   def withCompatibility(st: OperationStatus, isCompatibilityEnabled: Boolean): OperationStatus = {
+      st match {
+         case Success if isCompatibilityEnabled => SuccessCompat;
+         case SuccessWithPrevious if isCompatibilityEnabled => SuccessWithPreviousCompat;
+         case NotExecutedWithPrevious if isCompatibilityEnabled => NotExecutedWithPreviousCompat;
+         case _ => st
+      }
+   }
 }

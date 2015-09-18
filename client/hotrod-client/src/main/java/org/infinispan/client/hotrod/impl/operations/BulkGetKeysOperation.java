@@ -17,7 +17,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
  * @author <a href="mailto:rtsang@redhat.com">Ray Tsang</a>
  * @since 5.2
  */
-public class BulkGetKeysOperation extends RetryOnFailureOperation<Set<byte[]>> {
+public class BulkGetKeysOperation<K> extends RetryOnFailureOperation<Set<K>> {
    private final int scope;
 
    public BulkGetKeysOperation(Codec codec, TransportFactory transportFactory, byte[] cacheName, AtomicInteger topologyId, Flag[] flags, int scope) {
@@ -31,14 +31,14 @@ public class BulkGetKeysOperation extends RetryOnFailureOperation<Set<byte[]>> {
    }
 
    @Override
-   protected Set<byte[]> executeOperation(Transport transport) {
+   protected Set<K> executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, BULK_GET_KEYS_REQUEST);
       transport.writeVInt(scope);
       transport.flush();
-      readHeaderAndValidate(transport, params);
-      Set<byte[]> result = new HashSet<byte[]>();
+      short status = readHeaderAndValidate(transport, params);
+      Set<K> result = new HashSet<K>();
       while ( transport.readByte() == 1) { //there's more!
-         result.add(transport.readArray());
+         result.add(codec.readUnmarshallByteArray(transport, status));
       }
       return result;
    }

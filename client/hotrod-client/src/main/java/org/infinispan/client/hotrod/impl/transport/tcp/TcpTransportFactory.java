@@ -38,6 +38,7 @@ import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
+import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
@@ -458,6 +459,11 @@ public class TcpTransportFactory implements TransportFactory {
       }
 
       return true;
+   }
+
+   @Override
+   public Marshaller getMarshaller() {
+      return listenerNotifier.getMarshaller();
    }
 
    /**

@@ -12,6 +12,7 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -41,7 +42,7 @@ import static org.testng.AssertJUnit.assertEquals;
  * @since 5.3
  */
 @Test(groups = "functional", testName = "it.compatibility.EmbeddedRestHotRodTest")
-public class EmbeddedRestHotRodTest {
+public class EmbeddedRestHotRodTest extends AbstractInfinispanTest {
 
    private static final DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
 

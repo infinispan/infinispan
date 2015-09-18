@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod.impl.operations;
 import net.jcip.annotations.Immutable;
 import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -16,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.1
  */
 @Immutable
-public class RemoveOperation extends AbstractKeyOperation<byte[]> {
+public class RemoveOperation<V> extends AbstractKeyOperation<V> {
 
    public RemoveOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId, Flag[] flags) {
@@ -24,10 +25,10 @@ public class RemoveOperation extends AbstractKeyOperation<byte[]> {
    }
 
    @Override
-   public byte[] executeOperation(Transport transport) {
+   public V executeOperation(Transport transport) {
       short status = sendKeyOperation(key, transport, REMOVE_REQUEST, REMOVE_RESPONSE);
-      byte[] result = returnPossiblePrevValue(transport, status);
-      if (status == KEY_DOES_NOT_EXIST_STATUS)
+      V result = returnPossiblePrevValue(transport, status);
+      if (HotRodConstants.isNotExist(status))
          return null;
 
       return result; // NO_ERROR_STATUS

@@ -21,6 +21,7 @@ public interface HotRodConstants {
    static final byte VERSION_21 = 21;
    static final byte VERSION_22 = 22;
    static final byte VERSION_23 = 23;
+   static final byte VERSION_24 = 24;
 
    //requests
    static final byte PUT_REQUEST = 0x01;
@@ -87,20 +88,23 @@ public interface HotRodConstants {
 
    //response status
    static final byte NO_ERROR_STATUS = 0x00;
+   static final byte NOT_PUT_REMOVED_REPLACED_STATUS = 0x01;
+   static final int KEY_DOES_NOT_EXIST_STATUS = 0x02;
+   static final int SUCCESS_WITH_PREVIOUS = 0x03;
+   static final int NOT_EXECUTED_WITH_PREVIOUS = 0x04;
+   static final int INVALID_ITERATION = 0x05;
+   static final byte NO_ERROR_STATUS_COMPAT = 0x06;
+   static final byte SUCCESS_WITH_PREVIOUS_COMPAT = 0x07;
+   static final byte NOT_EXECUTED_WITH_PREVIOUS_COMPAT = 0x08;
+
    static final int INVALID_MAGIC_OR_MESSAGE_ID_STATUS = 0x81;
    static final int REQUEST_PARSING_ERROR_STATUS = 0x84;
-   static final byte NOT_PUT_REMOVED_REPLACED_STATUS = 0x01;
    static final int UNKNOWN_COMMAND_STATUS = 0x82;
    static final int SERVER_ERROR_STATUS = 0x85;
-   static final int KEY_DOES_NOT_EXIST_STATUS = 0x02;
    static final int UNKNOWN_VERSION_STATUS = 0x83;
    static final int COMMAND_TIMEOUT_STATUS = 0x86;
    static final int NODE_SUSPECTED = 0x87;
    static final int ILLEGAL_LIFECYCLE_STATE = 0x88;
-   static final int SUCCESS_WITH_PREVIOUS = 0x03;
-   static final int NOT_EXECUTED_WITH_PREVIOUS = 0x04;
-   static final int INVALID_ITERATION = 0x05;
-
 
    static final byte CLIENT_INTELLIGENCE_BASIC = 0x01;
    static final byte CLIENT_INTELLIGENCE_TOPOLOGY_AWARE = 0x02;
@@ -114,4 +118,39 @@ public interface HotRodConstants {
 
    static final int DEFAULT_CACHE_TOPOLOGY = -1;
    static final int SWITCH_CLUSTER_TOPOLOGY = -2;
+
+   static boolean isSuccess(short status) {
+      return status == NO_ERROR_STATUS
+         || status == NO_ERROR_STATUS_COMPAT
+         || status == SUCCESS_WITH_PREVIOUS
+         || status == SUCCESS_WITH_PREVIOUS_COMPAT;
+   }
+
+   static boolean isNotExecuted(short status) {
+      return status == NOT_PUT_REMOVED_REPLACED_STATUS
+         || status == NOT_EXECUTED_WITH_PREVIOUS
+         || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
+   }
+
+   static boolean isNotExist(short status) {
+      return status == KEY_DOES_NOT_EXIST_STATUS;
+   }
+
+   static boolean hasPrevious(short status) {
+      return status == SUCCESS_WITH_PREVIOUS
+         || status == SUCCESS_WITH_PREVIOUS_COMPAT
+         || status == NOT_EXECUTED_WITH_PREVIOUS
+         || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
+   }
+
+   static boolean hasCompatibility(short status) {
+      return status == NO_ERROR_STATUS_COMPAT
+         || status == SUCCESS_WITH_PREVIOUS_COMPAT
+         || status == NOT_EXECUTED_WITH_PREVIOUS_COMPAT;
+   }
+
+   static boolean isInvalidIteration(short status) {
+      return status == INVALID_ITERATION;
+   }
+
 }

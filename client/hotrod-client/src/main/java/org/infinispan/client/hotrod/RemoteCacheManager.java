@@ -555,8 +555,6 @@ public class RemoteCacheManager implements BasicCacheContainer {
       // Workaround for JDK6 NPE: http://bugs.sun.com/view_bug.do?bug_id=6427854
       SecurityActions.setProperty("sun.nio.ch.bugLevel", "\"\"");
 
-      codec = CodecFactory.getCodec(configuration.protocolVersion());
-
       transportFactory = Util.getInstance(configuration.transportFactory());
 
       if (marshaller == null) {
@@ -565,6 +563,8 @@ public class RemoteCacheManager implements BasicCacheContainer {
             marshaller = Util.getInstance(configuration.marshallerClass());
          }
       }
+
+      codec = CodecFactory.getCodec(configuration.protocolVersion());
 
       if (asyncExecutorService == null) {
          ExecutorFactory executorFactory = configuration.asyncExecutorFactory().factory();

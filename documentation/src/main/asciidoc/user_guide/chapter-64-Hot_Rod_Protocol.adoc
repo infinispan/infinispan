@@ -10,6 +10,7 @@ the custom TCP client/server Hot Rod protocol.
 * link:$$#_hot_rod_protocol_2_1$$[Hot Rod Protocol 2.1]
 * link:$$#_hot_rod_protocol_2_2$$[Hot Rod Protocol 2.2]
 * link:$$#_hot_rod_protocol_2_3$$[Hot Rod Protocol 2.3]
+* link:$$#_hot_rod_protocol_2_4$$[Hot Rod Protocol 2.4]
 
 ===== Hot Rod Protocol 1.0
 
@@ -1657,6 +1658,18 @@ Response format:
 +0x00+ = success, if execution completed successfully +
 +0x05+ = for non existent IterationId  +
 |==============================================================================
+
+===== Hot Rod Protocol 2.4
+
+.Infinispan versions
+TIP: This version of the protocol is implemented since Infinispan 8.1
+
+This Hot Rod protocol version adds three new status code that gives the client
+hints on whether the server has compatibility mode enabled or not:
+
+* `0x06`: Success status and compatibility mode is enabled.
+* `0x07`: Success status and return previous value, with compatibility mode is enabled.
+* `0x08`: Not executed and return previous value, with compatibility mode is enabled.
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash

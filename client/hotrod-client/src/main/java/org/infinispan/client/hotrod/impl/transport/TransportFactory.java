@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHashFactory;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.commons.marshall.Marshaller;
 
 /**
  * Transport factory for building and managing {@link org.infinispan.client.hotrod.impl.transport.Transport} objects.
@@ -67,4 +68,6 @@ public interface TransportFactory {
    void reset(byte[] cacheName);
 
    boolean trySwitchCluster(byte[] cacheName);
+
+   Marshaller getMarshaller();
 }

@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 4.1
  */
 @Immutable
-public class ReplaceOperation extends AbstractKeyValueOperation<byte[]> {
+public class ReplaceOperation<V> extends AbstractKeyValueOperation<V> {
 
    public ReplaceOperation(Codec codec, TransportFactory transportFactory,
             byte[] key, byte[] cacheName, AtomicInteger topologyId,
@@ -27,10 +27,8 @@ public class ReplaceOperation extends AbstractKeyValueOperation<byte[]> {
    }
 
    @Override
-   protected byte[] executeOperation(Transport transport) {
-      byte[] result = null;
+   protected V executeOperation(Transport transport) {
       short status = sendPutOperation(transport, REPLACE_REQUEST, REPLACE_RESPONSE);
-      result = returnPossiblePrevValue(transport, status);
-      return result;
+      return returnPossiblePrevValue(transport, status);
    }
 }

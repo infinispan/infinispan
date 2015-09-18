@@ -66,23 +66,23 @@ public class OperationsFactory implements HotRodConstants {
       return cacheNameBytes;
    }
 
-   public GetOperation newGetKeyOperation(byte[] key) {
-      return new GetOperation(
+   public <V> GetOperation<V> newGetKeyOperation(byte[] key) {
+      return new GetOperation<V>(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags());
    }
 
-   public GetAllOperation newGetAllOperation(Set<byte[]> keys) {
-      return new GetAllOperation(
+   public <K, V> GetAllOperation<K, V> newGetAllOperation(Set<byte[]> keys) {
+      return new GetAllOperation<K, V>(
             codec, transportFactory, keys, cacheNameBytes, topologyId, flags());
    }
 
-   public RemoveOperation newRemoveOperation(byte[] key) {
-      return new RemoveOperation(
+   public <V> RemoveOperation<V> newRemoveOperation(byte[] key) {
+      return new RemoveOperation<V>(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags());
    }
 
-   public RemoveIfUnmodifiedOperation newRemoveIfUnmodifiedOperation(byte[] key, long version) {
-      return new RemoveIfUnmodifiedOperation(
+   public <V> RemoveIfUnmodifiedOperation<V> newRemoveIfUnmodifiedOperation(byte[] key, long version) {
+      return new RemoveIfUnmodifiedOperation<V>(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(), version);
    }
 
@@ -93,13 +93,13 @@ public class OperationsFactory implements HotRodConstants {
             value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit, version);
    }
 
-   public GetWithVersionOperation newGetWithVersionOperation(byte[] key) {
-      return new GetWithVersionOperation(
+   public <V> GetWithVersionOperation<V> newGetWithVersionOperation(byte[] key) {
+      return new GetWithVersionOperation<V>(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags());
    }
 
-   public GetWithMetadataOperation newGetWithMetadataOperation(byte[] key) {
-      return new GetWithMetadataOperation(
+   public <V> GetWithMetadataOperation<V> newGetWithMetadataOperation(byte[] key) {
+      return new GetWithMetadataOperation<V>(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags());
    }
 
@@ -108,9 +108,9 @@ public class OperationsFactory implements HotRodConstants {
             codec, transportFactory, cacheNameBytes, topologyId, flags());
    }
 
-   public PutOperation newPutKeyValueOperation(byte[] key, byte[] value,
+   public <V> PutOperation<V> newPutKeyValueOperation(byte[] key, byte[] value,
           long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      return new PutOperation(
+      return new PutOperation<V>(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
             value, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
@@ -122,16 +122,16 @@ public class OperationsFactory implements HotRodConstants {
             lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
 
-   public PutIfAbsentOperation newPutIfAbsentOperation(byte[] key, byte[] value,
+   public <V> PutIfAbsentOperation<V> newPutIfAbsentOperation(byte[] key, byte[] value,
              long lifespan, TimeUnit lifespanUnit, long maxIdleTime, TimeUnit maxIdleTimeUnit) {
-      return new PutIfAbsentOperation(
+      return new PutIfAbsentOperation<V>(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
             value, lifespan, lifespanUnit, maxIdleTime, maxIdleTimeUnit);
    }
 
-   public ReplaceOperation newReplaceOperation(byte[] key, byte[] values,
+   public <V> ReplaceOperation<V> newReplaceOperation(byte[] key, byte[] values,
            long lifespan, TimeUnit lifespanTimeUnit, long maxIdle, TimeUnit maxIdleTimeUnit) {
-      return new ReplaceOperation(
+      return new ReplaceOperation<V>(
             codec, transportFactory, key, cacheNameBytes, topologyId, flags(),
             values, lifespan, lifespanTimeUnit, maxIdle, maxIdleTimeUnit);
    }
@@ -146,13 +146,13 @@ public class OperationsFactory implements HotRodConstants {
             codec, transportFactory, cacheNameBytes, topologyId, flags());
    }
 
-   public BulkGetOperation newBulkGetOperation(int size) {
+   public <K, V> BulkGetOperation<K, V> newBulkGetOperation(int size) {
       return new BulkGetOperation(
             codec, transportFactory, cacheNameBytes, topologyId, flags(), size);
    }
 
-   public BulkGetKeysOperation newBulkGetKeysOperation(int scope) {
-      return new BulkGetKeysOperation(
+   public <K> BulkGetKeysOperation<K> newBulkGetKeysOperation(int scope) {
+      return new BulkGetKeysOperation<K>(
          codec, transportFactory, cacheNameBytes, topologyId, flags(), scope);
    }
 
@@ -205,8 +205,8 @@ public class OperationsFactory implements HotRodConstants {
       return new SizeOperation(codec, transportFactory, cacheNameBytes, topologyId, flags());
    }
 
-   public ExecuteOperation newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams) {
-		return new ExecuteOperation(codec, transportFactory, cacheNameBytes, topologyId, flags(), taskName, marshalledParams);
+   public <T> ExecuteOperation<T> newExecuteOperation(String taskName, Map<String, byte[]> marshalledParams) {
+		return new ExecuteOperation<T>(codec, transportFactory, cacheNameBytes, topologyId, flags(), taskName, marshalledParams);
 	}
 
    public Flag[] flags() {
@@ -256,7 +256,7 @@ public class OperationsFactory implements HotRodConstants {
       return new IterationEndOperation(codec, flags(), cacheNameBytes, topologyId, iterationId, transportFactory, transport);
    }
 
-   public IterationNextOperation newIterationNextOperation(String iterationId, Transport transport) {
+   public <K, V> IterationNextOperation newIterationNextOperation(String iterationId, Transport transport) {
       return new IterationNextOperation(codec, flags(), cacheNameBytes, topologyId, iterationId, transport);
    }
 }

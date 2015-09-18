@@ -65,25 +65,25 @@ public class Codec21 extends Codec20 {
       boolean isRetried = transport.readByte() == 1 ? true : false;
 
       if (isCustom == 1) {
-         final Object eventData = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+         final Object eventData = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status);
          return createCustomEvent(eventData, eventType, isRetried);
       } else if (isCustom == 2) { // New in 2.1, dealing with raw custom events
          return createCustomEvent(transport.readArray(), eventType, isRetried); // Raw data
       } else {
          switch (eventType) {
             case CLIENT_CACHE_ENTRY_CREATED:
-               Object createdKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               Object createdKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status);
                long createdDataVersion = transport.readLong();
                return createCreatedEvent(createdKey, createdDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_MODIFIED:
-               Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status);
                long modifiedDataVersion = transport.readLong();
                return createModifiedEvent(modifiedKey, modifiedDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_REMOVED:
-               Object removedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               Object removedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status);
                return createRemovedEvent(removedKey, isRetried);
             case CLIENT_CACHE_ENTRY_EXPIRED:
-               Object expiredKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               Object expiredKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status);
                return createExpiredEvent(expiredKey);
             default:
                throw getLog().unknownEvent(eventTypeId);

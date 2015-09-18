@@ -35,7 +35,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
                val encoder = getEncoder(r.version)
                try {
                   r.version match {
-                     case VERSION_10 | VERSION_11 | VERSION_12 | VERSION_13 | VERSION_20 | VERSION_21 | VERSION_22 | VERSION_23 =>
+                     case ver if Constants.isVersionKnown(ver) =>
                         encoder.writeHeader(r, buf, addressCache, server)
                      // if error before reading version, don't send any topology changes
                      // cos the encoding might vary from one version to the other
@@ -74,11 +74,11 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
 
    private def getEncoder(version: Byte): AbstractVersionedEncoder = {
       version match {
-         case VERSION_10 => Encoders.Encoder10
-         case VERSION_11 => Encoders.Encoder11
-         case VERSION_12 => Encoders.Encoder12
-         case VERSION_13 => Encoders.Encoder13
-         case VERSION_20 | VERSION_21 | VERSION_22 | VERSION_23 => Encoder2x
+         case ver if Constants.isVersion10(ver) => Encoders.Encoder10
+         case ver if Constants.isVersion11(ver) => Encoders.Encoder11
+         case ver if Constants.isVersion12(ver) => Encoders.Encoder12
+         case ver if Constants.isVersion13(ver) => Encoders.Encoder13
+         case ver if Constants.isVersion2x(ver) => Encoder2x
          case 0 => Encoder2x
       }
    }

@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Mircea.Markus@jboss.com
  * @since 4.1
  */
-public class BulkGetOperation extends RetryOnFailureOperation<Map<byte[], byte[]>> {
+public class BulkGetOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    private final int entryCount;
 
@@ -33,14 +33,16 @@ public class BulkGetOperation extends RetryOnFailureOperation<Map<byte[], byte[]
    }
 
    @Override
-   protected Map<byte[], byte[]> executeOperation(Transport transport) {
+   protected Map<K, V> executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, BULK_GET_REQUEST);
       transport.writeVInt(entryCount);
       transport.flush();
-      readHeaderAndValidate(transport, params);
-      Map<byte[], byte[]> result = new HashMap<byte[], byte[]>();
+      short status = readHeaderAndValidate(transport, params);
+      Map<K, V> result = new HashMap<K, V>();
       while ( transport.readByte() == 1) { //there's more!
-         result.put(transport.readArray(), transport.readArray());
+         K key = codec.readUnmarshallByteArray(transport, status);
+         V value = codec.readUnmarshallByteArray(transport, status);
+         result.put(key, value);
       }
       return result;
    }

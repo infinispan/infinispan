@@ -352,7 +352,7 @@ object ClientListenerRegistry extends Constants {
    object ClientEventType {
       def apply(isCustom: Boolean, useRawData: Boolean, version: Byte): ClientEventType = {
          (isCustom, useRawData) match {
-            case (true, true) if version >= VERSION_21 => CustomRaw
+            case (true, true) if Constants.isVersionPost20(version) => CustomRaw
             case (true, _) => CustomPlain
             case (false, _) => Plain
          }

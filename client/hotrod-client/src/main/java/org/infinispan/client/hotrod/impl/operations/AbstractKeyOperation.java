@@ -9,6 +9,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.impl.VersionedOperationResponse;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 import org.infinispan.commons.logging.BasicLogFactory;
@@ -53,8 +54,8 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
       return readHeaderAndValidate(transport, params);
    }
 
-   protected byte[] returnPossiblePrevValue(Transport transport, short status) {
-      return codec.returnPossiblePrevValue(transport, status, flags);
+   protected T returnPossiblePrevValue(Transport transport, short status) {
+      return (T) codec.returnPossiblePrevValue(transport, status, flags);
    }
 
    protected VersionedOperationResponse returnVersionedOperationResponse(Transport transport, HeaderParams params) {
@@ -63,16 +64,16 @@ public abstract class AbstractKeyOperation<T> extends RetryOnFailureOperation<T>
 
       //4 ...
       VersionedOperationResponse.RspCode code;
-      if (respStatus == NO_ERROR_STATUS || respStatus == SUCCESS_WITH_PREVIOUS) {
+      if (HotRodConstants.isSuccess(respStatus)) {
          code = VersionedOperationResponse.RspCode.SUCCESS;
-      } else if (respStatus == NOT_PUT_REMOVED_REPLACED_STATUS || respStatus == NOT_EXECUTED_WITH_PREVIOUS) {
+      } else if (HotRodConstants.isNotExecuted(respStatus)) {
          code = VersionedOperationResponse.RspCode.MODIFIED_KEY;
-      } else if (respStatus == KEY_DOES_NOT_EXIST_STATUS) {
+      } else if (HotRodConstants.isNotExist(respStatus)) {
          code = VersionedOperationResponse.RspCode.NO_SUCH_KEY;
       } else {
          throw new IllegalStateException("Unknown response status: " + Integer.toHexString(respStatus));
       }
-      byte[] prevValue = returnPossiblePrevValue(transport, respStatus);
+      Object prevValue = returnPossiblePrevValue(transport, respStatus);
       return new VersionedOperationResponse(prevValue, code);
    }
 }

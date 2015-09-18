@@ -45,6 +45,11 @@ public class Codec20 implements Codec, HotRodConstants {
    final boolean trace = getLog().isTraceEnabled();
 
    @Override
+   public <T> T readUnmarshallByteArray(Transport transport, short status) {
+      return CodecUtils.readUnmarshallByteArray(transport, status);
+   }
+
+   @Override
    public HeaderParams writeHeader(Transport transport, HeaderParams params) {
       return writeHeader(transport, params, HotRodConstants.VERSION_20);
    }
@@ -70,6 +75,7 @@ public class Codec20 implements Codec, HotRodConstants {
       transport.writeVInt(lifespanSeconds);
       transport.writeVInt(maxIdleSeconds);
    }
+
 
    private void writeNamedFactory(Transport transport, String factoryName, byte[][] params) {
       transport.writeString(factoryName);
@@ -172,20 +178,20 @@ public class Codec20 implements Codec, HotRodConstants {
       boolean isRetried = transport.readByte() == 1 ? true : false;
 
       if (isCustom == 1) {
-         final Object eventData = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+         final Object eventData = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status);
          return createCustomEvent(eventData, eventType, isRetried);
       } else {
          switch (eventType) {
             case CLIENT_CACHE_ENTRY_CREATED:
-               Object createdKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               Object createdKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status);
                long createdDataVersion = transport.readLong();
                return createCreatedEvent(createdKey, createdDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_MODIFIED:
-               Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               Object modifiedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status);
                long modifiedDataVersion = transport.readLong();
                return createModifiedEvent(modifiedKey, modifiedDataVersion, isRetried);
             case CLIENT_CACHE_ENTRY_REMOVED:
-               Object removedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray());
+               Object removedKey = MarshallerUtil.bytes2obj(marshaller, transport.readArray(), status);
                return createRemovedEvent(removedKey, isRetried);
             default:
                throw log.unknownEvent(eventTypeId);
@@ -210,12 +216,13 @@ public class Codec20 implements Codec, HotRodConstants {
    }
 
    @Override
-   public byte[] returnPossiblePrevValue(Transport transport, short status, Flag[] flags) {
-      if (status == SUCCESS_WITH_PREVIOUS || status == NOT_EXECUTED_WITH_PREVIOUS) {
+   public Object returnPossiblePrevValue(Transport transport, short status, Flag[] flags) {
+      Marshaller marshaller = transport.getTransportFactory().getMarshaller();
+      if (HotRodConstants.hasPrevious(status)) {
          byte[] bytes = transport.readArray();
          if (log.isTraceEnabled()) log.tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
          //0-length response means null
-         return bytes.length == 0 ? null : bytes;
+         return bytes.length == 0 ? null : MarshallerUtil.bytes2obj(marshaller, bytes, status);
       } else {
          return null;
       }

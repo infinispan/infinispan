@@ -1,6 +1,7 @@
 package org.infinispan.client.hotrod.marshall;
 
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.marshall.Marshaller;
@@ -23,21 +24,23 @@ public final class MarshallerUtil {
    private MarshallerUtil() {}
 
    @SuppressWarnings("unchecked")
-   public static <T> T bytes2obj(Marshaller marshaller, byte[] bytes) {
+   public static <T> T bytes2obj(Marshaller marshaller, byte[] bytes, short status) {
       if (bytes == null) return null;
       try {
          Object ret = marshaller.objectFromByteBuffer(bytes);
-
-         // No extra configuration is required for client when using compatibility mode,
-         // and no different marshaller should be required to deal with standard serialization.
-         // So, if the unmarshalled object is still a byte[], it could be a standard
-         // serialized object, so check for stream magic
-         if (ret instanceof byte[] && isJavaSerialized((byte[]) ret)) {
-            try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream((byte[]) ret))) {
-               return (T) ois.readObject();
-            } catch (Exception ee) {
-               if (log.isDebugEnabled())
-                  log.debugf("Standard deserialization not in use for %s", Util.printArray(bytes));
+         if (HotRodConstants.hasCompatibility(status)) {
+            // Compatibility mode enabled
+            // No extra configuration is required for client when using compatibility mode,
+            // and no different marshaller should be required to deal with standard serialization.
+            // So, if the unmarshalled object is still a byte[], it could be a standard
+            // serialized object, so check for stream magic
+            if (ret instanceof byte[] && isJavaSerialized((byte[]) ret)) {
+               try (ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream((byte[]) ret))) {
+                  return (T) ois.readObject();
+               } catch (Exception ee) {
+                  if (log.isDebugEnabled())
+                     log.debugf("Standard deserialization not in use for %s", Util.printArray(bytes));
+               }
             }
          }
 

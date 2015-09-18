@@ -6,6 +6,7 @@ import org.infinispan.client.hotrod.annotation.ClientListener;
 import org.infinispan.client.hotrod.event.ClientEvent;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.commons.util.Either;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -95,7 +96,7 @@ public class AddClientListenerOperation extends RetryOnFailureOperation<Short> {
          either = codec.readHeaderOrEvent(dedicatedTransport, params, listenerId, listenerNotifier.getMarshaller());
          switch(either.type()) {
             case LEFT:
-               if (either.left() == NO_ERROR_STATUS)
+               if (HotRodConstants.isSuccess(either.left()))
                   listenerNotifier.startClientListener(listenerId);
                else // If error, remove it
                   listenerNotifier.removeClientListener(listenerId);

@@ -8,6 +8,7 @@ import org.infinispan.client.hotrod.impl.operations.IterationNextResponse;
 import org.infinispan.client.hotrod.impl.operations.IterationStartOperation;
 import org.infinispan.client.hotrod.impl.operations.IterationStartResponse;
 import org.infinispan.client.hotrod.impl.operations.OperationsFactory;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
@@ -21,8 +22,6 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
 
-import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.INVALID_ITERATION;
-import static org.infinispan.client.hotrod.impl.protocol.HotRodConstants.NO_ERROR_STATUS;
 import static org.infinispan.client.hotrod.marshall.MarshallerUtil.bytes2obj;
 
 /**
@@ -59,10 +58,10 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
       IterationEndResponse endResponse = operationsFactory.newIterationEndOperation(iterationId, transport).execute();
       short status = endResponse.getStatus();
 
-      if (status == NO_ERROR_STATUS) {
+      if (HotRodConstants.isSuccess(status)) {
          log.iterationClosed(iterationId);
       }
-      if (endResponse.getStatus() == INVALID_ITERATION) {
+      if (HotRodConstants.isInvalidIteration(status)) {
          throw log.errorClosingIteration(iterationId);
       }
    }
@@ -88,7 +87,7 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
          while (nextElements.isEmpty() && !endOfIteration) {
             IterationNextResponse iterationNextResponse = iterationNextOperation.execute();
             short status = iterationNextResponse.getStatus();
-            if (status == INVALID_ITERATION) {
+            if (HotRodConstants.isInvalidIteration(status)) {
                throw log.errorRetrievingNext(iterationId);
             }
             Entry<byte[], byte[]>[] entries = iterationNextResponse.getEntries();
@@ -97,9 +96,10 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
                endOfIteration = true;
                break;
             }
+
             for (Entry<byte[], byte[]> entry : entries) {
                if (segmentKeyTracker.track(entry.getKey())) {
-                  nextElements.add(new SimpleEntry<>(unmarshall(entry.getKey()), unmarshall(entry.getValue())));
+                  nextElements.add(new SimpleEntry<>(unmarshall(entry.getKey(), status), unmarshall(entry.getValue(), status)));
                }
             }
             segmentKeyTracker.segmentsFinished(iterationNextResponse.getFinishedSegments());
@@ -112,9 +112,8 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
       }
    }
 
-
-   private Object unmarshall(byte[] bytes) {
-      return bytes2obj(marshaller, bytes);
+   private Object unmarshall(byte[] bytes, short status) {
+      return bytes2obj(marshaller, bytes, status);
    }
 
    private void restartIteration(Set<Integer> missedSegments) {

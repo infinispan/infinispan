@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.jcip.annotations.Immutable;
 
 import org.infinispan.client.hotrod.Flag;
-import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
 import org.infinispan.client.hotrod.impl.transport.Transport;
@@ -22,7 +21,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
  * @since 7.2
  */
 @Immutable
-public class GetAllOperation extends RetryOnFailureOperation<Map<byte[], byte[]>> {
+public class GetAllOperation<K, V> extends RetryOnFailureOperation<Map<K, V>> {
 
    public GetAllOperation(Codec codec, TransportFactory transportFactory,
                        Set<byte[]> keys, byte[] cacheName, AtomicInteger topologyId,
@@ -34,7 +33,7 @@ public class GetAllOperation extends RetryOnFailureOperation<Map<byte[], byte[]>
    protected final Set<byte[]> keys;
 
    @Override
-   protected Map<byte[], byte[]> executeOperation(Transport transport) {
+   protected Map<K, V> executeOperation(Transport transport) {
       HeaderParams params = writeHeader(transport, GET_ALL_REQUEST);
       transport.writeVInt(keys.size());
       for (byte[] key : keys) {
@@ -42,11 +41,13 @@ public class GetAllOperation extends RetryOnFailureOperation<Map<byte[], byte[]>
       }
       transport.flush();
 
-      readHeaderAndValidate(transport, params);
+      short status = readHeaderAndValidate(transport, params);
       int size = transport.readVInt();
-      Map<byte[], byte[]> result = new HashMap<byte[], byte[]>(size);
+      Map<K, V> result = new HashMap<K, V>(size);
       for (int i = 0; i < size; ++i) {
-         result.put(transport.readArray(), transport.readArray());
+         K key = codec.readUnmarshallByteArray(transport, status);
+         V value = codec.readUnmarshallByteArray(transport, status);
+         result.put(key, value);
       }
       return result;
    }

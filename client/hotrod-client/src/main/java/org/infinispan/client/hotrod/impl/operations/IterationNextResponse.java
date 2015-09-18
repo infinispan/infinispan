@@ -6,7 +6,7 @@ import java.util.Map;
  * @author gustavonalle
  * @since 8.0
  */
-public class IterationNextResponse {
+public class IterationNextResponse<K, V> {
    private final short status;
    private final byte[] finishedSegments;
    private final Map.Entry<byte[], byte[]>[] entries;

@@ -18,7 +18,7 @@ import org.infinispan.client.hotrod.impl.transport.TransportFactory;
  * @author Tristan Tarrant
  * @since 7.1
  */
-public class ExecuteOperation extends RetryOnFailureOperation<byte[]> {
+public class ExecuteOperation<T> extends RetryOnFailureOperation<T> {
 
 	private final String taskName;
 	private final Map<String, byte[]> marshalledParams;
@@ -37,7 +37,7 @@ public class ExecuteOperation extends RetryOnFailureOperation<byte[]> {
 	}
 
 	@Override
-	protected byte[] executeOperation(Transport transport) {
+	protected T executeOperation(Transport transport) {
 		HeaderParams params = writeHeader(transport, EXEC_REQUEST);
 		transport.writeString(taskName);
 		transport.writeVInt(marshalledParams.size());
@@ -46,8 +46,8 @@ public class ExecuteOperation extends RetryOnFailureOperation<byte[]> {
 			transport.writeArray(entry.getValue());
 		}
 		transport.flush();
-		readHeaderAndValidate(transport, params);
-		return transport.readArray();
+		short status = readHeaderAndValidate(transport, params);
+		return codec.readUnmarshallByteArray(transport, status);
 	}
 
 }

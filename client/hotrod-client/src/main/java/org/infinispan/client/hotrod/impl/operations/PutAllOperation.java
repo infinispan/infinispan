@@ -13,6 +13,7 @@ import org.infinispan.client.hotrod.Flag;
 import org.infinispan.client.hotrod.exceptions.InvalidResponseException;
 import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.HeaderParams;
+import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
 
@@ -54,7 +55,7 @@ public class PutAllOperation extends RetryOnFailureOperation<Void> {
       transport.flush();
 
       short status = readHeaderAndValidate(transport, params);
-      if (status != NO_ERROR_STATUS) {
+      if (!HotRodConstants.isSuccess(status)) {
          throw new InvalidResponseException("Unexpected response status: " + Integer.toHexString(status));
       }
       return null;

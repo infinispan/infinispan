@@ -21,6 +21,7 @@ import org.infinispan.client.hotrod.exceptions.RemoteNodeSuspectException;
 import org.infinispan.client.hotrod.impl.transport.Transport;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
+import org.infinispan.client.hotrod.marshall.MarshallerUtil;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Either;
 import org.infinispan.commons.util.Util;
@@ -83,7 +84,7 @@ public class Codec10 implements Codec {
       //todo change once TX support is added
       transport.writeByte(params.txMarker);
       getLog().tracef("Wrote header for message %d. Operation code: %#04x. Flags: %#x",
-                 params.messageId, params.opCode, flagInt);
+         params.messageId, params.opCode, flagInt);
       return params;
    }
 
@@ -144,12 +145,13 @@ public class Codec10 implements Codec {
    }
 
    @Override
-   public byte[] returnPossiblePrevValue(Transport transport, short status, Flag[] flags) {
+   public Object returnPossiblePrevValue(Transport transport, short status, Flag[] flags) {
+      Marshaller marshaller = transport.getTransportFactory().getMarshaller();
       if (hasForceReturn(flags)) {
          byte[] bytes = transport.readArray();
          if (log.isTraceEnabled()) log.tracef("Previous value bytes is: %s", Util.printArray(bytes, false));
          //0-length response means null
-         return bytes.length == 0 ? null : bytes;
+         return bytes.length == 0 ? null : MarshallerUtil.bytes2obj(marshaller, bytes, status);
       } else {
          return null;
       }
@@ -166,6 +168,11 @@ public class Codec10 implements Codec {
    @Override
    public Log getLog() {
       return log;
+   }
+
+   @Override
+   public <T> T readUnmarshallByteArray(Transport transport, short status) {
+      return CodecUtils.readUnmarshallByteArray(transport, status);
    }
 
    protected void checkForErrorsInResponseStatus(Transport transport, HeaderParams params, short status) {

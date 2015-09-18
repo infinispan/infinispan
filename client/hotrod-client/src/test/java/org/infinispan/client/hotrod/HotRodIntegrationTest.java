@@ -12,6 +12,10 @@ import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +26,7 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertNull;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.*;
+import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
 
 /**
  * @author mmarkus
@@ -213,7 +218,7 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       long lifespan = TimeUnit.SECONDS.toMillis(lifespanInSecs);
       long startTime = System.currentTimeMillis();
       NotifyingFuture<Boolean> future = remoteCache.replaceWithVersionAsync(
-            k, newV, valueBinary.getVersion(), lifespanInSecs);
+         k, newV, valueBinary.getVersion(), lifespanInSecs);
       assert future.get();
 
       while (true) {
@@ -302,6 +307,33 @@ public class HotRodIntegrationTest extends SingleCacheManagerTest {
       assert null == remoteCache.putIfAbsent("aKey", "anotherValue");
       Object existingValue = remoteCache.withFlags(Flag.FORCE_RETURN_VALUE).putIfAbsent("aKey", "anotherValue");
       assert "aValue".equals(existingValue) : "Existing value was:" + existingValue;
+   }
+
+   public void testPutSerializableByteArray() {
+      RemoteCache<Object, byte[]> binaryRemote = remoteCacheManager.getCache();
+      byte[] bytes = serializeObject(new MyValue<>("aValue"));
+      binaryRemote.put("aKey", bytes);
+      assertArrayEquals(bytes, binaryRemote.get("aKey"));
+   }
+
+   private byte[] serializeObject(Object obj) {
+      ByteArrayOutputStream bs = new ByteArrayOutputStream();
+      try {
+         ObjectOutputStream os = new ObjectOutputStream(bs);
+         os.writeObject(obj);
+         os.close();
+         return bs.toByteArray();
+      } catch (IOException ioe) {
+         throw new AssertionError(ioe);
+      }
+   }
+
+   static class MyValue<V> implements Serializable {
+      final V value;
+
+      MyValue(V value) {
+         this.value = value;
+      }
    }
 
 }

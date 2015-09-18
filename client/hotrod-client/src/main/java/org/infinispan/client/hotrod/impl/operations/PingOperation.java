@@ -42,7 +42,7 @@ public class PingOperation extends HotRodOperation {
          transport.flush();
 
          short respStatus = readHeaderAndValidate(transport, params);
-         if (respStatus == HotRodConstants.NO_ERROR_STATUS) {
+         if (HotRodConstants.isSuccess(respStatus)) {
             if (log.isTraceEnabled())
                log.tracef("Successfully validated transport: %s", transport);
             return PingResult.SUCCESS;

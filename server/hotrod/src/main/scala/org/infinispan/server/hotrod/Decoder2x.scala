@@ -161,15 +161,15 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
          }
       }
       version match {
-         case VERSION_22 | VERSION_23 =>
+         case ver if Constants.isVersionPre22(ver) =>
+            val lifespan = readDuration(usingDefaultLifespan)
+            val maxIdle = readDuration(usingDefaultMaxIdle)
+            (new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS))
+         case _ => // from 2.2 onwards
             val timeUnits = TimeUnitValue.decodePair(buffer.readByte())
             val lifespanDuration = readDurationIfNeeded(timeUnits._1)
             val maxIdleDuration = readDurationIfNeeded(timeUnits._2)
             (new ExpirationParam(lifespanDuration, timeUnits._1), new ExpirationParam(maxIdleDuration, timeUnits._2))
-         case _ =>
-            val lifespan = readDuration(usingDefaultLifespan)
-            val maxIdle = readDuration(usingDefaultMaxIdle)
-            (new ExpirationParam(lifespan, TimeUnitValue.SECONDS), new ExpirationParam(maxIdle, TimeUnitValue.SECONDS))
       }
    }
 
@@ -376,7 +376,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             val filterFactoryInfo = readNamedFactory(buffer)
             val converterFactoryInfo = readNamedFactory(buffer)
             val useRawData = h.version match {
-               case VERSION_21 | VERSION_22 | VERSION_23 => buffer.readByte() == 1
+               case ver if Constants.isVersion2x(ver) => buffer.readByte() == 1
                case _ => false
             }
             val reg = server.getClientListenerRegistry
@@ -614,14 +614,13 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
     * Convert an expiration value into milliseconds
     */
    override def toMillis(param: ExpirationParam, h: SuitableHeader): Long = {
-      if (h.version == VERSION_22 | h.version == VERSION_23) {
+      if (Constants.isVersionPre22(h.version)) super.toMillis(param, h)
+      else
          if (param.duration > 0) {
             val javaTimeUnit = param.unit.toJavaTimeUnit(h)
             javaTimeUnit.toMillis(param.duration)
          } else {
             param.duration
          }
-      }
-      else super.toMillis(param, h)
    }
 }
