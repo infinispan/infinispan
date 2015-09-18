@@ -14,12 +14,15 @@ import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.persistence.BaseStoreTest;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
 import org.infinispan.persistence.spi.AdvancedLoadWriteStore;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.io.File;
 
 /**
  * Low level single-file cache store tests.
@@ -33,6 +36,7 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
    SoftIndexFileStore store;
    String tmpDirectory;
    boolean startIndex = true;
+   boolean keepIndex = false;
 
    @BeforeClass
    protected void setUpTempDir() {
@@ -48,10 +52,33 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
    protected AdvancedLoadWriteStore createStore() throws Exception {
       clearTempDir();
       store = new SoftIndexFileStore() {
+         boolean firstTime = true;
+
          @Override
          protected void startIndex() {
             if (startIndex) {
                super.startIndex();
+            }
+         }
+
+         @Override
+         public void start() {
+            super.start();
+            if (!firstTime) {
+               assertEquals(keepIndex, isIndexLoaded());
+            }
+            firstTime = false;
+         }
+
+         @Override
+         public void stop() {
+            super.stop();
+            if (!keepIndex) {
+               for (File f : new File(tmpDirectory).listFiles()) {
+                  if (!f.isDirectory()) {
+                     f.delete();
+                  }
+               }
             }
          }
       };
@@ -157,6 +184,15 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
       // value1 has been overwritten and value2 has expired
       MarshalledEntry entry = store.load("key");
       assertNull(entry != null ? entry.getKey() + "=" + entry.getValue() : null, entry);
+   }
+
+   public void testStopStartWithLoadDoesNotNukeValues() throws InterruptedException, PersistenceException {
+      keepIndex = true;
+      try {
+         testStopStartDoesNotNukeValues();
+      } finally {
+         keepIndex = false;
+      }
    }
 
    private void writeGibberish() {
