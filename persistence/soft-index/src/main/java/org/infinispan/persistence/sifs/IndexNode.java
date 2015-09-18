@@ -31,6 +31,7 @@ class IndexNode {
    private static final boolean trace = log.isTraceEnabled();
 
    private static final byte HAS_LEAVES = 1;
+   private static final byte HAS_NODES = 2;
    private static final int INNER_NODE_HEADER_SIZE = 5;
    private static final int INNER_NODE_REFERENCE_SIZE = 10;
    private static final int LEAF_NODE_REFERENCE_SIZE = 10;
@@ -80,11 +81,14 @@ class IndexNode {
          for (int i = 0; i < numKeyParts + 1; ++i) {
             leafNodes[i] = new LeafNode(buffer.getInt(), buffer.getInt(), buffer.getShort());
          }
-      } else {
+      } else if ((flags & HAS_NODES) != 0){
          innerNodes = new InnerNode[numKeyParts + 1];
          for (int i = 0; i < numKeyParts + 1; ++i) {
             innerNodes[i] = new InnerNode(buffer.getLong(), buffer.getShort());
          }
+      } else {
+         // the default
+         leafNodes = LeafNode.EMPTY_ARRAY;
       }
 
       if (trace) {
@@ -160,13 +164,20 @@ class IndexNode {
       }
    }
 
-   private void store(Index.IndexSpace indexSpace) throws IOException {
+   // called only internally or for root
+   void store(Index.IndexSpace indexSpace) throws IOException {
       this.offset = indexSpace.offset;
       this.occupiedSpace = indexSpace.length;
       ByteBuffer buffer = ByteBuffer.allocate(length());
       buffer.putShort((short) prefix.length);
       buffer.put(prefix);
-      buffer.put(innerNodes == null ? HAS_LEAVES : 0);
+      byte flags = 0;
+      if (innerNodes != null && innerNodes.length != 0) {
+         flags |= HAS_NODES;
+      } else if (leafNodes != null && leafNodes.length != 0) {
+         flags |= HAS_LEAVES;
+      }
+      buffer.put(flags);
       buffer.putShort((short) keyParts.length);
       for (int i = 0; i < keyParts.length; ++i) {
          buffer.putShort((short) keyParts[i].length);
@@ -878,7 +889,7 @@ class IndexNode {
    }
 
    public static IndexNode emptyWithLeaves(Index.Segment segment) {
-      return new IndexNode(segment, new byte[0], new byte[0][], new LeafNode[0]);
+      return new IndexNode(segment, new byte[0], new byte[0][], LeafNode.EMPTY_ARRAY);
    }
 
    public static IndexNode emptyWithInnerNodes(Index.Segment segment) {
@@ -926,6 +937,7 @@ class IndexNode {
    }
 
    private static class LeafNode extends EntryInfo {
+      private static LeafNode[] EMPTY_ARRAY = new LeafNode[0];
       private volatile SoftReference<EntryRecord> keyReference;
 
       public LeafNode(int file, int offset, short numRecords) {

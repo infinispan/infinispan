@@ -151,7 +151,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
       compactor.setIndex(index);
       startIndex();
       final AtomicLong maxSeqId = new AtomicLong(0);
-      if (configuration.purgeOnStartup()) {
+      if (index.isLoaded()) {
+         log.debug("Not building the index - loaded from persisted state");
+      } else if (configuration.purgeOnStartup()) {
          log.debug("Not building the index - purge will be executed");
       } else {
          log.debug("Building the index");
@@ -225,6 +227,10 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    protected void startIndex() {
       // this call is extracted for better testability
       index.start();
+   }
+
+   protected boolean isIndexLoaded() {
+      return index.isLoaded();
    }
 
    @Override
