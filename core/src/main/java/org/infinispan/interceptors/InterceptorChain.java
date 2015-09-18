@@ -97,15 +97,13 @@ public abstract class InterceptorChain implements SequentialInterceptorChain {
    public abstract Object invoke(InvocationContext ctx, VisitableCommand command);
 
    /**
-    * @return the first interceptor in the chain.
+    * @deprecated Since 8.1, throws an {@code UnsupportedOperationException}
     */
-
+   @Deprecated
    public abstract CommandInterceptor getFirstInChain();
 
    /**
-    * Mainly used by unit tests to replace the interceptor chain with the starting point passed in.
-    *
-    * @param interceptor interceptor to be used as the first interceptor in the chain.
+    * @deprecated Since 8.1, throws an {@code UnsupportedOperationException}
     */
    public abstract void setFirstInChain(CommandInterceptor interceptor);
 

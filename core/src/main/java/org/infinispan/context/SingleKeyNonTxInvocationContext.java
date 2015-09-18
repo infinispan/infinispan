@@ -14,7 +14,7 @@ import java.util.Set;
  * @author Sanne Grinovero
  * @since 5.1
  */
-public final class SingleKeyNonTxInvocationContext implements InvocationContext {
+public final class SingleKeyNonTxInvocationContext extends BaseSequentialInvocationContext implements InvocationContext {
 
    /**
     * It is possible for the key to only be wrapped but not locked, e.g. when a get takes place.

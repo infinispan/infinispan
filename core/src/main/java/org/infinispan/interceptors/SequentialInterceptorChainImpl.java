@@ -20,6 +20,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiFunction;
 
@@ -38,7 +41,7 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
    final ComponentMetadataRepo componentMetadataRepo;
    final ReentrantLock lock = new ReentrantLock();
 
-   private final List<SequentialInterceptor> interceptors = new ArrayList<>();
+   private final List<SequentialInterceptor> interceptors = new CopyOnWriteArrayList<>();
 
    public SequentialInterceptorChainImpl(ComponentMetadataRepo componentMetadataRepo) {
       this.componentMetadataRepo = componentMetadataRepo;
@@ -208,104 +211,69 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
    }
 
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
-      doInvoke(ctx, command, 0);
-   }
-
-   protected void doInvoke(InvocationContext ctx, VisitableCommand command, int startIndex) {
-      ArrayList<SequentialInterceptor> interceptorsCopy = new ArrayList<>(interceptors);
-      ArrayList<BiFunction<Object, Throwable, Object>> returnStack = new ArrayList<>(interceptors.size() / 2);
-      Object returnValue = null;
-      Throwable exception = null;
-      for (int i = startIndex; i < interceptorsCopy.size(); i++) {
-         try {
-            SequentialInterceptor interceptor = interceptorsCopy.get(i);
-            BiFunction<Object, Throwable, Object> afterAction = interceptor.visitCommand(ctx, command);
-            if (afterAction instanceof SequentialInterceptor.SkipNextInterceptor) {
-               returnValue = ((SequentialInterceptor.SkipNextInterceptor) afterAction).returnValue;
-               break;
-            } else if (afterAction instanceof SequentialInterceptor.NewCommand) {
-               // TODO Invoke from index i
-               VisitableCommand newCommand = ((SequentialInterceptor.NewCommand) afterAction).cmd;
-               doInvoke(ctx, newCommand, i + 1);
-            } else if (afterAction != null) {
-               returnStack.add(afterAction);
-            }
-         } catch (Throwable t) {
-            exception = t;
-         }
-      }
-
-      for (int i = returnStack.size() - 1; i <= startIndex; i--) {
-         BiFunction<Object, Throwable, Object> action = returnStack.get(i);
-         try {
-            returnValue = action.apply(returnValue, exception);
-            exception = null;
-         } catch (Throwable t) {
-            exception = t;
-         }
-      }
-
+      SequentialInvocationContext sctx = (SequentialInvocationContext) ctx;
       try {
-      } catch (CacheException e) {
-         if (e.getCause() instanceof InterruptedException)
-            Thread.currentThread().interrupt();
-         throw e;
-      } catch (RuntimeException e) {
-         throw e;
-      } catch (Throwable t) {
-         throw new CacheException(t);
+         return sctx.execute(command).get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);
+      } catch (ExecutionException e) {
+         throw new CacheException(e.getCause());
       }
    }
 
    public CommandInterceptor getFirstInChain() {
-      return firstInChain;
+      throw new UnsupportedOperationException();
    }
 
    public void setFirstInChain(CommandInterceptor interceptor) {
-      this.firstInChain = interceptor;
+      throw new UnsupportedOperationException();
    }
 
    public List<CommandInterceptor> getInterceptorsWhichExtend(
          Class<? extends CommandInterceptor> interceptorClass) {
       List<CommandInterceptor> result = new LinkedList<>();
-      for (CommandInterceptor interceptor : asList()) {
-         boolean isSubclass = interceptorClass.isAssignableFrom(interceptor.getClass());
-         if (isSubclass) {
-            result.add(interceptor);
+      for (SequentialInterceptor interceptor : interceptors) {
+         if (interceptor instanceof SequentialInterceptorAdapter) {
+            SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
+            Class<? extends CommandInterceptor> adaptedType = adapter.getAdaptedType();
+            boolean isSubclass = interceptorClass.isAssignableFrom(adaptedType);
+            if (isSubclass) {
+               result.add(adapter.getAdaptedInterceptor());
+            }
          }
       }
       return result;
    }
 
    public List<CommandInterceptor> getInterceptorsWithClass(Class clazz) {
-      // Called when building interceptor chain and so concurrent start calls are protected already
-      CommandInterceptor iterator = firstInChain;
-      List<CommandInterceptor> result = new ArrayList<>(2);
-      while (iterator != null) {
-         if (iterator.getClass() == clazz)
-            result.add(iterator);
-         iterator = iterator.getNext();
+      List<CommandInterceptor> result = new LinkedList<>();
+      for (SequentialInterceptor interceptor : interceptors) {
+         if (interceptorMatches(interceptor, clazz)) {
+            SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
+            result.add(adapter.getAdaptedInterceptor());
+         }
       }
       return result;
    }
 
    public String toString() {
       StringBuilder sb = new StringBuilder();
-      CommandInterceptor i = firstInChain;
-      while (i != null) {
+      for (SequentialInterceptor interceptor : interceptors) {
          sb.append("\n\t>> ");
-         sb.append(i.getClass().getName());
-         i = i.getNext();
+         sb.append(interceptor.getClass().getName());
       }
       return sb.toString();
    }
 
    public boolean containsInstance(CommandInterceptor interceptor) {
-      CommandInterceptor it = firstInChain;
-      while (it != null) {
-         if (it == interceptor)
-            return true;
-         it = it.getNext();
+      for (SequentialInterceptor current : interceptors) {
+         if (current instanceof SequentialInterceptorAdapter) {
+            SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) current;
+            if (adapter.getAdaptedInterceptor() == interceptor) {
+               return true;
+            }
+         }
       }
       return false;
    }
@@ -316,18 +284,26 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
 
    public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType,
                                           boolean alsoMatchSubClasses) {
-      // Called when building interceptor chain and so concurrent start calls are protected already
-      CommandInterceptor it = firstInChain;
-      while (it != null) {
-         if (alsoMatchSubClasses) {
-            if (interceptorType.isAssignableFrom(it.getClass()))
-               return true;
-         } else {
-            if (it.getClass().equals(interceptorType))
-               return true;
+      for (SequentialInterceptor interceptor : interceptors) {
+         if (interceptor instanceof SequentialInterceptorAdapter) {
+            SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
+            Class<? extends CommandInterceptor> adaptedType = adapter.getAdaptedType();
+            if (alsoMatchSubClasses) {
+               if (interceptorType.isAssignableFrom(adaptedType)) {
+                  return true;
+               }
+            } else {
+               if (interceptorType == adaptedType) {
+                  return true;
+               }
+            }
          }
-         it = it.getNext();
       }
       return false;
+   }
+
+   @Override
+   public List<SequentialInterceptor> getInterceptors() {
+      return new CopyOnWriteArrayList<>(interceptors);
    }
 }

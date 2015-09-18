@@ -1,10 +1,7 @@
 package org.infinispan.interceptors;
 
-import org.infinispan.commands.VisitableCommand;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,4 +9,5 @@ import java.util.List;
  * @since 8.0
  */
 public interface SequentialInterceptorChain {
+   List<SequentialInterceptor> getInterceptors();
 }

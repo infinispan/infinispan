@@ -17,7 +17,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.UnaryOperator;
 
 /**
  * @author Dan Berindei
@@ -41,145 +40,172 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       adaptedInterceptor.setNext(new NextInterceptor());
    }
 
+   public CommandInterceptor getAdaptedInterceptor() {
+      return adaptedInterceptor;
+   }
+
    public Class<? extends CommandInterceptor> getAdaptedType() {
       return adaptedInterceptor.getClass();
    }
 
    @Override
-   public BiFunction<Object, Throwable, Object> visitCommand(InvocationContext ctx, VisitableCommand command) {
-      AdapterContext actx = new AdapterContext(ctx);
-      CompletableFuture<Object> cf = CompletableFuture.supplyAsync(() -> {
+   public CompletableFuture<Object> visitCommand(InvocationContext ctx, VisitableCommand command) {
+      SequentialInvocationContext sctx = (SequentialInvocationContext) ctx;
+      AdapterContext actx = new AdapterContext(sctx);
+      CompletableFuture<Object> adaptedFuture = CompletableFuture.supplyAsync(() -> {
          try {
             Object returnValue = command.acceptVisitor(actx, adaptedInterceptor);
-            if (!actx.beforeFuture.isDone()) {
-               actx.beforeFuture.complete(skipNextInterceptor(returnValue));
-            }
+            actx.beforeFuture.complete(sctx.shortCircuit(returnValue));
             return returnValue;
          } catch (Throwable throwable) {
             throw new CacheException(throwable);
          }
       }, executor);
-      actx.beforeFuture.join();
-      return returnValue -> afterCommand(actx, cf, returnValue);
-   }
-
-   protected Object afterCommand(AdapterContext actx, CompletableFuture<Object> cf, Object returnValue) {
-      try {
-         actx.nextInterceptorFuture.complete(returnValue);
-         return cf.get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CacheException(e);
-      } catch (ExecutionException e) {
-         throw new CacheException(e.getCause());
-      }
+      actx.adaptedFuture = adaptedFuture;
+      return actx.beforeFuture;
    }
 
    public static class NextInterceptor extends CommandInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          AdapterContext actx = (AdapterContext) ctx;
+         actx.nextInterceptorFuture = new CompletableFuture<>();
+         if (command != actx.sctx.getCommand()) {
+            // The interceptor started executing a different command, fork the execution and
+            // create a new beforeFuture
+            CompletableFuture<Object> savedFuture = actx.beforeFuture;
+            actx.beforeFuture = new CompletableFuture<>();
+            savedFuture.complete(actx.sctx.forkInvocation(command, (returnValue, throwable) -> {
+               if (throwable == null) {
+                  actx.nextInterceptorFuture.complete(returnValue);
+               } else {
+                  actx.nextInterceptorFuture.completeExceptionally(throwable);
+               }
+               try {
+                  return actx.beforeFuture.get();
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw new CacheException(e);
+               } catch (ExecutionException e) {
+                  throw new CacheException(e.getCause());
+               }
+            }));
+         } else {
+            // Executing the next interceptor with the same command
+            actx.sctx.onReturn((returnValue, throwable) -> {
+               if (throwable == null) {
+                  actx.nextInterceptorFuture.complete(returnValue);
+               } else {
+                  actx.nextInterceptorFuture.completeExceptionally(throwable);
+               }
+               return actx.adaptedFuture;
+            });
+         }
          return actx.nextInterceptorFuture.get();
       }
    }
 
    private class AdapterContext implements InvocationContext {
-      private final InvocationContext ctx;
-      CompletableFuture<BiFunction<Object, Throwable, Object>> beforeFuture = new CompletableFuture<>();
-      CompletableFuture<Object> nextInterceptorFuture = new CompletableFuture<>();
+      private final SequentialInvocationContext sctx;
+      // Done when the command was passed to the next SequentialInterceptor in the chain
+      CompletableFuture<Object> beforeFuture = new CompletableFuture<>();
+      // Done when the next SequentialInterceptor returns
+      CompletableFuture<Object> nextInterceptorFuture = null;
+      // Done when the adapted interceptor finished executing
+      public CompletableFuture<Object> adaptedFuture;
 
-      public AdapterContext(InvocationContext ctx) {
-         this.ctx = ctx;
+      public AdapterContext(SequentialInvocationContext sctx) {
+         this.sctx = sctx;
       }
 
       @Override
       public boolean isOriginLocal() {
-         return ctx.isOriginLocal();
+         return sctx.isOriginLocal();
       }
 
       @Override
       public Address getOrigin() {
-         return ctx.getOrigin();
+         return sctx.getOrigin();
       }
 
       @Override
       public boolean isInTxScope() {
-         return ctx.isInTxScope();
+         return sctx.isInTxScope();
       }
 
       @Override
       public Object getLockOwner() {
-         return ctx.getLockOwner();
+         return sctx.getLockOwner();
       }
 
       @Override
       public void setLockOwner(Object lockOwner) {
-         ctx.setLockOwner(lockOwner);
+         sctx.setLockOwner(lockOwner);
       }
 
       @Override
       public InvocationContext clone() {
-         return ctx.clone();
+         return sctx.clone();
       }
 
       @Override
       public Set<Object> getLockedKeys() {
-         return ctx.getLockedKeys();
+         return sctx.getLockedKeys();
       }
 
       @Override
       public void clearLockedKeys() {
-         ctx.clearLockedKeys();
+         sctx.clearLockedKeys();
       }
 
       @Override
       public ClassLoader getClassLoader() {
-         return ctx.getClassLoader();
+         return sctx.getClassLoader();
       }
 
       @Override
       public void setClassLoader(ClassLoader classLoader) {
-         ctx.setClassLoader(classLoader);
+         sctx.setClassLoader(classLoader);
       }
 
       @Override
       public void addLockedKey(Object key) {
-         ctx.addLockedKey(key);
+         sctx.addLockedKey(key);
       }
 
       @Override
       public boolean hasLockedKey(Object key) {
-         return ctx.hasLockedKey(key);
+         return sctx.hasLockedKey(key);
       }
 
       @Override
       public boolean replaceValue(Object key, InternalCacheEntry cacheEntry) {
-         return ctx.replaceValue(key, cacheEntry);
+         return sctx.replaceValue(key, cacheEntry);
       }
 
       @Override
       public boolean isEntryRemovedInContext(Object key) {
-         return ctx.isEntryRemovedInContext(key);
+         return sctx.isEntryRemovedInContext(key);
       }
 
       @Override
       public CacheEntry lookupEntry(Object key) {
-         return ctx.lookupEntry(key);
+         return sctx.lookupEntry(key);
       }
 
       @Override
       public Map<Object, CacheEntry> getLookedUpEntries() {
-         return ctx.getLookedUpEntries();
+         return sctx.getLookedUpEntries();
       }
 
       @Override
       public void putLookedUpEntry(Object key, CacheEntry e) {
-         ctx.putLookedUpEntry(key, e);
+         sctx.putLookedUpEntry(key, e);
       }
 
       @Override
       public void removeLookedUpEntry(Object key) {
-         ctx.removeLookedUpEntry(key);
+         sctx.removeLookedUpEntry(key);
       }
    }
 }

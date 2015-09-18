@@ -111,7 +111,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       boolean needsVersionAwareComponents = transactionMode.isTransactional() &&
               Configurations.isVersioningEnabled(configuration);
 
-      SequentialInterceptorChain interceptorChain =
+      InterceptorChain interceptorChain =
             new SequentialInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());
       // add the interceptor chain to the registry first, since some interceptors may ask for it.
       // Add both the old class and the new interface
@@ -332,7 +332,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return interceptorChain;
    }
 
-   private void buildCustomInterceptors(SequentialInterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {
+   private void buildCustomInterceptors(InterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {
       for (InterceptorConfiguration config : customInterceptors.interceptors()) {
          if (interceptorChain.containsInterceptorType(config.interceptor().getClass())) continue;
 
