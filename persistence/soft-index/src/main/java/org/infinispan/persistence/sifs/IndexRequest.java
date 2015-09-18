@@ -1,5 +1,7 @@
 package org.infinispan.persistence.sifs;
 
+import org.infinispan.commons.util.Util;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -8,73 +10,69 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
  */
 class IndexRequest {
-
    public enum Type {
       UPDATE,
+      MOVED,
+      DROPPED,
       CLEAR,
       DELETE_FILE,
       STOP,
       GET_SIZE
    }
 
-   private Type type = Type.UPDATE;
-   private Object key;
+   private final Type type;
+   private final Object key;
    // the file and offset are duplicate to those in TemporaryTable because we have to match the CAS requests
-   private int file;
-   private int offset;
-   private int prevFile = -1;
-   private int prevOffset = -1;
-   private byte[] serializedKey;
-   private int size;
+   private final int file;
+   private final int offset;
+   private final int prevFile;
+   private final int prevOffset;
+   private final byte[] serializedKey;
+   private final int size;
    private volatile Object result;
    private AtomicInteger countDown;
 
-   public IndexRequest(Object key, byte[] serializedKey, int file, int offset, int size) {
+   private IndexRequest(Type type, Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
+      this.type = type;
       this.key = key;
-      this.serializedKey = serializedKey;
       this.file = file;
       this.offset = offset;
-      this.size = size;
-   }
-
-   public IndexRequest(Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
-      this.key = key;
-      this.serializedKey = serializedKey;
-      this.file = file;
-      this.offset = offset;
-      this.size = size;
       this.prevFile = prevFile;
       this.prevOffset = prevOffset;
+      this.serializedKey = serializedKey;
+      this.size = size;
    }
 
-   private IndexRequest(Type type) {
-      this.type = type;
+   public static IndexRequest update(Object key, byte[] serializedKey, int file, int offset, int size) {
+      return new IndexRequest(Type.UPDATE, key, serializedKey, file, offset, size, -1, -1);
+   }
+
+   public static IndexRequest moved(Object key, byte[] serializedKey, int file, int offset, int size, int prevFile, int prevOffset) {
+      return new IndexRequest(Type.MOVED, key, serializedKey, file, offset, size, prevFile, prevOffset);
+   }
+
+   public static IndexRequest dropped(Object key, byte[] serializedKey, int prevFile, int prevOffset) {
+      return new IndexRequest(Type.DROPPED, key, serializedKey, -1, -1, -1, prevFile, prevOffset);
    }
 
    public static IndexRequest clearRequest() {
-      return new IndexRequest(Type.CLEAR);
+      return new IndexRequest(Type.CLEAR, null, null, -1, -1, -1, -1, -1);
    }
 
    public static IndexRequest deleteFileRequest(int deletedFile) {
-      IndexRequest req = new IndexRequest(Type.DELETE_FILE);
-      req.file = deletedFile;
-      return req;
+      return new IndexRequest(Type.DELETE_FILE, null, null, deletedFile, -1, -1, -1, -1);
    }
 
    public static IndexRequest stopRequest() {
-      return new IndexRequest(Type.STOP);
+      return new IndexRequest(Type.STOP, null, null, -1, -1, -1, -1, -1);
    }
 
    public static IndexRequest sizeRequest() {
-      return new IndexRequest(Type.GET_SIZE);
+      return new IndexRequest(Type.GET_SIZE, null, null, -1, -1, -1, -1, -1);
    }
 
    public Type getType() {
       return type;
-   }
-
-   public boolean isCompareAndSet() {
-      return prevFile != -1;
    }
 
    public Object getKey() {
@@ -130,7 +128,9 @@ class IndexRequest {
    @Override
    public String toString() {
       return "IndexRequest{" +
-            "file=" + file +
+            "key=" + key +
+            ", serializedKey=" + Util.printArray(serializedKey) +
+            ", file=" + file +
             ", offset=" + offset +
             ", prevFile=" + prevFile +
             ", prevOffset=" + prevOffset +

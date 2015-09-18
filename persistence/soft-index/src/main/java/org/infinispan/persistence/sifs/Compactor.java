@@ -171,28 +171,51 @@ class Compactor extends Thread {
                   byte[] serializedKey = EntryRecord.readKey(handle, header, scheduledOffset);
                   Object key = marshaller.objectFromByteBuffer(serializedKey);
 
+                  int indexedOffset = header.valueLength() > 0 ? scheduledOffset : ~scheduledOffset;
                   boolean drop = true;
+                  boolean truncate = false;
                   EntryPosition entry = temporaryTable.get(key);
                   if (entry != null) {
                      synchronized (entry) {
-                        if (entry.file == scheduledFile && entry.offset == scheduledOffset) {
-                           drop = false;
-                        } else if (trace) {
+                        if (trace) {
                            log.tracef("Key for %d:%d was found in temporary table on %d:%d",
                                  scheduledFile, scheduledOffset, entry.file, entry.offset);
                         }
+                        if (entry.file == scheduledFile && entry.offset == indexedOffset) {
+                           // It's quite unlikely that we would compact a record that is not indexed yet,
+                           // but let's handle that
+                           if (header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime()) {
+                              truncate = true;
+                           }
+                        } else {
+                           truncate = true;
+                        }
                      }
+                     // When we have found the entry in temporary table, it's possible that the delete operation
+                     // (that was recorded in temporary table) will arrive to index after DROPPED - in that case
+                     // we could remove the entry and delete would not find it
+                     drop = false;
                   } else {
-                     EntryPosition position = index.getPosition(key, serializedKey);
-                     if (position != null && position.file == scheduledFile && position.offset == scheduledOffset) {
+                     EntryInfo info = index.getInfo(key, serializedKey);
+                     assert info != null : String.format("Index does not recognize entry on %d:%d");
+                     assert info.numRecords > 0;
+                     if (info.file == scheduledFile && info.offset == scheduledOffset) {
+                        assert header.valueLength() > 0;
+                        // live record with data
+                        truncate = header.expiryTime() >= 0 && header.expiryTime() <= timeService.wallClockTime();
+                        if (trace) {
+                           log.tracef("Is %d:%d expired? %s, numRecords? %d", scheduledFile, scheduledOffset, truncate, info.numRecords);
+                        }
+                        if (!truncate || info.numRecords > 1) {
+                           drop = false;
+                        }
+                        // Drop only when it is expired and has single record
+                     } else if (info.file == scheduledFile && info.offset == ~scheduledOffset && info.numRecords > 1) {
+                        // just tombstone but there are more non-compacted records for this key so we have to keep it
                         drop = false;
                      } else if (trace) {
-                        if (position != null) {
-                           log.tracef("Key for %d:%d was found in index on %d:%d",
-                                 scheduledFile, scheduledOffset, position.file, position.offset);
-                        } else {
-                           log.tracef("Key for %d:%d was not found in index!", scheduledFile, (Object)scheduledOffset);
-                        }
+                        log.tracef("Key for %d:%d was found in index on %d:%d, %d record => drop",
+                              scheduledFile, scheduledOffset, info.file, info.offset, info.numRecords);
                      }
                   }
                   if (drop) {
@@ -200,47 +223,47 @@ class Compactor extends Thread {
                         log.tracef("Drop %d:%d (%s)", scheduledFile, (Object)scheduledOffset,
                               header.valueLength() > 0 ? "record" : "tombstone");
                      }
-                     scheduledOffset += header.totalLength();
-                     continue;
-                  }
-
-                  if (logFile == null || currentOffset + header.totalLength() > maxFileSize) {
-                     if (logFile != null) {
-                        logFile.close();
-                        completeFile(logFile.fileId);
-                     }
-                     currentOffset = 0;
-                     logFile = fileProvider.getFileForLog();
-                     if (log.isDebugEnabled()) {
-                        log.debugf("Compacting to %d", (Object)logFile.fileId);
-                     }
-                  }
-
-                  byte[] serializedValue;
-                  byte[] serializedMetadata;
-                  int entryOffset;
-                  // we have to keep track of expired entries but only as tombstones - do not copy the value nor metadata
-                  if (header.valueLength() > 0 && (header.expiryTime() < 0 || header.expiryTime() > timeService.wallClockTime())) {
-                     serializedMetadata = EntryRecord.readMetadata(handle, header, scheduledOffset);
-                     serializedValue = EntryRecord.readValue(handle, header, scheduledOffset);
-                     entryOffset = currentOffset;
+                     indexQueue.put(IndexRequest.dropped(key, serializedKey, scheduledFile, scheduledOffset));
                   } else {
-                     serializedMetadata = null;
-                     serializedValue = null;
-                     entryOffset = ~currentOffset;
-                  }
+                     if (logFile == null || currentOffset + header.totalLength() > maxFileSize) {
+                        if (logFile != null) {
+                           logFile.close();
+                           completeFile(logFile.fileId);
+                        }
+                        currentOffset = 0;
+                        logFile = fileProvider.getFileForLog();
+                        if (log.isDebugEnabled()) {
+                           log.debugf("Compacting to %d", (Object) logFile.fileId);
+                        }
+                     }
 
-                  EntryRecord.writeEntry(logFile.fileChannel, serializedKey, serializedMetadata, serializedValue, header.seqId(), header.expiryTime());
-                  temporaryTable.setConditionally(key, logFile.fileId, entryOffset, scheduledFile, scheduledOffset);
-                  if (trace) {
-                     log.tracef("Update %d:%d -> %d:%d | %d,%d", scheduledFile, scheduledOffset, logFile.fileId, entryOffset, logFile.fileChannel.position(), logFile.fileChannel.size());
-                  }
-                  // entryFile cannot be used as we have to report the file due to free space statistics
-                  indexQueue.put(new IndexRequest(key, serializedKey,
-                        logFile.fileId, entryOffset,
-                        header.totalLength(), scheduledFile, scheduledOffset));
+                     byte[] serializedValue;
+                     byte[] serializedMetadata;
+                     int entryOffset;
+                     int writtenLength;
+                     if (header.valueLength() > 0 && !truncate) {
+                        serializedMetadata = EntryRecord.readMetadata(handle, header, scheduledOffset);
+                        serializedValue = EntryRecord.readValue(handle, header, scheduledOffset);
+                        entryOffset = currentOffset;
+                        writtenLength = header.totalLength();
+                     } else {
+                        serializedMetadata = null;
+                        serializedValue = null;
+                        entryOffset = ~currentOffset;
+                        writtenLength = EntryHeader.HEADER_SIZE + header.keyLength();
+                     }
+                     EntryRecord.writeEntry(logFile.fileChannel, serializedKey, serializedMetadata, serializedValue, header.seqId(), header.expiryTime());
+                     temporaryTable.setConditionally(key, logFile.fileId, entryOffset, scheduledFile, indexedOffset);
+                     if (trace) {
+                        log.tracef("Update %d:%d -> %d:%d | %d,%d", scheduledFile, indexedOffset,
+                              logFile.fileId, entryOffset, logFile.fileChannel.position(), logFile.fileChannel.size());
+                     }
+                     // entryFile cannot be used as we have to report the file due to free space statistics
+                     indexQueue.put(IndexRequest.moved(key, serializedKey, logFile.fileId, entryOffset, writtenLength,
+                           scheduledFile, indexedOffset));
 
-                  currentOffset += header.totalLength();
+                     currentOffset += writtenLength;
+                  }
                   scheduledOffset += header.totalLength();
                }
             } finally {

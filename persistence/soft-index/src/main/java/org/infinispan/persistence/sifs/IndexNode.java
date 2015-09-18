@@ -33,7 +33,7 @@ class IndexNode {
    private static final byte HAS_LEAVES = 1;
    private static final int INNER_NODE_HEADER_SIZE = 5;
    private static final int INNER_NODE_REFERENCE_SIZE = 10;
-   private static final int LEAF_NODE_REFERENCE_SIZE = 8;
+   private static final int LEAF_NODE_REFERENCE_SIZE = 10;
 
    public static final int RESERVED_SPACE
          = INNER_NODE_HEADER_SIZE + 2 * Math.max(INNER_NODE_REFERENCE_SIZE, LEAF_NODE_REFERENCE_SIZE);
@@ -48,6 +48,12 @@ class IndexNode {
    private int contentLength = -1;
    private int totalLength = -1;
    private int occupiedSpace;
+
+   public enum RecordChange {
+      INCREASE,
+      MOVE,
+      DECREASE,
+   }
 
    public IndexNode(Index.Segment segment, long offset, int occupiedSpace) throws IOException {
       this.segment = segment;
@@ -71,7 +77,7 @@ class IndexNode {
       if ((flags & HAS_LEAVES) != 0) {
          leafNodes = new LeafNode[numKeyParts + 1];
          for (int i = 0; i < numKeyParts + 1; ++i) {
-            leafNodes[i] = new LeafNode(buffer.getInt(), buffer.getInt());
+            leafNodes[i] = new LeafNode(buffer.getInt(), buffer.getInt(), buffer.getShort());
          }
       } else {
          innerNodes = new InnerNode[numKeyParts + 1];
@@ -172,6 +178,7 @@ class IndexNode {
          for (int i = 0; i < leafNodes.length; ++i) {
             buffer.putInt(leafNodes[i].file);
             buffer.putInt(leafNodes[i].offset);
+            buffer.putShort(leafNodes[i].numRecords);
          }
       }
       buffer.flip();
@@ -202,11 +209,25 @@ class IndexNode {
       GET_POSITION {
          @Override
          protected EntryPosition apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
-            EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider, timeService);
-            if (hak != null && hak.getKey() != null && Arrays.equals(hak.getKey(), key)) {
+            EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
+            if (hak != null && Arrays.equals(hak.getKey(), key)) {
+               if (hak.getHeader().expiryTime() > 0 && hak.getHeader().expiryTime() <= timeService.wallClockTime()) {
+                  return null;
+               }
                return leafNode;
             }
             return null;
+         }
+      },
+      GET_INFO {
+         @Override
+         protected EntryInfo apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
+            EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
+            if (hak != null && hak.getKey() != null && Arrays.equals(hak.getKey(), key)) {
+               return leafNode;
+            } else {
+               return null;
+            }
          }
       };
 
@@ -260,7 +281,7 @@ class IndexNode {
       }
    }
 
-   public static void setPosition(IndexNode root, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook) throws IOException {
+   public static void setPosition(IndexNode root, byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       IndexNode node = root;
       Stack<Path> stack = new Stack<Path>();
       while (node.innerNodes != null) {
@@ -269,7 +290,7 @@ class IndexNode {
          if (trace) log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)", System.identityHashCode(node), node.length(), node.innerNodes.length, insertionPoint);
          node = node.innerNodes[insertionPoint].getIndexNode(root.segment);
       }
-      IndexNode copy = node.copyWith(key, file, offset, size, overwriteHook);
+      IndexNode copy = node.copyWith(key, file, offset, size, overwriteHook, recordChange);
       if (copy == node) {
          // no change was executed
          return;
@@ -481,7 +502,7 @@ class IndexNode {
          }
       } else {
          for (int i = 0; i < leafNodes.length; ++i) {
-            EntryRecord hak = leafNodes[i].loadHeaderAndKey(segment.getFileProvider(), segment.getTimeService());
+            EntryRecord hak = leafNodes[i].loadHeaderAndKey(segment.getFileProvider());
             if (hak != null && hak.getKey() != null) return hak.getKey();
          }
       }
@@ -496,7 +517,7 @@ class IndexNode {
          }
       } else {
          for (int i = leafNodes.length - 1; i >= 0; --i) {
-            EntryRecord hak = leafNodes[i].loadHeaderAndKey(segment.getFileProvider(), segment.getTimeService());
+            EntryRecord hak = leafNodes[i].loadHeaderAndKey(segment.getFileProvider());
             if (hak != null && hak.getKey() != null) return hak.getKey();
          }
       }
@@ -508,9 +529,10 @@ class IndexNode {
     * @param key
     * @param file
     * @param offset
+    * @param recordChange
     * @return
     */
-   public IndexNode copyWith(byte[] key, int file, int offset, int size, OverwriteHook overwriteHook) throws IOException {
+   public IndexNode copyWith(byte[] key, int file, int offset, int size, OverwriteHook overwriteHook, RecordChange recordChange) throws IOException {
       if (leafNodes == null) throw new IllegalArgumentException();
       byte[] newPrefix;
       byte[][] newKeyParts;
@@ -518,7 +540,7 @@ class IndexNode {
       if (leafNodes.length == 0) {
          overwriteHook.setOverwritten(false, -1, -1);
          if (overwriteHook.check(-1, -1)) {
-            return new IndexNode(segment, prefix, keyParts, new LeafNode[]{ new LeafNode(file, offset)});
+            return new IndexNode(segment, prefix, keyParts, new LeafNode[]{ new LeafNode(file, offset, (short) 1)});
          } else {
             segment.getCompactor().free(file, size);
             return this;
@@ -526,37 +548,56 @@ class IndexNode {
       }
 
       int insertPart = getInsertionPoint(key);
-      EntryRecord hak = null;
+      LeafNode oldLeafNode = leafNodes[insertPart];
+
+      short numRecords = oldLeafNode.numRecords;
+      switch (recordChange) {
+         case INCREASE:
+            if (numRecords == Short.MAX_VALUE) {
+               throw new IllegalStateException("Too many records for this key (short overflow)");
+            }
+            numRecords++;
+            break;
+         case MOVE:
+            break;
+         case DECREASE:
+            numRecords--;
+            break;
+      }
+
+      EntryRecord hak;
       try {
-         hak = leafNodes[insertPart].loadHeaderAndKey(segment.getFileProvider(), segment.getTimeService());
+         hak = oldLeafNode.loadHeaderAndKey(segment.getFileProvider());
       } catch (IndexNodeOutdatedException e) {
          throw new IllegalStateException("Index cannot be outdated for segment updater thread", e);
       }
-      int keyComp = Integer.MAX_VALUE;
-      if (hak == null || hak.getKey() == null || (keyComp = compare(hak.getKey(), key)) == 0) {
-         if (offset >= 0) {
-            if (overwriteHook.check(leafNodes[insertPart].file, leafNodes[insertPart].offset)) {
+      int keyComp = compare(hak.getKey(), key);
+      if (keyComp == 0) {
+         if (numRecords > 0) {
+            if (overwriteHook.check(oldLeafNode.file, oldLeafNode.offset)) {
                newPrefix = prefix;
                newKeyParts = keyParts;
                newLeafNodes = new LeafNode[leafNodes.length];
                System.arraycopy(leafNodes, 0, newLeafNodes, 0, leafNodes.length);
                if (trace) {
-                  log.trace(String.format("Overwriting %d:%d (%s) with %d:%d",
-                        leafNodes[insertPart].file, leafNodes[insertPart].offset,
-                        hak == null ? "removed" : (hak.getKey() == null ? "expired" : "matching"), file, offset));
+                  log.trace(String.format("Overwriting %d:%d with %d:%d (%d)",
+                        oldLeafNode.file, oldLeafNode.offset, file, offset, numRecords));
                }
-               newLeafNodes[insertPart] = new LeafNode(file, offset);
-               if (hak != null) {
-                  segment.getCompactor().free(leafNodes[insertPart].file, hak.getHeader().totalLength());
+               // Do not update the file and offset for DROPPED IndexRequests
+               if (recordChange == RecordChange.INCREASE || recordChange == RecordChange.MOVE) {
+                  newLeafNodes[insertPart] = new LeafNode(file, offset, numRecords);
+                  segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
+               } else {
+                  newLeafNodes[insertPart] = new LeafNode(oldLeafNode.file, oldLeafNode.offset, numRecords);
                }
-               overwriteHook.setOverwritten(true, leafNodes[insertPart].file, leafNodes[insertPart].offset);
+               overwriteHook.setOverwritten(true, oldLeafNode.file, oldLeafNode.offset);
             } else {
                overwriteHook.setOverwritten(false, -1, -1);
                segment.getCompactor().free(file, size);
                return this;
             }
          } else {
-            overwriteHook.setOverwritten(keyComp == 0, leafNodes[insertPart].file, leafNodes[insertPart].offset);
+            overwriteHook.setOverwritten(true, oldLeafNode.file, oldLeafNode.offset);
             if (keyParts.length <= 1) {
                newPrefix = new byte[0];
                newKeyParts = new byte[0][];
@@ -578,15 +619,16 @@ class IndexNode {
                newLeafNodes = leafNodes;
             }
             if (hak != null) {
-               segment.getCompactor().free(leafNodes[insertPart].file, hak.getHeader().totalLength());
+               segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
             }
          }
       } else {
+         // IndexRequest cannot be MOVED or DROPPED when the key is not in the index
+         assert recordChange == RecordChange.INCREASE;
          overwriteHook.setOverwritten(false, -1, -1);
-         if (offset < 0) {
-            // this is a remove request, nothing to do
-            return this;
-         }
+         // We have to insert the record even if this is a delete request and the key was not found
+         // because otherwise we would have incorrect numRecord count. Eventually, Compactor will
+         // drop the tombstone and update index, removing this node
          if (keyParts.length == 0) {
             // TODO: we may use unnecessarily long keys here and the key is never shortened
             newPrefix = keyComp > 0 ? key : hak.getKey();
@@ -601,12 +643,12 @@ class IndexNode {
             newKeyParts[insertPart] = substring(key, newPrefix.length, keyComp);
             System.arraycopy(leafNodes, 0, newLeafNodes, 0, insertPart + 1);
             System.arraycopy(leafNodes, insertPart + 1, newLeafNodes, insertPart + 2, leafNodes.length - insertPart - 1);
-            newLeafNodes[insertPart + 1] = new LeafNode(file, offset);
+            newLeafNodes[insertPart + 1] = new LeafNode(file, offset, (short) 1);
          } else {
             newKeyParts[insertPart] = substring(hak.getKey(), newPrefix.length, -keyComp);
             System.arraycopy(leafNodes, 0, newLeafNodes, 0, insertPart);
             System.arraycopy(leafNodes, insertPart, newLeafNodes, insertPart + 1, leafNodes.length - insertPart);
-            newLeafNodes[insertPart] = new LeafNode(file, offset);
+            newLeafNodes[insertPart] = new LeafNode(file, offset, (short) 1);
          }
       }
       return new IndexNode(segment, newPrefix, newKeyParts, newLeafNodes);
@@ -807,7 +849,7 @@ class IndexNode {
    }
 
    public static IndexNode emptyWithLeaves(Index.Segment segment) {
-      return new IndexNode(segment, new byte[0], new byte[0][], new LeafNode[] { new LeafNode(-1, -1) });
+      return new IndexNode(segment, new byte[0], new byte[0][], new LeafNode[0]);
    }
 
    public static IndexNode emptyWithInnerNodes(Index.Segment segment) {
@@ -819,7 +861,6 @@ class IndexNode {
          return true;
       }
       public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
-
       }
    }
 
@@ -853,21 +894,18 @@ class IndexNode {
       }
    }
 
-   private static class LeafNode extends EntryPosition {
-
+   private static class LeafNode extends EntryInfo {
       private volatile SoftReference<EntryRecord> keyReference;
 
-      public LeafNode(int file, int offset) {
-         super(file, offset);
+      public LeafNode(int file, int offset, short numRecords) {
+         super(file, offset, numRecords);
       }
 
-      public EntryRecord loadHeaderAndKey(FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
-         if (offset < 0) return null;
-         EntryRecord headerAndKey = getHeaderAndKey(fileProvider, null, timeService);
-         return headerAndKey;
+      public EntryRecord loadHeaderAndKey(FileProvider fileProvider) throws IOException, IndexNodeOutdatedException {
+         return getHeaderAndKey(fileProvider, null);
       }
 
-      private EntryRecord getHeaderAndKey(FileProvider fileProvider, FileProvider.Handle handle, TimeService timeService) throws IOException, IndexNodeOutdatedException {
+      private EntryRecord getHeaderAndKey(FileProvider fileProvider, FileProvider.Handle handle) throws IOException, IndexNodeOutdatedException {
          EntryRecord headerAndKey;
          if (keyReference == null || (headerAndKey = keyReference.get()) == null) {
             synchronized (this) {
@@ -877,16 +915,17 @@ class IndexNode {
                      ownHandle = true;
                      handle = fileProvider.getFile(file);
                      if (handle == null) {
-                        throw new IndexNodeOutdatedException(file + ":" + offset);
+                        throw new IndexNodeOutdatedException(file + ":" + offset + " (" + numRecords + ")");
                      }
                   }
                   try {
-                     EntryHeader header = EntryRecord.readEntryHeader(handle, offset);
+                     int readOffset = offset < 0 ? ~offset : offset;
+                     EntryHeader header = EntryRecord.readEntryHeader(handle, readOffset);
                      if (header == null) {
-                        throw new IllegalStateException("Error reading header from " + file + ":" + offset + " | " + handle.getFileSize());
+                        throw new IllegalStateException("Error reading header from " + file + ":" + readOffset + " | " + handle.getFileSize());
                      }
-                     headerAndKey = new EntryRecord(header, EntryRecord.readKey(handle, header, offset), null, null);
-                     keyReference = new SoftReference<EntryRecord>(headerAndKey);
+                     headerAndKey = new EntryRecord(header, EntryRecord.readKey(handle, header, readOffset), null, null);
+                     keyReference = new SoftReference<>(headerAndKey);
                   } finally {
                      if (ownHandle) {
                         handle.close();
@@ -895,30 +934,34 @@ class IndexNode {
                }
             }
          }
-         if (headerAndKey.getHeader().expiryTime() > 0 && headerAndKey.getHeader().expiryTime() <= timeService.wallClockTime()) {
-            EntryRecord expired = headerAndKey;
-            headerAndKey = new EntryRecord(headerAndKey.getHeader(), null, null, null);
-            synchronized (this) {
-               if (keyReference.get() == expired) {
-                  keyReference = new SoftReference<EntryRecord>(headerAndKey);
-               }
-            }
-         }
+         assert headerAndKey != null;
          return headerAndKey;
       }
 
       public EntryRecord loadRecord(FileProvider fileProvider, byte[] key, TimeService timeService) throws IOException, IndexNodeOutdatedException {
-         if (offset < 0) return null;
          FileProvider.Handle handle = fileProvider.getFile(file);
+         int readOffset = offset < 0 ? ~offset : offset;
          if (handle == null) {
-            throw new IndexNodeOutdatedException(file + ":" + offset);
+            throw new IndexNodeOutdatedException(file + ":" + readOffset);
          }
          try {
-            EntryRecord headerAndKey = getHeaderAndKey(fileProvider, handle, timeService);
+            EntryRecord headerAndKey = getHeaderAndKey(fileProvider, handle);
             if (!Arrays.equals(key, headerAndKey.getKey())) {
+               if (trace) {
+                  log.trace("Key on " + file + ":" + readOffset + " not matched.");
+               }
                return null;
             }
-            return headerAndKey.loadMetadataAndValue(handle, offset);
+            if (headerAndKey.getHeader().expiryTime() > 0 && headerAndKey.getHeader().expiryTime() <= timeService.wallClockTime()) {
+               if (trace) {
+                  log.trace("Key on " + file + ":" + readOffset + " matched but expired.");
+               }
+               return null;
+            }
+            if (trace) {
+               log.trace("Loaded from " + file + ":" + readOffset);
+            }
+            return headerAndKey.loadMetadataAndValue(handle, readOffset);
          } finally {
             handle.close();
          }
