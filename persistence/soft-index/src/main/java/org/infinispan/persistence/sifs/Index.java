@@ -65,6 +65,14 @@ class Index {
       }
    }
 
+   /**
+    * Get record or null if expired
+    *
+    * @param key
+    * @param serializedKey
+    * @return
+    * @throws IOException
+    */
    public EntryRecord getRecord(Object key, byte[] serializedKey) throws IOException {
       int segment = Math.abs(keyEquivalence.hashCode(key)) % segments.length;
       lock.readLock().lock();
@@ -75,6 +83,14 @@ class Index {
       }
    }
 
+   /**
+    * Get position or null if expired
+    *
+    * @param key
+    * @param serializedKey
+    * @return
+    * @throws IOException
+    */
    public EntryPosition getPosition(Object key, byte[] serializedKey) throws IOException {
       int segment = Math.abs(keyEquivalence.hashCode(key)) % segments.length;
       lock.readLock().lock();
@@ -85,6 +101,23 @@ class Index {
       }
    }
 
+   /**
+    * Get position + numRecords, without expiration
+    *
+    * @param key
+    * @param serializedKey
+    * @return
+    * @throws IOException
+    */
+   public EntryInfo getInfo(Object key, byte[] serializedKey) throws IOException {
+      int segment = Math.abs(keyEquivalence.hashCode(key)) % segments.length;
+      lock.readLock().lock();
+      try {
+         return IndexNode.applyOnLeaf(segments[segment], serializedKey, segments[segment].rootReadLock(), IndexNode.ReadOperation.GET_INFO);
+      } finally {
+         lock.readLock().unlock();
+      }
+   }
 
    public void clear() throws IOException {
       lock.writeLock().lock();
@@ -151,6 +184,8 @@ class Index {
                }
                final IndexRequest request = indexQueue.take();
                if (trace) log.trace("Indexing " + request);
+               IndexNode.OverwriteHook overwriteHook;
+               IndexNode.RecordChange recordChange;
                switch (request.getType()) {
                   case CLEAR:
                      IndexRequest cleared;
@@ -174,49 +209,63 @@ class Index {
                   case GET_SIZE :
                      request.setResult(size.get());
                      continue;
-               }
-
-               IndexNode.OverwriteHook overwriteHook;
-               if (request.isCompareAndSet()) {
-                  overwriteHook = new IndexNode.OverwriteHook() {
-                     @Override
-                     public boolean check(int oldFile, int oldOffset) {
-                        return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
-                     }
-
-                     @Override
-                     public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
-                        if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
-                           size.decrementAndGet();
+                  case MOVED:
+                     recordChange = IndexNode.RecordChange.MOVE;
+                     overwriteHook = new IndexNode.OverwriteHook() {
+                        @Override
+                        public boolean check(int oldFile, int oldOffset) {
+                           return oldFile == request.getPrevFile() && oldOffset == request.getPrevOffset();
                         }
-                     }
-                  };
-               } else {
-                  overwriteHook = new IndexNode.OverwriteHook() {
-                     @Override
-                     public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
-                        request.setResult(overwritten);
-                        if (request.getOffset() >= 0 && prevOffset < 0) {
-                           size.incrementAndGet();
-                        } else if (request.getOffset() < 0 && prevOffset >= 0) {
-                           size.decrementAndGet();
+
+                        @Override
+                        public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
+                           if (overwritten && request.getOffset() < 0 && request.getPrevOffset() >= 0) {
+                              size.decrementAndGet();
+                           }
                         }
-                     }
-                  };
+                     };
+                     break;
+                  case UPDATE:
+                     recordChange = IndexNode.RecordChange.INCREASE;
+                     overwriteHook = new IndexNode.OverwriteHook() {
+                        @Override
+                        public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
+                           request.setResult(overwritten);
+                           if (request.getOffset() >= 0 && prevOffset < 0) {
+                              size.incrementAndGet();
+                           } else if (request.getOffset() < 0 && prevOffset >= 0) {
+                              size.decrementAndGet();
+                           }
+                        }
+                     };
+                     break;
+                  case DROPPED:
+                     recordChange = IndexNode.RecordChange.DECREASE;
+                     overwriteHook = new IndexNode.OverwriteHook() {
+                        @Override
+                        public void setOverwritten(boolean overwritten, int prevFile, int prevOffset) {
+                           if (request.getPrevFile() == prevFile && request.getPrevOffset() == prevOffset) {
+                              size.decrementAndGet();
+                           }
+                        }
+                     };
+                     break;
+                  default:
+                     throw new IllegalArgumentException(request.toString());
                }
                try {
-                  IndexNode.setPosition(root, request.getSerializedKey(), request.getFile(), request.getOffset(), request.getSize(), overwriteHook);
+                  IndexNode.setPosition(root, request.getSerializedKey(), request.getFile(), request.getOffset(),
+                        request.getSize(), overwriteHook, recordChange);
                } catch (IllegalStateException e) {
                   throw new IllegalStateException(request.toString(), e);
                }
-               request.setResult(false);
                temporaryTable.removeConditionally(request.getKey(), request.getFile(), request.getOffset());
             }
          } catch (IOException e) {
             throw new RuntimeException(e);
          } catch (InterruptedException e) {
             throw new RuntimeException(e);
-         } catch (Exception e) {
+         } catch (Throwable e) {
             log.error("Error in indexer thread", e);
          } finally {
             try {

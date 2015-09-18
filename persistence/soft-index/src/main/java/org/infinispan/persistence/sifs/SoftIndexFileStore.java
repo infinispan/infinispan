@@ -167,27 +167,13 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                   // We may check the seqId safely as we are the only thread writing to index
                   EntryPosition entry = temporaryTable.get(key);
                   if (entry == null) {
-                     entry = index.getPosition(key, serializedKey);
+                     entry = index.getInfo(key, serializedKey);
                   }
-                  // when the offset is < 0, the entry was deleted and we can't load its seqId
-                  // TODO: ISPN-5753 SIFS can reincarnate deleted entries during startup
-                  if (entry != null && entry.offset >= 0) {
-                     FileProvider.Handle handle = fileProvider.getFile(entry.file);
-                     try {
-                        EntryHeader header = EntryRecord.readEntryHeader(handle, entry.offset);
-                        if (header == null) {
-                           throw new IllegalStateException("Cannot read " + entry.file + ":" + entry.offset);
-                        }
-                        if (seqId < header.seqId()) {
-                           if (trace) log.tracef("Record on %d:%d has seqId %d > %d", entry.file, entry.offset, header.seqId(), seqId);
-                           return true;
-                        }
-                     } finally {
-                        handle.close();
-                     }
+                  if (entry != null && seqId < getSeqId(entry)) {
+                     return true;
                   }
                   temporaryTable.set(key, file, offset);
-                  indexQueue.put(new IndexRequest(key, serializedKey, file, offset, size));
+                  indexQueue.put(IndexRequest.update(key, serializedKey, file, offset, size));
                } catch (InterruptedException e) {
                   log.error("Interrupted building of index, the index won't be built properly!", e);
                   return false;
@@ -257,7 +243,8 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
    public synchronized int size() {
       try {
          logAppender.pause();
-         return (int) index.size();
+         long size = index.size();
+         return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
       } catch (InterruptedException e) {
          log.error("Interrupted", e);
          Thread.currentThread().interrupt();
@@ -492,23 +479,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             }
             EntryPosition entry = temporaryTable.get(key);
             if (entry == null) {
-               entry = index.getPosition(key, serializedKey);
+               entry = index.getInfo(key, serializedKey);
             }
-            if (entry != null && entry.offset >= 0) {
-               FileProvider.Handle handle = fileProvider.getFile(entry.file);
-               try {
-                  EntryHeader header = EntryRecord.readEntryHeader(handle, entry.offset);
-                  if (header == null) {
-                     throw new IllegalStateException("Cannot read " + entry.file + ":" + entry.offset);
-                  }
-                  if (seqId < header.seqId()) {
-                     return true;
-                  }
-               } finally {
-                  handle.close();
-               }
-            } else {
-               // entry is not in index = it was deleted
+            if (entry != null && seqId < getSeqId(entry)) {
                return true;
             }
             if (serializedValue != null && (expiration < 0 || expiration > timeService.wallClockTime())) {
@@ -553,6 +526,20 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                return;
             }
          }
+      }
+   }
+
+   protected long getSeqId(EntryPosition entry) throws IOException {
+      int entryOffset = entry.offset < 0 ? ~entry.offset : entry.offset;
+      FileProvider.Handle handle = fileProvider.getFile(entry.file);
+      try {
+         EntryHeader header = EntryRecord.readEntryHeader(handle, entryOffset);
+         if (header == null) {
+            throw new IllegalStateException("Cannot read " + entry.file + ":" + entryOffset);
+         }
+         return header.seqId();
+      } finally {
+         handle.close();
       }
    }
 }
