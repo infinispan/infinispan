@@ -3,6 +3,7 @@ package org.infinispan.persistence.sifs;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,9 @@ import org.infinispan.util.logging.LogFactory;
 class Index {
    private static final Log log = LogFactory.getLog(Index.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final int GRACEFULLY = 0x512ACEF0;
+   private static final int DIRTY = 0xD112770C;
+   protected static final int INDEX_FILE_HEADER_SIZE = 30;
 
    private final String indexDir;
    private final FileProvider fileProvider;
@@ -57,6 +61,16 @@ class Index {
       for (int i = 0; i < segments; ++i) {
          this.segments[i] = new Segment(i, indexQueue.subQueue(i), temporaryTable);
       }
+   }
+
+   /**
+    * @return True if the index was loaded from well persisted state
+    */
+   public boolean isLoaded() {
+      for (int i = 0; i < segments.length; ++i) {
+         if (!segments[i].loaded) return false;
+      }
+      return true;
    }
 
    public void start() {
@@ -156,11 +170,12 @@ class Index {
       private final TreeMap<Integer, List<IndexSpace>> freeBlocks = new TreeMap<Integer, List<IndexSpace>>();
       private final ReadWriteLock rootLock = new ReentrantReadWriteLock();
       private final File indexFileFile;
+      private final boolean loaded;
       private FileChannel indexFile;
       private long indexFileSize = 0;
       private AtomicLong size = new AtomicLong();
 
-      private volatile IndexNode root = IndexNode.emptyWithLeaves(this);
+      private volatile IndexNode root;
 
 
       private Segment(int id, BlockingQueue<IndexRequest> indexQueue, TemporaryTable temporaryTable) throws IOException {
@@ -171,7 +186,48 @@ class Index {
 
          this.indexFileFile = new File(indexDir, "index." + id);
          this.indexFile = new RandomAccessFile(indexFileFile, "rw").getChannel();
-         this.indexFile.truncate(0);
+         indexFile.position(0);
+         ByteBuffer buffer = ByteBuffer.allocate(INDEX_FILE_HEADER_SIZE);
+         if (indexFile.size() >= INDEX_FILE_HEADER_SIZE && read(indexFile, buffer) && buffer.getInt(0) == GRACEFULLY) {
+            long rootOffset = buffer.getLong(4);
+            short rootOccupied = buffer.getShort(12);
+            long freeBlocksOffset = buffer.getLong(14);
+            size.set(buffer.getLong(22));
+            root = new IndexNode(this, rootOffset, rootOccupied);
+            loadFreeBlocks(freeBlocksOffset);
+            indexFileSize = freeBlocksOffset;
+            loaded = true;
+         } else {
+            this.indexFile.truncate(0);
+            root = IndexNode.emptyWithLeaves(this);
+            loaded = false;
+            // reserve space for shutdown
+            indexFileSize = INDEX_FILE_HEADER_SIZE;
+         }
+         buffer.putInt(0, DIRTY);
+         buffer.position(0);
+         buffer.limit(4);
+         indexFile.position(0);
+         write(indexFile, buffer);
+      }
+
+      private void write(FileChannel indexFile, ByteBuffer buffer) throws IOException {
+         do {
+            int written = indexFile.write(buffer);
+            if (written < 0) {
+               throw new IllegalStateException("Cannot write to index file!");
+            }
+         } while (buffer.position() < buffer.limit());
+      }
+
+      private boolean read(FileChannel indexFile, ByteBuffer buffer) throws IOException {
+         do {
+            int read = indexFile.read(buffer);
+            if (read < 0) {
+               return false;
+            }
+         } while (buffer.position() < buffer.limit());
+         return true;
       }
 
       @Override
@@ -205,6 +261,8 @@ class Index {
                      }
                      continue;
                   case STOP:
+                     assert indexQueue.poll() == null;
+                     shutdown();
                      return;
                   case GET_SIZE :
                      request.setResult(size.get());
@@ -274,10 +332,80 @@ class Index {
          } finally {
             try {
                indexFile.close();
-               indexFileFile.delete();
             } catch (IOException e) {
                log.error("Failed to close/delete the index", e);
             }
+         }
+      }
+
+      private void shutdown() throws IOException {
+         IndexSpace rootSpace = allocateIndexSpace(root.length());
+         root.store(rootSpace);
+         indexFile.position(indexFileSize);
+         ByteBuffer buffer = ByteBuffer.allocate(4);
+         buffer.putInt(0, freeBlocks.size());
+         write(indexFile, buffer);
+         for (Map.Entry<Integer, List<IndexSpace>> entry : freeBlocks.entrySet()) {
+            List<IndexSpace> list = entry.getValue();
+            int requiredSize = 8 + list.size() * 10;
+            buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
+            buffer.position(0);
+            buffer.limit(requiredSize);
+            buffer.putInt(entry.getKey());
+            buffer.putInt(list.size());
+            for (IndexSpace space : list) {
+               buffer.putLong(space.offset);
+               buffer.putShort((short) space.length);
+            }
+            buffer.flip();
+            write(indexFile, buffer);
+         }
+         int headerWithoutMagic = INDEX_FILE_HEADER_SIZE - 4;
+         buffer = buffer.capacity() < headerWithoutMagic ? ByteBuffer.allocate(headerWithoutMagic) : buffer;
+         buffer.putLong(0, rootSpace.offset);
+         buffer.putShort(8, (short) rootSpace.length);
+         buffer.putLong(10, indexFileSize);
+         buffer.putLong(18, size.get());
+         buffer.position(0);
+         buffer.limit(headerWithoutMagic);
+         indexFile.position(4);
+         write(indexFile, buffer);
+         buffer.putInt(0, GRACEFULLY);
+         buffer.position(0);
+         buffer.limit(4);
+         indexFile.position(0);
+         write(indexFile, buffer);
+      }
+
+      private void loadFreeBlocks(long freeBlocksOffset) throws IOException {
+         indexFile.position(freeBlocksOffset);
+         ByteBuffer buffer = ByteBuffer.allocate(8);
+         buffer.limit(4);
+         if (!read(indexFile, buffer)) {
+            throw new IOException("Cannot read free blocks lists!");
+         }
+         int numLists = buffer.getInt(0);
+         for (int i = 0; i < numLists; ++i) {
+            buffer.position(0);
+            buffer.limit(8);
+            if (!read(indexFile, buffer)) {
+               throw new IOException("Cannot read free blocks lists!");
+            }
+            int blockLength = buffer.getInt(0);
+            int listSize = buffer.getInt(4);
+            int requiredSize = 10 * listSize;
+            buffer = buffer.capacity() < requiredSize ? ByteBuffer.allocate(requiredSize) : buffer;
+            buffer.position(0);
+            buffer.limit(requiredSize);
+            if (!read(indexFile, buffer)) {
+               throw new IOException("Cannot read free blocks lists!");
+            }
+            buffer.flip();
+            ArrayList<IndexSpace> list = new ArrayList<>(listSize);
+            for (int j = 0; j < listSize; ++j) {
+               list.add(new IndexSpace(buffer.getLong(), buffer.getShort()));
+            }
+            freeBlocks.put(blockLength, list);
          }
       }
 
@@ -287,7 +415,7 @@ class Index {
          CountDownLatch pause = (CountDownLatch) clear.getResult();
          root = IndexNode.emptyWithLeaves(this);
          indexFile.truncate(0);
-         indexFileSize = 0;
+         indexFileSize = INDEX_FILE_HEADER_SIZE;
          freeBlocks.clear();
          size.set(0);
          return pause;

@@ -8,26 +8,23 @@ import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.TestObjectStreamMarshaller;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.persistence.sifs.configuration.SoftIndexFileStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.AdvancedCacheLoader;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.PersistenceMockUtil;
-import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.testng.Assert.fail;
+import static org.infinispan.test.TestingUtil.recursiveFileRemove;
 
 /**
  * @author Radim Vansa &lt;rvansa@redhat.com&gt;
@@ -58,9 +56,7 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
    @BeforeMethod(alwaysRun = true)
    public void setUp() throws Exception {
       tmpDirectory = TestingUtil.tmpDirectory(this.getClass());
-      if (new File(tmpDirectory).exists()) {
-         Stream.of(new File(tmpDirectory).listFiles()).forEach(this::deleteRecursive);
-      }
+      recursiveFileRemove(tmpDirectory);
       marshaller = new TestObjectStreamMarshaller();
       factory = new InternalEntryFactoryImpl();
       store = new SoftIndexFileStore();
@@ -78,13 +74,6 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
       ((InternalEntryFactoryImpl) factory).injectTimeService(timeService);
       store.start();
       executorService = Executors.newFixedThreadPool(THREADS + 1);
-   }
-
-   private void deleteRecursive(File f) {
-      if (f.isDirectory()) {
-         Stream.of(f.listFiles()).forEach(this::deleteRecursive);
-      }
-      f.delete();
    }
 
    @AfterMethod
@@ -113,34 +102,34 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
       for (Future<?> future : futures) {
          future.get();
       }
-      ConcurrentHashMap<Object, MarshalledEntry> entries = new ConcurrentHashMap<>();
+      // let's wait so that we don't store expired values in the map
+      Thread.sleep(100);
+
+      Map<Object, Object> entries = new HashMap<>();
       store.process(KeyFilter.ACCEPT_ALL_FILTER, (marshalledEntry, taskContext) -> {
-         MarshalledEntry prev = entries.putIfAbsent(marshalledEntry.getKey(), marshalledEntry);
+         Object prev = entries.put(marshalledEntry.getKey(), marshalledEntry.getValue());
          if (prev != null) {
-            fail("Returned entry twice: " + marshalledEntry.getKey() + " -> " + prev.getValue() + ", " + marshalledEntry.getValue());
+            fail("Returned entry twice: " + marshalledEntry.getKey() + " -> " + prev + ", " + marshalledEntry.getValue());
          }
-      }, new WithinThreadExecutor(), true, true);
+      }, new WithinThreadExecutor(), true, false);
       store.stop();
       // remove index files
       Stream.of(new File(tmpDirectory).listFiles(file -> !file.isDirectory())).map(f -> f.delete());
       store.start();
       store.process(KeyFilter.ACCEPT_ALL_FILTER, (marshalledEntry, taskContext) -> {
-         MarshalledEntry stored = entries.get(marshalledEntry.getKey());
+         Object stored = entries.get(marshalledEntry.getKey());
          if (stored == null) {
             fail("Loaded " + marshalledEntry.getKey() + " -> " + marshalledEntry.getValue() + " but it's not in the map");
-         } else if (!Objects.equals(stored.getValue(), marshalledEntry.getValue())) {
-            fail("Loaded " + marshalledEntry.getKey() + " -> " + marshalledEntry.getValue() + " but it's was " + stored.getValue());
+         } else if (!Objects.equals(stored, marshalledEntry.getValue())) {
+            fail("Loaded " + marshalledEntry.getKey() + " -> " + marshalledEntry.getValue() + " but it's was " + stored);
          }
-      }, new WithinThreadExecutor(), true, true);
-      for (MarshalledEntry stored : entries.values()) {
-         MarshalledEntry loaded = store.load(stored.getKey());
+      }, new WithinThreadExecutor(), true, false);
+      for (Map.Entry<Object, Object> entry : entries.entrySet()) {
+         MarshalledEntry loaded = store.load(entry.getKey());
          if (loaded == null) {
-            if (stored.getMetadata().isExpired(timeService.wallClockTime())) {
-               continue;
-            }
-            fail("Did not load " + stored.getKey() + " -> " + stored.getValue());
-         } else if (!Objects.equals(stored.getValue(), loaded.getValue())) {
-            fail("Loaded " + stored.getKey() + " -> " + loaded.getValue() + " but it should be " + stored.getValue());
+            fail("Did not load " + entry.getKey() + " -> " + entry.getValue());
+         } else if (!Objects.equals(entry.getValue(), loaded.getValue())) {
+            fail("Loaded " + entry.getKey() + " -> " + loaded.getValue() + " but it should be " + entry.getValue());
          }
       }
    }
@@ -152,18 +141,19 @@ public class SoftIndexFileStoreStressTest extends AbstractInfinispanTest {
          InternalCacheEntry ice;
          while (!terminate) {
             long lifespan;
+             String key = key(random);
             switch (random.nextInt(3)) {
                case 0:
-                  lifespan = random.nextInt(3) == 0 ? random.nextInt(10) : - 1;
+                  lifespan = random.nextInt(3) == 0 ? random.nextInt(10) : -1;
                   ice = TestInternalCacheEntryFactory.<Object, Object>create(factory,
                      key(random), String.valueOf(random.nextInt()), lifespan);
                   store.write(TestingUtil.marshalledEntry(ice, marshaller));
                   break;
                case 1:
-                  store.delete(key(random));
+                  store.delete(key);
                   break;
                case 2:
-                  store.load(key(random));
+                  store.load(key);
             }
          }
       }
