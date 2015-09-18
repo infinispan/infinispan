@@ -96,10 +96,11 @@ public class LogAppender extends Thread {
                   logFile = fileProvider.getFileForLog();
                   log.debug("Appending records to " + logFile.fileId);
                }
-               EntryRecord.writeEntry(logFile.fileChannel, request.getSerializedKey(), request.getSerializedMetadata(), request.getSerializedValue(), nextSeqId(), request.getExpiration());
+               long seqId = nextSeqId();
+               EntryRecord.writeEntry(logFile.fileChannel, request.getSerializedKey(), request.getSerializedMetadata(), request.getSerializedValue(), seqId, request.getExpiration());
                int offset = request.getSerializedValue() == null ? ~currentOffset : currentOffset;
                temporaryTable.set(request.getKey(), logFile.fileId, offset);
-               IndexRequest indexRequest = new IndexRequest(request.getKey(), raw(request.getSerializedKey()),
+               IndexRequest indexRequest = IndexRequest.update(request.getKey(), raw(request.getSerializedKey()),
                      logFile.fileId, offset, request.length());
                request.setIndexRequest(indexRequest);
                indexQueue.put(indexRequest);
