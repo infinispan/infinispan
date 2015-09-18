@@ -15,6 +15,14 @@ Async marshalling has been entirely dropped since it was never reliable enough. 
 ==== Reenabling of isolation level configurations in server
 Because of the inability to configure write skew in the server, the isolation level attribute was ignored and defaulted to READ_COMMITTED. Now, when enabling REPEATABLE_READ together with optimistic locking, write skew is enabled by default in local and synchronous configurations.
 
+==== Subsystem renaming in server
+In order to avoid conflict and confusion with the similar subsystems in WildFly, we have renamed the following subsystems in server:
+* infinispan -> datagrid-infinispan
+* jgroups -> datagrid-jgroups
+* endpoint -> datagrid-infinispan-endpoint
+
+==== Server domain mode
+We no longer support the use of standalone mode for running clusters of servers. Domain mode (bin/domain.sh) should be used instead.
 
 == Upgrading from 6.0 to 7.0
 === API Changes
