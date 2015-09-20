@@ -107,14 +107,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
                } else {
                   actx.nextInterceptorFuture.completeExceptionally(throwable);
                }
-               try {
-                  return actx.beforeFuture.get();
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  throw new CacheException(e);
-               } catch (ExecutionException e) {
-                  throw new CacheException(e.getCause());
-               }
+               return actx.adaptedFuture;
             }));
          } else {
             // Executing the next interceptor with the same command
@@ -127,14 +120,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
                if (trace)
                   log.tracef("Next interceptor done, waiting for current interceptor %s to finish",
                              SequentialInterceptorAdapter.this);
-               try {
-                  return actx.adaptedFuture.get();
-               } catch (InterruptedException e) {
-                  Thread.currentThread().interrupt();
-                  throw new CacheException(e);
-               } catch (ExecutionException e) {
-                  throw new CacheException(e.getCause());
-               }
+               return actx.adaptedFuture;
             });
             actx.beforeFuture.complete(null);
          }
@@ -262,7 +248,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       }
 
       @Override
-      public void onReturn(BiFunction<Object, Throwable, Object> returnHandler) {
+      public void onReturn(BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
          throw new UnsupportedOperationException();
       }
 
@@ -273,7 +259,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
 
       @Override
       public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand,
-                                                      BiFunction<Object, Throwable, Object> returnHandler) {
+                                                      BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
          throw new UnsupportedOperationException();
       }
 

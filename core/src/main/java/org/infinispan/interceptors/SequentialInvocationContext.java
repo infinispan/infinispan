@@ -13,12 +13,12 @@ import java.util.function.BiFunction;
 public interface SequentialInvocationContext {
    VisitableCommand getCommand();
 
-   void onReturn(BiFunction<Object, Throwable, Object> returnHandler);
+   void onReturn(BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler);
 
    Object shortCircuit(Object returnValue);
 
    Object forkInvocation(VisitableCommand newCommand,
-                                            BiFunction<Object, Throwable, Object> returnHandler);
+                                            BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler);
 
    CompletableFuture<Object> execute(VisitableCommand command);
 }

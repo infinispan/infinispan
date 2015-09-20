@@ -211,9 +211,8 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
    }
 
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
-      SequentialInvocationContext sctx = (SequentialInvocationContext) ctx;
       try {
-         CompletableFuture<Object> future = sctx.execute(command);
+         CompletableFuture<Object> future = ctx.execute(command);
          return future.get();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();

@@ -124,7 +124,7 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public void onReturn(BiFunction<Object, Throwable, Object> returnHandler) {
+   public void onReturn(BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
    }
 
    @Override
@@ -134,7 +134,7 @@ public final class ImmutableContext implements InvocationContext {
 
    @Override
    public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand,
-                                                   BiFunction<Object, Throwable, Object> returnHandler) {
+                                                   BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
       return null;
    }
 

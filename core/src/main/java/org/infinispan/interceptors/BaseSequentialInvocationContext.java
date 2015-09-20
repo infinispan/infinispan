@@ -26,7 +26,7 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
    private final List<SequentialInterceptor> interceptors;
    // If >= interceptors.length, it means we've begun executing the return handlers
    private volatile int nextInterceptor = 0;
-   private final List<BiFunction<Object, Throwable, Object>> returnHandlers;
+   private final List<BiFunction<Object, Throwable, CompletableFuture<Object>>> returnHandlers;
 
    public BaseSequentialInvocationContext(SequentialInterceptorChain interceptorChain) {
       this.interceptors = interceptorChain != null ? interceptorChain.getInterceptors() : null;
@@ -39,7 +39,7 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
    }
 
    @Override
-   public void onReturn(BiFunction<Object, Throwable, Object> returnHandler) {
+   public void onReturn(BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
       returnHandlers.add(returnHandler);
    }
 
@@ -52,7 +52,7 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
 
    @Override
    public Object forkInvocation(VisitableCommand newCommand,
-                                                   BiFunction<Object, Throwable, Object> returnHandler) {
+                                BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
       VisitableCommand savedCommand = command;
       int savedInterceptor = nextInterceptor;
       command = newCommand;
@@ -107,12 +107,13 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
       // Interceptors are all done, execute the return handlers synchronously
       while (!returnHandlers.isEmpty()) {
          try {
-            BiFunction<Object, Throwable, Object> handler = returnHandlers.remove(returnHandlers.size() - 1);
-            Object newReturnValue = handler.apply(returnValue, throwable);
+            BiFunction<Object, Throwable, CompletableFuture<Object>> handler =
+                  returnHandlers.remove(returnHandlers.size() - 1);
+            CompletableFuture<Object> handlerFuture = handler.apply(returnValue, throwable);
             // TODO Need a non-null constant, this doesn't allow replacing the return value with null
-            if (newReturnValue != null) {
-               returnValue = newReturnValue;
-               throwable = null;
+            if (handlerFuture != null) {
+               handlerFuture.whenComplete(this::continueExecution);
+               return;
             }
          } catch (Throwable t) {
             returnValue = null;

@@ -41,7 +41,7 @@ import java.util.concurrent.CompletableFuture;
  * @author Dan Berindei
  * @since 8.0
  */
-public class DoubleDispatchSequentialInterceptorImpl implements DoubleDispatchSequentialInterceptor {
+public class BaseDoubleDispatchSequentialInterceptor implements DoubleDispatchSequentialInterceptor {
    @Override
    public CompletableFuture<Object> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return null;
