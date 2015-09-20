@@ -350,12 +350,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final boolean remove(Object key, Object value, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
       return removeInternal(key, value, explicitFlags, ctx);
    }
 
    private boolean removeInternal(Object key, Object value, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, value, explicitFlags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
@@ -545,13 +545,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final V remove(Object key, Set<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      assertKeyNotNull(key);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
       return removeInternal(key, explicitFlags, ctx);
    }
 
    @SuppressWarnings("unchecked")
    private V removeInternal(Object key, Set<Flag> explicitFlags, InvocationContext ctx) {
-      assertKeyNotNull(key);
       Set<Flag> flags = addUnsafeFlags(explicitFlags);
       RemoveCommand command = commandsFactory.buildRemoveCommand(key, null, flags);
       ctx.setLockOwner(command.getKeyLockOwner());
@@ -1079,6 +1079,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    final V put(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
       return putInternal(key, value, metadata, explicitFlags, ctx);
    }
@@ -1086,7 +1087,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    private V putInternal(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
       Set<Flag> flags = addUnsafeFlags(explicitFlags);
       Metadata merged = applyDefaultMetadata(metadata);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
@@ -1118,6 +1118,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    final V putIfAbsent(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(isPutForExternalRead(explicitFlags),
                                                                           explicitClassLoader, 1);
       return putIfAbsentInternal(key, value, metadata, explicitFlags, ctx);
@@ -1126,7 +1127,6 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    private V putIfAbsentInternal(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
       Set<Flag> flags = addUnsafeFlags(explicitFlags);
       PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, flags);
       command.setPutIfAbsent(true);
@@ -1166,13 +1166,13 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @SuppressWarnings("unchecked")
    final V replace(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, value);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
       return replaceInternal(key, value, metadata, explicitFlags, ctx);
    }
 
    @SuppressWarnings("unchecked")
    private V replaceInternal(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
       Set<Flag> flags = addUnsafeFlags(explicitFlags);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, metadata, flags);
       ctx.setLockOwner(command.getKeyLockOwner());
@@ -1189,14 +1189,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final boolean replace(K key, V oldValue, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, value);
+      assertValueNotNull(oldValue);
       InvocationContext ctx = getInvocationContextWithImplicitTransaction(false, explicitClassLoader, 1);
       return replaceInternal(key, oldValue, value, metadata, explicitFlags, ctx);
    }
 
    private boolean replaceInternal(K key, V oldValue, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      assertKeyValueNotNull(key, value);
-      assertValueNotNull(oldValue);
       ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, metadata, explicitFlags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
@@ -1238,6 +1238,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final NotifyingFuture<V> putAsync(final K key, final V value, final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, value);
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
@@ -1347,6 +1348,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final NotifyingFuture<V> putIfAbsentAsync(final K key, final V value, final Metadata metadata,
          final EnumSet<Flag> explicitFlags,final ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, value);
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
@@ -1381,6 +1383,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final NotifyingFuture<V> removeAsync(final Object key, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      assertKeyNotNull(key);
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
@@ -1415,6 +1418,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final NotifyingFuture<Boolean> removeAsync(final Object key, final Object value, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, value);
       final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<Boolean> returnValue = asyncExecutor.submit(new Callable<Boolean>() {
@@ -1453,6 +1457,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final NotifyingFuture<V> replaceAsync(final K key, final V value, final Metadata metadata,
          final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, value);
       final NotifyingFutureImpl<V> result = new NotifyingFutureImpl<V>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<V> returnValue = asyncExecutor.submit(new Callable<V>() {
@@ -1491,6 +1496,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    final NotifyingFuture<Boolean> replaceAsync(final K key, final V oldValue, final V newValue,
          final Metadata metadata, final EnumSet<Flag> explicitFlags, final ClassLoader explicitClassLoader) {
+      assertKeyValueNotNull(key, newValue);
+      assertValueNotNull(oldValue);
       final NotifyingFutureImpl<Boolean> result = new NotifyingFutureImpl<Boolean>();
       final InvocationContext ctx = getInvocationContextWithImplicitTransactionForAsyncOps(false, explicitClassLoader, 1);
       Future<Boolean> returnValue = asyncExecutor.submit(new Callable<Boolean>() {
