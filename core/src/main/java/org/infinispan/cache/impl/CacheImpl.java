@@ -366,8 +366,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final int size(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      SizeCommand command = commandsFactory.buildSizeCommand(explicitFlags);
-      return (Integer) invoker.invoke(getInvocationContextForRead(explicitClassLoader, UNBOUNDED), command);
+      return entrySet(explicitFlags, explicitClassLoader).size();
    }
 
    @Override
