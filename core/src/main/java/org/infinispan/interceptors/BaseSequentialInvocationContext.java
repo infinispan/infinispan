@@ -4,10 +4,10 @@ import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.interceptors.base.SequentialInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -18,14 +18,19 @@ import java.util.function.BiFunction;
  */
 public abstract class BaseSequentialInvocationContext extends CompletableFuture<Object>
       implements InvocationContext {
-   VisitableCommand command;
-   List<SequentialInterceptor> interceptors;
+   private static final Log log = LogFactory.getLog(BaseSequentialInvocationContext.class);
+   private static final boolean trace = log.isTraceEnabled();
+
+   // No need for volatile, the context must be properly published to the interceptors anyway
+   private VisitableCommand command;
+   private final List<SequentialInterceptor> interceptors;
    // If >= interceptors.length, it means we've begun executing the return handlers
-   int nextInterceptor = 0;
-   Deque<BiFunction<Object, Throwable, Object>> returnHandlers = new LinkedList<>();
+   private volatile int nextInterceptor = 0;
+   private final List<BiFunction<Object, Throwable, Object>> returnHandlers;
 
    public BaseSequentialInvocationContext(SequentialInterceptorChain interceptorChain) {
       this.interceptors = interceptorChain != null ? interceptorChain.getInterceptors() : null;
+      this.returnHandlers = new ArrayList<>(interceptors.size());
    }
 
    @Override
@@ -35,17 +40,18 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
 
    @Override
    public void onReturn(BiFunction<Object, Throwable, Object> returnHandler) {
-      returnHandlers.addLast(returnHandler);
+      returnHandlers.add(returnHandler);
    }
 
    @Override
-   public CompletableFuture<Object> shortCircuit(Object returnValue) {
+   public Object shortCircuit(Object returnValue) {
+      // TODO Return a special ShortCircuit object instance and check for it in continueExecution?
       nextInterceptor = interceptors.size();
-      return CompletableFuture.completedFuture(returnValue);
+      return returnValue;
    }
 
    @Override
-   public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand,
+   public Object forkInvocation(VisitableCommand newCommand,
                                                    BiFunction<Object, Throwable, Object> returnHandler) {
       VisitableCommand savedCommand = command;
       int savedInterceptor = nextInterceptor;
@@ -78,11 +84,20 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
          SequentialInterceptor next = interceptors.get(nextInterceptor);
          nextInterceptor++;
          try {
+            if (trace)
+               log.tracef("Executing interceptor %s", next);
             CompletableFuture<Object> nextFuture = next.visitCommand(this, command);
             if (nextFuture != null) {
                // The execution will continue when the interceptor finishes
-               nextFuture.whenComplete(this::continueExecution);
-               return;
+               // TODO Continue executing in the current thread if the future is already done
+               // nextFuture.whenComplete(this::continueExecution);
+               try {
+                  returnValue = nextFuture.get();
+                  throwable = null;
+               } catch (Throwable t) {
+                  returnValue = null;
+                  throwable = t;
+               }
             }
          } catch (Throwable t) {
             throwable = t;
@@ -92,7 +107,9 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
       // Interceptors are all done, execute the return handlers synchronously
       while (!returnHandlers.isEmpty()) {
          try {
-            Object newReturnValue = returnHandlers.removeLast().apply(returnValue, throwable);
+            BiFunction<Object, Throwable, Object> handler = returnHandlers.remove(returnHandlers.size() - 1);
+            Object newReturnValue = handler.apply(returnValue, throwable);
+            // TODO Need a non-null constant, this doesn't allow replacing the return value with null
             if (newReturnValue != null) {
                returnValue = newReturnValue;
                throwable = null;

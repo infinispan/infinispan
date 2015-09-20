@@ -7,6 +7,8 @@ import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.NonTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
+import org.infinispan.interceptors.InterceptorChain;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.transaction.impl.RemoteTransaction;
@@ -30,8 +32,8 @@ public class TransactionalInvocationContextFactory extends AbstractInvocationCon
    private boolean batchingEnabled;
 
    @Inject
-   public void init(TransactionManager tm,
-         TransactionTable transactionTable, Configuration config, BatchContainer batchContainer) {
+   public void init(TransactionManager tm, TransactionTable transactionTable, Configuration config,
+                    BatchContainer batchContainer, SequentialInterceptorChain interceptorChain) {
       super.init(config, interceptorChain);
       this.tm = tm;
       this.transactionTable = transactionTable;

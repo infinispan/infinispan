@@ -213,7 +213,8 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
       SequentialInvocationContext sctx = (SequentialInvocationContext) ctx;
       try {
-         return sctx.execute(command).get();
+         CompletableFuture<Object> future = sctx.execute(command);
+         return future.get();
       } catch (InterruptedException e) {
          Thread.currentThread().interrupt();
          throw new CacheException(e);
@@ -261,7 +262,7 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
       StringBuilder sb = new StringBuilder();
       for (SequentialInterceptor interceptor : interceptors) {
          sb.append("\n\t>> ");
-         sb.append(interceptor.getClass().getName());
+         sb.append(interceptor);
       }
       return sb.toString();
    }

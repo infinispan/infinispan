@@ -15,9 +15,9 @@ public interface SequentialInvocationContext {
 
    void onReturn(BiFunction<Object, Throwable, Object> returnHandler);
 
-   CompletableFuture<Object> shortCircuit(Object returnValue);
+   Object shortCircuit(Object returnValue);
 
-   CompletableFuture<Object> forkInvocation(VisitableCommand newCommand,
+   Object forkInvocation(VisitableCommand newCommand,
                                             BiFunction<Object, Throwable, Object> returnHandler);
 
    CompletableFuture<Object> execute(VisitableCommand command);

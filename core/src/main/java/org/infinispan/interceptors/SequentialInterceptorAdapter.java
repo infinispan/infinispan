@@ -1,14 +1,23 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
+import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.BaseSequentialInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.Address;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
+import org.infinispan.transaction.xa.GlobalTransaction;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.Transaction;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -24,17 +33,14 @@ import java.util.function.BiFunction;
  * @since 8.0
  */
 public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
+   private static final Log log = LogFactory.getLog(SequentialInterceptorAdapter.class);
+   private static final boolean trace = log.isTraceEnabled();
+
    private final CommandInterceptor adaptedInterceptor;
 
-   // TODO Inject
-   final ExecutorService executor = Executors.newCachedThreadPool(new ThreadFactory() {
-      final AtomicInteger counter = new AtomicInteger(0);
-
-      @Override
-      public Thread newThread(Runnable r) {
-         return new Thread(r, "LegacyInterceptor-" + counter.incrementAndGet());
-      }
-   });
+   // TODO Inject an existing thread pool
+   final static ExecutorService executor =
+         Executors.newCachedThreadPool(LegacyInterceptorThreadFactory.INSTANCE);
 
    public SequentialInterceptorAdapter(CommandInterceptor adaptedInterceptor) {
       this.adaptedInterceptor = adaptedInterceptor;
@@ -51,20 +57,41 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
 
    @Override
    public CompletableFuture<Object> visitCommand(InvocationContext ctx, VisitableCommand command) {
-      AdapterContext actx = new AdapterContext(ctx);
-      actx.adaptedFuture = CompletableFuture.supplyAsync(() -> {
+      AdapterContext actx = ctx.isInTxScope() ? new TxAdapterContext(ctx) : new AdapterContext(ctx);
+      actx.adaptedFuture = new CompletableFuture<>();
+      executor.execute(() -> {
          try {
+            if (trace)
+               log.tracef("Executing legacy interceptor %s", adaptedInterceptor);
             Object returnValue = command.acceptVisitor(actx, adaptedInterceptor);
-            actx.beforeFuture.complete(ctx.shortCircuit(returnValue));
-            return returnValue;
+            actx.adaptedFuture.complete(returnValue);
+            if (!actx.beforeFuture.isDone()) {
+               // The interceptor didn't call command.acceptVisitor(next)
+               // We need to run this in a separate thread
+               actx.beforeFuture.complete(ctx.shortCircuit(returnValue));
+            }
+            if (trace)
+               log.tracef("Finished legacy interceptor %s", adaptedInterceptor);
          } catch (Throwable throwable) {
+            if (trace)
+               log.tracef(throwable, "Exception in legacy interceptor %s", adaptedInterceptor);
+            actx.adaptedFuture.completeExceptionally(throwable);
+            if (!actx.beforeFuture.isDone()) {
+               // We need to run this in a separate thread
+               actx.beforeFuture.completeExceptionally(throwable);
+            }
             throw new CacheException(throwable);
          }
-      }, executor);
+      });
       return actx.beforeFuture;
    }
 
-   public static class NextInterceptor extends CommandInterceptor {
+   @Override
+   public String toString() {
+      return "SequentialInterceptorAdapter(" + adaptedInterceptor.getClass().getSimpleName() + ')';
+   }
+
+   public class NextInterceptor extends CommandInterceptor {
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
          AdapterContext actx = (AdapterContext) ctx;
@@ -97,21 +124,43 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
                } else {
                   actx.nextInterceptorFuture.completeExceptionally(throwable);
                }
-               return actx.adaptedFuture;
+               if (trace)
+                  log.tracef("Next interceptor done, waiting for current interceptor %s to finish",
+                             SequentialInterceptorAdapter.this);
+               try {
+                  return actx.adaptedFuture.get();
+               } catch (InterruptedException e) {
+                  Thread.currentThread().interrupt();
+                  throw new CacheException(e);
+               } catch (ExecutionException e) {
+                  throw new CacheException(e.getCause());
+               }
             });
+            actx.beforeFuture.complete(null);
          }
          return actx.nextInterceptorFuture.get();
       }
    }
 
-   private class AdapterContext implements InvocationContext {
-      private final InvocationContext sctx;
+   private static class LegacyInterceptorThreadFactory implements ThreadFactory {
+      public static final LegacyInterceptorThreadFactory INSTANCE = new LegacyInterceptorThreadFactory();
+
+      private final AtomicInteger counter = new AtomicInteger(0);
+
+      @Override
+      public Thread newThread(Runnable r) {
+         return new Thread(r, "LegacyInterceptor-" + counter.incrementAndGet());
+      }
+   }
+
+   static class AdapterContext implements InvocationContext {
+      protected final InvocationContext sctx;
       // Done when the command was passed to the next SequentialInterceptor in the chain
-      CompletableFuture<Object> beforeFuture = new CompletableFuture<>();
+      volatile CompletableFuture<Object> beforeFuture = new CompletableFuture<>();
       // Done when the next SequentialInterceptor returns
-      CompletableFuture<Object> nextInterceptorFuture = null;
+      volatile CompletableFuture<Object> nextInterceptorFuture = null;
       // Done when the adapted interceptor finished executing
-      public CompletableFuture<Object> adaptedFuture;
+      volatile CompletableFuture<Object> adaptedFuture;
 
       public AdapterContext(InvocationContext sctx) {
          this.sctx = sctx;
@@ -231,6 +280,62 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       @Override
       public CompletableFuture<Object> execute(VisitableCommand command) {
          throw new UnsupportedOperationException();
+      }
+   }
+
+   static class TxAdapterContext extends AdapterContext implements TxInvocationContext {
+      public TxAdapterContext(InvocationContext sctx) {
+         super(sctx);
+      }
+
+      @Override
+      public boolean hasModifications() {
+         return ((TxInvocationContext) sctx).hasModifications();
+      }
+
+      @Override
+      public Set<Object> getAffectedKeys() {
+         return ((TxInvocationContext) sctx).getAffectedKeys();
+      }
+
+      @Override
+      public GlobalTransaction getGlobalTransaction() {
+         return ((TxInvocationContext) sctx).getGlobalTransaction();
+      }
+
+      @Override
+      public List<WriteCommand> getModifications() {
+         return ((TxInvocationContext) sctx).getModifications();
+      }
+
+      @Override
+      public Transaction getTransaction() {
+         return ((TxInvocationContext) sctx).getTransaction();
+      }
+
+      @Override
+      public void addAffectedKey(Object key) {
+         ((TxInvocationContext) sctx).addAffectedKey(key);
+      }
+
+      @Override
+      public boolean isTransactionValid() {
+         return ((TxInvocationContext) sctx).isTransactionValid();
+      }
+
+      @Override
+      public boolean isImplicitTransaction() {
+         return ((TxInvocationContext) sctx).isImplicitTransaction();
+      }
+
+      @Override
+      public AbstractCacheTransaction getCacheTransaction() {
+         return ((TxInvocationContext) sctx).getCacheTransaction();
+      }
+
+      @Override
+      public void addAllAffectedKeys(Collection keys) {
+         ((TxInvocationContext) sctx).addAllAffectedKeys(keys);
       }
    }
 }
