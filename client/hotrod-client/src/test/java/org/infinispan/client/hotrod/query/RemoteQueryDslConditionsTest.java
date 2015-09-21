@@ -177,18 +177,18 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals("Checking account", list.get(0).getDescription());
    }
 
-   //todo [anistor] the original exception gets wrapped in HotRodClientException
-   @Override
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
-   public void testGroupBy3() throws Exception {
-      super.testGroupBy3();
-   }
-
    //todo [anistor] null numbers do not seem to work in remote mode
    @Test(enabled = false)
    @Override
    public void testIsNullNumericWithProjection1() throws Exception {
       super.testIsNullNumericWithProjection1();
+   }
+
+   //todo [anistor] the original exception gets wrapped in HotRodClientException
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   public void testGroupBy3() throws Exception {
+      super.testGroupBy3();
    }
 
    //todo [anistor] the original exception gets wrapped in HotRodClientException

@@ -29,7 +29,15 @@ public final class SumAccumulator extends FieldAccumulator {
    public void init(Object[] accRow) {
       Number value = (Number) accRow[pos];
       if (value != null) {
-         accRow[pos] = widen(value);
+         if (fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
+            accRow[pos] = value.longValue();
+         } else if (fieldType == Double.class || fieldType == Float.class) {
+            DoubleSum doubleSum = new DoubleSum();
+            accRow[pos] = doubleSum;
+            doubleSum.update(value.doubleValue());
+         } else {
+            accRow[pos] = value;
+         }
       }
    }
 
@@ -37,42 +45,38 @@ public final class SumAccumulator extends FieldAccumulator {
    public void update(Object[] srcRow, Object[] accRow) {
       Number value = (Number) srcRow[pos];
       if (value != null) {
-         value = widen(value);
-         Number sum = (Number) accRow[pos];
-         if (sum == null) {
-            accRow[pos] = value;
-         } else {
-            accRow[pos] = add(value, sum);
+         if (fieldType == Double.class || fieldType == Float.class) {
+            DoubleSum doubleSum = (DoubleSum) accRow[pos];
+            if (doubleSum == null) {
+               doubleSum = new DoubleSum();
+               accRow[pos] = doubleSum;
+            }
+            doubleSum.update(value.doubleValue());
+            return;
+         } else if (fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
+            value = value.longValue();
          }
+         Number sum = (Number) accRow[pos];
+         if (sum != null) {
+            if (fieldType == Long.class) {
+               value = sum.longValue() + value.longValue();
+            } else if (fieldType == BigInteger.class) {
+               value = ((BigInteger) sum).add((BigInteger) value);
+            } else if (fieldType == BigDecimal.class) {
+               value = ((BigDecimal) sum).add((BigDecimal) value);
+            } else {
+               // byte, short, int
+               value = sum.intValue() + value.intValue();
+            }
+         }
+         accRow[pos] = value;
       }
    }
 
-   private Number widen(Number value) {
-      if (fieldType == Integer.class || fieldType == Byte.class || fieldType == Short.class) {
-         return value.longValue();
-      } else if (fieldType == Float.class) {
-         return value.doubleValue();
+   @Override
+   public void finish(Object[] accRow) {
+      if (fieldType == Double.class || fieldType == Float.class) {
+         accRow[pos] = ((DoubleSum) accRow[pos]).getValue();
       }
-      return value;
-   }
-
-   private Number add(Number value, Number sum) {
-      if (fieldType == Long.class) {
-         return sum.longValue() + value.longValue();
-      }
-      if (fieldType == Float.class) {
-         return sum.doubleValue() + value.doubleValue();
-      }
-      if (fieldType == Double.class) {
-         return sum.doubleValue() + value.doubleValue();
-      }
-      if (fieldType == BigInteger.class) {
-         return ((BigInteger) sum).add((BigInteger) value);
-      }
-      if (fieldType == BigDecimal.class) {
-         return ((BigDecimal) sum).add((BigDecimal) value);
-      }
-      // byte, short, int
-      return sum.intValue() + value.intValue();
    }
 }
