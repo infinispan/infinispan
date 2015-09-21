@@ -23,7 +23,6 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.versioning.EntryVersionsMap;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -173,7 +172,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
          Collection<Address> recipients = getCommitNodes(ctx);
          Map<Address, Response> responseMap =
                rpcManager.invokeRemotely(recipients, command, createCommitRpcOptions());
-         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
+         checkTxCommandResponses(responseMap, command, ctx, recipients);
       }
       return invokeNextInterceptor(ctx, command);
    }

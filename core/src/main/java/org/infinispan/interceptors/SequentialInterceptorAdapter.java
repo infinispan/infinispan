@@ -276,7 +276,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       }
    }
 
-   static class TxAdapterContext extends AdapterContext implements TxInvocationContext {
+   static class TxAdapterContext<T extends AbstractCacheTransaction> extends AdapterContext implements TxInvocationContext<T> {
       public TxAdapterContext(InvocationContext sctx) {
          super(sctx);
       }
@@ -322,8 +322,8 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       }
 
       @Override
-      public AbstractCacheTransaction getCacheTransaction() {
-         return ((TxInvocationContext) sctx).getCacheTransaction();
+      public T getCacheTransaction() {
+         return ((TxInvocationContext<T>) sctx).getCacheTransaction();
       }
 
       @Override

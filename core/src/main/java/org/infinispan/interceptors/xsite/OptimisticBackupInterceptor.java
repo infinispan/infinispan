@@ -3,9 +3,9 @@ package org.infinispan.interceptors.xsite;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.transport.BackupResponse;
+import org.infinispan.transaction.impl.LocalTransaction;
 
 /**
  * Handles x-site data backups for optimistic transactional caches.
@@ -63,14 +63,14 @@ public class OptimisticBackupInterceptor extends BaseBackupInterceptor {
    }
 
    private boolean shouldRollbackRemoteTxCommand(TxInvocationContext ctx) {
-      return shouldInvokeRemoteTxCommand(ctx) && hasBeenPrepared((LocalTxInvocationContext) ctx);
+      return shouldInvokeRemoteTxCommand(ctx) && hasBeenPrepared((TxInvocationContext<LocalTransaction>) ctx);
    }
 
    /**
     * This 'has been prepared' logic only applies to optimistic transactions, hence it is not present in the
     * LocalTransaction object itself.
     */
-   private boolean hasBeenPrepared(LocalTxInvocationContext ctx) {
-      return !ctx.getRemoteLocksAcquired().isEmpty();
+   private boolean hasBeenPrepared(TxInvocationContext<LocalTransaction> ctx) {
+      return !ctx.getCacheTransaction().getRemoteLocksAcquired().isEmpty();
    }
 }

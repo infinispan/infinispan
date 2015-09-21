@@ -23,7 +23,6 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -35,6 +34,7 @@ import org.infinispan.jmx.annotations.ManagedAttribute;
 import org.infinispan.jmx.annotations.ManagedOperation;
 import org.infinispan.jmx.annotations.MeasurementType;
 import org.infinispan.jmx.annotations.Parameter;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -130,7 +130,7 @@ public class InvalidationInterceptor extends BaseRpcInterceptor implements JmxSt
       if (ctx.isOriginLocal()) {
          //unlock will happen async as it is a best effort
          boolean sync = !command.isUnlock();
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(rpcManager.getTransport().getMembers());
+         ((TxInvocationContext<LocalTransaction>) ctx).getCacheTransaction().locksAcquired(rpcManager.getTransport().getMembers());
          rpcManager.invokeRemotely(null, command, rpcManager.getDefaultRpcOptions(sync));
       }
       return retVal;

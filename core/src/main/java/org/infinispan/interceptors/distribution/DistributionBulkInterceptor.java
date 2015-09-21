@@ -16,7 +16,7 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ForwardingCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
@@ -28,6 +28,7 @@ import org.infinispan.stream.impl.RemovableCloseableIterator;
 import org.infinispan.stream.impl.RemovableIterator;
 import org.infinispan.stream.impl.tx.TxClusterStreamManager;
 import org.infinispan.stream.impl.tx.TxDistributedCacheStream;
+import org.infinispan.transaction.impl.LocalTransaction;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -59,7 +60,7 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
       if (!command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          if (ctx.isInTxScope()) {
             return new TxBackingEntrySet<>(getCacheWithFlags(cache, command), entrySet, command,
-                    (LocalTxInvocationContext) ctx);
+                    (TxInvocationContext<LocalTransaction>) ctx);
          } else {
             return new BackingEntrySet<>(getCacheWithFlags(cache, command), entrySet, command);
          }
@@ -161,10 +162,10 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
    }
 
    protected static class TxBackingEntrySet<K, V> extends BackingEntrySet<K, V> {
-      private final LocalTxInvocationContext ctx;
+      private final TxInvocationContext<LocalTransaction> ctx;
 
       private TxBackingEntrySet(Cache cache, CacheSet<CacheEntry<K, V>> entrySet, LocalFlagAffectedCommand command,
-                                LocalTxInvocationContext ctx) {
+                                TxInvocationContext<LocalTransaction> ctx) {
          super(cache, entrySet, command);
          this.ctx = ctx;
       }
@@ -236,7 +237,7 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
       if (!command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
          if (ctx.isInTxScope()) {
             return new TxBackingKeySet<>(getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
-                    Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command, (LocalTxInvocationContext) ctx);
+                    Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command, (TxInvocationContext<LocalTransaction>) ctx);
          } else {
             return new BackingKeySet<>(getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
                     Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command);
@@ -312,10 +313,10 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
    }
 
    private static class TxBackingKeySet<K, V> extends BackingKeySet<K, V> {
-      private final LocalTxInvocationContext ctx;
+      private final TxInvocationContext<LocalTransaction> ctx;
 
       public TxBackingKeySet(Cache<K, V> cache, CacheSet<CacheEntry<K, V>> entrySet, LocalFlagAffectedCommand command,
-                             LocalTxInvocationContext ctx) {
+                             TxInvocationContext<LocalTransaction> ctx) {
          super(cache, entrySet, command);
          this.ctx = ctx;
       }

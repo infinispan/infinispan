@@ -3,7 +3,6 @@ package org.infinispan.interceptors.base;
 import org.infinispan.commands.FlagAffectedCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.Flag;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
@@ -16,7 +15,6 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateConsumer;
-import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
 
 import java.util.Collection;

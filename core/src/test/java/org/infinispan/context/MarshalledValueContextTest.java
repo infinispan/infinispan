@@ -3,7 +3,7 @@ package org.infinispan.context;
 import org.infinispan.Cache;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.context.impl.LocalTxInvocationContext;
+import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -11,6 +11,7 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.infinispan.transaction.LockingMode;
+import org.infinispan.transaction.impl.LocalTransaction;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.testng.annotations.Test;
 
@@ -53,7 +54,8 @@ public class MarshalledValueContextTest extends SingleCacheManagerTest {
 
       LockManager lockManager = TestingUtil.extractComponent(c, LockManager.class);
 
-      assert cex.ctx instanceof LocalTxInvocationContext;
+      assert cex.ctx instanceof TxInvocationContext;
+      assert ((TxInvocationContext) cex.ctx).getCacheTransaction() instanceof LocalTransaction;
 
       assert cex.ctx.getLookedUpEntries().size() == 0 : "Looked up key should not be in transactional invocation context " +
                                                       "as we don't perform any changes";
