@@ -11,6 +11,7 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
+import org.infinispan.interceptors.base.BaseSequentialInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.util.logging.Log;
@@ -104,7 +105,13 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
    }
 
    public List<CommandInterceptor> asList() {
-      return Collections.emptyList();
+      ArrayList<CommandInterceptor> list = new ArrayList<>(interceptors.size());
+      interceptors.forEach(interceptor -> {
+         if (interceptor instanceof SequentialInterceptorAdapter) {
+            list.add(((SequentialInterceptorAdapter) interceptor).getAdaptedInterceptor());
+         }
+      });
+      return list;
    }
 
    public void removeInterceptor(Class<? extends CommandInterceptor> clazz) {

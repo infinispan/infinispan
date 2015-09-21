@@ -6,6 +6,7 @@ import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,11 +43,9 @@ public abstract class InterceptorChain implements SequentialInterceptorChain {
    public abstract int size();
 
    /**
-    * @deprecated Always returns an empty list, since not all interceptors are CommandInterceptors.
+    * @deprecated The list is incomplete since 8.1, because not all interceptors are CommandInterceptors.
     */
-   public List<CommandInterceptor> asList() {
-      return Collections.emptyList();
-   }
+   public abstract List<CommandInterceptor> asList();
 
    /**
     * Removes all the occurences of supplied interceptor type from the chain.
