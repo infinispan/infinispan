@@ -44,7 +44,7 @@ import java.util.Set;
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public abstract class CommandInterceptor extends AbstractVisitor {
+public abstract class CommandInterceptor extends AbstractVisitor implements AnyInterceptor {
 
    private CommandInterceptor next;
 

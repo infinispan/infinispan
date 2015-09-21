@@ -36,6 +36,7 @@ import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.SequentialInterceptorChainImpl;
 import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
+import org.infinispan.interceptors.base.AnyInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.compat.TypeConverterInterceptor;
 import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
@@ -93,7 +94,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    }
 
 
-   private void register(Class<? extends CommandInterceptor> clazz, CommandInterceptor chainedInterceptor) {
+   private void register(Class<? extends AnyInterceptor> clazz, AnyInterceptor chainedInterceptor) {
       try {
          componentRegistry.registerComponent(chainedInterceptor, clazz);
       } catch (RuntimeException e) {
@@ -111,12 +112,12 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       boolean needsVersionAwareComponents = transactionMode.isTransactional() &&
               Configurations.isVersioningEnabled(configuration);
 
-      InterceptorChain interceptorChain =
+      SequentialInterceptorChain interceptorChain =
             new SequentialInterceptorChainImpl(componentRegistry.getComponentMetadataRepo());
       // add the interceptor chain to the registry first, since some interceptors may ask for it.
       // Add both the old class and the new interface
-      componentRegistry.registerComponent(interceptorChain, InterceptorChain.class);
       componentRegistry.registerComponent(interceptorChain, SequentialInterceptorChain.class);
+      componentRegistry.registerComponent(new InterceptorChain(interceptorChain), InterceptorChain.class);
 
       boolean invocationBatching = configuration.invocationBatching().enabled();
       boolean isTotalOrder = configuration.transaction().transactionProtocol().isTotalOrder();
@@ -332,11 +333,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return interceptorChain;
    }
 
-   private void buildCustomInterceptors(InterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {
+   private void buildCustomInterceptors(SequentialInterceptorChain interceptorChain, CustomInterceptorsConfiguration customInterceptors) {
       for (InterceptorConfiguration config : customInterceptors.interceptors()) {
-         if (interceptorChain.containsInterceptorType(config.interceptor().getClass())) continue;
+         if (interceptorChain.containsInterceptorType(config.anyInterceptor().getClass())) continue;
 
-         CommandInterceptor customInterceptor = config.interceptor();
+         AnyInterceptor customInterceptor = config.anyInterceptor();
          SecurityActions.applyProperties(customInterceptor, config.properties());
          register(customInterceptor.getClass(), customInterceptor);
          if (config.first())
@@ -346,19 +347,19 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
          else if (config.index() >= 0)
             interceptorChain.addInterceptor(customInterceptor, config.index());
          else if (config.after() != null) {
-            List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClass(config.after());
-            if (withClassName.isEmpty()) {
+            AnyInterceptor withClassName = interceptorChain.findInterceptorWithClass(config.after());
+            if (withClassName == null) {
                throw new CacheConfigurationException("Cannot add after class: " + config.after()
                                                       + " as no such interceptor exists in the default chain");
             }
-            interceptorChain.addInterceptorAfter(customInterceptor, withClassName.get(0).getClass());
+            interceptorChain.addInterceptorAfter(customInterceptor, withClassName.getClass());
          } else if (config.before() != null) {
-            List<CommandInterceptor> withClassName = interceptorChain.getInterceptorsWithClass(config.before());
-            if (withClassName.isEmpty()) {
+            AnyInterceptor withClassName = interceptorChain.findInterceptorWithClass(config.before());
+            if (withClassName == null) {
                throw new CacheConfigurationException("Cannot add before class: " + config.after()
                                                       + " as no such interceptor exists in the default chain");
             }
-            interceptorChain.addInterceptorBefore(customInterceptor, withClassName.get(0).getClass());
+            interceptorChain.addInterceptorBefore(customInterceptor, withClassName.getClass());
          } else if (config.position() == InterceptorConfiguration.Position.OTHER_THAN_FIRST_OR_LAST) {
             interceptorChain.addInterceptor(customInterceptor, 1);
          }
@@ -378,7 +379,12 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
    @Override
    public <T> T construct(Class<T> componentType) {
       try {
-         return componentType.cast(buildInterceptorChain());
+         SequentialInterceptorChain sequentialInterceptorChain = buildInterceptorChain();
+         if (componentType == InterceptorChain.class) {
+            return componentType.cast(componentRegistry.getComponent(InterceptorChain.class));
+         } else {
+            return componentType.cast(sequentialInterceptorChain);
+         }
       } catch (CacheException ce) {
          throw ce;
       } catch (Exception e) {

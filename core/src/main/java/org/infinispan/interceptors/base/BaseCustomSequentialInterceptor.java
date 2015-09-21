@@ -11,18 +11,18 @@ import org.infinispan.manager.EmbeddedCacheManager;
  * overloaded forms) or registering custom interceptors via XML should extend this base class when creating their own 
  * custom interceptors.
  * <p />
- * As of Infinispan 5.1, annotations on custom interceptors, including {@link Inject}, {@link Start} and {@link Stop} 
+ * Annotations on custom interceptors, including {@link Inject}, {@link Start} and {@link Stop}
  * will not be respected and callbacks will not be made.
  * <p />
  * Instead, custom interceptor authors should extend this base class to gain access to {@link Cache} and {@link EmbeddedCacheManager},
  * from which other components may be accessed.  Further, lifecycle should be implemented by overriding {@link #start()}
  * and {@link #stop()} as defined in this class.
  *
- * @deprecated Since 8.1, use {@link BaseCustomSequentialInterceptor} instead.
- * @author Manik Surtani
- * @since 5.1
+ * @see BaseCustomInterceptor
+ * @author Dan Berindei
+ * @since 8.1
  */
-public class BaseCustomInterceptor extends CommandInterceptor {
+public class BaseCustomSequentialInterceptor implements DDSequentialInterceptor {
    protected Cache<?, ?> cache;
    protected EmbeddedCacheManager embeddedCacheManager;
 

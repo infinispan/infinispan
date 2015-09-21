@@ -12,7 +12,7 @@ import java.util.function.BiFunction;
  * @author Dan Berindei
  * @since 8.1
  */
-public interface SequentialInterceptor {
+public interface SequentialInterceptor extends AnyInterceptor {
    /**
     * Perform some work for the command, before the command itself is executed.
     *

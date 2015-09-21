@@ -11,31 +11,30 @@ import org.infinispan.factories.annotations.Stop;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
-import org.infinispan.interceptors.base.BaseSequentialInterceptor;
+import org.infinispan.interceptors.base.AnyInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 /**
  * Knows how to build and manage an chain of interceptors. Also in charge with invoking methods on the chain.
  *
  * @author Mircea.Markus@jboss.com
  * @author Galder Zamarreño
+ * @author Dan Berindei
  * @since 4.0
  */
 @Scope(Scopes.NAMED_CACHE)
-public class SequentialInterceptorChainImpl extends InterceptorChain implements SequentialInterceptorChain {
+public class SequentialInterceptorChainImpl implements SequentialInterceptorChain {
 
    private static final Log log = LogFactory.getLog(SequentialInterceptorChainImpl.class);
 
@@ -56,7 +55,7 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
       }
    }
 
-   private void validateCustomInterceptor(Class<? extends CommandInterceptor> i) {
+   private void validateCustomInterceptor(Class<? extends AnyInterceptor> i) {
       if ((!ReflectionUtil.getAllMethodsShallow(i, Inject.class).isEmpty() ||
             !ReflectionUtil.getAllMethodsShallow(i, Start.class).isEmpty() ||
             !ReflectionUtil.getAllMethodsShallow(i, Stop.class).isEmpty()) &&
@@ -70,21 +69,21 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
     *
     * @param clazz type of interceptor to check for
     */
-   private void assertNotAdded(Class<? extends CommandInterceptor> clazz) {
-      if (containsInterceptorType(clazz))
+   private void assertNotAdded(Class<? extends AnyInterceptor> clazz) {
+      if (containsInterceptorType(clazz, false))
          throw new CacheConfigurationException("Detected interceptor of type [" + clazz.getName() +
                                                      "] being added to the interceptor chain " +
                                                      System.identityHashCode(this) + " more than once!");
    }
 
-   public void addInterceptor(CommandInterceptor interceptor, int position) {
+   public void addInterceptor(AnyInterceptor interceptor, int position) {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
-         Class<? extends CommandInterceptor> interceptorClass = interceptor.getClass();
+         Class<? extends AnyInterceptor> interceptorClass = interceptor.getClass();
          assertNotAdded(interceptorClass);
          validateCustomInterceptor(interceptorClass);
-         interceptors.add(position, new SequentialInterceptorAdapter(interceptor));
+         interceptors.add(position, makeSequentialInterceptor(interceptor));
       } finally {
          lock.unlock();
       }
@@ -105,16 +104,10 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
    }
 
    public List<CommandInterceptor> asList() {
-      ArrayList<CommandInterceptor> list = new ArrayList<>(interceptors.size());
-      interceptors.forEach(interceptor -> {
-         if (interceptor instanceof SequentialInterceptorAdapter) {
-            list.add(((SequentialInterceptorAdapter) interceptor).getAdaptedInterceptor());
-         }
-      });
-      return list;
+      return Collections.emptyList();
    }
 
-   public void removeInterceptor(Class<? extends CommandInterceptor> clazz) {
+   public void removeInterceptor(Class<? extends AnyInterceptor> clazz) {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
@@ -129,27 +122,20 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
    }
 
    protected boolean interceptorMatches(SequentialInterceptor interceptor,
-                                        Class<? extends CommandInterceptor> clazz) {
-      if (interceptor instanceof SequentialInterceptorAdapter) {
-         Class<? extends CommandInterceptor> adaptedType =
-               ((SequentialInterceptorAdapter) interceptor).getAdaptedType();
-         if (clazz == adaptedType) {
-            return true;
-         }
-      }
-      return false;
+                                        Class<? extends AnyInterceptor> clazz) {
+      return clazz == getRealInterceptorType(interceptor);
    }
 
-   public boolean addInterceptorAfter(CommandInterceptor toAdd,
-                                      Class<? extends CommandInterceptor> afterInterceptor) {
+   public boolean addInterceptorAfter(AnyInterceptor toAdd,
+                                      Class<? extends AnyInterceptor> afterInterceptor) {
       lock.lock();
       try {
-         Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
+         Class<? extends AnyInterceptor> interceptorClass = toAdd.getClass();
          assertNotAdded(interceptorClass);
          validateCustomInterceptor(interceptorClass);
          for (int i = 0; i < interceptors.size(); i++) {
             if (interceptorMatches(interceptors.get(i), afterInterceptor)) {
-               interceptors.add(i + 1, new SequentialInterceptorAdapter(toAdd));
+               interceptors.add(i + 1, makeSequentialInterceptor(toAdd));
                return true;
             }
          }
@@ -160,24 +146,24 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
    }
 
    @Deprecated
-   public boolean addInterceptorBefore(CommandInterceptor toAdd,
-                                       Class<? extends CommandInterceptor> beforeInterceptor,
+   public boolean addInterceptorBefore(AnyInterceptor toAdd,
+                                       Class<? extends AnyInterceptor> beforeInterceptor,
                                        boolean isCustom) {
       if (isCustom)
          validateCustomInterceptor(toAdd.getClass());
       return addInterceptorBefore(toAdd, beforeInterceptor);
    }
 
-   public boolean addInterceptorBefore(CommandInterceptor toAdd,
-                                       Class<? extends CommandInterceptor> beforeInterceptor) {
+   public boolean addInterceptorBefore(AnyInterceptor toAdd,
+                                       Class<? extends AnyInterceptor> beforeInterceptor) {
       lock.lock();
       try {
-         Class<? extends CommandInterceptor> interceptorClass = toAdd.getClass();
+         Class<? extends AnyInterceptor> interceptorClass = toAdd.getClass();
          assertNotAdded(interceptorClass);
          validateCustomInterceptor(interceptorClass);
          for (int i = 0; i < interceptors.size(); i++) {
             if (interceptorMatches(interceptors.get(i), beforeInterceptor)) {
-               interceptors.add(i, new SequentialInterceptorAdapter(toAdd));
+               interceptors.add(i, makeSequentialInterceptor(toAdd));
                return true;
             }
          }
@@ -187,18 +173,18 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
       }
    }
 
-   public boolean replaceInterceptor(CommandInterceptor replacingInterceptor,
-                                     Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
+   public boolean replaceInterceptor(AnyInterceptor replacingInterceptor,
+                                     Class<? extends AnyInterceptor> toBeReplacedInterceptorType) {
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
-         Class<? extends CommandInterceptor> interceptorClass = replacingInterceptor.getClass();
+         Class<? extends AnyInterceptor> interceptorClass = replacingInterceptor.getClass();
          assertNotAdded(interceptorClass);
          validateCustomInterceptor(interceptorClass);
 
          for (int i = 0; i < interceptors.size(); i++) {
             if (interceptorMatches(interceptors.get(i), toBeReplacedInterceptorType)) {
-               interceptors.set(i, new SequentialInterceptorAdapter(replacingInterceptor));
+               interceptors.set(i, makeSequentialInterceptor(replacingInterceptor));
                return true;
             }
          }
@@ -208,13 +194,13 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
       }
    }
 
-   public void appendInterceptor(CommandInterceptor ci, boolean isCustom) {
-      Class<? extends CommandInterceptor> interceptorClass = ci.getClass();
+   public void appendInterceptor(AnyInterceptor ci, boolean isCustom) {
+      Class<? extends AnyInterceptor> interceptorClass = ci.getClass();
       if (isCustom)
          validateCustomInterceptor(interceptorClass);
       assertNotAdded(interceptorClass);
       // Called when building interceptor chain and so concurrent start calls are protected already
-      interceptors.add(new SequentialInterceptorAdapter(ci));
+      interceptors.add(makeSequentialInterceptor(ci));
    }
 
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
@@ -233,39 +219,26 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
       }
    }
 
-   public CommandInterceptor getFirstInChain() {
-      throw new UnsupportedOperationException();
-   }
-
-   public void setFirstInChain(CommandInterceptor interceptor) {
-      throw new UnsupportedOperationException();
-   }
-
-   public List<CommandInterceptor> getInterceptorsWhichExtend(
-         Class<? extends CommandInterceptor> interceptorClass) {
-      List<CommandInterceptor> result = new LinkedList<>();
+   public AnyInterceptor findInterceptorExtending(Class<? extends AnyInterceptor> interceptorClass) {
       for (SequentialInterceptor interceptor : interceptors) {
-         if (interceptor instanceof SequentialInterceptorAdapter) {
-            SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
-            Class<? extends CommandInterceptor> adaptedType = adapter.getAdaptedType();
-            boolean isSubclass = interceptorClass.isAssignableFrom(adaptedType);
-            if (isSubclass) {
-               result.add(adapter.getAdaptedInterceptor());
-            }
+         AnyInterceptor realInterceptor = getRealInterceptor(interceptor);
+         boolean isSubclass = interceptorClass.isInstance(realInterceptor);
+         if (isSubclass) {
+            return realInterceptor;
          }
       }
-      return result;
+      return null;
    }
 
-   public List<CommandInterceptor> getInterceptorsWithClass(Class clazz) {
-      List<CommandInterceptor> result = new LinkedList<>();
+   @Override
+   public AnyInterceptor findInterceptorWithClass(Class interceptorClass) {
       for (SequentialInterceptor interceptor : interceptors) {
-         if (interceptorMatches(interceptor, clazz)) {
-            SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
-            result.add(adapter.getAdaptedInterceptor());
+         AnyInterceptor realInterceptor = getRealInterceptor(interceptor);
+         if (realInterceptor.getClass() == interceptorClass) {
+            return realInterceptor;
          }
       }
-      return result;
+      return null;
    }
 
    public String toString() {
@@ -277,36 +250,31 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
       return sb.toString();
    }
 
-   public boolean containsInstance(CommandInterceptor interceptor) {
+   public boolean containsInstance(AnyInterceptor interceptor) {
       for (SequentialInterceptor current : interceptors) {
-         if (current instanceof SequentialInterceptorAdapter) {
-            SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) current;
-            if (adapter.getAdaptedInterceptor() == interceptor) {
-               return true;
-            }
+         if (getRealInterceptor(current) == interceptor) {
+            return true;
          }
       }
       return false;
    }
 
-   public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType) {
+   public boolean containsInterceptorType(Class<? extends AnyInterceptor> interceptorType) {
       return containsInterceptorType(interceptorType, false);
    }
 
-   public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType,
+   @Override
+   public boolean containsInterceptorType(Class<? extends AnyInterceptor> interceptorType,
                                           boolean alsoMatchSubClasses) {
       for (SequentialInterceptor interceptor : interceptors) {
-         if (interceptor instanceof SequentialInterceptorAdapter) {
-            SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
-            Class<? extends CommandInterceptor> adaptedType = adapter.getAdaptedType();
-            if (alsoMatchSubClasses) {
-               if (interceptorType.isAssignableFrom(adaptedType)) {
-                  return true;
-               }
-            } else {
-               if (interceptorType == adaptedType) {
-                  return true;
-               }
+         Class<? extends AnyInterceptor> currentInterceptorType = getRealInterceptorType(interceptor);
+         if (alsoMatchSubClasses) {
+            if (interceptorType.isAssignableFrom(currentInterceptorType)) {
+               return true;
+            }
+         } else {
+            if (interceptorType == currentInterceptorType) {
+               return true;
             }
          }
       }
@@ -315,6 +283,40 @@ public class SequentialInterceptorChainImpl extends InterceptorChain implements 
 
    @Override
    public List<SequentialInterceptor> getInterceptors() {
+      // The new instance will not be affected by changes to the original list
       return new CopyOnWriteArrayList<>(interceptors);
+   }
+
+   @Override
+   public Stream<AnyInterceptor> getRealInterceptors() {
+      return getInterceptors().stream().map(this::getRealInterceptor);
+   }
+
+   protected SequentialInterceptor makeSequentialInterceptor(AnyInterceptor interceptor) {
+      SequentialInterceptor theInterceptor;
+      if (interceptor instanceof SequentialInterceptor) {
+         theInterceptor = (SequentialInterceptor) interceptor;
+      } else {
+         theInterceptor = new SequentialInterceptorAdapter((CommandInterceptor) interceptor);
+      }
+      return theInterceptor;
+   }
+
+   protected AnyInterceptor getRealInterceptor(SequentialInterceptor interceptor) {
+      if (interceptor instanceof SequentialInterceptorAdapter) {
+         SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
+         return adapter.getAdaptedInterceptor();
+      } else {
+         return interceptor;
+      }
+   }
+
+   protected Class<? extends AnyInterceptor> getRealInterceptorType(SequentialInterceptor interceptor) {
+      if (interceptor instanceof SequentialInterceptorAdapter) {
+         SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
+         return adapter.getAdaptedType();
+      } else {
+         return interceptor.getClass();
+      }
    }
 }

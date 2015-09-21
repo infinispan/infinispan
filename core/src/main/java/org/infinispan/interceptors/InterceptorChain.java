@@ -7,7 +7,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.interceptors.base.CommandInterceptor;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,14 +19,22 @@ import java.util.List;
  */
 @Scope(Scopes.NAMED_CACHE)
 @Deprecated
-public abstract class InterceptorChain implements SequentialInterceptorChain {
+public class InterceptorChain {
+   private SequentialInterceptorChain sequentialInterceptorChain;
+
+   public InterceptorChain(SequentialInterceptorChain sequentialInterceptorChain) {
+      this.sequentialInterceptorChain = sequentialInterceptorChain;
+   }
+
    /**
     * Inserts the given interceptor at the specified position in the chain (o based indexing).
     *
     * @throws IllegalArgumentException if the position is invalid (e.g. 5 and there are only 2 interceptors in the
     *                                  chain)
     */
-   public abstract void addInterceptor(CommandInterceptor interceptor, int position);
+   public void addInterceptor(CommandInterceptor interceptor, int position) {
+      sequentialInterceptorChain.addInterceptor(interceptor, position);
+   }
 
    /**
     * Removes the interceptor at the given postion.
@@ -35,45 +42,68 @@ public abstract class InterceptorChain implements SequentialInterceptorChain {
     * @throws IllegalArgumentException if the position is invalid (e.g. 5 and there are only 2 interceptors in the
     *                                  chain)
     */
-   public abstract void removeInterceptor(int position);
+   public void removeInterceptor(int position) {
+      sequentialInterceptorChain.removeInterceptor(position);
+   }
 
    /**
     * Returns the number of interceptors in the chain.
     */
-   public abstract int size();
+   public int size() {
+      return sequentialInterceptorChain.size();
+   }
 
    /**
     * @deprecated The list is incomplete since 8.1, because not all interceptors are CommandInterceptors.
     */
-   public abstract List<CommandInterceptor> asList();
+   public List<CommandInterceptor> asList() {
+      ArrayList<CommandInterceptor> list =
+            new ArrayList<>(sequentialInterceptorChain.getInterceptors().size());
+      sequentialInterceptorChain.getRealInterceptors().forEach(ci -> {
+         if (ci instanceof CommandInterceptor) {
+            list.add((CommandInterceptor) ci);
+         }
+      });
+      return list;
+   }
 
    /**
     * Removes all the occurences of supplied interceptor type from the chain.
     */
-   public abstract void removeInterceptor(Class<? extends CommandInterceptor> clazz);
+   public void removeInterceptor(Class<? extends CommandInterceptor> clazz) {
+      sequentialInterceptorChain.removeInterceptor(clazz);
+   }
 
    /**
     * Adds a new interceptor in list after an interceptor of a given type.
     *
     * @return true if the interceptor was added; i.e. the afterInterceptor exists
     */
-   public abstract boolean addInterceptorAfter(CommandInterceptor toAdd, Class<? extends CommandInterceptor> afterInterceptor);
+   public boolean addInterceptorAfter(CommandInterceptor toAdd,
+                                      Class<? extends CommandInterceptor> afterInterceptor) {
+      return addInterceptorAfter(toAdd, afterInterceptor);
+   }
 
    /**
     * @deprecated Use {@link #addInterceptorBefore(CommandInterceptor,
     * Class)} instead.
     */
    @Deprecated
-   public abstract boolean addInterceptorBefore(CommandInterceptor toAdd,
-                                Class<? extends CommandInterceptor> beforeInterceptor, boolean isCustom);
+   public boolean addInterceptorBefore(CommandInterceptor toAdd,
+                                       Class<? extends CommandInterceptor> beforeInterceptor,
+                                       boolean isCustom) {
+      return addInterceptorBefore(toAdd, beforeInterceptor, isCustom);
+   }
 
    /**
     * Adds a new interceptor in list after an interceptor of a given type.
     *
     * @return true if the interceptor was added; i.e. the afterInterceptor exists
     */
-   public abstract boolean addInterceptorBefore(CommandInterceptor toAdd,
-                                Class<? extends CommandInterceptor> beforeInterceptor);
+   public boolean addInterceptorBefore(CommandInterceptor toAdd,
+                                       Class<? extends CommandInterceptor> beforeInterceptor) {
+      return addInterceptorBefore(toAdd, beforeInterceptor);
+   }
 
    /**
     * Replaces an existing interceptor of the given type in the interceptor chain with a new interceptor instance passed as parameter.
@@ -82,49 +112,84 @@ public abstract class InterceptorChain implements SequentialInterceptorChain {
     * @param toBeReplacedInterceptorType the type of interceptor that should be swapped with the new one
     * @return true if the interceptor was replaced
     */
-   public abstract boolean replaceInterceptor(CommandInterceptor replacingInterceptor,
-                              Class<? extends CommandInterceptor> toBeReplacedInterceptorType);
+   public boolean replaceInterceptor(CommandInterceptor replacingInterceptor,
+                                     Class<? extends CommandInterceptor> toBeReplacedInterceptorType) {
+      return sequentialInterceptorChain.replaceInterceptor(replacingInterceptor, toBeReplacedInterceptorType);
+   }
 
    /**
     * Appends at the end.
     */
-   public abstract void appendInterceptor(CommandInterceptor ci, boolean isCustom);
+   public void appendInterceptor(CommandInterceptor ci, boolean isCustom) {
+      sequentialInterceptorChain.appendInterceptor(ci, isCustom);
+   }
 
    /**
     * Walks the command through the interceptor chain. The received ctx is being passed in.
     */
-   public abstract Object invoke(InvocationContext ctx, VisitableCommand command);
+   public Object invoke(InvocationContext ctx, VisitableCommand command) {
+      return sequentialInterceptorChain.invoke(ctx, command);
+   }
 
    /**
     * @deprecated Since 8.1, throws an {@code UnsupportedOperationException}
     */
    @Deprecated
-   public abstract CommandInterceptor getFirstInChain();
+   public CommandInterceptor getFirstInChain() {
+      return (CommandInterceptor) sequentialInterceptorChain
+            .findInterceptorExtending(CommandInterceptor.class);
+   }
 
    /**
     * @deprecated Since 8.1, throws an {@code UnsupportedOperationException}
     */
-   public abstract void setFirstInChain(CommandInterceptor interceptor);
+   public void setFirstInChain(CommandInterceptor interceptor) {
+      addInterceptor(interceptor, 0);
+   }
 
    /**
     * Returns all interceptors which extend the given command interceptor.
     */
-   public abstract List<CommandInterceptor> getInterceptorsWhichExtend(Class<? extends CommandInterceptor> interceptorClass);
+   public List<CommandInterceptor> getInterceptorsWhichExtend(
+         Class<? extends CommandInterceptor> interceptorClass) {
+      ArrayList<CommandInterceptor> list =
+            new ArrayList<>(sequentialInterceptorChain.getInterceptors().size());
+      sequentialInterceptorChain.getRealInterceptors().forEach(ci -> {
+         if (interceptorClass.isInstance(ci)) {
+            list.add((CommandInterceptor) ci);
+         }
+      });
+      return list;
+   }
 
    /**
     * Returns all the interceptors that have the fully qualified name of their class equal with the supplied class
     * name.
     */
-   public abstract List<CommandInterceptor> getInterceptorsWithClass(Class clazz);
+   public List<CommandInterceptor> getInterceptorsWithClass(Class clazz) {
+      ArrayList<CommandInterceptor> list =
+            new ArrayList<>(sequentialInterceptorChain.getInterceptors().size());
+      sequentialInterceptorChain.getRealInterceptors().forEach(ci -> {
+         if (clazz == ci.getClass()) {
+            list.add((CommandInterceptor) ci);
+         }
+      });
+      return list;
+   }
 
    /**
     * Checks whether the chain contains the supplied interceptor instance.
     */
-   public abstract boolean containsInstance(CommandInterceptor interceptor);
+   public boolean containsInstance(CommandInterceptor interceptor) {
+      return sequentialInterceptorChain.containsInstance(interceptor);
+   }
 
-   public abstract boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType);
+   public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType) {
+      return sequentialInterceptorChain.containsInterceptorType(interceptorType);
+   }
 
-   public abstract boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType,
-                                   boolean alsoMatchSubClasses);
-
+   public boolean containsInterceptorType(Class<? extends CommandInterceptor> interceptorType,
+                                          boolean alsoMatchSubClasses) {
+      return sequentialInterceptorChain.containsInterceptorType(interceptorType, alsoMatchSubClasses);
+   }
 }

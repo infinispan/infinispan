@@ -22,7 +22,9 @@ import org.infinispan.eviction.EvictionManager;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.filter.KeyValueFilter;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.partitionhandling.AvailabilityMode;
@@ -74,6 +76,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     *
     * @param i        the interceptor to add
     * @param position the position to add the interceptor
+    * @deprecated Since 8.1, use {@link #getSequentialInterceptorChain()} instead.
     */
    void addInterceptor(CommandInterceptor i, int position);
 
@@ -84,6 +87,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param i                interceptor to add
     * @param afterInterceptor interceptor type after which to place custom interceptor
     * @return true if successful, false otherwise.
+    * @deprecated Since 8.1, use {@link #getSequentialInterceptorChain()} instead.
     */
    boolean addInterceptorAfter(CommandInterceptor i, Class<? extends CommandInterceptor> afterInterceptor);
 
@@ -94,6 +98,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * @param i                 interceptor to add
     * @param beforeInterceptor interceptor type before which to place custom interceptor
     * @return true if successful, false otherwise.
+    * @deprecated Since 8.1, use {@link #getSequentialInterceptorChain()} instead.
     */
    boolean addInterceptorBefore(CommandInterceptor i, Class<? extends CommandInterceptor> beforeInterceptor);
 
@@ -102,6 +107,7 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * last one at getInterceptorChain().size() - 1.
     *
     * @param position the position at which to remove an interceptor
+    * @deprecated Since 8.1, use {@link #getSequentialInterceptorChain()} instead.
     */
    void removeInterceptor(int position);
 
@@ -109,13 +115,21 @@ public interface AdvancedCache<K, V> extends Cache<K, V> {
     * Removes the interceptor of specified type.
     *
     * @param interceptorType type of interceptor to remove
+    * @deprecated Since 8.1, use {@link #getSequentialInterceptorChain()} instead.
     */
    void removeInterceptor(Class<? extends CommandInterceptor> interceptorType);
 
    /**
-    * @deprecated Since 8.1, returns {@code null} because not all interceptors are {@link CommandInterceptor}s.
+    * @deprecated Since 8.1, use {@link #getSequentialInterceptorChain()} instead.
     */
    List<CommandInterceptor> getInterceptorChain();
+
+   /**
+    * TODO Move invoke() to a separate interface, leave only the
+    * @return The interceptor chain.
+    * @since 8.1
+    */
+   SequentialInterceptorChain getSequentialInterceptorChain();
 
    /**
     * @return the eviction manager - if one is configured - for this cache instance

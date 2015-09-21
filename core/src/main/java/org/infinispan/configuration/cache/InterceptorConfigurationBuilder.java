@@ -7,8 +7,11 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.commons.util.TypedProperties;
 import org.infinispan.configuration.cache.InterceptorConfiguration.*;
 import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.interceptors.base.AnyInterceptor;
 import org.infinispan.interceptors.base.BaseCustomInterceptor;
+import org.infinispan.interceptors.base.BaseCustomSequentialInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -69,6 +72,11 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
     * @param interceptor an instance of {@link CommandInterceptor}
     */
    public InterceptorConfigurationBuilder interceptor(CommandInterceptor interceptor) {
+      attributes.attribute(INTERCEPTOR).set(interceptor);
+      return this;
+   }
+
+   public InterceptorConfigurationBuilder interceptor(SequentialInterceptor interceptor) {
       attributes.attribute(INTERCEPTOR).set(interceptor);
       return this;
    }
@@ -135,7 +143,7 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
    @Override
    public void validate() {
       Attribute<Class> interceptorClassAttribute = attributes.attribute(INTERCEPTOR_CLASS);
-      Attribute<CommandInterceptor> interceptorAttribute = attributes.attribute(INTERCEPTOR);
+      Attribute<AnyInterceptor> interceptorAttribute = attributes.attribute(INTERCEPTOR);
 
 
       if (!interceptorClassAttribute.isNull() && !interceptorAttribute.isNull()) {
@@ -143,12 +151,13 @@ public class InterceptorConfigurationBuilder extends AbstractCustomInterceptorsC
       } else if (interceptorClassAttribute.isNull() && interceptorAttribute.isNull()) {
          throw log.customInterceptorMissingClass();
       }
-      Class<? extends CommandInterceptor> interceptorClass = interceptorClassAttribute.get();
+      Class<? extends AnyInterceptor> interceptorClass = interceptorClassAttribute.get();
       if (interceptorClass == null) {
          interceptorClass = interceptorAttribute.get().getClass();
       }
 
-      if (!BaseCustomInterceptor.class.isAssignableFrom(interceptorClass)) {
+      if (!BaseCustomInterceptor.class.isAssignableFrom(interceptorClass) &&
+            !BaseCustomSequentialInterceptor.class.isAssignableFrom(interceptorClass)) {
          final String className = interceptorClass.getName();
          //Suppress noisy warnings if the interceptor is one of our own (like one of those from Query):
          if (! className.startsWith("org.infinispan.")) {
