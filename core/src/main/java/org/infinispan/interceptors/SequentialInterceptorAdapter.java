@@ -129,6 +129,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
             return actx.nextInterceptorFuture.get();
          } catch (ExecutionException e) {
             Throwable cause = e.getCause();
+            e.initCause(null);
             cause.addSuppressed(e);
             throw cause;
          }
