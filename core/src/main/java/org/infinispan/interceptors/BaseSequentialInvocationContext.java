@@ -89,15 +89,9 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
             CompletableFuture<Object> nextFuture = next.visitCommand(this, command);
             if (nextFuture != null) {
                // The execution will continue when the interceptor finishes
-               // TODO Continue executing in the current thread if the future is already done
-               // nextFuture.whenComplete(this::continueExecution);
-               try {
-                  returnValue = nextFuture.get();
-                  throwable = null;
-               } catch (Throwable t) {
-                  returnValue = null;
-                  throwable = t;
-               }
+               // May continue in the current thread if the future is already done
+               nextFuture.whenComplete(this::continueExecution);
+               return;
             }
          } catch (Throwable t) {
             throwable = t;
@@ -110,10 +104,14 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
             BiFunction<Object, Throwable, CompletableFuture<Object>> handler =
                   returnHandlers.remove(returnHandlers.size() - 1);
             CompletableFuture<Object> handlerFuture = handler.apply(returnValue, throwable);
-            // TODO Need a non-null constant, this doesn't allow replacing the return value with null
+            // If the handler modified nextInterceptor, the execution must continue with that interceptor
             if (handlerFuture != null) {
                handlerFuture.whenComplete(this::continueExecution);
                return;
+            } else {
+               if (nextInterceptor < interceptors.size()) {
+                  continueExecution(returnValue, throwable);
+               }
             }
          } catch (Throwable t) {
             returnValue = null;

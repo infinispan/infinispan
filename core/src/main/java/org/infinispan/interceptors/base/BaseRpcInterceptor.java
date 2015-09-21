@@ -16,6 +16,7 @@ import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptionsBuilder;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.statetransfer.StateConsumer;
+import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.impl.LocalTransaction;
 
 import java.util.Collection;
@@ -69,19 +70,19 @@ public abstract class BaseRpcInterceptor extends CommandInterceptor {
       }
 
       // Skip the remote invocation if this is a state transfer transaction
-      LocalTxInvocationContext localCtx = (LocalTxInvocationContext) ctx;
-      if (localCtx.getCacheTransaction().getStateTransferFlag() == Flag.PUT_FOR_STATE_TRANSFER) {
+      LocalTransaction localTx = (LocalTransaction) ctx.getCacheTransaction();
+      if (localTx.getStateTransferFlag() == Flag.PUT_FOR_STATE_TRANSFER) {
          return false;
       }
 
       // just testing for empty modifications isn't enough - the Lock API may acquire locks on keys but won't
       // register a Modification.  See ISPN-711.
-      boolean shouldInvokeRemotely = ctx.hasModifications() || !localCtx.getRemoteLocksAcquired().isEmpty() ||
-         localCtx.getCacheTransaction().getTopologyId() != rpcManager.getTopologyId();
+      boolean shouldInvokeRemotely = ctx.hasModifications() || !localTx.getRemoteLocksAcquired().isEmpty() ||
+         localTx.getTopologyId() != rpcManager.getTopologyId();
 
       if (getLog().isTraceEnabled()) {
          getLog().tracef("Should invoke remotely? %b. hasModifications=%b, hasRemoteLocksAcquired=%b",
-               shouldInvokeRemotely, ctx.hasModifications(), !localCtx.getRemoteLocksAcquired().isEmpty());
+               shouldInvokeRemotely, ctx.hasModifications(), !localTx.getRemoteLocksAcquired().isEmpty());
       }
 
       return shouldInvokeRemotely;

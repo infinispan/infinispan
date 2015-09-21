@@ -64,14 +64,14 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
             if (trace)
                log.tracef("Executing legacy interceptor %s", adaptedInterceptor);
             Object returnValue = command.acceptVisitor(actx, adaptedInterceptor);
+            if (trace)
+               log.tracef("Finished legacy interceptor %s", adaptedInterceptor);
             actx.adaptedFuture.complete(returnValue);
             if (!actx.beforeFuture.isDone()) {
                // The interceptor didn't call command.acceptVisitor(next)
                // We need to run this in a separate thread
                actx.beforeFuture.complete(ctx.shortCircuit(returnValue));
             }
-            if (trace)
-               log.tracef("Finished legacy interceptor %s", adaptedInterceptor);
          } catch (Throwable throwable) {
             if (trace)
                log.tracef(throwable, "Exception in legacy interceptor %s", adaptedInterceptor);
@@ -107,7 +107,8 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
                } else {
                   actx.nextInterceptorFuture.completeExceptionally(throwable);
                }
-               return actx.adaptedFuture;
+               // The new beforeFuture!
+               return actx.beforeFuture;
             }));
          } else {
             // Executing the next interceptor with the same command
@@ -124,7 +125,13 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
             });
             actx.beforeFuture.complete(null);
          }
-         return actx.nextInterceptorFuture.get();
+         try {
+            return actx.nextInterceptorFuture.get();
+         } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            cause.addSuppressed(e);
+            throw cause;
+         }
       }
    }
 

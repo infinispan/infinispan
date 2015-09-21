@@ -152,15 +152,16 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
    public Object visitLockControlCommand(TxInvocationContext ctx, LockControlCommand command) throws Throwable {
       if (ctx.isOriginLocal()) {
+         TxInvocationContext<LocalTransaction> localTxCtx = ctx;
          //In Pessimistic mode, the delta composite keys were sent to the wrong owner and never locked.
          final Collection<Address> affectedNodes = cdl.getOwners(filterDeltaCompositeKeys(command.getKeys()));
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(affectedNodes == null ? dm.getConsistentHash()
-               .getMembers() : affectedNodes);
+         localTxCtx.getCacheTransaction().locksAcquired(
+               affectedNodes == null ? dm.getConsistentHash().getMembers() : affectedNodes);
          log.tracef("Registered remote locks acquired %s", affectedNodes);
          RpcOptions rpcOptions = rpcManager.getRpcOptionsBuilder(ResponseMode.SYNCHRONOUS_IGNORE_LEAVERS, DeliverOrder.NONE).build();
          Map<Address, Response> responseMap = rpcManager.invokeRemotely(affectedNodes, command, rpcOptions);
-         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx,
-                                 ((LocalTxInvocationContext) ctx).getRemoteLocksAcquired());
+         checkTxCommandResponses(responseMap, command, localTxCtx,
+                                 localTxCtx.getCacheTransaction().getRemoteLocksAcquired());
       }
       return invokeNextInterceptor(ctx, command);
    }
@@ -182,19 +183,21 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       Object retVal = invokeNextInterceptor(ctx, command);
 
       if (shouldInvokeRemoteTxCommand(ctx)) {
+         TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) ctx;
          Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(ctx));
-         prepareOnAffectedNodes(ctx, command, recipients);
-         ((LocalTxInvocationContext) ctx).remoteLocksAcquired(
+         prepareOnAffectedNodes(localTxCtx, command, recipients);
+         localTxCtx.getCacheTransaction().locksAcquired(
                recipients == null ? dm.getWriteConsistentHash().getMembers() : recipients);
       }
       return retVal;
    }
 
-   protected void prepareOnAffectedNodes(TxInvocationContext<?> ctx, PrepareCommand command, Collection<Address> recipients) {
+   protected void prepareOnAffectedNodes(TxInvocationContext<LocalTransaction> ctx, PrepareCommand command,
+                                         Collection<Address> recipients) {
       try {
          // this method will return immediately if we're the only member (because exclude_self=true)
          Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, createPrepareRpcOptions());
-         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
+         checkTxCommandResponses(responseMap, command, ctx, recipients);
       } finally {
          transactionRemotelyPrepared(ctx);
       }
@@ -205,7 +208,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
       if (shouldInvokeRemoteTxCommand(ctx)) {
          Collection<Address> recipients = getCommitNodes(ctx);
          Map<Address, Response> responseMap = rpcManager.invokeRemotely(recipients, command, createRollbackRpcOptions());
-         checkTxCommandResponses(responseMap, command, (LocalTxInvocationContext) ctx, recipients);
+         checkTxCommandResponses(responseMap, command, ctx, recipients);
       }
 
       return invokeNextInterceptor(ctx, command);
@@ -219,7 +222,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected void checkTxCommandResponses(Map<Address, Response> responseMap, TransactionBoundaryCommand command,
-                                          LocalTxInvocationContext context, Collection<Address> recipients) {
+                                          TxInvocationContext<LocalTransaction> context, Collection<Address> recipients) {
       OutdatedTopologyException outdatedTopologyException = null;
       for (Map.Entry<Address, Response> e : responseMap.entrySet()) {
          Address recipient = e.getKey();
@@ -251,7 +254,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    private boolean checkCacheNotFoundResponseInPartitionHandling(TransactionBoundaryCommand command,
-                                                                 LocalTxInvocationContext context,
+                                                                 TxInvocationContext<LocalTransaction> context,
                                                                  Collection<Address> recipients) {
       final GlobalTransaction globalTransaction = command.getGlobalTransaction();
       final Collection<Object> lockedKeys = context.getLockedKeys();

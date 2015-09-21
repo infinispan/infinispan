@@ -2,12 +2,10 @@ package org.infinispan.interceptors;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.Spliterators;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.transaction.Status;
 import javax.transaction.SystemException;
@@ -43,13 +41,10 @@ import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.context.impl.LocalTxInvocationContext;
 import org.infinispan.context.impl.RemoteTxInvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.iteration.EntryIterable;
-import org.infinispan.iteration.impl.TransactionAwareEntryIterable;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -157,7 +152,7 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
          return invokeNextInterceptor(ctx, command);
       } finally {
          if (!ctx.isOriginLocal()) {
-            verifyRemoteTransaction((RemoteTxInvocationContext) ctx, command);
+            verifyRemoteTransaction(ctx, command);
          }
       }
    }
@@ -461,7 +456,7 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
       return rollbacks.get();
    }
 
-   private void verifyRemoteTransaction(RemoteTxInvocationContext ctx, AbstractTransactionBoundaryCommand command) throws Throwable {
+   private void verifyRemoteTransaction(TxInvocationContext<RemoteTransaction> ctx, AbstractTransactionBoundaryCommand command) throws Throwable {
       final GlobalTransaction globalTransaction = command.getGlobalTransaction();
 
       // command.getOrigin() and ctx.getOrigin() are not reliable for LockControlCommands started by
