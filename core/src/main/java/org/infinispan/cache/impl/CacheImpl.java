@@ -369,7 +369,12 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    }
 
    final int size(EnumSet<Flag> explicitFlags, ClassLoader explicitClassLoader) {
-      return entrySet(explicitFlags, explicitClassLoader).size();
+      long size = keySet(explicitFlags, explicitClassLoader).stream().count();
+      if (size > Integer.MAX_VALUE) {
+         return Integer.MAX_VALUE;
+      } else {
+         return (int) size;
+      }
    }
 
    @Override
