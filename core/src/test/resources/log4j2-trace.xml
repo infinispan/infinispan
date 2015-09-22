@@ -22,7 +22,7 @@
    <Loggers>
        <Logger name="org.infinispan" level="trace" />
        <Logger name="com.mchange" level="warn" />
-       <Logger name="org.jgroups" levle="info"/>
+       <Logger name="org.jgroups" level="info"/>
        <Root level="info">
           <AppenderRef ref="CompressedFileAppender"/>
        </Root>
