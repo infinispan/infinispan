@@ -2,7 +2,6 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.write.WriteCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
@@ -59,80 +58,78 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
    public CompletableFuture<Object> visitCommand(InvocationContext ctx, VisitableCommand command) {
       AdapterContext actx = ctx.isInTxScope() ? new TxAdapterContext(ctx) : new AdapterContext(ctx);
       actx.adaptedFuture = new CompletableFuture<>();
-      executor.execute(() -> {
-         try {
-            if (trace)
-               log.tracef("Executing legacy interceptor %s", adaptedInterceptor);
-            Object returnValue = command.acceptVisitor(actx, adaptedInterceptor);
-            if (trace)
-               log.tracef("Finished legacy interceptor %s", adaptedInterceptor);
-            actx.adaptedFuture.complete(returnValue);
-            if (!actx.beforeFuture.isDone()) {
-               // The interceptor didn't call command.acceptVisitor(next)
-               // We need to run this in a separate thread
-               actx.beforeFuture.complete(ctx.shortCircuit(returnValue));
-            }
-         } catch (Throwable throwable) {
-            if (trace)
-               log.tracef(throwable, "Exception in legacy interceptor %s", adaptedInterceptor);
-            actx.adaptedFuture.completeExceptionally(throwable);
-            if (!actx.beforeFuture.isDone()) {
-               // We need to run this in a separate thread
-               actx.beforeFuture.completeExceptionally(throwable);
-            }
-            throw new CacheException(throwable);
-         }
-      });
-      return actx.beforeFuture;
+      executor.execute(() -> asyncVisit(ctx, command, actx));
+      return actx.visitFuture;
+   }
+
+   protected void asyncVisit(InvocationContext ctx, VisitableCommand command, AdapterContext actx) {
+      try {
+         if (trace)
+            log.tracef("Executing legacy interceptor %s for %s", getAdaptedType().getSimpleName(), command);
+         Object returnValue = command.acceptVisitor(actx, adaptedInterceptor);
+         if (trace)
+            log.tracef("Finished legacy interceptor %s for %s", getAdaptedType().getSimpleName(), command);
+         actx.adaptedFuture.complete(returnValue);
+         actx.visitFuture.complete(ctx.shortCircuit(returnValue));
+      } catch (Throwable throwable) {
+         if (trace)
+            log.tracef(throwable, "Exception in legacy interceptor %s for %s", getAdaptedType().getSimpleName(), command);
+         actx.adaptedFuture.completeExceptionally(throwable);
+         actx.visitFuture.completeExceptionally(throwable);
+      }
+   }
+
+   Object handleNextInterceptor(AdapterContext ctx, VisitableCommand command) throws Throwable {
+      AdapterContext actx = ctx;
+      CompletableFuture<Object> nextInterceptorFuture = new CompletableFuture<>();
+      // The legacy interceptors can start executing a new command even on the return path,
+      // but forkInvocation() doesn't work on the return path.
+      // So we have to fork even for the same command, and short-circuit when the legacy
+      // interceptor is done.
+      // TODO If this is common enough, maybe forking should be the default??
+      BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler =
+            (returnValue, throwable) -> handleNextReturn(actx, nextInterceptorFuture, returnValue, throwable);
+      if (trace) log.tracef("visitFuture done for %s", getAdaptedType().getSimpleName());
+      actx.visitFuture.complete(actx.sctx.forkInvocation(command, returnHandler));
+      try {
+         if (trace) log.trace("Waiting for next interceptor's return handler");
+         return nextInterceptorFuture.get();
+      } catch (ExecutionException e) {
+         Throwable cause = e.getCause();
+         throw cause;
+      }
+   }
+
+   private CompletableFuture<Object> handleNextReturn(AdapterContext actx,
+                                                      CompletableFuture<Object> nextInterceptorFuture,
+                                                      Object returnValue, Throwable throwable) {
+      if (trace)
+         log.tracef("Resuming legacy interceptor %s for %s", getAdaptedType().getSimpleName(), actx.sctx.getCommand());
+      actx.visitFuture = new CompletableFuture<>();
+      if (throwable == null) {
+         nextInterceptorFuture.complete(returnValue);
+      } else {
+         nextInterceptorFuture.completeExceptionally(throwable);
+      }
+      // May be already done by now...
+      return actx.visitFuture;
    }
 
    @Override
    public String toString() {
-      return "SequentialInterceptorAdapter(" + adaptedInterceptor.getClass().getSimpleName() + ')';
+      return "SequentialInterceptorAdapter(" + getAdaptedType().getSimpleName() + ')';
    }
 
    public class NextInterceptor extends CommandInterceptor {
+
       @Override
       protected Object handleDefault(InvocationContext ctx, VisitableCommand command) throws Throwable {
-         AdapterContext actx = (AdapterContext) ctx;
-         actx.nextInterceptorFuture = new CompletableFuture<>();
-         if (command != actx.sctx.getCommand()) {
-            // The interceptor started executing a different command, fork the execution and
-            // create a new beforeFuture
-            CompletableFuture<Object> savedFuture = actx.beforeFuture;
-            actx.beforeFuture = new CompletableFuture<>();
-            savedFuture.complete(actx.sctx.forkInvocation(command, (returnValue, throwable) -> {
-               if (throwable == null) {
-                  actx.nextInterceptorFuture.complete(returnValue);
-               } else {
-                  actx.nextInterceptorFuture.completeExceptionally(throwable);
-               }
-               // The new beforeFuture!
-               return actx.beforeFuture;
-            }));
-         } else {
-            // Executing the next interceptor with the same command
-            actx.sctx.onReturn((returnValue, throwable) -> {
-               if (throwable == null) {
-                  actx.nextInterceptorFuture.complete(returnValue);
-               } else {
-                  actx.nextInterceptorFuture.completeExceptionally(throwable);
-               }
-               if (trace)
-                  log.tracef("Next interceptor done, waiting for current interceptor %s to finish",
-                             SequentialInterceptorAdapter.this);
-               return actx.adaptedFuture;
-            });
-            actx.beforeFuture.complete(null);
-         }
-         try {
-            return actx.nextInterceptorFuture.get();
-         } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            e.initCause(null);
-            cause.addSuppressed(e);
-            throw cause;
-         }
+         return handleNextInterceptor((AdapterContext) ctx, command);
+      }
+
+      @Override
+      public String toString() {
+         return "NextInterceptor(" + getAdaptedType().getSimpleName() + ")";
       }
    }
 
@@ -147,12 +144,10 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       }
    }
 
-   static class AdapterContext implements InvocationContext {
+   class AdapterContext implements InvocationContext {
       protected final InvocationContext sctx;
       // Done when the command was passed to the next SequentialInterceptor in the chain
-      volatile CompletableFuture<Object> beforeFuture = new CompletableFuture<>();
-      // Done when the next SequentialInterceptor returns
-      volatile CompletableFuture<Object> nextInterceptorFuture = null;
+      volatile CompletableFuture<Object> visitFuture = new CompletableFuture<>();
       // Done when the adapted interceptor finished executing
       volatile CompletableFuture<Object> adaptedFuture;
 
@@ -275,9 +270,15 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       public CompletableFuture<Object> execute(VisitableCommand command) {
          throw new UnsupportedOperationException();
       }
+
+      @Override
+      public String toString() {
+         return "AdapterContext(" + getAdaptedType().getSimpleName() + ")";
+      }
    }
 
-   static class TxAdapterContext<T extends AbstractCacheTransaction> extends AdapterContext implements TxInvocationContext<T> {
+   class TxAdapterContext<T extends AbstractCacheTransaction> extends AdapterContext
+         implements TxInvocationContext<T> {
       public TxAdapterContext(InvocationContext sctx) {
          super(sctx);
       }

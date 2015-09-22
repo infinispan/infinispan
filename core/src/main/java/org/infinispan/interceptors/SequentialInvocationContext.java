@@ -2,6 +2,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -17,8 +18,7 @@ public interface SequentialInvocationContext {
 
    Object shortCircuit(Object returnValue);
 
-   Object forkInvocation(VisitableCommand newCommand,
-                                            BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler);
+   Object forkInvocation(VisitableCommand newCommand, BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler);
 
    CompletableFuture<Object> execute(VisitableCommand command);
 }

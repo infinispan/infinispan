@@ -53,26 +53,43 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
    @Override
    public Object forkInvocation(VisitableCommand newCommand,
                                 BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
+      if (trace)
+         log.tracef("Forking command %s at interceptor %s", newCommand, interceptors.get(nextInterceptor));
       VisitableCommand savedCommand = command;
       int savedInterceptor = nextInterceptor;
       command = newCommand;
-      onReturn((returnValue, throwable) -> {
-         command = savedCommand;
-         nextInterceptor = savedInterceptor;
-         return returnHandler.apply(returnValue, throwable);
-      });
+      onReturn((returnValue, throwable) -> handleForkReturn(newCommand, returnHandler, savedCommand,
+                                                            savedInterceptor, returnValue, throwable));
       // Proceed with the next interceptor
       return null;
+   }
+
+   protected CompletableFuture<Object> handleForkReturn(VisitableCommand newCommand,
+                                                        BiFunction<Object, Throwable,
+                                                              CompletableFuture<Object>> returnHandler,
+                                                        VisitableCommand savedCommand, int savedInterceptor,
+                                                        Object returnValue, Throwable throwable) {
+      if (trace)
+         log.tracef("Forked command %s done at %s", newCommand, interceptors.get(savedInterceptor));
+      command = savedCommand;
+      nextInterceptor = savedInterceptor;
+      return returnHandler.apply(returnValue, throwable);
    }
 
    @Override
    public CompletableFuture<Object> execute(VisitableCommand command) {
       this.command = command;
       continueExecution(null, null);
+      if (trace)
+         log.tracef("Got the first visit future for %s", command);
       return this;
    }
 
    public void continueExecution(Object returnValue, Throwable throwable) {
+      if (trace)
+         log.tracef("Continue execution for %s, next interceptor %s, next return handler %s", getCommand(),
+                    nextInterceptor,
+                    returnHandlers.isEmpty() ? "N/A" : returnHandlers.get(returnHandlers.size() - 1));
       while (nextInterceptor < interceptors.size()) {
          if (throwable != null) {
             // Got an exception, skip the rest of the interceptors and start executing the return handlers
@@ -87,6 +104,8 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
             if (trace)
                log.tracef("Executing interceptor %s", next);
             CompletableFuture<Object> nextFuture = next.visitCommand(this, command);
+            if (trace)
+               log.tracef("Executed interceptor %s, got %s", next, nextFuture);
             if (nextFuture != null) {
                // The execution will continue when the interceptor finishes
                // May continue in the current thread if the future is already done
@@ -98,17 +117,23 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
          }
       }
 
-      // Interceptors are all done, execute the return handlers synchronously
+      // Interceptors are all done, execute the return handlers
       while (!returnHandlers.isEmpty()) {
          try {
             BiFunction<Object, Throwable, CompletableFuture<Object>> handler =
                   returnHandlers.remove(returnHandlers.size() - 1);
+            if (trace)
+               log.tracef("Executing return handler %s", handler);
             CompletableFuture<Object> handlerFuture = handler.apply(returnValue, throwable);
-            // If the handler modified nextInterceptor, the execution must continue with that interceptor
+            if (trace)
+               log.tracef("Executed return handler %s, got %s", handler, handlerFuture);
             if (handlerFuture != null) {
                handlerFuture.whenComplete(this::continueExecution);
                return;
             } else {
+               // If the handler modified nextInterceptor, the execution must continue with that interceptor
+               // TODO Forking on the return path no longer works. If we re-enable it, we should allow the
+               // TODO interceptors to save the context instead of passing this to forkInvocation
                if (nextInterceptor < interceptors.size()) {
                   continueExecution(returnValue, throwable);
                }
@@ -120,6 +145,8 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
       }
 
       // We are done!
+      if (trace)
+         log.tracef("Command %s done, return value %s, throwable %s", command, returnValue, throwable);
       if (throwable == null) {
          complete(returnValue);
       } else {

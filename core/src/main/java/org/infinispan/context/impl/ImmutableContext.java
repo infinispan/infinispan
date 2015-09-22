@@ -133,8 +133,8 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand,
-                                                   BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
+   public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand, BiFunction<Object,
+         Throwable, CompletableFuture<Object>> returnHandler) {
       return null;
    }
 
