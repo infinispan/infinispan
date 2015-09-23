@@ -81,7 +81,7 @@ public class InterceptorChain {
     */
    public boolean addInterceptorAfter(CommandInterceptor toAdd,
                                       Class<? extends CommandInterceptor> afterInterceptor) {
-      return addInterceptorAfter(toAdd, afterInterceptor);
+      return sequentialInterceptorChain.addInterceptorAfter(toAdd, afterInterceptor);
    }
 
    /**
@@ -92,7 +92,7 @@ public class InterceptorChain {
    public boolean addInterceptorBefore(CommandInterceptor toAdd,
                                        Class<? extends CommandInterceptor> beforeInterceptor,
                                        boolean isCustom) {
-      return addInterceptorBefore(toAdd, beforeInterceptor, isCustom);
+      return sequentialInterceptorChain.addInterceptorBefore(toAdd, beforeInterceptor);
    }
 
    /**
@@ -102,7 +102,7 @@ public class InterceptorChain {
     */
    public boolean addInterceptorBefore(CommandInterceptor toAdd,
                                        Class<? extends CommandInterceptor> beforeInterceptor) {
-      return addInterceptorBefore(toAdd, beforeInterceptor);
+      return sequentialInterceptorChain.addInterceptorBefore(toAdd, beforeInterceptor);
    }
 
    /**
