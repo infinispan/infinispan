@@ -180,8 +180,8 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    //todo [anistor] the original exception gets wrapped in HotRodClientException
    @Override
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
-   public void testGroupBy3() throws Exception {
-      super.testGroupBy3();
+   public void testGroupBy2() throws Exception {
+      super.testGroupBy2();
    }
 
    //todo [anistor] null numbers do not seem to work in remote mode
@@ -193,6 +193,18 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
    //todo [anistor] the original exception gets wrapped in HotRodClientException
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: Queries containing grouping and aggregation functions must use projections.")
+   @Override
+   public void testGroupBy3() {
+      super.testGroupBy3();
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "java.lang.IllegalStateException: Aggregation SUM cannot be applied to property of type java.lang.String")
+   @Override
+   public void testGroupBy4() {
+      super.testGroupBy4();
+   }
+
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: HQL000009: Cannot have aggregate functions in WHERE clause : SUM.")
    @Override
    public void testGroupBy5() {
       super.testGroupBy5();

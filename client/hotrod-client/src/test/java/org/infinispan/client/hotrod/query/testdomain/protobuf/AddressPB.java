@@ -10,6 +10,7 @@ public class AddressPB implements Address {
 
    private String street;
    private String postCode;
+   private int number;
 
    public String getStreet() {
       return street;
@@ -28,10 +29,21 @@ public class AddressPB implements Address {
    }
 
    @Override
+   public int getNumber() {
+      return number;
+   }
+
+   @Override
+   public void setNumber(int number) {
+      this.number = number;
+   }
+
+   @Override
    public String toString() {
       return "AddressPB{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
+            ", number='" + number + '\'' +
             '}';
    }
 }
