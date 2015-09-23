@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.net.ssl.SSLContext;
 
@@ -59,7 +61,6 @@ public class TcpTransportFactory implements TransportFactory {
    // Per cache request balancing strategy
    private Map<byte[], FailoverRequestBalancingStrategy> balancers;
    private Configuration configuration;
-   private Collection<SocketAddress> initialServers;
    // the primitive fields are often accessed separately from the rest so it makes sense not to require synchronization for them
    private volatile boolean tcpNoDelay;
    private volatile boolean tcpKeepAlive;
@@ -71,6 +72,9 @@ public class TcpTransportFactory implements TransportFactory {
    @GuardedBy("lock")
    private volatile TopologyInfo topologyInfo;
 
+   private volatile int clustersViewed = 0;
+   private List<ClusterInfo> clusters = new ArrayList<>();
+
    @Override
    public void start(Codec codec, Configuration configuration, AtomicInteger defaultCacheTopologyId, ClientListenerNotifier listenerNotifier) {
       synchronized (lock) {
@@ -78,11 +82,20 @@ public class TcpTransportFactory implements TransportFactory {
          this.configuration = configuration;
          boolean pingOnStartup = configuration.pingOnStartup();
          Collection<SocketAddress> servers = new ArrayList<>();
-         initialServers = new ArrayList<>();
+         Collection<SocketAddress> initialServers = new ArrayList<>();
          for(ServerConfiguration server : configuration.servers()) {
             servers.add(new InetSocketAddress(server.host(), server.port()));
          }
          initialServers.addAll(servers);
+         configuration.clusters().stream().forEach(cluster -> {
+            Collection<SocketAddress> clusterAddresses = cluster.getCluster().stream()
+               .map(server -> new InetSocketAddress(server.host(), server.port()))
+               .collect(Collectors.toList());
+            ClusterInfo clusterInfo = new ClusterInfo(cluster.getClusterName(), clusterAddresses);
+            log.debugf("Add secondary cluster: ", clusterInfo);
+            clusters.add(clusterInfo);
+         });
+         clusters.add(new ClusterInfo("___DEFAULT-CLUSTER___", initialServers));
          topologyInfo = new TopologyInfo(defaultCacheTopologyId, Collections.unmodifiableCollection(servers), configuration);
          tcpNoDelay = configuration.tcpNoDelay();
          tcpKeepAlive = configuration.tcpKeepAlive();
@@ -350,7 +363,10 @@ public class TcpTransportFactory implements TransportFactory {
       // The borrowObject() call could take a long time, so we hold the lock only until we get the connection pool reference
       KeyedObjectPool<SocketAddress, TcpTransport> pool = getConnectionPool();
       try {
-         return pool.borrowObject(server);
+         TcpTransport tcpTransport = pool.borrowObject(server);
+         // If transport was successfully retrieved, reset viewed clusters
+         clustersViewed = 0;
+         return tcpTransport;
       } catch (Exception e) {
          String message = "Could not fetch transport";
          log.debug(message, e);
@@ -410,8 +426,24 @@ public class TcpTransportFactory implements TransportFactory {
 
    @Override
    public void reset(byte[] cacheName) {
-      updateServers(initialServers, cacheName, true);
+      ClusterInfo cluster = clusters.get(clusters.size() - 1);
+      log.debugf("Reset cluster addresses for cache '%s' to: %s", cacheName, cluster);
+      updateServers(cluster.clusterAddresses, cacheName, true);
       topologyInfo.setTopologyId(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
+   }
+
+   @Override
+   public boolean trySwitchCluster(byte[] cacheName) {
+      if (clustersViewed >= clusters.size()) {
+         log.debugf("All cluster addresses viewed (number=%d) and none worked: %s", clustersViewed, clusters);
+         return false;
+      }
+
+      ClusterInfo cluster = clusters.get(clustersViewed++);
+      log.debugf("Switch to a different cluster for cache '%s': %s", cacheName, cluster);
+      updateServers(cluster.clusterAddresses, cacheName, true);
+      topologyInfo.setTopologyId(HotRodConstants.DEFAULT_CACHE_TOPOLOGY);
+      return true;
    }
 
    /**
@@ -449,6 +481,24 @@ public class TcpTransportFactory implements TransportFactory {
       @Override
       public SocketAddress nextServer(Set<SocketAddress> failedServers) {
          return delegate.nextServer();
+      }
+   }
+
+   private static final class ClusterInfo {
+      final Collection<SocketAddress> clusterAddresses;
+      final String clusterName;
+
+      private ClusterInfo(String clusterName, Collection<SocketAddress> clusterAddresses) {
+         this.clusterAddresses = clusterAddresses;
+         this.clusterName = clusterName;
+      }
+
+      @Override
+      public String toString() {
+         return "ClusterInfo{" +
+            "name='" + clusterName + '\'' +
+            ", addresses=" + clusterAddresses +
+            '}';
       }
    }
 }

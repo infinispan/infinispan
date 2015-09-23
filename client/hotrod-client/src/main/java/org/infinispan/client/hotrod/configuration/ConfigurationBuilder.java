@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.impl.ConfigurationProperties;
@@ -67,6 +68,8 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    private int maxRetries = ConfigurationProperties.DEFAULT_MAX_RETRIES;
    private final NearCacheConfigurationBuilder nearCache;
 
+   private final List<ClusterConfigurationBuilder> clusters = new ArrayList<ClusterConfigurationBuilder>();
+
    public ConfigurationBuilder() {
       this.classLoader = new WeakReference<ClassLoader>(Thread.currentThread().getContextClassLoader());
       this.connectionPool = new ConnectionPoolConfigurationBuilder(this);
@@ -79,6 +82,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
    public ServerConfigurationBuilder addServer() {
       ServerConfigurationBuilder builder = new ServerConfigurationBuilder(this);
       this.servers.add(builder);
+      return builder;
+   }
+
+   @Override
+   public ClusterConfigurationBuilder addCluster(String clusterName) {
+      ClusterConfigurationBuilder builder = new ClusterConfigurationBuilder(this, clusterName);
+      this.clusters.add(builder);
       return builder;
    }
 
@@ -315,14 +325,17 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       else {
          servers.add(new ServerConfiguration("127.0.0.1", ConfigurationProperties.DEFAULT_HOTROD_PORT));
       }
+
+      List<ClusterConfiguration> serverClusterConfigs = clusters.stream()
+         .map(ClusterConfigurationBuilder::create).collect(Collectors.toList());
       if (marshaller == null) {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
                consistentHashImpl, forceReturnValues, keySizeEstimate, marshallerClass, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-               valueSizeEstimate, maxRetries, nearCache.create());
+               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
       } else {
          return new Configuration(asyncExecutorFactory.create(), balancingStrategyClass, balancingStrategy, classLoader == null ? null : classLoader.get(), connectionPool.create(), connectionTimeout,
                consistentHashImpl, forceReturnValues, keySizeEstimate, marshaller, pingOnStartup, protocolVersion, servers, socketTimeout, security.create(), tcpNoDelay, tcpKeepAlive, transportFactory,
-               valueSizeEstimate, maxRetries, nearCache.create());
+               valueSizeEstimate, maxRetries, nearCache.create(), serverClusterConfigs);
       }
    }
 

@@ -24,6 +24,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.io.IOException;
 import java.net.BindException;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.Collection;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,26 +48,39 @@ public class HotRodClientTestingUtil {
    private static final AtomicInteger uniquePort = new AtomicInteger(15232);
 
    public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, HotRodServerConfigurationBuilder builder) {
+      return startHotRodServer(cacheManager, uniquePort.incrementAndGet(), builder);
+   }
+
+   public static HotRodServer startHotRodServer(EmbeddedCacheManager cacheManager, int startPort, HotRodServerConfigurationBuilder builder) {
       // TODO: This is very rudimentary!! HotRodTestingUtil needs a more robust solution where ports are generated randomly and retries if already bound
       HotRodServer server = null;
       int maxTries = 10;
       int currentTries = 0;
-      ChannelException lastException = null;
+      Throwable lastError = null;
+      int port = startPort;
       while (server == null && currentTries < maxTries) {
          try {
-            server = HotRodTestingUtil.startHotRodServer(cacheManager, uniquePort.incrementAndGet(), builder);
+            server = HotRodTestingUtil.startHotRodServer(cacheManager, port++, builder);
          } catch (ChannelException e) {
             if (!(e.getCause() instanceof BindException)) {
                throw e;
             } else {
                log.debug("Address already in use: [" + e.getMessage() + "], so let's try next port");
                currentTries++;
-               lastException = e;
+               lastError = e;
+            }
+         } catch (Throwable t) {
+            if (!(t instanceof BindException)) {
+               throw t;
+            } else {
+               log.debug("Address already in use: [" + t.getMessage() + "], so let's try next port");
+               currentTries++;
+               lastError = t;
             }
          }
       }
-      if (server == null && lastException != null)
-         throw lastException;
+      if (server == null && lastError != null)
+         throw new AssertionError(lastError);
 
       return server;
    }

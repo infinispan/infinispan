@@ -112,6 +112,10 @@ public abstract class RetryOnFailureOperation<T> extends HotRodOperation {
             transportFactory.reset(cacheName);
             triedCompleteRestart = true;
             return -1; // reset retry count
+         } else if (transportFactory.trySwitchCluster(cacheName)){
+            log.debug("Switched to a different cluster");
+            triedCompleteRestart = true;
+            return -1; // reset retry count
          } else {
             log.exceptionAndNoRetriesLeft(i,transportFactory.getMaxRetries(), e);
             throw e;
