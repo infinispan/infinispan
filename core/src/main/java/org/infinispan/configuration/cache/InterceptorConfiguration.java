@@ -81,7 +81,7 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
 
    public AnyInterceptor anyInterceptor() {
       if (interceptor.isNull()) {
-         return (SequentialInterceptor) Util.getInstance(interceptorClass.get());
+         return (AnyInterceptor) Util.getInstance(interceptorClass.get());
       } else {
          return interceptor.get();
       }
