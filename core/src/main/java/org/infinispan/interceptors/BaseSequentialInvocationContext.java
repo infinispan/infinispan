@@ -8,6 +8,7 @@ import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -29,7 +30,8 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
    private final List<BiFunction<Object, Throwable, CompletableFuture<Object>>> returnHandlers;
 
    public BaseSequentialInvocationContext(SequentialInterceptorChain interceptorChain) {
-      this.interceptors = interceptorChain != null ? interceptorChain.getInterceptors() : null;
+      this.interceptors = interceptorChain != null ? interceptorChain.getInterceptors() :
+            Collections.emptyList();
       this.returnHandlers = new ArrayList<>(interceptors.size());
    }
 
