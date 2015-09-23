@@ -5,6 +5,7 @@ import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.base.BaseSequentialInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
@@ -36,13 +37,15 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
    private static final boolean trace = log.isTraceEnabled();
 
    private final CommandInterceptor adaptedInterceptor;
+   private final InvocationContextContainer icc;
 
    // TODO Inject an existing thread pool
    final static ExecutorService executor =
          Executors.newCachedThreadPool(LegacyInterceptorThreadFactory.INSTANCE);
 
-   public SequentialInterceptorAdapter(CommandInterceptor adaptedInterceptor) {
+   public SequentialInterceptorAdapter(CommandInterceptor adaptedInterceptor, InvocationContextContainer icc) {
       this.adaptedInterceptor = adaptedInterceptor;
+      this.icc = icc;
       adaptedInterceptor.setNext(new NextInterceptor());
    }
 
@@ -66,6 +69,9 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       try {
          if (trace)
             log.tracef("Executing legacy interceptor %s for %s", getAdaptedType().getSimpleName(), command);
+         if (ctx.getClassLoader() != null) {
+            icc.setThreadLocal(actx);
+         }
          Object returnValue = command.acceptVisitor(actx, adaptedInterceptor);
          if (trace)
             log.tracef("Finished legacy interceptor %s for %s", getAdaptedType().getSimpleName(), command);
@@ -76,6 +82,10 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
             log.tracef(throwable, "Exception in legacy interceptor %s for %s", getAdaptedType().getSimpleName(), command);
          actx.adaptedFuture.completeExceptionally(throwable);
          actx.visitFuture.completeExceptionally(throwable);
+      } finally {
+         if (ctx.getClassLoader() != null) {
+            icc.clearThreadLocal();
+         }
       }
    }
 

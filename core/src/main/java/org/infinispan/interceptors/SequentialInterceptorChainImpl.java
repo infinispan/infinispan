@@ -5,6 +5,7 @@ import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -39,12 +40,19 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    private static final Log log = LogFactory.getLog(SequentialInterceptorChainImpl.class);
 
    final ComponentMetadataRepo componentMetadataRepo;
+   private InvocationContextContainer icc;
+
    final ReentrantLock lock = new ReentrantLock();
 
    private final List<SequentialInterceptor> interceptors = new CopyOnWriteArrayList<>();
 
    public SequentialInterceptorChainImpl(ComponentMetadataRepo componentMetadataRepo) {
       this.componentMetadataRepo = componentMetadataRepo;
+   }
+
+   @Inject
+   public void inject(InvocationContextContainer icc) {
+      this.icc = icc;
    }
 
    @Start
@@ -297,7 +305,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       if (interceptor instanceof SequentialInterceptor) {
          theInterceptor = (SequentialInterceptor) interceptor;
       } else {
-         theInterceptor = new SequentialInterceptorAdapter((CommandInterceptor) interceptor);
+         theInterceptor = new SequentialInterceptorAdapter((CommandInterceptor) interceptor, icc);
       }
       return theInterceptor;
    }
