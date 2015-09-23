@@ -168,7 +168,7 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
          }
 
          if (!isTotalOrder) {
-            replayRemoteTransactionIfNeeded((RemoteTxInvocationContext) ctx, command.getTopologyId());
+            replayRemoteTransactionIfNeeded(ctx, command.getTopologyId());
          }
       }
 
@@ -508,7 +508,7 @@ public class TxInterceptor<K, V> extends CommandInterceptor implements JmxStatis
       }
    }
 
-   private void replayRemoteTransactionIfNeeded(RemoteTxInvocationContext ctx, int topologyId) throws Throwable {
+   private void replayRemoteTransactionIfNeeded(TxInvocationContext<RemoteTransaction> ctx, int topologyId) throws Throwable {
       // If a commit is received for a transaction that doesn't have its 'lookedUpEntries' populated
       // we know for sure this transaction is 2PC and was received via state transfer but the preceding PrepareCommand
       // was not received by local node because it was executed on the previous key owners. We need to re-prepare
