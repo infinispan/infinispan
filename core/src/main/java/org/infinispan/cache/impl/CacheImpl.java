@@ -1821,4 +1821,5 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    public Properties getConfigurationAsProperties() {
       return new PropertyFormatter().format(config);
    }
+
 }

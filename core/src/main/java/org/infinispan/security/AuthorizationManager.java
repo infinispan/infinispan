@@ -16,5 +16,15 @@ import org.infinispan.factories.scopes.Scopes;
  */
 @Scope(Scopes.NAMED_CACHE)
 public interface AuthorizationManager {
-   void checkPermission(AuthorizationPermission permissions);
+   /**
+    * Verifies that the {@link Subject} associated with the current {@link AccessControlContext}
+    * has the requested permission. A {@link SecurityException} is thrown otherwise.
+    */
+   void checkPermission(AuthorizationPermission permission);
+
+   /**
+    * Verifies that the {@link Subject} associated with the current {@link AccessControlContext}
+    * has the requested permission and role. A {@link SecurityException} is thrown otherwise.
+    */
+   void checkPermission(AuthorizationPermission permission, String role);
 }
