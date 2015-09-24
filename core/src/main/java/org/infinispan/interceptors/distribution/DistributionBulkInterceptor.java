@@ -4,6 +4,7 @@ import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.CacheSet;
 import org.infinispan.CacheStream;
+import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.read.AbstractCloseableIteratorCollection;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -30,8 +31,10 @@ import org.infinispan.stream.impl.tx.TxClusterStreamManager;
 import org.infinispan.stream.impl.tx.TxDistributedCacheStream;
 import org.infinispan.transaction.impl.LocalTransaction;
 
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -48,10 +51,12 @@ import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXEC
  */
 public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
    private Cache<K, V> cache;
+   private CommandsFactory commandsFactory;
 
    @Inject
-   public void inject(Cache<K, V> cache) {
+   public void inject(Cache<K, V> cache, CommandsFactory commandsFactory) {
       this.cache = cache;
+      this.commandsFactory = commandsFactory;
    }
 
    @Override
@@ -235,12 +240,16 @@ public class DistributionBulkInterceptor<K, V> extends CommandInterceptor {
    @Override
    public CacheSet<K> visitKeySetCommand(InvocationContext ctx, KeySetCommand command) throws Throwable {
       if (!command.hasFlag(Flag.CACHE_MODE_LOCAL)) {
+         Set<Flag> flags = command.getFlags() != null ? EnumSet.copyOf(command.getFlags()) : EnumSet.noneOf(Flag.class);
+         flags.add(Flag.CACHE_MODE_LOCAL);
+         EntrySetCommand entrySetCommand = commandsFactory.buildEntrySetCommand(flags);
+         CacheSet<CacheEntry<K, V>> localEntrySet =
+               (CacheSet<CacheEntry<K, V>>) super.visitEntrySetCommand(ctx, entrySetCommand);
          if (ctx.isInTxScope()) {
-            return new TxBackingKeySet<>(getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
-                    Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command, (TxInvocationContext<LocalTransaction>) ctx);
+            return new TxBackingKeySet<>(getCacheWithFlags(cache, command), localEntrySet, command,
+                                         (TxInvocationContext<LocalTransaction>) ctx);
          } else {
-            return new BackingKeySet<>(getCacheWithFlags(cache, command), cache.getAdvancedCache().withFlags(
-                    Flag.CACHE_MODE_LOCAL).cacheEntrySet(), command);
+            return new BackingKeySet<>(getCacheWithFlags(cache, command), localEntrySet, command);
          }
       }
       return (CacheSet<K>) super.visitKeySetCommand(ctx, command);
