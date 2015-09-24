@@ -1,8 +1,8 @@
 package org.infinispan.scripting.impl;
 
 import java.lang.invoke.MethodHandles;
+import java.util.concurrent.CompletableFuture;
 
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.scripting.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
@@ -20,7 +20,7 @@ public class NullRunner implements ScriptRunner {
    }
 
    @Override
-   public <T> NotifyingFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings binding) {
+   public <T> CompletableFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings binding) {
       throw log.cannotInvokeScriptDirectly(metadata.name(), metadata.mode().toString());
    }
 

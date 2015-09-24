@@ -16,6 +16,7 @@
       <module name="org.infinispan" />
       <module name="org.infinispan.server" />
       <module name="org.infinispan.scripting" services="import"/>
+      <module name="org.infinispan.tasks" services="import"/>
       <module name="org.infinispan.remote-query.server" services="import"/>
       <module name="org.infinispan.objectfilter" />
       <module name="org.infinispan.query" />

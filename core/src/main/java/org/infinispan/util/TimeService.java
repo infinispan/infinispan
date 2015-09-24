@@ -3,6 +3,7 @@ package org.infinispan.util;
 import org.infinispan.factories.scopes.Scope;
 import org.infinispan.factories.scopes.Scopes;
 
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,6 +24,11 @@ public interface TimeService {
     * @return the current cpu time in nanoseconds. Note that some platforms do not provide nanosecond precision.
     */
    long time();
+
+   /**
+    * @return the current {@link Instant}. Similarly to {@link #time()}, note that some platforms do not provide nanosecond precision.
+    */
+   Instant instant();
 
    /**
     * It is equivalent to {@code timeDuration(startTime, time(), outputTimeUnit)}.

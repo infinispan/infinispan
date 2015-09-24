@@ -3,8 +3,8 @@ package org.infinispan.scripting;
 import static org.testng.AssertJUnit.assertEquals;
 
 import java.io.InputStream;
-
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.tasks.TaskContext;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
@@ -32,7 +32,7 @@ public class ScriptingTest extends SingleCacheManagerTest {
    }
 
    public void testSimpleScript() throws Exception {
-      String result = (String) scriptingManager.runScript(SCRIPT_NAME).get();
+      String result = (String) scriptingManager.runScript(SCRIPT_NAME, new TaskContext().addParameter("a", "a")).get();
       assertEquals("a", result);
    }
 }

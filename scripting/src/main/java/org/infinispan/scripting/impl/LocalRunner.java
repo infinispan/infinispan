@@ -1,6 +1,6 @@
 package org.infinispan.scripting.impl;
 
-import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * LocalRunner.
@@ -15,7 +15,7 @@ public class LocalRunner implements ScriptRunner {
    }
 
    @Override
-   public <T> NotifyingFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings bindings) {
+   public <T> CompletableFuture<T> runScript(ScriptingManagerImpl scriptManager, ScriptMetadata metadata, CacheScriptBindings bindings) {
       return scriptManager.execute(metadata, bindings);
    }
 

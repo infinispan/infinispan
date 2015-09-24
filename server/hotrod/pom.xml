@@ -39,7 +39,7 @@
       </dependency>
       <dependency>
          <groupId>${project.groupId}</groupId>
-         <artifactId>infinispan-scripting</artifactId>
+         <artifactId>infinispan-tasks</artifactId>
          <optional>true</optional>
       </dependency>
       <dependency>

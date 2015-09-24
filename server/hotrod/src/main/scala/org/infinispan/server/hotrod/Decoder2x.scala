@@ -36,13 +36,13 @@ import scala.collection.immutable
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import org.infinispan.server.core.transport.SaslQopHandler
-import org.infinispan.scripting.ScriptingManager
-import javax.script.SimpleBindings
 import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 import java.util.{BitSet => JavaBitSet}
-
 import java.util.HashSet
 import java.util.HashMap
+import org.infinispan.tasks.TaskManager
+import java.util.Optional
+import org.infinispan.tasks.TaskContext
 
 /**
  * HotRod protocol decoder specific for specification version 2.0.
@@ -312,11 +312,8 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
                val paramValue = marshaller.objectFromByteBuffer(readRangedBytes(buffer))
                params.put(paramName, paramValue)
             }
-            params.put("marshaller", marshaller)
-            params.put("cache", cache)
-            val scriptingManager = SecurityActions.getCacheGlobalComponentRegistry(cache).getComponent(classOf[ScriptingManager])
-            scriptingManager.setMarshaller(marshaller)
-            val result: Any = scriptingManager.runScript(name, cache, new SimpleBindings(params)).get
+            val taskManager = SecurityActions.getCacheGlobalComponentRegistry(cache).getComponent(classOf[TaskManager])
+            val result: Any = taskManager.runTask(name, new TaskContext().marshaller(marshaller).cache(cache).parameters(params)).get
             new ExecResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, marshaller.objectToByteBuffer(result))
       }
    }
