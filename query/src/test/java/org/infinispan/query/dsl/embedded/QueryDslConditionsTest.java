@@ -1969,6 +1969,51 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
       assertEquals(22.0, list.get(0)[0]);  // only non-null "age"s were counted
    }
 
+   public void testDateGrouping1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("date")
+            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15")).toBuilder()
+            .groupBy("date")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(makeDate("2013-02-27"), list.get(0)[0]);
+   }
+
+   @Test(enabled = false, description = "https://issues.jboss.org/browse/ISPN-5791")
+   public void testDateGrouping2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.count("date"), Expression.min("date"))
+            .having("description").eq("Hotel").toBuilder()
+            .groupBy("id")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(1L, list.get(0)[0]);
+      assertEquals(makeDate("2013-02-27"), list.get(0)[1]);
+   }
+
+   public void testDateGrouping3() throws Exception {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.min("date"), Expression.count("date"))
+            .having("description").eq("Hotel").toBuilder()
+            .groupBy("id")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(makeDate("2013-02-27"), list.get(0)[0]);
+      assertEquals(1L, list.get(0)[1]);
+   }
+
    public void testParam() throws Exception {
       QueryFactory qf = getQueryFactory();
 
@@ -2002,7 +2047,7 @@ public class QueryDslConditionsTest extends AbstractQueryDslTest {
 
       Query q = qf.from(getModelFactory().getUserImplClass())
             .having("name").eq(Expression.param("param1"))
-                  .and().having("gender").eq(Expression.param("param2"))
+            .and().having("gender").eq(Expression.param("param2"))
             .toBuilder().build();
 
       q.setParameter("param1", "John");

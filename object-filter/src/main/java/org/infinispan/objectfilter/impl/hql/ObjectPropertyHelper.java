@@ -3,16 +3,14 @@ package org.infinispan.objectfilter.impl.hql;
 import org.hibernate.hql.ast.spi.EntityNamesResolver;
 import org.hibernate.hql.ast.spi.PropertyHelper;
 import org.infinispan.objectfilter.impl.logging.Log;
+import org.infinispan.objectfilter.impl.util.DateHelper;
 import org.infinispan.objectfilter.impl.util.StringHelper;
 import org.jboss.logging.Logger;
 
-import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 /**
  * A specialised {@link PropertyHelper} able to handle non-Class metadata.
@@ -24,20 +22,10 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
 
    private static final Log log = Logger.getMessageLogger(Log.class, ObjectPropertyHelper.class.getName());
 
-   private static final String DATE_FORMAT = "yyyyMMddHHmmssSSS";   //todo [anistor] is there a standard jpa time format?
-
-   private static final TimeZone GMT_TZ = TimeZone.getTimeZone("GMT");
-
    protected final EntityNamesResolver entityNamesResolver;
 
    protected ObjectPropertyHelper(EntityNamesResolver entityNamesResolver) {
       this.entityNamesResolver = entityNamesResolver;
-   }
-
-   protected DateFormat getDateFormat() {
-      SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
-      dateFormat.setTimeZone(GMT_TZ);
-      return dateFormat;
    }
 
    /**
@@ -59,7 +47,7 @@ public abstract class ObjectPropertyHelper<TypeMetadata> implements PropertyHelp
 
       if (Date.class.isAssignableFrom(propertyType)) {
          try {
-            return getDateFormat().parse(value);
+            return DateHelper.getJpaDateFormat().parse(value);
          } catch (ParseException e) {
             throw log.getInvalidDateLiteralException(value);
          }
