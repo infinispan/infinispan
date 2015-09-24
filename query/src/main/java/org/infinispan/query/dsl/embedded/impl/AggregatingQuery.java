@@ -39,7 +39,7 @@ final class AggregatingQuery extends HybridQuery {
       for (Object[] row : list) {
          grouper.addRow(row);
       }
-      return grouper.getGroupIterator();
+      return grouper.finish();
    }
 
    @Override
