@@ -17,6 +17,7 @@ import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
+import org.infinispan.query.dsl.Expression;
 import org.infinispan.query.dsl.Query;
 import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.dsl.SortOrder;
@@ -162,8 +163,8 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
 
       for (int i = 0; i < 4; i++) {
          Long d = (Long) list.get(i)[0];
-         assertTrue(d <= makeDate("2013-01-31").getTime());
-         assertTrue(d >= makeDate("2013-01-01").getTime());
+         assertTrue(d.compareTo(makeDate("2013-01-31").getTime()) <= 0);
+         assertTrue(d.compareTo(makeDate("2013-01-01").getTime()) >= 0);
       }
    }
 
@@ -177,13 +178,6 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       assertEquals("Checking account", list.get(0).getDescription());
    }
 
-   //todo [anistor] the original exception gets wrapped in HotRodClientException
-   @Override
-   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
-   public void testGroupBy3() throws Exception {
-      super.testGroupBy3();
-   }
-
    //todo [anistor] null numbers do not seem to work in remote mode
    @Test(enabled = false)
    @Override
@@ -192,9 +186,75 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
    }
 
    //todo [anistor] the original exception gets wrapped in HotRodClientException
+   @Override
+   @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: The expression 'surname' must be part of an aggregate function or it should be included in the GROUP BY clause")
+   public void testGroupBy3() throws Exception {
+      super.testGroupBy3();
+   }
+
+   //todo [anistor] the original exception gets wrapped in HotRodClientException
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: Queries containing grouping and aggregation functions must use projections.")
    @Override
    public void testGroupBy5() {
       super.testGroupBy5();
+   }
+
+   /**
+    * This test is overridden because dates need special handling for protobuf (being actually emulated as long
+    * timestamps).
+    */
+   @Override
+   public void testDateGrouping1() throws Exception {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select("date")
+            .having("date").between(makeDate("2013-02-15"), makeDate("2013-03-15")).toBuilder()
+            .groupBy("date")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(1, list.get(0).length);
+      assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[0]);
+   }
+
+   /**
+    * This test is overridden because dates need special handling for protobuf (being actually emulated as long
+    * timestamps).
+    */
+   @Override
+   public void testDateGrouping2() throws Exception {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.count("date"), Expression.min("date"))
+            .having("description").eq("Hotel").toBuilder()
+            .groupBy("id")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(1L, list.get(0)[0]);
+      assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[1]);
+   }
+
+   /**
+    * This test is overridden because dates need special handling for protobuf (being actually emulated as long
+    * timestamps).
+    */
+   @Override
+   public void testDateGrouping3() throws Exception {
+      QueryFactory qf = getQueryFactory();
+      Query q = qf.from(getModelFactory().getTransactionImplClass())
+            .select(Expression.min("date"), Expression.count("date"))
+            .having("description").eq("Hotel").toBuilder()
+            .groupBy("id")
+            .build();
+
+      List<Object[]> list = q.list();
+      assertEquals(1, list.size());
+      assertEquals(2, list.get(0).length);
+      assertEquals(makeDate("2013-02-27").getTime(), list.get(0)[0]);
+      assertEquals(1L, list.get(0)[1]);
    }
 }

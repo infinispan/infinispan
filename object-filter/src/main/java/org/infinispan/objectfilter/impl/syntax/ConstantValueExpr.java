@@ -1,5 +1,9 @@
 package org.infinispan.objectfilter.impl.syntax;
 
+import org.infinispan.objectfilter.impl.util.DateHelper;
+
+import java.util.Date;
+
 /**
  * A constant comparable value, to be used as right or left side in a comparison expression.
  *
@@ -51,6 +55,9 @@ public final class ConstantValueExpr implements ValueExpr {
       }
       if (constantValue instanceof Character) {
          return "'" + constantValue + "'";
+      }
+      if (constantValue instanceof Date) {
+         return "'" + DateHelper.getJpaDateFormat().format((Date) constantValue) + "'";
       }
       return "" + constantValue;
    }
