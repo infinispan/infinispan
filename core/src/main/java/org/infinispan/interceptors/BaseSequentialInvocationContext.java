@@ -17,7 +17,7 @@ import java.util.function.BiFunction;
  * @author Dan Berindei
  * @since 8.0
  */
-public abstract class BaseSequentialInvocationContext extends CompletableFuture<Object>
+public abstract class BaseSequentialInvocationContext
       implements InvocationContext {
    private static final Log log = LogFactory.getLog(BaseSequentialInvocationContext.class);
    private static final boolean trace = log.isTraceEnabled();
@@ -28,6 +28,7 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
    // If >= interceptors.length, it means we've begun executing the return handlers
    private volatile int nextInterceptor = 0;
    private final List<BiFunction<Object, Throwable, CompletableFuture<Object>>> returnHandlers;
+   private CompletableFuture<Object> future;
 
    public BaseSequentialInvocationContext(SequentialInterceptorChain interceptorChain) {
       this.interceptors = interceptorChain != null ? interceptorChain.getInterceptors() :
@@ -56,7 +57,7 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
    public Object forkInvocation(VisitableCommand newCommand,
                                 BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
       if (trace)
-         log.tracef("Forking command %s at interceptor %s", newCommand, interceptors.get(nextInterceptor));
+         log.tracef("Forking command %s at interceptor %d %s", newCommand, nextInterceptor, interceptors.get(nextInterceptor));
       VisitableCommand savedCommand = command;
       int savedInterceptor = nextInterceptor;
       command = newCommand;
@@ -80,11 +81,13 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
 
    @Override
    public CompletableFuture<Object> execute(VisitableCommand command) {
+      this.future = new CompletableFuture<>();
       this.command = command;
+      this.nextInterceptor = 0;
       continueExecution(null, null);
       if (trace)
          log.tracef("Got the first visit future for %s", command);
-      return this;
+      return future;
    }
 
    public void continueExecution(Object returnValue, Throwable throwable) {
@@ -150,15 +153,16 @@ public abstract class BaseSequentialInvocationContext extends CompletableFuture<
       if (trace)
          log.tracef("Command %s done, return value %s, throwable %s", command, returnValue, throwable);
       if (throwable == null) {
-         complete(returnValue);
+         future.complete(returnValue);
       } else {
-         completeExceptionally(throwable);
+         future.completeExceptionally(throwable);
       }
    }
 
    public BaseSequentialInvocationContext clone() {
       try {
-         return (BaseSequentialInvocationContext) super.clone();
+         BaseSequentialInvocationContext clone = (BaseSequentialInvocationContext) super.clone();
+         return clone;
       } catch (CloneNotSupportedException e) {
          throw new CacheException("Impossible");
       }
