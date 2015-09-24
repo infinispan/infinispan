@@ -1,5 +1,7 @@
 package org.infinispan.configuration.global;
 
+import java.util.concurrent.TimeUnit;
+
 import org.infinispan.commons.configuration.Builder;
 
 /**
@@ -24,7 +26,12 @@ public class GlobalSecurityConfigurationBuilder extends AbstractGlobalConfigurat
 
    @Override
    public GlobalSecurityConfigurationBuilder securityCacheTimeout(long securityCacheTimeout) {
-      this.securityCacheTimeout = securityCacheTimeout;
+      return securityCacheTimeout(securityCacheTimeout, TimeUnit.MILLISECONDS);
+   }
+
+   @Override
+   public GlobalSecurityConfigurationBuilder securityCacheTimeout(long securityCacheTimeout, TimeUnit unit) {
+      this.securityCacheTimeout = unit.toMillis(securityCacheTimeout);
       return this;
    }
 

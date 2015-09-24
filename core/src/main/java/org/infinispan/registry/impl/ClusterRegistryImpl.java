@@ -60,9 +60,6 @@ public class ClusterRegistryImpl<S, K, V> implements ClusterRegistry<S, K, V> {
 
    @Stop(priority=1)
    public void stop() {
-      if (clusterRegistryCache != null) {
-         clusterRegistryCache.stop();
-      }
       clusterRegistryCache = null;
    }
 

@@ -10,10 +10,6 @@ import org.infinispan.factories.scopes.Scopes;
 import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.remoting.inboundhandler.GlobalInboundInvocationHandler;
 import org.infinispan.remoting.inboundhandler.InboundInvocationHandler;
-import org.infinispan.topology.ClusterTopologyManager;
-import org.infinispan.topology.ClusterTopologyManagerImpl;
-import org.infinispan.topology.LocalTopologyManager;
-import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.util.DefaultTimeService;
 import org.infinispan.util.TimeService;
 import org.infinispan.xsite.BackupReceiverRepository;
@@ -27,31 +23,26 @@ import org.infinispan.xsite.BackupReceiverRepositoryImpl;
  * @since 4.0
  */
 
-@DefaultFactoryFor(classes = {InboundInvocationHandler.class, RemoteCommandsFactory.class, ExternalizerTable.class,
-                              BackupReceiverRepository.class, CancellationService.class, TimeService.class})
+@DefaultFactoryFor(classes = {BackupReceiverRepository.class, CancellationService.class, ExternalizerTable.class,
+                              InboundInvocationHandler.class, RemoteCommandsFactory.class, TimeService.class})
 @Scope(Scopes.GLOBAL)
 public class EmptyConstructorFactory extends AbstractComponentFactory implements AutoInstantiableFactory {
 
    @Override
    @SuppressWarnings("unchecked")
    public <T> T construct(Class<T> componentType) {
-      if (componentType.equals(RemoteCommandsFactory.class))
-         return (T) new RemoteCommandsFactory();
-      else if (componentType.equals(ExternalizerTable.class))
-         return (T) new ExternalizerTable();
-      else if (componentType.equals(LocalTopologyManager.class))
-         return (T) new LocalTopologyManagerImpl();
-      else if (componentType.equals(ClusterTopologyManager.class))
-         return (T) new ClusterTopologyManagerImpl();
-      else if (componentType.equals(BackupReceiverRepository.class))
+      if (componentType.equals(BackupReceiverRepository.class))
          return (T) new BackupReceiverRepositoryImpl();
       else if (componentType.equals(CancellationService.class))
          return (T) new CancellationServiceImpl();
-      else if (componentType.equals(TimeService.class)) {
-         return (T) new DefaultTimeService();
-      } else if (componentType.equals(InboundInvocationHandler.class)) {
+      else if (componentType.equals(ExternalizerTable.class))
+         return (T) new ExternalizerTable();
+      else if (componentType.equals(InboundInvocationHandler.class))
          return (T) new GlobalInboundInvocationHandler();
-      }
+      else if (componentType.equals(RemoteCommandsFactory.class))
+         return (T) new RemoteCommandsFactory();
+      else if (componentType.equals(TimeService.class))
+         return (T) new DefaultTimeService();
 
       throw new CacheConfigurationException("Don't know how to create a " + componentType.getName());
    }

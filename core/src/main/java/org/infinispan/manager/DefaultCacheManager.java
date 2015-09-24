@@ -36,7 +36,6 @@ import org.infinispan.jmx.annotations.Parameter;
 import org.infinispan.lifecycle.ComponentStatus;
 import org.infinispan.notifications.cachemanagerlistener.CacheManagerNotifier;
 import org.infinispan.registry.InternalCacheRegistry;
-import org.infinispan.registry.impl.ClusterRegistryImpl;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.transport.Address;
@@ -676,7 +675,8 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
                }
                cachesToStop.addAll(caches.keySet());
                // will be stopped by the GCR
-               cachesToStop.remove(ClusterRegistryImpl.GLOBAL_REGISTRY_CACHE_NAME);
+               InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
+               internalCacheRegistry.filterPrivateCaches(cachesToStop);
                // make sure we stop the default cache LAST!
                if(!defaultCacheHasDependency) {
                   cachesToStop.add(DEFAULT_CACHE_NAME);
@@ -757,7 +757,7 @@ public class DefaultCacheManager implements EmbeddedCacheManager {
       names.addAll(Immutables.immutableSetConvert(caches.keySet()));
       names.remove(DEFAULT_CACHE_NAME);
       InternalCacheRegistry internalCacheRegistry = globalComponentRegistry.getComponent(InternalCacheRegistry.class);
-      internalCacheRegistry.filterInternalCaches(names);
+      internalCacheRegistry.filterPrivateCaches(names);
       if (names.isEmpty())
          return InfinispanCollections.emptySet();
       else
