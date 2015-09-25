@@ -1,5 +1,17 @@
 package org.infinispan.query.backend;
 
+import org.hibernate.annotations.common.reflection.ReflectionManager;
+import org.hibernate.search.cfg.SearchMapping;
+import org.hibernate.search.cfg.spi.SearchConfiguration;
+import org.hibernate.search.cfg.spi.SearchConfigurationBase;
+import org.hibernate.search.engine.service.classloading.impl.DefaultClassLoaderService;
+import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
+import org.hibernate.search.engine.service.spi.Service;
+import org.hibernate.search.engine.spi.SearchMappingHelper;
+import org.infinispan.factories.ComponentRegistry;
+import org.infinispan.hibernate.search.spi.CacheManagerService;
+import org.infinispan.manager.EmbeddedCacheManager;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -7,19 +19,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-
-import org.hibernate.annotations.common.reflection.ReflectionManager;
-import org.hibernate.search.cfg.SearchMapping;
-import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.cfg.spi.SearchConfigurationBase;
-import org.hibernate.search.engine.spi.SearchMappingHelper;
-import org.hibernate.search.engine.service.classloading.impl.DefaultClassLoaderService;
-import org.hibernate.search.engine.service.classloading.spi.ClassLoaderService;
-import org.hibernate.search.engine.service.spi.Service;
-import org.hibernate.search.store.DirectoryProvider;
-import org.infinispan.hibernate.search.spi.CacheManagerService;
-import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.manager.EmbeddedCacheManager;
 
 /**
  * Class that implements {@link org.hibernate.search.cfg.spi.SearchConfiguration} so that within Infinispan-Query, there is
@@ -31,6 +30,7 @@ import org.infinispan.manager.EmbeddedCacheManager;
 public class SearchableCacheConfiguration extends SearchConfigurationBase implements SearchConfiguration {
 
    private static final String HSEARCH_PREFIX = "hibernate.search.";
+   public static final String AFFINITY_CONFIG = "infinispan.index.affinity";
 
    private final Map<String, Class<?>> classes;
    private final Properties properties;
@@ -38,7 +38,7 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
    private final Map<Class<? extends Service>, Object> providedServices;
    private final DefaultClassLoaderService classLoaderService = new DefaultClassLoaderService();
 
-   public SearchableCacheConfiguration(Class<?>[] classArray, Properties properties, EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr) {
+   public SearchableCacheConfiguration(Class<?>[] classArray, Properties properties, EmbeddedCacheManager uninitializedCacheManager, ComponentRegistry cr, String cacheName) {
       this.providedServices = initializeProvidedServices(uninitializedCacheManager, cr);
       if (properties == null) {
          this.properties = new Properties();
@@ -134,6 +134,9 @@ public class SearchableCacheConfiguration extends SearchConfigurationBase implem
             key = HSEARCH_PREFIX + key.toString();
          }
          target.put(key, entry.getValue());
+      }
+      if (origin.containsKey(AFFINITY_CONFIG) && origin.getProperty(AFFINITY_CONFIG).equals("enabled")) {
+         target.put("hibernate.search.default.sharding_strategy", AffinityShardIdentifierProvider.class.getName());
       }
       return target;
    }

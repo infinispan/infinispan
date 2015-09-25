@@ -15,6 +15,7 @@ import org.hibernate.search.backend.TransactionContext;
 import org.hibernate.search.backend.spi.Work;
 import org.hibernate.search.backend.spi.WorkType;
 import org.hibernate.search.backend.spi.Worker;
+import org.hibernate.search.engine.integration.impl.ExtendedSearchIntegrator;
 import org.hibernate.search.spi.SearchIntegrator;
 import org.infinispan.Cache;
 import org.infinispan.commands.FlagAffectedCommand;
@@ -31,6 +32,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.KnownComponentNames;
 import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
@@ -48,6 +50,8 @@ import org.infinispan.query.impl.DefaultSearchWorkCreator;
 import org.infinispan.query.logging.Log;
 import org.infinispan.registry.ClusterRegistry;
 import org.infinispan.registry.ScopedKey;
+import org.infinispan.remoting.rpc.RpcManager;
+import org.infinispan.remoting.transport.Address;
 import org.infinispan.util.logging.LogFactory;
 
 /**
@@ -76,6 +80,7 @@ public final class QueryInterceptor extends CommandInterceptor {
    private SearchWorkCreator<Object> searchWorkCreator = new DefaultSearchWorkCreator<>();
 
    private SearchFactoryHandler searchFactoryHandler;
+   private final boolean affinityEnabled;
 
    private DataContainer dataContainer;
    protected TransactionManager transactionManager;
@@ -83,6 +88,8 @@ public final class QueryInterceptor extends CommandInterceptor {
    protected ExecutorService asyncExecutor;
 
    private static final Log log = LogFactory.getLog(QueryInterceptor.class, Log.class);
+   private DistributionManager distributionManager;
+   private RpcManager rpcManager;
 
    @Override
    protected Log getLog() {
@@ -92,6 +99,9 @@ public final class QueryInterceptor extends CommandInterceptor {
    public QueryInterceptor(SearchIntegrator searchFactory, IndexModificationStrategy indexingMode) {
       this.searchFactory = searchFactory;
       this.indexingMode = indexingMode;
+      String property = searchFactory.unwrap(ExtendedSearchIntegrator.class)
+            .getConfigurationProperties().getProperty("hibernate.search.default.sharding_strategy");
+      affinityEnabled = property != null && property.equals(AffinityShardIdentifierProvider.class.getName());
    }
 
    @Inject
@@ -99,6 +109,8 @@ public final class QueryInterceptor extends CommandInterceptor {
    protected void injectDependencies(TransactionManager transactionManager,
                                      TransactionSynchronizationRegistry transactionSynchronizationRegistry,
                                      Cache cache,
+                                     DistributionManager distributionManager,
+                                     RpcManager rpcManager,
                                      ClusterRegistry<String, Class<?>, Boolean> clusterRegistry,
                                      DataContainer dataContainer,
                                      @ComponentName(KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR) ExecutorService e) {
@@ -106,6 +118,8 @@ public final class QueryInterceptor extends CommandInterceptor {
       this.transactionSynchronizationRegistry = transactionSynchronizationRegistry;
       this.asyncExecutor = e;
       this.dataContainer = dataContainer;
+      this.distributionManager = distributionManager;
+      this.rpcManager = rpcManager;
       this.clusterRegistry = new ReadIntensiveClusterRegistryWrapper(clusterRegistry, "QueryKnownClasses#" + cache.getName());
       this.searchFactoryHandler = new SearchFactoryHandler(this.searchFactory, this.clusterRegistry, new TransactionHelper(transactionManager));
    }
@@ -235,7 +249,15 @@ public final class QueryInterceptor extends CommandInterceptor {
    protected void updateIndexes(final boolean usingSkipIndexCleanupFlag, final Object value, final Object key, final TransactionContext transactionContext) {
       // Note: it's generally unsafe to assume there is no previous entry to cleanup: always use UPDATE
       // unless the specific flag is allowing this.
-      performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
+      if(affinityEnabled) {
+         Address address = rpcManager.getAddress();
+         boolean isPrimaryOwner = distributionManager.getPrimaryLocation(key).equals(address);
+         if(isPrimaryOwner) {
+            performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
+         }
+      } else {
+         performSearchWork(value, keyToString(key), usingSkipIndexCleanupFlag ? WorkType.ADD : WorkType.UPDATE, transactionContext);
+      }
    }
 
    private void performSearchWork(Object value, Serializable id, WorkType workType, TransactionContext transactionContext) {

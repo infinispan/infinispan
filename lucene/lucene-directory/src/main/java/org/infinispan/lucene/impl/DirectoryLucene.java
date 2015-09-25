@@ -136,6 +136,9 @@ class DirectoryLucene extends Directory implements DirectoryExtensions {
       return indexName;
    }
 
+   public int getAffinitySegmentId() {
+      return affinitySegmentId;
+   }
    /**
     * {@inheritDoc}
     */

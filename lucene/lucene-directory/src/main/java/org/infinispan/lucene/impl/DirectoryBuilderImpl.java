@@ -17,8 +17,8 @@ import java.util.concurrent.Executor;
 public class DirectoryBuilderImpl implements BuildContext {
 
    /**
-    * Used as default chunk size: each Lucene index segment is split into smaller parts having a default size in bytes as
-    * defined here
+    * Used as default chunk size: each Lucene index segment is split into smaller parts having a default size in bytes
+    * as defined here
     */
    public static final int DEFAULT_BUFFER_SIZE = 1024 * 1024;
 
@@ -48,7 +48,7 @@ public class DirectoryBuilderImpl implements BuildContext {
       this.metadataCache = checkValidConfiguration(checkNotNull(metadataCache, "metadataCache"), indexName);
       this.chunksCache = checkValidConfiguration(checkNotNull(chunksCache, "chunksCache"), indexName);
       this.distLocksCache = checkValidConfiguration(checkNotNull(distLocksCache, "distLocksCache"), indexName);
-      this.indexName =  checkNotNull(indexName, "indexName");
+      this.indexName = checkNotNull(indexName, "indexName");
       validateMetadataCache(metadataCache, indexName);
    }
 
@@ -83,7 +83,7 @@ public class DirectoryBuilderImpl implements BuildContext {
 
    @Override
    public BuildContext affinityLocationIntoSegment(int segmentId) {
-      if (segmentId<1) {
+      if (segmentId < 0) {
          throw log.affinityLocationIntoSegmentValueShallNotBeNegative(indexName, segmentId);
       }
       this.affinitySegmentId = segmentId;
@@ -116,7 +116,7 @@ public class DirectoryBuilderImpl implements BuildContext {
       return new DistributedSegmentReadLocker((Cache<Object, Integer>) distLocksCache, chunksCache, metadataCache, indexName, affinitySegmentId);
    }
 
-   private static <T> T checkNotNull(final T v,final String objectname) {
+   private static <T> T checkNotNull(final T v, final String objectname) {
       if (v == null)
          throw log.requiredParameterWasPassedNull(objectname);
       return v;
