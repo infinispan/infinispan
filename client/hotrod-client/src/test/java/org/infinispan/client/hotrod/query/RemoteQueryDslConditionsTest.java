@@ -191,13 +191,6 @@ public class RemoteQueryDslConditionsTest extends QueryDslConditionsTest {
       super.testIsNullNumericWithProjection1();
    }
 
-   //todo [anistor] null numbers do not seem to work in remote mode
-   @Test(enabled = false)
-   @Override
-   public void testIsNullNumericWithProjection2() throws Exception {
-      super.testIsNullNumericWithProjection2();
-   }
-
    //todo [anistor] the original exception gets wrapped in HotRodClientException
    @Test(expectedExceptions = HotRodClientException.class, expectedExceptionsMessageRegExp = "org.hibernate.hql.ParsingException: Queries containing grouping and aggregation functions must use projections.")
    @Override
