@@ -180,9 +180,12 @@ public class InvocationContextInterceptor extends CommandInterceptor {
       if (!ctx.isInTxScope())
          return false;
 
-      if (ctx.isOriginLocal())
-         return txTable.containsLocalTx(tm.getTransaction());
-      else
-         return txTable.containRemoteTx(((TxInvocationContext) ctx).getGlobalTransaction());
+      TxInvocationContext txContext = (TxInvocationContext) ctx;
+      if (ctx.isOriginLocal()) {
+         return txTable.containsLocalTx(txContext.getTransaction());
+//         return txTable.containsLocalTx(tm.getTransaction());
+      } else {
+         return txTable.containRemoteTx(txContext.getGlobalTransaction());
+      }
    }
 }
