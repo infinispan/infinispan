@@ -42,12 +42,12 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
    private List<FilterSubscriptionImpl> filterSubscriptions;
 
-   private Map<Predicate<?>, Counter> suspendedSubscriptionCounts;
+   private Map<Predicate<?>, Counter> suspendedPredicateSubscriptionCounts;
 
-   protected MatcherEvalContext(Object userContext, Object instance, Object eventType) {
+   protected MatcherEvalContext(Object userContext, Object eventType, Object instance) {
       this.userContext = userContext;
-      this.instance = instance;
       this.eventType = eventType;
+      this.instance = instance;
    }
 
    public abstract TypeMetadata getEntityType();
@@ -69,9 +69,9 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
 
    public void initMultiFilterContext(FilterRegistry<TypeMetadata, AttributeMetadata, AttributeId> filterRegistry) {
       rootNode = filterRegistry.getPredicateIndex().getRoot();
-      suspendedSubscriptionCounts = new HashMap<Predicate<?>, Counter>();
+      suspendedPredicateSubscriptionCounts = new HashMap<Predicate<?>, Counter>();
       filterSubscriptions = filterRegistry.getFilterSubscriptions();
-      filterContexts = new FilterEvalContext[filterSubscriptions.size()];
+      filterContexts = new FilterEvalContext[filterRegistry.getFilterSubscriptions().size()];
    }
 
    public FilterEvalContext initSingleFilterContext(FilterSubscriptionImpl filterSubscription) {
@@ -100,10 +100,10 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
       if (isSingleFilter()) {
          return;
       }
-      Counter counter = suspendedSubscriptionCounts.get(predicate);
+      Counter counter = suspendedPredicateSubscriptionCounts.get(predicate);
       if (counter == null) {
          counter = new Counter();
-         suspendedSubscriptionCounts.put(predicate, counter);
+         suspendedPredicateSubscriptionCounts.put(predicate, counter);
       }
       counter.value++;
    }
@@ -113,7 +113,7 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
          return -1;
       }
 
-      Counter counter = suspendedSubscriptionCounts.get(predicate);
+      Counter counter = suspendedPredicateSubscriptionCounts.get(predicate);
       return counter == null ? 0 : counter.value;
    }
 
@@ -124,24 +124,62 @@ public abstract class MatcherEvalContext<TypeMetadata, AttributeMetadata, Attrib
    public void process(AttributeNode<AttributeMetadata, AttributeId> node) {
       currentNode = node;
       processAttributes(currentNode, instance);
-      if (filterContexts != null) {
-         notifySubscribers();
-      }
    }
 
-   private void notifySubscribers() {
+   public void notifySubscribers() {
+      if (isSingleFilter()) {
+         return;
+      }
+
       for (int i = 0; i < filterContexts.length; i++) {
-         FilterEvalContext filterEvalContext = filterContexts[i];
          FilterSubscriptionImpl s = filterSubscriptions.get(i);
+         FilterEvalContext filterEvalContext = filterContexts[i];
          if (filterEvalContext == null) {
             if (s.getBETree().getChildCounters()[0] == BETree.EXPR_TRUE) {
+               // this filter is a tautology and since its FilterEvalContext was never activated that means it also does not have projections
                filterEvalContext = new FilterEvalContext(this, s);
+               filterContexts[i] = filterEvalContext;
             } else {
                continue;
             }
          }
          if (filterEvalContext.isMatching()) {
-            s.getCallback().onFilterResult(userContext, instance, eventType, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
+            s.getCallback().onFilterResult(false, userContext, eventType, instance, filterEvalContext.getProjection(), filterEvalContext.getSortProjection());
+         }
+      }
+   }
+
+   public void notifyDeltaSubscribers(MatcherEvalContext other, Object joiningEvent, Object leavingEvent) {
+      if (isSingleFilter()) {
+         return;
+      }
+
+      for (int i = 0; i < filterContexts.length; i++) {
+         FilterSubscriptionImpl s = filterSubscriptions.get(i);
+
+         FilterEvalContext filterEvalContext1 = filterContexts[i];
+         if (filterEvalContext1 == null && s.getBETree().getChildCounters()[0] == BETree.EXPR_TRUE) {
+            // this filter is a tautology and since its FilterEvalContext was never activated that means it also does not have projections
+            filterEvalContext1 = new FilterEvalContext(this, s);
+            filterContexts[i] = filterEvalContext1;
+         }
+
+         FilterEvalContext filterEvalContext2 = null;
+         if (other != null) {
+            filterEvalContext2 = other.filterContexts[i];
+            if (filterEvalContext2 == null && s.getBETree().getChildCounters()[0] == BETree.EXPR_TRUE) {
+               // this filter is a tautology and since its FilterEvalContext was never activated that means it also does not have projections
+               filterEvalContext2 = new FilterEvalContext(other, s);
+               other.filterContexts[i] = filterEvalContext2;
+            }
+         }
+
+         boolean before = filterEvalContext1 != null && filterEvalContext1.isMatching();
+         boolean after = filterEvalContext2 != null && filterEvalContext2.isMatching();
+         if (!before && after) {
+            s.getCallback().onFilterResult(true, userContext, joiningEvent, instance, filterEvalContext2.getProjection(), filterEvalContext2.getSortProjection());
+         } else if (before && !after) {
+            s.getCallback().onFilterResult(true, userContext, leavingEvent, instance, filterEvalContext1.getProjection(), filterEvalContext1.getSortProjection());
          }
       }
    }

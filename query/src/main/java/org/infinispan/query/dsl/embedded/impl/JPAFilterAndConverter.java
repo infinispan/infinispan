@@ -111,7 +111,6 @@ public class JPAFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter
    @Override
    public ObjectFilter.FilterResult filterAndConvert(K key, V value, Metadata metadata) {
       if (value == null) {
-         // this is a 'pre' invocation, ignore it
          return null;
       }
       return getObjectFilter().filter(value);

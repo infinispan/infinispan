@@ -1,9 +1,10 @@
 package org.infinispan.query.remote.impl.filter;
 
-import org.infinispan.Cache;
 import org.infinispan.commons.marshall.AbstractExternalizer;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.protostream.ProtobufUtil;
@@ -26,16 +27,17 @@ import java.util.Set;
  * @author gustavonalle
  * @since 8.1
  */
-public class JPABinaryProtobufFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, Object> {
+public final class JPABinaryProtobufFilterAndConverter<K, V> extends AbstractKeyValueFilterConverter<K, V, Object> {
 
-   private transient SerializationContext serCtx;
+   private SerializationContext serCtx;
+
    private final JPAProtobufFilterAndConverter delegate;
 
    @Inject
    @SuppressWarnings("unused")
-   protected void injectDependencies(Cache cache) {
-      delegate.injectDependencies(cache);
-      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cache.getCacheManager());
+   protected void injectDependencies(ComponentRegistry componentRegistry, EmbeddedCacheManager cacheManager) {
+      componentRegistry.wireDependencies(delegate);
+      serCtx = ProtobufMetadataManagerImpl.getSerializationContextInternal(cacheManager);
    }
 
    public JPABinaryProtobufFilterAndConverter(String jpaQuery, Map<String, Object> namedParameters) {

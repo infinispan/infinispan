@@ -523,7 +523,7 @@ public class QueryEngine {
       SecurityActions.doPrivileged(new PrivilegedAction<Object>() {
          @Override
          public Object run() {
-            filter.injectDependencies(cache);
+            cache.getComponentRegistry().wireDependencies(filter);
             return null;
          }
       });

@@ -26,7 +26,7 @@ import java.util.Set;
  */
 public final class JPAProtobufCacheEventFilterConverter extends JPACacheEventFilterConverter<Object, Object, byte[]> {
 
-   private transient SerializationContext serCtx;
+   private SerializationContext serCtx;
 
    public JPAProtobufCacheEventFilterConverter(JPAFilterAndConverter<Object, Object> filterAndConverter) {
       super(filterAndConverter);
