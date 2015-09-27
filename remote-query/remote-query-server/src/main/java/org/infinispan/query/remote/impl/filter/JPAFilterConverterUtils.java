@@ -16,7 +16,7 @@ import java.util.Map;
 class JPAFilterConverterUtils {
 
 
-   static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
+   private static final BaseProtoStreamMarshaller paramMarshaller = new BaseProtoStreamMarshaller() {
 
       private final SerializationContext serializationContext = ProtobufUtil.newSerializationContext(new Configuration.Builder().build());
 
@@ -46,10 +46,10 @@ class JPAFilterConverterUtils {
                namedParams.put(name, value);
             }
          }
-         return namedParams;
       } catch (IOException | ClassNotFoundException e) {
          throw new CacheException(e);
       }
+      return namedParams;
    }
 
 }

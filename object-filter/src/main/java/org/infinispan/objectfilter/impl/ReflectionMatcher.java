@@ -33,10 +33,10 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    }
 
    @Override
-   protected ReflectionMatcherEvalContext startMultiTypeContext(Object userContext, Object instance, Object eventType) {
+   protected ReflectionMatcherEvalContext startMultiTypeContext(Object userContext, Object eventType, Object instance) {
       FilterRegistry<Class<?>, ReflectionHelper.PropertyAccessor, String> filterRegistry = getFilterRegistryForType(instance.getClass());
       if (filterRegistry != null) {
-         ReflectionMatcherEvalContext context = new ReflectionMatcherEvalContext(userContext, instance, eventType);
+         ReflectionMatcherEvalContext context = new ReflectionMatcherEvalContext(userContext, eventType, instance);
          context.initMultiFilterContext(filterRegistry);
          return context;
       }
@@ -44,13 +44,14 @@ public class ReflectionMatcher extends BaseMatcher<Class<?>, ReflectionHelper.Pr
    }
 
    @Override
-   protected ReflectionMatcherEvalContext startSingleTypeContext(Object userContext, Object instance, MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> metadataAdapter, Object eventType) {
+   protected ReflectionMatcherEvalContext startSingleTypeContext(Object userContext, Object eventType, Object instance, MetadataAdapter<Class<?>, ReflectionHelper.PropertyAccessor, String> metadataAdapter) {
       if (metadataAdapter.getTypeMetadata() == instance.getClass()) {
-         return new ReflectionMatcherEvalContext(userContext, instance, eventType);
+         return new ReflectionMatcherEvalContext(userContext, eventType, instance);
       } else {
          return null;
       }
    }
+
    @Override
    protected FilterProcessingChain<Class<?>> createFilterProcessingChain(Map<String, Object> namedParameters) {
       return FilterProcessingChain.build(entityNamesResolver, propertyHelper, namedParameters);

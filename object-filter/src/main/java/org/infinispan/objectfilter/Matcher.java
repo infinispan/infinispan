@@ -30,11 +30,13 @@ public interface Matcher {
     *
     * @param userContext an optional user provided object to be passed to matching subscribers along with the matching
     *                    instance; can be {@code null}
-    * @param instance    the object to test against the registered filters; never {@code null}
     * @param eventType   on optional event type discriminator that is matched against the even type specified when the
     *                    filter was registered; can be {@code null}
+    * @param instance    the object to test against the registered filters; never {@code null}
     */
-   void match(Object userContext, Object instance, Object eventType);
+   void match(Object userContext, Object eventType, Object instance);
+
+   void matchDelta(Object userContext, Object eventType, Object instanceOld, Object instanceNew, Object joiningEvent, Object leavingEvent);
 
    /**
     * Obtains an ObjectFilter instance that is capable of testing a single filter condition.

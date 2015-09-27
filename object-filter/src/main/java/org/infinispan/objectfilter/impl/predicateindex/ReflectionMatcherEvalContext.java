@@ -12,8 +12,8 @@ public final class ReflectionMatcherEvalContext extends MatcherEvalContext<Class
 
    private final Class<?> entityType;
 
-   public ReflectionMatcherEvalContext(Object userContext, Object instance, Object eventType) {
-      super(userContext, instance, eventType);
+   public ReflectionMatcherEvalContext(Object userContext, Object eventType, Object instance) {
+      super(userContext, eventType, instance);
       entityType = instance.getClass();
    }
 

@@ -6,7 +6,7 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
 /**
- * Log messages for the object filter parser backend..
+ * Log messages for the object filter parser backend.
  *
  * @author anistor@redhat.com
  * @since 7.0
@@ -37,4 +37,7 @@ public interface Log extends BasicLogger {
 
    @Message(id = 410, value = "Invalid enum literal '%s' for enum type %s")
    ParsingException getInvalidEnumLiteralException(String value, String enumType);
+
+   @Message(id = 411, value = "Filters cannot use grouping or aggregations")
+   ParsingException getFiltersCannotUseGroupingOrAggregationException();
 }
