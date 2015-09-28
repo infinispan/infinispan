@@ -99,6 +99,11 @@ public final class DeploymentJmsMasterSlaveAndInfinispanAs2ndLevelCache {
             .value("create-drop")
             .up()
             .createProperty()
+            // Disable the automatically enabled Hibernate Search instance which is included in WildFly
+            .name( "wildfly.jpa.hibernate.search.module" )
+            .value( "none" )
+            .up()
+            .createProperty()
             .name("hibernate.search.default.lucene_version")
             .value("LUCENE_CURRENT")
             .up()
