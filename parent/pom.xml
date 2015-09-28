@@ -172,7 +172,7 @@
       <version.webdav.servlet>2.0.1</version.webdav.servlet>
       <version.weld>1.1.13.Final</version.weld>
       
-      <version.wildfly>10.0.0.CR1</version.wildfly>
+      <version.wildfly>10.0.0.CR2</version.wildfly>
       <version.wildfly.arquillian>1.0.0.Final</version.wildfly.arquillian>
       <version.wildfly.core>2.0.0.CR1</version.wildfly.core>
       <version.wildfly.maven.plugin>1.1.0.Alpha3</version.wildfly.maven.plugin>
