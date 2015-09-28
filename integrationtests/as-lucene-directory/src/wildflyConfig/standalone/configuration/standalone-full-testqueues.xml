@@ -155,7 +155,7 @@
         <subsystem xmlns="urn:jboss:domain:deployment-scanner:2.0">
             <deployment-scanner path="deployments" relative-to="jboss.server.base.dir" scan-interval="5000" runtime-failure-causes-rollback="${jboss.deployment.scanner.rollback.on.failure:false}"/>
         </subsystem>
-        <subsystem xmlns="urn:jboss:domain:ee:3.0">
+        <subsystem xmlns="urn:jboss:domain:ee:4.0">
             <spec-descriptor-property-replacement>false</spec-descriptor-property-replacement>
             <concurrent>
                 <context-services>
@@ -165,10 +165,10 @@
                     <managed-thread-factory name="default" jndi-name="java:jboss/ee/concurrency/factory/default" context-service="default"/>
                 </managed-thread-factories>
                 <managed-executor-services>
-                    <managed-executor-service name="default" jndi-name="java:jboss/ee/concurrency/executor/default" context-service="default" hung-task-threshold="60000" core-threads="5" max-threads="25" keepalive-time="5000"/>
+                    <managed-executor-service name="default" jndi-name="java:jboss/ee/concurrency/executor/default" context-service="default" hung-task-threshold="60000" keepalive-time="5000"/>
                 </managed-executor-services>
                 <managed-scheduled-executor-services>
-                    <managed-scheduled-executor-service name="default" jndi-name="java:jboss/ee/concurrency/scheduler/default" context-service="default" hung-task-threshold="60000" core-threads="2" keepalive-time="3000"/>
+                    <managed-scheduled-executor-service name="default" jndi-name="java:jboss/ee/concurrency/scheduler/default" context-service="default" hung-task-threshold="60000" keepalive-time="3000"/>
                 </managed-scheduled-executor-services>
             </concurrent>
             <default-bindings context-service="java:jboss/ee/concurrency/context/default" datasource="java:jboss/datasources/ExampleDS" jms-connection-factory="java:jboss/DefaultJMSConnectionFactory" managed-executor-service="java:jboss/ee/concurrency/executor/default" managed-scheduled-executor-service="java:jboss/ee/concurrency/scheduler/default" managed-thread-factory="java:jboss/ee/concurrency/factory/default"/>
@@ -273,6 +273,7 @@
             </cache-container>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:iiop-openjdk:1.0">
+            <orb socket-binding="iiop" ssl-socket-binding="iiop-ssl"/>
             <initializers transactions="spec" security="identity"/>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:jaxrs:1.0"/>
@@ -317,11 +318,8 @@
                     <role name="guest" send="true" consume="true" create-non-durable-queue="true" delete-non-durable-queue="true"/>
                 </security-setting>
                 <address-setting name="#" dead-letter-address="jms.queue.DLQ" expiry-address="jms.queue.ExpiryQueue" max-size-bytes="10485760" page-size-bytes="2097152" message-counter-history-day-limit="10"/>
-                <http-connector name="http-connector" socket-binding="http">
-                    <param name="http-upgrade-endpoint" value="http-acceptor"/>
-                </http-connector>
-                <http-connector name="http-connector-throughput" socket-binding="http">
-                    <param name="http-upgrade-endpoint" value="http-acceptor-throughput"/>
+                <http-connector name="http-connector" socket-binding="http" endpoint="http-acceptor"/>
+                <http-connector name="http-connector-throughput" socket-binding="http" endpoint="http-acceptor-throughput">
                     <param name="batch-delay" value="50"/>
                 </http-connector>
                 <in-vm-connector name="in-vm" server-id="0"/>
