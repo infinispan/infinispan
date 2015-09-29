@@ -13,10 +13,38 @@ In this example caches 1, 2 and 3 all use the same JGroups channel.
 
 [source,java]
 ----
-EmbeddedCacheManager cm = new DefaultCacheManager("infinispan.xml");
-Cache<Object, Object> cache1 = cm.getCache("replSyncCache");
-Cache<Object, Object> cache2 = cm.getCache("replAsyncCache");
-Cache<Object, Object> cache3 = cm.getCache("invalidationSyncCache");
+ public static void main(String[] args) throws Exception {
+      boolean useXmlConfig = false;
+      String cache = "repl";
+      String nodeName = null;
+
+      for (String arg : args) {
+         switch (arg) {
+            case "-x":
+               useXmlConfig = true;
+               break;
+            case "-p":
+               useXmlConfig = false;
+               break;
+            case "-d":
+               cache = "dist";
+               break;
+            case "-r":
+               cache = "repl";
+               break;
+            default:
+               nodeName = arg;
+               break;
+         }
+      }
+      new Node(useXmlConfig, cache, nodeName).run();
+   }
+...
+ public void run() throws IOException, InterruptedException {
+      EmbeddedCacheManager cacheManager = createCacheManager();
+      final Cache<String, String> cache = cacheManager.getCache(cacheName);
+      ...
+ }
 ----
 
 === Running Infinispan in a cluster
