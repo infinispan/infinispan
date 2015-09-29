@@ -6,6 +6,8 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.factories.KnownComponentNames;
+import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -23,6 +25,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
@@ -40,6 +44,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    private static final Log log = LogFactory.getLog(SequentialInterceptorChainImpl.class);
 
    final ComponentMetadataRepo componentMetadataRepo;
+   private ExecutorService remoteExecutor;
    private InvocationContextContainer icc;
 
    final ReentrantLock lock = new ReentrantLock();
@@ -51,8 +56,10 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Inject
-   public void inject(InvocationContextContainer icc) {
+   public void inject(InvocationContextContainer icc,
+                      @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService remoteExecutor) {
       this.icc = icc;
+      this.remoteExecutor = remoteExecutor;
    }
 
    @Start
@@ -300,17 +307,18 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       return getInterceptors().stream().map(this::getRealInterceptor);
    }
 
-   protected SequentialInterceptor makeSequentialInterceptor(AnyInterceptor interceptor) {
+   private SequentialInterceptor makeSequentialInterceptor(AnyInterceptor interceptor) {
       SequentialInterceptor theInterceptor;
       if (interceptor instanceof SequentialInterceptor) {
          theInterceptor = (SequentialInterceptor) interceptor;
       } else {
-         theInterceptor = new SequentialInterceptorAdapter((CommandInterceptor) interceptor, icc);
+         theInterceptor =
+               new SequentialInterceptorAdapter((CommandInterceptor) interceptor, icc, remoteExecutor);
       }
       return theInterceptor;
    }
 
-   protected AnyInterceptor getRealInterceptor(SequentialInterceptor interceptor) {
+   private AnyInterceptor getRealInterceptor(SequentialInterceptor interceptor) {
       if (interceptor instanceof SequentialInterceptorAdapter) {
          SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
          return adapter.getAdaptedInterceptor();
@@ -319,7 +327,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       }
    }
 
-   protected Class<? extends AnyInterceptor> getRealInterceptorType(SequentialInterceptor interceptor) {
+   private Class<? extends AnyInterceptor> getRealInterceptorType(SequentialInterceptor interceptor) {
       if (interceptor instanceof SequentialInterceptorAdapter) {
          SequentialInterceptorAdapter adapter = (SequentialInterceptorAdapter) interceptor;
          return adapter.getAdaptedType();

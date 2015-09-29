@@ -38,14 +38,16 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
 
    private final CommandInterceptor adaptedInterceptor;
    private final InvocationContextContainer icc;
+   private final ExecutorService executor;
 
    // TODO Inject an existing thread pool
-   final static ExecutorService executor =
+   final static ExecutorService COMMON_EXECUTOR =
          Executors.newCachedThreadPool(LegacyInterceptorThreadFactory.INSTANCE);
 
-   public SequentialInterceptorAdapter(CommandInterceptor adaptedInterceptor, InvocationContextContainer icc) {
+   public SequentialInterceptorAdapter(CommandInterceptor adaptedInterceptor, InvocationContextContainer icc, ExecutorService executor) {
       this.adaptedInterceptor = adaptedInterceptor;
       this.icc = icc;
+      this.executor = COMMON_EXECUTOR;
       adaptedInterceptor.setNext(new NextInterceptor());
    }
 

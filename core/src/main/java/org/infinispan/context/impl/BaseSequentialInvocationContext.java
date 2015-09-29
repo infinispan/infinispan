@@ -1,8 +1,9 @@
-package org.infinispan.interceptors;
+package org.infinispan.context.impl;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheException;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;

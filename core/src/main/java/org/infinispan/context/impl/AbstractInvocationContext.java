@@ -3,7 +3,6 @@ package org.infinispan.context.impl;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
-import org.infinispan.interceptors.BaseSequentialInvocationContext;
 import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.remoting.transport.Address;
 
