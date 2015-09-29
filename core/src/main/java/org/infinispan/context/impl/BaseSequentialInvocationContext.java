@@ -22,6 +22,7 @@ public abstract class BaseSequentialInvocationContext
       implements InvocationContext {
    private static final Log log = LogFactory.getLog(BaseSequentialInvocationContext.class);
    private static final boolean trace = log.isTraceEnabled();
+   private static final Object SHORT_CIRCUIT_NULL = new Object();
 
    // No need for volatile, the context must be properly published to the interceptors anyway
    private VisitableCommand command;
@@ -49,9 +50,7 @@ public abstract class BaseSequentialInvocationContext
 
    @Override
    public Object shortCircuit(Object returnValue) {
-      // TODO Return a special ShortCircuit object instance and check for it in continueExecution?
-      nextInterceptor = interceptors.size();
-      return returnValue;
+      return returnValue != null ? returnValue : SHORT_CIRCUIT_NULL;
    }
 
    @Override
@@ -59,13 +58,7 @@ public abstract class BaseSequentialInvocationContext
                                 BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
       if (trace)
          log.tracef("Forking command %s at interceptor %d %s", newCommand, nextInterceptor, interceptors.get(nextInterceptor));
-      VisitableCommand savedCommand = command;
-      int savedInterceptor = nextInterceptor;
-      command = newCommand;
-      onReturn((returnValue, throwable) -> handleForkReturn(newCommand, returnHandler, savedCommand,
-                                                            savedInterceptor, returnValue, throwable));
-      // Proceed with the next interceptor
-      return null;
+      return new ForkInfo(newCommand, returnHandler);
    }
 
    protected CompletableFuture<Object> handleForkReturn(VisitableCommand newCommand,
@@ -74,7 +67,8 @@ public abstract class BaseSequentialInvocationContext
                                                         VisitableCommand savedCommand, int savedInterceptor,
                                                         Object returnValue, Throwable throwable) {
       if (trace)
-         log.tracef("Forked command %s done at %s", newCommand, interceptors.get(savedInterceptor));
+         log.tracef("Forked command %s done at %s, return value %s/%s, continuing with %s", newCommand,
+                    interceptors.get(savedInterceptor), returnValue, throwable, savedCommand);
       command = savedCommand;
       nextInterceptor = savedInterceptor;
       return returnHandler.apply(returnValue, throwable);
@@ -93,13 +87,29 @@ public abstract class BaseSequentialInvocationContext
 
    public void continueExecution(Object returnValue, Throwable throwable) {
       if (trace)
-         log.tracef("Continue execution for %s, next interceptor %s, next return handler %s", getCommand(),
-                    nextInterceptor,
-                    returnHandlers.isEmpty() ? "N/A" : returnHandlers.get(returnHandlers.size() - 1));
+         log.tracef(
+               "Continue execution for %s, next interceptor %s, return handlers %s, return value %s, exception %s",
+               getCommand(),
+               nextInterceptor, returnHandlers.size(), returnValue, throwable);
       while (nextInterceptor < interceptors.size()) {
-         if (throwable != null) {
-            // Got an exception, skip the rest of the interceptors and start executing the return handlers
+         if (returnValue instanceof ForkInfo) {
+            // Start invoking a new command with the next interceptor.
+            // Save the current command and interceptor in a lambda and restore it when the forked command
+            // returns.
+            VisitableCommand savedCommand = command;
+            int savedInterceptor = nextInterceptor;
+            ForkInfo forkInfo = (ForkInfo) returnValue;
+            command = forkInfo.newCommand;
+            onReturn((v, t) -> handleForkReturn(savedCommand, forkInfo.returnHandler, savedCommand,
+                                                savedInterceptor, v, t));
+            // Proceed with the next interceptor
+         } else if (returnValue != null || throwable != null) {
+            // Got an exception or a short-circuit
+            // Skip the rest of the interceptors and start executing the return handlers
             nextInterceptor = interceptors.size();
+            if (returnValue == SHORT_CIRCUIT_NULL) {
+               returnValue = null;
+            }
             break;
          }
 
@@ -107,14 +117,11 @@ public abstract class BaseSequentialInvocationContext
          SequentialInterceptor next = interceptors.get(nextInterceptor);
          nextInterceptor++;
          try {
-            if (trace)
-               log.tracef("Executing interceptor %s", next);
             CompletableFuture<Object> nextFuture = next.visitCommand(this, command);
-            if (trace)
-               log.tracef("Executed interceptor %s, got %s", next, nextFuture);
             if (nextFuture != null) {
                // The execution will continue when the interceptor finishes
                // May continue in the current thread if the future is already done
+               // TODO Optimize when the future is already done?
                nextFuture.whenComplete(this::continueExecution);
                return;
             }
@@ -128,21 +135,10 @@ public abstract class BaseSequentialInvocationContext
          try {
             BiFunction<Object, Throwable, CompletableFuture<Object>> handler =
                   returnHandlers.remove(returnHandlers.size() - 1);
-            if (trace)
-               log.tracef("Executing return handler %s", handler);
             CompletableFuture<Object> handlerFuture = handler.apply(returnValue, throwable);
-            if (trace)
-               log.tracef("Executed return handler %s, got %s", handler, handlerFuture);
             if (handlerFuture != null) {
                handlerFuture.whenComplete(this::continueExecution);
                return;
-            } else {
-               // If the handler modified nextInterceptor, the execution must continue with that interceptor
-               // TODO Forking on the return path no longer works. If we re-enable it, we should allow the
-               // TODO interceptors to save the context instead of passing this to forkInvocation
-               if (nextInterceptor < interceptors.size()) {
-                  continueExecution(returnValue, throwable);
-               }
             }
          } catch (Throwable t) {
             returnValue = null;
@@ -166,6 +162,17 @@ public abstract class BaseSequentialInvocationContext
          return clone;
       } catch (CloneNotSupportedException e) {
          throw new CacheException("Impossible");
+      }
+   }
+
+   private class ForkInfo {
+      private final VisitableCommand newCommand;
+      private final BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler;
+
+      public ForkInfo(VisitableCommand newCommand,
+                      BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
+         this.newCommand = newCommand;
+         this.returnHandler = returnHandler;
       }
    }
 }
