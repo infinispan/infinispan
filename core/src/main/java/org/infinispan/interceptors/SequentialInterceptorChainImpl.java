@@ -226,7 +226,13 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          Thread.currentThread().interrupt();
          throw new CacheException(e);
       } catch (ExecutionException e) {
-         throw new CacheException(e.getCause());
+         Throwable cause = e.getCause();
+         if (cause instanceof CacheException) {
+            cause.addSuppressed(new CacheException());
+            throw (CacheException) cause;
+         } else {
+            throw new CacheException(cause);
+         }
       }
    }
 
