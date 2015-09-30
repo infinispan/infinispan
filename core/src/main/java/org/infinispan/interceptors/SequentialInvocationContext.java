@@ -21,4 +21,6 @@ public interface SequentialInvocationContext {
    Object forkInvocation(VisitableCommand newCommand, BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler);
 
    CompletableFuture<Object> execute(VisitableCommand command);
+
+   // TODO Object executeRestOfChain() for legacy interceptors and/or local execution?
 }
