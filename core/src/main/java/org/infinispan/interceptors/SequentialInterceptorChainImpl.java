@@ -3,6 +3,8 @@ package org.infinispan.interceptors;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.CacheException;
+import org.infinispan.commons.util.ImmutableListCopy;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
@@ -23,7 +25,6 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
@@ -48,7 +49,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
    final ReentrantLock lock = new ReentrantLock();
 
-   private final List<SequentialInterceptor> interceptors = new CopyOnWriteArrayList<>();
+   private volatile List<SequentialInterceptor> interceptors = InfinispanCollections.emptyList();
 
    public SequentialInterceptorChainImpl(ComponentMetadataRepo componentMetadataRepo) {
       this.componentMetadataRepo = componentMetadataRepo;
@@ -97,7 +98,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          Class<? extends AnyInterceptor> interceptorClass = interceptor.getClass();
          assertNotAdded(interceptorClass);
          validateCustomInterceptor(interceptorClass);
-         interceptors.add(position, makeSequentialInterceptor(interceptor));
+         interceptors = immutableListAdd(interceptors, position, makeSequentialInterceptor(interceptor));
       } finally {
          lock.unlock();
       }
@@ -107,7 +108,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       final ReentrantLock lock = this.lock;
       lock.lock();
       try {
-         interceptors.remove(position);
+         interceptors = immutableListRemove(interceptors, position);
       } finally {
          lock.unlock();
       }
@@ -127,7 +128,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       try {
          for (int i = 0; i < interceptors.size(); i++) {
             if (interceptorMatches(interceptors.get(i), clazz)) {
-               interceptors.remove(i);
+               removeInterceptor(i);
+               break;
             }
          }
       } finally {
@@ -149,7 +151,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          validateCustomInterceptor(interceptorClass);
          for (int i = 0; i < interceptors.size(); i++) {
             if (interceptorMatches(interceptors.get(i), afterInterceptor)) {
-               interceptors.add(i + 1, makeSequentialInterceptor(toAdd));
+               interceptors = immutableListAdd(interceptors, i + 1, makeSequentialInterceptor(toAdd));
                return true;
             }
          }
@@ -177,7 +179,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          validateCustomInterceptor(interceptorClass);
          for (int i = 0; i < interceptors.size(); i++) {
             if (interceptorMatches(interceptors.get(i), beforeInterceptor)) {
-               interceptors.add(i, makeSequentialInterceptor(toAdd));
+               interceptors = immutableListAdd(interceptors, i, makeSequentialInterceptor(toAdd));
                return true;
             }
          }
@@ -198,7 +200,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
          for (int i = 0; i < interceptors.size(); i++) {
             if (interceptorMatches(interceptors.get(i), toBeReplacedInterceptorType)) {
-               interceptors.set(i, makeSequentialInterceptor(replacingInterceptor));
+               interceptors =
+                     immutableListReplace(interceptors, i, makeSequentialInterceptor(replacingInterceptor));
                return true;
             }
          }
@@ -214,7 +217,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          validateCustomInterceptor(interceptorClass);
       assertNotAdded(interceptorClass);
       // Called when building interceptor chain and so concurrent start calls are protected already
-      interceptors.add(makeSequentialInterceptor(ci));
+      interceptors = immutableListAdd(interceptors, interceptors.size(), makeSequentialInterceptor(ci));
    }
 
    public Object invoke(InvocationContext ctx, VisitableCommand command) {
@@ -236,7 +239,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    public AnyInterceptor findInterceptorExtending(Class<? extends AnyInterceptor> interceptorClass) {
-      for (SequentialInterceptor interceptor : interceptors) {
+      List<SequentialInterceptor> localInterceptors = this.interceptors;
+      for (SequentialInterceptor interceptor : localInterceptors) {
          AnyInterceptor realInterceptor = getRealInterceptor(interceptor);
          boolean isSubclass = interceptorClass.isInstance(realInterceptor);
          if (isSubclass) {
@@ -248,7 +252,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
    @Override
    public AnyInterceptor findInterceptorWithClass(Class interceptorClass) {
-      for (SequentialInterceptor interceptor : interceptors) {
+      List<SequentialInterceptor> localInterceptors = this.interceptors;
+      for (SequentialInterceptor interceptor : localInterceptors) {
          AnyInterceptor realInterceptor = getRealInterceptor(interceptor);
          if (realInterceptor.getClass() == interceptorClass) {
             return realInterceptor;
@@ -259,7 +264,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
    public String toString() {
       StringBuilder sb = new StringBuilder();
-      for (SequentialInterceptor interceptor : interceptors) {
+      List<SequentialInterceptor> localInterceptors = this.interceptors;
+      for (SequentialInterceptor interceptor : localInterceptors) {
          sb.append("\n\t>> ");
          sb.append(interceptor);
       }
@@ -267,7 +273,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    public boolean containsInstance(AnyInterceptor interceptor) {
-      for (SequentialInterceptor current : interceptors) {
+      List<SequentialInterceptor> localInterceptors = this.interceptors;
+      for (SequentialInterceptor current : localInterceptors) {
          if (getRealInterceptor(current) == interceptor) {
             return true;
          }
@@ -282,7 +289,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    @Override
    public boolean containsInterceptorType(Class<? extends AnyInterceptor> interceptorType,
                                           boolean alsoMatchSubClasses) {
-      for (SequentialInterceptor interceptor : interceptors) {
+      List<SequentialInterceptor> localInterceptors = this.interceptors;
+      for (SequentialInterceptor interceptor : localInterceptors) {
          Class<? extends AnyInterceptor> currentInterceptorType = getRealInterceptorType(interceptor);
          if (alsoMatchSubClasses) {
             if (interceptorType.isAssignableFrom(currentInterceptorType)) {
@@ -300,7 +308,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    @Override
    public List<SequentialInterceptor> getInterceptors() {
       // The new instance will not be affected by changes to the original list
-      return new CopyOnWriteArrayList<>(interceptors);
+      return interceptors;
    }
 
    @Override
@@ -335,5 +343,46 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       } else {
          return interceptor.getClass();
       }
+   }
+
+   protected ImmutableListCopy<SequentialInterceptor> immutableListAdd(List<SequentialInterceptor> list,
+                                                                       int position,
+                                                                       SequentialInterceptor newInterceptor) {
+      SequentialInterceptor[] copy = new SequentialInterceptor[list.size() + 1];
+      for (int i = 0; i < position; i++) {
+         copy[i] = list.get(i);
+      }
+      copy[position] = newInterceptor;
+      for (int i = position; i < list.size(); i++) {
+         copy[i + 1] = list.get(i);
+      }
+      return new ImmutableListCopy<>(copy);
+   }
+
+   protected ImmutableListCopy<SequentialInterceptor> immutableListReplace(List<SequentialInterceptor> list,
+                                                                           int position,
+                                                                           SequentialInterceptor
+                                                                                 newInterceptor) {
+      SequentialInterceptor[] copy = new SequentialInterceptor[list.size() + 1];
+      for (int i = 0; i < position; i++) {
+         copy[i] = list.get(i);
+      }
+      copy[position] = newInterceptor;
+      copy[position] = newInterceptor;
+      for (int i = position + 1; i < list.size(); i++) {
+         copy[i] = list.get(i);
+      }
+      return new ImmutableListCopy<>(copy);
+   }
+
+   protected List<SequentialInterceptor> immutableListRemove(List<SequentialInterceptor> list, int position) {
+      SequentialInterceptor[] copy = new SequentialInterceptor[list.size() - 1];
+      for (int i = 0; i < position; i++) {
+         copy[i] = list.get(i);
+      }
+      for (int i = position + 1; i < list.size(); i++) {
+         copy[i - 1] = list.get(i);
+      }
+      return new ImmutableListCopy<>(copy);
    }
 }
