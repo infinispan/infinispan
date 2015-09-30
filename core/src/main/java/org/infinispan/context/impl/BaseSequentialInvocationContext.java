@@ -103,6 +103,7 @@ public abstract class BaseSequentialInvocationContext
             onReturn((v, t) -> handleForkReturn(savedCommand, forkInfo.returnHandler, savedCommand,
                                                 savedInterceptor, v, t));
             // Proceed with the next interceptor
+            returnValue = null;
          } else if (returnValue != null || throwable != null) {
             // Got an exception or a short-circuit
             // Skip the rest of the interceptors and start executing the return handlers
