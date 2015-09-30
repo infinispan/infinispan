@@ -22,7 +22,9 @@ import javax.transaction.TransactionManager;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.fail;
@@ -113,23 +115,20 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
       cache.addListener(dl);
       final List<Throwable> throwables = new LinkedList<Throwable>();
 
-      Thread th = new Thread() {
-         public void run() {
-            try {
-               cache.put("k", "v3");
-            } catch (Throwable th) {
-               throwables.add(th);
-            }
+      Future<?> future = fork((Runnable) () -> {
+         try {
+            cache.put("k", "v3");
+         } catch (Throwable th) {
+            throwables.add(th);
          }
-      };
+      });
 
-      th.start();
       // wait for th to acquire the lock
       lockAquiredSignal.await();
 
-      // and now interrupt the thread.
-      th.interrupt();
-      th.join();
+      // and now throw the exception
+      dl.waitLatch.countDown();
+      future.get(10, SECONDS);
 
       assert throwables.size() == 1;
       assert throwables.get(0) instanceof CacheException;
@@ -150,10 +149,11 @@ public class InvocationContextTest extends MultipleCacheManagersTest {
          if (!event.isPre()) {
             lockAcquiredLatch.countDown();
             try {
-               waitLatch.await();
+               waitLatch.await(10, SECONDS);
             } catch (InterruptedException e) {
                throw new RuntimeException(e);
             }
+            throw new RuntimeException("Induced exception");
          }
       }
    }
