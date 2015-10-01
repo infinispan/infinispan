@@ -51,7 +51,6 @@ import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.SurvivesRestarts;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.filter.KeyValueFilter;
-import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.interceptors.SequentialInterceptorAdapter;
 import org.infinispan.interceptors.SequentialInterceptorChain;
 import org.infinispan.interceptors.base.CommandInterceptor;

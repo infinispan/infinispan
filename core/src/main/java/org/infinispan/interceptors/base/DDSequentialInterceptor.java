@@ -47,9 +47,9 @@ import java.util.concurrent.CompletableFuture;
 public interface DDSequentialInterceptor extends SequentialInterceptor, Visitor {
 
    @Override
-   default CompletableFuture<Object> visitCommand(InvocationContext ctx, VisitableCommand cmd)
+   default CompletableFuture<Object> visitCommand(InvocationContext ctx, VisitableCommand command)
          throws Throwable {
-      return (CompletableFuture<Object>) cmd.acceptVisitor(ctx, this);
+      return (CompletableFuture<Object>) command.acceptVisitor(ctx, this);
    }
 
    @Override

@@ -26,5 +26,5 @@ public interface SequentialInterceptor extends AnyInterceptor {
     * the interceptor must use {@code return invokeNewCommand(command)}, either in the method
     * or in the asynchronous task.
     */
-   CompletableFuture<Object> visitCommand(InvocationContext ctx, VisitableCommand cmd) throws Throwable;
+   CompletableFuture<Object> visitCommand(InvocationContext ctx, VisitableCommand command) throws Throwable;
 }

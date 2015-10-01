@@ -363,7 +363,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
                                                                            int position,
                                                                            SequentialInterceptor
                                                                                  newInterceptor) {
-      SequentialInterceptor[] copy = new SequentialInterceptor[list.size() + 1];
+      SequentialInterceptor[] copy = new SequentialInterceptor[list.size()];
       for (int i = 0; i < position; i++) {
          copy[i] = list.get(i);
       }
