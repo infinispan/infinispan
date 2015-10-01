@@ -136,4 +136,11 @@ public abstract class CommandInterceptor extends AbstractVisitor implements AnyI
          return cache;
       }
    }
+
+   /**
+    * @return The {@link SequentialInterceptor} replacing this interceptor.
+    */
+   public Class<? extends SequentialInterceptor> getSequentialInterceptor() {
+      return null;
+   }
 }

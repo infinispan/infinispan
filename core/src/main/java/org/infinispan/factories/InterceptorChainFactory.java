@@ -19,7 +19,6 @@ import org.infinispan.interceptors.BatchingInterceptor;
 import org.infinispan.interceptors.CacheLoaderInterceptor;
 import org.infinispan.interceptors.CacheMgmtInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
-import org.infinispan.interceptors.CallInterceptor;
 import org.infinispan.interceptors.ClusteredActivationInterceptor;
 import org.infinispan.interceptors.ClusteredCacheLoaderInterceptor;
 import org.infinispan.interceptors.DeadlockDetectingInterceptor;
@@ -38,6 +37,7 @@ import org.infinispan.interceptors.TxInterceptor;
 import org.infinispan.interceptors.VersionedEntryWrappingInterceptor;
 import org.infinispan.interceptors.base.AnyInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.interceptors.compat.TypeConverterInterceptor;
 import org.infinispan.interceptors.distribution.DistributionBulkInterceptor;
 import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
@@ -49,6 +49,7 @@ import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
+import org.infinispan.interceptors.sequential.CallInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderStateTransferInterceptor;
@@ -93,6 +94,11 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       return chainedInterceptor;
    }
 
+   private SequentialInterceptor createInterceptor(SequentialInterceptor interceptor, Class<? extends
+         SequentialInterceptor> interceptorType) {
+      register(interceptorType, interceptor);
+      return interceptor;
+   }
 
    private void register(Class<? extends AnyInterceptor> clazz, AnyInterceptor chainedInterceptor) {
       try {
@@ -326,7 +332,7 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
             //Nothing...
       }
 
-      CommandInterceptor callInterceptor = createInterceptor(new CallInterceptor(), CallInterceptor.class);
+      SequentialInterceptor callInterceptor = createInterceptor(new CallInterceptor(), CallInterceptor.class);
       interceptorChain.appendInterceptor(callInterceptor, false);
       log.trace("Finished building default interceptor chain.");
       buildCustomInterceptors(interceptorChain, configuration.customInterceptors());
