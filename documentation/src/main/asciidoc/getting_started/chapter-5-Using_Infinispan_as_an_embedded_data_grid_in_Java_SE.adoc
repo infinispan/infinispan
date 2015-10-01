@@ -14,9 +14,9 @@ In this example caches 1, 2 and 3 all use the same JGroups channel.
 [source,java]
 ----
 EmbeddedCacheManager cm = new DefaultCacheManager("infinispan.xml");
-Cache<Object, Object> cache1 = cm.getCache("replSyncCache");
-Cache<Object, Object> cache2 = cm.getCache("replAsyncCache");
-Cache<Object, Object> cache3 = cm.getCache("invalidationSyncCache");
+Cache<Object, Object> replSyncCache = cm.getCache("replSyncCache");
+Cache<Object, Object> replAsyncCache = cm.getCache("replAsyncCache");
+Cache<Object, Object> invalidationSyncCache = cm.getCache("invalidationSyncCache");
 ----
 
 === Running Infinispan in a cluster
