@@ -33,7 +33,7 @@ public abstract class BaseSequentialInvocationContext
    private CompletableFuture<Object> future;
 
    public BaseSequentialInvocationContext(SequentialInterceptorChain interceptorChain) {
-      this.interceptors = interceptorChain != null ? interceptorChain.getInterceptors() :
+      this.interceptors = interceptorChain != null ? interceptorChain.getSequentialInterceptors() :
             Collections.emptyList();
       this.returnHandlers = new ArrayList<>(interceptors.size());
    }

@@ -8,7 +8,6 @@ import org.infinispan.commons.configuration.attributes.IdentityAttributeCopier;
 import org.infinispan.commons.util.Util;
 import org.infinispan.interceptors.base.AnyInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.interceptors.base.SequentialInterceptor;
 
 /**
  * Describes a custom interceptor
@@ -62,12 +61,12 @@ public class InterceptorConfiguration extends AbstractTypedPropertiesConfigurati
    }
 
    @SuppressWarnings("unchecked")
-   public Class<? extends CommandInterceptor> after() {
+   public Class<? extends AnyInterceptor> after() {
       return after.get();
    }
 
    @SuppressWarnings("unchecked")
-   public Class<? extends CommandInterceptor> before() {
+   public Class<? extends AnyInterceptor> before() {
       return before.get();
    }
 

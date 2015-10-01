@@ -13,9 +13,9 @@ import java.util.stream.Stream;
  * @since 8.0
  */
 public interface SequentialInterceptorChain {
-   List<SequentialInterceptor> getInterceptors();
+   List<SequentialInterceptor> getSequentialInterceptors();
 
-   Stream<AnyInterceptor> getRealInterceptors();
+   List<AnyInterceptor> getInterceptors();
 
    /**
     * Inserts the given interceptor at the specified position in the chain (o based indexing).
@@ -88,7 +88,7 @@ public interface SequentialInterceptorChain {
     * Returns all the interceptors that have the fully qualified name of their class equal with the supplied class
     * name.
     */
-   AnyInterceptor findInterceptorWithClass(Class interceptorClass);
+   AnyInterceptor findInterceptorWithClass(Class<? extends AnyInterceptor> interceptorClass);
 
    /**
     * Checks whether the chain contains the supplied interceptor instance.

@@ -58,8 +58,8 @@ public class InterceptorChain {
     */
    public List<CommandInterceptor> asList() {
       ArrayList<CommandInterceptor> list =
-            new ArrayList<>(sequentialInterceptorChain.getInterceptors().size());
-      sequentialInterceptorChain.getRealInterceptors().forEach(ci -> {
+            new ArrayList<>(sequentialInterceptorChain.getSequentialInterceptors().size());
+      sequentialInterceptorChain.getInterceptors().forEach(ci -> {
          if (ci instanceof CommandInterceptor) {
             list.add((CommandInterceptor) ci);
          }
@@ -153,8 +153,8 @@ public class InterceptorChain {
    public List<CommandInterceptor> getInterceptorsWhichExtend(
          Class<? extends CommandInterceptor> interceptorClass) {
       ArrayList<CommandInterceptor> list =
-            new ArrayList<>(sequentialInterceptorChain.getInterceptors().size());
-      sequentialInterceptorChain.getRealInterceptors().forEach(ci -> {
+            new ArrayList<>(sequentialInterceptorChain.getSequentialInterceptors().size());
+      sequentialInterceptorChain.getInterceptors().forEach(ci -> {
          if (interceptorClass.isInstance(ci)) {
             list.add((CommandInterceptor) ci);
          }
@@ -168,8 +168,8 @@ public class InterceptorChain {
     */
    public List<CommandInterceptor> getInterceptorsWithClass(Class clazz) {
       ArrayList<CommandInterceptor> list =
-            new ArrayList<>(sequentialInterceptorChain.getInterceptors().size());
-      sequentialInterceptorChain.getRealInterceptors().forEach(ci -> {
+            new ArrayList<>(sequentialInterceptorChain.getSequentialInterceptors().size());
+      sequentialInterceptorChain.getInterceptors().forEach(ci -> {
          if (clazz == ci.getClass()) {
             list.add((CommandInterceptor) ci);
          }

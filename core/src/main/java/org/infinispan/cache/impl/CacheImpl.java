@@ -877,7 +877,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public List<CommandInterceptor> getInterceptorChain() {
-      List<SequentialInterceptor> interceptors = invoker.getInterceptors();
+      List<SequentialInterceptor> interceptors = invoker.getSequentialInterceptors();
       ArrayList<CommandInterceptor> list = new ArrayList<>(interceptors.size());
       interceptors.forEach(interceptor -> {
          if (interceptor instanceof SequentialInterceptorAdapter) {

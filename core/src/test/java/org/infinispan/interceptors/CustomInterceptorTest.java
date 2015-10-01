@@ -4,6 +4,7 @@ import org.infinispan.Cache;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.InterceptorConfiguration.Position;
+import org.infinispan.interceptors.base.AnyInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.AbstractInfinispanTest;
@@ -27,7 +28,8 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
          @Override
          public void call() {
             final Cache<Object,Object> cache = cm.getCache();
-            CommandInterceptor i = cache.getAdvancedCache().getInterceptorChain().get(0);
+            AnyInterceptor i =
+                  cache.getAdvancedCache().getSequentialInterceptorChain().getInterceptors().get(0);
             assertTrue("Expecting FooInterceptor in the interceptor chain", i instanceof FooInterceptor);
             assertEquals("bar", ((FooInterceptor)i).getFoo());
          }
@@ -49,8 +51,10 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(cacheManager) {
          @Override
          public void call() {
-            List<CommandInterceptor> interceptorChain = cacheManager.getCache("interceptors").getAdvancedCache().getInterceptorChain();
-            assertEquals(interceptorChain.get(interceptorChain.size() - 2).getClass(), FooInterceptor.class);
+            List<AnyInterceptor> interceptors =
+                  cacheManager.getCache("interceptors").getAdvancedCache().getSequentialInterceptorChain()
+                              .getInterceptors();
+            assertEquals(FooInterceptor.class, interceptors.get(interceptors.size() - 2).getClass());
          }
       });
    }
@@ -77,8 +81,11 @@ public class CustomInterceptorTest extends AbstractInfinispanTest {
       withCacheManager(new CacheManagerCallable(cacheManager) {
          @Override
          public void call() {
-            List<CommandInterceptor> interceptorChain = cacheManager.getCache().getAdvancedCache().getInterceptorChain();
-            assertEquals(interceptorChain.get(interceptorChain.size() - 2).getClass(), FooInterceptor.class);
+            List<AnyInterceptor> interceptors =
+                  cacheManager.getCache().getAdvancedCache().getSequentialInterceptorChain()
+                              .getInterceptors();
+            Object o = interceptors.get(interceptors.size() - 2);
+            assertEquals(FooInterceptor.class, o.getClass());
             assertFalse(interceptor.putInvoked);
             cacheManager.getCache().put("k", "v");
             assertEquals("v", cacheManager.getCache().get("k"));

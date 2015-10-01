@@ -28,7 +28,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 /**
  * Knows how to build and manage an chain of interceptors. Also in charge with invoking methods on the chain.
@@ -139,6 +139,19 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
    protected boolean interceptorMatches(SequentialInterceptor interceptor,
                                         Class<? extends AnyInterceptor> clazz) {
+      if (CommandInterceptor.class.isAssignableFrom(clazz)) {
+         // Legacy interceptor, see if it has a replacement
+         try {
+            CommandInterceptor ci = (CommandInterceptor) clazz.newInstance();
+            Class<? extends SequentialInterceptor> replacement = ci.getSequentialInterceptor();
+            if (replacement != null) {
+               log.warnf("Interceptor %s is deprecated, please use %s instead", clazz, replacement);
+               return replacement == getRealInterceptorType(interceptor);
+            }
+         } catch (Exception e) {
+            // Ignore
+         }
+      }
       return clazz == getRealInterceptorType(interceptor);
    }
 
@@ -255,7 +268,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       List<SequentialInterceptor> localInterceptors = this.interceptors;
       for (SequentialInterceptor interceptor : localInterceptors) {
          AnyInterceptor realInterceptor = getRealInterceptor(interceptor);
-         if (realInterceptor.getClass() == interceptorClass) {
+         if (interceptorMatches(interceptor, interceptorClass)) {
             return realInterceptor;
          }
       }
@@ -306,14 +319,14 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    }
 
    @Override
-   public List<SequentialInterceptor> getInterceptors() {
+   public List<SequentialInterceptor> getSequentialInterceptors() {
       // The new instance will not be affected by changes to the original list
       return interceptors;
    }
 
    @Override
-   public Stream<AnyInterceptor> getRealInterceptors() {
-      return getInterceptors().stream().map(this::getRealInterceptor);
+   public List<AnyInterceptor> getInterceptors() {
+      return getSequentialInterceptors().stream().map(this::getRealInterceptor).collect(Collectors.toList());
    }
 
    private SequentialInterceptor makeSequentialInterceptor(AnyInterceptor interceptor) {
