@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.xsite;
 
+import org.infinispan.Cache;
+import org.infinispan.client.hotrod.HitsAwareCacheManagersTest.HitCountInterceptor;
 import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.test.HotRodClientTestingUtil;
 import org.infinispan.client.hotrod.test.InternalRemoteCacheManager;
@@ -8,6 +10,7 @@ import org.infinispan.configuration.cache.BackupConfigurationBuilder;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
@@ -21,8 +24,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
+import static org.testng.AssertJUnit.assertEquals;
 
 abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
 
@@ -102,6 +107,68 @@ abstract class AbstractHotRodSiteFailoverTest extends AbstractXSiteTest {
 
       log.debugf("Create site '%s' with ports: %s", siteName,
          servers.stream().map(s -> String.valueOf(s.getPort())).collect(Collectors.joining(", ")));
+   }
+
+   protected void addHitCountInterceptors() {
+      siteServers.forEach((name, servers) ->
+         servers.forEach(server -> {
+            HitCountInterceptor interceptor = new HitCountInterceptor();
+            server.getCacheManager().getCache().getAdvancedCache().addInterceptor(interceptor, 1);
+         })
+      );
+   }
+
+   protected void assertNoHits() {
+      siteServers.forEach((name, servers) ->
+         servers.forEach(server -> {
+            Cache<?, ?> cache = server.getCacheManager().getCache();
+            HitCountInterceptor interceptor = getHitCountInterceptor(cache);
+            assertEquals(0, interceptor.getHits());
+         })
+      );
+   }
+
+   protected void resetHitCounters() {
+      siteServers.forEach((name, servers) ->
+         servers.forEach(server -> {
+            Cache<?, ?> cache = server.getCacheManager().getCache();
+            HitCountInterceptor interceptor = getHitCountInterceptor(cache);
+            interceptor.reset();
+         })
+      );
+   }
+
+   protected void assertSiteHit(String siteName, int expectedHits) {
+      Stream<HotRodServer> serversHit = siteServers.get(siteName).stream().filter(server -> {
+         Cache<?, ?> cache = server.getCacheManager().getCache();
+         HitCountInterceptor interceptor = getHitCountInterceptor(cache);
+         return interceptor.getHits() == expectedHits;
+      });
+      assertEquals(1, serversHit.count());
+      resetHitCounters();
+   }
+
+   protected void assertSiteNotHit(String siteName) {
+      siteServers.get(siteName).stream().forEach(server -> {
+         Cache<?, ?> cache = server.getCacheManager().getCache();
+         HitCountInterceptor interceptor = getHitCountInterceptor(cache);
+         assertEquals(0, interceptor.getHits());
+      });
+   }
+
+   protected HitCountInterceptor getHitCountInterceptor(Cache<?, ?> cache) {
+      HitCountInterceptor hitCountInterceptor = null;
+      List<CommandInterceptor> interceptorChain = cache.getAdvancedCache().getInterceptorChain();
+      for (CommandInterceptor interceptor : interceptorChain) {
+         boolean isHitCountInterceptor = interceptor instanceof HitCountInterceptor;
+         if (hitCountInterceptor != null && isHitCountInterceptor) {
+            throw new IllegalStateException("Two HitCountInterceptors! " + interceptorChain);
+         }
+         if (isHitCountInterceptor) {
+            hitCountInterceptor = (HitCountInterceptor) interceptor;
+         }
+      }
+      return hitCountInterceptor;
    }
 
 }

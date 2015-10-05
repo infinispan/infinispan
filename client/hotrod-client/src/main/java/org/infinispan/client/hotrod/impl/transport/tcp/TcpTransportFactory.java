@@ -40,6 +40,7 @@ import org.infinispan.commons.equivalence.AnyEquivalence;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CollectionFactory;
+import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.SslContextFactory;
 import org.infinispan.commons.util.Util;
 
@@ -233,7 +234,7 @@ public class TcpTransportFactory implements TransportFactory {
       return borrowTransportFromPool(server);
    }
 
-   // To be called from within `lock` synchronized block
+   @GuardedBy("lock")
    private SocketAddress getNextServer(Set<SocketAddress> failedServers, byte[] cacheName) {
       FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
 
@@ -305,49 +306,67 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public void updateServers(Collection<SocketAddress> newServers, byte[] cacheName, boolean quiet) {
       synchronized (lock) {
-         Collection<SocketAddress> servers = topologyInfo.getServers();
-         Set<SocketAddress> addedServers = new HashSet<>(newServers);
-         addedServers.removeAll(servers);
-         Set<SocketAddress> failedServers = new HashSet<>(servers);
-         failedServers.removeAll(newServers);
-         if (log.isTraceEnabled()) {
-            log.tracef("Current list: %s", servers);
-            log.tracef("New list: %s", newServers);
-            log.tracef("Added servers: %s", addedServers);
-            log.tracef("Removed servers: %s", failedServers);
+         Collection<SocketAddress> servers = updateTopologyInfo(newServers, quiet);
+         if (!servers.isEmpty()) {
+            FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
+            balancer.setServers(servers);
          }
-
-         if (failedServers.isEmpty() && addedServers.isEmpty()) {
-            log.debug("Same list of servers, not changing the pool");
-            return;
-         }
-
-         //1. first add new servers. For servers that went down, the returned transport will fail for now
-         for (SocketAddress server : addedServers) {
-            log.newServerAdded(server);
-            try {
-               connectionPool.addObject(server);
-            } catch (Exception e) {
-               if (!quiet) log.failedAddingNewServer(server, e);
-            }
-         }
-
-         //2. Remove failed servers
-         for (SocketAddress server : failedServers) {
-            log.removingServer(server);
-            connectionPool.clear(server);
-         }
-
-         servers = Collections.unmodifiableList(new ArrayList(newServers));
-         topologyInfo.updateServers(servers);
-
-         if (!failedServers.isEmpty()) {
-            listenerNotifier.failoverClientListeners(failedServers);
-         }
-
-         FailoverRequestBalancingStrategy balancer = getOrCreateIfAbsentBalancer(cacheName);
-         balancer.setServers(servers);
       }
+   }
+
+   private void updateServers(Collection<SocketAddress> newServers, boolean quiet) {
+      synchronized (lock) {
+         Collection<SocketAddress> servers = updateTopologyInfo(newServers, quiet);
+         if (!servers.isEmpty()) {
+            for (FailoverRequestBalancingStrategy balancer : balancers.values())
+               balancer.setServers(servers);
+         }
+      }
+   }
+
+   @GuardedBy("lock")
+   private Collection<SocketAddress> updateTopologyInfo(Collection<SocketAddress> newServers, boolean quiet) {
+      Collection<SocketAddress> servers = topologyInfo.getServers();
+      Set<SocketAddress> addedServers = new HashSet<>(newServers);
+      addedServers.removeAll(servers);
+      Set<SocketAddress> failedServers = new HashSet<>(servers);
+      failedServers.removeAll(newServers);
+      if (log.isTraceEnabled()) {
+         log.tracef("Current list: %s", servers);
+         log.tracef("New list: %s", newServers);
+         log.tracef("Added servers: %s", addedServers);
+         log.tracef("Removed servers: %s", failedServers);
+      }
+
+      if (failedServers.isEmpty() && addedServers.isEmpty()) {
+         log.debug("Same list of servers, not changing the pool");
+         return InfinispanCollections.emptyList();
+      }
+
+      //1. first add new servers. For servers that went down, the returned transport will fail for now
+      for (SocketAddress server : addedServers) {
+         log.newServerAdded(server);
+         try {
+            connectionPool.addObject(server);
+         } catch (Exception e) {
+            if (!quiet) log.failedAddingNewServer(server, e);
+         }
+      }
+
+      //2. Remove failed servers
+      for (SocketAddress server : failedServers) {
+         log.removingServer(server);
+         connectionPool.clear(server);
+      }
+
+      servers = Collections.unmodifiableList(new ArrayList(newServers));
+      topologyInfo.updateServers(servers);
+
+      if (!failedServers.isEmpty()) {
+         listenerNotifier.failoverClientListeners(failedServers);
+      }
+
+      return servers;
    }
 
    public Collection<SocketAddress> getServers() {
@@ -464,6 +483,38 @@ public class TcpTransportFactory implements TransportFactory {
    @Override
    public Marshaller getMarshaller() {
       return listenerNotifier.getMarshaller();
+   }
+
+   public boolean switchToCluster(String clusterName) {
+      if (clusters.isEmpty()) {
+         log.debugf("No alternative clusters configured, so can't switch cluster");
+         return false;
+      }
+
+      Collection<SocketAddress> addresses = findClusterInfo(clusterName);
+      if (!addresses.isEmpty()) {
+         updateServers(addresses, true);
+         topologyInfo.setTopologyId(HotRodConstants.SWITCH_CLUSTER_TOPOLOGY);
+
+         if (log.isInfoEnabled()) {
+            if (!clusterName.equals(DEFAULT_CLUSTER_NAME))
+               log.manuallySwitchedToCluster(clusterName);
+            else
+               log.manuallySwitchedBackToMainCluster();
+         }
+
+         return true;
+      }
+
+      return false;
+   }
+
+   private Collection<SocketAddress> findClusterInfo(String clusterName) {
+      for (ClusterInfo cluster : clusters) {
+         if (cluster.clusterName.equals(clusterName))
+            return cluster.clusterAddresses;
+      }
+      return InfinispanCollections.emptyList();
    }
 
    /**
