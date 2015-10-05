@@ -15,7 +15,8 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.distribution.ch.ConsistentHash;
-import org.infinispan.stream.impl.local.LocalEntryCacheStream;
+import org.infinispan.stream.impl.local.EntryStreamSupplier;
+import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.DataContainerRemoveIterator;
 
 import java.util.Iterator;
@@ -132,14 +133,14 @@ public class EntrySetCommand<K, V> extends AbstractLocalCommand implements Visit
 
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
-         return new LocalEntryCacheStream<>(cache, false, getConsistentHash(cache), () -> super.stream(),
-                 cache.getAdvancedCache().getComponentRegistry());
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, getConsistentHash(cache),
+                 () -> super.stream()), false, cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         return new LocalEntryCacheStream<>(cache, true, getConsistentHash(cache), () -> super.parallelStream(),
-                 cache.getAdvancedCache().getComponentRegistry());
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(cache, getConsistentHash(cache),
+                 () -> super.stream()), true, cache.getAdvancedCache().getComponentRegistry());
       }
    }
 

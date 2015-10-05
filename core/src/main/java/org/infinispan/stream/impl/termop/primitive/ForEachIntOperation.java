@@ -1,17 +1,19 @@
 package org.infinispan.stream.impl.termop.primitive;
 
+import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.termop.BaseTerminalOperation;
 import org.infinispan.stream.impl.termop.object.NoMapIteratorOperation;
+import org.infinispan.stream.CacheAware;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntConsumer;
 import java.util.function.Supplier;
@@ -96,5 +98,13 @@ public class ForEachIntOperation<K> extends BaseTerminalOperation implements Key
 
    public IntConsumer getConsumer() {
       return consumer;
+   }
+
+   @Override
+   public void handleInjection(ComponentRegistry registry) {
+      super.handleInjection(registry);
+      if (consumer instanceof CacheAware) {
+         ((CacheAware) consumer).injectCache(registry.getComponent(Cache.class));
+      }
    }
 }

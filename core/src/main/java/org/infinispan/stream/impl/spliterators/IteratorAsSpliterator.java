@@ -49,7 +49,7 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
        * @param characteristics
        * @return
        */
-      public Builder setCharacteristics(int characteristics) {
+      public Builder<T> setCharacteristics(int characteristics) {
          this.characteristics = characteristics;
          return this;
       }
@@ -60,7 +60,7 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
        * @param batchIncrease
        * @return this
        */
-      public Builder setBatchIncrease(int batchIncrease) {
+      public Builder<T> setBatchIncrease(int batchIncrease) {
          if (batchIncrease <= 0) {
             throw new IllegalArgumentException("The batchIncrease " + batchIncrease + " must be greater than 0");
          }
@@ -88,7 +88,7 @@ public class IteratorAsSpliterator<T> implements CloseableSpliterator<T> {
        * @param estimateRemaining
        * @return this
        */
-      public Builder setEstimateRemaining(long estimateRemaining) {
+      public Builder<T> setEstimateRemaining(long estimateRemaining) {
          this.estimateRemaining = estimateRemaining;
          return this;
       }

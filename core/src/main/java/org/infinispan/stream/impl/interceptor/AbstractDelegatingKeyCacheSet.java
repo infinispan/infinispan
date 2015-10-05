@@ -7,7 +7,8 @@ import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.stream.impl.AbstractDelegatingCacheSet;
-import org.infinispan.stream.impl.local.LocalKeyCacheStream;
+import org.infinispan.stream.impl.local.KeyStreamSupplier;
+import org.infinispan.stream.impl.local.LocalCacheStream;
 
 import java.util.stream.StreamSupport;
 
@@ -42,10 +43,9 @@ public abstract class AbstractDelegatingKeyCacheSet<K, V> extends AbstractDelega
 
    private CacheStream<K> getStream(boolean parallel) {
       DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-      CloseableSpliterator<CacheEntry<K, V>> closeableSpliterator = cache.getAdvancedCache().cacheEntrySet().spliterator();
-      // TODO: add custom local key cache stream that doesn't use entries - this way it doesn't need to use entry set
-      CacheStream<K> stream = new LocalKeyCacheStream<>(cache, parallel, dm != null ? dm.getConsistentHash() : null,
-              () -> StreamSupport.stream(closeableSpliterator, parallel), cache.getAdvancedCache().getComponentRegistry());
+      CloseableSpliterator<K> closeableSpliterator = spliterator();
+      CacheStream<K> stream = new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
+              () -> StreamSupport.stream(closeableSpliterator, false)), parallel, cache.getAdvancedCache().getComponentRegistry());
       // We rely on the fact that on close returns the same instance
       stream.onClose(() -> closeableSpliterator.close());
       return stream;
