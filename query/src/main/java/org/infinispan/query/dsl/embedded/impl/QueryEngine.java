@@ -51,6 +51,8 @@ import java.util.Map;
  */
 public class QueryEngine {
 
+   private static final int MAX_EXPANSION_COFACTORS = 16;
+
    protected final AdvancedCache<?, ?> cache;
 
    /**
@@ -373,7 +375,7 @@ public class QueryEngine {
          return new EmbeddedQuery(this, queryFactory, cache, jpqlString, namedParameters, parsingResult.getProjections(), startOffset, maxResults);
       }
 
-      BooleShannonExpansion bse = new BooleShannonExpansion(getIndexedFieldProvider(parsingResult));
+      BooleShannonExpansion bse = new BooleShannonExpansion(MAX_EXPANSION_COFACTORS, getIndexedFieldProvider(parsingResult));
       BooleanExpr expansion = bse.expand(normalizedWhereClause);
 
       if (expansion == normalizedWhereClause) {  // identity comparison is intended here!

@@ -32,7 +32,7 @@ public class BooleShannonExpansionTest {
       FilterParsingResult<Class<?>> parsingResult = queryParser.parseQuery(jpaQuery, FilterProcessingChain.build(entityNamesResolver, propertyHelper, null));
       BooleanExpr expr = booleanFilterNormalizer.normalize(parsingResult.getWhereClause());
 
-      BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(new BooleShannonExpansion.IndexedFieldProvider() {
+      BooleShannonExpansion booleShannonExpansion = new BooleShannonExpansion(3, new BooleShannonExpansion.IndexedFieldProvider() {
          @Override
          public boolean isIndexed(List<String> propertyPath) {
             String last = propertyPath.get(propertyPath.size() - 1);
@@ -76,5 +76,13 @@ public class BooleShannonExpansionTest {
                                "p.phoneNumbers.number != '1234' and p.surname = 'Adrian' or p.name = 'Nistor'",
                          "OR(EQUAL(PROP(surname), CONST(Adrian)), EQUAL(PROP(name), CONST(Nistor)))",
                          "FROM org.infinispan.objectfilter.test.model.Person WHERE (surname = \"Adrian\") OR (name = \"Nistor\")");
+   }
+
+   @Test
+   public void testExpansionTooBig() throws Exception {
+      assertExpectedTree("from org.infinispan.objectfilter.test.model.Person p where " +
+                               "p.phoneNumbers.number != '1234' and p.surname = 'Adrian' or p.name = 'Nistor' and license = 'PPL'",
+                         "CONST_TRUE",
+                         "FROM org.infinispan.objectfilter.test.model.Person");
    }
 }
