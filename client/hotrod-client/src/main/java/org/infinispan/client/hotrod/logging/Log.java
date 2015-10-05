@@ -209,4 +209,12 @@ public interface Log extends BasicLogger {
    @LogMessage(level = INFO)
    @Message(value = "Switched back to main cluster", id = 4051)
    void switchedBackToMainCluster();
+
+   @LogMessage(level = INFO)
+   @Message(value = "Manually switched to cluster '%s'", id = 4052)
+   void manuallySwitchedToCluster(String clusterName);
+
+   @LogMessage(level = INFO)
+   @Message(value = "Manually switched back to main cluster", id = 4053)
+   void manuallySwitchedBackToMainCluster();
 }

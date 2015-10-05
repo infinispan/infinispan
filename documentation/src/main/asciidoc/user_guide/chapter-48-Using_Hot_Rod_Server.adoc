@@ -928,6 +928,17 @@ NOTE: Remember that regardless of the cluster definitions, the initial
 server(s) configuration must be provided unless the initial servers can
 be resolved using the default server host and port details.
 
+====== Manual Site Cluster Switch
+
+As well as supporting automatic site cluster failover, Java Hot Rod clients
+can also switch between site clusters manually by calling RemoteCacheManager's
+`switchToCluster(clusterName)` and `switchToDefaultCluster()`.
+
+Using `switchToCluster(clusterName)`, users can force a client to switch
+to one of the clusters pre-defined in the Hot Rod client configuration.
+To switch to the initial servers defined in the client configuration, call
+`switchToDefaultCluster()`.
+
 ====  Consistent Concurrent Updates With Hot Rod Versioned Operations
 Data structures, such as Infinispan link:http://docs.jboss.org/infinispan/{infinispanversion}/apidocs/org/infinispan/Cache.html[Cache] , that are accessed and modified concurrently can suffer from data consistency issues unless there're mechanisms to guarantee data correctness. Infinispan Cache, since it implements link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html[ConcurrentMap] , provides operations such as link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#replace(K, V, V)[conditional replace] , link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#putIfAbsent(K, V)[putIfAbsent] , and link:http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ConcurrentMap.html#remove(java.lang.Object, java.lang.Object)[conditional remove] to its clients in order to guarantee data correctness. It even allows clients to operate against cache instances within JTA transactions, hence providing the necessary data consistency guarantees.
 

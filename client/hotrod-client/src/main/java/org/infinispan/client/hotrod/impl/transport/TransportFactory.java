@@ -70,4 +70,7 @@ public interface TransportFactory {
    boolean trySwitchCluster(byte[] cacheName);
 
    Marshaller getMarshaller();
+
+   boolean switchToCluster(String clusterName);
+
 }

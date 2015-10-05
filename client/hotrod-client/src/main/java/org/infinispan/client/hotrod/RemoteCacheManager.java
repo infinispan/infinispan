@@ -26,6 +26,7 @@ import org.infinispan.client.hotrod.impl.protocol.Codec;
 import org.infinispan.client.hotrod.impl.protocol.CodecFactory;
 import org.infinispan.client.hotrod.impl.protocol.HotRodConstants;
 import org.infinispan.client.hotrod.impl.transport.TransportFactory;
+import org.infinispan.client.hotrod.impl.transport.tcp.TcpTransportFactory;
 import org.infinispan.client.hotrod.logging.Log;
 import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.client.hotrod.near.NearCacheService;
@@ -606,6 +607,29 @@ public class RemoteCacheManager implements BasicCacheContainer {
 
    public boolean isStarted() {
       return started;
+   }
+
+   /**
+    * Switch remote cache manager to a different cluster, previously
+    * declared via configuration. If the switch was completed successfully,
+    * this method returns {@code true}, otherwise it returns {@code false}.
+    *
+    * @param clusterName name of the cluster to which to switch to
+    * @return {@code true} if the cluster was switched, {@code false} otherwise
+    */
+   public boolean switchToCluster(String clusterName) {
+      return transportFactory.switchToCluster(clusterName);
+   }
+
+   /**
+    * Switch remote cache manager to a the default cluster, previously
+    * declared via configuration. If the switch was completed successfully,
+    * this method returns {@code true}, otherwise it returns {@code false}.
+    *
+    * @return {@code true} if the cluster was switched, {@code false} otherwise
+    */
+   public boolean switchToDefaultCluster() {
+      return transportFactory.switchToCluster(TcpTransportFactory.DEFAULT_CLUSTER_NAME);
    }
 
    private Properties loadFromStream(InputStream stream) {
