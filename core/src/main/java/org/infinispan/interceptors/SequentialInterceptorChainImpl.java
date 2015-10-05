@@ -144,10 +144,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
          try {
             CommandInterceptor ci = (CommandInterceptor) clazz.newInstance();
             Class<? extends SequentialInterceptor> replacement = ci.getSequentialInterceptor();
-            if (replacement != null) {
-               log.warnf("Interceptor %s is deprecated, please use %s instead", clazz, replacement);
-               return replacement == getRealInterceptorType(interceptor);
-            }
+            if (replacement != null && replacement == getRealInterceptorType(interceptor))
+               return true;
          } catch (Exception e) {
             // Ignore
          }

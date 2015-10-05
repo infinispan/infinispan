@@ -22,8 +22,7 @@ import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
 import org.infinispan.interceptors.ActivationInterceptor;
 import org.infinispan.interceptors.CacheWriterInterceptor;
-import org.infinispan.interceptors.InvalidationInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.base.AnyInterceptor;
 import org.infinispan.jmx.JmxStatisticsExposer;
 import org.infinispan.jmx.annotations.DataType;
 import org.infinispan.jmx.annotations.DisplayType;
@@ -637,10 +636,10 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
       return hitRatio;
    }
 
-   public static <T extends CommandInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?,?> cache, Class<T> interceptorClass) {
-
-      List<CommandInterceptor> interceptorChain = cache.getInterceptorChain();
-      for (CommandInterceptor interceptor : interceptorChain) {
+   public static <T extends AnyInterceptor> T getFirstInterceptorWhichExtends(AdvancedCache<?, ?> cache,
+                                                                              Class<T> interceptorClass) {
+      List<AnyInterceptor> interceptorChain = cache.getSequentialInterceptorChain().getInterceptors();
+      for (AnyInterceptor interceptor : interceptorChain) {
          boolean isSubclass = interceptorClass.isAssignableFrom(interceptor.getClass());
          if (isSubclass) {
             return (T) interceptor;
@@ -688,8 +687,9 @@ public class ClusterCacheStatsImpl implements ClusterCacheStats, JmxStatisticsEx
 
 
          //invalidations
-         InvalidationInterceptor invalidationInterceptor = getFirstInterceptorWhichExtends(remoteCache,
-               InvalidationInterceptor.class);
+         org.infinispan.interceptors.sequential.InvalidationInterceptor invalidationInterceptor =
+               getFirstInterceptorWhichExtends(remoteCache,
+                                               org.infinispan.interceptors.sequential.InvalidationInterceptor.class);
          if (invalidationInterceptor != null) {
             map.put(INVALIDATIONS, invalidationInterceptor.getInvalidations());
          } else {

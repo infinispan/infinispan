@@ -6,6 +6,7 @@ import org.infinispan.interceptors.base.SequentialInterceptor;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * @author Dan Berindei

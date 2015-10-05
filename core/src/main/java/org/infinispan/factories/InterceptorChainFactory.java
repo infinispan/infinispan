@@ -26,7 +26,6 @@ import org.infinispan.interceptors.DistCacheWriterInterceptor;
 import org.infinispan.interceptors.EntryWrappingInterceptor;
 import org.infinispan.interceptors.GroupingInterceptor;
 import org.infinispan.interceptors.InterceptorChain;
-import org.infinispan.interceptors.InvalidationInterceptor;
 import org.infinispan.interceptors.InvocationContextInterceptor;
 import org.infinispan.interceptors.IsMarshallableInterceptor;
 import org.infinispan.interceptors.MarshalledValueInterceptor;
@@ -50,6 +49,7 @@ import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;
 import org.infinispan.interceptors.locking.PessimisticLockingInterceptor;
 import org.infinispan.interceptors.sequential.CallInterceptor;
+import org.infinispan.interceptors.sequential.InvalidationInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderDistributionInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderInterceptor;
 import org.infinispan.interceptors.totalorder.TotalOrderStateTransferInterceptor;
@@ -303,7 +303,8 @@ public class InterceptorChainFactory extends AbstractNamedCacheComponentFactory 
       switch (cacheMode) {
          case INVALIDATION_SYNC:
          case INVALIDATION_ASYNC:
-            interceptorChain.appendInterceptor(createInterceptor(new InvalidationInterceptor(), InvalidationInterceptor.class), false);
+            interceptorChain.appendInterceptor(
+                  createInterceptor(new InvalidationInterceptor(), InvalidationInterceptor.class), false);
             break;
          case DIST_SYNC:
          case REPL_SYNC:

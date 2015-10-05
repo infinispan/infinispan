@@ -978,7 +978,7 @@ public interface Log extends BasicLogger {
 
    @LogMessage(level = WARN)
    @Message(value = "Unable to broadcast evicts as a part of the prepare phase. Rolling back.", id = 268)
-   void unableToRollbackEvictionsDuringPrepare(@Cause Throwable e);
+   void unableToBroadcastEvictionsDuringPrepare(@Cause Throwable e);
 
    @LogMessage(level = WARN)
    @Message(value = "Cache used for Grid metadata should be synchronous.", id = 269)

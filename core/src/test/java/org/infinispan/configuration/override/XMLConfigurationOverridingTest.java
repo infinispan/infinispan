@@ -1,7 +1,7 @@
 package org.infinispan.configuration.override;
 
 import org.infinispan.context.Flag;
-import org.infinispan.interceptors.base.BaseSequentialInterceptor;
+import org.infinispan.interceptors.sequential.BaseSequentialInterceptor;
 import org.infinispan.interceptors.base.DDSequentialInterceptor;
 import org.junit.Assert;
 import org.infinispan.Cache;

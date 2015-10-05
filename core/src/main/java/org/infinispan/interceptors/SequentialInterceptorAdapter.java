@@ -7,7 +7,7 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.base.BaseSequentialInterceptor;
+import org.infinispan.interceptors.sequential.BaseSequentialInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
