@@ -6,6 +6,7 @@
          <indexing index="LOCAL">
                <property name="default.directory_provider">infinispan</property>
                <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
+               <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
       </distributed-cache>
       <local-cache name="LuceneIndexesMetadata" />

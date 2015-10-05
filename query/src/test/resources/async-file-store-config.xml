@@ -17,6 +17,7 @@
             <property name="default.locking_cachename">LuceneIndexesLocking_custom</property>
             <property name="default.data_cachename">LuceneIndexesData_custom</property>
             <property name="default.metadata_cachename">LuceneIndexesMetadata_custom</property>
+            <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
       </local-cache>
       <!-- *************************************** -->

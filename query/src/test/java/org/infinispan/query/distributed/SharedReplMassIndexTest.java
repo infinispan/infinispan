@@ -23,7 +23,9 @@ public class SharedReplMassIndexTest extends DistributedMassIndexingTest {
       cacheCfg.indexing()
             .index(Index.ALL)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+
       List<Cache<String, Car>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
 
       waitForClusterToForm(neededCacheNames);

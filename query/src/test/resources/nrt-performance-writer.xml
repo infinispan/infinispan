@@ -43,6 +43,7 @@
             <property name="default.sharding_strategy.nbr_of_shards">6</property>
             <!-- Enable error safety net -->
             <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
+            <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
          <!--  For our test we don't want to keep all data in memory: throw some away -->
          <eviction max-entries="200" strategy="LIRS" />

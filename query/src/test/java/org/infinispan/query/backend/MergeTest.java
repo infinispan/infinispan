@@ -64,6 +64,7 @@ public class MergeTest extends MultipleCacheManagersTest {
             .addProperty("hibernate.search.default.worker.execution", "async")
             .addProperty("default.indexwriter.merge_max_size", "1024")
             .addProperty("default.indexwriter.ram_buffer_size", "256")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       ;
       List<Cache<Long, Person>> caches = createClusteredCaches(2, cacheCfg);
       cache1 = caches.get(0);

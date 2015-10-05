@@ -30,7 +30,8 @@ public class OverlappingDistMassIndexTest extends OverlappingIndexMassIndexTest 
       cacheCfg
             .indexing()
             .index(Index.LOCAL)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
+            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
 
       List<Cache<String, Object>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
 

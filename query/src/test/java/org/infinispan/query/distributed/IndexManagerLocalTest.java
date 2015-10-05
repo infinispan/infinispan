@@ -37,7 +37,7 @@ public class IndexManagerLocalTest extends SingleCacheManagerTest {
             .cacheMode(CacheMode.LOCAL)
             .indexing()
             .index(Index.ALL)
-            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
+            .addProperty("lucene_version", "LUCENE_CURRENT")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
 

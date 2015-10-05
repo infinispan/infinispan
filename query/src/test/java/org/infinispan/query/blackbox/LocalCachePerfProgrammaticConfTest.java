@@ -33,7 +33,8 @@ public class LocalCachePerfProgrammaticConfTest extends LocalCacheTest {
             .addProperty("default.indexwriter.merge_factor", "30")
             .addProperty("default.indexwriter.merge_max_size", "4096")
             .addProperty("default.indexwriter.ram_buffer_size", "220")
-            .addProperty("default.sharding_strategy.nbr_of_shards", "6");
+            .addProperty("default.sharding_strategy.nbr_of_shards", "6")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
 
       enhanceConfig(cfg);
       return TestCacheManagerFactory.createCacheManager(cfg);

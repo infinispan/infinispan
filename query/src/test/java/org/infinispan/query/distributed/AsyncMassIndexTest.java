@@ -43,7 +43,8 @@ public class AsyncMassIndexTest extends MultipleCacheManagersTest {
             .indexing()
             .index(Index.LOCAL)
             .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler");
+            .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
 
       List<Cache<Integer, Transaction>> cacheList = createClusteredCaches(NUM_NODES, cacheCfg);
 

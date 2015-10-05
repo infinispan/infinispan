@@ -33,6 +33,7 @@ public class DeclarativeConfigTest extends SingleCacheManagerTest {
             "   <local-cache name=\"default\">\n" +
             "      <indexing index=\"LOCAL\">\n" +
             "            <property name=\"default.directory_provider\">ram</property>\n" +
+            "            <property name=\"lucene_version\">LUCENE_CURRENT</property>\n" +
             "      </indexing>\n" +
             "   </local-cache>\n" +
             "</cache-container>" +

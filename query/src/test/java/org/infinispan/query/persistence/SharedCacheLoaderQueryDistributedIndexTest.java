@@ -17,6 +17,8 @@ public class SharedCacheLoaderQueryDistributedIndexTest extends SharedCacheLoade
 
       builder.indexing().index(Index.LOCAL)
             .addProperty("default.directory_provider", "infinispan")
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
+            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+
    }
 }
