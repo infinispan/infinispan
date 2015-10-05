@@ -100,5 +100,8 @@ public interface Log extends BasicLogger {
    @Message(value = "No attribute copier for type '%s'", id = 916)
    IllegalArgumentException noAttributeCopierForType(Class<?> klass);
 
+   @Message(value = "Cannot resize unbounded container", id = 917)
+   UnsupportedOperationException cannotResizeUnboundedContainer();
+
 }
 

@@ -6,11 +6,14 @@ import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionThreadPolicy;
 import org.infinispan.eviction.EvictionType;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
 /**
  * Controls the eviction settings for the cache.
  */
 public class EvictionConfiguration {
+   static final Log log = LogFactory.getLog(EvictionConfiguration.class);
    public static final AttributeDefinition<Long> SIZE  = AttributeDefinition.builder("size", -1l).build();
    public static final AttributeDefinition<EvictionType> TYPE  = AttributeDefinition.builder("type", EvictionType.COUNT).build();
    public static final AttributeDefinition<EvictionStrategy> STRATEGY = AttributeDefinition.builder("strategy", EvictionStrategy.NONE).immutable().build();
@@ -64,6 +67,10 @@ public class EvictionConfiguration {
 
    public long size() {
       return size.get();
+   }
+
+   public void size(long newSize) {
+      size.set(newSize);
    }
 
    public EvictionType type() {

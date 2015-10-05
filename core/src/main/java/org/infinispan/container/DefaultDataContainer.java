@@ -252,6 +252,22 @@ public class DefaultDataContainer<K, V> implements DataContainer<K, V> {
    }
 
    @Override
+   public long capacity() {
+      if (entries instanceof BoundedEquivalentConcurrentHashMapV8) {
+         BoundedEquivalentConcurrentHashMapV8<K, V> resizable = (BoundedEquivalentConcurrentHashMapV8<K, V>)entries;
+         return resizable.capacity();
+      } else throw new UnsupportedOperationException();
+   }
+
+   @Override
+   public void resize(long newSize) {
+      if (entries instanceof BoundedEquivalentConcurrentHashMapV8) {
+         BoundedEquivalentConcurrentHashMapV8<K, V> resizable = (BoundedEquivalentConcurrentHashMapV8<K, V>)entries;
+         resizable.resize(newSize);
+      } else throw log.cannotResizeUnboundedContainer();
+   }
+
+   @Override
    public int size() {
       int size = 0;
       // We have to loop through to make sure to remove expired entries

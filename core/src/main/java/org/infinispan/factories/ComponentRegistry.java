@@ -1,6 +1,7 @@
 package org.infinispan.factories;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.configuration.cache.Configuration;
@@ -310,6 +311,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       stateTransferLock = getOrCreateComponent(StateTransferLock.class);
       inboundInvocationHandler = getOrCreateComponent(PerCacheInboundInvocationHandler.class);
       getOrCreateComponent(ClusterCacheStats.class);  //no need to save ref to a field, just initialize component
+      getOrCreateComponent(CacheConfigurationMBean.class);
    }
 
    @Override
