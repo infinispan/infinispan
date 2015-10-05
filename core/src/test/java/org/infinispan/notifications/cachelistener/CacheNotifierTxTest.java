@@ -83,9 +83,6 @@ public class CacheNotifierTxTest extends AbstractInfinispanTest {
       verify(mockNotifier, atLeastOnce()).notifyCacheEntryCreated(anyObject(),
             anyObject(), any(Metadata.class), anyBoolean(),
             isA(InvocationContext.class), any(PutKeyValueCommand.class));
-      verify(mockNotifier, atLeastOnce()).notifyCacheEntryModified(anyObject(),
-            anyObject(), any(Metadata.class), anyObject(), any(Metadata.class), eq(true),
-            isA(InvocationContext.class), any(PutKeyValueCommand.class));
       reset(mockNotifier);
    }
 
