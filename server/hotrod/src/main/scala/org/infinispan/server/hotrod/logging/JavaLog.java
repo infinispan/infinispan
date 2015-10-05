@@ -39,7 +39,7 @@ public interface JavaLog extends org.infinispan.util.logging.Log {
    @Message(value = "A topology cache named '%s' has already been defined", id = 6003)
    CacheConfigurationException invalidTopologyCache(String topologyCacheName);
 
-   @Message(value = "Isolation level must be READ_COMMITTED or lower: '%s'", id = 6004)
+   @Message(value = "Cannot enable isolation level '%s' with writeSkewCheck disabled", id = 6004)
    CacheConfigurationException invalidIsolationLevel(IsolationLevel isolationLevel);
 
    @Message(value = "Cannot enable authentication without specifying a ServerAuthenticationProvider", id = 6005)

@@ -122,8 +122,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
    private def validateCacheConfiguration(cacheCfg: Configuration) {
       val isolationLevel = cacheCfg.locking().isolationLevel()
-      if (isolationLevel == IsolationLevel.REPEATABLE_READ
-              || isolationLevel == IsolationLevel.SERIALIZABLE)
+      if ((isolationLevel == IsolationLevel.REPEATABLE_READ || isolationLevel == IsolationLevel.SERIALIZABLE) && !cacheCfg.locking().writeSkewCheck())
          throw log.invalidIsolationLevel(isolationLevel)
    }
 
