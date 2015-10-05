@@ -33,7 +33,7 @@ public class AnalyzerTest extends SingleCacheManagerTest {
          .indexing()
             .index(Index.ALL)
             .addProperty("hibernate.search.default.directory_provider", "ram")
-            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       return TestCacheManagerFactory.createCacheManager(cfg);
    }
 

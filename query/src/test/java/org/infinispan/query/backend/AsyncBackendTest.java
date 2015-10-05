@@ -112,7 +112,8 @@ public class AsyncBackendTest extends AbstractInfinispanTest {
    private ConfigurationBuilder getBaseConfig() {
       ConfigurationBuilder cfg = new ConfigurationBuilder();
       cfg.clustering().cacheMode(CacheMode.REPL_SYNC).indexing().index(Index.ALL)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
+            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfg;
    }
 

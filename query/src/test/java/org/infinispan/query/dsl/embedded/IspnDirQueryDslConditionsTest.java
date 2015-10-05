@@ -27,7 +27,9 @@ public class IspnDirQueryDslConditionsTest extends QueryDslConditionsTest {
 
       ConfigurationBuilder cfg = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       cfg.indexing().index(Index.ALL)
-            .addProperty("default.directory_provider", "infinispan");
+            .addProperty("default.directory_provider", "infinispan")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
+
 
       manager(0).defineConfiguration(TEST_CACHE_NAME, cfg.build());
       cache = manager(0).getCache(TEST_CACHE_NAME);

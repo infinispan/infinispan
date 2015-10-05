@@ -28,7 +28,7 @@ public class ReplRamMassIndexingTest extends DistributedMassIndexingTest {
             .addProperty("hibernate.search.default.directory_provider", "ram")
             .addProperty("hibernate.search.default.exclusive_index_use", "true")
             .addProperty("error_handler", "org.infinispan.query.helper.StaticTestingErrorHandler")
-            .addProperty("lucene_version", "LUCENE_48")
+            .addProperty("lucene_version", "LUCENE_CURRENT")
             .clustering()
             .hash().numSegments(10 * NUM_NODES);
       cacheCfg.clustering().stateTransfer().fetchInMemoryState(true);

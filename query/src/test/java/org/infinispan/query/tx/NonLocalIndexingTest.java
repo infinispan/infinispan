@@ -35,7 +35,7 @@ public class NonLocalIndexingTest extends MultipleCacheManagersTest {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, transactionsEnabled());
       builder.indexing().index(Index.ALL)
             .addProperty("hibernate.search.default.directory_provider", "ram")
-            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT");
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       createClusteredCaches(2, builder);
    }
 

@@ -226,7 +226,7 @@ public class TestCacheManagerFactory {
             .cacheMode(mode)
          .indexing()
             .index(indexing ? Index.ALL : Index.NONE)
-            .addProperty("hibernate.search.lucene_version", "LUCENE_CURRENT")
+            .addProperty("lucene_version", "LUCENE_CURRENT")
          ;
       if (mode.isClustered()) {
          return createClusteredCacheManager(builder);

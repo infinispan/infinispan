@@ -171,7 +171,9 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
 
    private ConfigurationBuilder getIndexedConfig() {
       ConfigurationBuilder cfg = getBaseConfig();
-      cfg.indexing().index(Index.ALL).addProperty("default.directory_provider", "infinispan");
+      cfg.indexing().index(Index.ALL)
+              .addProperty("default.directory_provider", "infinispan")
+              .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfg;
    }
 
@@ -180,19 +182,24 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
       cfg.indexing().index(Index.ALL)
             .addProperty("default.locking_cachename", lockCache)
             .addProperty("default.data_cachename", dataCache)
-            .addProperty("default.metadata_cachename", metadataCache);
+            .addProperty("default.metadata_cachename", metadataCache)
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfg;
    }
 
    private ConfigurationBuilder getIndexedConfigWithInfinispanIndexManager() {
       ConfigurationBuilder cfg = getIndexedConfig();
-      cfg.indexing().index(Index.ALL).addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
+      cfg.indexing().index(Index.ALL)
+              .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+              .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfg;
    }
 
    private ConfigurationBuilder getIndexedConfigWithCustomLock() {
       ConfigurationBuilder cfg = getIndexedConfig();
-      cfg.indexing().index(Index.ALL).addProperty("default.locking_strategy", "none");
+      cfg.indexing().index(Index.ALL)
+              .addProperty("default.locking_strategy", "none")
+              .addProperty("lucene_version", "LUCENE_CURRENT");
       return cfg;
    }
 

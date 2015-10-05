@@ -115,7 +115,8 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    protected EmbeddedCacheManager createCacheManager() throws Exception {
       final ConfigurationBuilder builder = getDefaultStandaloneCacheConfig(false);
       builder.indexing().index(Index.ALL)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager");
+            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+            .addProperty("lucene_version", "LUCENE_CURRENT");
       EmbeddedCacheManager cm = TestCacheManagerFactory.createCacheManager(builder);
       Configuration nonIndexed = nonIndexed();
       cm.defineConfiguration("LuceneIndexesMetadata", nonIndexed);
@@ -125,7 +126,8 @@ public class QueryInterceptorIndexingOperationsTest extends SingleCacheManagerTe
    }
 
    private Configuration nonIndexed() {
-      return new ConfigurationBuilder().indexing().index(Index.NONE).build();
+      return new ConfigurationBuilder().indexing().index(Index.NONE)
+              .addProperty("lucene_version", "LUCENE_CURRENT").build();
    }
 
    interface Operation {

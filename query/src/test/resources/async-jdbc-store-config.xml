@@ -16,6 +16,7 @@
             <property name="default.data_cachename">LuceneIndexesData_custom1</property>
             <property name="default.metadata_cachename">LuceneIndexesMetadata_custom1</property>
             <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
+            <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
       </replicated-cache>
       <replicated-cache name="LuceneIndexesMetadata_custom1">
