@@ -12,6 +12,7 @@ import org.infinispan.configuration.cache.ClusterLoaderConfiguration
 import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
 import org.infinispan.util.concurrent.IsolationLevel
 import org.infinispan.commons.CacheConfigurationException
+import org.infinispan.configuration.cache.VersioningScheme
 
 /**
  * Test to verify that configuration changes are reflected in backend caches.
@@ -48,12 +49,16 @@ class HotRodConfigurationTest {
 
    @Test(expectedExceptions = Array(classOf[CacheConfigurationException]))
    def testRepeatableReadIsolationLevelValidation() {
-      validateIsolationLevel(IsolationLevel.REPEATABLE_READ)
+      validateIsolationLevel(IsolationLevel.REPEATABLE_READ, false)
    }
 
    @Test(expectedExceptions = Array(classOf[CacheConfigurationException]))
    def testSerializableIsolationLevelValidation() {
-      validateIsolationLevel(IsolationLevel.SERIALIZABLE)
+      validateIsolationLevel(IsolationLevel.SERIALIZABLE, false)
+   }
+   
+   def testRepeatableReadIsolationLevelWithSkewCheckValidation() {
+      validateIsolationLevel(IsolationLevel.REPEATABLE_READ, true)
    }
 
    private def withClusteredServer(builder: HotRodServerConfigurationBuilder) (assert: (Configuration, Long) => Unit) {
@@ -65,13 +70,16 @@ class HotRodConfigurationTest {
       }
    }
 
-   private def validateIsolationLevel(isolationLevel: IsolationLevel) {
+   private def validateIsolationLevel(isolationLevel: IsolationLevel, writeSkew: Boolean) {
       val hotRodBuilder = new HotRodServerConfigurationBuilder
       val builder = new ConfigurationBuilder()
-      builder.locking().isolationLevel(isolationLevel)
+      builder.locking().isolationLevel(isolationLevel).writeSkewCheck(writeSkew)
+      if (writeSkew) {
+        builder.versioning().enable().scheme(VersioningScheme.SIMPLE)
+      }
       Stoppable.useCacheManager(TestCacheManagerFactory.createClusteredCacheManager(hotRodCacheConfiguration(builder))) {
          cm =>
-            startHotRodServer(cm, UniquePortThreadLocal.get.intValue, hotRodBuilder)
+            Stoppable.useServer(startHotRodServer(cm, UniquePortThreadLocal.get.intValue, hotRodBuilder)) { server => {} }
       }
    }
 
