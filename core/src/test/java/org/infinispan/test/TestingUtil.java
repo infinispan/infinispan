@@ -5,7 +5,6 @@ import org.infinispan.Cache;
 import org.infinispan.cache.impl.CacheImpl;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.VisitableCommand;
-import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.marshall.AbstractDelegatingMarshaller;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
@@ -29,7 +28,6 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.marshall.core.ExternalizerTable;
 import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.EmbeddedMetadata;
 import org.infinispan.metadata.Metadata;
@@ -51,6 +49,8 @@ import org.infinispan.security.impl.SecureCacheImpl;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.transaction.impl.TransactionTable;
+import org.infinispan.util.CyclicDependencyException;
+import org.infinispan.util.DependencyGraph;
 import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.concurrent.WithinThreadExecutor;
 import org.infinispan.util.concurrent.locks.LockManager;
@@ -72,7 +72,6 @@ import javax.management.ObjectName;
 import javax.security.auth.Subject;
 import javax.transaction.Status;
 import javax.transaction.TransactionManager;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -89,8 +88,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static java.io.File.separator;
+import static org.infinispan.commons.api.BasicCacheContainer.DEFAULT_CACHE_NAME;
 import static org.infinispan.persistence.manager.PersistenceManager.AccessMode.BOTH;
 import static org.testng.AssertJUnit.assertFalse;
 
@@ -682,28 +683,30 @@ public class TestingUtil {
       }
    }
 
+   private static Set<String> getOrderedCacheNames(EmbeddedCacheManager cacheContainer) {
+      Set<String> caches = new LinkedHashSet<>();
+      DependencyGraph graph = TestingUtil.extractField(cacheContainer, "cacheDependencyGraph");
+      try {
+         caches.addAll(graph.topologicalSort());
+      } catch (CyclicDependencyException ignored) {
+      }
+      return caches;
+   }
+
    protected static Set<Cache> getRunningCaches(EmbeddedCacheManager cacheContainer) {
-      Set<Cache> running = new HashSet<Cache>();
       if (cacheContainer == null || !cacheContainer.getStatus().allowInvocations())
-         return running;
+         return new HashSet<>();
 
-      for (String cacheName : cacheContainer.getCacheNames()) {
-         if (cacheContainer.isRunning(cacheName)) {
-            Cache c = cacheContainer.getCache(cacheName, false);
-            if (c != null && c.getStatus().allowInvocations()) {
-               running.add(c);
-            }
-         }
-      }
+      Set<String> running = new LinkedHashSet<>();
+      running.addAll(getOrderedCacheNames(cacheContainer));
+      running.addAll(cacheContainer.getCacheNames());
+      running.add(DEFAULT_CACHE_NAME);
 
-      if (cacheContainer.isDefaultRunning()) {
-         Cache defaultCache = cacheContainer.getCache(EmbeddedCacheManager.DEFAULT_CACHE_NAME, false);
-         if (defaultCache != null && defaultCache.getStatus().allowInvocations()) {
-            running.add(defaultCache);
-         }
-      }
-
-      return running;
+      return running.stream()
+              .map(s -> cacheContainer.getCache(s, false))
+              .filter(Objects::nonNull)
+              .filter(c -> c.getStatus().allowInvocations())
+              .collect(Collectors.toCollection(LinkedHashSet::new));
    }
 
    private static void clearRunningTx(Cache cache) {
@@ -1212,7 +1215,7 @@ public class TestingUtil {
    }
 
    public static ObjectName getCacheObjectName(String jmxDomain) {
-      return getCacheObjectName(jmxDomain, CacheContainer.DEFAULT_CACHE_NAME + "(local)");
+      return getCacheObjectName(jmxDomain, DEFAULT_CACHE_NAME + "(local)");
    }
 
    public static ObjectName getCacheObjectName(String jmxDomain, String cacheName) {
