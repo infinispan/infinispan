@@ -105,11 +105,10 @@ public class PutMapCommand extends AbstractFlagAffectedCommand implements WriteC
 
             if (contextEntry.isCreated()) {
                notifier.notifyCacheEntryCreated(key, newValue, metadata, true, ctx, this);
+            } else {
+               notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue, previousMetadata,
+                                                 true, ctx, this);
             }
-            // TODO Only invoke the modified listener if the entry was not created?
-            notifier.notifyCacheEntryModified(key, newValue, metadata, previousValue, previousMetadata, true,
-                                              ctx, this);
-
             contextEntry.setValue(newValue);
             Metadatas.updateMetadata(contextEntry, metadata);
             contextEntry.setChanged(true);
