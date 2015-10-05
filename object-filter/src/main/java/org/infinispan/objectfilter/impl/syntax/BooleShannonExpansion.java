@@ -15,6 +15,11 @@ import java.util.Set;
  */
 public final class BooleShannonExpansion {
 
+   /**
+    * The maximum number of cofactors we allow in the product before giving up.
+    */
+   private final int maxExpansionCofactors;
+
    // todo [anistor] besides indexed vs non-indexed we need to detect occurrences of cross-relationship spurious matches and apply a second in-memory filtering phase
    public interface IndexedFieldProvider {
 
@@ -23,7 +28,8 @@ public final class BooleShannonExpansion {
 
    private final IndexedFieldProvider indexedFieldProvider;
 
-   public BooleShannonExpansion(IndexedFieldProvider indexedFieldProvider) {
+   public BooleShannonExpansion(int maxExpansionCofactors, IndexedFieldProvider indexedFieldProvider) {
+      this.maxExpansionCofactors = maxExpansionCofactors;
       this.indexedFieldProvider = indexedFieldProvider;
    }
 
@@ -252,6 +258,7 @@ public final class BooleShannonExpansion {
       }
 
       if (!collector.predicatesToRemove.isEmpty()) {
+         int numCofactors = 1;
          for (PrimaryPredicateExpr e : collector.predicatesToRemove) {
             Replacer replacer1 = new Replacer(e, ConstantBooleanExpr.TRUE);
             BooleanExpr e1 = booleanExpr.acceptVisitor(replacer1);
@@ -271,6 +278,7 @@ public final class BooleShannonExpansion {
             } else if (e2 == ConstantBooleanExpr.FALSE) {
                booleanExpr = e1;
             } else {
+               numCofactors *= 2;
                OrExpr disjunction;
                if (e1 instanceof OrExpr) {
                   disjunction = (OrExpr) e1;
@@ -287,6 +295,11 @@ public final class BooleShannonExpansion {
                }
                PredicateOptimisations.optimizePredicates(disjunction.getChildren(), false);
                booleanExpr = disjunction;
+            }
+            if (numCofactors > maxExpansionCofactors) {
+               // expansion is too big, it's better to do full scan rather than search the index with a huge and
+               // complex query that is a disjunction of many predicates so will very likely match everything anyway
+               return ConstantBooleanExpr.TRUE;
             }
          }
       }
