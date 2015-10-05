@@ -372,6 +372,7 @@ public abstract class AbstractCacheStream<T, S extends BaseStream<T, S>, T_CONS>
          }
          KeyTrackingTerminalOperation<Object, T, Object> op = getForEach(consumer, supplierForSegments(ch,
                  segmentsToProcess, excludedKeys));
+         op.handleInjection(registry);
          UUID id = csm.remoteStreamOperationRehashAware(getParallelDistribution(), parallel, ch, segmentsToProcess,
                  keysToFilter, new AtomicReferenceArrayToMap<>(results.referenceArray), includeLoader, op,
                  results);

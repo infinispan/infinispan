@@ -13,7 +13,8 @@ import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
-import org.infinispan.stream.impl.local.LocalKeyCacheStream;
+import org.infinispan.stream.impl.local.KeyStreamSupplier;
+import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.DataContainerRemoveIterator;
 
 import java.util.Iterator;
@@ -100,29 +101,17 @@ public class KeySetCommand<K, V> extends AbstractLocalCommand implements Visitab
       @Override
       public CacheStream<K> stream() {
          DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-         return new LocalKeyCacheStream<>(cache, false,
-                 dm != null ? dm.getConsistentHash() : null,
-                 () -> {
-                    DataContainer<K, V> dataContainer = cache.getAdvancedCache().getDataContainer();
-                    Spliterator<CacheEntry<K, V>> spliterator = Spliterators.spliterator(
-                            new DataContainerRemoveIterator<>(cache, dataContainer), dataContainer.size(),
-                            Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
-                    return StreamSupport.stream(spliterator, false);
-                 }, cache.getAdvancedCache().getComponentRegistry());
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
+                 () -> StreamSupport.stream(spliterator(), false)), false,
+                 cache.getAdvancedCache().getComponentRegistry());
       }
 
       @Override
       public CacheStream<K> parallelStream() {
          DistributionManager dm = cache.getAdvancedCache().getDistributionManager();
-         return new LocalKeyCacheStream<>(cache, true,
-                 dm != null ? dm.getConsistentHash() : null,
-                 () -> {
-                    DataContainer<K, V> dataContainer = cache.getAdvancedCache().getDataContainer();
-                    Spliterator<CacheEntry<K, V>> spliterator = Spliterators.spliterator(
-                            new DataContainerRemoveIterator<>(cache, dataContainer), dataContainer.size(),
-                            Spliterator.CONCURRENT | Spliterator.DISTINCT | Spliterator.NONNULL);
-                    return StreamSupport.stream(spliterator, true);
-                 }, cache.getAdvancedCache().getComponentRegistry());
+         return new LocalCacheStream<>(new KeyStreamSupplier<>(cache, dm != null ? dm.getConsistentHash() : null,
+                 () -> StreamSupport.stream(spliterator(), false)), true,
+                 cache.getAdvancedCache().getComponentRegistry());
       }
    }
 

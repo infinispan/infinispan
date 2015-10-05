@@ -10,19 +10,13 @@ import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
 import org.infinispan.commons.util.Closeables;
 import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.distribution.DistributionManager;
 import org.infinispan.stream.StreamMarshalling;
-import org.infinispan.stream.impl.local.LocalEntryCacheStream;
-import org.infinispan.stream.impl.local.LocalValueCacheStream;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.function.Function;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * CacheCollection that can be used for the values method of a cache.  Backs all the calls to the cacheSet version
@@ -96,18 +90,12 @@ public class ValueCacheCollection<K, V> extends AbstractCloseableIteratorCollect
    @Override
    public CacheStream<V> stream() {
       Stream<CacheEntry<K, V>> stream = cacheSet.stream();
-      if (stream instanceof LocalEntryCacheStream) {
-         return ((LocalEntryCacheStream) stream).toLocalValueCacheStream();
-      }
       return (CacheStream<V>) stream.map(StreamMarshalling.entryToValueFunction());
    }
 
    @Override
    public CacheStream<V> parallelStream() {
       Stream<CacheEntry<K, V>> stream = cacheSet.parallelStream();
-      if (stream instanceof LocalEntryCacheStream) {
-         return ((LocalEntryCacheStream) stream).toLocalValueCacheStream();
-      }
-      return (CacheStream<V>) cacheSet.parallelStream().map(StreamMarshalling.entryToValueFunction());
+      return (CacheStream<V>) stream.map(StreamMarshalling.entryToValueFunction());
    }
 }

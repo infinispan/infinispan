@@ -49,9 +49,9 @@ import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.security.AuthorizationManager;
 import org.infinispan.stats.Stats;
-import org.infinispan.stream.impl.local.LocalEntryCacheStream;
-import org.infinispan.stream.impl.local.LocalKeyCacheStream;
-import org.infinispan.stream.impl.local.LocalValueCacheStream;
+import org.infinispan.stream.impl.local.EntryStreamSupplier;
+import org.infinispan.stream.impl.local.KeyStreamSupplier;
+import org.infinispan.stream.impl.local.LocalCacheStream;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.concurrent.locks.LockManager;
 import org.infinispan.util.logging.Log;
@@ -1416,13 +1416,20 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CacheStream<Entry<K, V>> stream() {
-         return new LocalEntryCacheStream(SimpleCacheImpl.this, false, null, getStreamSupplier(false), getComponentRegistry());
+         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null,
+                 getStreamSupplier(false)), false, componentRegistry));
       }
 
       @Override
       public CacheStream<Entry<K, V>> parallelStream() {
-         return new LocalEntryCacheStream(SimpleCacheImpl.this, true, null, getStreamSupplier(true), getComponentRegistry());
+         return cacheStreamCast(new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null,
+                 getStreamSupplier(false)), true, componentRegistry));
       }
+   }
+
+   // This is a hack to allow the cast to work.  Java doesn't like subtypes in generics
+   private static <K, V> CacheStream<Entry<K, V>> cacheStreamCast(CacheStream stream) {
+      return stream;
    }
 
    protected class CacheEntrySet extends EntrySetBase<CacheEntry<K, V>> implements CacheSet<CacheEntry<K, V>> {
@@ -1470,14 +1477,14 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CacheStream<CacheEntry<K, V>> stream() {
-         Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(false);
-         return new LocalEntryCacheStream<>(SimpleCacheImpl.this, false, null, supplier, getComponentRegistry());
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null, getStreamSupplier(false)),
+                 false, componentRegistry);
       }
 
       @Override
       public CacheStream<CacheEntry<K, V>> parallelStream() {
-         Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(false);
-         return new LocalEntryCacheStream<>(SimpleCacheImpl.this, true, null, supplier, getComponentRegistry());
+         return new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this, null, getStreamSupplier(false)),
+                 true, componentRegistry);
       }
    }
 
@@ -1568,12 +1575,16 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
 
       @Override
       public CacheStream<V> stream() {
-         return new LocalValueCacheStream<>(SimpleCacheImpl.this, false, null, getStreamSupplier(false), getComponentRegistry());
+         LocalCacheStream<CacheEntry<K, V>> lcs = new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this,
+                 null, getStreamSupplier(false)), false, componentRegistry);
+         return (CacheStream<V>) lcs.map(CacheEntry::getValue);
       }
 
       @Override
       public CacheStream<V> parallelStream() {
-         return new LocalValueCacheStream<>(SimpleCacheImpl.this, true, null, getStreamSupplier(true), getComponentRegistry());
+         LocalCacheStream<CacheEntry<K, V>> lcs = new LocalCacheStream<>(new EntryStreamSupplier<>(SimpleCacheImpl.this,
+                 null, getStreamSupplier(false)), true, componentRegistry);
+         return (CacheStream<V>) lcs.map(CacheEntry::getValue);
       }
    }
 
@@ -1648,13 +1659,15 @@ public class SimpleCacheImpl<K, V> implements AdvancedCache<K, V> {
       @Override
       public CacheStream<K> stream() {
          Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(false);
-         return new LocalKeyCacheStream<>(SimpleCacheImpl.this, false, null, supplier, getComponentRegistry());
+         return new LocalCacheStream<K>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null,
+                 () -> supplier.get().map(CacheEntry::getKey)), false, componentRegistry);
       }
 
       @Override
       public CacheStream<K> parallelStream() {
          Supplier<Stream<CacheEntry<K, V>>> supplier = getStreamSupplier(true);
-         return new LocalKeyCacheStream<>(SimpleCacheImpl.this, true, null, supplier, getComponentRegistry());
+         return new LocalCacheStream<K>(new KeyStreamSupplier<>(SimpleCacheImpl.this, null,
+                 () -> supplier.get().map(CacheEntry::getKey)), true, componentRegistry);
       }
    }
 

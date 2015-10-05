@@ -1,10 +1,13 @@
 package org.infinispan.stream.impl.termop.primitive;
 
+import org.infinispan.Cache;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.ImmortalCacheEntry;
+import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.stream.impl.KeyTrackingTerminalOperation;
 import org.infinispan.stream.impl.intops.IntermediateOperation;
 import org.infinispan.stream.impl.termop.BaseTerminalOperation;
+import org.infinispan.stream.CacheAware;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -95,5 +98,13 @@ public class ForEachDoubleOperation<K> extends BaseTerminalOperation implements 
 
    public DoubleConsumer getConsumer() {
       return consumer;
+   }
+
+   @Override
+   public void handleInjection(ComponentRegistry registry) {
+      super.handleInjection(registry);
+      if (consumer instanceof CacheAware) {
+         ((CacheAware) consumer).injectCache(registry.getComponent(Cache.class));
+      }
    }
 }
