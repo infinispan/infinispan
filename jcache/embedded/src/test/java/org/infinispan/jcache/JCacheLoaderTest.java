@@ -1,25 +1,34 @@
 package org.infinispan.jcache;
 
+import org.infinispan.AdvancedCache;
 import org.infinispan.commons.util.CollectionFactory;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.DataContainer;
 import org.infinispan.jcache.embedded.JCacheManager;
 import org.infinispan.jcache.util.InMemoryJCacheLoader;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
+import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.util.ControlledTimeService;
+import org.infinispan.util.TimeService;
 import org.testng.annotations.Test;
 
 import javax.cache.Cache;
+import javax.cache.configuration.Factory;
 import javax.cache.configuration.FactoryBuilder;
 import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.Duration;
+import javax.cache.expiry.ExpiryPolicy;
 import javax.cache.integration.CompletionListenerFuture;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import static org.infinispan.test.TestingUtil.withCacheManager;
 import static org.testng.AssertJUnit.assertEquals;
@@ -32,7 +41,7 @@ import static org.testng.AssertJUnit.assertTrue;
  * @since 6.0
  */
 @Test(groups = "functional", testName = "jcache.JCacheLoaderTest")
-public class JCacheLoaderTest {
+public class JCacheLoaderTest extends AbstractInfinispanTest {
 
    public void testLoadAllWithJCacheLoader(Method m) {
       final String cacheName = m.getName();
@@ -99,6 +108,60 @@ public class JCacheLoaderTest {
             futureGet(future); // wait for key to be loaded
             assertTrue(future.isDone());
             assertEquals(numEntries * 2, dummyStore.stats().get("load").intValue());
+         }
+      });
+   }
+
+   public void testLoadEntryWithExpiration(Method m) {
+      final String cacheName = m.getName();
+      withCacheManager(new CacheManagerCallable(
+         TestCacheManagerFactory.createCacheManager(false)) {
+         @Override
+         public void call() {
+            ControlledTimeService timeService = new ControlledTimeService(0);
+            TestingUtil.replaceComponent(cm, TimeService.class, timeService, true);
+            JCacheManager jCacheManager = createJCacheManager(cm, this);
+
+            InMemoryJCacheLoader<Integer, String> cacheLoader = new InMemoryJCacheLoader<Integer, String>();
+            cacheLoader.store(1, "v1").store(2, "v2");
+
+            MutableConfiguration<Integer, String> cfg = new MutableConfiguration<Integer, String>();
+            final long lifespan = 3000;
+            cfg.setReadThrough(true);
+            cfg.setExpiryPolicyFactory(new Factory<ExpiryPolicy>() {
+               @Override
+               public ExpiryPolicy create() {
+                  return new ExpiryPolicy() {
+                     @Override
+                     public Duration getExpiryForCreation() {
+                        return new Duration(TimeUnit.MILLISECONDS, lifespan);
+                     }
+
+                     @Override
+                     public Duration getExpiryForAccess() {
+                        return null;
+                     }
+
+                     @Override
+                     public Duration getExpiryForUpdate() {
+                        return Duration.ZERO;
+                     }
+                  };
+               }
+            });
+            // JDK6 fails to compile when calling FactoryBuilder.factoryOf() :(
+            cfg.setCacheLoaderFactory(new FactoryBuilder.SingletonFactory(cacheLoader));
+            Cache<Integer, String> cache = jCacheManager.createCache(cacheName, cfg);
+
+            assertEquals("v2", cache.get(2));
+            assertEquals("v1", cache.get(1));
+
+            timeService.advance(lifespan + 100);
+
+            DataContainer<Integer, String> dc = cache.unwrap(AdvancedCache.class).getDataContainer();
+
+            assertEquals(null, dc.get(2));
+            assertEquals(null, dc.get(1));
          }
       });
    }
