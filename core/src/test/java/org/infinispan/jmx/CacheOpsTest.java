@@ -1,28 +1,31 @@
 package org.infinispan.jmx;
 
+import static org.infinispan.test.TestingUtil.getCacheObjectName;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.container.DefaultDataContainer;
+import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-
-import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
-
 /**
  * @author Mircea Markus
  * @since 5.2
  */
 @Test (groups = "functional", testName = "jmx.CacheClearTest")
-public class CacheClearTest extends SingleCacheManagerTest {
+public class CacheOpsTest extends SingleCacheManagerTest {
 
-   public static final String JMX_DOMAIN = CacheClearTest.class.getSimpleName();
+   public static final String JMX_DOMAIN = CacheOpsTest.class.getSimpleName();
    private MBeanServer server;
 
    @Override
@@ -31,6 +34,7 @@ public class CacheClearTest extends SingleCacheManagerTest {
       gcb.globalJmxStatistics().jmxDomain(JMX_DOMAIN).mBeanServerLookup(new PerThreadMBeanServerLookup()).enable();
       ConfigurationBuilder dcc = TestCacheManagerFactory.getDefaultCacheConfiguration(true);
       dcc.transaction().autoCommit(false);
+      dcc.eviction().type(EvictionType.COUNT).size(1000);
       dcc.jmxStatistics().enable();
       server = PerThreadMBeanServerLookup.getThreadMBeanServer();
       return new DefaultCacheManager(gcb.build(), dcc.build());

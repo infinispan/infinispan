@@ -60,6 +60,7 @@ public class EvictionConfigurationBuilder extends AbstractConfigurationChildBuil
     *
     * @param maxEntries
     */
+   @Deprecated
    public EvictionConfigurationBuilder maxEntries(long maxEntries) {
       return type(EvictionType.COUNT).size(maxEntries);
    }

@@ -200,4 +200,24 @@ public interface DataContainer<K, V> extends Iterable<InternalCacheEntry<K, V>> 
       InternalCacheEntry<K, V> compute(K key, InternalCacheEntry<K, V> oldEntry, InternalEntryFactory factory);
 
    }
+
+   /**
+    * Resizes the capacity of the underlying container. This is only supported if the container is bounded.
+    * An {@link UnsupportedOperationException} is thrown otherwise.
+    *
+    * @param newSize the new size
+    */
+   default void resize(long newSize) {
+      throw new UnsupportedOperationException();
+   }
+
+   /**
+    * Returns the capacity of the underlying container. This is only supported if the container is bounded. An {@link UnsupportedOperationException} is thrown
+    * otherwise.
+    *
+    * @return
+    */
+   default long capacity() {
+      throw new UnsupportedOperationException();
+   }
 }

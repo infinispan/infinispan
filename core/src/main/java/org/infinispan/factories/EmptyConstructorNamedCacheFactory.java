@@ -2,6 +2,7 @@ package org.infinispan.factories;
 
 
 import org.infinispan.batch.BatchContainer;
+import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.CommandsFactoryImpl;
 import org.infinispan.commons.CacheConfigurationException;
@@ -59,7 +60,7 @@ import static org.infinispan.commons.util.Util.getInstance;
  * @author Pedro Ruivo
  * @since 4.0
  */
-@DefaultFactoryFor(classes = {CacheNotifier.class, ClusterCacheNotifier.class, CommandsFactory.class,
+@DefaultFactoryFor(classes = {CacheNotifier.class, CacheConfigurationMBean.class, ClusterCacheNotifier.class, CommandsFactory.class,
                               PersistenceManager.class, InvocationContextContainer.class,
                               PassivationManager.class, ActivationManager.class,
                               BatchContainer.class, EvictionManager.class,
@@ -96,6 +97,8 @@ public class EmptyConstructorNamedCacheFactory extends AbstractNamedCacheCompone
             return (T) new InvocationContextContainerImpl();
          } else if (componentType.equals(CacheNotifier.class)) {
             return (T) new CacheNotifierImpl();
+         } else if (componentType.equals(CacheConfigurationMBean.class)) {
+            return (T) new CacheConfigurationMBean();
          } else if (componentType.equals(CommandsFactory.class)) {
             return (T) new CommandsFactoryImpl();
          } else if (componentType.equals(PersistenceManager.class)) {

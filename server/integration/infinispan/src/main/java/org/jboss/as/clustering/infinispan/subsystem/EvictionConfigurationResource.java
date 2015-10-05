@@ -25,11 +25,13 @@ package org.jboss.as.clustering.infinispan.subsystem;
 import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.eviction.EvictionType;
 import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
+import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 
@@ -53,19 +55,11 @@ public class EvictionConfigurationResource extends CacheConfigurationChildResour
                     .setDefaultValue(new ModelNode().set(EvictionStrategy.NONE.name()))
                     .build();
 
-    static final SimpleAttributeDefinition MAX_ENTRIES =
-            new SimpleAttributeDefinitionBuilder(ModelKeys.MAX_ENTRIES, ModelType.LONG, true)
-                    .setXmlName(Attribute.MAX_ENTRIES.getLocalName())
-                    .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
-                    .setDefaultValue(new ModelNode().set(-1))
-                    .build();
-
     static final SimpleAttributeDefinition SIZE =
             new SimpleAttributeDefinitionBuilder(ModelKeys.SIZE, ModelType.LONG, true)
                     .setXmlName(Attribute.SIZE.getLocalName())
                     .setAllowExpression(true)
-                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_NONE)
                     .setDefaultValue(new ModelNode().set(-1))
                     .build();
 
@@ -78,9 +72,21 @@ public class EvictionConfigurationResource extends CacheConfigurationChildResour
                    .setDefaultValue(new ModelNode().set(EvictionType.COUNT.name()))
                    .build();
 
-    static final AttributeDefinition[] ATTRIBUTES = {EVICTION_STRATEGY, MAX_ENTRIES, SIZE, TYPE};
+    static final AttributeDefinition[] ATTRIBUTES = {EVICTION_STRATEGY, SIZE, TYPE};
 
     public EvictionConfigurationResource(CacheConfigurationResource parent) {
         super(PATH, ModelKeys.EVICTION, parent, ATTRIBUTES);
+    }
+
+    @Override
+    public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
+        final OperationStepHandler restartCacheWriteHandler = new RestartCacheWriteAttributeHandler(
+                resource.getPathElement().getKey(), resource.getServiceInstaller(), attributes);
+
+        resourceRegistration.registerReadWriteAttribute(EVICTION_STRATEGY, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
+        resourceRegistration.registerReadWriteAttribute(TYPE, CacheReadAttributeHandler.INSTANCE, restartCacheWriteHandler);
+        resourceRegistration.registerReadWriteAttribute(SIZE, CacheReadAttributeHandler.INSTANCE, new RuntimeCacheConfigurationWriteAttributeHandler(SIZE, (configuration, newSize) -> {
+            configuration.eviction().size(newSize.asLong());
+        }));
     }
 }

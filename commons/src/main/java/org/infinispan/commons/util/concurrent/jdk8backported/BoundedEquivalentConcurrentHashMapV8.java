@@ -249,11 +249,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    static final Log log = LogFactory.getLog(BoundedEquivalentConcurrentHashMapV8.class);
 
    // EVICTION STUFF
-   
+
    public static <K, V> EvictionListener<K, V> getNullEvictionListener() {
       return new NullEvictionListener<>();
    }
-   
+
    public interface EvictionListener<K, V> {
 
       void onEntryEviction(Map<K, V> evicted);
@@ -373,10 +373,10 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
    public interface EvictionPolicy<K, V> {
 
-      Node<K,V> createNewEntry(K key, int hash, Node<K,V> next, V value, 
+      Node<K,V> createNewEntry(K key, int hash, Node<K,V> next, V value,
             EvictionEntry<K, V> evictionEntry);
 
-      TreeNode<K,V> createNewEntry(K key, int hash, TreeNode<K,V> next, 
+      TreeNode<K,V> createNewEntry(K key, int hash, TreeNode<K,V> next,
             TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry);
 
       /**
@@ -426,7 +426,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        *            removed entry in Segment
        */
       void onEntryRemove(Node<K, V> e);
-      
+
       /**
        * This should be invoked after an operation that would cause an element to be added
        * to the map to make sure that no elements need evicting.
@@ -434,7 +434,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * Note this is also invoked after a read hit.
        * <p>
        * This method is never invoked while holding a lock on any segment
-       * 
+       *
        * @return the nodes that were evicted
        */
       Collection<Node<K, V>> findIfEntriesNeedEvicting();
@@ -451,7 +451,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
    static class NullEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
       private final NodeEquivalence<K, V> nodeEq;
-      
+
       public NullEvictionPolicy(NodeEquivalence<K, V> nodeEq) {
          this.nodeEq = nodeEq;
       }
@@ -467,14 +467,14 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
 
       @Override
-      public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value, 
+      public Node<K, V> createNewEntry(K key, int hash, Node<K, V> next, V value,
             EvictionEntry<K, V> evictionEntry) {
          // No eviction passed in
          return new Node<K, V>(hash, nodeEq, key, value, next);
       }
-      
+
       @Override
-      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next, 
+      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next,
             TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry) {
          return new TreeNode<>(hash, nodeEq, key, value, next, parent, evictionEntry);
       }
@@ -523,7 +523,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
 
    static class LRUEvictionPolicy<K, V> implements EvictionPolicy<K, V> {
       final BoundedEquivalentConcurrentHashMapV8<K, V> map;
-      final StrippedConcurrentLinkedDeque<Node<K, V>> deque = 
+      final StrippedConcurrentLinkedDeque<Node<K, V>> deque =
             new StrippedConcurrentLinkedDeque<Node<K,V>>();
       volatile long maxSize;
       final AtomicReference<SizeAndEvicting> currentSize = new AtomicReference<>(
@@ -640,7 +640,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
 
       @Override
-      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next, 
+      public TreeNode<K, V> createNewEntry(K key, int hash, TreeNode<K, V> next,
             TreeNode<K, V> parent, V value, EvictionEntry<K, V> evictionEntry) {
          TreeNode<K, V> treeNode;
          if (evictionEntry == null) {
@@ -754,13 +754,13 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
 
       public void setQueueNode(DequeNode<LIRSNode<K, V>> queueNode) {
-         this.queueNode = queueNode; 
+         this.queueNode = queueNode;
       }
 
       @Override
       public String toString() {
-         return "LIRSNode [state=" + state + ", stackNode=" + 
-               System.identityHashCode(stackNode) + ", queueNode=" + 
+         return "LIRSNode [state=" + state + ", stackNode=" +
+               System.identityHashCode(stackNode) + ", queueNode=" +
                System.identityHashCode(queueNode)
                + ", key=" + key + "]";
       }
@@ -786,7 +786,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
    }
 
-   static SizeAndEvicting incrementSizeEviction(AtomicReference<SizeAndEvicting> currentSize, 
+   static SizeAndEvicting incrementSizeEviction(AtomicReference<SizeAndEvicting> currentSize,
          long size, long eviction) {
       boolean replaced = false;
       SizeAndEvicting lirsSize = null;
@@ -978,7 +978,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      e.val = value;
                      // We don't add a value to the map here as the map implementation
                      // will handle this for us afterwards
-                     
+
                      // In the case of eviction we add the node back as if it was a HIR_RESIDENT
                      // except we also have to evict an old HIR to make room
                      evictHIR = true;
@@ -1059,7 +1059,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * Prunes blocks in the bottom of the stack until a HOT block is removed.
        * If pruned blocks were resident, then they remain in the queue; non-resident blocks (if any)
        * are dropped
-       * @return Returns an array storing the removed LIR details.  The first element is 
+       * @return Returns an array storing the removed LIR details.  The first element is
        *         the DequeNode that was removed from the stack deque - this
        *         is helpful to determine if this entry was update concurrently (because
        *         it will have a new stack deque pointer if it was).  The second element is
@@ -1155,7 +1155,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                }
                lirsNode.setStackNode(null);
             }
-            
+
             // Also unlink from queue node if it was set
             DequeNode<LIRSNode<K, V>> queueNode = lirsNode.queueNode;
             if (queueNode != null) {
@@ -1184,7 +1184,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
             // we may have to do a write to the value most likely, so we retry this
             // with the table lock so we can properly do the update - NOTE that the
             // recency can change outside of this lock
-            if (recency == Recency.HIR_NONRESIDENT || 
+            if (recency == Recency.HIR_NONRESIDENT ||
                   recency == Recency.EVICTING) {
                reAttempt = true;
             } else {
@@ -1503,7 +1503,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                // finally evict it
                // The locking of the outer segment is required if the entry is hit with
                // an update at the same time
-               if (evict.state == Recency.EVICTING || 
+               if (evict.state == Recency.EVICTING ||
                      evict.state == Recency.HIR_NONRESIDENT) {
                   // Most of the following is copied from putVal method of CHMV8
                   // This is so we can get the owning node so we can synchronize
@@ -1569,7 +1569,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       NONE {
          @Override
          public <K, V> EvictionPolicy<K, V> make(
-               BoundedEquivalentConcurrentHashMapV8<K, V> map, 
+               BoundedEquivalentConcurrentHashMapV8<K, V> map,
                EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity) {
             return new NullEvictionPolicy<K, V>(map.nodeEq);
          }
@@ -1577,7 +1577,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       LRU {
          @Override
          public <K, V> EvictionPolicy<K, V> make(
-               BoundedEquivalentConcurrentHashMapV8<K, V> map, 
+               BoundedEquivalentConcurrentHashMapV8<K, V> map,
                EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity) {
             if (sizeCalculator == null) {
                return new LRUEvictionPolicy<K, V>(map, capacity,
@@ -1586,12 +1586,12 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                return new LRUEvictionPolicy<K, V>(map, capacity,
                      new NodeSizeCalculatorWrapper<K, V>(sizeCalculator), true);
             }
-            
+
          }
       },
       LIRS {
          @Override
-         public <K, V> EvictionPolicy<K, V> make(BoundedEquivalentConcurrentHashMapV8<K, V> map, 
+         public <K, V> EvictionPolicy<K, V> make(BoundedEquivalentConcurrentHashMapV8<K, V> map,
                EntrySizeCalculator<? super K, ? super V> sizeCalculator, long capacity) {
             if (sizeCalculator != null) {
                throw new IllegalArgumentException("LIRS does not support a size calculator!");
@@ -1996,7 +1996,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       volatile Node<K,V> next;
       volatile EvictionEntry<K, V> eviction;
 
-      Node(int hash, NodeEquivalence<K, V> nodeEq, K key, 
+      Node(int hash, NodeEquivalence<K, V> nodeEq, K key,
             V val, Node<K,V> next) { // EQUIVALENCE_MOD
          this.hash = hash;
          this.key = key;
@@ -2009,14 +2009,20 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return nodeEq.keyEq.hashCode(key) ^ nodeEq.valueEq.hashCode(value);
       }
 
+      @Override
       public final K getKey()       { return key; }
+      @Override
       public final V getValue()     { return val; }
+      @Override
       public final int hashCode()   { throw new UnsupportedOperationException("hashCode is not supported!"); } // EQUIVALENCE_MOD
+      @Override
       public String toString(){ return "Node: " + key + "=" + val; }
+      @Override
       public final V setValue(V value) {
          throw new UnsupportedOperationException();
       }
 
+      @Override
       public final boolean equals(Object o) {
          throw new UnsupportedOperationException("equals is not supported!");
       }
@@ -2304,7 +2310,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          Eviction evictionStrategy, EvictionListener<? super K, ? super V> evictionListener,
          Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
       this(maxSize, evictionStrategy, evictionListener, keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
-      
+
       if (initialCapacity < 0)
          throw new IllegalArgumentException();
       if (initialCapacity > maxSize) {
@@ -2346,7 +2352,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     */
    public BoundedEquivalentConcurrentHashMapV8(long maxSize, int initialCapacity, float loadFactor,
          Equivalence<? super K> keyEquivalence, Equivalence<? super V> valueEquivalence) {
-      this(maxSize, initialCapacity, loadFactor, 1, Eviction.LRU, getNullEvictionListener(), 
+      this(maxSize, initialCapacity, loadFactor, 1, Eviction.LRU, getNullEvictionListener(),
             keyEquivalence, valueEquivalence); // EQUIVALENCE_MOD
    }
 
@@ -2377,8 +2383,8 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          throw new IllegalArgumentException();
       if (initialCapacity < concurrencyLevel)   // Use at least as many bins
          initialCapacity = concurrencyLevel;   // as estimated threads
-      long size = (long)(1.0 + (long)initialCapacity / loadFactor);
-      int cap = (size >= (long)MAXIMUM_CAPACITY) ?
+      long size = (long)(1.0 + initialCapacity / loadFactor);
+      int cap = (size >= MAXIMUM_CAPACITY) ?
             MAXIMUM_CAPACITY : tableSizeFor((int)size);
       this.sizeCtl = cap;
    }
@@ -2388,16 +2394,18 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    /**
     * {@inheritDoc}
     */
+   @Override
    public int size() {
       long n = sumCount();
       return ((n < 0L) ? 0 :
-                    (n > (long)Integer.MAX_VALUE) ? Integer.MAX_VALUE :
+                    (n > Integer.MAX_VALUE) ? Integer.MAX_VALUE :
                           (int)n);
    }
 
    /**
     * {@inheritDoc}
     */
+   @Override
    public boolean isEmpty() {
       return sumCount() <= 0L; // ignore transient negative values
    }
@@ -2413,6 +2421,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public V get(Object key) {
       Node<K,V>[] tab; Node<K,V> e, p; int n, eh; K ek;
       int h = spread(keyEq.hashCode(key)); // EQUIVALENCE_MOD
@@ -2493,6 +2502,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         {@code equals} method; {@code false} otherwise
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public boolean containsKey(Object key) {
       return get(key) != null;
    }
@@ -2507,6 +2517,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         specified value
     * @throws NullPointerException if the specified value is null
     */
+   @Override
    public boolean containsValue(Object value) {
       if (value == null)
          throw new NullPointerException();
@@ -2534,6 +2545,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         {@code null} if there was no mapping for {@code key}
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    public V put(K key, V value) {
       return putVal(key, value, false);
    }
@@ -2584,7 +2596,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                         }
                         Node<K,V> pred = e;
                         if ((e = e.next) == null) {
-                           pred.next = evictionPolicy.createNewEntry(key,  hash,  null, 
+                           pred.next = evictionPolicy.createNewEntry(key,  hash,  null,
                                  value, null);
                            evictionPolicy.onEntryMiss(pred.next, value);
                            // When entry not present, attempt to activate if necessary
@@ -2635,6 +2647,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @param m mappings to be stored in this map
     */
+   @Override
    public void putAll(Map<? extends K, ? extends V> m) {
       tryPresize(m.size());
       for (Map.Entry<? extends K, ? extends V> e : m.entrySet())
@@ -2650,6 +2663,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         {@code null} if there was no mapping for {@code key}
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public V remove(Object key) {
       return replaceNode(key, null, null);
    }
@@ -2784,6 +2798,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
    /**
     * Removes all of the mappingsonEntryHit(e) from this map.
     */
+   @Override
    public void clear() {
       long delta = 0L; // negative number of deletions
       int i = 0;
@@ -2837,6 +2852,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return the set view
     */
+   @Override
    public KeySetView<K,V> keySet() {
       KeySetView<K,V> ks;
       return (ks = keySet) != null ? ks : (keySet = new KeySetView<K,V>(this, null));
@@ -2860,6 +2876,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return the collection view
     */
+   @Override
    public Collection<V> values() {
       ValuesView<K,V> vs;
       return (vs = values) != null ? vs : (values = new ValuesView<K,V>(this));
@@ -2882,6 +2899,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return the set view
     */
+   @Override
    public Set<Map.Entry<K,V>> entrySet() {
       EntrySetView<K,V> es;
       return (es = entrySet) != null ? es : (entrySet = new EntrySetView<K,V>(this));
@@ -2894,6 +2912,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return the hash code value for this map
     */
+   @Override
    public int hashCode() {
       int h = 0;
       Node<K,V>[] t;
@@ -2920,6 +2939,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @return a string representation of this map
     */
+   @Override
    public String toString() {
       Node<K,V>[] t;
       int f = (t = table) == null ? 0 : t.length;
@@ -2956,6 +2976,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @param o object to be compared for equality with this map
     * @return {@code true} if the specified object is equal to this map
     */
+   @Override
    @SuppressWarnings("unchecked")
    public boolean equals(Object o) {
       if (o != this) {
@@ -3088,7 +3109,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          sizeCtl = 0;
       else {
          int n;
-         if (size >= (long)(MAXIMUM_CAPACITY >>> 1))
+         if (size >= MAXIMUM_CAPACITY >>> 1)
             n = MAXIMUM_CAPACITY;
          else {
             int sz = (int)size;
@@ -3130,7 +3151,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      p.next = first;
                      TreeNode<K,V> hd = null, tl = null;
                      for (q = p; q != null; q = q.next) {
-                        TreeNode<K,V> t = evictionPolicy.createNewEntry(q.key, q.hash, 
+                        TreeNode<K,V> t = evictionPolicy.createNewEntry(q.key, q.hash,
                               null, null, q.val, q.eviction);
                         if ((t.prev = tl) == null)
                            hd = t;
@@ -3164,6 +3185,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         or {@code null} if there was no mapping for the key
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    public V putIfAbsent(K key, V value) {
       return putVal(key, value, true);
    }
@@ -3173,6 +3195,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public boolean remove(Object key, Object value) {
       if (key == null)
          throw new NullPointerException();
@@ -3184,6 +3207,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *
     * @throws NullPointerException if any of the arguments are null
     */
+   @Override
    public boolean replace(K key, V oldValue, V newValue) {
       if (key == null || oldValue == null || newValue == null)
          throw new NullPointerException();
@@ -3197,6 +3221,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     *         or {@code null} if there was no mapping for the key
     * @throws NullPointerException if the specified key or value is null
     */
+   @Override
    public V replace(K key, V value) {
       if (key == null || value == null)
          throw new NullPointerException();
@@ -3216,11 +3241,13 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @return the mapping for the key, if present; else the default value
     * @throws NullPointerException if the specified key is null
     */
+   @Override
    public V getOrDefault(Object key, V defaultValue) {
       V v;
       return (v = get(key)) == null ? defaultValue : v;
    }
 
+   @Override
    public void forEach(BiConsumer<? super K, ? super V> action) {
       if (action == null) throw new NullPointerException();
       Node<K,V>[] t;
@@ -3234,6 +3261,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
    }
 
+   @Override
    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
       if (function == null) throw new NullPointerException();
       Node<K,V>[] t;
@@ -3277,6 +3305,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws RuntimeException or Error if the mappingFunction does so,
     *         in which case the mapping is left unestablished
     */
+   @Override
    public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
       if (key == null || mappingFunction == null)
          throw new NullPointerException();
@@ -3396,6 +3425,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws RuntimeException or Error if the remappingFunction does so,
     *         in which case the mapping is unchanged
     */
+   @Override
    public V computeIfPresent(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       if (key == null || remappingFunction == null)
          throw new NullPointerException();
@@ -3471,7 +3501,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
       if (delta != 0) {
-         addCount((long)delta, binCount);
+         addCount(delta, binCount);
       }
       return val;
    }
@@ -3496,6 +3526,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws RuntimeException or Error if the remappingFunction does so,
     *         in which case the mapping is unchanged
     */
+   @Override
    public V compute(K key,
          BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
       if (key == null || remappingFunction == null)
@@ -3622,7 +3653,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
       if (delta != 0) {
-         addCount((long)delta, binCount);
+         addCount(delta, binCount);
       }
       notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
       return val;
@@ -3648,6 +3679,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @throws RuntimeException or Error if the remappingFunction does so,
     *         in which case the mapping is unchanged
     */
+   @Override
    public V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
       if (key == null || value == null || remappingFunction == null)
          throw new NullPointerException();
@@ -3751,7 +3783,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
       if (delta != 0) {
-         addCount((long)delta, binCount);
+         addCount(delta, binCount);
          notifyEvictionListener(evictionPolicy.findIfEntriesNeedEvicting());
       }
       return val;
@@ -3878,6 +3910,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.nextTable = tab;
       }
 
+      @Override
       Node<K,V> find(int h, Object k) {
          // loop to avoid arbitrarily deep recursion on forwarding nodes
          outer: for (Node<K,V>[] tab = nextTable;;) {
@@ -3913,6 +3946,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(RESERVED, nodeEq, null, null, null); // EQUIVALENCE_MOD
       }
 
+      @Override
       Node<K,V> find(int h, Object k) {
          return null;
       }
@@ -3955,12 +3989,16 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       return tab;
    }
 
-   public void resize(int newSize) {
+   public void resize(long newSize) {
       if (newSize <= 0) {
          throw new IllegalArgumentException();
       }
       this.maxSize = newSize;
       this.evictionPolicy.resize(newSize);
+   }
+
+   public long capacity() {
+      return maxSize;
    }
 
    /**
@@ -3995,7 +4033,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       }
       if (check >= 0) {
          Node<K,V>[] tab, nt; int n, sc;
-         while (s >= (long)(sc = sizeCtl) && (sizeCtl * .75) < maxSize && (tab = table) != null &&
+         while (s >= (sc = sizeCtl) && (sizeCtl * .75) < maxSize && (tab = table) != null &&
                (n = tab.length) < MAXIMUM_CAPACITY) {
             int rs = resizeStamp(n);
             if (sc < 0) {
@@ -4192,7 +4230,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      int lc = 0, hc = 0;
                      for (Node<K,V> e = t.first; e != null; e = e.next) {
                         int h = e.hash;
-                        TreeNode<K,V> p = evictionPolicy.createNewEntry(e.key, h, null, 
+                        TreeNode<K,V> p = evictionPolicy.createNewEntry(e.key, h, null,
                               null, e.val, e.eviction);
                         if ((h & n) == 0) {
                            if ((p.prev = loTail) == null)
@@ -4285,7 +4323,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       TreeNode<K,V> right;
       TreeNode<K,V> prev;    // needed to unlink next upon deletion
       boolean red;
-      
+
       TreeNode(int hash, NodeEquivalence<K,V> nodeEq, K key, V val, Node<K,V> next, // EQUIVALENCE_MOD
             TreeNode<K,V> parent, EvictionEntry<K, V> evictionEntry) {
          super(hash, nodeEq, key, val, next); // EQUIVALENCE_MOD
@@ -4295,6 +4333,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
 
+      @Override
       Node<K,V> find(int h, Object k) {
          return findTreeNode(h, k, null);
       }
@@ -4333,6 +4372,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return null;
       }
 
+      @Override
       public String toString() {
          return "Tree" + super.toString() + " with hash " + System.identityHashCode(this);
       }
@@ -4469,6 +4509,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * using tree comparisons from root, but continues linear
        * search when lock not available.
        */
+      @Override
       final Node<K,V> find(int h, Object k) {
          if (k != null) {
             for (Node<K,V> e = first; e != null; ) {
@@ -5036,6 +5077,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          advanceUntilValidValue();
       }
 
+      @Override
       final Node<K, V> advance() {
          throw new UnsupportedOperationException();
       }
@@ -5077,6 +5119,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(tab, index, size, limit, map);
       }
 
+      @Override
       public final K next() {
          K k;
          if ((k = key) == null)
@@ -5086,6 +5129,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return k;
       }
 
+      @Override
       public final K nextElement() { return next(); }
    }
 
@@ -5096,6 +5140,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(tab, index, size, limit, map);
       }
 
+      @Override
       public final V next() {
          K k;
          if ((k = key) == null)
@@ -5106,6 +5151,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return v;
       }
 
+      @Override
       public final V nextElement() { return next(); }
    }
 
@@ -5116,6 +5162,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(tab, index, size, limit, map);
       }
 
+      @Override
       public final Map.Entry<K,V> next() {
          K k;
          if ((k = key) == null)
@@ -5139,11 +5186,16 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.val = val;
          this.map = map;
       }
+      @Override
       public K getKey()        { return key; }
+      @Override
       public V getValue()      { return val; }
+      @Override
       public int hashCode()    { return map.keyEq.hashCode(key) ^ map.valueEq.hashCode(val); } // EQUIVALENCE_MOD
+      @Override
       public String toString() { return key + "=" + val; }
 
+      @Override
       public boolean equals(Object o) {
          Object k, v; Map.Entry<?,?> e;
          return ((o instanceof Map.Entry) &&
@@ -5161,6 +5213,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * could even have been removed, in which case the put will
        * re-establish). We do not and cannot guarantee more.
        */
+      @Override
       public V setValue(V value) {
          if (value == null) throw new NullPointerException();
          V v = val;
@@ -5179,6 +5232,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.est = est;
       }
 
+      @Override
       public ConcurrentHashMapSpliterator<K> trySplit() {
          int i, f, h;
          return (h = ((i = baseIndex) + (f = baseLimit)) >>> 1) <= i ? null :
@@ -5186,12 +5240,14 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      f, est >>>= 1);
       }
 
+      @Override
       public void forEachRemaining(Consumer<? super K> action) {
          if (action == null) throw new NullPointerException();
          for (Node<K,V> p; (p = advance()) != null;)
             action.accept(p.key);
       }
 
+      @Override
       public boolean tryAdvance(Consumer<? super K> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V> p;
@@ -5201,6 +5257,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return true;
       }
 
+      @Override
       public long estimateSize() { return est; }
 
    }
@@ -5214,6 +5271,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.est = est;
       }
 
+      @Override
       public ConcurrentHashMapSpliterator<V> trySplit() {
          int i, f, h;
          return (h = ((i = baseIndex) + (f = baseLimit)) >>> 1) <= i ? null :
@@ -5221,12 +5279,14 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      f, est >>>= 1);
       }
 
+      @Override
       public void forEachRemaining(Consumer<? super V> action) {
          if (action == null) throw new NullPointerException();
          for (Node<K,V> p; (p = advance()) != null;)
             action.accept(p.val);
       }
 
+      @Override
       public boolean tryAdvance(Consumer<? super V> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V> p;
@@ -5236,6 +5296,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return true;
       }
 
+      @Override
       public long estimateSize() { return est; }
 
    }
@@ -5251,6 +5312,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.est = est;
       }
 
+      @Override
       public ConcurrentHashMapSpliterator<Map.Entry<K,V>> trySplit() {
          int i, f, h;
          return (h = ((i = baseIndex) + (f = baseLimit)) >>> 1) <= i ? null :
@@ -5258,6 +5320,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                      f, est >>>= 1, map);
       }
 
+      @Override
       public void forEachRemaining(Consumer<? super Map.Entry<K,V>> action) {
          if (action == null) throw new NullPointerException();
          for (Node<K,V> p; (p = advance()) != null; ) {
@@ -5267,6 +5330,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          }
       }
 
+      @Override
       public boolean tryAdvance(Consumer<? super Map.Entry<K,V>> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V> p;
@@ -5280,6 +5344,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return false;
       }
 
+      @Override
       public long estimateSize() { return est; }
 
    }
@@ -5310,6 +5375,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     * @param action the action
     * @since 1.8
     */
+   @Override
    public void forEach(long parallelismThreshold,
          BiConsumer<? super K,? super V> action) {
       if (action == null) throw new NullPointerException();
@@ -6042,8 +6108,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * Removes all of the elements from this view, by removing all
        * the mappings from the map backing this view.
        */
+      @Override
       public final void clear()      { map.clear(); }
+      @Override
       public final int size()        { return map.size(); }
+      @Override
       public final boolean isEmpty() { return map.isEmpty(); }
 
       // implementations below rely on concrete classes supplying these
@@ -6056,12 +6125,16 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * guaranteed to) reflect any modifications subsequent to
        * construction.
        */
+      @Override
       public abstract Iterator<E> iterator();
+      @Override
       public abstract boolean contains(Object o);
+      @Override
       public abstract boolean remove(Object o);
 
       private static final String oomeMsg = "Required array size too large";
 
+      @Override
       public final Object[] toArray() {
          long sz = map.mappingCount();
          if (sz > MAX_ARRAY_SIZE)
@@ -6084,6 +6157,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return (i == n) ? r : Arrays.copyOf(r, i);
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public final <T> T[] toArray(T[] a) {
          long sz = map.mappingCount();
@@ -6125,6 +6199,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        *
        * @return a string representation of this collection
        */
+      @Override
       public final String toString() {
          StringBuilder sb = new StringBuilder();
          sb.append('[');
@@ -6141,6 +6216,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return sb.append(']').toString();
       }
 
+      @Override
       public final boolean containsAll(Collection<?> c) {
          if (c != this) {
             for (Object e : c) {
@@ -6151,6 +6227,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return true;
       }
 
+      @Override
       public final boolean removeAll(Collection<?> c) {
          boolean modified = false;
          for (Iterator<E> it = iterator(); it.hasNext();) {
@@ -6162,6 +6239,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return modified;
       }
 
+      @Override
       public final boolean retainAll(Collection<?> c) {
          boolean modified = false;
          for (Iterator<E> it = iterator(); it.hasNext();) {
@@ -6208,6 +6286,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * {@inheritDoc}
        * @throws NullPointerException if the specified key is null
        */
+      @Override
       public boolean contains(Object o) { return map.containsKey(o); }
 
       /**
@@ -6219,11 +6298,13 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * @return {@code true} if the backing map contained the specified key
        * @throws NullPointerException if the specified key is null
        */
+      @Override
       public boolean remove(Object o) { return map.remove(o) != null; }
 
       /**
        * @return an iterator over the keys of the backing map
        */
+      @Override
       public Iterator<K> iterator() {
          Node<K,V>[] t;
          BoundedEquivalentConcurrentHashMapV8<K,V> m = map;
@@ -6241,6 +6322,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * @throws UnsupportedOperationException if no default mapped value
        * for additions was provided
        */
+      @Override
       public boolean add(K e) {
          V v;
          if ((v = value) == null)
@@ -6259,6 +6341,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
        * @throws UnsupportedOperationException if no default mapped value
        * for additions was provided
        */
+      @Override
       public boolean addAll(Collection<? extends K> c) {
          boolean added = false;
          V v;
@@ -6271,6 +6354,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return added;
       }
 
+      @Override
       public int hashCode() {
          int h = 0;
          for (K e : this)
@@ -6278,6 +6362,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return h;
       }
 
+      @Override
       public boolean equals(Object o) {
          Set<?> c;
          return ((o instanceof Set) &&
@@ -6294,6 +6379,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return new KeySpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n);
       }
 
+      @Override
       public void forEach(Consumer<? super K> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V>[] t;
@@ -6315,10 +6401,12 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          implements Collection<V>, java.io.Serializable {
       private static final long serialVersionUID = 2249069246763182397L;
       ValuesView(BoundedEquivalentConcurrentHashMapV8<K,V> map) { super(map); }
+      @Override
       public final boolean contains(Object o) {
          return map.containsValue(o);
       }
 
+      @Override
       public final boolean remove(Object o) {
          if (o != null) {
             for (Iterator<V> it = iterator(); it.hasNext();) {
@@ -6331,6 +6419,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return false;
       }
 
+      @Override
       public final Iterator<V> iterator() {
          BoundedEquivalentConcurrentHashMapV8<K,V> m = map;
          Node<K,V>[] t;
@@ -6338,9 +6427,11 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return new ValueIterator<K,V>(t, f, 0, f, m);
       }
 
+      @Override
       public final boolean add(V e) {
          throw new UnsupportedOperationException();
       }
+      @Override
       public final boolean addAll(Collection<? extends V> c) {
          throw new UnsupportedOperationException();
       }
@@ -6353,6 +6444,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return new ValueSpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n);
       }
 
+      @Override
       public void forEach(Consumer<? super V> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V>[] t;
@@ -6374,6 +6466,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       private static final long serialVersionUID = 2249069246763182397L;
       EntrySetView(BoundedEquivalentConcurrentHashMapV8<K,V> map) { super(map); }
 
+      @Override
       @SuppressWarnings("unchecked")
       public boolean contains(Object o) {
          Object k, v, r; Map.Entry<?,?> e;
@@ -6384,6 +6477,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
                        (v == r || map.valueEq.equals((V) r, v))); // EQUIVALENCE_MOD
       }
 
+      @Override
       public boolean remove(Object o) {
          Object k, v; Map.Entry<?,?> e;
          return ((o instanceof Map.Entry) &&
@@ -6395,6 +6489,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       /**
        * @return an iterator over the entries of the backing map
        */
+      @Override
       public Iterator<Map.Entry<K,V>> iterator() {
          BoundedEquivalentConcurrentHashMapV8<K,V> m = map;
          Node<K,V>[] t;
@@ -6402,10 +6497,12 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return new EntryIterator<K,V>(t, f, 0, f, m);
       }
 
+      @Override
       public boolean add(Entry<K,V> e) {
          return map.putVal(e.getKey(), e.getValue(), false) == null;
       }
 
+      @Override
       public boolean addAll(Collection<? extends Entry<K,V>> c) {
          boolean added = false;
          for (Entry<K,V> e : c) {
@@ -6415,6 +6512,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return added;
       }
 
+      @Override
       public final int hashCode() {
          int h = 0;
          Node<K,V>[] t;
@@ -6430,6 +6528,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return h;
       }
 
+      @Override
       public final boolean equals(Object o) {
          Set<?> c;
          return ((o instanceof Set) &&
@@ -6446,6 +6545,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          return new EntrySpliterator<K,V>(t, f, 0, f, n < 0L ? 0L : n, m);
       }
 
+      @Override
       public void forEach(Consumer<? super Map.Entry<K,V>> action) {
          if (action == null) throw new NullPointerException();
          Node<K,V>[] t;
@@ -6470,7 +6570,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
     */
    abstract static class BulkTask<K,V,R> extends CountedCompleter<R> {
       private static final long serialVersionUID = -3076449340738586169L;
-      
+
       Node<K,V>[] tab;        // same as Traverser
       Node<K,V> next;
       int index;
@@ -6541,6 +6641,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.action = action;
       }
+      @Override
       public final void compute() {
          final Consumer<? super K> action;
          if ((action = this.action) != null) {
@@ -6569,6 +6670,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.action = action;
       }
+      @Override
       public final void compute() {
          final Consumer<? super V> action;
          if ((action = this.action) != null) {
@@ -6599,6 +6701,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.action = action;
       }
+      @Override
       public final void compute() {
          final Consumer<? super Entry<K,V>> action;
          if ((action = this.action) != null) {
@@ -6633,6 +6736,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.action = action;
       }
+      @Override
       public final void compute() {
          final BiConsumer<? super K, ? super V> action;
          if ((action = this.action) != null) {
@@ -6664,6 +6768,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.transformer = transformer; this.action = action;
       }
+      @Override
       public final void compute() {
          final Function<? super K, ? extends U> transformer;
          final Consumer<? super U> action;
@@ -6699,6 +6804,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.transformer = transformer; this.action = action;
       }
+      @Override
       public final void compute() {
          final Function<? super V, ? extends U> transformer;
          final Consumer<? super U> action;
@@ -6735,6 +6841,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.transformer = transformer; this.action = action;
       }
+      @Override
       public final void compute() {
          final Function<Map.Entry<K,V>, ? extends U> transformer;
          final Consumer<? super U> action;
@@ -6775,6 +6882,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.transformer = transformer; this.action = action;
       }
+      @Override
       public final void compute() {
          final BiFunction<? super K, ? super V, ? extends U> transformer;
          final Consumer<? super U> action;
@@ -6812,7 +6920,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.searchFunction = searchFunction; this.result = result;
       }
+      @Override
       public final U getRawResult() { return result.get(); }
+      @Override
       public final void compute() {
          final Function<? super K, ? extends U> searchFunction;
          final AtomicReference<U> result;
@@ -6856,7 +6966,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.searchFunction = searchFunction; this.result = result;
       }
+      @Override
       public final U getRawResult() { return result.get(); }
+      @Override
       public final void compute() {
          final Function<? super V, ? extends U> searchFunction;
          final AtomicReference<U> result;
@@ -6900,7 +7012,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.searchFunction = searchFunction; this.result = result;
       }
+      @Override
       public final U getRawResult() { return result.get(); }
+      @Override
       public final void compute() {
          final Function<Entry<K,V>, ? extends U> searchFunction;
          final AtomicReference<U> result;
@@ -6944,7 +7058,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t);
          this.searchFunction = searchFunction; this.result = result;
       }
+      @Override
       public final U getRawResult() { return result.get(); }
+      @Override
       public final void compute() {
          final BiFunction<? super K, ? super V, ? extends U> searchFunction;
          final AtomicReference<U> result;
@@ -6989,7 +7105,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.reducer = reducer;
       }
+      @Override
       public final K getRawResult() { return result; }
+      @Override
       public final void compute() {
          final BiFunction<? super K, ? super K, ? extends K> reducer;
          if ((reducer = this.reducer) != null) {
@@ -7036,7 +7154,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.reducer = reducer;
       }
+      @Override
       public final V getRawResult() { return result; }
+      @Override
       public final void compute() {
          final BiFunction<? super V, ? super V, ? extends V> reducer;
          if ((reducer = this.reducer) != null) {
@@ -7083,7 +7203,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          super(p, b, i, f, t); this.nextRight = nextRight;
          this.reducer = reducer;
       }
+      @Override
       public final Map.Entry<K,V> getRawResult() { return result; }
+      @Override
       public final void compute() {
          final BiFunction<Map.Entry<K,V>, Map.Entry<K,V>, ? extends Map.Entry<K,V>> reducer;
          if ((reducer = this.reducer) != null) {
@@ -7131,7 +7253,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.reducer = reducer;
       }
+      @Override
       public final U getRawResult() { return result; }
+      @Override
       public final void compute() {
          final Function<? super K, ? extends U> transformer;
          final BiFunction<? super U, ? super U, ? extends U> reducer;
@@ -7184,7 +7308,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.reducer = reducer;
       }
+      @Override
       public final U getRawResult() { return result; }
+      @Override
       public final void compute() {
          final Function<? super V, ? extends U> transformer;
          final BiFunction<? super U, ? super U, ? extends U> reducer;
@@ -7237,7 +7363,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.reducer = reducer;
       }
+      @Override
       public final U getRawResult() { return result; }
+      @Override
       public final void compute() {
          final Function<Map.Entry<K,V>, ? extends U> transformer;
          final BiFunction<? super U, ? super U, ? extends U> reducer;
@@ -7290,7 +7418,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.reducer = reducer;
       }
+      @Override
       public final U getRawResult() { return result; }
+      @Override
       public final void compute() {
          final BiFunction<? super K, ? super V, ? extends U> transformer;
          final BiFunction<? super U, ? super U, ? extends U> reducer;
@@ -7348,7 +7478,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Double getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToDoubleFunction<? super K> transformer;
          final DoubleBinaryOperator reducer;
@@ -7397,7 +7529,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Double getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToDoubleFunction<? super V> transformer;
          final DoubleBinaryOperator reducer;
@@ -7446,7 +7580,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Double getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToDoubleFunction<Map.Entry<K,V>> transformer;
          final DoubleBinaryOperator reducer;
@@ -7495,7 +7631,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Double getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToDoubleBiFunction<? super K, ? super V> transformer;
          final DoubleBinaryOperator reducer;
@@ -7544,7 +7682,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Long getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToLongFunction<? super K> transformer;
          final LongBinaryOperator reducer;
@@ -7593,7 +7733,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Long getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToLongFunction<? super V> transformer;
          final LongBinaryOperator reducer;
@@ -7642,7 +7784,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Long getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToLongFunction<Map.Entry<K,V>> transformer;
          final LongBinaryOperator reducer;
@@ -7691,7 +7835,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Long getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToLongBiFunction<? super K, ? super V> transformer;
          final LongBinaryOperator reducer;
@@ -7740,7 +7886,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Integer getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToIntFunction<? super K> transformer;
          final IntBinaryOperator reducer;
@@ -7789,7 +7937,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Integer getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToIntFunction<? super V> transformer;
          final IntBinaryOperator reducer;
@@ -7838,7 +7988,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Integer getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToIntFunction<Map.Entry<K,V>> transformer;
          final IntBinaryOperator reducer;
@@ -7887,7 +8039,9 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
          this.transformer = transformer;
          this.basis = basis; this.reducer = reducer;
       }
+      @Override
       public final Integer getRawResult() { return result; }
+      @Override
       public final void compute() {
          final ToIntBiFunction<? super K, ? super V> transformer;
          final IntBinaryOperator reducer;
@@ -8109,6 +8263,7 @@ public class BoundedEquivalentConcurrentHashMapV8<K,V> extends AbstractMap<K,V>
       try {
          return java.security.AccessController.doPrivileged
                (new java.security.PrivilegedExceptionAction<sun.misc.Unsafe>() {
+                  @Override
                   public sun.misc.Unsafe run() throws Exception {
                      Class<sun.misc.Unsafe> k = sun.misc.Unsafe.class;
                      for (java.lang.reflect.Field f : k.getDeclaredFields()) {
