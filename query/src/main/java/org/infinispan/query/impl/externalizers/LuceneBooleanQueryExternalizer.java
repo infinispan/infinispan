@@ -25,25 +25,27 @@ public class LuceneBooleanQueryExternalizer extends AbstractExternalizer<Boolean
    @Override
    public BooleanQuery readObject(final ObjectInput input) throws IOException, ClassNotFoundException {
       final boolean disableCoord = input.readBoolean();
-      final BooleanQuery unserialized = new BooleanQuery(disableCoord);
-      unserialized.setBoost(input.readFloat());
-      unserialized.setMinimumNumberShouldMatch(UnsignedNumeric.readUnsignedInt(input));
+      final float boost = input.readFloat();
+      final int minimumNumberShouldMatch = UnsignedNumeric.readUnsignedInt(input);
       final int numberOfClauses = UnsignedNumeric.readUnsignedInt(input);
+
+      BooleanQuery.Builder unserialized = new BooleanQuery.Builder()
+              .setDisableCoord(disableCoord)
+              .setMinimumNumberShouldMatch(minimumNumberShouldMatch);
       assureNumberOfClausesLimit(numberOfClauses);
-      final BooleanClause[] booleanClauses = new BooleanClause[numberOfClauses];
-      //We take advantage of the following method not making a defensive copy:
-      final List<BooleanClause> clauses = unserialized.clauses();
-      for (int i=0; i<numberOfClauses; i++) {
-         appendReadClause(input, clauses);
+      for (int i = 0; i < numberOfClauses; i++) {
+         appendReadClause(input, unserialized);
       }
-      return unserialized;
+      BooleanQuery booleanQuery = unserialized.build();
+      booleanQuery.setBoost(boost);
+      return booleanQuery;
    }
 
-   private void appendReadClause(ObjectInput input, List<BooleanClause> clauses) throws IOException, ClassNotFoundException {
+   private void appendReadClause(ObjectInput input, BooleanQuery.Builder builder) throws IOException, ClassNotFoundException {
       final Occur occur = (Occur) input.readObject();
       Query q = (Query) input.readObject();
       BooleanClause clause = new BooleanClause(q, occur);
-      clauses.add(clause);
+      builder.add(clause);
    }
 
    private void writeClause(final ObjectOutput output, final BooleanClause booleanClause) throws IOException {
@@ -59,8 +61,8 @@ public class LuceneBooleanQueryExternalizer extends AbstractExternalizer<Boolean
       final List<BooleanClause> booleanClauses = query.clauses();
       final int numberOfClauses = booleanClauses.size();
       UnsignedNumeric.writeUnsignedInt(output, numberOfClauses);
-      for (int i=0; i<numberOfClauses; i++) {
-         writeClause(output, booleanClauses.get(i));
+      for (BooleanClause booleanClause : booleanClauses) {
+         writeClause(output, booleanClause);
       }
    }
 

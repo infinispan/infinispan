@@ -240,7 +240,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       Query allQuery = queryBuilder.all().createQuery();
       assert searchManager.getQuery(allQuery, Person.class).list().size() == 3;
 
-      Map<String,Person> allWrites = new HashMap<String,Person>();
+      Map<String,Person> allWrites = new HashMap<>();
       allWrites.put(key1, person1);
       allWrites.put(key2, person2);
       allWrites.put(key3, person3);
@@ -268,7 +268,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person4.setName("New Goat");
       person4.setBlurb("Also eats grass");
 
-      Map<String,Person> allWrites = new HashMap<String,Person>();
+      Map<String,Person> allWrites = new HashMap<>();
       allWrites.put(key1, person1);
       allWrites.put(key2, person2);
       allWrites.put(key3, person3);
@@ -304,12 +304,7 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       person4.setBlurb("Also eats grass");
 
       cache2.putForExternalRead("newGoat", person4);
-      eventually(new Condition() {
-         @Override
-         public boolean isSatisfied() throws Exception {
-            return cache2.get("newGoat") != null;
-         }
-      });
+      eventually(() -> cache2.get("newGoat") != null);
       List found = searchManager.getQuery(allQuery, Person.class).list();
       AssertJUnit.assertEquals(4, found.size());
 
@@ -431,9 +426,10 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       prepareTestData();
       queryParser = createQueryParser("blurb");
 
-      BooleanQuery luceneQuery = new BooleanQuery();
-      luceneQuery.add(queryParser.parse("eats"), Occur.SHOULD);
-      luceneQuery.add(queryParser.parse("playing"), Occur.SHOULD);
+      BooleanQuery luceneQuery = new BooleanQuery.Builder()
+              .add(queryParser.parse("eats"), Occur.SHOULD)
+              .add(queryParser.parse("playing"), Occur.SHOULD)
+              .build();
       CacheQuery cacheQuery = Search.getSearchManager(cache1).getQuery(luceneQuery);
       AssertJUnit.assertEquals(3, cacheQuery.getResultSize());
 
@@ -530,15 +526,11 @@ public class ClusteredCacheTest extends MultipleCacheManagersTest {
       CacheQuery cacheQuery = manager.getQuery(luceneQuery);
 
       int counter = 0;
-      ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY));
-      try {
-         while(found.hasNext()) {
+      try (ResultIterator found = cacheQuery.iterator(new FetchOptions().fetchMode(FetchOptions.FetchMode.LAZY))) {
+         while (found.hasNext()) {
             found.next();
             counter++;
-        }
-      }
-      finally {
-         found.close();
+         }
       }
 
       AssertJUnit.assertEquals(2, counter);
