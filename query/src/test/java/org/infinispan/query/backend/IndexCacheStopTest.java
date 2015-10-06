@@ -10,6 +10,7 @@ import org.infinispan.manager.CacheContainer;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.query.CacheQuery;
 import org.infinispan.query.Search;
+import org.infinispan.query.test.AnotherGrassEater;
 import org.infinispan.query.test.Person;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.TestingUtil;
@@ -20,6 +21,8 @@ import org.infinispan.util.DependencyGraph;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import static org.infinispan.test.fwk.TestCacheManagerFactory.createClusteredCacheManager;
 import static org.testng.Assert.assertTrue;
@@ -109,7 +112,7 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
       cacheManager.defineConfiguration("cacheA", getIndexedConfigWithCustomCaches("single", "single", "single").build());
       cacheManager.defineConfiguration("cacheB", getIndexedConfigWithCustomCaches("single", "single", "single").build());
       startAndIndexData("cacheA", cacheManager);
-      startAndIndexData("cacheB", cacheManager);
+      startAndIndexOtherEntityData("cacheB", cacheManager);
       cacheManager.stop();
 
       assertEquals(cacheManager.getStatus(), ComponentStatus.TERMINATED);
@@ -139,25 +142,31 @@ public class IndexCacheStopTest extends AbstractInfinispanTest {
    }
 
    private void startAndIndexData(String cacheName, CacheContainer cacheContainer) {
-      Cache<Integer, Person> cache;
+      startAndIndexEntityData(cacheName, cacheContainer, i -> new Person("name" + i, "blurb" + i, i), Person.class);
+   }
+
+   private void startAndIndexOtherEntityData(String cacheName, CacheContainer cacheContainer) {
+      startAndIndexEntityData(cacheName, cacheContainer, i -> new AnotherGrassEater("name" + i, "blurb" + i), AnotherGrassEater.class);
+   }
+
+   private <T> void startAndIndexEntityData(String cacheName, CacheContainer cacheContainer, Function<Integer, T> provider, Class<T> type) {
+      Cache<Integer, T> cache;
       if (cacheName == null) {
          cache = cacheContainer.getCache();
       } else {
          cache = cacheContainer.getCache(cacheName);
       }
-      populateData(cache);
-      assertIndexPopulated(cache);
+      populateData(cache, provider);
+      assertIndexPopulated(cache, type);
    }
 
-   private void assertIndexPopulated(Cache<Integer, Person> cache) {
-      CacheQuery query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), Person.class);
+   private <T> void assertIndexPopulated(Cache<Integer, T> cache, Class<T> clazz) {
+      CacheQuery query = Search.getSearchManager(cache).getQuery(new MatchAllDocsQuery(), clazz);
       assertEquals(query.list().size(), CACHE_SIZE);
    }
 
-   private void populateData(Cache<Integer, Person> cache) {
-      for (int i = 0; i < CACHE_SIZE; i++) {
-         cache.put(i, new Person("name" + i, "blurb" + i, i));
-      }
+   private <T> void populateData(Cache<Integer, T> cache, Function<Integer, T> provider) {
+      IntStream.range(0, CACHE_SIZE).forEach(i -> cache.put(i, provider.apply(i)));
    }
 
    private ConfigurationBuilder getBaseConfig() {
