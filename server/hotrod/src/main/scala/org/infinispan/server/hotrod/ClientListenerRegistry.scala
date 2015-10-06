@@ -183,8 +183,12 @@ class ClientListenerRegistry(configuration: HotRodServerConfiguration) extends L
       @CacheEntryExpired
       def onCacheEvent(event: CacheEntryEvent[Bytes, Bytes]) {
          if (isSendEvent(event)) {
-            val dataVersion = event.getMetadata.version().asInstanceOf[NumericVersion].getVersion
-            sendEvent(event.getKey, event.getValue, dataVersion, event)
+            sendEvent(event.getKey, event.getValue, if (event.getMetadata == null) {
+               null.asInstanceOf[Long]
+            } else {
+               event.getMetadata.version().asInstanceOf[NumericVersion].getVersion
+            }, event);
+
          }
       }
 
