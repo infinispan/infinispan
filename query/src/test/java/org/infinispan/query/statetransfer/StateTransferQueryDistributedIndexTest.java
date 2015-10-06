@@ -14,10 +14,10 @@ public class StateTransferQueryDistributedIndexTest extends StateTransferQueryIn
    @Override
    protected void configureCache(ConfigurationBuilder builder) {
       super.configureCache(builder);
-
       builder.indexing().index(Index.LOCAL)
-            .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
-            .addProperty("lucene_version", "LUCENE_CURRENT");
+              .addProperty("default.directory_provider", "infinispan")
+              .addProperty("default.indexmanager", "org.infinispan.query.indexmanager.InfinispanIndexManager")
+              .addProperty("lucene_version", "LUCENE_CURRENT");
 
    }
 }
