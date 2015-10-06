@@ -15,6 +15,7 @@ import org.infinispan.query.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -83,14 +84,15 @@ public class DistributedExecutorMassIndexer implements MassIndexer {
          } else {
             indexWork = new IndexWorker(indexedType, true);
          }
-         DistributedTask task = executor
+         DistributedTask<Void> task = executor
                .createDistributedTaskBuilder(indexWork)
                .timeout(0, TimeUnit.NANOSECONDS)
                .build();
          if (replicated && shared && !sharded) {
             futures.add(executor.submit(task));
          } else {
-            futures.addAll(executor.submitEverywhere(task));
+            //needs casting as submitEverywhere declares a return type of `List<Future<T>>` but all those Future actually implement NotifyingFuture
+            futures.addAll((List) executor.submitEverywhere(task));
          }
       }
       return new ExecutionResult<>(futures, toFlush);
