@@ -134,7 +134,7 @@ public class KeyTransformationHandlerTest {
    public void testStringToKeyWithInvalidTransformer() {
       ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
 
-      key = keyTransformationHandler.stringToKey("T:org.infinispan.SomeTransformer:key1", contextClassLoader);
+      key = keyTransformationHandler.stringToKey("T:org.infinispan.InexistentTransformer:key1", contextClassLoader);
    }
 
    public void testStringToKeyWithCustomTransformable() {
