@@ -1,29 +1,20 @@
 package org.infinispan.interceptors;
 
 import org.infinispan.commands.CommandsFactory;
-import org.infinispan.commands.FlagAffectedCommand;
-import org.infinispan.commands.read.AbstractDataCommand;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.EntryFactory;
-import org.infinispan.container.entries.CacheEntry;
-import org.infinispan.container.entries.InternalCacheEntry;
-import org.infinispan.context.Flag;
-import org.infinispan.context.InvocationContext;
-import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.factories.annotations.Start;
 import org.infinispan.interceptors.base.BaseRpcInterceptor;
 import org.infinispan.statetransfer.StateTransferManager;
 import org.infinispan.util.concurrent.locks.LockManager;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Base class for replication and distribution interceptors.
  *
  * @author anistor@redhat.com
- * @since 5.2
+ * @deprecated Since 8.1, use {@link org.infinispan.interceptors.sequential.ClusteringInterceptor} instead.
  */
+@Deprecated
 public abstract class ClusteringInterceptor extends BaseRpcInterceptor {
 
    protected CommandsFactory cf;

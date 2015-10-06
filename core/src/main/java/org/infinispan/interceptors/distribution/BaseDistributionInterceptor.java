@@ -65,8 +65,9 @@ import static org.infinispan.commons.util.Util.toStr;
  * @author Mircea.Markus@jboss.com
  * @author Pete Muir
  * @author Dan Berindei <dan@infinispan.org>
- * @since 4.0
+ * @deprecated Since 8.1, use {@link org.infinispan.interceptors.sequential.BaseDistributionInterceptor} instead.
  */
+@Deprecated
 public abstract class BaseDistributionInterceptor extends ClusteringInterceptor {
 
    protected DistributionManager dm;

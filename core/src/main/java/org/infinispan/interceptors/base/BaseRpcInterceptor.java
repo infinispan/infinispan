@@ -27,7 +27,7 @@ import java.util.Set;
  *
  * @author <a href="mailto:manik@jboss.org">Manik Surtani (manik@jboss.org)</a>
  * @author Mircea.Markus@jboss.com
- * @deprecated
+ * @deprecated Since 8.1, use {@link org.infinispan.interceptors.sequential.BaseRpcInterceptor} instead.
  */
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
