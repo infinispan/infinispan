@@ -12,6 +12,7 @@ import static org.testng.Assert.*;
  * @author gustavonalle
  * @since 7.0
  */
+@Test(groups = "unit", testName = "query.config.ProgrammaticAutoConfigTest")
 public class ProgrammaticAutoConfigTest {
 
    @Test
