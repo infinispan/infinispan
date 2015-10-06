@@ -3,7 +3,6 @@ package org.infinispan.query;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.search.Query;
 import org.hibernate.search.query.dsl.EntityContext;
-import org.hibernate.search.spi.SearchIntegrator;
 import org.hibernate.search.stat.Statistics;
 
 /**
@@ -31,14 +30,6 @@ public interface SearchManager {
     * @return
     */
    EntityContext buildQueryBuilderForClass(Class<?> entityType);
-
-   /**
-    * Experimental.
-    * Access the SearchFactory
-    * @Deprecated This method is going to be changed or removed with no replacement.
-    * If you need this method, please let us know so that replacements can be created.
-    */
-   SearchIntegrator getSearchFactory();
 
    /**
     * Experimental!
