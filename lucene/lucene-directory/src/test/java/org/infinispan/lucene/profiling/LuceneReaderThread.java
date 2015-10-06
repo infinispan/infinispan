@@ -9,7 +9,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.TotalHitCountCollector;
 import org.apache.lucene.store.Directory;
 
 /**
@@ -38,9 +38,14 @@ public class LuceneReaderThread extends LuceneUserThread {
       refreshIndexReader();
       for (String term : strings) {
          Query query = new TermQuery(new Term("main", term));
-         TopDocs docs = searcher.search(query, null, 1);
-         if (docs.totalHits != 1) {
+         TotalHitCountCollector countingCollector = new TotalHitCountCollector();
+         searcher.search(query, countingCollector);
+         int hits = countingCollector.getTotalHits();
+         if (hits == 0) {
             throw new RuntimeException("String '" + term + "' should exist but was not found in index");
+         }
+         else if (hits > 1) {
+            throw new RuntimeException("String '" + term + "' should be unique, but " + hits + " were found" );
          }
       }
       // put the strings back at their place:

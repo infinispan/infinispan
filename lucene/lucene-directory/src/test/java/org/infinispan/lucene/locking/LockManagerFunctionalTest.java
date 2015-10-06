@@ -4,6 +4,7 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.Lock;
 import org.apache.lucene.store.LockFactory;
+import org.apache.lucene.store.LockObtainFailedException;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.lucene.CacheTestSupport;
@@ -55,17 +56,26 @@ public class LockManagerFunctionalTest extends MultipleCacheManagersTest {
 
    @Test
    public void testLuceneIndexLocking() throws IOException {
-      BaseLockFactory baseLockFactory = BaseLockFactory.INSTANCE;
-      assertFalse(IndexWriter.isLocked(directory1));
+      assertFalse(isLocked(directory1));
       Lock obtainedLock = directory1.obtainLock(IndexWriter.WRITE_LOCK_NAME);
-      assertTrue(IndexWriter.isLocked(directory1));
-      assertTrue(IndexWriter.isLocked(directory2));
-      assertFalse(IndexWriter.isLocked(directory3));
+      assertTrue(isLocked(directory1));
+      assertTrue(isLocked(directory2));
+      assertFalse(isLocked(directory3));
       obtainedLock.ensureValid(); //will throw an exception on failure
       obtainedLock.close();
-      assertFalse(IndexWriter.isLocked(directory1));
-      assertFalse(IndexWriter.isLocked(directory2));
-      assertFalse(IndexWriter.isLocked(directory3));
+      assertFalse(isLocked(directory1));
+      assertFalse(isLocked(directory2));
+      assertFalse(isLocked(directory3));
+   }
+
+   //Replacing the now deprecated IndexWriter.isLocked helper
+   private static boolean isLocked(Directory directory) throws IOException {
+      try {
+         directory.obtainLock(IndexWriter.WRITE_LOCK_NAME).close();
+         return false;
+      } catch (LockObtainFailedException failed) {
+         return true;
+      }
    }
 
    protected LockFactory makeLockFactory() {

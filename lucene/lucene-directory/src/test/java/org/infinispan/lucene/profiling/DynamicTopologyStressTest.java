@@ -177,7 +177,7 @@ public class DynamicTopologyStressTest extends MultipleCacheManagersTest {
                if (i==0) continue; // nothing written yet
                String termValue = "HA" + i;
                Query query = new TermQuery(new Term( FIELDNAME, termValue));
-               TopDocs docs = indexSearcher.search(query, null, 1);
+               TopDocs docs = indexSearcher.search(query, 1);
                if (docs.totalHits != 1) {
                   failed.set(true);
                   log.error("String '" + termValue + "' should exist but was not found in index");

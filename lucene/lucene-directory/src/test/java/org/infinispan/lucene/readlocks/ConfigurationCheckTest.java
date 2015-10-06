@@ -24,7 +24,7 @@ public class ConfigurationCheckTest extends SingleCacheManagerTest {
       configurationBuilder
          .eviction()
             .strategy(EvictionStrategy.LRU)
-            .maxEntries(10)
+            .maxEntries(10l)
             ;
       return TestCacheManagerFactory.createCacheManager(configurationBuilder);
    }

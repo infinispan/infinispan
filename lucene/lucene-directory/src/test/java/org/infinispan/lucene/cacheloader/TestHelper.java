@@ -10,7 +10,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.TotalHitCountCollector;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.infinispan.lucene.CacheTestSupport;
@@ -75,10 +75,12 @@ public class TestHelper {
                queryToFind = new TermQuery(new Term("secondaryField", term));
                queryNotToFind = new TermQuery(new Term("main", term));
             }
-            TopDocs docs = searcher.search(queryToFind, null, 2);
-            AssertJUnit.assertEquals("String '" + term + "' should exist but was not found in index", 1, docs.totalHits);
-            docs = searcher.search(queryNotToFind, null, 1);
-            AssertJUnit.assertEquals("String '" + term + "' should NOT exist but was found in index", 0, docs.totalHits);
+            TotalHitCountCollector toFindCounter = new TotalHitCountCollector();
+            searcher.search(queryToFind, toFindCounter);
+            AssertJUnit.assertEquals("String '" + term + "' should exist but was not found in index", 1, toFindCounter.getTotalHits());
+            TotalHitCountCollector toNotFindCounter = new TotalHitCountCollector();
+            searcher.search(queryNotToFind, toNotFindCounter);
+            AssertJUnit.assertEquals("String '" + term + "' should NOT exist but was found in index", 0, toNotFindCounter.getTotalHits());
          }
       }
       finally {

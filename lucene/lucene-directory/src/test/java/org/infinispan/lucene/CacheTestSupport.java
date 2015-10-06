@@ -153,7 +153,7 @@ public abstract class CacheTestSupport {
          // dummy query that probably won't return anything
          Term term = new Term( "path", "good" );
          TermQuery termQuery = new TermQuery(term);
-         search.search(termQuery, null, 1);
+         search.search(termQuery, 1);
       } finally {
          if (search != null) {
             indexReader.close();
@@ -199,7 +199,7 @@ public abstract class CacheTestSupport {
       IndexReader reader = DirectoryReader.open(dir);
       IndexSearcher searcher = new IndexSearcher(reader);
       Query query = new TermQuery(new Term("body", term));
-      TopDocs docs = searcher.search(query, null, expectedResults + 1);
+      TopDocs docs = searcher.search(query, expectedResults + 1);
       AssertJUnit.assertEquals(expectedResults, docs.totalHits);
       for (ScoreDoc scoreDoc : docs.scoreDocs) {
          int docId = scoreDoc.doc;

@@ -167,7 +167,7 @@ public class IndexReadingStressTest {
          for (int i = startValue; i <= max && state.needToQuit() == false; i += increment) {
             Term termToQuery = new Term("main", Integer.toString(i));
             Query query = new TermQuery(termToQuery);
-            TopDocs docs = searcher.search(query, null, 1);
+            TopDocs docs = searcher.search(query, 1);
             if (i % 2 == 0 && docs.totalHits != 1) {
                //Even values should be found in the index
                throw new RuntimeException("String '" + String.valueOf(i) + "' should exist but was not found in index");
