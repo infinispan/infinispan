@@ -22,7 +22,7 @@ public class MassIndexingWithStoreTest extends DistributedMassIndexingTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       cacheCfg.eviction().maxEntries(1).strategy(EvictionStrategy.LRU);
-      cacheCfg.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(getClass().getSimpleName());
+      cacheCfg.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(getClass().getSimpleName()).purgeOnStartup(true);
       cacheCfg.storeAsBinary().enable();
       cacheCfg.indexing()
             .index(Index.ALL)
