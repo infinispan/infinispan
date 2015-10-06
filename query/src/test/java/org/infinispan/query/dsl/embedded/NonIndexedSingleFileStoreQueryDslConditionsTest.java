@@ -37,7 +37,7 @@ public class NonIndexedSingleFileStoreQueryDslConditionsTest extends NonIndexedQ
             .location(tmpDirectory);
 
       // ensure the data container contains minimal data so the store will need to be accessed to get the rest
-      cfg.locking().concurrencyLevel(1).dataContainer().eviction().maxEntries(1);
+      cfg.locking().concurrencyLevel(1).dataContainer().eviction().maxEntries(1L);
 
       createClusteredCaches(1, cfg);
    }

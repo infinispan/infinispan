@@ -272,10 +272,10 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
    }
 
    private BooleanQuery createLuceneQuery() throws ParseException {
-      BooleanQuery luceneQuery = new BooleanQuery();
-      luceneQuery.add(queryParser.parse("eats"), Occur.SHOULD);
-      luceneQuery.add(queryParser.parse("playing"), Occur.SHOULD);
-      return luceneQuery;
+      return new BooleanQuery.Builder()
+              .add(queryParser.parse("eats"), Occur.SHOULD)
+              .add(queryParser.parse("playing"), Occur.SHOULD)
+              .build();
    }
 
 }

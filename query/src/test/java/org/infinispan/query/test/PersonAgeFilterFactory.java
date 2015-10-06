@@ -1,15 +1,11 @@
 package org.infinispan.query.test;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.CachingWrapperFilter;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.Query;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.QueryWrapperFilter;
-import org.apache.lucene.search.TermQuery;
 import org.hibernate.search.annotations.Factory;
-import org.hibernate.search.annotations.Key;
-import org.hibernate.search.filter.FilterKey;
-import org.hibernate.search.filter.StandardFilterKey;
 
 /**
  * A filter factory producing a filter for Person. Filters by age.
@@ -22,20 +18,14 @@ import org.hibernate.search.filter.StandardFilterKey;
 public class PersonAgeFilterFactory {
    private Integer age;
 
-   @Key
-   public FilterKey getKey() {
-      StandardFilterKey key = new StandardFilterKey();
-      key.addParameter(age);
-      return key;
-   }
-
    public void setAge(Integer age) {
       this.age = age;
    }
 
    @Factory
    public Filter getFilter() {
-      Query query = new TermQuery(new Term("age", age.toString()));
-      return new CachingWrapperFilter(new QueryWrapperFilter(query));
+      NumericRangeQuery<Integer> query = NumericRangeQuery.newIntRange("age", this.age, age, true, true);
+      BooleanQuery filterQuery = new BooleanQuery.Builder().add(query, BooleanClause.Occur.FILTER).build();
+      return new QueryWrapperFilter(filterQuery);
    }
 }

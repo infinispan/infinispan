@@ -153,12 +153,11 @@ public class InconsistentIndexesAfterRestartTest extends AbstractInfinispanTest 
                     '}';
         }
 
-        public static Query searchByName(String name) {
-            BooleanQuery query = new BooleanQuery();
-            query.add(new TermQuery(
-                    new Term(SEntity.IDX_NAME, name.toLowerCase())), BooleanClause.Occur.MUST);
-            return query;
-        }
+       public static Query searchByName(String name) {
+          return new BooleanQuery.Builder()
+                  .add(new TermQuery(
+                          new Term(SEntity.IDX_NAME, name.toLowerCase())), BooleanClause.Occur.MUST).build();
+       }
     }
 
     @BeforeClass

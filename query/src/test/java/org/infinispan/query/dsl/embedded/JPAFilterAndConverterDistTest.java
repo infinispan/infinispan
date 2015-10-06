@@ -2,9 +2,12 @@ package org.infinispan.query.dsl.embedded;
 
 import org.infinispan.Cache;
 import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.commons.util.Closeables;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.distribution.MagicKey;
+import org.infinispan.filter.CacheFilters;
 import org.infinispan.objectfilter.ObjectFilter;
 import org.infinispan.objectfilter.impl.ReflectionMatcher;
 import org.infinispan.query.dsl.embedded.impl.JPAFilterAndConverter;
@@ -15,6 +18,7 @@ import org.testng.annotations.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
@@ -57,7 +61,8 @@ public class JPAFilterAndConverterDistTest extends MultipleCacheManagersTest {
 
       JPAFilterAndConverter filterAndConverter = new JPAFilterAndConverter<Object, Person>("from org.infinispan.query.test.Person where blurb is null and age <= 31", null, ReflectionMatcher.class);
 
-      CloseableIterator<Map.Entry<Object, ObjectFilter.FilterResult>> iterator = cache(0).getAdvancedCache().filterEntries(filterAndConverter).converter(filterAndConverter).iterator();
+      Stream<CacheEntry<Object, Object>> stream = cache(0).getAdvancedCache().cacheEntrySet().stream();
+      CloseableIterator<Map.Entry<Object, ObjectFilter.FilterResult>> iterator = Closeables.iterator(CacheFilters.filterAndConvert(stream, filterAndConverter).iterator());
       Map<Object, ObjectFilter.FilterResult> results = mapFromIterator(iterator);
 
       assertEquals(2, results.size());
@@ -72,7 +77,7 @@ public class JPAFilterAndConverterDistTest extends MultipleCacheManagersTest {
     */
    private Map<Object, ObjectFilter.FilterResult> mapFromIterator(CloseableIterator<Map.Entry<Object, ObjectFilter.FilterResult>> iterator) {
       try {
-         Map<Object, ObjectFilter.FilterResult> result = new HashMap<Object, ObjectFilter.FilterResult>();
+         Map<Object, ObjectFilter.FilterResult> result = new HashMap<>();
          while (iterator.hasNext()) {
             Map.Entry<Object, ObjectFilter.FilterResult> entry = iterator.next();
             result.put(entry.getKey(), entry.getValue());

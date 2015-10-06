@@ -9,6 +9,7 @@ import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
 import org.infinispan.query.queries.faceting.Car;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Test for MassIndexer with a store
@@ -21,7 +22,7 @@ public class MassIndexingWithStoreTest extends DistributedMassIndexingTest {
    @Override
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder cacheCfg = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
-      cacheCfg.eviction().maxEntries(1).strategy(EvictionStrategy.LRU);
+      cacheCfg.eviction().maxEntries(1L).strategy(EvictionStrategy.LRU);
       cacheCfg.persistence().passivation(true).addStore(DummyInMemoryStoreConfigurationBuilder.class).storeName(getClass().getSimpleName()).purgeOnStartup(true);
       cacheCfg.storeAsBinary().enable();
       cacheCfg.indexing()
@@ -33,9 +34,7 @@ public class MassIndexingWithStoreTest extends DistributedMassIndexingTest {
 
       waitForClusterToForm(neededCacheNames);
 
-      for (Cache cache : cacheList) {
-         caches.add(cache);
-      }
+      caches.addAll(cacheList.stream().collect(Collectors.toList()));
 
    }
 

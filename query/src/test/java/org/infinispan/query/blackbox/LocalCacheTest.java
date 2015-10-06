@@ -14,9 +14,9 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Explanation;
-import org.apache.lucene.search.Filter;
-import org.apache.lucene.search.PrefixFilter;
+import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryWrapperFilter;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
@@ -316,9 +316,9 @@ public class LocalCacheTest extends SingleCacheManagerTest {
 
       assert found.size() == 2;
 
-      Filter filter = new PrefixFilter(new Term("blurb", "cheese"));
+      BooleanQuery filter = new BooleanQuery.Builder().add(new PrefixQuery(new Term("blurb", "cheese")), Occur.FILTER).build();
 
-      cacheQuery.filter(filter);
+      cacheQuery.filter(new QueryWrapperFilter(filter));
 
       found = cacheQuery.list();
 
@@ -629,9 +629,10 @@ public class LocalCacheTest extends SingleCacheManagerTest {
       // Create a term that I know will return me everything with name goat.
       Term goat = new Term ("name", "goat");
 
-      BooleanQuery luceneQuery = new BooleanQuery();
-      luceneQuery.add(new TermQuery(goat), Occur.SHOULD);
-      luceneQuery.add(new TermQuery(navin), Occur.SHOULD);
+      BooleanQuery luceneQuery = new BooleanQuery.Builder()
+              .add(new TermQuery(goat), Occur.SHOULD)
+              .add(new TermQuery(navin), Occur.SHOULD)
+              .build();
       CacheQuery cacheQuery = Search.getSearchManager(cache).getQuery(luceneQuery);
 
       // We know that we've got all 3 hits.

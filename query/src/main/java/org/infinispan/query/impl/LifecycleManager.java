@@ -10,8 +10,8 @@ import javax.management.ObjectName;
 import org.hibernate.search.cfg.Environment;
 import org.hibernate.search.cfg.SearchMapping;
 import org.hibernate.search.cfg.spi.SearchConfiguration;
-import org.hibernate.search.spi.SearchFactoryBuilder;
 import org.hibernate.search.spi.SearchIntegrator;
+import org.hibernate.search.spi.SearchIntegratorBuilder;
 import org.infinispan.AdvancedCache;
 import org.infinispan.Cache;
 import org.infinispan.commons.CacheException;
@@ -256,7 +256,7 @@ public class LifecycleManager extends AbstractModuleLifecycle {
          indexingProperties = addProgrammaticMappings(indexingProperties, cr);
          // Set up the search factory for Hibernate Search first.
          SearchConfiguration config = new SearchableCacheConfiguration(new Class[0], indexingProperties, uninitializedCacheManager, cr);
-         searchFactory = new SearchFactoryBuilder().configuration(config).buildSearchFactory();
+         searchFactory = new SearchIntegratorBuilder().configuration(config).buildSearchIntegrator();
          cr.registerComponent(searchFactory, SearchIntegrator.class);
       }
       return searchFactory;

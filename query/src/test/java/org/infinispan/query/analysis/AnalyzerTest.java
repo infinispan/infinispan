@@ -1,10 +1,10 @@
 package org.infinispan.query.analysis;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.Token;
+import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
-import org.hibernate.search.util.AnalyzerUtils;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.Index;
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -14,6 +14,11 @@ import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -83,88 +88,78 @@ public class AnalyzerTest extends SingleCacheManagerTest {
 
       Analyzer analyzer = search.getAnalyzer( "standard_analyzer" );
       String text = "This is just FOOBAR's";
-      Token[] tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "This", "is", "just", "FOOBAR's" } );
+      assertEquals(asList("This", "is", "just", "FOOBAR's"), terms(analyzer, "name", text));
 
       analyzer = search.getAnalyzer( "html_standard_analyzer" );
       text = "This is <b>foo</b><i>bar's</i>";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "This", "is", "foobar's" } );
+      assertEquals(asList("This", "is", "foobar's"), terms(analyzer, "name", text));
 
       analyzer = search.getAnalyzer( "html_whitespace_analyzer" );
       text = "This is <b>foo</b><i>bar's</i>";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "This", "is", "foobar's" } );
+      assertEquals(asList("This", "is", "foobar's"), terms(analyzer, "name", text));
 
       analyzer = search.getAnalyzer( "length_analyzer" );
       text = "ab abc abcd abcde abcdef";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "abc", "abcd", "abcde" } );
+      assertEquals(asList("abc", "abcd", "abcde" ), terms(analyzer, "name", text));
 
       analyzer = search.getAnalyzer( "length_analyzer" );
       text = "ab abc abcd abcde abcdef";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "abc", "abcd", "abcde" } );
+      assertEquals(asList("abc", "abcd", "abcde"), terms(analyzer, "name", text));
 
       analyzer = search.getAnalyzer( "porter_analyzer" );
       text = "bikes bikes biking";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "bike", "bike", "bike" } );
+      assertEquals(asList("bike", "bike", "bike"), terms(analyzer, "name", text));
 
       analyzer = search.getAnalyzer( "word_analyzer" );
       text = "CamelCase";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "Camel", "Case" } );
+      assertEquals(asList("Camel", "Case"), terms(analyzer, "name", text));
 
       analyzer = search.getAnalyzer( "synonym_analyzer" );
       text = "ipod cosmos";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual(tokens, new String[]{"ipod", "i-pod", "cosmos", "universe"});
+      assertEquals(asList("ipod", "i-pod", "cosmos", "universe"), terms(analyzer, "name", text));
 
       analyzer = search.getAnalyzer( "shingle_analyzer" );
       text = "please divide this sentence into shingles";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual(
-            tokens,
-            new String[] {
-                  "please",
-                  "please divide",
-                  "divide",
-                  "divide this",
-                  "this",
-                  "this sentence",
-                  "sentence",
-                  "sentence into",
-                  "into",
-                  "into shingles",
-                  "shingles"
-            }
-      );
+      assertEquals(asList(
+              "please",
+              "please divide",
+              "divide",
+              "divide this",
+              "this",
+              "this sentence",
+              "sentence",
+              "sentence into",
+              "into",
+              "into shingles",
+              "shingles"), terms(analyzer, "name", text));
 
       analyzer = search.getAnalyzer( "pattern_analyzer" );
       text = "foo,bar";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "foo", "bar" } );
+      assertEquals(asList("foo", "bar"), terms(analyzer, "name", text));
 
       // CharStreamFactories test
       analyzer = search.getAnalyzer( "mapping_char_analyzer" );
       text = "CORA\u00C7\u00C3O DE MEL\u00C3O";
-      tokens = AnalyzerUtils.tokensFromAnalysis( analyzer, "name", text );
-      assertTokensEqual( tokens, new String[] { "CORACAO", "DE", "MELAO" } );
+      assertEquals(asList("CORACAO", "DE", "MELAO"), terms(analyzer, "name", text));
+   }
+
+   private List<String> terms(Analyzer analyzer, String fieldName, String text) throws IOException {
+      List<String> terms = new ArrayList<>();
+      TokenStream tokenStream = analyzer.tokenStream(fieldName, text);
+      tokenStream.addAttribute(CharTermAttribute.class);
+      CharTermAttribute attribute = tokenStream.getAttribute(CharTermAttribute.class);
+      tokenStream.reset();
+      while(tokenStream.incrementToken()) {
+         terms.add(attribute.toString());
+      }
+      tokenStream.close();
+      return terms;
    }
 
    protected Class<?>[] getAnnotatedClasses() {
       return new Class[] {
             Team.class
       };
-   }
-
-   private static void assertTokensEqual(Token[] tokens, String[] strings) {
-      assertEquals( strings.length, tokens.length );
-
-      for ( int i = 0; i < tokens.length; i++ ) {
-         assertEquals( "index " + i, strings[i], AnalyzerUtils.getTermText( tokens[i] ) );
-      }
    }
 
 }
