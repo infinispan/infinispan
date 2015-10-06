@@ -28,7 +28,7 @@ import java.util.stream.Stream;
  * @author gustavonalle
  * @since 7.1
  */
-public class IndexWorker implements DistributedCallable<Object, Object, Object> {
+public class IndexWorker implements DistributedCallable<Object, Object, Void> {
 
    protected Cache<Object, Object> cache;
    protected final Class<?> entity;
