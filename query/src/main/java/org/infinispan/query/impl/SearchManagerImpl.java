@@ -88,14 +88,6 @@ public class SearchManagerImpl implements SearchManagerImplementor {
       return searchFactory.buildQueryBuilder().forEntity(entityType);
    }
 
-   /* (non-Javadoc)
-    * @see org.infinispan.query.SearchManager#getSearchFactory()
-    */
-   @Override @Deprecated
-   public SearchIntegrator getSearchFactory() {
-      return searchFactory;
-   }
-
    @Override
    public MassIndexer getMassIndexer() {
       // TODO: Should a new instance be created every time?
