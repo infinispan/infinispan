@@ -264,7 +264,7 @@ public class LocalCacheTest extends SingleCacheManagerTest {
    public void testSetSort() throws ParseException {
       loadTestingData();
 
-      Sort sort = new Sort( new SortField("age", SortField.Type.STRING));
+      Sort sort = new Sort( new SortField("age", SortField.Type.INT));
 
       queryParser = createQueryParser("name");
 
