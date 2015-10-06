@@ -6,6 +6,7 @@ import org.hibernate.search.annotations.EncodingType;
 import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.Resolution;
+import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.infinispan.query.dsl.embedded.testdomain.Account;
 
@@ -20,9 +21,11 @@ import java.util.Date;
 public class AccountHS implements Account, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    private int id;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    private String description;
 
    @Field(store = Store.YES, analyze = Analyze.NO)

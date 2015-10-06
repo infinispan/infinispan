@@ -4,6 +4,7 @@ import org.hibernate.search.annotations.Field;
 import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.ProvidedId;
+import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.StringBridge;
 
@@ -17,6 +18,10 @@ public class AnotherGrassEater implements Serializable {
    private String name;
    @Field(store = Store.YES)
    private String blurb;
+
+   @Field(store = Store.NO)
+   @SortableField
+   private int age;
 
    public AnotherGrassEater() {
    }

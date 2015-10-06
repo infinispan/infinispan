@@ -105,7 +105,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.Type.STRING);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
@@ -158,7 +158,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.Type.STRING);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
@@ -215,7 +215,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       populateCache();
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.Type.STRING);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 
@@ -243,7 +243,7 @@ public class ClusteredQueryTest extends MultipleCacheManagersTest {
       cacheQuery.maxResults(1);
 
       // applying sort
-      SortField sortField = new SortField("age", SortField.Type.STRING);
+      SortField sortField = new SortField("age", SortField.Type.INT);
       Sort sort = new Sort(sortField);
       cacheQuery.sort(sort);
 

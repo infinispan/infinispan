@@ -6,6 +6,7 @@ import org.hibernate.search.annotations.FieldBridge;
 import org.hibernate.search.annotations.Indexed;
 import org.hibernate.search.annotations.IndexedEmbedded;
 import org.hibernate.search.annotations.NumericField;
+import org.hibernate.search.annotations.SortableField;
 import org.hibernate.search.annotations.Store;
 import org.hibernate.search.bridge.builtin.impl.BuiltinIterableBridge;
 import org.infinispan.query.dsl.embedded.testdomain.Address;
@@ -23,6 +24,7 @@ import java.util.Set;
 public class UserHS implements User, Serializable {
 
    @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    private int id;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
@@ -30,13 +32,16 @@ public class UserHS implements User, Serializable {
    private Set<Integer> accountIds;
 
    @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    private String name;
 
    @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = Field.DEFAULT_NULL_TOKEN)
+   @SortableField
    private String surname;
 
    @Field(store = Store.YES, analyze = Analyze.NO, indexNullAs = "-1")
    @NumericField
+   @SortableField
    private Integer age;  // yes, not the birth date :)
 
    @Field(store = Store.YES, analyze = Analyze.NO)

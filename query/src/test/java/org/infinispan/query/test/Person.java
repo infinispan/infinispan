@@ -19,10 +19,14 @@ import java.util.Date;
 public class Person implements Serializable {
    @Field(store = Store.YES)
    private String name;
+
    @Field(store = Store.YES)
    private String blurb;
-   @Field(store = Store.YES, analyze = Analyze.NO, bridge = @FieldBridge(impl = IntegerBridge.class))
+
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   @SortableField
    private int age;
+
    @Field(store = Store.YES, analyze = Analyze.NO)
    @DateBridge(resolution = Resolution.DAY)
    private Date dateOfGraduation;
