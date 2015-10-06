@@ -183,7 +183,7 @@ public class RhqPluginXmlGenerator {
                      }
                   }
                   if (!annotatedParameter) {
-                     throw new RuntimeException("Duplicate operation name: " + name);
+                     throw new RuntimeException("Operation " + name + " on " + name + " requires all parameters to be annotated");
                   }
                }
 
