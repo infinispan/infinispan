@@ -607,7 +607,8 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
                                           remoteTransactions == null ? 0 : remoteTransactions.size());
          if (trace) log.tracef("Unfinished local transactions: %s",
                     localTransactions.values().stream().map(AbstractCacheTransaction::getGlobalTransaction));
-         if (trace) log.tracef("Unfinished remote transactions: %s", remoteTransactions.keySet());
+         if (trace)
+            log.tracef("Unfinished remote transactions: %s", remoteTransactions == null ? "none" : remoteTransactions.keySet());
       } else {
          log.debug("All transactions terminated");
       }
