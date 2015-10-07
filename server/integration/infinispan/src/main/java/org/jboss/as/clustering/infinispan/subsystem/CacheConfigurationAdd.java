@@ -435,13 +435,8 @@ public abstract class CacheConfigurationAdd extends AbstractAddStepHandler imple
             builder.eviction().strategy(strategy);
 
             if (strategy.isEnabled()) {
-                if (eviction.hasDefined(ModelKeys.MAX_ENTRIES)) {
-                    final long maxEntries = EvictionConfigurationResource.MAX_ENTRIES.resolveModelAttribute(context, eviction).asLong();
-                    builder.eviction().maxEntries(maxEntries);
-                } else {
-                    final long size = EvictionConfigurationResource.SIZE.resolveModelAttribute(context, eviction).asLong();
-                    builder.eviction().size(size);
-                }
+                final long size = EvictionConfigurationResource.SIZE.resolveModelAttribute(context, eviction).asLong();
+                builder.eviction().size(size);
                 final EvictionType type = EvictionType.valueOf(EvictionConfigurationResource.TYPE.resolveModelAttribute(context, eviction).asString());
                 builder.eviction().type(type);
             }

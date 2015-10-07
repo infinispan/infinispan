@@ -1367,4 +1367,8 @@ public interface Log extends BasicLogger {
 
    @Message(value = "Global state persistence was enabled without specifying a location", id = 382)
    CacheConfigurationException missingGlobalPersistentStateLocation();
+
+   @LogMessage(level = WARN)
+   @Message(value = "The eviction max-entries attribute has been deprecated. Please use the size attribute instead", id = 383)
+   void evictionMaxEntriesDeprecated();
 }

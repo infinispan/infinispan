@@ -1061,7 +1061,11 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     break;
                 }
                 case MAX_ENTRIES: {
-                    EvictionConfigurationResource.MAX_ENTRIES.parseAndSetParameter(value, eviction, reader);
+                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_1)) {
+                        throw ParseUtils.unexpectedAttribute(reader, i);
+                    } else {
+                        EvictionConfigurationResource.SIZE.parseAndSetParameter(value, eviction, reader);
+                    }
                     break;
                 }
                 case TYPE: {

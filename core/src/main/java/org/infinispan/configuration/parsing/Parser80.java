@@ -1433,7 +1433,8 @@ public class Parser80 implements ConfigurationParser {
                break;
             }
             case MAX_ENTRIES: {
-               builder.eviction().maxEntries(Long.parseLong(value));
+               log.evictionMaxEntriesDeprecated();
+               builder.eviction().size(Long.parseLong(value));
                break;
             }
             case THREAD_POLICY: {
