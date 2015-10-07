@@ -8,7 +8,7 @@ package org.infinispan.commands.module;
  */
 public interface ModuleCommandExtensions {
 
-   ExtendedModuleCommandFactory getModuleCommandFactory();
+   ModuleCommandFactory getModuleCommandFactory();
 
    ModuleCommandInitializer getModuleCommandInitializer();
 
