@@ -1,5 +1,6 @@
 package org.infinispan.client.hotrod.event;
 
+import org.infinispan.Cache;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.CustomEvent;
 import org.infinispan.client.hotrod.event.CustomEventLogListener.FilterConverterFactory;
@@ -14,6 +15,7 @@ import org.infinispan.client.hotrod.test.RemoteCacheManagerCallable;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
+import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.server.hotrod.HotRodServer;
 import org.infinispan.server.hotrod.configuration.HotRodServerConfigurationBuilder;
 import org.infinispan.test.TestingUtil;
@@ -158,6 +160,22 @@ public class ClientClusterExpirationEventsTest extends MultiHotRodServersTest {
             eventListener.expectExpiredEvent(new CustomEvent(key0, null, 2));
             assertNull(remote.get(key1));
             eventListener.expectExpiredEvent(new CustomEvent(key1, "two", 2));
+         }
+      });
+   }
+
+   public void testNullValueMetadataExpiration() {
+      final Integer key = HotRodClientTestingUtil.getIntKeyForServer(server(0));
+      final EventLogListener<Integer> eventListener = new EventLogListener<>();
+      withClientListener(eventListener, new RemoteCacheManagerCallable(client(0)) {
+         @Override
+         public void call() {
+            Cache<Integer, String> cache0 = cache(0);
+            CacheNotifier notifier = cache0.getAdvancedCache().getComponentRegistry().getComponent(CacheNotifier.class);
+            byte[] keyBytes = HotRodClientTestingUtil.toBytes(key);
+            // Note we are manually forcing an expiration event with a null value and metadata
+            notifier.notifyCacheEntryExpired(keyBytes, null, null, null);
+            eventListener.expectOnlyExpiredEvent(key, cache(0));
          }
       });
    }
