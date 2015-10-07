@@ -78,7 +78,7 @@
             <state-persistence />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" max-entries="1000" />
+               <eviction strategy="LRU" size="1000" type="COUNT"/>
                <file-store passivation="true" path="dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
@@ -101,7 +101,7 @@
             <state-persistence />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" max-entries="1000" />
+               <eviction strategy="LRU" size="1000" type="COUNT"/>
                <leveldb-store passivation="true" path="level-dc" purge="true" shared="false" />
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
@@ -142,7 +142,7 @@
             <transport lock-timeout="60000" />
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" max-entries="1000" />
+               <eviction strategy="LRU" size="1000" type="COUNT"/>
                <mixed-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="true" fetch-state="true" preload="true" purge="false">
                   <binary-keyed-table prefix="ISPN_MIX_BKT" create-on-start="true" drop-on-exit="false">
                      <id-column name="id" type="VARCHAR" />
@@ -159,7 +159,7 @@
 
             <distributed-cache name="memcachedCache" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" max-entries="1000" />
+               <eviction strategy="LRU" size="1000" type="COUNT"/>
                <string-keyed-jdbc-store datasource="java:jboss/datasources/ExampleDS" dialect="H2" passivation="true" fetch-state="true" preload="false" purge="false" shared="false">
                   <string-keyed-table prefix="ISPN_MC_SK">
                      <id-column name="id" type="VARCHAR" />
@@ -190,14 +190,14 @@
             <state-persistence />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" max-entries="1000" />
+               <eviction strategy="LRU" size="1000" type="COUNT"/>
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" passivation="true">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
             </local-cache>
             <local-cache name="memcachedCache" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LIRS" max-entries="1000" />
+               <eviction strategy="LIRS" size="1000" type="COUNT"/>
                <remote-store cache="memcachedCache" socket-timeout="60000" tcp-no-delay="true" passivation="true">
                   <remote-server outbound-socket-binding="remote-store-hotrod-server" />
                </remote-store>
@@ -218,7 +218,7 @@
             <state-persistence />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
-               <eviction strategy="LRU" max-entries="1000" />
+               <eviction strategy="LRU" size="1000" type="COUNT"/>
             </local-cache>
             <local-cache name="namedCache" start="EAGER">
                <expiration lifespan="2000" max-idle="1000" />

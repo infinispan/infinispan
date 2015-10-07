@@ -842,7 +842,7 @@
     </xs:attribute>
     <xs:attribute name="max-entries" type="xs:long" default="-1">
       <xs:annotation>
-        <xs:documentation>Maximum number of entries in a cache instance.  A value of -1 means no limit.  This is currently limited to 2^48 - 1 in size.</xs:documentation>
+        <xs:documentation>Deprecated since 8.1. Use the size attribute instead.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="thread-policy" type="tns:eviction-thread-policy" default="DEFAULT">
@@ -859,7 +859,7 @@
     </xs:attribute>
     <xs:attribute name="size" type="xs:long" default="-1">
       <xs:annotation>
-        <xs:documentation>Maximum size to use for eviction. When using the COUNT type, this is the maximum number of entries in a cache instance. When using the MEMORY threshold policy, this is the maximum number of allocated bytes used by a cache's datacontainer. A value of -1 means no limit.</xs:documentation>
+        <xs:documentation>Maximum size to use for eviction. When using the COUNT type, this is the maximum number of entries in a cache instance. When using the MEMORY threshold policy, this is the maximum number of allocated bytes used by a cache's datacontainer. A value of -1 means no limit. This is currently limited to 2^48 - 1 in size.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
