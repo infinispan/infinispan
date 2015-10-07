@@ -58,6 +58,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
  * Repository for {@link RemoteTransaction} and {@link org.infinispan.transaction.xa.TransactionXaAdapter}s (locally
@@ -605,10 +606,14 @@ public class TransactionTable implements org.infinispan.transaction.TransactionT
       if (txsOnGoing) {
          log.unfinishedTransactionsRemain(localTransactions == null ? 0 : localTransactions.size(),
                                           remoteTransactions == null ? 0 : remoteTransactions.size());
-         if (trace) log.tracef("Unfinished local transactions: %s",
-                    localTransactions.values().stream().map(AbstractCacheTransaction::getGlobalTransaction));
-         if (trace)
-            log.tracef("Unfinished remote transactions: %s", remoteTransactions == null ? "none" : remoteTransactions.keySet());
+         if (trace) {
+            log.tracef("Unfinished local transactions: %s",
+               localTransactions.values().stream().map(tx -> tx.getGlobalTransaction().toString())
+                  .collect(Collectors.joining(", ", "[", "]")));
+
+            log.tracef("Unfinished remote transactions: %s",
+               remoteTransactions == null ? "none" : remoteTransactions.keySet());
+         }
       } else {
          log.debug("All transactions terminated");
       }
