@@ -14,6 +14,7 @@ class IndexRequest {
       UPDATE,
       MOVED,
       DROPPED,
+      FOUND_OLD,
       CLEAR,
       DELETE_FILE,
       STOP,
@@ -53,6 +54,10 @@ class IndexRequest {
 
    public static IndexRequest dropped(Object key, byte[] serializedKey, int prevFile, int prevOffset) {
       return new IndexRequest(Type.DROPPED, key, serializedKey, -1, -1, -1, prevFile, prevOffset);
+   }
+
+   public static IndexRequest foundOld(Object key, byte[] serializedKey, int prevFile, int prevOffset) {
+      return new IndexRequest(Type.FOUND_OLD, key, serializedKey, -1, -1, -1, prevFile, prevOffset);
    }
 
    public static IndexRequest clearRequest() {
