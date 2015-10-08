@@ -230,11 +230,11 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
          }
       }
 
-      if (r.clientIntel == INTELLIGENCE_TOPOLOGY_AWARE || !cacheMode.isDistributed) {
-         Some(TopologyAwareResponse(topologyId, serverEndpoints, 0))
-      } else {
+      if (r.clientIntel == INTELLIGENCE_HASH_DISTRIBUTION_AWARE && !cacheMode.isInvalidation) {
          val numSegments = cacheTopology.getReadConsistentHash.getNumSegments
          Some(HashDistAware20Response(topologyId, serverEndpoints, numSegments, DEFAULT_CONSISTENT_HASH_VERSION))
+      } else {
+         Some(TopologyAwareResponse(topologyId, serverEndpoints, 0))
       }
    }
 

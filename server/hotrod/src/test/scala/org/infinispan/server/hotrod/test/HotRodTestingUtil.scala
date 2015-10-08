@@ -382,7 +382,7 @@ object HotRodTestingUtil extends Log {
       entry
    }
 
-   def marshall(obj: String): Array[Byte] =
+   def marshall(obj: Any): Array[Byte] =
       if (obj == null) null else new JBossMarshaller().objectToByteBuffer(obj, 64)
 
    def unmarshall[T](key: Array[Byte]): T =

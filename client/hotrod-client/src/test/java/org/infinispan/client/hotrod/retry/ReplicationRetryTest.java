@@ -6,11 +6,14 @@ import java.net.SocketAddress;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.infinispan.client.hotrod.RemoteCacheManager;
 import org.infinispan.client.hotrod.VersionedValue;
+import org.infinispan.client.hotrod.impl.consistenthash.ConsistentHash;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.server.hotrod.HotRodServer;
+import org.infinispan.server.hotrod.test.HotRodTestingUtil;
 import org.infinispan.test.TestingUtil;
 import org.testng.annotations.Test;
 
@@ -101,9 +104,12 @@ public class ReplicationRetryTest extends AbstractRetryTest {
    }
 
    private void validateSequenceAndStopServer() {
+      ConsistentHash consistentHash = tcpTransportFactory.getConsistentHash(RemoteCacheManager.cacheNameBytes());
+      SocketAddress expectedServer;
+
       resetStats();
       assertNoHits();
-      SocketAddress expectedServer = strategy.getServers()[strategy.getNextPosition()];
+      expectedServer = consistentHash.getServer(HotRodTestingUtil.marshall("k"));
       assertNoHits();
       remoteCache.put("k","v");
 
@@ -111,22 +117,22 @@ public class ReplicationRetryTest extends AbstractRetryTest {
       assertOnlyServerHit(expectedServer);
 
       resetStats();
-      expectedServer = strategy.getServers()[strategy.getNextPosition()];
+      expectedServer = consistentHash.getServer(HotRodTestingUtil.marshall("k2"));
       remoteCache.put("k2","v2");
       assertOnlyServerHit(expectedServer);
 
       resetStats();
-      expectedServer = strategy.getServers()[strategy.getNextPosition()];
+      expectedServer = consistentHash.getServer(HotRodTestingUtil.marshall("k3"));
       remoteCache.put("k3","v3");
       assertOnlyServerHit(expectedServer);
 
       resetStats();
-      expectedServer = strategy.getServers()[strategy.getNextPosition()];
+      expectedServer = consistentHash.getServer(HotRodTestingUtil.marshall("k"));
       assertEquals("v", remoteCache.put("k","v"));
       assertOnlyServerHit(expectedServer);
 
       //this would be the next server to be shutdown
-      expectedServer = strategy.getServers()[strategy.getNextPosition()];
+      expectedServer = consistentHash.getServer(HotRodTestingUtil.marshall("k"));
       HotRodServer toStop = addr2hrServer.get(expectedServer);
       toStop.stop();
       for (Iterator<EmbeddedCacheManager> ecmIt = cacheManagers.iterator(); ecmIt.hasNext();) {

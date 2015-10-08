@@ -2,6 +2,7 @@ package org.infinispan.distribution.ch.impl;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.marshall.InstanceReusingAdvancedExternalizer;
+import org.infinispan.commons.util.Util;
 import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.marshall.core.Ids;
 import org.infinispan.remoting.transport.Address;
@@ -9,7 +10,14 @@ import org.infinispan.remoting.transport.Address;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Special implementation of {@link org.infinispan.distribution.ch.ConsistentHash} for replicated caches.
@@ -27,13 +35,19 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    private final List<Address> members;
    private final Set<Address> membersSet;
    private final Set<Integer> segments;
+   private final int segmentSize;
 
    public ReplicatedConsistentHash(Hash hashFunction, List<Address> members, int[] primaryOwners) {
       this.hashFunction = hashFunction;
-      this.members = Collections.unmodifiableList(new ArrayList<Address>(members));
-      this.membersSet = Collections.unmodifiableSet(new HashSet<Address>(members));
+      this.members = Collections.unmodifiableList(new ArrayList<>(members));
+      this.membersSet = Collections.unmodifiableSet(new HashSet<>(members));
       this.primaryOwners = primaryOwners;
-      this.segments = new RangeSet(primaryOwners.length);
+      Set<Integer> segmentIds = new HashSet<>(primaryOwners.length);
+      for (int i = 0; i < primaryOwners.length; i++) {
+         segmentIds.add(i);
+      }
+      segments = Collections.unmodifiableSet(segmentIds);
+      segmentSize = Util.getSegmentSize(primaryOwners.length);
    }
 
    @Override
@@ -59,7 +73,7 @@ public class ReplicatedConsistentHash implements ConsistentHash {
    @Override
    public int getSegment(Object key) {
       // The result must always be positive, so we make sure the dividend is positive first
-      return (hashFunction.hash(key) & Integer.MAX_VALUE) % primaryOwners.length;
+      return (hashFunction.hash(key) & Integer.MAX_VALUE) / segmentSize;
    }
 
    @Override

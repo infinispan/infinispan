@@ -172,7 +172,7 @@ class HotRodReplicationTest extends HotRodMultiNodeTest {
    @Test(enabled=false) // Disable explicitly to avoid TestNG thinking this is a test!!
    protected def checkTopologyReceived(topoResp: AbstractTestTopologyAwareResponse,
            servers: List[HotRodServer], cacheName: String) {
-      assertNoHashTopologyReceived(topoResp, servers, cacheName, currentServerTopologyId)
+      assertHashTopology20Received(topoResp, servers, cacheName, currentServerTopologyId)
    }
 
 }
