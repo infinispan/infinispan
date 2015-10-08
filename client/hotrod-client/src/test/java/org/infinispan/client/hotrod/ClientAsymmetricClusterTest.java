@@ -1,6 +1,5 @@
 package org.infinispan.client.hotrod;
 
-import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.test.MultiHotRodServersTest;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
@@ -31,9 +30,9 @@ public class ClientAsymmetricClusterTest extends MultiHotRodServersTest {
       manager(0).defineConfiguration(CACHE_NAME, builder.build());
    }
 
-   @Test(expectedExceptions = HotRodClientException.class,
-         expectedExceptionsMessageRegExp = ".*CacheNotFoundException.*")
    public void testAsymmetricCluster() {
+      // The requests will only be routed to servers that have the cache running
+      // (i.e. are in the cache's consistent hash)
       RemoteCacheManager client0 = client(0);
       RemoteCache<Object, Object> cache0 = client0.getCache(CACHE_NAME);
       cache0.put(1, "v1");

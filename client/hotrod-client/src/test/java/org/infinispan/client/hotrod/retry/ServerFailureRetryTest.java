@@ -40,7 +40,7 @@ public class ServerFailureRetryTest extends AbstractRetryTest {
    }
 
    private void retryExceptions(boolean throwJGroupsException) {
-      AdvancedCache<?, ?> nextCache = nextCacheToHit();
+      AdvancedCache<?, ?> nextCache = cacheToHit(1);
       ErrorInducingInterceptor interceptor = new ErrorInducingInterceptor(throwJGroupsException);
       nextCache.addInterceptor(interceptor, 1);
       try {
@@ -57,7 +57,7 @@ public class ServerFailureRetryTest extends AbstractRetryTest {
       remoteCache.put(1, "v1");
       assertEquals("v1", remoteCache.get(1));
       // Find out what next cluster cache to be hit and stop it
-      Cache<?, ?> cache = nextCacheToHit();
+      Cache<?, ?> cache = cacheToHit(2);
       try {
          cache.stop();
          remoteCache.put(2, "v2");
