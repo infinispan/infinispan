@@ -154,9 +154,7 @@ class Compactor extends Thread {
                continue;
             }
 
-            if (log.isDebugEnabled()) {
-               log.debugf("Compacting file %d", scheduledFile);
-            }
+            log.debugf("Compacting file %d", scheduledFile);
             int scheduledOffset = 0;
             FileProvider.Handle handle = fileProvider.getFile(scheduledFile);
             if (handle == null) {
@@ -232,28 +230,51 @@ class Compactor extends Thread {
                         }
                         currentOffset = 0;
                         logFile = fileProvider.getFileForLog();
-                        if (log.isDebugEnabled()) {
-                           log.debugf("Compacting to %d", (Object) logFile.fileId);
-                        }
+                        log.debugf("Compacting to %d", (Object) logFile.fileId);
                      }
 
-                     byte[] serializedValue;
-                     byte[] serializedMetadata;
+                     byte[] serializedValue = null;
+                     byte[] serializedMetadata = null;
                      int entryOffset;
                      int writtenLength;
                      if (header.valueLength() > 0 && !truncate) {
-                        serializedMetadata = EntryRecord.readMetadata(handle, header, scheduledOffset);
+                        if (header.metadataLength() > 0) {
+                           serializedMetadata = EntryRecord.readMetadata(handle, header, scheduledOffset);
+                        }
                         serializedValue = EntryRecord.readValue(handle, header, scheduledOffset);
                         entryOffset = currentOffset;
                         writtenLength = header.totalLength();
                      } else {
-                        serializedMetadata = null;
-                        serializedValue = null;
                         entryOffset = ~currentOffset;
                         writtenLength = EntryHeader.HEADER_SIZE + header.keyLength();
                      }
                      EntryRecord.writeEntry(logFile.fileChannel, serializedKey, serializedMetadata, serializedValue, header.seqId(), header.expiryTime());
-                     temporaryTable.setConditionally(key, logFile.fileId, entryOffset, scheduledFile, indexedOffset);
+                     TemporaryTable.LockedEntry lockedEntry = temporaryTable.replaceOrLock(key, logFile.fileId, entryOffset, scheduledFile, indexedOffset);
+                     if (lockedEntry == null) {
+                        if (trace) {
+                           log.trace("Found entry in temporary table");
+                        }
+                     } else {
+                        boolean update = false;
+                        try {
+                           EntryInfo info = index.getInfo(key, serializedKey);
+                           if (info == null) {
+                              throw new IllegalStateException(String.format(
+                                    "%s was not found in index but it was not in temporary table and there's entry on %d:%d", key, scheduledFile, indexedOffset));
+                           } else {
+                              update = info.file == scheduledFile && info.offset == indexedOffset;
+                           }
+                           if (trace) {
+                              log.tracef("In index the key is on %d:%d (%s)", info.file, info.offset, String.valueOf(update));
+                           }
+                        } finally {
+                           if (update) {
+                              temporaryTable.updateAndUnlock(lockedEntry, logFile.fileId, entryOffset);
+                           } else {
+                              temporaryTable.removeAndUnlock(lockedEntry, key);
+                           }
+                        }
+                     }
                      if (trace) {
                         log.tracef("Update %d:%d -> %d:%d | %d,%d", scheduledFile, indexedOffset,
                               logFile.fileId, entryOffset, logFile.fileChannel.position(), logFile.fileChannel.size());
@@ -284,12 +305,8 @@ class Compactor extends Thread {
                indexQueue.put(IndexRequest.deleteFileRequest(scheduledFile));
             }
          }
-      } catch (IOException e) {
-         throw new RuntimeException(e);
-      } catch (ClassNotFoundException e) {
-         throw new RuntimeException(e);
-      } catch (InterruptedException e) {
-         throw new RuntimeException(e);
+      } catch (Exception e) {
+         log.error("Compactor failed.", e);
       }
    }
 

@@ -135,7 +135,6 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          throw new IllegalStateException("This store is already started!");
       }
       started = true;
-      log.info("Starting using configuration " + configuration);
       temporaryTable = new TemporaryTable(configuration.indexQueueLength() * configuration.indexSegments(), keyEquivalence);
       storeQueue = new SyncProcessingQueue<LogRequest>();
       indexQueue = new IndexQueue(configuration.indexSegments(), configuration.indexQueueLength(), keyEquivalence);
@@ -162,14 +161,13 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                long prevSeqId;
                while (seqId > (prevSeqId = maxSeqId.get()) && !maxSeqId.compareAndSet(prevSeqId, seqId));
                Object key = marshaller.objectFromByteBuffer(serializedKey);
-               if (trace) log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
+               if (trace) {
+                  log.tracef("Loaded %d:%d (seqId %d, expiration %d)", file, offset, seqId, expiration);
+               }
                try {
                   // We may check the seqId safely as we are the only thread writing to index
-                  EntryPosition entry = temporaryTable.get(key);
-                  if (entry == null) {
-                     entry = index.getInfo(key, serializedKey);
-                  }
-                  if (entry != null && seqId < getSeqId(entry)) {
+                  if (isSeqIdOld(seqId, key, serializedKey)) {
+                     indexQueue.put(IndexRequest.foundOld(key, serializedKey, file, offset));
                      return true;
                   }
                   temporaryTable.set(key, file, offset);
@@ -188,6 +186,40 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
          });
       }
       logAppender.setSeqId(maxSeqId.get() + 1);
+   }
+
+   protected boolean isSeqIdOld(long seqId, Object key, byte[] serializedKey) throws IOException {
+      for (; ; ) {
+         EntryPosition entry = temporaryTable.get(key);
+         if (entry == null) {
+            entry = index.getInfo(key, serializedKey);
+         }
+         if (entry == null) {
+            if (trace) {
+               log.trace("Did not found position for " + key);
+            }
+            return false;
+         } else {
+            FileProvider.Handle handle = fileProvider.getFile(entry.file);
+            if (handle == null) {
+               // the file was deleted after we've looked up temporary table/index
+               continue;
+            }
+            try {
+               int entryOffset = entry.offset < 0 ? ~entry.offset : entry.offset;
+               EntryHeader header = EntryRecord.readEntryHeader(handle, entryOffset);
+               if (header == null) {
+                  throw new IOException("Cannot read " + entry.file + ":" + entryOffset);
+               }
+               if (trace) {
+                  log.tracef("SeqId on %d:%d is %d", entry.file, entry.offset, header.seqId());
+               }
+               return seqId < header.seqId();
+            } finally {
+               handle.close();
+            }
+         }
+      }
    }
 
    protected void startIndex() {
@@ -331,6 +363,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             EntryPosition entry = temporaryTable.get(key);
             if (entry != null) {
                if (entry.offset < 0) {
+                  log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone", key, entry.file, entry.offset);
                   return null;
                }
                FileProvider.Handle handle = fileProvider.getFile(entry.file);
@@ -341,6 +374,9 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                         throw new IllegalStateException("Error reading from " + entry.file + ":" + entry.offset + " | " + handle.getFileSize());
                      }
                      if (header.expiryTime() > 0 && header.expiryTime() <= timeService.wallClockTime()) {
+                        if (trace) {
+                           log.tracef("Entry for key=%s found in temporary table on %d:%d but it is expired", key, entry.file, entry.offset);
+                        }
                         return null;
                      }
                      serializedKey = EntryRecord.readKey(handle, header, entry.offset);
@@ -351,7 +387,13 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                      }
                      if (header.valueLength() > 0) {
                         serializedValue = EntryRecord.readValue(handle, header, entry.offset);
+                        if (trace) {
+                           log.tracef("Entry for key=%s found in temporary table on %d:%d and loaded", key, entry.file, entry.offset);
+                        }
                      } else {
+                        if (trace) {
+                           log.tracef("Entry for key=%s found in temporary table on %d:%d but it is a tombstone in log", key, entry.file, entry.offset);
+                        }
                         return null;
                      }
                      return marshalledEntryFactory.newMarshalledEntry(toBuffer(serializedKey), toBuffer(serializedValue), toBuffer(serializedMetadata));
@@ -477,11 +519,7 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
             if (!notNullFilter.accept(key)) {
                return true;
             }
-            EntryPosition entry = temporaryTable.get(key);
-            if (entry == null) {
-               entry = index.getInfo(key, serializedKey);
-            }
-            if (entry != null && seqId < getSeqId(entry)) {
+            if (isSeqIdOld(seqId, key, serializedKey)) {
                return true;
             }
             if (serializedValue != null && (expiration < 0 || expiration > timeService.wallClockTime())) {
@@ -526,20 +564,6 @@ public class SoftIndexFileStore implements AdvancedLoadWriteStore {
                return;
             }
          }
-      }
-   }
-
-   protected long getSeqId(EntryPosition entry) throws IOException {
-      int entryOffset = entry.offset < 0 ? ~entry.offset : entry.offset;
-      FileProvider.Handle handle = fileProvider.getFile(entry.file);
-      try {
-         EntryHeader header = EntryRecord.readEntryHeader(handle, entryOffset);
-         if (header == null) {
-            throw new IllegalStateException("Cannot read " + entry.file + ":" + entryOffset);
-         }
-         return header.seqId();
-      } finally {
-         handle.close();
       }
    }
 }

@@ -104,13 +104,17 @@ public class SoftIndexFileStoreTest extends BaseStoreTest {
       store.stop();
       store.start();
 
-      assertEquals("v1", store.load("k1").getValue());
+      MarshalledEntry entry = store.load("k1");
+      assertNotNull(entry);
+      assertEquals("v1", entry.getValue());
       store.write(entry2);
 
       store.stop();
       store.start();
 
-      assertEquals("v2", store.load("k1").getValue());
+      entry = store.load("k1");
+      assertNotNull(entry);
+      assertEquals("v2", entry.getValue());
    }
 
    // test for ISPN-5743

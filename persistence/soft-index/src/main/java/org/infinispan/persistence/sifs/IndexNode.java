@@ -51,6 +51,7 @@ class IndexNode {
 
    public enum RecordChange {
       INCREASE,
+      INCREASE_FOR_OLD,
       MOVE,
       DECREASE,
    }
@@ -86,7 +87,9 @@ class IndexNode {
          }
       }
 
-      if (trace) log.tracef("Loaded %08x from %d:%d (length %d)", System.identityHashCode(this), offset, occupiedSpace, length());
+      if (trace) {
+         log.tracef("Loaded %08x from %d:%d (length %d)", System.identityHashCode(this), offset, occupiedSpace, length());
+      }
    }
 
    private static ByteBuffer loadBuffer(FileChannel indexFile, long offset, int occupiedSpace) throws IOException {
@@ -184,9 +187,11 @@ class IndexNode {
       buffer.flip();
       segment.getIndexFile().write(buffer, offset);
 
-      if (trace) log.tracef("Persisted %08x (length %d, %d %s) to %d:%d", System.identityHashCode(this), length(),
+      if (trace) {
+         log.tracef("Persisted %08x (length %d, %d %s) to %d:%d", System.identityHashCode(this), length(),
             innerNodes != null ? innerNodes.length : leafNodes.length,
             innerNodes != null ? "children" : "leaves", offset, occupiedSpace);
+      }
    }
 
    private static class Path {
@@ -210,11 +215,18 @@ class IndexNode {
          @Override
          protected EntryPosition apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
             EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
-            if (hak != null && Arrays.equals(hak.getKey(), key)) {
+            if (Arrays.equals(hak.getKey(), key)) {
                if (hak.getHeader().expiryTime() > 0 && hak.getHeader().expiryTime() <= timeService.wallClockTime()) {
+                  if (trace) {
+                     log.tracef("Found node on %d:%d but it is expired", leafNode.file, leafNode.offset);
+                  }
                   return null;
                }
                return leafNode;
+            } else {
+               if (trace) {
+                  log.tracef("Found node on %d:%d but key does not match", leafNode.file, leafNode.offset);
+               }
             }
             return null;
          }
@@ -223,9 +235,12 @@ class IndexNode {
          @Override
          protected EntryInfo apply(LeafNode leafNode, byte[] key, FileProvider fileProvider, TimeService timeService) throws IOException, IndexNodeOutdatedException {
             EntryRecord hak = leafNode.loadHeaderAndKey(fileProvider);
-            if (hak != null && hak.getKey() != null && Arrays.equals(hak.getKey(), key)) {
+            if (Arrays.equals(hak.getKey(), key)) {
                return leafNode;
             } else {
+               if (trace) {
+                  log.tracef("Found node on %d:%d but key does not match", leafNode.file, leafNode.offset);
+               }
                return null;
             }
          }
@@ -287,7 +302,9 @@ class IndexNode {
       while (node.innerNodes != null) {
          int insertionPoint = node.getInsertionPoint(key);
          stack.push(new Path(node, insertionPoint));
-         if (trace) log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)", System.identityHashCode(node), node.length(), node.innerNodes.length, insertionPoint);
+         if (trace) {
+            log.tracef("Pushed %08x (length %d, %d children) to stack (insertion point %d)", System.identityHashCode(node), node.length(), node.innerNodes.length, insertionPoint);
+         }
          node = node.innerNodes[insertionPoint].getIndexNode(root.segment);
       }
       IndexNode copy = node.copyWith(key, file, offset, size, overwriteHook, recordChange);
@@ -306,18 +323,23 @@ class IndexNode {
          if (result == null) {
             return;
          }
-         if (trace)
+         if (trace) {
             log.tracef("Created (1) %d new nodes, GC %08x", result.newNodes.size(), System.identityHashCode(node));
+         }
          garbage.push(node);
          for (;;) {
             if (stack.isEmpty()) {
                IndexNode newRoot;
                if (result.newNodes.size() == 1) {
                   newRoot = result.newNodes.get(0);
-                  if (trace) log.tracef("Setting new root %08x (index has shrunk)", System.identityHashCode(newRoot));
+                  if (trace) {
+                     log.tracef("Setting new root %08x (index has shrunk)", System.identityHashCode(newRoot));
+                  }
                } else {
                   newRoot = IndexNode.emptyWithInnerNodes(root.segment).copyWith(0, 0, result.newNodes);
-                  if (trace) log.tracef("Setting new root %08x (index has grown)", System.identityHashCode(newRoot));
+                  if (trace) {
+                     log.tracef("Setting new root %08x (index has grown)", System.identityHashCode(newRoot));
+                  }
                }
                newRoot.segment.setRoot(newRoot);
                return;
@@ -330,11 +352,14 @@ class IndexNode {
             }
             result = manageLength(path.node.segment, stack, path.node, copy, garbage);
             if (result == null) {
-               if (trace) log.tracef("No more index updates required");
+               if (trace) {
+                  log.tracef("No more index updates required");
+               }
                return;
             }
-            if (trace)
+            if (trace) {
                log.tracef("Created (2) %d new nodes, GC %08x", result.newNodes.size(), System.identityHashCode(path.node));
+            }
             garbage.push(path.node);
          }
       } finally {
@@ -553,6 +578,7 @@ class IndexNode {
       short numRecords = oldLeafNode.numRecords;
       switch (recordChange) {
          case INCREASE:
+         case INCREASE_FOR_OLD:
             if (numRecords == Short.MAX_VALUE) {
                throw new IllegalStateException("Too many records for this key (short overflow)");
             }
@@ -579,15 +605,18 @@ class IndexNode {
                newKeyParts = keyParts;
                newLeafNodes = new LeafNode[leafNodes.length];
                System.arraycopy(leafNodes, 0, newLeafNodes, 0, leafNodes.length);
-               if (trace) {
-                  log.trace(String.format("Overwriting %d:%d with %d:%d (%d)",
-                        oldLeafNode.file, oldLeafNode.offset, file, offset, numRecords));
-               }
                // Do not update the file and offset for DROPPED IndexRequests
                if (recordChange == RecordChange.INCREASE || recordChange == RecordChange.MOVE) {
+                  if (trace) {
+                     log.trace(String.format("Overwriting %d:%d with %d:%d (%d)",
+                           oldLeafNode.file, oldLeafNode.offset, file, offset, numRecords));
+                  }
                   newLeafNodes[insertPart] = new LeafNode(file, offset, numRecords);
                   segment.getCompactor().free(oldLeafNode.file, hak.getHeader().totalLength());
                } else {
+                  if (trace) {
+                     log.trace(String.format("Updating num records for %d:%d to %d", oldLeafNode.file, oldLeafNode.offset, numRecords));
+                  }
                   newLeafNodes[insertPart] = new LeafNode(oldLeafNode.file, oldLeafNode.offset, numRecords);
                }
                overwriteHook.setOverwritten(true, oldLeafNode.file, oldLeafNode.offset);
@@ -857,6 +886,8 @@ class IndexNode {
    }
 
    public static class OverwriteHook {
+      public static final OverwriteHook NOOP = new OverwriteHook();
+
       public boolean check(int oldFile, int oldOffset) {
          return true;
       }
@@ -935,6 +966,7 @@ class IndexNode {
             }
          }
          assert headerAndKey != null;
+         assert headerAndKey.getKey() != null;
          return headerAndKey;
       }
 
@@ -949,6 +981,12 @@ class IndexNode {
             if (!Arrays.equals(key, headerAndKey.getKey())) {
                if (trace) {
                   log.trace("Key on " + file + ":" + readOffset + " not matched.");
+               }
+               return null;
+            }
+            if (headerAndKey.getHeader().valueLength() <= 0) {
+               if (trace) {
+                  log.trace("Entry " + file + ":" + readOffset + " matched, it is a tombstone.");
                }
                return null;
             }
