@@ -194,7 +194,7 @@ class Index {
                      }
                      CountDownLatch pause = new CountDownLatch(1);
                      request.setResult(pause);
-                     log.debug("Waiting for cleared " + System.nanoTime());
+                     log.debug("Waiting for cleared");
                      pause.await();
                      continue;
                   case DELETE_FILE:
@@ -249,6 +249,10 @@ class Index {
                            }
                         }
                      };
+                     break;
+                  case FOUND_OLD:
+                     recordChange = IndexNode.RecordChange.INCREASE_FOR_OLD;
+                     overwriteHook = IndexNode.OverwriteHook.NOOP;
                      break;
                   default:
                      throw new IllegalArgumentException(request.toString());

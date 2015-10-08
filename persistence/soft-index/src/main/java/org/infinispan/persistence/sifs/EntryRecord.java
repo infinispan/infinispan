@@ -43,16 +43,25 @@ class EntryRecord {
       int metadataOffset = offset + EntryHeader.HEADER_SIZE + header.keyLength();
       if (header.metadataLength() > 0) {
          metadata = new byte[header.metadataLength()];
-         if (read(handle, ByteBuffer.wrap(metadata), metadataOffset, header.metadataLength()) < 0) return null;
+         if (read(handle, ByteBuffer.wrap(metadata), metadataOffset, header.metadataLength()) < 0) {
+            throw new IllegalStateException("End of file reached when reading metadata on "
+                  + handle.getFileId() + ":" + offset + ": " + header);
+         }
       }
+      assert header.valueLength() > 0;
       value = new byte[header.valueLength()];
-      if (read(handle, ByteBuffer.wrap(value), metadataOffset + header.metadataLength(), header.valueLength()) < 0) return null;
+      if (read(handle, ByteBuffer.wrap(value), metadataOffset + header.metadataLength(), header.valueLength()) < 0) {
+         throw new IllegalStateException("End of file reached when reading value on "
+               + handle.getFileId() + ":" + offset + ": " + header);
+      }
       return this;
    }
 
    public static EntryHeader readEntryHeader(FileProvider.Handle handle, long offset) throws IOException {
       ByteBuffer header = ByteBuffer.allocate(EntryHeader.HEADER_SIZE);
-      if (read(handle, header, offset, EntryHeader.HEADER_SIZE) < 0) return null;
+      if (read(handle, header, offset, EntryHeader.HEADER_SIZE) < 0) {
+         return null;
+      }
       header.flip();
       try {
          return new EntryHeader(header);
@@ -63,19 +72,30 @@ class EntryRecord {
 
    public static byte[] readKey(FileProvider.Handle handle, EntryHeader header, long offset) throws IOException {
       byte[] key = new byte[header.keyLength()];
-      if (read(handle, ByteBuffer.wrap(key), offset + EntryHeader.HEADER_SIZE, header.keyLength()) < 0) return null;
+      if (read(handle, ByteBuffer.wrap(key), offset + EntryHeader.HEADER_SIZE, header.keyLength()) < 0) {
+         throw new IllegalStateException("End of file reached when reading key on "
+               + handle.getFileId() + ":" + offset);
+      }
       return key;
    }
 
    public static byte[] readMetadata(FileProvider.Handle handle, EntryHeader header, long offset) throws IOException {
+      assert header.metadataLength() > 0;
       byte[] metadata = new byte[header.metadataLength()];
-      if (read(handle, ByteBuffer.wrap(metadata), offset + EntryHeader.HEADER_SIZE + header.keyLength(), header.metadataLength()) < 0) return null;
+      if (read(handle, ByteBuffer.wrap(metadata), offset + EntryHeader.HEADER_SIZE + header.keyLength(), header.metadataLength()) < 0) {
+         throw new IllegalStateException("End of file reached when reading metadata on "
+               + handle.getFileId() + ":" + offset + ": " + header);
+      }
       return metadata;
    }
 
    public static byte[] readValue(FileProvider.Handle handle, EntryHeader header, long offset) throws IOException {
+      assert header.valueLength() > 0;
       byte[] value = new byte[header.valueLength()];
-      if (read(handle, ByteBuffer.wrap(value), offset + EntryHeader.HEADER_SIZE + header.keyLength() + header.metadataLength(), header.valueLength()) < 0) return null;
+      if (read(handle, ByteBuffer.wrap(value), offset + EntryHeader.HEADER_SIZE + header.keyLength() + header.metadataLength(), header.valueLength()) < 0) {
+         throw new IllegalStateException("End of file reached when reading metadata on "
+               + handle.getFileId() + ":" + offset + ": " + header);
+      }
       return value;
    }
 
