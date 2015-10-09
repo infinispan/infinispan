@@ -20,6 +20,7 @@ import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.filter.NamedFactory;
+import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.protostream.FileDescriptorSource;
 import org.infinispan.protostream.SerializationContext;
@@ -58,6 +59,7 @@ import org.junit.runner.RunWith;
 public class HotRodCustomMarshallerIteratorIT {
 
    private static final String TO_STRING_FILTER_CONVERTER_FACTORY_NAME = "to-string-filter-converter";
+   private static final String PARAM_FILTER_CONVERTER_FACTORY_NAME = "param-filter-converter";
    private static final String CACHE_NAME = "testcache";
    private static RemoteCacheManager remoteCacheManager;
 
@@ -105,9 +107,10 @@ public class HotRodCustomMarshallerIteratorIT {
                   // Register marshaller
             .addAsServiceProvider(Marshaller.class, CustomProtoStreamMarshaller.class)
                   // Add custom filterConverter classes
-            .addClasses(CustomFilterFactory.class, CustomFilterFactory.CustomFilter.class)
-                  // Register custom filterConverterFactory
-            .addAsServiceProvider(KeyValueFilterConverterFactory.class, CustomFilterFactory.class);
+            .addClasses(CustomFilterFactory.class, CustomFilterFactory.CustomFilter.class, ParamCustomFilterFactory.class,
+                    ParamCustomFilterFactory.ParamCustomFilter.class)
+                  // Register custom filterConverterFactories
+            .addAsServiceProviderAndClasses(KeyValueFilterConverterFactory.class, ParamCustomFilterFactory.class, CustomFilterFactory.class);
    }
 
    @Test
@@ -131,6 +134,11 @@ public class HotRodCustomMarshallerIteratorIT {
       entryMap = iteratorToMap(remoteCache.retrieveEntries(TO_STRING_FILTER_CONVERTER_FACTORY_NAME, 10));
       assertEquals(10, entryMap.size());
       assertTrue(((String) entryMap.get(2)).startsWith("User{"));
+
+      // Iteration with parametrised filter
+      entryMap = iteratorToMap(remoteCache.retrieveEntries(PARAM_FILTER_CONVERTER_FACTORY_NAME, new Object[]{3}, null, 10));
+      assertEquals(10, entryMap.size());
+      assertTrue(entryMap.get(2).equals("Use"));
    }
 
    private Map<Object, Object> iteratorToMap(CloseableIterator<Entry<Object, Object>> iterator) {
@@ -170,6 +178,28 @@ public class HotRodCustomMarshallerIteratorIT {
          @Override
          public String filterAndConvert(Integer key, User value, Metadata metadata) {
             return value.toString();
+         }
+      }
+   }
+
+   @NamedFactory(name = PARAM_FILTER_CONVERTER_FACTORY_NAME)
+   public static class ParamCustomFilterFactory implements ParamKeyValueFilterConverterFactory<Integer, User, String> {
+
+      @Override
+      public KeyValueFilterConverter<Integer, User, String> getFilterConverter(Object[] params) {
+         return new ParamCustomFilter((Integer) params[0]);
+      }
+
+      public static class ParamCustomFilter extends AbstractKeyValueFilterConverter<Integer, User, String> implements Serializable {
+         private final int maxLength;
+
+         public ParamCustomFilter(int maxLength) {
+            this.maxLength = maxLength;
+         }
+
+         @Override
+         public String filterAndConvert(Integer key, User value, Metadata metadata) {
+            return value.toString().substring(0, maxLength);
          }
       }
    }

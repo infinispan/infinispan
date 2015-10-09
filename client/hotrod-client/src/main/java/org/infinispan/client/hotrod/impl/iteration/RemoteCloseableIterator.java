@@ -36,6 +36,7 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
    private final OperationsFactory operationsFactory;
    private final Marshaller marshaller;
    private final String filterConverterFactory;
+   private final byte[][] filterParams;
    private final Set<Integer> segments;
    private final int batchSize;
 
@@ -45,8 +46,9 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
    boolean endOfIteration = false;
    private Queue<SimpleEntry<Object, Object>> nextElements = new LinkedList<>();
 
-   public RemoteCloseableIterator(OperationsFactory operationsFactory, String filterConverterFactory, Set<Integer> segments, int batchSize, Marshaller marshaller) {
+   public RemoteCloseableIterator(OperationsFactory operationsFactory, String filterConverterFactory, byte[][] filterParams, Set<Integer> segments, int batchSize, Marshaller marshaller) {
       this.filterConverterFactory = filterConverterFactory;
+      this.filterParams = filterParams;
       this.segments = segments;
       this.batchSize = batchSize;
       this.operationsFactory = operationsFactory;
@@ -130,7 +132,7 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
       if (log.isDebugEnabled()) {
          log.debugf("Staring iteration with segments %s", fromSegments);
       }
-      IterationStartOperation iterationStartOperation = operationsFactory.newIterationStartOperation(filterConverterFactory, fromSegments, batchSize);
+      IterationStartOperation iterationStartOperation = operationsFactory.newIterationStartOperation(filterConverterFactory, filterParams, fromSegments, batchSize);
       IterationStartResponse startResponse = iterationStartOperation.execute();
       this.transport = startResponse.getTransport();
       if (log.isDebugEnabled()) {

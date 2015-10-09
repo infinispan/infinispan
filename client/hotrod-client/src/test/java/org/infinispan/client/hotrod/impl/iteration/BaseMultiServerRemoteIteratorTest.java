@@ -4,7 +4,9 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.RemoteCacheManager;
@@ -15,8 +17,11 @@ import org.infinispan.distribution.ch.ConsistentHash;
 import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
+import org.infinispan.filter.ParamKeyValueFilterConverterFactory;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+
+import static org.infinispan.client.hotrod.impl.iteration.BaseMultiServerRemoteIteratorTest.SubstringFilterFactory.DEFAULT_LENGTH;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -84,6 +89,27 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
    }
 
    @Test
+   public void testFilterByCustomParamFilter() {
+      String factoryName = "substringConverter";
+      servers.forEach(s -> s.addKeyValueFilterConverterFactory(factoryName, new SubstringFilterFactory()));
+      int filterParam = 12;
+
+      RemoteCache<String, String> stringCache = clients.get(0).getCache();
+      IntStream.rangeClosed(0, CACHE_SIZE - 1).forEach(idx -> stringCache.put(String.valueOf(idx), UUID.randomUUID().toString()));
+
+      Set<Entry<Object, Object>> entries = extractEntries(stringCache.retrieveEntries(factoryName, new Object[]{filterParam}, null, 10));
+
+      Set<String> values = extractValues(entries);
+      assertForAll(values, s -> s.length() == filterParam);
+
+      // Omitting param, filter should use default value
+      entries = extractEntries(stringCache.retrieveEntries(factoryName, 10));
+      values = extractValues(entries);
+      assertForAll(values, s -> s.length() == DEFAULT_LENGTH);
+   }
+
+
+   @Test
    public void testFilterBySegment() {
       RemoteCache<Integer, AccountHS> cache = clients.get(0).getCache();
       populateCache(CACHE_SIZE, this::newAccount, cache);
@@ -119,6 +145,30 @@ public abstract class BaseMultiServerRemoteIteratorTest extends MultiHotRodServe
          }
       }
 
+   }
+
+   static final class SubstringFilterFactory implements ParamKeyValueFilterConverterFactory<String, String, String> {
+
+      public static final int DEFAULT_LENGTH = 20;
+
+      @Override
+      public KeyValueFilterConverter<String, String, String> getFilterConverter(Object[] params) {
+         return new SubstringFilterConverter(params);
+      }
+
+
+      static class SubstringFilterConverter extends AbstractKeyValueFilterConverter<String, String, String> implements Serializable {
+         private final int length;
+
+         public SubstringFilterConverter(Object[] params) {
+            this.length = (int) (params == null || params.length == 0 ? DEFAULT_LENGTH : params[0]);
+         }
+
+         @Override
+         public String filterAndConvert(String key, String value, Metadata metadata) {
+            return value.substring(0, length);
+         }
+      }
    }
 
    private Set<Integer> getKeysFromSegments(Set<Integer> segments) {

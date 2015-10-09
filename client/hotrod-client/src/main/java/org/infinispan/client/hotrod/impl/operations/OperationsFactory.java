@@ -248,8 +248,8 @@ public class OperationsFactory implements HotRodConstants {
       return transportFactory.getCacheTopologyInfo(cacheNameBytes);
    }
 
-   public IterationStartOperation newIterationStartOperation(String filterConverterFactory, Set<Integer> segments, int batchSize) {
-      return new IterationStartOperation(codec, flags(), cacheNameBytes, topologyId, filterConverterFactory, segments, batchSize, transportFactory);
+   public IterationStartOperation newIterationStartOperation(String filterConverterFactory, byte[][] filterParameters, Set<Integer> segments, int batchSize) {
+      return new IterationStartOperation(codec, flags(), cacheNameBytes, topologyId, filterConverterFactory, filterParameters, segments, batchSize, transportFactory);
    }
 
    public IterationEndOperation newIterationEndOperation(String iterationId, Transport transport) {

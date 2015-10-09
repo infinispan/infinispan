@@ -408,4 +408,9 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, int batchSize) {
       return delegate.retrieveEntries(filterConverterFactory, batchSize);
    }
+
+   @Override
+   public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
+      return delegate.retrieveEntries(filterConverterFactory, filterConverterParams, segments, batchSize);
+   }
 }

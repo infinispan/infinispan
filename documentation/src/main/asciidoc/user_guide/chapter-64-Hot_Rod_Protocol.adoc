@@ -1671,6 +1671,27 @@ hints on whether the server has compatibility mode enabled or not:
 * `0x07`: Success status and return previous value, with compatibility mode is enabled.
 * `0x08`: Not executed and return previous value, with compatibility mode is enabled.
 
+The Iteration Start operation can optionally send parameters if a custom filter is provided and
+it's parametrised:
+
+====== Operations
+
+.Iteration Start
+
+Request format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name          | Size             | Value
+| Segments size       | signed vInt      | same as protocol version 2.3.
+| Segments            | byte array       | same as protocol version 2.3.
+| FilterConverter size| signed vInt      | same as protocol version 2.3.
+| FilterConverter     | UTF-8 byte array | same as protocol version 2.3.
+| Parameters size     | byte             | the number of params of the custom filter. Only present when filter converter is provided.
+| Parameters          | byte[][]         | an array of parameters, each parameter is a byte array.
+| BatchSize           | vInt             | same as protocol version 2.3.
+|==============================================================================
+
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
 wheel, and to place keys of entries on the same wheel to determine where

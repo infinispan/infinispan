@@ -2,7 +2,6 @@ package org.infinispan.server.hotrod.iteration
 
 import java.io.{ObjectInput, ObjectOutput}
 
-import org.infinispan.commons.marshall.jboss.GenericJBossMarshaller
 import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
 import org.infinispan.distribution.ch.ConsistentHash
 import org.infinispan.factories.annotations.Inject
@@ -11,7 +10,6 @@ import org.infinispan.metadata.Metadata
 import org.infinispan.server.hotrod._
 
 import scala.collection.JavaConversions._
-import scala.util._
 
 /**
  * @author gustavonalle
@@ -31,7 +29,7 @@ class IterationFilter[K, V, Any](val compat: Boolean,
       filterMarshaller = if (compat)
          cache.getCacheConfiguration.compatibility().marshaller()
       else
-         marshaller.getOrElse(MarshallerBuilder.genericFromFilter(providedFilter))
+         marshaller.getOrElse(MarshallerBuilder.genericFromInstance(providedFilter))
    }
 
    override def filterAndConvert(key: K, value: V, metadata: Metadata): Any = {
@@ -68,27 +66,5 @@ class IterationFilterExternalizer[K, V, C] extends AbstractExternalizer[Iteratio
       output.writeBoolean(obj.compat)
       output.writeObject(obj.providedFilter)
       output.writeObject(MarshallerBuilder.toClass(obj))
-   }
-}
-
-object MarshallerBuilder {
-   def toClass[K, V, C](filter: IterationFilter[K, V, C]) = filter.marshaller.map(_.getClass).orNull
-
-   def fromClass[K, V, C](marshallerClass: Option[Class[Marshaller]], filter: Option[KeyValueFilterConverter[K, V, C]]): Marshaller = {
-      val withClassLoaderCtor = for {
-         f <- filter
-         m <- marshallerClass
-         c <- Try(m.getConstructor(classOf[ClassLoader])).toOption
-      } yield c.newInstance(filter.getClass.getClassLoader)
-
-      withClassLoaderCtor.getOrElse {
-         withEmptyCtor(marshallerClass).getOrElse(genericFromFilter(filter))
-      }
-   }
-
-   private def withEmptyCtor(marshallerClass: Option[Class[Marshaller]]) = marshallerClass.map(_.newInstance())
-
-   def genericFromFilter[K, V, C](filter: Option[KeyValueFilterConverter[K, V, C]]): Marshaller = {
-      new GenericJBossMarshaller(filter.map(_.getClass.getClassLoader).orNull)
    }
 }

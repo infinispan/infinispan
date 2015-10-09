@@ -10,7 +10,7 @@ import org.infinispan.commons.util.{CollectionFactory, InfinispanCollections}
 import org.infinispan.configuration.cache.CompatibilityModeConfiguration
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.filter.CacheFilters.filterAndConvert
-import org.infinispan.filter.{KeyValueFilterConverter, KeyValueFilterConverterFactory}
+import org.infinispan.filter.{KeyValueFilterConverter, KeyValueFilterConverterFactory, ParamKeyValueFilterConverterFactory}
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.hotrod.OperationStatus.OperationStatus
 import org.infinispan.server.hotrod._
@@ -23,7 +23,7 @@ import org.infinispan.util.concurrent.ConcurrentHashSet
  */
 trait IterationManager {
    type IterationId = String
-   def start(cacheName: String, segments: Option[JavaBitSet], filterConverterFactory: Option[String], batch: Integer): IterationId
+   def start(cacheName: String, segments: Option[JavaBitSet], filterConverterFactory: NamedFactory, batch: Integer): IterationId
    def next(cacheName: String, iterationId: IterationId): IterableIterationResult
    def close(cacheName: String, iterationId: IterationId): Boolean
    def addKeyValueFilterConverterFactory[K, V, C](name: String, factory: KeyValueFilterConverterFactory[K, V, C]): Unit
@@ -78,7 +78,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
    private val iterationStateMap = CollectionFactory.makeConcurrentMap[String, IterationState]()
    private val filterConverterFactoryMap = CollectionFactory.makeConcurrentMap[String, KeyValueFilterConverterFactory[_, _, _]]()
 
-   override def start(cacheName: String, segments: Option[JavaBitSet], filterConverterFactory: Option[String], batch: Integer): IterationId = {
+   override def start(cacheName: String, segments: Option[JavaBitSet], namedFactory: NamedFactory, batch: Integer): IterationId = {
       val iterationId = UUID.randomUUID().toString
       val stream = cacheManager.getCache(cacheName).getAdvancedCache.cacheEntrySet.stream().asInstanceOf[CacheStream[CacheEntry[AnyRef, AnyRef]]]
       segments.map(bitSet => {
@@ -89,7 +89,7 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
       val segmentListener = new IterationSegmentsListener
       val compatInfo = CompatInfo(cacheManager.getCacheConfiguration(cacheName).compatibility())
 
-      val customFilter = buildCustomFilter(filterConverterFactory).map { providedFilter =>
+      val customFilter = buildCustomFilter(namedFactory).map { providedFilter =>
          new IterationFilter(compatInfo.enabled, Some(providedFilter), marshaller)
       }
 
@@ -103,13 +103,22 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
       iterationId
    }
 
-   private def buildCustomFilter[K, V, Any](optName: Option[String]) = {
-      optName match {
+   private def buildCustomFilter[K, V, Any](namedFactory: NamedFactory) = {
+      namedFactory match {
          case None => None
-         case Some(name) => Option(filterConverterFactoryMap.get(name))
-                 .map(_.getFilterConverter)
-                 .orElse(throw log.missingKeyValueFilterConverterFactory(name))
+         case Some((name, params)) =>
+            Option(filterConverterFactoryMap.get(name)).map {
+               case factory: ParamKeyValueFilterConverterFactory[_, _, _] =>
+                  val unmarshalledParams = unmarshallParams(params.toArray, factory)
+                  factory.getFilterConverter(unmarshalledParams)
+               case factory: KeyValueFilterConverterFactory[_, _, _] => factory.getFilterConverter
+            }.orElse(throw log.missingKeyValueFilterConverterFactory(name))
       }
+   }
+
+   private def unmarshallParams(params: Array[Bytes], factory: AnyRef): Array[AnyRef] = {
+      val m = marshaller.getOrElse(MarshallerBuilder.genericFromInstance(Some(factory)))
+      params.map(m.objectFromByteBuffer)
    }
 
    override def next(cacheName: String, iterationId: IterationId): IterableIterationResult = {

@@ -157,14 +157,20 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
    NotifyingFuture<Boolean> replaceWithVersionAsync(K key, V newValue, long version, int lifespanSeconds, int maxIdleSeconds);
 
    /**
+    * @see #retrieveEntries(String, Object[], java.util.Set, int)
+    */
+   CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize);
+
+   /**
     * Retrieve entries from the server
     *
     * @param filterConverterFactory Factory name for the KeyValueFilterConverter or null for no filtering.
+    * @param filterConverterParams  Parameters to the KeyValueFilterConverter
     * @param segments               The segments to iterate. If null all segments will be iterated. An empty set will filter out all entries.
     * @param batchSize              The number of entries transferred from the server at a time.
     * @return Iterator for the entries
     */
-   CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Set<Integer> segments, int batchSize);
+   CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize);
 
    /**
     * @see #retrieveEntries(String, java.util.Set, int)

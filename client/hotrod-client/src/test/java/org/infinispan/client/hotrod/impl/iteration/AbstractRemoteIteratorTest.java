@@ -2,6 +2,7 @@ package org.infinispan.client.hotrod.impl.iteration;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -13,6 +14,7 @@ import java.util.stream.Stream;
 import org.infinispan.client.hotrod.RemoteCache;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import static org.testng.Assert.assertTrue;
 
@@ -77,6 +79,18 @@ public interface AbstractRemoteIteratorTest {
          int segment = segmentCalculator.apply(toByteBuffer(key, marshaller));
          assertTrue(segments.contains(segment));
       });
+   }
+
+   default Set<Map.Entry<Object, Object>> extractEntries(CloseableIterator<Map.Entry<Object, Object>> iterator) {
+      Set<Map.Entry<Object, Object>> entries = new HashSet<>();
+      try {
+         while (iterator.hasNext()) {
+            entries.add(iterator.next());
+         }
+      } finally {
+         iterator.close();
+      }
+      return entries;
    }
 
 }
