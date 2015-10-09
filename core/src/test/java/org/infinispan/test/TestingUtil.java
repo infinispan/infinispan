@@ -685,10 +685,10 @@ public class TestingUtil {
 
    private static Set<String> getOrderedCacheNames(EmbeddedCacheManager cacheContainer) {
       Set<String> caches = new LinkedHashSet<>();
-      DependencyGraph graph = TestingUtil.extractField(cacheContainer, "cacheDependencyGraph");
       try {
+         DependencyGraph graph = TestingUtil.extractField(cacheContainer, "cacheDependencyGraph");
          caches.addAll(graph.topologicalSort());
-      } catch (CyclicDependencyException ignored) {
+      } catch (Exception ignored) {
       }
       return caches;
    }
