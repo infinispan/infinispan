@@ -47,9 +47,11 @@ public class EmbeddedCacheManagerConfigurationService {
         Map<String, List<String>> getRoles();
     }
 
-    interface StatePersistenceConfiguration {
-        String getPath();
-        String getRelativeTo();
+    interface GlobalStateLocationConfiguration {
+        String getPersistencePath();
+        String getPersistenceRelativeTo();
+        String getTemporaryPath();
+        String getTemporaryRelativeTo();
     }
 
     interface Dependencies {

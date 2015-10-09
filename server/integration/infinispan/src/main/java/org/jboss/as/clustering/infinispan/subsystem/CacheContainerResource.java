@@ -217,7 +217,7 @@ public class CacheContainerResource extends SimpleResourceDefinition {
         // child resources
         resourceRegistration.registerSubModel(new TransportResource());
         resourceRegistration.registerSubModel(new CacheContainerSecurityResource());
-        resourceRegistration.registerSubModel(new StatePersistenceResource());
+        resourceRegistration.registerSubModel(new GlobalStateResource());
         for(ResourceDefinition resource : ThreadPoolResource.values()) {
             resourceRegistration.registerSubModel(resource);
         }

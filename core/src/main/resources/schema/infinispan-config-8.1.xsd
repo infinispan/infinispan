@@ -191,7 +191,7 @@
           <xs:documentation>Defines JMX management details.</xs:documentation>
         </xs:annotation>
       </xs:element>
-      <xs:element name="state-persistence" type="tns:state-persistence" minOccurs="0">
+      <xs:element name="global-state" type="tns:global-state" minOccurs="0">
         <xs:annotation>
           <xs:documentation>Defines the global state persistence configuration. If this element is not present, global state persistence will be disabled.</xs:documentation>
         </xs:annotation>
@@ -535,7 +535,30 @@
     </xs:attribute>
   </xs:complexType>
   
-  <xs:complexType name="state-persistence">
+  <xs:complexType name="global-state">
+    <xs:sequence>
+      <xs:element name="persistent-location" type="tns:global-state-path" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>
+            Defines the filesystem path where persistent state data which needs to survive container restarts
+            should be stored. The data stored at this location is required for graceful
+            shutdown and restore. Defaults to the user.dir system property which usually is where the
+            application was started. This value should be overridden to a more appropriate location.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="temporary-location" type="tns:global-state-path" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>
+            Defines the filesystem path where temporary state should be stored. Defaults to the value of the
+            java.io.tmpdir system property.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="global-state-path">
     <xs:attribute name="relative-to" type="xs:string" default="jboss.server.data.dir">
         <xs:annotation>
             <xs:documentation>Ignored in embedded mode.</xs:documentation>

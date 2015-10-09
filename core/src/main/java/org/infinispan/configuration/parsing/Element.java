@@ -41,6 +41,7 @@ public enum Element {
     GROUPS("groups"),
     GROUPER("grouper"),
     GLOBAL("global"),
+    GLOBAL_STATE("global-state"),
     HASH("hash"),
     JGROUPS("jgroups"),
     IDENTITY_ROLE_MAPPER("identity-role-mapper"),
@@ -55,6 +56,7 @@ public enum Element {
     LOCAL_CACHE("local-cache"),
     LOCAL_CACHE_CONFIGURATION("local-cache-configuration"),
     PERSISTENCE("persistence"),
+    PERSISTENT_LOCATION("persistent-location"),
     LOCKING("locking"),
     MODULES("modules"),
     PROPERTIES("properties"),
@@ -73,11 +75,11 @@ public enum Element {
     SITES("sites"),
     STATE_TRANSFER("state-transfer"),
     STACK_FILE("stack-file"),
-    STATE_PERSISTENCE("state-persistence"),
     STORE("store"),
     STORE_AS_BINARY("store-as-binary"),
     SYNC("sync"),
     TAKE_OFFLINE("take-offline"),
+    TEMPORARY_LOCATION("temporary-location"),
     THREADS("threads"),
     THREAD_FACTORY("thread-factory"),
     TRANSACTION("transaction"),
@@ -86,7 +88,6 @@ public enum Element {
     VERSIONING("versioning"),
     WRITE_BEHIND("write-behind"),
     PARTITION_HANDLING("partition-handling"),
-
     ;
 
     private final String name;

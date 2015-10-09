@@ -33,5 +33,5 @@ public interface GlobalConfigurationChildBuilder {
 
    GlobalConfiguration build();
 
-   GlobalStatePersistenceConfigurationBuilder statePersistence();
+   GlobalStateConfigurationBuilder globalState();
 }

@@ -39,7 +39,10 @@
       <jmx domain="my-domain" mbean-server-lookup="org.infinispan.jmx.CustomMBeanServerPropertiesTest$TestLookup" duplicate-domains="true">
          <property name="key">value</property>
       </jmx>
-      <state-persistence path="path" relative-to="jboss.server.temp.dir" />
+      <global-state>
+         <persistent-location path="persistentPath" relative-to="jboss.server.temp.dir" />
+         <temporary-location path="tmpPath" relative-to="jboss.server.temp.dir" />
+      </global-state>
       <local-cache name="local" start="EAGER" module="org.infinispan" statistics="true">
          <locking acquire-timeout="30000" concurrency-level="2000" isolation="NONE" striping="true"/>
          <transaction mode="FULL_XA" stop-timeout="60000" locking="OPTIMISTIC" transaction-manager-lookup="org.infinispan.transaction.lookup.JBossStandaloneJTAManagerLookup" complete-timeout="34000" reaper-interval="35000" auto-commit="true" />

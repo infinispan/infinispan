@@ -103,6 +103,8 @@ public class ModelKeys {
     static final String FILE_STORE = "file-store";
     static final String FILE_STORE_NAME = "FILE_STORE";
     static final String FLUSH_LOCK_TIMEOUT = "flush-lock-timeout";
+    static final String GLOBAL_STATE = "global-state";
+    static final String GLOBAL_STATE_NAME = "GLOBAL_STATE";
     static final String HOTROD_WRAPPING = "hotrod-wrapping";
     static final String ID_COLUMN = "id-column";
     static final String IDENTITY_ROLE_MAPPER = "identity-role-mapper";
@@ -162,6 +164,8 @@ public class ModelKeys {
     static final String PASSIVATION = "passivation";
     static final String PATH = "path";
     static final String PERMISSIONS = "permissions";
+    static final String PERSISTENCE = "persistence";
+    static final String PERSISTENT_LOCATION = "persistent-location";
     static final String PREFIX = "prefix";
     static final String PRELOAD = "preload";
     static final String PROPERTY = "property";
@@ -203,8 +207,6 @@ public class ModelKeys {
     static final String SOCKET_TIMEOUT = "socket-timeout";
     static final String STACK = "stack";
     static final String START = "start";
-    static final String STATE_PERSISTENCE = "state-persistence";
-    static final String STATE_PERSISTENCE_NAME = "STATE_PERSISTENCE";
     static final String STATE_TRANSFER = "state-transfer";
     static final String STATE_TRANSFER_NAME = "STATE_TRANSFER";
     static final String STATE_TRANSFER_EXECUTOR = "state-transfer-executor";
@@ -220,6 +222,7 @@ public class ModelKeys {
     static final String TAKE_BACKUP_OFFLINE_MIN_WAIT = "min-wait";
     static final String TAKE_OFFLINE = "take-offline";
     static final String TCP_NO_DELAY = "tcp-no-delay";
+    static final String TEMPORARY_LOCATION = "temporary-location";
     static final String THREAD_POOL_SIZE = "thread-pool-size";
     static final String TIMEOUT = "timeout";
     static final String TIMESTAMP_COLUMN = "timestamp-column";

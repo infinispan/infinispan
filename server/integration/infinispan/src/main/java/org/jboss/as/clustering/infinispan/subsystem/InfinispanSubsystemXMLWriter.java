@@ -119,11 +119,11 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
                     writer.writeEndElement();
                 }
 
-                if (container.hasDefined(ModelKeys.STATE_PERSISTENCE)) {
-                    writer.writeStartElement(Element.STATE_PERSISTENCE.getLocalName());
-                    ModelNode statePersistence = container.get(ModelKeys.STATE_PERSISTENCE, ModelKeys.STATE_PERSISTENCE_NAME);
-                    this.writeOptional(writer, Attribute.RELATIVE_TO, statePersistence, ModelKeys.RELATIVE_TO);
-                    this.writeOptional(writer, Attribute.PATH, statePersistence, ModelKeys.PATH);
+                if (container.hasDefined(ModelKeys.GLOBAL_STATE)) {
+                    writer.writeStartElement(Element.GLOBAL_STATE.getLocalName());
+                    ModelNode globalState = container.get(ModelKeys.GLOBAL_STATE, ModelKeys.GLOBAL_STATE_NAME);
+                    writeStatePathElement(Element.PERSISTENT_LOCATION, ModelKeys.PERSISTENT_LOCATION, writer, globalState);
+                    writeStatePathElement(Element.TEMPORARY_LOCATION, ModelKeys.TEMPORARY_LOCATION, writer, globalState);
                     writer.writeEndElement();
                 }
 
@@ -151,6 +151,17 @@ public class InfinispanSubsystemXMLWriter implements XMLElementWriter<SubsystemM
             }
         }
         writer.writeEndElement();
+    }
+
+    private void writeStatePathElement(Element element, String name, XMLExtendedStreamWriter writer, ModelNode node) throws XMLStreamException {
+        if (node.hasDefined(name)) {
+            ModelNode pathNode = node.get(name);
+            writer.writeStartElement(element.getLocalName());
+            writeAttribute(writer, pathNode, GlobalStateResource.PATH);
+            writeOptional(writer, Attribute.RELATIVE_TO, pathNode, ModelKeys.RELATIVE_TO);
+            writer.writeEndElement();
+        }
+
     }
 
     private static void writeThreadPoolElements(Element element, ThreadPoolResource pool, XMLExtendedStreamWriter writer, ModelNode container) throws XMLStreamException {

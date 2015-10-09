@@ -22,8 +22,8 @@
 package org.jboss.as.clustering.infinispan.subsystem;
 
 import java.util.List;
-import java.util.ServiceLoader;
 import java.util.Map.Entry;
+import java.util.ServiceLoader;
 
 import javax.management.MBeanServer;
 
@@ -31,7 +31,7 @@ import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuild
 import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalStatePersistenceConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.marshall.core.Ids;
@@ -48,6 +48,11 @@ import org.jboss.as.clustering.infinispan.ChannelTransport;
 import org.jboss.as.clustering.infinispan.InfinispanLogger;
 import org.jboss.as.clustering.infinispan.MBeanServerProvider;
 import org.jboss.as.clustering.infinispan.io.SimpleExternalizer;
+import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.AuthorizationConfiguration;
+import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.GlobalStateLocationConfiguration;
+import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.TransportConfiguration;
+import org.jboss.as.controller.services.path.PathManager;
+import org.jboss.as.controller.services.path.PathManagerService;
 import org.jboss.as.jmx.MBeanServerService;
 import org.jboss.as.server.Services;
 import org.jboss.marshalling.ModularClassResolver;
@@ -61,11 +66,6 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.ValueService;
 import org.jboss.msc.value.InjectedValue;
 import org.jboss.msc.value.Value;
-import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.AuthorizationConfiguration;
-import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.StatePersistenceConfiguration;
-import org.jboss.as.clustering.infinispan.subsystem.EmbeddedCacheManagerConfigurationService.TransportConfiguration;
-import org.jboss.as.controller.services.path.PathManager;
-import org.jboss.as.controller.services.path.PathManagerService;
 
 /**
  * @author Paul Ferraro
@@ -79,7 +79,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
     private ModuleIdentifier module;
     private AuthorizationConfigurationBuilder authorization = null;
     private ValueDependency<TransportConfiguration> transport = null;
-    private StatePersistenceConfigurationBuilder statePersistence = null;
+    private GlobalStateLocationConfigurationBuilder globalStateLocation = null;
     private final InjectedValue<ThreadPoolConfiguration> asyncOperationsThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> expirationThreadPool = new InjectedValue<>();
     private final InjectedValue<ThreadPoolConfiguration> listenerThreadPool = new InjectedValue<>();
@@ -116,7 +116,7 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         if (this.transport != null) {
             this.transport.register(builder);
         }
-        if (this.statePersistence != null) {
+        if (this.globalStateLocation != null) {
             builder.addDependency(PathManagerService.SERVICE_NAME, PathManager.class, this.pathManager);
         }
         return builder.setInitialMode(ServiceController.Mode.ON_DEMAND);
@@ -190,11 +190,13 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
             }
         }
 
-        StatePersistenceConfiguration statePersistence = (this.statePersistence != null) ? this.statePersistence.getValue() : null;
+        GlobalStateLocationConfiguration statePersistence = (this.globalStateLocation != null) ? this.globalStateLocation.getValue() : null;
         if (statePersistence != null) {
-            GlobalStatePersistenceConfigurationBuilder statePersistenceBuilder = builder.statePersistence().enable();
-            String location = pathManager.getValue().resolveRelativePathEntry(statePersistence.getPath(), statePersistence.getRelativeTo());
-            statePersistenceBuilder.location(location);
+            GlobalStateConfigurationBuilder statePersistenceBuilder = builder.globalState().enable();
+            String persistentLocation = pathManager.getValue().resolveRelativePathEntry(statePersistence.getPersistencePath(), statePersistence.getPersistenceRelativeTo());
+            statePersistenceBuilder.persistentLocation(persistentLocation);
+            String temporaryLocation = pathManager.getValue().resolveRelativePathEntry(statePersistence.getPersistencePath(), statePersistence.getPersistenceRelativeTo());
+            statePersistenceBuilder.temporaryLocation(temporaryLocation);
         }
 
         builder.asyncThreadPool().read(this.asyncOperationsThreadPool.getValue());
@@ -235,8 +237,8 @@ public class CacheContainerConfigurationBuilder implements Builder<GlobalConfigu
         return this.authorization;
     }
 
-    public StatePersistenceConfigurationBuilder setStatePersistence() {
-        this.statePersistence = new StatePersistenceConfigurationBuilder();
-        return this.statePersistence;
+    public GlobalStateLocationConfigurationBuilder setGlobalState() {
+        this.globalStateLocation = new GlobalStateLocationConfigurationBuilder();
+        return this.globalStateLocation;
     }
 }

@@ -24,6 +24,7 @@ package org.jboss.as.clustering.infinispan.subsystem;
 
 import org.jboss.as.clustering.infinispan.subsystem.CacheConfigOperationHandlers.CacheConfigAdd;
 import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
@@ -39,31 +40,50 @@ import org.jboss.dmr.ModelType;
 
 /**
  * Resource description for the addressable resource
- * /subsystem=infinispan/cache-container=X/state-persistence=STATE_PERSISTENCE
+ * /subsystem=infinispan/cache-container=X/global-state=GLOBAL_STATE
  *
  * @author Tristan Tarrant
  */
-public class StatePersistenceResource extends SimpleResourceDefinition {
+public class GlobalStateResource extends SimpleResourceDefinition {
 
-    public static final PathElement STATE_PERSISTENCE_PATH = PathElement.pathElement(ModelKeys.STATE_PERSISTENCE,
-            ModelKeys.STATE_PERSISTENCE_NAME);
+    public static final PathElement GLOBAL_STATE_PATH = PathElement.pathElement(ModelKeys.GLOBAL_STATE,
+            ModelKeys.GLOBAL_STATE_NAME);
 
     // attributes
 
     static final SimpleAttributeDefinition PATH = new SimpleAttributeDefinitionBuilder(ModelKeys.PATH, ModelType.STRING,
-            true).setXmlName(Attribute.PATH.getLocalName()).setAllowExpression(true)
+            false).setXmlName(Attribute.PATH.getLocalName()).setAllowExpression(true)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES).build();
 
-    static final SimpleAttributeDefinition RELATIVE_TO = new SimpleAttributeDefinitionBuilder(ModelKeys.RELATIVE_TO,
+    static final SimpleAttributeDefinition PERSISTENT_RELATIVE_TO = new SimpleAttributeDefinitionBuilder(ModelKeys.RELATIVE_TO,
             ModelType.STRING, true).setXmlName(Attribute.RELATIVE_TO.getLocalName()).setAllowExpression(false)
                     .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .setDefaultValue(new ModelNode().set(ServerEnvironment.SERVER_DATA_DIR)).build();
 
-    static final AttributeDefinition[] ATTRIBUTES = { RELATIVE_TO, PATH };
+    static final SimpleAttributeDefinition TEMPORARY_RELATIVE_TO = new SimpleAttributeDefinitionBuilder(ModelKeys.RELATIVE_TO,
+            ModelType.STRING, true).setXmlName(Attribute.RELATIVE_TO.getLocalName()).setAllowExpression(false)
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                    .setDefaultValue(new ModelNode().set(ServerEnvironment.SERVER_TEMP_DIR)).build();
 
-    StatePersistenceResource() {
-        super(STATE_PERSISTENCE_PATH,
-                new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.STATE_PERSISTENCE),
+    static final ObjectTypeAttributeDefinition PERSISTENT_LOCATION_PATH =
+            ObjectTypeAttributeDefinition.Builder.of(ModelKeys.PERSISTENT_LOCATION, PATH, PERSISTENT_RELATIVE_TO)
+                .setAllowNull(true)
+                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                .setXmlName(ModelKeys.PERSISTENT_LOCATION)
+                .build();
+
+    static final ObjectTypeAttributeDefinition TEMPORARY_STATE_PATH =
+            ObjectTypeAttributeDefinition.Builder.of(ModelKeys.TEMPORARY_LOCATION, PATH, TEMPORARY_RELATIVE_TO)
+                .setAllowNull(true)
+                .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
+                .setXmlName(ModelKeys.TEMPORARY_LOCATION)
+                .build();
+
+    static final AttributeDefinition[] ATTRIBUTES = { PERSISTENT_LOCATION_PATH, TEMPORARY_STATE_PATH };
+
+    GlobalStateResource() {
+        super(GLOBAL_STATE_PATH,
+                new InfinispanResourceDescriptionResolver(ModelKeys.CACHE_CONTAINER, ModelKeys.GLOBAL_STATE),
                 new CacheConfigAdd(ATTRIBUTES), ReloadRequiredRemoveStepHandler.INSTANCE);
     }
 

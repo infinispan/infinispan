@@ -9,7 +9,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default" statistics="true">
-            <state-persistence />
+            <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <transaction mode="NONE" />
@@ -75,7 +75,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
-            <state-persistence />
+            <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" size="1000" type="COUNT"/>
@@ -98,7 +98,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
-            <state-persistence />
+            <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" size="1000" type="COUNT"/>
@@ -125,7 +125,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
-            <state-persistence />
+            <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <remote-store cache="default" socket-timeout="60000" tcp-no-delay="true" shared="true" hotrod-wrapping="true" purge="false" passivation="false">
@@ -187,7 +187,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
-            <state-persistence />
+            <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" size="1000" type="COUNT"/>
@@ -215,7 +215,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
-            <state-persistence />
+            <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <eviction strategy="LRU" size="1000" type="COUNT"/>
@@ -230,7 +230,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
-            <state-persistence />
+            <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <rest-store path="/rest/default" shared="true" purge="false" passivation="false">
@@ -245,7 +245,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="clustered" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="clustered" default-cache="default" >
-            <state-persistence />
+            <global-state />
             <transport lock-timeout="60000"/>
             <distributed-cache name="default" mode="SYNC" segments="20" owners="2" remote-timeout="30000" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
@@ -277,7 +277,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
-            <state-persistence />
+            <global-state />
             <local-cache name="default" start="EAGER">
                <locking acquire-timeout="30000" concurrency-level="1000" striping="false" />
                <compatibility enabled="true" />
@@ -289,7 +289,7 @@
       <replacement placeholder="@@default-cache-container@@" attributeValue="local" />
       <replacement placeholder="CACHE-CONTAINERS">
          <cache-container name="local" default-cache="default">
-            <state-persistence />
+            <global-state />
             <security>
                 <authorization>
                     <identity-role-mapper />
