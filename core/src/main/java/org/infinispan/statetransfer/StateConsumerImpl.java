@@ -50,6 +50,7 @@ import org.infinispan.util.concurrent.TimeoutException;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
+import javax.transaction.SystemException;
 import javax.transaction.TransactionManager;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -578,30 +579,27 @@ public class StateConsumerImpl implements StateConsumer {
 
             PutKeyValueCommand put = commandsFactory.buildPutKeyValueCommand(
                   e.getKey(), e.getValue(), e.getMetadata(), flags);
+            ctx.setLockOwner(put.getKeyLockOwner());
+            interceptorChain.invoke(ctx, put);
 
-            boolean success = false;
-            try {
-               ctx.setLockOwner(put.getKeyLockOwner());
-               interceptorChain.invoke(ctx, put);
-               success = true;
-            } finally {
-               if (ctx.isInTxScope()) {
-                  if (success) {
-                     try {
-                        transactionManager.commit();
-                     } catch (Throwable ex) {
-                        log.errorf(ex, "Could not commit transaction created by state transfer of key %s", e.getKey());
-                        if (transactionManager.getTransaction() != null) {
-                           transactionManager.rollback();
-                        }
-                     }
-                  } else {
-                     transactionManager.rollback();
-                  }
-               }
+            if (transactionManager != null) {
+               transactionManager.commit();
             }
          } catch (Exception ex) {
-            log.problemApplyingStateForKey(ex.getMessage(), e.getKey(), ex);
+            if (!cache.getStatus().allowInvocations()) {
+               log.debugf("Cache %s is shutting down, stopping state transfer", cacheName);
+               break;
+            } else {
+               log.problemApplyingStateForKey(ex.getMessage(), e.getKey(), ex);
+            }
+         } finally {
+            try {
+               if (transactionManager != null && transactionManager.getTransaction() != null) {
+                  transactionManager.rollback();
+               }
+            } catch (SystemException e1) {
+               log.warnf("Error encountered while rolling back transaction for state key %s", e.getKey());
+            }
          }
       }
       if (trace) log.tracef("Finished applying chunk of segment %d of cache %s", segmentId, cacheName);
