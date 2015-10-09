@@ -57,7 +57,7 @@ public class InternalCacheRegistryImpl implements InternalCacheRegistry {
       builder.jmxStatistics().disable(); // Internal caches must not be included in stats counts
       GlobalConfiguration globalConfiguration = cacheManager.getCacheManagerConfiguration();
       if (flags.contains(Flag.PERSISTENT) && globalConfiguration.statePersistence().enabled()) {
-         builder.persistence().addSingleFileStore().location(globalConfiguration.statePersistence().location()).purgeOnStartup(false).preload(true);
+         builder.persistence().addSingleFileStore().location(globalConfiguration.statePersistence().persistentLocation()).purgeOnStartup(false).preload(true);
       }
       SecurityActions.defineConfiguration(cacheManager, name, builder.build());
       internalCaches.add(name);

@@ -96,9 +96,9 @@
                     <xs:documentation>Defines a thread pool used for asynchronous transport communication.</xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="state-persistence" type="tns:state-persistence" minOccurs="0">
+            <xs:element name="global-state" type="tns:global-state" minOccurs="0">
                 <xs:annotation>
-                    <xs:documentation>Defines the global state persistence configuration.</xs:documentation>
+                    <xs:documentation>Defines the global state configuration.</xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:choice maxOccurs="unbounded">
@@ -321,18 +321,36 @@
             </xs:element>
         </xs:sequence>
     </xs:complexType>
-    
-    <xs:complexType name="state-persistence">
+
+    <xs:complexType name="global-state">
+        <xs:sequence>
+            <xs:element name="persistent-location" type="tns:global-state-path" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines the path where global state for this cache-container will be stored. The data stored at this location is required for graceful
+                        shutdown and restore.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="temporary-location" type="tns:global-state-path" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines the path which will be used to store temporary data.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="global-state-path">
         <xs:attribute name="relative-to" type="xs:string" default="jboss.server.data.dir">
             <xs:annotation>
-                <xs:documentation>Ignored in embedded mode.</xs:documentation>
+                <xs:documentation>The base directory in which to store the state</xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute name="path" type="xs:string" use="required">
             <xs:annotation>
-                <xs:documentation>
-                    Defines the path where global state for this cache-container will be stored.
-                </xs:documentation>
+                <xs:documentation>Defines the path where state for this cache-container will be stored.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
     </xs:complexType>

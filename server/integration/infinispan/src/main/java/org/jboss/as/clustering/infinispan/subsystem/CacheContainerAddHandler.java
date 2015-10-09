@@ -50,6 +50,7 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.naming.deployment.ContextNames;
+import org.jboss.as.server.ServerEnvironment;
 import org.jboss.dmr.ModelNode;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.msc.service.ServiceTarget;
@@ -106,11 +107,26 @@ public class CacheContainerAddHandler extends AbstractAddStepHandler {
             }
         }
 
-        if (model.hasDefined(StatePersistenceResource.STATE_PERSISTENCE_PATH.getKey())) {
-            ModelNode statePersistence = model.get(StatePersistenceResource.STATE_PERSISTENCE_PATH.getKeyValuePair());
-            final String path = ModelNodes.asString(StatePersistenceResource.PATH.resolveModelAttribute(context, statePersistence), InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + name);
-            final String relativeTo = ModelNodes.asString(StatePersistenceResource.RELATIVE_TO.resolveModelAttribute(context, statePersistence));
-            configBuilder.setStatePersistence().setPath(path).setRelativeTo(relativeTo);
+        if (model.hasDefined(GlobalStateResource.GLOBAL_STATE_PATH.getKey())) {
+            ModelNode globalState = model.get(GlobalStateResource.GLOBAL_STATE_PATH.getKeyValuePair());
+            final String defaultPersistentLocation = InfinispanExtension.SUBSYSTEM_NAME + File.separatorChar + name;
+            GlobalStateLocationConfigurationBuilder globalStateBuilder = configBuilder.setGlobalState();
+            if (globalState.hasDefined(ModelKeys.PERSISTENT_LOCATION)) {
+                ModelNode persistentLocation = globalState.get(ModelKeys.PERSISTENT_LOCATION);
+                final String path = ModelNodes.asString(GlobalStateResource.PATH.resolveModelAttribute(context, persistentLocation), defaultPersistentLocation);
+                final String relativeTo = ModelNodes.asString(GlobalStateResource.TEMPORARY_RELATIVE_TO.resolveModelAttribute(context, persistentLocation));
+                globalStateBuilder.setPersistencePath(path).setPersistenceRelativeTo(relativeTo);
+            } else {
+                globalStateBuilder.setPersistencePath(defaultPersistentLocation).setPersistenceRelativeTo(ServerEnvironment.SERVER_DATA_DIR);
+            }
+            if (globalState.hasDefined(ModelKeys.TEMPORARY_LOCATION)) {
+                ModelNode persistentLocation = globalState.get(ModelKeys.TEMPORARY_LOCATION);
+                final String path = ModelNodes.asString(GlobalStateResource.PATH.resolveModelAttribute(context, persistentLocation), defaultPersistentLocation);
+                final String relativeTo = ModelNodes.asString(GlobalStateResource.TEMPORARY_RELATIVE_TO.resolveModelAttribute(context, persistentLocation));
+                globalStateBuilder.setTemporaryPath(path).setTemporaryRelativeTo(relativeTo);
+            } else {
+                globalStateBuilder.setTemporaryPath(defaultPersistentLocation).setTemporaryRelativeTo(ServerEnvironment.SERVER_TEMP_DIR);
+            }
         }
 
         AuthorizationConfigurationBuilder authorizationConfig = null;

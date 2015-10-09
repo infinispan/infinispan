@@ -44,8 +44,11 @@ import org.infinispan.security.impl.IdentityRoleMapper;
 import org.infinispan.server.jgroups.subsystem.ChannelResourceDefinition;
 import org.infinispan.server.jgroups.subsystem.JGroupsSubsystemResourceDefinition;
 import org.jboss.as.controller.AttributeDefinition;
+import org.jboss.as.controller.ObjectListAttributeDefinition;
+import org.jboss.as.controller.ObjectTypeAttributeDefinition;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.parsing.ParseUtils;
@@ -232,9 +235,9 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
                     }
                     break;
                 }
-                case STATE_PERSISTENCE: {
+                case GLOBAL_STATE: {
                    if (namespace.since(Namespace.INFINISPAN_SERVER_8_1)) {
-                      parseGlobalStatePersistence(reader, containerAddress, operations);
+                      parseGlobalState(reader, containerAddress, operations);
                    } else {
                       ParseUtils.unexpectedElement(reader);
                    }
@@ -344,21 +347,43 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         }
     }
 
-    private void parseGlobalStatePersistence(XMLExtendedStreamReader reader, PathAddress containerAddress,
+    private void parseGlobalState(XMLExtendedStreamReader reader, PathAddress containerAddress,
             Map<PathAddress, ModelNode> operations) throws XMLStreamException {
-        PathAddress statePersistenceAddress = containerAddress.append(ModelKeys.STATE_PERSISTENCE, ModelKeys.STATE_PERSISTENCE_NAME);
-        ModelNode statePersistence = Util.createAddOperation(statePersistenceAddress);
+        PathAddress globalStateAddress = containerAddress.append(ModelKeys.GLOBAL_STATE, ModelKeys.GLOBAL_STATE_NAME);
+        ModelNode globalState = Util.createAddOperation(globalStateAddress);
+        while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+            Element element = Element.forName(reader.getLocalName());
+            switch (element) {
+                case PERSISTENT_LOCATION: {
+                    parseGlobalStatePath(reader, globalState, GlobalStateResource.PERSISTENT_LOCATION_PATH);
+                    break;
+                }
+                case TEMPORARY_LOCATION: {
+                    parseGlobalStatePath(reader, globalState, GlobalStateResource.TEMPORARY_STATE_PATH);
+                    break;
+                }
+                default: {
+                    throw ParseUtils.unexpectedElement(reader);
+                }
+            }
+        }
 
+        operations.put(globalStateAddress, globalState);
+    }
+
+    private void parseGlobalStatePath(XMLExtendedStreamReader reader, ModelNode operation,
+            ObjectTypeAttributeDefinition statePath) throws XMLStreamException {
+        ModelNode model = operation.get(statePath.getName());
         for (int i = 0; i < reader.getAttributeCount(); i++) {
             String value = reader.getAttributeValue(i);
             Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
             switch (attribute) {
                 case RELATIVE_TO: {
-                    FileStoreResource.RELATIVE_TO.parseAndSetParameter(value, statePersistence, reader);
+                    GlobalStateResource.TEMPORARY_RELATIVE_TO.parseAndSetParameter(value, model, reader);
                     break;
                 }
                 case PATH: {
-                    FileStoreResource.PATH.parseAndSetParameter(value, statePersistence, reader);
+                    GlobalStateResource.PATH.parseAndSetParameter(value, model, reader);
                     break;
                 }
                 default: {
@@ -368,11 +393,9 @@ public final class InfinispanSubsystemXMLReader implements XMLElementReader<List
         }
 
         ParseUtils.requireNoContent(reader);
-
-        operations.put(statePersistenceAddress, statePersistence);
     }
 
-   private void parseTransport(XMLExtendedStreamReader reader, PathAddress containerAddress, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
+    private void parseTransport(XMLExtendedStreamReader reader, PathAddress containerAddress, Map<PathAddress, ModelNode> operations) throws XMLStreamException {
 
         PathAddress transportAddress = containerAddress.append(ModelKeys.TRANSPORT, ModelKeys.TRANSPORT_NAME);
         ModelNode transport = Util.createAddOperation(transportAddress);

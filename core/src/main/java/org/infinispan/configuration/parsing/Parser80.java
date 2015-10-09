@@ -1,5 +1,26 @@
 package org.infinispan.configuration.parsing;
 
+import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_NOTIFICATION_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_OPERATIONS_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_REPLICATION_QUEUE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.ASYNC_TRANSPORT_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.PERSISTENCE_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.REMOTE_COMMAND_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.STATE_TRANSFER_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.TOTAL_ORDER_EXECUTOR;
+import static org.infinispan.factories.KnownComponentNames.shortened;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ThreadFactory;
+
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+
 import org.infinispan.commons.configuration.BuiltBy;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.Equivalence;
@@ -10,11 +31,28 @@ import org.infinispan.commons.executors.ThreadPoolExecutorFactory;
 import org.infinispan.commons.marshall.AdvancedExternalizer;
 import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.Util;
-import org.infinispan.configuration.cache.*;
+import org.infinispan.configuration.cache.AbstractStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.AsyncStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.AuthorizationConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupConfiguration;
+import org.infinispan.configuration.cache.BackupConfigurationBuilder;
+import org.infinispan.configuration.cache.BackupFailurePolicy;
+import org.infinispan.configuration.cache.CacheMode;
+import org.infinispan.configuration.cache.ClusterLoaderConfigurationBuilder;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.configuration.cache.CustomStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.Index;
+import org.infinispan.configuration.cache.InterceptorConfiguration;
+import org.infinispan.configuration.cache.InterceptorConfigurationBuilder;
+import org.infinispan.configuration.cache.PartitionHandlingConfigurationBuilder;
+import org.infinispan.configuration.cache.SecurityConfigurationBuilder;
+import org.infinispan.configuration.cache.SingleFileStoreConfigurationBuilder;
+import org.infinispan.configuration.cache.StoreConfigurationBuilder;
+import org.infinispan.configuration.cache.VersioningScheme;
 import org.infinispan.configuration.global.GlobalAuthorizationConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalRoleConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalStatePersistenceConfigurationBuilder;
+import org.infinispan.configuration.global.GlobalStateConfigurationBuilder;
 import org.infinispan.configuration.global.ShutdownHookBehavior;
 import org.infinispan.configuration.global.ThreadPoolConfiguration;
 import org.infinispan.configuration.global.ThreadPoolConfigurationBuilder;
@@ -44,18 +82,6 @@ import org.infinispan.util.concurrent.IsolationLevel;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.kohsuke.MetaInfServices;
-
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ThreadFactory;
-
-import static org.infinispan.commons.util.StringPropertyReplacer.replaceProperties;
-import static org.infinispan.factories.KnownComponentNames.*;
 
 /**
  * This class implements the parser for Infinispan/AS7/EAP/JDG schema files
@@ -578,9 +604,9 @@ public class Parser80 implements ConfigurationParser {
                parseGlobalSecurity(reader, holder);
                break;
             }
-            case STATE_PERSISTENCE: {
+            case GLOBAL_STATE: {
                if (reader.getSchema().since(8, 1)) {
-                  parseGlobalStatePersistence(reader, holder);
+                  parseGlobalState(reader, holder);
                } else {
                   ParseUtils.unexpectedElement(reader);
                }
@@ -807,10 +833,29 @@ public class Parser80 implements ConfigurationParser {
       ParseUtils.requireNoContent(reader);
    }
 
-   private void parseGlobalStatePersistence(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
-      GlobalStatePersistenceConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().statePersistence().enable();
-      String path = ParseUtils.requireAttributes(reader, Attribute.PATH.getLocalName())[0];
-      builder.location(replaceProperties(path));
+   private void parseGlobalState(XMLExtendedStreamReader reader, ConfigurationBuilderHolder holder) throws XMLStreamException {
+      ParseUtils.requireNoAttributes(reader);
+      GlobalStateConfigurationBuilder builder = holder.getGlobalConfigurationBuilder().globalState().enable();
+      while (reader.hasNext() && (reader.nextTag() != XMLStreamConstants.END_ELEMENT)) {
+         Element element = Element.forName(reader.getLocalName());
+         switch (element) {
+            case PERSISTENT_LOCATION: {
+               builder.persistentLocation(parseGlobalStatePath(reader));
+               break;
+            }
+            case TEMPORARY_LOCATION: {
+               builder.temporaryLocation(parseGlobalStatePath(reader));
+               break;
+            }
+            default: {
+               throw ParseUtils.unexpectedElement(reader);
+            }
+         }
+      }
+   }
+
+   private String parseGlobalStatePath(XMLExtendedStreamReader reader) throws XMLStreamException {
+      String path = replaceProperties(ParseUtils.requireAttributes(reader, Attribute.PATH.getLocalName())[0]);
       for (int i = 0; i < reader.getAttributeCount(); i++) {
          Attribute attribute = Attribute.forName(reader.getAttributeLocalName(i));
          switch (attribute) {
@@ -828,6 +873,7 @@ public class Parser80 implements ConfigurationParser {
          }
       }
       ParseUtils.requireNoContent(reader);
+      return path;
    }
 
    private ThreadPoolConfiguration createThreadPoolConfiguration(String threadPoolName, String componentName) {

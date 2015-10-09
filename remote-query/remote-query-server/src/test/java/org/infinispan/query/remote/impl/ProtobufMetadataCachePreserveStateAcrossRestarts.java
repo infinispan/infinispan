@@ -17,7 +17,7 @@ public class ProtobufMetadataCachePreserveStateAcrossRestarts extends AbstractIn
 
    protected EmbeddedCacheManager createCacheManager(String persistentStateLocation) throws Exception {
       GlobalConfigurationBuilder global = new GlobalConfigurationBuilder();
-      global.statePersistence().enable().location(persistentStateLocation);
+      global.globalState().enable().persistentLocation(persistentStateLocation);
       EmbeddedCacheManager cacheManager = TestCacheManagerFactory.createCacheManager(global, new ConfigurationBuilder());
       cacheManager.getCache();
       return cacheManager;

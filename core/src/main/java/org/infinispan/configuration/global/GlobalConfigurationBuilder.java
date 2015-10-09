@@ -26,7 +26,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    private final ThreadPoolConfigurationBuilder stateTransferThreadPool;
    private final ThreadPoolConfigurationBuilder asyncThreadPool;
    private final ShutdownConfigurationBuilder shutdown;
-   private final GlobalStatePersistenceConfigurationBuilder statePersistence;
+   private final GlobalStateConfigurationBuilder globalState;
    private final List<Builder<?>> modules = new ArrayList<Builder<?>>();
    private final SiteConfigurationBuilder site;
 
@@ -40,7 +40,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       this.serialization = new SerializationConfigurationBuilder(this);
       this.security = new GlobalSecurityConfigurationBuilder(this);
       this.shutdown = new ShutdownConfigurationBuilder(this);
-      this.statePersistence = new GlobalStatePersistenceConfigurationBuilder(this);
+      this.globalState = new GlobalStateConfigurationBuilder(this);
       this.site = new SiteConfigurationBuilder(this);
       this.expirationThreadPool = new ThreadPoolConfigurationBuilder(this);
       this.listenerThreadPool = new ThreadPoolConfigurationBuilder(this);
@@ -178,8 +178,8 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
    }
 
    @Override
-   public GlobalStatePersistenceConfigurationBuilder statePersistence() {
-      return statePersistence;
+   public GlobalStateConfigurationBuilder globalState() {
+      return globalState;
    }
 
    @SuppressWarnings("unchecked")
@@ -196,7 +196,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             security,
             serialization,
             shutdown,
-            statePersistence,
+            globalState,
             site
       ).forEach(c -> c.validate());
       modules.forEach(c -> c.validate());
@@ -220,7 +220,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             security.create(),
             serialization.create(),
             shutdown.create(),
-            statePersistence.create(),
+            globalState.create(),
             modulesConfig,
             site.create(),
             cl.get());
@@ -245,7 +245,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       security.read(template.security());
       serialization.read(template.serialization());
       shutdown.read(template.shutdown());
-      statePersistence.read(template.statePersistence());
+      globalState.read(template.statePersistence());
       transport.read(template.transport());
       site.read(template.sites());
       return this;
@@ -272,7 +272,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
             ", asyncThreadPool=" + asyncThreadPool +
             ", security=" + security +
             ", shutdown=" + shutdown +
-            ", statePersistence=" + statePersistence +
+            ", statePersistence=" + globalState +
             ", site=" + site +
             '}';
    }
@@ -308,7 +308,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
          return false;
       if (!security.equals(that.security))
          return false;
-      if (!statePersistence.equals(that.statePersistence))
+      if (!globalState.equals(that.globalState))
          return false;
 
       return !transport.equals(that.transport);
@@ -329,7 +329,7 @@ public class GlobalConfigurationBuilder implements GlobalConfigurationChildBuild
       result = 31 * result + (shutdown.hashCode());
       result = 31 * result + (site.hashCode());
       result = 31 * result + (security.hashCode());
-      result = 31 * result + (statePersistence.hashCode());
+      result = 31 * result + (globalState.hashCode());
       return result;
    }
 

@@ -1365,8 +1365,9 @@ public interface Log extends BasicLogger {
    @Message(value = "This configuration is not supported for simple cache", id = 381)
    CacheConfigurationException notSupportedInSimpleCache();
 
+   @LogMessage(level = WARN)
    @Message(value = "Global state persistence was enabled without specifying a location", id = 382)
-   CacheConfigurationException missingGlobalPersistentStateLocation();
+   void missingGlobalStatePersistentLocation();
 
    @LogMessage(level = WARN)
    @Message(value = "The eviction max-entries attribute has been deprecated. Please use the size attribute instead", id = 383)
@@ -1380,3 +1381,4 @@ public interface Log extends BasicLogger {
    void dataContainerConfigurationDeprecated();
 
 }
+

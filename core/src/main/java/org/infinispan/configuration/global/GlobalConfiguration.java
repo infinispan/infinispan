@@ -42,7 +42,7 @@ public class GlobalConfiguration {
    private final GlobalSecurityConfiguration security;
    private final SerializationConfiguration serialization;
    private final ShutdownConfiguration shutdown;
-   private final GlobalStatePersistenceConfiguration statePersistence;
+   private final GlobalStateConfiguration statePersistence;
    private final Map<Class<?>, ?> modules;
    private final SiteConfiguration site;
    private final WeakReference<ClassLoader> cl;
@@ -62,7 +62,7 @@ public class GlobalConfiguration {
          GlobalJmxStatisticsConfiguration globalJmxStatistics,
          TransportConfiguration transport, GlobalSecurityConfiguration security,
          SerializationConfiguration serialization, ShutdownConfiguration shutdown,
-         GlobalStatePersistenceConfiguration statePersistence,
+         GlobalStateConfiguration statePersistence,
          List<?> modules, SiteConfiguration site,ClassLoader cl) {
       this.evictionThreadPool = evictionThreadPool;
       this.listenerThreadPool = listenerThreadPool;
@@ -185,7 +185,7 @@ public class GlobalConfiguration {
       return shutdown;
    }
 
-   public GlobalStatePersistenceConfiguration statePersistence() {
+   public GlobalStateConfiguration statePersistence() {
       return statePersistence;
    }
 
