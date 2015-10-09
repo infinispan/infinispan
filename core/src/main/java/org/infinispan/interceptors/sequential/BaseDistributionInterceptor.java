@@ -13,6 +13,7 @@ import org.infinispan.commands.write.DataWriteCommand;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commands.write.WriteCommand;
 import org.infinispan.commons.CacheException;
+import org.infinispan.container.EntryFactory;
 import org.infinispan.container.entries.CacheEntry;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.container.entries.InternalCacheValue;
@@ -114,7 +115,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor
                List<CacheEntry> cacheEntries =
                      (List<CacheEntry>) ((SuccessfulResponse) response).getResponseValue();
                for (CacheEntry entry : cacheEntries) {
-                  entryFactory.wrapEntryForReading(ctx, entry.getKey(), entry);
+                  entryFactory.wrapExternalEntry(ctx, entry.getKey(), entry, EntryFactory.Wrap.STORE, false);;
                }
             }
          }
@@ -510,7 +511,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor
                                 rpcManager.getAddress(), ch.locateOwners(key));
                   }
                   // Force a map entry to be created, because we know this entry is local
-                  entryFactory.wrapEntryForPut(ctx, key, null, false, command, false);
+                  entryFactory.wrapExternalEntry(ctx, key, null, EntryFactory.Wrap.WRAP_ALL, false);
                }
             }
          }
@@ -533,7 +534,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor
                if (!justRetrieved.containsKey(key)) {
                   missingRemoteValues = true;
                } else {
-                  entryFactory.wrapEntryForPut(ctx, key, justRetrieved.get(key), false, command, false);
+                  InternalCacheEntry remoteEntry = justRetrieved.get(key);
+                  entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.WRAP_NON_NULL,
+                                                 false);
                }
             }
          }
@@ -558,7 +561,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor
                                 rpcManager.getAddress(), ch.locateOwners(key));
                   }
                   // Force a map entry to be created, because we know this entry is local
-                  entryFactory.wrapEntryForPut(ctx, key, null, false, command, false);
+                  entryFactory.wrapExternalEntry(ctx, key, null, EntryFactory.Wrap.WRAP_ALL, false);
                }
             }
          }
@@ -570,8 +573,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor
    public CompletableFuture<Object> visitReadOnlyManyCommand(InvocationContext ctx,
          ReadOnlyManyCommand command) throws Throwable {
       // TODO: Can we reimplement GetAll in terms of ReadOnlyManyCommand?
-      if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP) ||
-            command.hasFlag(Flag.IGNORE_RETURN_VALUES)) {
+      if (command.hasFlag(Flag.CACHE_MODE_LOCAL) || command.hasFlag(Flag.SKIP_REMOTE_LOOKUP)) {
          return null;
       }
 
@@ -605,7 +607,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor
                                 rpcManager.getAddress(), ch.locateOwners(key));
                   }
                   // Force a map entry to be created, because we know this entry is local
-                  entryFactory.wrapEntryForPut(ctx, key, null, false, command, false);
+                  entryFactory.wrapExternalEntry(ctx, key, null, EntryFactory.Wrap.WRAP_ALL, false);
                }
             }
          }
@@ -628,7 +630,9 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor
                if (!justRetrieved.containsKey(key)) {
                   missingRemoteValues = true;
                } else {
-                  entryFactory.wrapEntryForPut(ctx, key, justRetrieved.get(key), false, command, false);
+                  InternalCacheEntry remoteEntry = justRetrieved.get(key);
+                  entryFactory.wrapExternalEntry(ctx, key, remoteEntry, EntryFactory.Wrap.WRAP_NON_NULL,
+                                                 false);
                }
             }
          }
@@ -653,21 +657,11 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor
                                 rpcManager.getAddress(), ch.locateOwners(key));
                   }
                   // Force a map entry to be created, because we know this entry is local
-                  entryFactory.wrapEntryForPut(ctx, key, null, false, command, false);
+                  entryFactory.wrapExternalEntry(ctx, key, null, EntryFactory.Wrap.WRAP_ALL, false);
                }
             }
          }
          return null;
-      }
-   }
-
-   protected void wrapInternalCacheEntry(InternalCacheEntry ice, InvocationContext ctx, Object key,
-         boolean isWrite, FlagAffectedCommand command) {
-      if (!ctx.replaceValue(key, ice)) {
-         if (isWrite)
-            entryFactory.wrapEntryForPut(ctx, key, ice, false, command, true);
-         else
-            ctx.putLookedUpEntry(key, ice);
       }
    }
 
