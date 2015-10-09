@@ -382,7 +382,7 @@ public interface Log extends BasicLogger {
    void errorProcessing1pcPrepareCommand(@Cause Throwable e);
 
    @LogMessage(level = ERROR)
-   @Message(value = "Exception while rollback", id = 98)
+   @Message(value = "Exception during rollback", id = 98)
    void errorRollingBack(@Cause Throwable e);
 
    @LogMessage(level = ERROR)
