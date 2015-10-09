@@ -11,6 +11,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -89,9 +90,10 @@ public abstract class BaseSequentialInvocationContext
    public void continueExecution(Object returnValue, Throwable throwable) {
       if (trace)
          log.tracef(
-               "Continue execution for %s, next interceptor %s, return handlers %s, return value %s, exception %s",
-               getCommand(),
-               nextInterceptor, returnHandlers.size(), returnValue, throwable);
+               "Continue execution for %s, next interceptor %s, return handlers %s, returning %s, throwing " +
+                     "%s",
+               getCommand(), nextInterceptor, returnHandlers.size(),
+               returnValue != null ? returnValue.getClass() : null, throwable);
       while (nextInterceptor < interceptors.size()) {
          if (returnValue instanceof ForkInfo) {
             // Start invoking a new command with the next interceptor.
@@ -150,7 +152,8 @@ public abstract class BaseSequentialInvocationContext
 
       // We are done!
       if (trace)
-         log.tracef("Command %s done, return value %s, throwable %s", command, returnValue, throwable);
+         log.tracef("Command %s done, returning %s, throwing %s", command,
+                    returnValue != null ? returnValue.getClass() : null, throwable);
       if (throwable == null) {
          future.complete(returnValue);
       } else {
