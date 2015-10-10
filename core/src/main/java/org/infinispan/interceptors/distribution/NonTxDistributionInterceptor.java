@@ -60,16 +60,6 @@ import java.util.concurrent.TimeoutException;
 @Deprecated
 public class NonTxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
-   protected boolean writeNeedsRemoteValue(InvocationContext ctx, WriteCommand command, Object key) {
-      return false;
-   }
-
-   @Override
-   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key)
-         throws Throwable {
-   }
-
-   @Override
    public Class<? extends SequentialInterceptor> getSequentialInterceptor() {
       return org.infinispan.interceptors.sequential.NonTxDistributionInterceptor.class;
    }

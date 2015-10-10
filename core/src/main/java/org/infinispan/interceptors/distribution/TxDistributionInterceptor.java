@@ -13,16 +13,6 @@ import org.infinispan.interceptors.base.SequentialInterceptor;
 @Deprecated
 public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    @Override
-   protected boolean writeNeedsRemoteValue(InvocationContext ctx, WriteCommand command, Object key) {
-      return false;
-   }
-
-   @Override
-   protected void remoteGetBeforeWrite(InvocationContext ctx, WriteCommand command, Object key)
-         throws Throwable {
-   }
-
-   @Override
    public Class<? extends SequentialInterceptor> getSequentialInterceptor() {
       return org.infinispan.interceptors.sequential.TxDistributionInterceptor.class;
    }

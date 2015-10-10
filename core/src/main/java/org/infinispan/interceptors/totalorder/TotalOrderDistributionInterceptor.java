@@ -5,6 +5,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.interceptors.distribution.TxDistributionInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -22,11 +23,8 @@ import java.util.Collection;
  */
 @Deprecated
 public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor {
-
-   private static final Log log = LogFactory.getLog(TotalOrderDistributionInterceptor.class);
-
    @Override
-   protected Log getLog() {
-      return log;
+   public Class<? extends SequentialInterceptor> getSequentialInterceptor() {
+      return org.infinispan.interceptors.sequential.totalorder.TotalOrderDistributionInterceptor.class;
    }
 }

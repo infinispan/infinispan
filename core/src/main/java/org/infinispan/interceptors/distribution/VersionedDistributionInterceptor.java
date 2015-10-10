@@ -2,6 +2,7 @@ package org.infinispan.interceptors.distribution;
 
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.remoting.responses.Response;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.LocalTransaction;
@@ -22,10 +23,8 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromRe
  */
 @Deprecated
 public class VersionedDistributionInterceptor extends TxDistributionInterceptor {
-   private static final Log log = LogFactory.getLog(VersionedDistributionInterceptor.class);
-
    @Override
-   protected Log getLog() {
-      return log;
+   public Class<? extends SequentialInterceptor> getSequentialInterceptor() {
+      return org.infinispan.interceptors.sequential.VersionedDistributionInterceptor.class;
    }
 }

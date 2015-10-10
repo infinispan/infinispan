@@ -7,6 +7,7 @@ import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.impl.TxInvocationContext;
+import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.interceptors.distribution.VersionedDistributionInterceptor;
 import org.infinispan.remoting.responses.KeysValidateFilter;
 import org.infinispan.remoting.transport.Address;
@@ -26,11 +27,8 @@ import java.util.Collection;
  */
 @Deprecated
 public class TotalOrderVersionedDistributionInterceptor extends VersionedDistributionInterceptor {
-
-   private static final Log log = LogFactory.getLog(TotalOrderVersionedDistributionInterceptor.class);
-
    @Override
-   protected Log getLog() {
-      return log;
+   public Class<? extends SequentialInterceptor> getSequentialInterceptor() {
+      return org.infinispan.interceptors.sequential.totalorder.TotalOrderVersionedDistributionInterceptor.class;
    }
 }
