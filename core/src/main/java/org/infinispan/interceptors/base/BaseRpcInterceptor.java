@@ -29,6 +29,7 @@ import java.util.Set;
  * @author Mircea.Markus@jboss.com
  * @deprecated Since 8.1, use {@link org.infinispan.interceptors.sequential.BaseRpcInterceptor} instead.
  */
+@Deprecated
 public abstract class BaseRpcInterceptor extends CommandInterceptor {
 
    protected RpcManager rpcManager;

@@ -18,29 +18,14 @@ import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromRe
  * A version of the {@link TxDistributionInterceptor} that adds logic to handling prepares when entries are versioned.
  *
  * @author Manik Surtani
- * @since 5.1
+ * @deprecated Since 8.1, use {@link org.infinispan.interceptors.sequential.VersionedDistributionInterceptor} instead.
  */
+@Deprecated
 public class VersionedDistributionInterceptor extends TxDistributionInterceptor {
-
    private static final Log log = LogFactory.getLog(VersionedDistributionInterceptor.class);
 
    @Override
    protected Log getLog() {
       return log;
-   }
-
-   @Override
-   protected void prepareOnAffectedNodes(TxInvocationContext<LocalTransaction> ctx, PrepareCommand command, Collection<Address> recipients) {
-      // Perform the RPC
-      try {
-         Map<Address, Response> resps = rpcManager.invokeRemotely(recipients, command, createPrepareRpcOptions());
-         checkTxCommandResponses(resps, command, ctx, recipients);
-
-         // Now store newly generated versions from lock owners for use during the commit phase.
-         CacheTransaction ct = ctx.getCacheTransaction();
-         for (Response r : resps.values()) readVersionsFromResponse(r, ct);
-      } finally {
-         transactionRemotelyPrepared(ctx);
-      }
    }
 }
