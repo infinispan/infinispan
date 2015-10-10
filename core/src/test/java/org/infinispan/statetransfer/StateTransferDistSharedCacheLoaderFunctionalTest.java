@@ -40,7 +40,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
    };
    int id;
 
-   static final int INSERTION_COUNT = 1000;
+   static final int INSERTION_COUNT = 100;
 
    @BeforeMethod
    public void beforeEachMethod() {
@@ -52,6 +52,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
    protected void createCacheManagers() throws Throwable {
       super.createCacheManagers();
       configurationBuilder.clustering().cacheMode(CacheMode.DIST_SYNC);
+      configurationBuilder.clustering().stateTransfer().chunkSize(50);
    }
 
    @Override
