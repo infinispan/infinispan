@@ -203,7 +203,7 @@ public class DistSyncTxL1FuncTest extends BaseDistSyncL1Test {
             throw new RemoteException("FAIL", new TimeoutException());
          }
          // Only throw exception on the first call just in case if test calls it more than once to fail properly
-      }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager).invokeRemotely(anyCollection(), any(ReplicableCommand.class), any(RpcOptions.class));
+      }).doAnswer(AdditionalAnswers.delegatesTo(realManager)).when(mockManager).invokeRemotelyAsync(anyCollection(), any(ReplicableCommand.class), any(RpcOptions.class));
 
       TestingUtil.replaceComponent(nonOwnerCache, RpcManager.class, mockManager, true);
       try {
