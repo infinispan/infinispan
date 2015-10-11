@@ -11,10 +11,7 @@ import org.infinispan.util.logging.LogFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * @author Dan Berindei
@@ -31,7 +28,7 @@ public abstract class BaseSequentialInvocationContext
    private final List<SequentialInterceptor> interceptors;
    // If >= interceptors.length, it means we've begun executing the return handlers
    private volatile int nextInterceptor = 0;
-   private final List<BiFunction<Object, Throwable, CompletableFuture<Object>>> returnHandlers;
+   private final List<ReturnHandler> returnHandlers;
    private CompletableFuture<Object> future;
 
    public BaseSequentialInvocationContext(SequentialInterceptorChain interceptorChain) {
@@ -46,7 +43,7 @@ public abstract class BaseSequentialInvocationContext
    }
 
    @Override
-   public void onReturn(BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
+   public void onReturn(ReturnHandler returnHandler) {
       returnHandlers.add(returnHandler);
    }
 
@@ -56,18 +53,15 @@ public abstract class BaseSequentialInvocationContext
    }
 
    @Override
-   public Object forkInvocation(VisitableCommand newCommand,
-                                BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
+   public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand, ReturnHandler returnHandler) {
       if (trace)
          log.tracef("Forking command %s at interceptor %d %s", newCommand, nextInterceptor, interceptors.get(nextInterceptor));
       return new ForkInfo(newCommand, returnHandler);
    }
 
    protected CompletableFuture<Object> handleForkReturn(VisitableCommand newCommand,
-                                                        BiFunction<Object, Throwable,
-                                                              CompletableFuture<Object>> returnHandler,
-                                                        VisitableCommand savedCommand, int savedInterceptor,
-                                                        Object returnValue, Throwable throwable) {
+         ReturnHandler returnHandler, VisitableCommand savedCommand, int savedInterceptor, Object returnValue,
+         Throwable throwable) throws Throwable {
       if (trace)
          log.tracef("Forked command %s done at %s, return value %s/%s, continuing with %s", newCommand,
                     interceptors.get(savedInterceptor), returnValue, throwable, savedCommand);
@@ -137,8 +131,7 @@ public abstract class BaseSequentialInvocationContext
       // Interceptors are all done, execute the return handlers
       while (!returnHandlers.isEmpty()) {
          try {
-            BiFunction<Object, Throwable, CompletableFuture<Object>> handler =
-                  returnHandlers.remove(returnHandlers.size() - 1);
+            ReturnHandler handler = returnHandlers.remove(returnHandlers.size() - 1);
             CompletableFuture<Object> handlerFuture = handler.apply(returnValue, throwable);
             if (handlerFuture != null) {
                handlerFuture.whenComplete(this::continueExecution);
@@ -170,12 +163,12 @@ public abstract class BaseSequentialInvocationContext
       }
    }
 
-   private class ForkInfo {
+   private class ForkInfo extends CompletableFuture<Object> {
       private final VisitableCommand newCommand;
-      private final BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler;
+      private final ReturnHandler returnHandler;
 
-      public ForkInfo(VisitableCommand newCommand,
-                      BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
+      public ForkInfo(VisitableCommand newCommand, ReturnHandler returnHandler) {
+         super.complete(null);
          this.newCommand = newCommand;
          this.returnHandler = returnHandler;
       }

@@ -296,11 +296,7 @@ public abstract class BaseDistributionInterceptor extends ClusteringInterceptor
       // invoke the command locally, we need to know if it's successful or not
       ctx.onReturn((localResult, throwable) -> {
          if (throwable != null) {
-            if (throwable instanceof RuntimeException) {
-               throw (RuntimeException) throwable;
-            } else {
-               throw new CacheException(throwable);
-            }
+            throw throwable;
          }
          return handleLocalResult(ctx, command, localResult);
       });

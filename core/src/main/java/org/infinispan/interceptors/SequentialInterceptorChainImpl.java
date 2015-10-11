@@ -118,10 +118,6 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       return interceptors.size();
    }
 
-   public List<CommandInterceptor> asList() {
-      return Collections.emptyList();
-   }
-
    public void removeInterceptor(Class<? extends AnyInterceptor> clazz) {
       final ReentrantLock lock = this.lock;
       lock.lock();
@@ -139,12 +135,12 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
    protected boolean interceptorMatches(SequentialInterceptor interceptor,
                                         Class<? extends AnyInterceptor> clazz) {
-      Class<? extends SequentialInterceptor> theClass = getSearchInterceptorClass(clazz);
+      Class<? extends SequentialInterceptor> sequentialClazz = getSequentialInterceptorClass(clazz);
       Class<? extends AnyInterceptor> realInterceptorType = getRealInterceptorType(interceptor);
-      return theClass == realInterceptorType;
+      return clazz == realInterceptorType || sequentialClazz == realInterceptorType;
    }
 
-   private Class<? extends SequentialInterceptor> getSearchInterceptorClass(
+   private Class<? extends SequentialInterceptor> getSequentialInterceptorClass(
          Class<? extends AnyInterceptor> clazz) {
       // AnyInterceptor only has two subclasses: SequentialInterceptor and CommandInterceptor
       if (CommandInterceptor.class.isAssignableFrom(clazz)) {
@@ -308,7 +304,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    @Override
    public boolean containsInterceptorType(Class<? extends AnyInterceptor> interceptorType,
                                           boolean alsoMatchSubClasses) {
-      interceptorType = getSearchInterceptorClass(interceptorType);
+      Class<? extends SequentialInterceptor> sequentialInterceptorType =
+            getSequentialInterceptorClass(interceptorType);
       List<SequentialInterceptor> localInterceptors = this.interceptors;
       for (SequentialInterceptor interceptor : localInterceptors) {
          Class<? extends AnyInterceptor> currentInterceptorType = getRealInterceptorType(interceptor);
@@ -316,8 +313,13 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
             if (interceptorType.isAssignableFrom(currentInterceptorType)) {
                return true;
             }
+            if (sequentialInterceptorType != null &&
+                  sequentialInterceptorType.isAssignableFrom(currentInterceptorType)) {
+               return true;
+            }
          } else {
-            if (interceptorType == currentInterceptorType) {
+            if (interceptorType == currentInterceptorType ||
+                  sequentialInterceptorType == currentInterceptorType) {
                return true;
             }
          }

@@ -11,6 +11,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static org.infinispan.transaction.impl.WriteSkewHelper.readVersionsFromResponse;
 
@@ -28,7 +29,7 @@ public class VersionedDistributionInterceptor extends TxDistributionInterceptor 
 
    @Override
    protected void prepareOnAffectedNodes(TxInvocationContext<LocalTransaction> ctx, PrepareCommand command,
-         Collection<Address> recipients) {
+         Collection<Address> recipients) throws Throwable {
       // Perform the RPC
       try {
          Map<Address, Response> resps =

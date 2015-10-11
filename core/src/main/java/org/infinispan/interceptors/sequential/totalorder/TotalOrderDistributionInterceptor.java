@@ -3,7 +3,6 @@ package org.infinispan.interceptors.sequential.totalorder;
 import org.infinispan.commands.tx.CommitCommand;
 import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
-import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.sequential.TxDistributionInterceptor;
@@ -49,7 +48,7 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
 
    @Override
    protected void prepareOnAffectedNodes(TxInvocationContext<LocalTransaction> ctx, PrepareCommand command,
-         Collection<Address> recipients) {
+         Collection<Address> recipients) throws Throwable {
       if (log.isTraceEnabled()) {
          log.tracef("Total Order Anycast transaction %s with Total Order",
                     command.getGlobalTransaction().globalId());
@@ -65,11 +64,8 @@ public class TotalOrderDistributionInterceptor extends TxDistributionInterceptor
 
       try {
          totalOrderPrepare(recipients, command, isSyncCommitPhase() ? null : getSelfDeliverFilter()).get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CacheException(e);
       } catch (ExecutionException e) {
-         throw new CacheException(e.getCause());
+         throw e.getCause();
       } finally {
          transactionRemotelyPrepared(ctx);
       }

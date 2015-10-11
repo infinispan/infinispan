@@ -54,7 +54,7 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
 
    @Override
    protected void prepareOnAffectedNodes(TxInvocationContext<LocalTransaction> ctx, PrepareCommand command,
-         Collection<Address> recipients) {
+         Collection<Address> recipients) throws Throwable {
       if (log.isTraceEnabled()) {
          log.tracef("Total Order Anycast transaction %s with Total Order",
                     command.getGlobalTransaction().globalId());
@@ -78,11 +78,8 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
                new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
 
          totalOrderPrepare(recipients, command, responseFilter).get();
-      } catch (InterruptedException e) {
-         Thread.currentThread().interrupt();
-         throw new CacheException(e);
       } catch (ExecutionException e) {
-         throw new CacheException(e.getCause());
+         throw e.getCause();
       } finally {
          transactionRemotelyPrepared(ctx);
       }

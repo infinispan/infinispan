@@ -7,8 +7,8 @@ import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
 import org.infinispan.context.impl.TxInvocationContext;
-import org.infinispan.interceptors.sequential.BaseSequentialInterceptor;
 import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.interceptors.sequential.BaseSequentialInterceptor;
 import org.infinispan.remoting.transport.Address;
 import org.infinispan.transaction.impl.AbstractCacheTransaction;
 import org.infinispan.transaction.xa.GlobalTransaction;
@@ -26,7 +26,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
 
 /**
  * @author Dan Berindei
@@ -99,7 +98,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       // So we have to fork even for the same command, and short-circuit when the legacy
       // interceptor is done.
       // TODO If this is common enough, maybe forking should be the default??
-      BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler =
+      SequentialInvocationContext.ReturnHandler returnHandler =
             (returnValue, throwable) -> handleNextReturn(actx, nextInterceptorFuture, returnValue, throwable);
       if (trace) log.tracef("visitFuture done for %s", getAdaptedType().getSimpleName());
       actx.visitFuture.complete(actx.sctx.forkInvocation(command, returnHandler));
@@ -263,7 +262,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       }
 
       @Override
-      public void onReturn(BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
+      public void onReturn(ReturnHandler returnHandler) {
          throw new UnsupportedOperationException();
       }
 
@@ -274,7 +273,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
 
       @Override
       public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand,
-                                                      BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
+            ReturnHandler returnHandler) {
          throw new UnsupportedOperationException();
       }
 

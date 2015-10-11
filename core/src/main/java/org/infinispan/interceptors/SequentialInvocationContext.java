@@ -2,6 +2,7 @@ package org.infinispan.interceptors;
 
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.context.InvocationContext;
+import org.infinispan.context.impl.BaseSequentialInvocationContext;
 import org.infinispan.interceptors.base.SequentialInterceptor;
 
 import java.util.concurrent.CompletableFuture;
@@ -15,13 +16,17 @@ import java.util.function.Function;
 public interface SequentialInvocationContext {
    VisitableCommand getCommand();
 
-   void onReturn(BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler);
+   void onReturn(ReturnHandler returnHandler);
 
    Object shortCircuit(Object returnValue);
 
-   Object forkInvocation(VisitableCommand newCommand, BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler);
+   CompletableFuture<Object> forkInvocation(VisitableCommand newCommand, ReturnHandler returnHandler);
 
    CompletableFuture<Object> execute(VisitableCommand command);
 
    // TODO Object executeRestOfChain() for legacy interceptors and/or local execution?
+
+   interface ReturnHandler {
+      CompletableFuture<Object> apply(Object returnValue, Throwable throwable) throws Throwable;
+   }
 }

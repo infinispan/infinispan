@@ -10,7 +10,6 @@ import org.infinispan.remoting.transport.Address;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiFunction;
 
 /**
  * This context is a non-context for operations such as eviction which are not related
@@ -124,7 +123,7 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public void onReturn(BiFunction<Object, Throwable, CompletableFuture<Object>> returnHandler) {
+   public void onReturn(ReturnHandler returnHandler) {
    }
 
    @Override
@@ -133,8 +132,7 @@ public final class ImmutableContext implements InvocationContext {
    }
 
    @Override
-   public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand, BiFunction<Object,
-         Throwable, CompletableFuture<Object>> returnHandler) {
+   public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand, ReturnHandler returnHandler) {
       return null;
    }
 

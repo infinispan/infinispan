@@ -46,6 +46,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 import static java.lang.String.format;
 import static org.infinispan.util.DeltaCompositeKeyUtil.filterDeltaCompositeKeys;
@@ -202,7 +203,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    public CompletableFuture<Object> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command)
          throws Throwable {
       ctx.onReturn((returnValue, throwable) -> {
-         if (shouldInvokeRemoteTxCommand(ctx)) {
+         if (throwable == null && shouldInvokeRemoteTxCommand(ctx)) {
             TxInvocationContext<LocalTransaction> localTxCtx = (TxInvocationContext<LocalTransaction>) ctx;
             Collection<Address> recipients = cdl.getOwners(getAffectedKeysFromContext(ctx));
             prepareOnAffectedNodes(localTxCtx, command, recipients);
@@ -215,7 +216,7 @@ public class TxDistributionInterceptor extends BaseDistributionInterceptor {
    }
 
    protected void prepareOnAffectedNodes(TxInvocationContext<LocalTransaction> ctx, PrepareCommand command,
-         Collection<Address> recipients) {
+         Collection<Address> recipients) throws Throwable {
       try {
          // this method will return immediately if we're the only member (because exclude_self=true)
          Map<Address, Response> responseMap =
