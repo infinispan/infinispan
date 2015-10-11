@@ -1,12 +1,14 @@
 package org.infinispan.cache.impl;
 
 import org.infinispan.AdvancedCache;
+import org.infinispan.Cache;
 import org.infinispan.CacheCollection;
 import org.infinispan.CacheSet;
 import org.infinispan.Version;
 import org.infinispan.atomic.Delta;
 import org.infinispan.batch.BatchContainer;
 import org.infinispan.commands.CommandsFactory;
+import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.VisitableCommand;
 import org.infinispan.commands.control.LockControlCommand;
 import org.infinispan.commands.read.EntrySetCommand;
@@ -1838,5 +1840,14 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    )
    public Properties getConfigurationAsProperties() {
       return new PropertyFormatter().format(config);
+   }
+
+   public static <K, V> Cache<K, V> getCacheWithFlags(Cache<K, V> cache, LocalFlagAffectedCommand command) {
+      Set<Flag> flags = command.getFlags();
+      if (flags != null && !flags.isEmpty()) {
+         return cache.getAdvancedCache().withFlags(flags.toArray(new Flag[flags.size()]));
+      } else {
+         return cache;
+      }
    }
 }
