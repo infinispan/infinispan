@@ -139,18 +139,26 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
    protected boolean interceptorMatches(SequentialInterceptor interceptor,
                                         Class<? extends AnyInterceptor> clazz) {
+      Class<? extends SequentialInterceptor> theClass = getSearchInterceptorClass(clazz);
+      Class<? extends AnyInterceptor> realInterceptorType = getRealInterceptorType(interceptor);
+      return theClass == realInterceptorType;
+   }
+
+   private Class<? extends SequentialInterceptor> getSearchInterceptorClass(
+         Class<? extends AnyInterceptor> clazz) {
+      // AnyInterceptor only has two subclasses: SequentialInterceptor and CommandInterceptor
       if (CommandInterceptor.class.isAssignableFrom(clazz)) {
          // Legacy interceptor, see if it has a replacement
          try {
             CommandInterceptor ci = (CommandInterceptor) clazz.newInstance();
             Class<? extends SequentialInterceptor> replacement = ci.getSequentialInterceptor();
-            if (replacement != null && replacement == getRealInterceptorType(interceptor))
-               return true;
+            if (replacement != null)
+               return replacement;
          } catch (Exception e) {
             // Ignore
          }
       }
-      return clazz == getRealInterceptorType(interceptor);
+      return (Class<? extends SequentialInterceptor>) clazz;
    }
 
    public boolean addInterceptorAfter(AnyInterceptor toAdd,
@@ -300,6 +308,7 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    @Override
    public boolean containsInterceptorType(Class<? extends AnyInterceptor> interceptorType,
                                           boolean alsoMatchSubClasses) {
+      interceptorType = getSearchInterceptorClass(interceptorType);
       List<SequentialInterceptor> localInterceptors = this.interceptors;
       for (SequentialInterceptor interceptor : localInterceptors) {
          Class<? extends AnyInterceptor> currentInterceptorType = getRealInterceptorType(interceptor);
