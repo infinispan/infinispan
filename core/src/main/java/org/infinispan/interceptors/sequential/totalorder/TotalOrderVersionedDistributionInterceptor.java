@@ -5,6 +5,7 @@ import org.infinispan.commands.tx.PrepareCommand;
 import org.infinispan.commands.tx.RollbackCommand;
 import org.infinispan.commands.tx.VersionedPrepareCommand;
 import org.infinispan.commands.write.ClearCommand;
+import org.infinispan.commons.CacheException;
 import org.infinispan.configuration.cache.Configurations;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.interceptors.sequential.VersionedDistributionInterceptor;
@@ -16,6 +17,7 @@ import org.infinispan.util.logging.LogFactory;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 /**
  * This interceptor is used in total order in distributed mode when the write skew check is enabled. After
@@ -75,7 +77,12 @@ public class TotalOrderVersionedDistributionInterceptor extends VersionedDistrib
                ctx.getCacheTransaction().hasModification(ClearCommand.class) || isSyncCommitPhase() ? null :
                new KeysValidateFilter(rpcManager.getAddress(), ctx.getAffectedKeys());
 
-         totalOrderPrepare(recipients, command, responseFilter);
+         totalOrderPrepare(recipients, command, responseFilter).get();
+      } catch (InterruptedException e) {
+         Thread.currentThread().interrupt();
+         throw new CacheException(e);
+      } catch (ExecutionException e) {
+         throw new CacheException(e.getCause());
       } finally {
          transactionRemotelyPrepared(ctx);
       }
