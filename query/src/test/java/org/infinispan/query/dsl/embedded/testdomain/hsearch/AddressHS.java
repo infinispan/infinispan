@@ -19,6 +19,9 @@ public class AddressHS implements Address, Serializable {
    @Field(store = Store.YES, analyze = Analyze.NO)
    private String postCode;
 
+   @Field(store = Store.YES, analyze = Analyze.NO)
+   private int number;
+
    public String getStreet() {
       return street;
    }
@@ -35,6 +38,14 @@ public class AddressHS implements Address, Serializable {
       this.postCode = postCode;
    }
 
+   public int getNumber() {
+      return number;
+   }
+
+   public void setNumber(int number) {
+      this.number = number;
+   }
+
    @Override
    public boolean equals(Object o) {
       if (this == o) return true;
@@ -44,6 +55,7 @@ public class AddressHS implements Address, Serializable {
 
       if (postCode != null ? !postCode.equals(other.postCode) : other.postCode != null) return false;
       if (street != null ? !street.equals(other.street) : other.street != null) return false;
+      if (number != other.number) return false;
 
       return true;
    }
@@ -52,6 +64,7 @@ public class AddressHS implements Address, Serializable {
    public int hashCode() {
       int result = street != null ? street.hashCode() : 0;
       result = 31 * result + (postCode != null ? postCode.hashCode() : 0);
+      result = 31 * result + number;
       return result;
    }
 
@@ -60,6 +73,7 @@ public class AddressHS implements Address, Serializable {
       return "AddressHS{" +
             "street='" + street + '\'' +
             ", postCode='" + postCode + '\'' +
+            ", number='" + number + '\'' +
             '}';
    }
 }
