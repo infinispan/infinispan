@@ -45,7 +45,11 @@ public interface ClusterTopologyManager {
 
    boolean isRebalancingEnabled();
 
+   boolean isRebalancingEnabled(String cacheName);
+
    void setRebalancingEnabled(boolean enabled);
+
+   void setRebalancingEnabled(String cacheName, boolean enabled);
 
    void forceRebalance(String cacheName);
 

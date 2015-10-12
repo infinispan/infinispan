@@ -89,6 +89,16 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    }
 
    @Override
+   public boolean isCacheRebalancingEnabled(String cacheName) throws Exception {
+      return delegate.isCacheRebalancingEnabled(cacheName);
+   }
+
+   @Override
+   public void setCacheRebalancingEnabled(String cacheName, boolean enabled) throws Exception {
+      setCacheRebalancingEnabled(cacheName, enabled);
+   }
+
+   @Override
    public AvailabilityMode getCacheAvailability(String cacheName) {
       return delegate.getCacheAvailability(cacheName);
    }

@@ -56,6 +56,7 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
    private final String TX_CACHE = "txCache";
    private final String NONTX_CACHE = "nontxCache";
 
+   @Override
    protected void createCacheManagers() throws Throwable {
       // The cache managers are created in the test methods
    }
@@ -187,6 +188,7 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
          return result;
       }
 
+      @Override
       public void run() {
          int c = 0;
          while (!stop) {
@@ -321,6 +323,16 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       @Override
       public void setRebalancingEnabled(boolean enabled) {
          instance.setRebalancingEnabled(enabled);
+      }
+
+      @Override
+      public boolean isRebalancingEnabled(String cacheName) {
+         return instance.isRebalancingEnabled(cacheName);
+      }
+
+      @Override
+      public void setRebalancingEnabled(String cacheName, boolean enabled) {
+         instance.setRebalancingEnabled(cacheName, enabled);
       }
 
       @Override

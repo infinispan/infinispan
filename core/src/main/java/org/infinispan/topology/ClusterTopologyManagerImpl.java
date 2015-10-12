@@ -83,7 +83,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    private final ConcurrentMap<String, ClusterCacheStatus> cacheStatusMap = CollectionFactory.makeConcurrentMap();
    private ClusterViewListener viewListener;
 
-   private volatile boolean isRebalancingEnabled = true;
+   // The global rebalancing status
+   private volatile boolean globalRebalancingEnabled = true;
 
    @Inject
    public void inject(Transport transport,
@@ -129,7 +130,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
                   command, ResponseMode.SYNCHRONOUS, getGlobalTimeout(), null, DeliverOrder.NONE, false);
             Response response = responseMap.get(coordinator);
             if (response instanceof SuccessfulResponse) {
-               isRebalancingEnabled = ((Boolean) ((SuccessfulResponse) response).getResponseValue());
+               globalRebalancingEnabled = ((Boolean) ((SuccessfulResponse) response).getResponseValue());
             } else {
                log.errorReadingRebalancingStatus(coordinator, null);
             }
@@ -317,8 +318,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
    }
 
    private ClusterCacheStatus initCacheStatusIfAbsent(String cacheName) {
-      ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
-      if (cacheStatus == null) {
+      return cacheStatusMap.computeIfAbsent(cacheName, (name) -> {
          // We assume that any cache with partition handling configured is already defined on all the nodes
          // (including the coordinator) before it starts on any node.
          Configuration cacheConfiguration = cacheManager.getCacheConfiguration(cacheName);
@@ -328,13 +328,8 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          } else {
             availabilityStrategy = new PreferAvailabilityStrategy();
          }
-         ClusterCacheStatus newCacheStatus = new ClusterCacheStatus(cacheName, availabilityStrategy, this, transport);
-         cacheStatus = cacheStatusMap.putIfAbsent(cacheName, newCacheStatus);
-         if (cacheStatus == null) {
-            cacheStatus = newCacheStatus;
-         }
-      }
-      return cacheStatus;
+         return new ClusterCacheStatus(cacheName, availabilityStrategy, this, transport);
+      });
    }
 
    @Override
@@ -371,7 +366,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
          }
       }
 
-      isRebalancingEnabled = recoveredRebalancingStatus;
+      globalRebalancingEnabled = recoveredRebalancingStatus;
       // Compute the new consistent hashes on separate threads
       int maxThreads = Runtime.getRuntime().availableProcessors() / 2 + 1;
       CompletionService<Void> cs = new SemaphoreCompletionService<>(asyncTransportExecutor, maxThreads);
@@ -543,23 +538,43 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Override
    public boolean isRebalancingEnabled() {
-      return isRebalancingEnabled;
+      return globalRebalancingEnabled;
+   }
+
+   @Override
+   public boolean isRebalancingEnabled(String cacheName) {
+      if (cacheName ==null) {
+         return isRebalancingEnabled();
+      } else {
+         return cacheStatusMap.get(cacheName).isRebalanceEnabled();
+      }
+   }
+
+   @Override
+   public void setRebalancingEnabled(String cacheName, boolean enabled) {
+      if (cacheName == null) {
+         setRebalancingEnabled(enabled);
+      } else {
+         ClusterCacheStatus clusterCacheStatus = cacheStatusMap.get(cacheName);
+         if (clusterCacheStatus != null)
+            clusterCacheStatus.setRebalanceEnabled(enabled);
+      }
    }
 
    @Override
    public void setRebalancingEnabled(boolean enabled) {
       if (enabled) {
-         if (!isRebalancingEnabled) {
+         if (!globalRebalancingEnabled) {
             CLUSTER.rebalancingEnabled();
          }
       } else {
-         if (isRebalancingEnabled) {
+         if (globalRebalancingEnabled) {
             CLUSTER.rebalancingSuspended();
          }
       }
-      isRebalancingEnabled = enabled;
+      globalRebalancingEnabled = enabled;
       for (ClusterCacheStatus cacheStatus : cacheStatusMap.values()) {
-         cacheStatus.setRebalanceEnabled(enabled);
+         cacheStatus.startQueuedRebalance();
       }
    }
 
@@ -581,7 +596,6 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
 
    @Listener(sync = true)
    public class ClusterViewListener {
-      @SuppressWarnings("unused")
       @Merged
       @ViewChanged
       public void handleViewChange(final ViewChangedEvent e) {

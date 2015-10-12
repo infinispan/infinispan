@@ -185,12 +185,12 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
 
          // rebalance policy control
          case POLICY_GET_STATUS:
-            return clusterTopologyManager.isRebalancingEnabled();
+            return clusterTopologyManager.isRebalancingEnabled(cacheName);
          case POLICY_ENABLE:
-            clusterTopologyManager.setRebalancingEnabled(true);
+            clusterTopologyManager.setRebalancingEnabled(cacheName, true);
             return true;
          case POLICY_DISABLE:
-            clusterTopologyManager.setRebalancingEnabled(false);
+            clusterTopologyManager.setRebalancingEnabled(cacheName, false);
             return true;
 
          // availability mode

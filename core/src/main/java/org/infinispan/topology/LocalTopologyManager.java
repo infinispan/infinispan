@@ -83,12 +83,25 @@ public interface LocalTopologyManager {
     */
    boolean isTotalOrderCache(String cacheName);
 
+   /**
+    * Checks whether rebalancing is enabled for the entire cluster.
+    */
    boolean isRebalancingEnabled() throws Exception;
+
+   /**
+    * Checks whether rebalancing is enabled for the specified cache.
+    */
+   boolean isCacheRebalancingEnabled(String cacheName) throws Exception;
 
    /**
     * Enable or disable rebalancing in the entire cluster.
     */
    void setRebalancingEnabled(boolean enabled) throws Exception;
+
+   /**
+    * Enable or disable rebalancing for the specified cache.
+    */
+   void setCacheRebalancingEnabled(String cacheName, boolean enabled) throws Exception;
 
    /**
     * Retrieves the availability state of a cache.
