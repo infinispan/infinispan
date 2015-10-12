@@ -272,7 +272,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       }
 
       @Override
-      public CompletableFuture<Object> forkInvocation(VisitableCommand newCommand,
+      public Object forkInvocation(VisitableCommand newCommand,
             ReturnHandler returnHandler) {
          throw new UnsupportedOperationException();
       }

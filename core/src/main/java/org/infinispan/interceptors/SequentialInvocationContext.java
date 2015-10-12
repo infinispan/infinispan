@@ -20,7 +20,7 @@ public interface SequentialInvocationContext {
 
    Object shortCircuit(Object returnValue);
 
-   CompletableFuture<Object> forkInvocation(VisitableCommand newCommand, ReturnHandler returnHandler);
+   Object forkInvocation(VisitableCommand newCommand, ReturnHandler returnHandler);
 
    CompletableFuture<Object> execute(VisitableCommand command);
 
