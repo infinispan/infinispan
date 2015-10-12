@@ -39,7 +39,7 @@ import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.interceptors.compat.TypeConverterInterceptor;
 import org.infinispan.interceptors.distribution.L1LastChanceInterceptor;
-import org.infinispan.interceptors.distribution.L1NonTxInterceptor;
+import org.infinispan.interceptors.sequential.L1NonTxInterceptor;
 import org.infinispan.interceptors.distribution.L1TxInterceptor;
 import org.infinispan.interceptors.locking.NonTransactionalLockingInterceptor;
 import org.infinispan.interceptors.locking.OptimisticLockingInterceptor;

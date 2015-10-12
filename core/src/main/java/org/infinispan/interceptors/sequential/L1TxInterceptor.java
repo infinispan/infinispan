@@ -1,4 +1,4 @@
-package org.infinispan.interceptors.distribution;
+package org.infinispan.interceptors.sequential;
 
 import org.infinispan.commands.LocalFlagAffectedCommand;
 import org.infinispan.commands.tx.CommitCommand;
@@ -10,56 +10,57 @@ import org.infinispan.commands.write.ReplaceCommand;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.impl.TxInvocationContext;
 import org.infinispan.remoting.transport.jgroups.SuspectException;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-
-import static org.infinispan.commons.util.Util.toStr;
 
 /**
  * Interceptor that handles L1 logic for transactional caches.
  *
  * @author William Burns
- * @deprecated Since 8.1, use {@link org.infinispan.interceptors.sequential.L1TxInterceptor} instead.
+ * @since 6.0
  */
-@Deprecated
 public class L1TxInterceptor extends L1NonTxInterceptor {
+   private static final Log log = LogFactory.getLog(L1TxInterceptor.class);
 
    @Override
-   public Object visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
+   public CompletableFuture<Object> visitPutKeyValueCommand(InvocationContext ctx, PutKeyValueCommand command) throws Throwable {
       return performCommandWithL1WriteIfAble(ctx, command, false, true, true);
    }
 
    @Override
-   public Object visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
+   public CompletableFuture<Object> visitPutMapCommand(InvocationContext ctx, PutMapCommand command) throws Throwable {
       // TODO: need to figure out if we do anything here? - is the prepare/commmit L1 invalidation sufficient?
-      return invokeNextInterceptor(ctx, command);
+      return null;
    }
 
    @Override
-   public Object visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
+   public CompletableFuture<Object> visitReplaceCommand(InvocationContext ctx, ReplaceCommand command) throws Throwable {
       return performCommandWithL1WriteIfAble(ctx, command, false, true, true);
    }
 
    @Override
-   public Object visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
+   public CompletableFuture<Object> visitRemoveCommand(InvocationContext ctx, RemoveCommand command) throws Throwable {
       return performCommandWithL1WriteIfAble(ctx, command, false, true, false);
    }
 
    @Override
-   public Object visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
+   public CompletableFuture<Object> visitPrepareCommand(TxInvocationContext ctx, PrepareCommand command) throws Throwable {
       if (command.isOnePhaseCommit() && shouldFlushL1(ctx)) {
          blockOnL1FutureIfNeeded(flushL1Caches(ctx));
       }
 
-      return invokeNextInterceptor(ctx, command);
+      return null;
    }
 
    @Override
-   public Object visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
+   public CompletableFuture<Object> visitCommitCommand(TxInvocationContext ctx, CommitCommand command) throws Throwable {
       if (shouldFlushL1(ctx)) {
          blockOnL1FutureIfNeeded(flushL1Caches(ctx));
       }
-      return invokeNextInterceptor(ctx, command);
+      return null;
    }
 
    @Override
@@ -83,7 +84,7 @@ public class L1TxInterceptor extends L1NonTxInterceptor {
          } catch (Exception e) {
             // Ignore SuspectExceptions - if the node has gone away then there is nothing to invalidate anyway.
             if (!(e.getCause() instanceof SuspectException)) {
-               getLog().failedInvalidatingRemoteCache(e);
+               log.failedInvalidatingRemoteCache(e);
             }
          }
       }
