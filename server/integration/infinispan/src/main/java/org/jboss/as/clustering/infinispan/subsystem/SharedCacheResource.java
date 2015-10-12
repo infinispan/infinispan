@@ -48,6 +48,11 @@ public class SharedCacheResource extends ClusteredCacheResource {
                  .setValidator(new EnumValidator<>(AvailabilityMode.class, false, false))
                  .build();
 
+   static final SimpleAttributeDefinition CACHE_REBALANCE =
+           new SimpleAttributeDefinitionBuilder(ModelKeys.CACHE_REBALANCE, ModelType.BOOLEAN, true)
+                   .setFlags(AttributeAccess.Flag.STORAGE_RUNTIME)
+                   .build();
+
     public SharedCacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd addHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(pathElement, descriptionResolver, addHandler, removeHandler, resolvePathHandler, runtimeRegistration);
     }
@@ -58,6 +63,7 @@ public class SharedCacheResource extends ClusteredCacheResource {
         if (runtimeRegistration) {
             CacheMetricsHandler.INSTANCE.registerCommonMetrics(resourceRegistration);
             resourceRegistration.registerReadWriteAttribute(CACHE_AVAILABILITY, CacheAvailabilityAttributeHandler.INSTANCE, CacheAvailabilityAttributeHandler.INSTANCE);
+            resourceRegistration.registerReadWriteAttribute(CACHE_REBALANCE, CacheRebalanceAttributeHandler.INSTANCE, CacheRebalanceAttributeHandler.INSTANCE);
         }
     }
 }

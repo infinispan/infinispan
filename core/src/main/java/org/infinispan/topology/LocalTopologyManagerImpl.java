@@ -452,10 +452,19 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
          dataType = DataType.TRAIT, writable = true)
    @Override
    public boolean isRebalancingEnabled() throws Exception {
-      ReplicableCommand command = new CacheTopologyControlCommand(null,
+      return isCacheRebalancingEnabled(null);
+   }
+
+   @Override
+   public void setRebalancingEnabled(boolean enabled) throws Exception {
+      setCacheRebalancingEnabled(null, enabled);
+   }
+
+   @Override
+   public boolean isCacheRebalancingEnabled(String cacheName) throws Exception {
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
             CacheTopologyControlCommand.Type.POLICY_GET_STATUS, transport.getAddress(), transport.getViewId());
       while (true) {
-         Address coordinator = transport.getCoordinator();
          int nextViewId = transport.getViewId() + 1;
          try {
             return (Boolean) executeOnCoordinator(command, getGlobalTimeout());
@@ -467,10 +476,10 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
    }
 
    @Override
-   public void setRebalancingEnabled(boolean enabled) throws Exception {
+   public void setCacheRebalancingEnabled(String cacheName, boolean enabled) throws Exception {
       CacheTopologyControlCommand.Type type = enabled ? CacheTopologyControlCommand.Type.POLICY_ENABLE
             : CacheTopologyControlCommand.Type.POLICY_DISABLE;
-      ReplicableCommand command = new CacheTopologyControlCommand(null, type, transport.getAddress(),
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName, type, transport.getAddress(),
             transport.getViewId());
       executeOnClusterSync(command, getGlobalTimeout(), false, false);
    }

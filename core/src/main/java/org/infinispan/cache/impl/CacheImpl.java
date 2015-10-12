@@ -973,6 +973,34 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
       setAvailability(AvailabilityMode.valueOf(availabilityString));
    }
 
+   @ManagedAttribute(
+         description = "Returns whether cache rebalancing is enabled",
+         displayName = "Cache rebalacing",
+         dataType = DataType.TRAIT,
+         writable = true
+   )
+   public boolean isRebalancingEnabled() {
+      if (localTopologyManager != null) {
+         try {
+            return localTopologyManager.isCacheRebalancingEnabled(getName());
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+      } else {
+         return false;
+      }
+   }
+
+   public void setRebalancingEnabled(boolean enabled) {
+      if (localTopologyManager != null) {
+         try {
+            localTopologyManager.setCacheRebalancingEnabled(getName(), enabled);
+         } catch (Exception e) {
+            throw new CacheException(e);
+         }
+      }
+   }
+
    @Override
    public boolean startBatch() {
       if (!config.invocationBatching().enabled()) {

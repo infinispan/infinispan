@@ -25,7 +25,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.VAL
 
 import org.infinispan.Cache;
 import org.infinispan.factories.ComponentRegistry;
-import org.infinispan.partitionhandling.AvailabilityMode;
 import org.infinispan.server.infinispan.SecurityActions;
 import org.infinispan.server.infinispan.spi.service.CacheServiceName;
 import org.infinispan.topology.LocalTopologyManager;
@@ -38,14 +37,14 @@ import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
 /**
- * CacheAvailabilityAttributeHandler.
+ * CacheRebalanceAttributeHandler.
  *
  * @author Tristan Tarrant
- * @since 7.0
+ * @since 8.1
  */
-public class CacheAvailabilityAttributeHandler extends AbstractRuntimeOnlyHandler {
+public class CacheRebalanceAttributeHandler extends AbstractRuntimeOnlyHandler {
 
-    public static final CacheAvailabilityAttributeHandler INSTANCE = new CacheAvailabilityAttributeHandler();
+    public static final CacheRebalanceAttributeHandler INSTANCE = new CacheRebalanceAttributeHandler();
 
     @Override
     public void executeRuntimeStep(OperationContext context, ModelNode operation) throws OperationFailedException {
@@ -64,9 +63,9 @@ public class CacheAvailabilityAttributeHandler extends AbstractRuntimeOnlyHandle
                     try {
                         if (operation.hasDefined(VALUE)) {
                             ModelNode newValue = operation.get(VALUE);
-                            localTopologyManager.setCacheAvailability(cacheName, AvailabilityMode.valueOf(newValue.asString()));
+                            localTopologyManager.setCacheRebalancingEnabled(cacheName, newValue.asBoolean());
                         } else {
-                            context.getResult().set(new ModelNode().set(localTopologyManager.getCacheAvailability(cacheName).toString()));
+                            context.getResult().set(new ModelNode().set(localTopologyManager.isRebalancingEnabled()));
                         }
                     } catch (Exception e) {
                         throw new OperationFailedException(MESSAGES.failedToInvokeOperation(e.getLocalizedMessage()));

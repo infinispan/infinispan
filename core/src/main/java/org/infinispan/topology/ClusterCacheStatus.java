@@ -54,6 +54,7 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    private volatile CacheTopology stableTopology;
    private volatile AvailabilityMode availabilityMode = AvailabilityMode.AVAILABLE;
    private volatile List<Address> queuedRebalanceMembers;
+   private volatile boolean rebalancingEnabled = true;
 
    private volatile RebalanceConfirmationCollector rebalanceConfirmationCollector;
 
@@ -678,12 +679,13 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    }
 
    public boolean isRebalanceEnabled() {
-      return clusterTopologyManager.isRebalancingEnabled();
+      return rebalancingEnabled && clusterTopologyManager.isRebalancingEnabled();
    }
 
    public void setRebalanceEnabled(boolean enabled) {
       synchronized (this) {
-         if (enabled) {
+         rebalancingEnabled = enabled;
+         if (rebalancingEnabled) {
             log.debugf("Rebalancing is now enabled for cache %s", cacheName);
             startQueuedRebalance();
          } else {
@@ -700,4 +702,5 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
    public void forceAvailabilityMode(AvailabilityMode newAvailabilityMode) {
       availabilityStrategy.onManualAvailabilityChange(this, newAvailabilityMode);
    }
+
 }
