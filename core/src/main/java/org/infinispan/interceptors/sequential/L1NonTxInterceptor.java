@@ -32,10 +32,9 @@ import org.infinispan.statetransfer.StateTransferLock;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentMap;
@@ -235,20 +234,28 @@ public class L1NonTxInterceptor extends BaseRpcInterceptor implements
          invalidationFuture = null;
       }
 
-      List<Object> affectedKeys = new ArrayList<>(command.getAffectedKeys());
-      ctx.onReturn((returnValue, throwable) -> {
+      Iterator<Object> affectedKeys = command.getAffectedKeys().iterator();
+      return CompletableFuture.completedFuture(ctx.forkInvocation(command, (returnValue, throwable) -> {
+         if (throwable != null)
+            throw throwable;
+
          processInvalidationResult(ctx, command, invalidationFuture);
          //we also need to remove from L1 the keys that are not ours
-         while (!affectedKeys.isEmpty()) {
-            Object firstKey = affectedKeys.iterator().next();
-            if (!cdl.localNodeIsOwner(firstKey)) {
-               // TODO Continue execution instead of returning null
-               return removeFromL1(ctx, firstKey, (returnValue1, throwable1) -> CompletableFuture.completedFuture(returnValue));
-            }
+         return invalidateAffectedKeys(ctx, affectedKeys, returnValue);
+      }));
+   }
+
+   protected CompletableFuture<Object> invalidateAffectedKeys(InvocationContext ctx,
+         Iterator<Object> affectedKeys, Object returnValue) throws Throwable {
+      while (affectedKeys.hasNext()) {
+         Object firstKey = affectedKeys.next();
+         if (!cdl.localNodeIsOwner(firstKey)) {
+            return removeFromL1(ctx, firstKey,
+                                (returnValue1, throwable1) -> invalidateAffectedKeys(ctx, affectedKeys,
+                                                                                     returnValue));
          }
-         return null;
-      });
-      return null;
+      }
+      return CompletableFuture.completedFuture(returnValue);
    }
 
    @Override
