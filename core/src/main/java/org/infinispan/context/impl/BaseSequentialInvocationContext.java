@@ -71,10 +71,10 @@ public abstract class BaseSequentialInvocationContext
          ReturnHandler returnHandler, VisitableCommand savedCommand, int savedInterceptor, Object returnValue,
          Throwable throwable) throws Throwable {
       if (trace)
-         log.tracef("Forked command %s done at %d/%s, returning %s/%s, continuing with %s at %d/%s",
-                    newCommand, nextInterceptor, interceptorToString(nextInterceptor),
-                    returnValue != null ? returnValue.getClass() : null, throwable, savedCommand,
-                    savedInterceptor, interceptorToString(savedInterceptor));
+         log.tracef(
+               "Executing fork return handler %s, command %s done, next interceptor %d/%s, returning %s/%s",
+               returnHandler, newCommand, savedInterceptor, interceptorToString(savedInterceptor),
+               returnValue != null ? returnValue.getClass() : null, throwable);
       command = savedCommand;
       nextInterceptor = savedInterceptor;
       return returnHandler.apply(returnValue, throwable);
@@ -93,8 +93,8 @@ public abstract class BaseSequentialInvocationContext
       while (nextInterceptor < interceptors.size()) {
          if (trace)
             log.tracef("Executing interceptor %d/%s for command %s, returning %s/%s", nextInterceptor,
-                       interceptorToString(nextInterceptor), getCommand(), returnHandlers.size(),
-                       returnValue != null ? returnValue.getClass().getSimpleName() : null, throwable);
+                       interceptorToString(nextInterceptor), getCommand(), returnValueToString(returnValue),
+                       throwable);
          if (returnValue instanceof ForkInfo) {
             // Start invoking a new command with the next interceptor.
             // Save the current command and interceptor in a lambda and restore it when the forked command
@@ -139,7 +139,7 @@ public abstract class BaseSequentialInvocationContext
          if (trace)
             log.tracef("Executing return handler %d/%s for command %s, returning %s/%s",
                        returnHandlers.size() - 1, returnHandlers.get(returnHandlers.size() - 1), getCommand(),
-                       returnValue != null ? returnValue.getClass().getSimpleName() : null, throwable);
+                       returnValueToString(returnValue), throwable);
          try {
             ReturnHandler handler = returnHandlers.remove(returnHandlers.size() - 1);
             CompletableFuture<Object> handlerFuture = handler.apply(returnValue, throwable);
@@ -162,6 +162,10 @@ public abstract class BaseSequentialInvocationContext
       } else {
          future.completeExceptionally(throwable);
       }
+   }
+
+   protected String returnValueToString(Object returnValue) {
+      return returnValue != null ? returnValue.getClass().getSimpleName() : null;
    }
 
    public BaseSequentialInvocationContext clone() {
