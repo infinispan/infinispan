@@ -8,7 +8,7 @@ import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, Iteratio
 import org.infinispan.manager.EmbeddedCacheManager
 import org.infinispan.server.core.{QueryFacade, AbstractProtocolServer}
 import org.infinispan.eviction.EvictionStrategy
-import org.infinispan.commons.util.CollectionFactory
+import org.infinispan.commons.util.{ServiceFinder, CollectionFactory}
 import org.infinispan.commons.equivalence.AnyEquivalence
 import org.infinispan.remoting.transport.Address
 import org.infinispan.configuration.cache.{Configuration, CacheMode, ConfigurationBuilder}
@@ -91,6 +91,16 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       clientListenerRegistry = new ClientListenerRegistry(configuration)
 
       addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory)
+
+      loadFilterConverterFactories(classOf[CacheEventFilterConverterFactory])(addCacheEventFilterConverterFactory)
+      loadFilterConverterFactories(classOf[CacheEventConverterFactory])(addCacheEventConverterFactory)
+      loadFilterConverterFactories(classOf[KeyValueFilterConverterFactory[Any,Any,Any]])(addKeyValueFilterConverterFactory)
+   }
+
+   private def loadFilterConverterFactories[T](c: Class[T])(action: (String, T) => Any) = ServiceFinder.load(c).foreach { factory =>
+      Option(factory.getClass.getAnnotation(classOf[org.infinispan.filter.NamedFactory])).foreach { ann =>
+         action(ann.name, factory)
+      }
    }
 
    private def loadQueryFacades(): Seq[QueryFacade] =
