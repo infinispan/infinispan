@@ -7,30 +7,30 @@ import org.infinispan.commons.configuration.ConfigurationFor;
 import org.infinispan.commons.configuration.attributes.AttributeSet;
 import org.infinispan.configuration.cache.AsyncStoreConfiguration;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.configuration.cache.SingletonStoreConfiguration;
 import org.infinispan.container.entries.InternalCacheEntry;
+import org.infinispan.marshall.TestObjectStreamMarshaller;
+import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.marshall.core.MarshalledEntryImpl;
-import org.infinispan.persistence.spi.InitializationContext;
-import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.persistence.async.AdvancedAsyncCacheLoader;
 import org.infinispan.persistence.async.AdvancedAsyncCacheWriter;
 import org.infinispan.persistence.async.State;
 import org.infinispan.persistence.dummy.DummyInMemoryStore;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfiguration;
 import org.infinispan.persistence.dummy.DummyInMemoryStoreConfigurationBuilder;
-import org.infinispan.persistence.spi.CacheWriter;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.marshall.TestObjectStreamMarshaller;
-import org.infinispan.test.fwk.TestCacheManagerFactory;
-import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.persistence.modifications.Modification;
 import org.infinispan.persistence.modifications.Remove;
 import org.infinispan.persistence.modifications.Store;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
+import org.infinispan.persistence.spi.CacheWriter;
+import org.infinispan.persistence.spi.InitializationContext;
+import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.infinispan.test.CacheManagerCallable;
 import org.infinispan.test.TestingUtil;
+import org.infinispan.test.fwk.TestCacheManagerFactory;
+import org.infinispan.test.fwk.TestInternalCacheEntryFactory;
 import org.infinispan.test.fwk.TestResourceTracker;
 import org.infinispan.util.PersistenceMockUtil;
 import org.infinispan.util.logging.Log;
@@ -52,7 +52,11 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.infinispan.test.TestingUtil.k;
 import static org.infinispan.test.TestingUtil.marshalledEntry;
 import static org.infinispan.test.TestingUtil.v;
-import static org.testng.AssertJUnit.*;
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertNull;
+import static org.testng.AssertJUnit.fail;
 
 @Test(groups = "unit", testName = "persistence.support.AsyncStoreTest", sequential=true)
 public class AsyncStoreTest extends AbstractInfinispanTest {
@@ -510,8 +514,12 @@ public class AsyncStoreTest extends AbstractInfinispanTest {
             .shutdownTimeout(50);
 
       writer = new AdvancedAsyncCacheWriter(underlying);
-      writer.init(PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller));
+      InitializationContext ctx =
+            PersistenceMockUtil.createContext(getClass().getSimpleName(), builder.build(), marshaller);
+      writer.init(ctx);
       writer.start();
+      underlying.init(ctx);
+      underlying.start();
       try {
          final CountDownLatch done = new CountDownLatch(1);
 
