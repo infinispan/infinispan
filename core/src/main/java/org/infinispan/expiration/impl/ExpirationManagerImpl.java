@@ -1,12 +1,11 @@
 package org.infinispan.expiration.impl;
 
 import net.jcip.annotations.ThreadSafe;
-
 import org.infinispan.Cache;
 import org.infinispan.commons.util.Util;
+import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.container.DataContainer;
-import org.infinispan.container.InternalEntryFactory;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.expiration.ExpirationManager;
 import org.infinispan.factories.KnownComponentNames;
@@ -14,18 +13,15 @@ import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
-import org.infinispan.interceptors.locking.ClusteringDependentLogic;
 import org.infinispan.marshall.core.MarshalledEntry;
 import org.infinispan.metadata.Metadata;
-import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.notifications.cachelistener.CacheNotifier;
+import org.infinispan.persistence.manager.PersistenceManager;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
 import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -53,7 +49,7 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
     * key will be removed or updated.  In the latter case we don't want to send an expiration event and then a remove
     * event when we could do just the removal.
     */
-   protected final ConcurrentMap<K, Object> expiring = new ConcurrentHashMap<>();
+   protected ConcurrentMap<K, Object> expiring;
 
    @Inject
    public void initialize(@ComponentName(KnownComponentNames.EXPIRATION_SCHEDULED_EXECUTOR)
@@ -73,6 +69,9 @@ public class ExpirationManagerImpl<K, V> implements ExpirationManager<K, V> {
       this.persistenceManager = persistenceManager;
       this.cacheNotifier = cacheNotifier;
       this.timeService = timeService;
+
+      this.expiring = new EquivalentConcurrentHashMapV8<>(cfg.dataContainer().keyEquivalence(),
+              cfg.dataContainer().valueEquivalence());
    }
 
 
