@@ -40,7 +40,7 @@ public class StateTransferDistSharedCacheLoaderFunctionalTest extends StateTrans
    };
    int id;
 
-   static final int INSERTION_COUNT = 1000;
+   static final int INSERTION_COUNT = 500;
 
    @BeforeMethod
    public void beforeEachMethod() {
