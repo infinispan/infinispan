@@ -1,9 +1,10 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
 import org.infinispan.factories.components.ComponentMetadataRepo;
 import org.infinispan.factories.components.ModuleMetadataFileFinder;
 import org.infinispan.interceptors.base.AnyInterceptor;
-import org.infinispan.interceptors.base.CommandInterceptor;
 import org.infinispan.interceptors.sequential.InvalidationInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
@@ -34,6 +35,8 @@ public class SequentialInterceptorChainTest {
       ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
       componentMetadataRepo.initialize(Collections.<ModuleMetadataFileFinder>emptyList(), SequentialInterceptorChainTest.class.getClassLoader());
       SequentialInterceptorChainImpl ic = new SequentialInterceptorChainImpl(componentMetadataRepo);
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
+      ic.inject(null, globalConfiguration);
       ic.addInterceptor(new org.infinispan.interceptors.sequential.CallInterceptor(), 0);
       ic.addInterceptor(new ActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);

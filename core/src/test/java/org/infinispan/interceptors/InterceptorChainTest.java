@@ -1,5 +1,14 @@
 package org.infinispan.interceptors;
 
+import org.infinispan.configuration.global.GlobalConfiguration;
+import org.infinispan.configuration.global.GlobalConfigurationBuilder;
+import org.infinispan.factories.components.ComponentMetadataRepo;
+import org.infinispan.factories.components.ModuleMetadataFileFinder;
+import org.infinispan.interceptors.base.CommandInterceptor;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.testng.annotations.Test;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -8,13 +17,6 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import org.infinispan.factories.components.ComponentMetadataRepo;
-import org.infinispan.factories.components.ModuleMetadataFileFinder;
-import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.util.logging.Log;
-import org.infinispan.util.logging.LogFactory;
-import org.testng.annotations.Test;
 
 /**
  * Tests {@link InterceptorChain} logic
@@ -31,7 +33,11 @@ public class InterceptorChainTest {
    public void testConcurrentAddRemove() throws Exception {
       ComponentMetadataRepo componentMetadataRepo = new ComponentMetadataRepo();
       componentMetadataRepo.initialize(Collections.<ModuleMetadataFileFinder>emptyList(), InterceptorChainTest.class.getClassLoader());
-      InterceptorChain ic = new InterceptorChain(new SequentialInterceptorChainImpl(componentMetadataRepo));
+      SequentialInterceptorChainImpl sequentialInterceptorChain =
+            new SequentialInterceptorChainImpl(componentMetadataRepo);
+      GlobalConfiguration globalConfiguration = new GlobalConfigurationBuilder().build();
+      sequentialInterceptorChain.inject(null, globalConfiguration);
+      InterceptorChain ic = new InterceptorChain(sequentialInterceptorChain);
       ic.setFirstInChain(new CallInterceptor());
       ic.addInterceptor(new ActivationInterceptor(), 1);
       CyclicBarrier barrier = new CyclicBarrier(4);

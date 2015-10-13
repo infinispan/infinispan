@@ -6,10 +6,9 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.util.ImmutableListCopy;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.ReflectionUtil;
+import org.infinispan.configuration.global.GlobalConfiguration;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.context.InvocationContextContainer;
-import org.infinispan.factories.KnownComponentNames;
-import org.infinispan.factories.annotations.ComponentName;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.annotations.Start;
 import org.infinispan.factories.annotations.Stop;
@@ -22,11 +21,9 @@ import org.infinispan.interceptors.base.SequentialInterceptor;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -44,8 +41,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
    private static final Log log = LogFactory.getLog(SequentialInterceptorChainImpl.class);
 
    final ComponentMetadataRepo componentMetadataRepo;
-   private ExecutorService remoteExecutor;
    private InvocationContextContainer icc;
+   private GlobalConfiguration globalConfiguration;
 
    final ReentrantLock lock = new ReentrantLock();
 
@@ -57,9 +54,9 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
 
    @Inject
    public void inject(InvocationContextContainer icc,
-                      @ComponentName(KnownComponentNames.REMOTE_COMMAND_EXECUTOR) ExecutorService remoteExecutor) {
+                      GlobalConfiguration globalConfiguration) {
       this.icc = icc;
-      this.remoteExecutor = remoteExecutor;
+      this.globalConfiguration = globalConfiguration;
    }
 
    @Start
@@ -343,8 +340,8 @@ public class SequentialInterceptorChainImpl implements SequentialInterceptorChai
       if (interceptor instanceof SequentialInterceptor) {
          theInterceptor = (SequentialInterceptor) interceptor;
       } else {
-         theInterceptor =
-               new SequentialInterceptorAdapter((CommandInterceptor) interceptor, icc, remoteExecutor);
+         String nodeName = globalConfiguration.transport().nodeName();
+         theInterceptor = new SequentialInterceptorAdapter((CommandInterceptor) interceptor, icc, nodeName);
       }
       return theInterceptor;
    }

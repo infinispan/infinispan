@@ -37,15 +37,17 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
 
    private final CommandInterceptor adaptedInterceptor;
    private final InvocationContextContainer icc;
+   private final String nodeName;
    private final ExecutorService executor;
 
    // TODO Inject an existing thread pool
    final static ExecutorService COMMON_EXECUTOR =
          Executors.newCachedThreadPool(LegacyInterceptorThreadFactory.INSTANCE);
 
-   public SequentialInterceptorAdapter(CommandInterceptor adaptedInterceptor, InvocationContextContainer icc, ExecutorService executor) {
+   public SequentialInterceptorAdapter(CommandInterceptor adaptedInterceptor, InvocationContextContainer icc, String nodeName) {
       this.adaptedInterceptor = adaptedInterceptor;
       this.icc = icc;
+      this.nodeName = nodeName;
       this.executor = COMMON_EXECUTOR;
       adaptedInterceptor.setNext(new NextInterceptor());
    }
@@ -67,7 +69,10 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
    }
 
    protected void asyncVisit(InvocationContext ctx, VisitableCommand command, AdapterContext actx) {
+      Thread currentThread = Thread.currentThread();
+      String oldThreadName = currentThread.getName();
       try {
+         currentThread.setName(oldThreadName + "," + nodeName);
          if (trace)
             log.tracef("Executing legacy interceptor %s for %s", getAdaptedType().getSimpleName(), command);
          if (ctx.getClassLoader() != null) {
@@ -84,6 +89,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
          actx.adaptedFuture.completeExceptionally(throwable);
          actx.visitFuture.completeExceptionally(throwable);
       } finally {
+         currentThread.setName(oldThreadName);
          if (ctx.getClassLoader() != null) {
             icc.clearThreadLocal();
          }
@@ -151,7 +157,7 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
 
       @Override
       public Thread newThread(Runnable r) {
-         return new Thread(r, "LegacyInterceptor-" + counter.incrementAndGet());
+         return new Thread(r, "legacy-" + counter.incrementAndGet());
       }
    }
 
