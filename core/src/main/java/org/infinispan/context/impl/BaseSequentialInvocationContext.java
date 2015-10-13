@@ -90,11 +90,14 @@ public abstract class BaseSequentialInvocationContext
    }
 
    public void continueExecution(Object returnValue, Throwable throwable) {
+      boolean logInterceptor = true;
       while (nextInterceptor < interceptors.size()) {
-         if (trace)
+         if (logInterceptor && trace) {
             log.tracef("Executing interceptor %d/%s for command %s, returning %s/%s", nextInterceptor,
                        interceptorToString(nextInterceptor), getCommand(), returnValueToString(returnValue),
                        throwable);
+            logInterceptor = false;
+         }
          if (returnValue instanceof ForkInfo) {
             // Start invoking a new command with the next interceptor.
             // Save the current command and interceptor in a lambda and restore it when the forked command
@@ -123,11 +126,15 @@ public abstract class BaseSequentialInvocationContext
          try {
             CompletableFuture<Object> nextFuture = next.visitCommand(this, command);
             if (nextFuture != null) {
-               // The execution will continue when the interceptor finishes
-               // May continue in the current thread if the future is already done
-               // TODO Optimize when the future is already done?
-               nextFuture.whenComplete(this::continueExecution);
-               return;
+               if (nextFuture.isDone()) {
+                  // Any exception will be handled in the catch below
+                  returnValue = nextFuture.getNow(null);
+               } else {
+                  // The execution will continue when the interceptor finishes
+                  // May continue in the current thread if the future is already done
+                  nextFuture.whenComplete(this::continueExecution);
+                  return;
+               }
             }
          } catch (Throwable t) {
             throwable = t;
