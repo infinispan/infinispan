@@ -11,6 +11,7 @@ import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -34,7 +35,18 @@ public class SharedStoreTest extends MultipleCacheManagersTest {
       // don't create the caches here, we want them to join the cluster one by one
    }
 
+   @AfterMethod
+   @Override
+   protected void clearContent() throws Throwable {
+      // Because the store is shared, the stats are not cleared between methods
+      // In particular, the clear between methods is added to the statistics
+      List<CacheLoader<Object, Object>> cachestores = TestingUtil.cachestores(caches());
+      super.clearContent();
+      cachestores.forEach(store -> ((DummyInMemoryStore) store).clearStats());
+   }
+
    public void testUnnecessaryWrites() throws PersistenceException {
+      // The first cache is created here.
       cache(0).put("key", "value");
 
       // the second and third cache are only started here
