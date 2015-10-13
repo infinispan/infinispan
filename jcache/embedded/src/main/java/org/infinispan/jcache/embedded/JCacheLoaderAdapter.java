@@ -42,7 +42,7 @@ public class JCacheLoaderAdapter<K, V> implements org.infinispan.persistence.spi
 
    @Override
    public MarshalledEntry load(Object key) throws PersistenceException {
-      V value = loadKey(key);
+      V value = loadKey(MarshalledValues.extract(key));
 
       if (value != null) {
          Duration expiry = Expiration.getExpiry(expiryPolicy, Expiration.Operation.CREATION);
