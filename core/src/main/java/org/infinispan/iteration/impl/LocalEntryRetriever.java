@@ -702,9 +702,6 @@ public class LocalEntryRetriever<K, V> implements EntryRetriever<K, V> {
    }
 
    protected static <T> T unwrapMarshalledvalue(T value) {
-      if (value instanceof MarshalledValue) {
-         return (T) ((MarshalledValue) value).get();
-      }
-      return value;
+      return MarshalledValue.unwrap(value);
    }
 }

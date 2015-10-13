@@ -52,6 +52,10 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
       if (key == null) {
          key = unmarshall(keyBytes);
       }
+
+      if (key instanceof MarshalledValue)
+         key = MarshalledValue.unwrap(key);
+
       return key;
    }
 
@@ -60,6 +64,10 @@ public class MarshalledEntryImpl<K,V> implements MarshalledEntry<K,V> {
       if (value == null) {
          value = unmarshall(valueBytes);
       }
+
+      if (value instanceof MarshalledValue)
+         value = MarshalledValue.unwrap(value);
+
       return value;
    }
 

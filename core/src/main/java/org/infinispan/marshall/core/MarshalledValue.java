@@ -191,6 +191,15 @@ public final class MarshalledValue implements Externalizable {
       marshaller = new GenericJBossMarshaller();
    }
 
+   public static <T> T unwrap(Object obj) {
+      return as((obj instanceof MarshalledValue ? ((MarshalledValue) obj).get() : obj));
+   }
+
+   @SuppressWarnings("unchecked")
+   private static <T> T as(Object obj) {
+      return (T) obj;
+   }
+
    public static class Externalizer extends AbstractExternalizer<MarshalledValue> {
       private final StreamingMarshaller globalMarshaller;
 

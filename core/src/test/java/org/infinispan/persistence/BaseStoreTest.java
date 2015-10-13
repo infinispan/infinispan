@@ -499,12 +499,13 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
    public void testLoadAndStoreMarshalledValues() throws PersistenceException {
       assertIsEmpty();
 
-      MarshalledValue key = new MarshalledValue(new Pojo().role("key"), getMarshaller());
-      MarshalledValue key2 = new MarshalledValue(new Pojo().role("key2"), getMarshaller());
-      MarshalledValue value = new MarshalledValue(new Pojo().role("value"), getMarshaller());
+      Pojo key = new Pojo().role("key");
+      MarshalledValue mvKey = new MarshalledValue(key, getMarshaller());
+      Pojo value = new Pojo().role("value");
+      MarshalledValue mvValue = new MarshalledValue(value, getMarshaller());
 
       assertFalse(cl.contains(key));
-      cl.write(new MarshalledEntryImpl<Object, Object>(key, value, null, getMarshaller()));
+      cl.write(new MarshalledEntryImpl<Object, Object>(mvKey, mvValue, null, getMarshaller()));
 
       assertEquals(value, cl.load(key).getValue());
       MarshalledEntry entry = cl.load(key);
@@ -512,6 +513,7 @@ public abstract class BaseStoreTest extends AbstractInfinispanTest {
                  entry.getMetadata() == null || entry.getMetadata().expiryTime() == -1 || entry.getMetadata().maxIdle() == -1);
       assertContains(key, true);
 
+      Pojo key2 = new Pojo().role("key2");
       assertFalse(cl.delete(key2));
       assertTrue(cl.delete(key));
    }

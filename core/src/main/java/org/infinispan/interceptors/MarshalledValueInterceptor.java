@@ -231,12 +231,11 @@ public class MarshalledValueInterceptor<K, V> extends CommandInterceptor {
    }
 
    protected <R> R processRetVal(R retVal, InvocationContext ctx) {
-      if (retVal instanceof MarshalledValue) {
-         if (ctx == null || ctx.isOriginLocal()) {
-            if (trace) log.tracef("Return is a marshall value, so extract instance from: %s", retVal);
-            retVal = (R) ((MarshalledValue) retVal).get();
-         }
+      if (ctx == null || ctx.isOriginLocal()) {
+         if (trace) log.tracef("Return is a marshall value, so extract instance from: %s", retVal);
+         return MarshalledValue.unwrap(retVal);
       }
+
       return retVal;
    }
 

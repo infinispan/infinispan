@@ -17,12 +17,14 @@ import org.infinispan.commons.CacheException;
 import org.infinispan.commons.configuration.ConfiguredBy;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
 import org.infinispan.commons.equivalence.Equivalence;
+import org.infinispan.commons.io.ByteBuffer;
 import org.infinispan.commons.marshall.StreamingMarshaller;
 import org.infinispan.commons.util.InfinispanCollections;
 import org.infinispan.commons.util.Util;
 import org.infinispan.commons.util.concurrent.jdk8backported.EquivalentConcurrentHashMapV8;
 import org.infinispan.filter.KeyFilter;
 import org.infinispan.marshall.core.MarshalledEntry;
+import org.infinispan.marshall.core.MarshalledEntryImpl;
 import org.infinispan.metadata.InternalMetadata;
 import org.infinispan.persistence.TaskContextImpl;
 import org.infinispan.persistence.spi.AdvancedCacheExpirationWriter;
@@ -318,7 +320,11 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
 
    private byte[] serialize(MarshalledEntry o) {
       try {
-         return marshaller.objectToByteBuffer(new KeyValuePair(o.getValue(), o.getMetadata()));
+         // Retrieve value as bytes instead of value to avoid unnecessary
+         // unwrapping/deserialization if the value is a MarshalledValue,
+         // e.g. storeAsBinary as been enabled, and hence the value might be
+         // already in serialized form.
+         return marshaller.objectToByteBuffer(new KeyValuePair(o.getValueBytes(), o.getMetadataBytes()));
       } catch (IOException e) {
          throw new CacheException(e);
       } catch (InterruptedException e) {
@@ -334,8 +340,9 @@ public class DummyInMemoryStore implements AdvancedLoadWriteStore, AdvancedCache
          if (!fetchValue && !fetchMetadata) {
             return ctx.getMarshalledEntryFactory().newMarshalledEntry(key, null, (InternalMetadata) null);
          }
-         KeyValuePair<Object, InternalMetadata> keyValuePair =
-               (KeyValuePair<Object, InternalMetadata>) marshaller.objectFromByteBuffer(b);
+         KeyValuePair<ByteBuffer, ByteBuffer> keyValuePair =
+               (KeyValuePair<ByteBuffer, ByteBuffer>) marshaller.objectFromByteBuffer(b);
+
          return ctx.getMarshalledEntryFactory().newMarshalledEntry(key,
                fetchValue ? keyValuePair.getKey() : null,
                fetchMetadata ? keyValuePair.getValue() : null);

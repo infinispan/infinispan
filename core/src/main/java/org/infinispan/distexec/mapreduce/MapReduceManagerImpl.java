@@ -387,11 +387,7 @@ public class MapReduceManagerImpl implements MapReduceManager {
       @SuppressWarnings("unchecked")
       protected V getValue(InternalCacheEntry<K,V> entry){
          if (entry != null && !entry.isExpired(timeService.wallClockTime())) {
-            Object value = entry.getValue();
-            if (value instanceof MarshalledValue) {
-               value = ((MarshalledValue) value).get();
-            }
-            return  (V)value;
+            return MarshalledValue.unwrap(entry.getValue());
          } else {
             return null;
          }
@@ -446,18 +442,14 @@ public class MapReduceManagerImpl implements MapReduceManager {
 
       @Override
       public void processEntry(MarshalledEntry<K, V> marshalledEntry, TaskContext taskContext) throws InterruptedException {
-         executeMapWithCollector(marshalledEntry.getKey(), getValue(marshalledEntry));
+         executeMapWithCollector(marshalledEntry.getKey(), marshalledEntry.getValue());
       }
 
       @Override
       @SuppressWarnings("unchecked")
       protected V getValue(InternalCacheEntry<K, V> entry){
          if (entry != null) {
-            Object value = entry.getValue();
-            if (value instanceof MarshalledValue) {
-               value = ((MarshalledValue) value).get();
-            }
-            return  (V)value;
+            return MarshalledValue.unwrap(entry.getValue());
          } else {
             return null;
          }
@@ -502,15 +494,6 @@ public class MapReduceManagerImpl implements MapReduceManager {
          }
       }
 
-      @SuppressWarnings("unchecked")
-      private V getValue(MarshalledEntry<K, V> marshalledEntry) {
-         Object loadedValue = marshalledEntry.getValue();
-         if (loadedValue instanceof MarshalledValue) {
-            return  (V) ((MarshalledValue) loadedValue).get();
-         } else {
-            return (V) loadedValue;
-         }
-      }
    }
 
    private static final class IntermediateKeyFilter<T> implements KeyFilter<IntermediateKey<T>> {
