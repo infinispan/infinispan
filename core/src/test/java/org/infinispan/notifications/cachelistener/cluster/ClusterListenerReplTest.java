@@ -111,6 +111,10 @@ public class ClusterListenerReplTest extends AbstractClusterListenerNonTxTest {
 
       // Remove the interceptor so the next command can proceed properly
       cache2.getAdvancedCache().removeInterceptor(BlockingInterceptor.class);
+      // Removing the interceptor is not enough, we need to disable the existing ones
+      // Because the command is retried on cache0 with the same interceptors
+      blockingInterceptor0.stopBlocking();
+      blockingInterceptor2.stopBlocking();
 
       // Kill the cache now - note this will automatically unblock the fork thread
       TestingUtil.killCacheManagers(cache1.getCacheManager());
