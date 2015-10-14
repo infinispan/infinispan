@@ -109,7 +109,6 @@ public class SequentialInterceptorAdapter extends BaseSequentialInterceptor {
       if (trace) log.tracef("visitFuture done for %s", getAdaptedType().getSimpleName());
       actx.visitFuture.complete(actx.sctx.forkInvocation(command, returnHandler));
       try {
-         if (trace) log.trace("Waiting for next interceptor's return handler");
          return nextInterceptorFuture.get();
       } catch (ExecutionException e) {
          Throwable cause = e.getCause();
