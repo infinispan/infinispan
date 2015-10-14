@@ -23,14 +23,12 @@ import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
 /**
- * 
  * Basic tests for continuous query over HotRod.
- * 
+ *
  * @author vjuranek
  * @since 8.1
  */
-
-@Category({ Queries.class })
+@Category(Queries.class)
 @RunWith(Arquillian.class)
 public class ContinuousQueryIT extends RemoteQueryBaseIT {
 
@@ -39,10 +37,6 @@ public class ContinuousQueryIT extends RemoteQueryBaseIT {
 
    public ContinuousQueryIT() {
       super("clustered", "localtestcache");
-   }
-
-   protected ContinuousQueryIT(String cacheContainerName, String cacheName) {
-      super(cacheContainerName, cacheName);
    }
 
    @Override
@@ -74,7 +68,7 @@ public class ContinuousQueryIT extends RemoteQueryBaseIT {
          }
       };
       Object clientListener = ClientEvents.addContinuousQueryListener(remoteCache, listener, query);
-      
+
       assertNotNull(clientListener);
       expectElementsInQueue(joined, 1);
       expectElementsInQueue(left, 0);
@@ -84,24 +78,24 @@ public class ContinuousQueryIT extends RemoteQueryBaseIT {
       remoteCache.put(4, user4);
       expectElementsInQueue(joined, 1);
       expectElementsInQueue(left, 0);
-      
+
       User user1 = remoteCache.get(1);
       user1.setAge(19);
       remoteCache.put(1, user1);
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 1);
-      
+
       remoteCache.clear();
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 1);
-      
+
       remoteCache.removeClientListener(clientListener);
       user1.setAge(25);
       remoteCache.put(1, user1);
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 0);
    }
-   
+
    private User createUser(int id, int age) {
       User user = new User();
       user.setId(id);
@@ -111,12 +105,12 @@ public class ContinuousQueryIT extends RemoteQueryBaseIT {
       user.setGender(User.Gender.MALE);
       return user;
    }
-   
+
    private void expectElementsInQueue(BlockingQueue<Object> queue, int numElements) {
       for (int i = 0; i < numElements; i++) {
          try {
             Object e = queue.poll(5, TimeUnit.SECONDS);
-            assertNotNull(e);
+            assertNotNull("Queue was empty!", e);
          } catch (InterruptedException e) {
             throw new AssertionError("Interrupted while waiting for condition", e);
          }
@@ -124,10 +118,9 @@ public class ContinuousQueryIT extends RemoteQueryBaseIT {
       try {
          // no more elements expected here
          Object e = queue.poll(5, TimeUnit.SECONDS);
-         assertNull(e);
+         assertNull("No more elements expected in queue!", e);
       } catch (InterruptedException e) {
          throw new AssertionError("Interrupted while waiting for condition", e);
       }
    }
-
 }
