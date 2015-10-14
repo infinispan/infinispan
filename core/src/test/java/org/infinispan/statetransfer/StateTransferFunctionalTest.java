@@ -347,6 +347,7 @@ public class StateTransferFunctionalTest extends MultipleCacheManagersTest {
       Cache<Object, Object> cache1, cache2;
       cache1 = createCacheManager().getCache(cacheName);
 
+      assertEquals(0, cache1.getAdvancedCache().getDataContainer().size());
       writeInitialData(cache1);
       // Delay the transient copy, so that we get a more thorough log test
       DelayTransfer value = new DelayTransfer();
