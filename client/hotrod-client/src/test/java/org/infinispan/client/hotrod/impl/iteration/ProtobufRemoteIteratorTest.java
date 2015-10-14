@@ -1,14 +1,7 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.Search;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
 import org.infinispan.client.hotrod.query.testdomain.protobuf.marshallers.MarshallerRegistration;
@@ -22,11 +15,22 @@ import org.infinispan.filter.AbstractKeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverter;
 import org.infinispan.filter.KeyValueFilterConverterFactory;
 import org.infinispan.metadata.Metadata;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
 import org.infinispan.query.remote.client.ProtobufMetadataManagerConstants;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
-import org.testng.annotations.Test;
 
 /**
  * @author gustavonalle
@@ -68,7 +72,7 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
    @Override
    protected org.infinispan.client.hotrod.configuration.ConfigurationBuilder createHotRodClientConfigurationBuilder(int serverPort) {
       return super.createHotRodClientConfigurationBuilder(serverPort)
-                  .marshaller(new ProtoStreamMarshaller());
+              .marshaller(new ProtoStreamMarshaller());
    }
 
    public void testSimpleIteration() {
@@ -114,6 +118,32 @@ public class ProtobufRemoteIteratorTest extends MultiHotRodServersTest implement
       ConsistentHash consistentHash = advancedCache(0).getDistributionManager().getConsistentHash();
 
       assertKeysInSegment(results, segments, marshaller, consistentHash::getSegment);
+   }
+
+   public void testFilteredIterationWithQuery() {
+      RemoteCache<Integer, AccountPB> remoteCache = clients.get(0).getCache();
+      populateCache(CACHE_SIZE, this::newAccountPB, remoteCache);
+      QueryFactory queryFactory = Search.getQueryFactory(remoteCache);
+
+      int lowerId = 5;
+      int higherId = 8;
+      Query simpleQuery = queryFactory.from(AccountPB.class).having("id").between(lowerId, higherId).toBuilder().build();
+      Set<Entry<Object, Object>> entries = extractEntries(remoteCache.retrieveEntriesByQuery(simpleQuery, null, 10));
+      Set<Integer> keys = extractKeys(entries);
+
+      assertEquals(4, keys.size());
+      assertForAll(keys, key -> key >= lowerId && key <= higherId);
+      assertForAll(entries,e -> e.getValue() instanceof AccountPB);
+
+      Query projectionsQuery = queryFactory.from(AccountPB.class).select("id", "description").having("id").between(lowerId, higherId).toBuilder().build();
+      Set<Entry<Integer, Object[]>> entriesWithProjection = extractEntries(remoteCache.retrieveEntriesByQuery(projectionsQuery, null, 10));
+
+      assertEquals(4, entriesWithProjection.size());
+      assertForAll(entriesWithProjection, entry -> {
+         Integer id = entry.getKey();
+         Object[] value = entry.getValue();
+         return value[0] == id && value[1].equals("description for " + id);
+      });
    }
 
 }

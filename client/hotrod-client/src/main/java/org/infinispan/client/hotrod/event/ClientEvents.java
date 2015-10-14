@@ -6,25 +6,29 @@ import org.infinispan.client.hotrod.annotation.ClientCacheEntryExpired;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
 import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
 import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
 import org.infinispan.protostream.ProtobufUtil;
 import org.infinispan.protostream.SerializationContext;
 import org.infinispan.query.dsl.Query;
-import org.infinispan.query.dsl.impl.BaseQuery;
 import org.infinispan.query.remote.client.ContinuousQueryResult;
 
 import java.io.IOException;
-import java.util.Map;
+
+import static org.infinispan.client.hotrod.filter.Filters.*;
 
 public class ClientEvents {
 
    /**
     * The name of the factory used for query DSL based filters and converters. This factory is provided internally by
     * the server.
+    * @deprecated Use constants from {@link Filters}
     */
-   public static final String QUERY_DSL_FILTER_FACTORY_NAME = "query-dsl-filter-converter-factory";
+   @Deprecated
+   public static final String QUERY_DSL_FILTER_FACTORY_NAME = Filters.QUERY_DSL_FILTER_FACTORY_NAME;
 
-   public static final String CONTINUOUS_QUERY_FILTER_FACTORY_NAME = "continuous-query-filter-converter-factory";
+   @Deprecated
+   public static final String CONTINUOUS_QUERY_FILTER_FACTORY_NAME = Filters.CONTINUOUS_QUERY_FILTER_FACTORY_NAME;
 
    private static final ClientCacheFailoverEvent FAILOVER_EVENT_SINGLETON = new ClientCacheFailoverEvent() {
       @Override
@@ -81,22 +85,6 @@ public class ClientEvents {
       Object[] factoryParams = makeFactoryParams(query);
       remoteCache.addClientListener(eventListener, factoryParams, null);
       return eventListener;
-   }
-
-   private static Object[] makeFactoryParams(Query query) {
-      BaseQuery baseQuery = (BaseQuery) query;
-      Map<String, Object> namedParameters = baseQuery.getNamedParameters();
-      if (namedParameters == null) {
-         return new Object[]{baseQuery.getJPAQuery()};
-      }
-      Object[] factoryParams = new Object[1 + namedParameters.size() * 2];
-      factoryParams[0] = baseQuery.getJPAQuery();
-      int i = 1;
-      for (Map.Entry<String, Object> e : namedParameters.entrySet()) {
-         factoryParams[i++] = e.getKey();
-         factoryParams[i++] = e.getValue();
-      }
-      return factoryParams;
    }
 
    @ClientListener(filterFactoryName = CONTINUOUS_QUERY_FILTER_FACTORY_NAME,

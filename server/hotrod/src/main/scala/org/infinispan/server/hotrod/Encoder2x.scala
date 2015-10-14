@@ -337,13 +337,24 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
             writeRangedBytes(r.iterationResult.segmentsToBytes, buf)
             val entries = r.iterationResult.entrySeq
             writeUnsignedInt(entries.size, buf)
-            entries.foreach { e =>
-               writeRangedBytes(e._1.asInstanceOf[Bytes],buf)
-               writeRangedBytes(e._2.asInstanceOf[Bytes],buf)
+            val projectionLength = projectionInfo(entries, r.version)
+            projectionLength.foreach(writeUnsignedInt(_, buf))
+            entries.foreach { case ((key: Bytes, value)) =>
+               writeRangedBytes(key, buf)
+               value match {
+                  case v: Array[Object] => v.foreach(o => writeRangedBytes(o.asInstanceOf[Bytes], buf))
+                  case v: Bytes => writeRangedBytes(v, buf)
+               }
             }
          case e: ErrorResponse => writeString(e.msg, buf)
          case _ => if (buf == null)
             throw new IllegalArgumentException("Response received is unknown: " + r)
       }
+   }
+
+   def projectionInfo(entries: Seq[(AnyRef, AnyRef)], version: Byte) = entries.headOption match {
+      case Some((_, projections: Array[Object])) => Some(projections.length)
+      case Some((_, singleValue: Bytes)) if !Constants.isVersionPre24(version) => Some(1)
+      case _ => None
    }
 }

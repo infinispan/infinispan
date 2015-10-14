@@ -1,11 +1,9 @@
 package org.infinispan.server.test.query;
 
-import java.util.Collections;
-import java.util.List;
-
 import org.infinispan.arquillian.core.InfinispanResource;
 import org.infinispan.arquillian.core.RemoteInfinispanServer;
 import org.infinispan.client.hotrod.Search;
+import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.protostream.sampledomain.Address;
 import org.infinispan.protostream.sampledomain.User;
 import org.infinispan.query.dsl.Query;
@@ -16,9 +14,12 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 
 /**
  * Tests for remote queries over HotRod on a local cache using RAM directory.
@@ -105,6 +106,44 @@ public class RemoteQueryIT extends RemoteQueryBaseIT {
         assertEquals(Object[].class, list.get(0).getClass());
         assertEquals("Tom", list.get(0)[0]);
         assertEquals("Cat", list.get(0)[1]);
+    }
+
+    @Test
+    public void testIteratorWithQuery() throws Exception {
+        remoteCache.put(1, createUser1());
+        remoteCache.put(2, createUser2());
+
+        QueryFactory qf = Search.getQueryFactory(remoteCache);
+        Query simpleQuery = qf.from(User.class).having("name").eq("Tom").toBuilder().build();
+
+        List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
+        try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
+            while (iter.hasNext()) {
+                entries.add(iter.next());
+            }
+        }
+        assertEquals(1, entries.size());
+        assertEquals("Cat", ((User) entries.get(0).getValue()).getSurname());
+    }
+
+    @Test
+    public void testIteratorWithQueryAndProjections() throws Exception {
+        remoteCache.put(1, createUser1());
+        remoteCache.put(2, createUser2());
+
+        QueryFactory qf = Search.getQueryFactory(remoteCache);
+        Query simpleQuery = qf.from(User.class).select("surname", "name").having("name").eq("Tom").toBuilder().build();
+
+        List<Map.Entry<Object, Object>> entries = new ArrayList<>(1);
+        try (CloseableIterator<Map.Entry<Object, Object>> iter = remoteCache.retrieveEntriesByQuery(simpleQuery, null, 3)) {
+            while (iter.hasNext()) {
+                entries.add(iter.next());
+            }
+        }
+        assertEquals(1, entries.size());
+        Object[] projections = (Object[]) entries.get(0).getValue();
+        assertEquals("Cat", projections[0]);
+        assertEquals("Tom", projections[1]);
     }
 
     private User createUser1() {

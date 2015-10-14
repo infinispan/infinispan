@@ -14,6 +14,7 @@ import org.infinispan.client.hotrod.ServerStatistics;
 import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.query.dsl.Query;
 
 /**
  * Base class for building wrappers over remote cache instances.
@@ -412,5 +413,10 @@ abstract class RemoteCacheWrapper<K, V> implements RemoteCache<K, V> {
    @Override
    public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize) {
       return delegate.retrieveEntries(filterConverterFactory, filterConverterParams, segments, batchSize);
+   }
+
+   @Override
+   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+      return delegate.retrieveEntriesByQuery(filterQuery, segments, batchSize);
    }
 }

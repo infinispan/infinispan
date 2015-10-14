@@ -3,7 +3,6 @@ package org.infinispan.server.hotrod.iteration
 import java.io.{ObjectInput, ObjectOutput}
 
 import org.infinispan.commons.marshall.{AbstractExternalizer, Marshaller}
-import org.infinispan.distribution.ch.ConsistentHash
 import org.infinispan.factories.annotations.Inject
 import org.infinispan.filter.{AbstractKeyValueFilterConverter, KeyValueFilterConverter}
 import org.infinispan.metadata.Metadata
@@ -18,18 +17,19 @@ import scala.collection.JavaConversions._
 
 class IterationFilter[K, V, Any](val compat: Boolean,
                                  val providedFilter: Option[KeyValueFilterConverter[K, V, Any]],
-                                 val marshaller: Option[Marshaller]) extends AbstractKeyValueFilterConverter[K, V, Any] {
+                                 val marshaller: Option[Marshaller],
+                                 val binary: Boolean) extends AbstractKeyValueFilterConverter[K, V, Any] {
 
-   private var filterMarshaller: Marshaller = _
-   private var consistentHash: Option[ConsistentHash] = _
+   protected var filterMarshaller: Marshaller = _
 
    @Inject
    def injectDependencies(cache: Cache) {
-      this.consistentHash = Option(cache.getDistributionManager).map(_.getConsistentHash)
       filterMarshaller = if (compat)
          cache.getCacheConfiguration.compatibility().marshaller()
       else
          marshaller.getOrElse(MarshallerBuilder.genericFromInstance(providedFilter))
+      providedFilter.foreach(cache.getAdvancedCache.getComponentRegistry.wireDependencies)
+
    }
 
    override def filterAndConvert(key: K, value: V, metadata: Metadata): Any = {
@@ -39,7 +39,7 @@ class IterationFilter[K, V, Any](val compat: Boolean,
    private def filterByProvidedFilter(key: K, value: V, metadata: Metadata): Option[Any] = {
       if (providedFilter.isEmpty) Some(value.asInstanceOf[Any])
       else {
-         if (!compat) {
+         if (!compat && !binary) {
             val unmarshalledKey = filterMarshaller.objectFromByteBuffer(key.asInstanceOf[Bytes]).asInstanceOf[K]
             val unmarshalledValue = filterMarshaller.objectFromByteBuffer(value.asInstanceOf[Bytes]).asInstanceOf[V]
             val result = providedFilter.flatMap(c => Option(c.filterAndConvert(unmarshalledKey, unmarshalledValue, metadata)))
@@ -59,12 +59,14 @@ class IterationFilterExternalizer[K, V, C] extends AbstractExternalizer[Iteratio
       val filter = input.readObject().asInstanceOf[Option[KeyValueFilterConverter[K, V, C]]]
       val marshallerClass = input.readObject().asInstanceOf[Class[Marshaller]]
       val marshaller = MarshallerBuilder.fromClass(Option(marshallerClass), filter)
-      new IterationFilter[K, V, C](compat, filter, Option(marshaller))
+      val binary = input.readBoolean()
+      new IterationFilter[K, V, C](compat, filter, Option(marshaller),binary)
    }
 
    override def writeObject(output: ObjectOutput, obj: IterationFilter[K, V, C]) = {
       output.writeBoolean(obj.compat)
       output.writeObject(obj.providedFilter)
       output.writeObject(MarshallerBuilder.toClass(obj))
+      output.writeBoolean(obj.binary)
    }
 }

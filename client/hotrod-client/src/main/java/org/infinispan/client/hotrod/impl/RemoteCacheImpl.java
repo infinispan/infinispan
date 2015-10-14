@@ -25,6 +25,7 @@ import org.infinispan.client.hotrod.VersionedValue;
 import org.infinispan.client.hotrod.event.ClientListenerNotifier;
 import org.infinispan.client.hotrod.exceptions.HotRodClientException;
 import org.infinispan.client.hotrod.exceptions.RemoteCacheManagerNotStartedException;
+import org.infinispan.client.hotrod.filter.Filters;
 import org.infinispan.client.hotrod.impl.operations.*;
 import org.infinispan.client.hotrod.impl.iteration.RemoteCloseableIterator;
 import org.infinispan.client.hotrod.logging.Log;
@@ -33,6 +34,9 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
 import org.infinispan.commons.util.concurrent.NotifyingFutureImpl;
+import org.infinispan.query.dsl.Query;
+
+import static org.infinispan.client.hotrod.filter.Filters.makeFactoryParams;
 
 /**
  * @author Mircea.Markus@jboss.com
@@ -188,6 +192,12 @@ public class RemoteCacheImpl<K, V> extends RemoteCacheSupport<K, V> {
    @Override
    public CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, int batchSize) {
       return retrieveEntries(filterConverterFactory, null, batchSize);
+   }
+
+   @Override
+   public CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize) {
+      Object[] factoryParams = makeFactoryParams(filterQuery);
+      return retrieveEntries(Filters.ITERATION_QUERY_FILTER_CONVERTER_FACTORY_NAME, factoryParams, segments, batchSize);
    }
 
    @Override

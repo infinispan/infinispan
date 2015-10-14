@@ -2,7 +2,7 @@ package org.infinispan.server.hotrod
 
 import logging.Log
 import org.infinispan.commons.marshall.Marshaller
-import org.infinispan.filter.KeyValueFilterConverterFactory
+import org.infinispan.filter.{ParamKeyValueFilterConverterFactory, KeyValueFilterConverterFactory}
 import org.infinispan.notifications.cachelistener.filter.{CacheEventFilterConverterFactory, CacheEventConverterFactory, CacheEventFilterFactory}
 import org.infinispan.server.hotrod.iteration.{DefaultIterationManager, IterationManager}
 import org.infinispan.manager.EmbeddedCacheManager
@@ -92,6 +92,7 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
 
       addCacheEventConverterFactory("key-value-with-previous-converter-factory", new KeyValueWithPreviousEventConverterFactory)
 
+      loadFilterConverterFactories(classOf[ParamKeyValueFilterConverterFactory[Any,Any,Any]])((name, f) => addKeyValueFilterConverterFactory(name, f.asInstanceOf[KeyValueFilterConverterFactory[_,_,_]]))
       loadFilterConverterFactories(classOf[CacheEventFilterConverterFactory])(addCacheEventFilterConverterFactory)
       loadFilterConverterFactories(classOf[CacheEventConverterFactory])(addCacheEventConverterFactory)
       loadFilterConverterFactories(classOf[KeyValueFilterConverterFactory[Any,Any,Any]])(addKeyValueFilterConverterFactory)

@@ -9,9 +9,9 @@ import java.util.Map;
 public class IterationNextResponse<K, V> {
    private final short status;
    private final byte[] finishedSegments;
-   private final Map.Entry<byte[], byte[]>[] entries;
+   private final Map.Entry<byte[], Object[]>[] entries;
 
-   public IterationNextResponse(short status, byte[] finishedSegments, Map.Entry<byte[], byte[]>[] entries) {
+   public IterationNextResponse(short status, byte[] finishedSegments, Map.Entry<byte[], Object[]>[] entries) {
       this.status = status;
       this.finishedSegments = finishedSegments;
       this.entries = entries;
@@ -21,7 +21,7 @@ public class IterationNextResponse<K, V> {
       return finishedSegments;
    }
 
-   public Map.Entry<byte[], byte[]>[] getEntries() {
+   public Map.Entry<byte[], Object[]>[] getEntries() {
       return entries;
    }
 

@@ -16,6 +16,7 @@ import org.infinispan.commons.marshall.Marshaller;
 import org.infinispan.commons.util.CloseableIterator;
 
 import java.util.AbstractMap.SimpleEntry;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
@@ -92,16 +93,16 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
             if (HotRodConstants.isInvalidIteration(status)) {
                throw log.errorRetrievingNext(iterationId);
             }
-            Entry<byte[], byte[]>[] entries = iterationNextResponse.getEntries();
+            Entry<byte[], Object[]>[] entries = iterationNextResponse.getEntries();
 
             if (entries.length == 0) {
                endOfIteration = true;
                break;
             }
 
-            for (Entry<byte[], byte[]> entry : entries) {
+            for (Entry<byte[], Object[]> entry : entries) {
                if (segmentKeyTracker.track(entry.getKey())) {
-                  nextElements.add(new SimpleEntry<>(unmarshall(entry.getKey(), status), unmarshall(entry.getValue(), status)));
+                  nextElements.add(new SimpleEntry<>(unmarshall(entry.getKey(), status), unmarshallValue(entry.getValue(), status)));
                }
             }
             segmentKeyTracker.segmentsFinished(iterationNextResponse.getFinishedSegments());
@@ -112,6 +113,11 @@ public class RemoteCloseableIterator implements CloseableIterator<Entry<Object, 
          restartIteration(segmentKeyTracker.missedSegments());
          fetch();
       }
+   }
+
+   private Object unmarshallValue(Object[] value, short status) {
+      if (value.length == 1) return unmarshall((byte[]) value[0], status);
+      return Arrays.stream(value).map(bytes -> unmarshall((byte[]) bytes, status)).toArray();
    }
 
    private Object unmarshall(byte[] bytes, short status) {

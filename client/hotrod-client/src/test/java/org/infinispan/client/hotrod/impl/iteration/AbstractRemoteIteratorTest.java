@@ -1,5 +1,11 @@
 package org.infinispan.client.hotrod.impl.iteration;
 
+import org.infinispan.client.hotrod.RemoteCache;
+import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
+import org.infinispan.commons.marshall.Marshaller;
+import org.infinispan.commons.util.CloseableIterator;
+import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
+
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -11,11 +17,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.infinispan.client.hotrod.RemoteCache;
-import org.infinispan.client.hotrod.query.testdomain.protobuf.AccountPB;
-import org.infinispan.commons.marshall.Marshaller;
-import org.infinispan.commons.util.CloseableIterator;
-import org.infinispan.query.dsl.embedded.testdomain.hsearch.AccountHS;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -81,11 +82,11 @@ public interface AbstractRemoteIteratorTest {
       });
    }
 
-   default Set<Map.Entry<Object, Object>> extractEntries(CloseableIterator<Map.Entry<Object, Object>> iterator) {
-      Set<Map.Entry<Object, Object>> entries = new HashSet<>();
+   default <K,V> Set<Map.Entry<K, V>> extractEntries(CloseableIterator<Map.Entry<Object, Object>> iterator) {
+      Set<Map.Entry<K, V>> entries = new HashSet<>();
       try {
          while (iterator.hasNext()) {
-            entries.add(iterator.next());
+            entries.add((Map.Entry<K, V>) iterator.next());
          }
       } finally {
          iterator.close();

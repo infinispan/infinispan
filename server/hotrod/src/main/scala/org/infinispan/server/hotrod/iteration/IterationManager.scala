@@ -89,13 +89,15 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
       val segmentListener = new IterationSegmentsListener
       val compatInfo = CompatInfo(cacheManager.getCacheConfiguration(cacheName).compatibility())
 
-      val customFilter = buildCustomFilter(namedFactory).map { providedFilter =>
-         new IterationFilter(compatInfo.enabled, Some(providedFilter), marshaller)
-      }
+      val filteredStream = for {
+         (name, params) <- namedFactory
+         factory <- getFactory(name)
+         (filter, isBinary) <- buildFilter(factory, params.toArray)
+         iterationFilter <- Some(new IterationFilter(compatInfo.enabled, Some(filter), marshaller, isBinary))
+         stream <- Some(filterAndConvert(stream.asInstanceOf[util.stream.Stream[CacheEntry[Any, Any]]], iterationFilter.asInstanceOf[KeyValueFilterConverter[Any, Any, Any]]))
+      } yield stream
 
-      val iterator = customFilter.map { case f =>
-         filterAndConvert(stream.asInstanceOf[util.stream.Stream[CacheEntry[Any, Any]]], f.asInstanceOf[KeyValueFilterConverter[Any, Any, Any]])
-      }.getOrElse(stream).iterator()
+      val iterator = filteredStream.getOrElse(stream).iterator()
 
       val iterationState = new IterationState(segmentListener, iterator.asInstanceOf[java.util.Iterator[CacheEntry[AnyRef, AnyRef]]], stream, batch, compatInfo)
 
@@ -103,16 +105,15 @@ class DefaultIterationManager(val cacheManager: EmbeddedCacheManager) extends It
       iterationId
    }
 
-   private def buildCustomFilter[K, V, Any](namedFactory: NamedFactory) = {
-      namedFactory match {
-         case None => None
-         case Some((name, params)) =>
-            Option(filterConverterFactoryMap.get(name)).map {
-               case factory: ParamKeyValueFilterConverterFactory[_, _, _] =>
-                  val unmarshalledParams = unmarshallParams(params.toArray, factory)
-                  factory.getFilterConverter(unmarshalledParams)
-               case factory: KeyValueFilterConverterFactory[_, _, _] => factory.getFilterConverter
-            }.orElse(throw log.missingKeyValueFilterConverterFactory(name))
+   private def getFactory(name: String) =
+      Option(filterConverterFactoryMap.get(name)).orElse(throw log.missingKeyValueFilterConverterFactory(name))
+
+   private def buildFilter(factory: KeyValueFilterConverterFactory[_, _, _], params: Array[Bytes]) = {
+      factory match {
+         case f: ParamKeyValueFilterConverterFactory[_, _, _] =>
+            val parameters: Array[AnyRef] = if (f.binaryParam()) params.toArray else unmarshallParams(params.toArray, f)
+            Some(f.getFilterConverter(parameters), f.binaryParam())
+         case f: KeyValueFilterConverterFactory[_, _, _] => Some(f.getFilterConverter, false)
       }
    }
 

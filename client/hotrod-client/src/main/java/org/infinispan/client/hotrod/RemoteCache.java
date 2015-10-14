@@ -3,6 +3,7 @@ package org.infinispan.client.hotrod;
 import org.infinispan.commons.api.BasicCache;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.concurrent.NotifyingFuture;
+import org.infinispan.query.dsl.Query;
 
 import java.util.Collection;
 import java.util.Map;
@@ -173,9 +174,19 @@ public interface RemoteCache<K, V> extends BasicCache<K, V> {
    CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, Object[] filterConverterParams, Set<Integer> segments, int batchSize);
 
    /**
-    * @see #retrieveEntries(String, java.util.Set, int)
+    * @see #retrieveEntries(String, Object[], java.util.Set, int)
     */
    CloseableIterator<Entry<Object, Object>> retrieveEntries(String filterConverterFactory, int batchSize);
+
+   /**
+    * Retrieve entries from the server matching a query.
+    *
+    * @param filterQuery {@link Query}
+    * @param segments    The segments to iterate. If null all segments will be iterated. An empty set will filter out all entries.
+    * @param batchSize   The number of entries transferred from the server at a time.
+    * @return {@link CloseableIterator}
+    */
+   CloseableIterator<Entry<Object, Object>> retrieveEntriesByQuery(Query filterQuery, Set<Integer> segments, int batchSize);
 
    /**
     * Returns the {@link VersionedValue} associated to the supplied key param, or null if it doesn't exist.

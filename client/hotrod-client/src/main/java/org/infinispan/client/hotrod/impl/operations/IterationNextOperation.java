@@ -35,14 +35,18 @@ public class IterationNextOperation extends HotRodOperation {
       short status = readHeaderAndValidate(transport, params);
       byte[] finishedSegments = transport.readArray();
       int entriesSize = transport.readVInt();
-      Map.Entry<byte[], byte[]>[] entries = new Map.Entry[entriesSize];
-      for (int i = 0; i < entriesSize; i++) {
-         byte[] key = transport.readArray();
-         byte[] value = transport.readArray();
-         entries[i] = new SimpleEntry<>(key, value);
+      Map.Entry<byte[], Object[]>[] entries = new Map.Entry[entriesSize];
+      if (entriesSize > 0) {
+         int projectionsSize = transport.readVInt();
+         for (int i = 0; i < entriesSize; i++) {
+            byte[] key = transport.readArray();
+            Object[] projections = new Object[projectionsSize];
+            for (int j = 0; j < projectionsSize; j++) {
+               projections[j] = transport.readArray();
+            }
+            entries[i] = new SimpleEntry<>(key, projections);
+         }
       }
-
       return new IterationNextResponse(status, finishedSegments, entries);
-
    }
 }
