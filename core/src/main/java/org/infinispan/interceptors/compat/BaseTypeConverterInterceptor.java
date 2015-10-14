@@ -13,7 +13,6 @@ import org.infinispan.commands.write.PutKeyValueCommand;
 import org.infinispan.commands.write.PutMapCommand;
 import org.infinispan.commands.write.RemoveCommand;
 import org.infinispan.commands.write.ReplaceCommand;
-import org.infinispan.commons.util.CloseableIterable;
 import org.infinispan.commons.util.CloseableIterator;
 import org.infinispan.commons.util.CloseableIteratorMapper;
 import org.infinispan.commons.util.CloseableSpliterator;
@@ -26,9 +25,7 @@ import org.infinispan.context.Flag;
 import org.infinispan.context.InvocationContext;
 import org.infinispan.distribution.DistributionManager;
 import org.infinispan.factories.annotations.Inject;
-import org.infinispan.filter.Converter;
 import org.infinispan.interceptors.base.CommandInterceptor;
-import org.infinispan.iteration.EntryIterable;
 import org.infinispan.metadata.Metadata;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingEntryCacheSet;
 import org.infinispan.stream.impl.interceptor.AbstractDelegatingKeyCacheSet;
@@ -36,7 +33,6 @@ import org.infinispan.stream.impl.local.LocalEntryCacheStream;
 import org.infinispan.stream.impl.local.LocalKeyCacheStream;
 import org.infinispan.stream.impl.spliterators.IteratorAsSpliterator;
 
-import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -44,7 +40,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Spliterator;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
