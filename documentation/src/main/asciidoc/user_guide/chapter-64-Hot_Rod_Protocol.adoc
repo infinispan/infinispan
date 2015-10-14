@@ -1687,10 +1687,41 @@ Request format:
 | Segments            | byte array       | same as protocol version 2.3.
 | FilterConverter size| signed vInt      | same as protocol version 2.3.
 | FilterConverter     | UTF-8 byte array | same as protocol version 2.3.
-| Parameters size     | byte             | the number of params of the custom filter. Only present when filter converter is provided.
-| Parameters          | byte[][]         | an array of parameters, each parameter is a byte array.
+| Parameters size     | byte             | the number of params of the filter. Only present when FilterConverter is provided.
+| Parameters          | byte[][]         | an array of parameters, each parameter is a byte array. Only present if Parameters size is greater than 0.
 | BatchSize           | vInt             | same as protocol version 2.3.
 |==============================================================================
+
+The Iteration Next operation can optionally return projections in the value,
+meaning more than one value is contained in the same entry.
+
+.Iteration Next
+
+Response format:
+
+[cols="3,^2,10",options="header"]
+|==============================================================================
+| Field Name                    | Size       | Value
+| Finished segments size        | vInt       | same as protocol version 2.3.
+| Finished segments             | byte array | same as protocol version 2.3.
+| Entry count                   | vInt       | same as protocol version 2.3.
+| Number of value projections   | vInt       | Number of projections for the values. If 1, behaves like version protocol version 2.3.
+| Key1 Length                   | vInt       | same as protocol version 2.3.
+| Key1                          | byte array | same as protocol version 2.3.
+| Value1 projection1 length     | vInt       | length of value1 first projection
+| Value1 projection1            | byte array | retrieved value1 first projection
+| Value1 projection2 length     | vInt       | length of value2 second projection
+| Value1 projection2            | byte array | retrieved value2 second projection
+|... continues until all projections for the value retrieved
+| Key2 Length                   | vInt       | same as protocol version 2.3.
+| Key2                          | byte array | same as protocol version 2.3.
+| Value2 projection1 length     | vInt       | length of value 2 first projection
+| Value2 projection1            | byte array | retrieved value 2 first projection
+| Value2 projection2 length     | vInt       | length of value 2 second projection
+| Value2 projection2            | byte array | retrieved value 2 second projection
+|... continues until entry count is reached ||
+|==============================================================================
+
 
 ==== Hot Rod Hash Functions
 Infinispan makes use of a consistent hash function to place nodes on a hash
