@@ -5,6 +5,7 @@ import org.infinispan.cache.impl.CacheConfigurationMBean;
 import org.infinispan.commands.CommandsFactory;
 import org.infinispan.commands.module.ModuleCommandInitializer;
 import org.infinispan.configuration.cache.Configuration;
+import org.infinispan.container.versioning.VersionGenerator;
 import org.infinispan.factories.annotations.Inject;
 import org.infinispan.factories.components.ComponentMetadata;
 import org.infinispan.factories.components.ComponentMetadataRepo;
@@ -50,6 +51,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    private CommandsFactory commandsFactory;
    private StateTransferLock stateTransferLock;
    private PerCacheInboundInvocationHandler inboundInvocationHandler;
+   private VersionGenerator versionGenerator;
 
    protected final WeakReference<ClassLoader> defaultClassLoader;
 
@@ -292,6 +294,12 @@ public class ComponentRegistry extends AbstractComponentRegistry {
    public StateTransferLock getStateTransferLock() {
       return stateTransferLock;
    }
+   /**
+    * Caching shortcut for #getLocalComponent(VersionGenerator.class)
+     */
+   public VersionGenerator getVersionGenerator() {
+      return versionGenerator;
+   }
 
    /**
     * Caching shortcut for #getComponent(PerCacheInboundInvocationHandler.class);
@@ -310,6 +318,7 @@ public class ComponentRegistry extends AbstractComponentRegistry {
       commandsFactory = getLocalComponent(CommandsFactory.class);
       stateTransferLock = getOrCreateComponent(StateTransferLock.class);
       inboundInvocationHandler = getOrCreateComponent(PerCacheInboundInvocationHandler.class);
+      versionGenerator = getOrCreateComponent(VersionGenerator.class);
       getOrCreateComponent(ClusterCacheStats.class);  //no need to save ref to a field, just initialize component
       getOrCreateComponent(CacheConfigurationMBean.class);
    }

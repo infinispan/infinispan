@@ -213,7 +213,7 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
    }
 
    def generateVersion(registry: ComponentRegistry, cache: org.infinispan.Cache[Bytes, Bytes]): EntryVersion = {
-      val cacheVersionGenerator = registry.getComponent(classOf[VersionGenerator])
+      val cacheVersionGenerator = registry.getVersionGenerator
       if (cacheVersionGenerator == null) {
          // It could be null, for example when not running in compatibility mode.
          // The reason for that is that if no other component depends on the
