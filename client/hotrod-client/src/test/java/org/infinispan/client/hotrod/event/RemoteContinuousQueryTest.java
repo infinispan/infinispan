@@ -161,18 +161,16 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       user2.setAge(22);
       remoteCache.put("expiredUser1", user1, 5, TimeUnit.MILLISECONDS);
       remoteCache.put("expiredUser2", user2, 5, TimeUnit.MILLISECONDS);
-      
+
       expectElementsInQueue(joined, 2);
       expectElementsInQueue(left, 0);
-      joined.clear();
-      
-      TestingUtil.sleepThread(6);
+
+      TestingUtil.sleepThread(60);
       assertNull(remoteCache.get("expiredUser1"));
       assertNull(remoteCache.get("expiredUser2"));
-      
+
       expectElementsInQueue(joined, 0);
       expectElementsInQueue(left, 2);
-      joined.clear();
 
       remoteCache.removeClientListener(clientListener);
 
@@ -187,7 +185,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       for (int i = 0; i < numElements; i++) {
          try {
             Object e = queue.poll(5, TimeUnit.SECONDS);
-            assertNotNull(e);
+            assertNotNull("Queue was empty!", e);
          } catch (InterruptedException e) {
             throw new AssertionError("Interrupted while waiting for condition", e);
          }
@@ -195,7 +193,7 @@ public class RemoteContinuousQueryTest extends MultiHotRodServersTest {
       try {
          // no more elements expected here
          Object e = queue.poll(5, TimeUnit.SECONDS);
-         assertNull(e);
+         assertNull("No more elements expected in queue!", e);
       } catch (InterruptedException e) {
          throw new AssertionError("Interrupted while waiting for condition", e);
       }

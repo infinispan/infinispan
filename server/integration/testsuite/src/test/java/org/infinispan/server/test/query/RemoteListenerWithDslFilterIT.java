@@ -1,0 +1,175 @@
+package org.infinispan.server.test.query;
+
+import org.infinispan.arquillian.core.InfinispanResource;
+import org.infinispan.arquillian.core.RemoteInfinispanServer;
+import org.infinispan.client.hotrod.Search;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryCreated;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryModified;
+import org.infinispan.client.hotrod.annotation.ClientCacheEntryRemoved;
+import org.infinispan.client.hotrod.annotation.ClientListener;
+import org.infinispan.client.hotrod.event.ClientCacheEntryCustomEvent;
+import org.infinispan.client.hotrod.event.ClientCacheEntryRemovedEvent;
+import org.infinispan.client.hotrod.event.ClientEvents;
+import org.infinispan.client.hotrod.marshall.ProtoStreamMarshaller;
+import org.infinispan.protostream.ProtobufUtil;
+import org.infinispan.protostream.SerializationContext;
+import org.infinispan.protostream.sampledomain.Address;
+import org.infinispan.protostream.sampledomain.User;
+import org.infinispan.query.dsl.Expression;
+import org.infinispan.query.dsl.Query;
+import org.infinispan.query.dsl.QueryFactory;
+import org.infinispan.query.remote.client.FilterResult;
+import org.infinispan.server.test.category.Queries;
+import org.infinispan.util.logging.Log;
+import org.infinispan.util.logging.LogFactory;
+import org.jboss.arquillian.junit.Arquillian;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+
+/**
+ * Basic test for query DSL based remote event filters.
+ *
+ * @author anistor@redhat.com
+ * @since 8.1
+ */
+@Category(Queries.class)
+@RunWith(Arquillian.class)
+public class RemoteListenerWithDslFilterIT extends RemoteQueryBaseIT {
+
+   @InfinispanResource("remote-query-1")
+   protected RemoteInfinispanServer server;
+
+   public RemoteListenerWithDslFilterIT() {
+      super("clustered", "localtestcache");
+   }
+
+   @Override
+   protected RemoteInfinispanServer getServer() {
+      return server;
+   }
+
+   @Test
+   public void testEventFilter() throws Exception {
+      User user1 = new User();
+      user1.setId(1);
+      user1.setName("John");
+      user1.setSurname("Doe");
+      user1.setGender(User.Gender.MALE);
+      user1.setAge(22);
+      user1.setAccountIds(new HashSet<Integer>(Arrays.asList(1, 2)));
+      user1.setNotes("Lorem ipsum dolor sit amet");
+
+      Address address1 = new Address();
+      address1.setStreet("Main Street");
+      address1.setPostCode("X1234");
+      user1.setAddresses(Collections.singletonList(address1));
+
+      User user2 = new User();
+      user2.setId(2);
+      user2.setName("Spider");
+      user2.setSurname("Man");
+      user2.setGender(User.Gender.MALE);
+      user2.setAge(32);
+      user2.setAccountIds(Collections.singleton(3));
+
+      Address address2 = new Address();
+      address2.setStreet("Old Street");
+      address2.setPostCode("Y12");
+      Address address3 = new Address();
+      address3.setStreet("Bond Street");
+      address3.setPostCode("ZZ");
+      user2.setAddresses(Arrays.asList(address2, address3));
+
+      User user3 = new User();
+      user3.setId(3);
+      user3.setName("Spider");
+      user3.setSurname("Woman");
+      user3.setGender(User.Gender.FEMALE);
+      user3.setAge(31);
+      user3.setAccountIds(Collections.<Integer>emptySet());
+
+      remoteCache.put(user1.getId(), user1);
+      remoteCache.put(user2.getId(), user2);
+      remoteCache.put(user3.getId(), user3);
+      assertEquals(3, remoteCache.size());
+
+      SerializationContext serCtx = ProtoStreamMarshaller.getSerializationContext(remoteCache.getRemoteCacheManager());
+      QueryFactory qf = Search.getQueryFactory(remoteCache);
+
+      Query query = qf.from(User.class)
+            .having("age").lte(Expression.param("ageParam"))
+            .toBuilder().select("age")
+            .build()
+            .setParameter("ageParam", 32);
+
+      ClientEntryListener listener = new ClientEntryListener(serCtx);
+      ClientEvents.addClientQueryListener(remoteCache, listener, query);
+      assertEquals(3, listener.createEvents.size());
+
+      user3.setAge(40);
+      remoteCache.put(user1.getId(), user1);
+      remoteCache.put(user2.getId(), user2);
+      remoteCache.put(user3.getId(), user3);
+
+      assertEquals(3, remoteCache.size());
+      assertEquals(2, listener.modifyEvents.size());
+
+      remoteCache.removeClientListener(listener);
+   }
+
+   @ClientListener(filterFactoryName = ClientEvents.QUERY_DSL_FILTER_FACTORY_NAME,
+         converterFactoryName = ClientEvents.QUERY_DSL_FILTER_FACTORY_NAME,
+         useRawData = true, includeCurrentState = true)
+   public static class ClientEntryListener {
+
+      private final Log log = LogFactory.getLog(getClass());
+
+      public final List<FilterResult> createEvents = new ArrayList<FilterResult>();
+
+      public final List<FilterResult> modifyEvents = new ArrayList<FilterResult>();
+
+      private final SerializationContext serializationContext;
+
+      public ClientEntryListener(SerializationContext serializationContext) {
+         this.serializationContext = serializationContext;
+      }
+
+      @ClientCacheEntryCreated
+      public void handleClientCacheEntryCreatedEvent(ClientCacheEntryCustomEvent event) throws IOException {
+         FilterResult r = (FilterResult) ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
+         createEvents.add(r);
+
+         log.debugf("handleClientCacheEntryCreatedEvent instance=%s projection=%s sortProjection=%s\n",
+               r.getInstance(),
+               r.getProjection() == null ? null : Arrays.asList(r.getProjection()),
+               r.getSortProjection() == null ? null : Arrays.asList(r.getSortProjection()));
+      }
+
+      @ClientCacheEntryModified
+      public void handleClientCacheEntryModifiedEvent(ClientCacheEntryCustomEvent event) throws IOException {
+         FilterResult r = (FilterResult) ProtobufUtil.fromWrappedByteArray(serializationContext, (byte[]) event.getEventData());
+         modifyEvents.add(r);
+
+         log.debugf("handleClientCacheEntryModifiedEvent instance=%s projection=%s sortProjection=%s\n",
+               r.getInstance(),
+               r.getProjection() == null ? null : Arrays.asList(r.getProjection()),
+               r.getSortProjection() == null ? null : Arrays.asList(r.getSortProjection()));
+
+      }
+
+      @ClientCacheEntryRemoved
+      public void handleClientCacheEntryRemovedEvent(ClientCacheEntryRemovedEvent event) {
+         log.debugf("handleClientCacheEntryRemovedEvent %s\n", event.getKey());
+      }
+   }
+}
