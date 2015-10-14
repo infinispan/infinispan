@@ -396,7 +396,11 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             decoder.checkpointTo(HotRodDecoderState.DECODE_PARAMETERS)
          case IterationStartRequest =>
             val segments = readOptRangedBytes(buffer)
-            val namedFactory = for (factory <- readOptString(buffer)) yield (factory, readOptionalParams(buffer))
+            val namedFactory = if (Constants.isVersionPre24(h.version)) {
+               for (factory <- readOptString(buffer)) yield (factory, List[Bytes]())
+            } else {
+               for (factory <- readOptString(buffer)) yield (factory, readOptionalParams(buffer))
+            }
             val batchSize = readUnsignedInt(buffer)
             val iterationId = server.iterationManager.start(cache.getName, segments.map(JavaBitSet.valueOf), namedFactory, batchSize)
             new IterationStartResponse(h.version, h.messageId, h.cacheName, h.clientIntel, h.topologyId, iterationId)
