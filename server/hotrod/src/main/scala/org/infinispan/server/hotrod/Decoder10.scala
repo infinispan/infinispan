@@ -1,6 +1,7 @@
 package org.infinispan.server.hotrod
 
 import logging.Log
+import org.infinispan.configuration.cache.Configuration
 import org.infinispan.server.core.Operation._
 import HotRodOperation._
 import OperationStatus._
@@ -268,7 +269,7 @@ object Decoder10 extends AbstractVersionedDecoder with ServerConstants with Log 
       }
    }
 
-   override def getOptimizedCache(h: HotRodHeader, c: Cache): Cache = {
+   override def getOptimizedCache(h: HotRodHeader, c: Cache, cacheCfg: Configuration): Cache = {
       var optCache = c
       if (!hasFlag(h, ForceReturnPreviousValue)) {
          h.op match {

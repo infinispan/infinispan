@@ -132,28 +132,28 @@ class CacheDecodeContext(server: HotRodServer) extends ServerConstants with Log 
 
    def obtainCache(cacheManager: EmbeddedCacheManager) = {
       val cacheName = header.cacheName
-      // Talking to the wrong cache are really request parsing errors
-      // and hence should be treated as client errors
-      if (cacheName.startsWith(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX))
-         throw new RequestParsingException(
-            "Remote requests are not allowed to topology cache. Do no send remote requests to cache '%s'".format(cacheName),
-            header.version, header.messageId)
-
-      var seenForFirstTime = false
       // Try to avoid calling cacheManager.getCacheNames() if possible, since this creates a lot of unnecessary garbage
-      if (server.isCacheNameKnown(cacheName)) {
-         if (!(cacheManager.getCacheNames contains cacheName)) {
+      var cache = server.getKnownCacheInstance(cacheName)
+      if (cache == null) {
+         // Talking to the wrong cache are really request parsing errors
+         // and hence should be treated as client errors
+         if (cacheName.startsWith(HotRodServerConfiguration.TOPOLOGY_CACHE_NAME_PREFIX)) {
+            throw new RequestParsingException(
+               "Remote requests are not allowed to topology cache. Do no send remote requests to cache '%s'".format(cacheName),
+               header.version, header.messageId)
+         }
+
+         if (!cacheName.isEmpty && !(cacheManager.getCacheNames contains cacheName)) {
             isError = true // Mark it as error so that the rest of request is ignored
             throw new CacheNotFoundException(
                "Cache with name '%s' not found amongst the configured caches".format(cacheName),
                header.version, header.messageId)
-         } else {
-            seenForFirstTime = true
          }
+         cache = server.getCacheInstance(cacheName, cacheManager, skipCacheCheck = true)
       }
 
-      val cache = server.getCacheInstance(cacheName, cacheManager, seenForFirstTime)
-      this.cache = decoder.getOptimizedCache(header, cache).getAdvancedCache
+      val cacheCfg = server.getCacheConfiguration(cacheName)
+      this.cache = decoder.getOptimizedCache(header, cache, cacheCfg)
    }
 
    def buildMetadata: Metadata = {

@@ -181,8 +181,8 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
       builder
    }
 
-   def isCacheNameKnown(cacheName: String) = {
-      cacheName != null && !cacheName.isEmpty && !(knownCaches containsKey cacheName)
+   def getKnownCacheInstance(cacheName: String) = {
+      knownCaches.get(cacheName)
    }
 
    def getCacheInstance(cacheName: String, cacheManager: EmbeddedCacheManager, skipCacheCheck: Boolean): Cache = {
@@ -202,9 +202,10 @@ class HotRodServer extends AbstractProtocolServer("HotRod") with Log {
          else
             cache = tmpCache.getAdvancedCache
 
-         knownCaches.put(cacheName, cache)
+         // We don't need synchronization as long as we store the cache last
          knownCacheConfigurations.put(cacheName, cacheConfiguration)
          knownCacheRegistries.put(cacheName, SecurityActions.getCacheComponentRegistry(tmpCache.getAdvancedCache))
+         knownCaches.put(cacheName, cache)
          // make sure we register a Migrator for this cache!
          tryRegisterMigrationManager(cacheName, cache)
       }
