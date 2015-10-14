@@ -1,18 +1,16 @@
 package org.infinispan.server.hotrod
 
 import io.netty.buffer.ByteBuf
+import org.infinispan.configuration.cache.CacheMode
 import org.infinispan.manager.EmbeddedCacheManager
-import org.infinispan.remoting.transport.Address
 import org.infinispan.server.core.transport.ExtendedByteBuf._
-import org.infinispan.server.hotrod.HotRodServer._
+import org.infinispan.server.hotrod.Events._
 import org.infinispan.server.hotrod.OperationStatus._
 import org.infinispan.server.hotrod.logging.Log
 import org.infinispan.server.hotrod.util.BulkUtil
+import org.infinispan.topology.CacheTopology
+
 import scala.collection.JavaConversions._
-import scala.collection.mutable
-import org.infinispan.server.hotrod.Events._
-import scala.collection.mutable.ListBuffer
-import org.infinispan.remoting.rpc.RpcManager
 
 /**
  * @author Galder Zamarreño
@@ -51,7 +49,18 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
    }
 
    override def writeHeader(r: Response, buf: ByteBuf, addressCache: AddressCache, server: HotRodServer): Unit = {
-      val newTopology = getTopologyResponse(r, addressCache, server)
+      // Sometimes an error happens before we have added the cache to the knownCaches/knownCacheConfigurations map
+      // If that happens, we pretend the cache is LOCAL and we skip the topology update
+      val cr = server.getCacheRegistry(r.cacheName)
+      val configuration = server.getCacheConfiguration(r.cacheName)
+      val cacheMode = configuration match {
+         case null => CacheMode.LOCAL
+         case _ => configuration.clustering().cacheMode()
+      }
+      val cacheTopology = if (cacheMode.isClustered) cr.getStateTransferManager.getCacheTopology else null
+      val newTopology = getTopologyResponse(r, addressCache, cacheMode, cacheTopology)
+
+
       buf.writeByte(MAGIC_RES.byteValue)
       writeUnsignedLong(r.messageId, buf)
       buf.writeByte(r.operation.id.byteValue)
@@ -63,8 +72,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
                if (r.clientIntel == INTELLIGENCE_HASH_DISTRIBUTION_AWARE)
                   writeEmptyHashInfo(t, buf)
             case h: HashDistAware20Response =>
-               val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, skipCacheCheck = false)
-               writeHashTopologyUpdate(h, cache, buf)
+               writeHashTopologyUpdate(h, cacheTopology, buf)
          }
          case None =>
             trace("Write topology response header with no change")
@@ -107,9 +115,9 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       writeUnsignedInt(t.numSegments, buffer)
    }
 
-   private def writeHashTopologyUpdate(h: HashDistAware20Response, cache: Cache, buf: ByteBuf) {
+   private def writeHashTopologyUpdate(h: HashDistAware20Response, cacheTopology: CacheTopology, buf: ByteBuf) {
       // Calculate members first, in case there are no members
-      val ch = SecurityActions.getCacheDistributionManager(cache).getReadConsistentHash
+      val ch = cacheTopology.getReadConsistentHash
       val members = h.serverEndpointsMap.filter { case (addr, serverAddr) =>
          ch.getMembers.contains(addr)
       }
@@ -163,23 +171,22 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       }
    }
 
-   private def getTopologyResponse(r: Response, addressCache: AddressCache, server: HotRodServer): Option[AbstractTopologyResponse] = {
+   private def getTopologyResponse(r: Response, addressCache: AddressCache, cacheMode: CacheMode, cacheTopology: CacheTopology): Option[AbstractTopologyResponse] = {
       // If clustered, set up a cache for topology information
       if (addressCache != null) {
          r.clientIntel match {
             case INTELLIGENCE_TOPOLOGY_AWARE | INTELLIGENCE_HASH_DISTRIBUTION_AWARE => {
-               val cache = server.getCacheInstance(r.cacheName, addressCache.getCacheManager, skipCacheCheck = false)
-               // Use the request cache's topology id as the HotRod topologyId.
-               val rpcManager = SecurityActions.getCacheRpcManager(cache)
                // Only send a topology update if the cache is clustered
-               val currentTopologyId = rpcManager match {
-                  case null => DEFAULT_TOPOLOGY_ID
-                  case _ => rpcManager.getTopologyId
+               if (cacheMode.isClustered) {
+                  // Use the request cache's topology id as the HotRod topologyId.
+                  val currentTopologyId = cacheTopology.getTopologyId
+                  // AND if the client's topology id is smaller than the server's topology id
+                  if (r.topologyId < currentTopologyId)
+                     generateTopologyResponse(r, addressCache, cacheMode, cacheTopology)
+                  else None
+               } else {
+                  None
                }
-               // AND if the client's topology id is smaller than the server's topology id
-               if (currentTopologyId >= DEFAULT_TOPOLOGY_ID && r.topologyId < currentTopologyId)
-                  generateTopologyResponse(r, addressCache, cache, rpcManager, currentTopologyId)
-               else None
             }
             case INTELLIGENCE_BASIC => None
          }
@@ -187,7 +194,7 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
    }
 
    private def generateTopologyResponse(r: Response, addressCache: AddressCache,
-           cache: Cache, rpcManager: RpcManager, currentTopologyId: Int): Option[AbstractTopologyResponse] = {
+                                        cacheMode : CacheMode, cacheTopology: CacheTopology): Option[AbstractTopologyResponse] = {
       // If the topology cache is incomplete, we assume that a node has joined but hasn't added his HotRod
       // endpoint address to the topology cache yet. We delay the topology update until the next client
       // request by returning null here (so the client topology id stays the same).
@@ -198,7 +205,8 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
       // difference between the client topology id and the server topology id is 2 or more. The partial update
       // will have the topology id of the server - 1, so it won't prevent a regular topology update if/when
       // the topology cache is updated.
-      val cacheMembers = rpcManager.getMembers
+      val currentTopologyId = cacheTopology.getTopologyId
+      val cacheMembers = cacheTopology.getMembers
       val serverEndpoints = addressCache.toMap
 
       var topologyId = currentTopologyId
@@ -221,11 +229,11 @@ object Encoder2x extends AbstractVersionedEncoder with Constants with Log {
             if (isTrace) trace("Send partial topology update with topology id %s", topologyId)
          }
       }
-      val numSegments = Option(SecurityActions.getCacheDistributionManager(cache)).map(_.getReadConsistentHash).map(_.getNumSegments).getOrElse(0)
-      val config = SecurityActions.getCacheConfiguration(cache)
-      if (r.clientIntel == INTELLIGENCE_TOPOLOGY_AWARE || !config.clustering().cacheMode().isDistributed) {
-         Some(TopologyAwareResponse(topologyId, serverEndpoints, numSegments))
+
+      if (r.clientIntel == INTELLIGENCE_TOPOLOGY_AWARE || !cacheMode.isDistributed) {
+         Some(TopologyAwareResponse(topologyId, serverEndpoints, 0))
       } else {
+         val numSegments = cacheTopology.getReadConsistentHash.getNumSegments
          Some(HashDistAware20Response(topologyId, serverEndpoints, numSegments, DEFAULT_CONSISTENT_HASH_VERSION))
       }
    }

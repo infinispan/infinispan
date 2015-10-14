@@ -2,14 +2,13 @@ package org.infinispan.server.hotrod
 
 import java.util.concurrent.TimeUnit
 
-import org.infinispan.stats.Stats
-import org.infinispan.server.core.QueryFacade
-import org.infinispan.server.core.transport.NettyTransport
-import org.infinispan.container.entries.CacheEntry
 import io.netty.buffer.ByteBuf
-import org.infinispan.server.hotrod.configuration.HotRodServerConfiguration
-import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.Channel
+import io.netty.channel.ChannelHandlerContext
+import org.infinispan.configuration.cache.Configuration
+import org.infinispan.container.entries.CacheEntry
+import org.infinispan.server.core.transport.NettyTransport
+import org.infinispan.stats.Stats
 
 /**
  * This class represents the work to be done by a decoder of a particular Hot Rod protocol version.
@@ -85,7 +84,7 @@ abstract class AbstractVersionedDecoder {
    /**
     * Get an optimized cache instance depending on the operation parameters.
     */
-   def getOptimizedCache(h: HotRodHeader, c: Cache): Cache
+   def getOptimizedCache(h: HotRodHeader, c: Cache, cacheCfg: Configuration): Cache
 
    /**
     * Transforms lifespan pass as seconds into milliseconds

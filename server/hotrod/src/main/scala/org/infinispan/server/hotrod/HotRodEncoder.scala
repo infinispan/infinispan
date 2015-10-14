@@ -39,7 +39,7 @@ class HotRodEncoder(cacheManager: EmbeddedCacheManager, server: HotRodServer)
                         encoder.writeHeader(r, buf, addressCache, server)
                      // if error before reading version, don't send any topology changes
                      // cos the encoding might vary from one version to the other
-                     case 0 => encoder.writeHeader(r, buf, null, null)
+                     case 0 => encoder.writeHeader(r, buf, null, server)
                   }
 
                   encoder.writeResponse(r, buf, cacheManager, server)

@@ -6,6 +6,7 @@ import io.netty.channel.Channel
 import java.io.IOException
 import org.infinispan.IllegalLifecycleStateException
 import org.infinispan.commons.CacheException
+import org.infinispan.configuration.cache.Configuration
 import org.infinispan.container.entries.CacheEntry
 import org.infinispan.container.versioning.NumericVersion
 import org.infinispan.context.Flag.{SKIP_CACHE_LOAD, SKIP_INDEXING, IGNORE_RETURN_VALUES}
@@ -548,8 +549,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
       causes.mkString("\n")
    }
 
-   override def getOptimizedCache(h: HotRodHeader, c: Cache): Cache = {
-      val cacheCfg = SecurityActions.getCacheConfiguration(c)
+   override def getOptimizedCache(h: HotRodHeader, c: Cache, cacheCfg: Configuration): Cache = {
       val isTransactional = cacheCfg.transaction().transactionMode().isTransactional
       val isClustered = cacheCfg.clustering().cacheMode().isClustered
 
