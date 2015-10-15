@@ -335,14 +335,13 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       if (isNotificationAllowed(command, cacheEntryRemovedListeners)) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_REMOVED);
          if (pre) {
-            configureEvent(e, key, previousValue, previousMetadata, pre, ctx, command, previousValue, previousMetadata);
+            configureEvent(e, key, previousValue, previousMetadata, true, ctx, command, previousValue, previousMetadata);
          } else {
             // to be consistent it would be better to pass null as previousMetadata but certain server code
             // depends on ability to retrieve these metadata when pre=false from CacheEntryEvent.getMetadata
             // instead of having proper method getOldMetadata() there.
-            configureEvent(e, key, null, previousMetadata, pre, ctx, command, previousValue, previousMetadata);
+            configureEvent(e, key, null, previousMetadata, false, ctx, command, previousValue, previousMetadata);
          }
-         setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          boolean sendEvents = !ctx.isInTxScope();
          try {
@@ -383,14 +382,37 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       setTx(ctx, e);
    }
 
+   private void configureEvent(EventImpl<K, V> e, K key, V value, boolean pre, InvocationContext ctx) {
+      if (typeConverter != null) {
+         key = (K) typeConverter.unboxKey(key);
+         value = (V) typeConverter.unboxValue(value);
+      }
+
+      e.setPre(pre);
+      e.setKey(key);
+      e.setValue(value);
+      e.setOriginLocal(ctx.isOriginLocal());
+      setTx(ctx, e);
+   }
+
+   private void configureEvent(EventImpl<K, V> e, K key, V value, Metadata metadata) {
+      if (typeConverter != null) {
+         key = (K) typeConverter.unboxKey(key);
+         value = (V) typeConverter.unboxValue(value);
+      }
+
+      e.setKey(key);
+      e.setValue(value);
+      e.setMetadata(metadata);
+      e.setOriginLocal(true);
+      e.setPre(false);
+   }
+
    @Override
    public void notifyCacheEntryVisited(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryVisitedListeners)) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_VISITED);
-         e.setPre(pre);
-         e.setKey(key);
-         e.setValue(value);
-         setTx(ctx, e);
+         configureEvent(e, key, value, pre, ctx);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryVisitedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
@@ -435,11 +457,7 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public void notifyCacheEntryExpired(K key, V value, Metadata metadata, InvocationContext ctx) {
       if (isNotificationAllowed(null, cacheEntryExpiredListeners)) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_EXPIRED);
-         e.setKey(key);
-         e.setValue(value);
-         e.setMetadata(metadata);
-         e.setOriginLocal(true);
-         e.setPre(false);
+         configureEvent(e, key, value, metadata);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
 
          boolean sendEvents = ctx == null || !ctx.isInTxScope();
@@ -465,7 +483,6 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
       if (isNotificationAllowed(command, cacheEntryInvalidatedListeners)) {
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_INVALIDATED);
          configureEvent(e, key, value, metadata, pre, ctx, command, value, metadata);
-         setTx(ctx, e);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryInvalidatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
@@ -475,13 +492,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    public void notifyCacheEntryLoaded(K key, V value, boolean pre,
          InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryLoadedListeners)) {
-         boolean originLocal = ctx.isOriginLocal();
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_LOADED);
-         e.setOriginLocal(originLocal);
-         e.setPre(pre);
-         e.setKey(key);
-         e.setValue(value);
-         setTx(ctx, e);
+         configureEvent(e, key, value, pre, ctx);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryLoadedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
@@ -490,13 +502,8 @@ public final class CacheNotifierImpl<K, V> extends AbstractListenerImpl<Event<K,
    @Override
    public void notifyCacheEntryActivated(K key, V value, boolean pre, InvocationContext ctx, FlagAffectedCommand command) {
       if (isNotificationAllowed(command, cacheEntryActivatedListeners)) {
-         boolean originLocal = ctx.isOriginLocal();
          EventImpl<K, V> e = EventImpl.createEvent(cache, CACHE_ENTRY_ACTIVATED);
-         e.setOriginLocal(originLocal);
-         e.setPre(pre);
-         e.setKey(key);
-         e.setValue(value);
-         setTx(ctx, e);
+         configureEvent(e, key, value, pre, ctx);
          boolean isLocalNodePrimaryOwner = clusteringDependentLogic.localNodeIsPrimaryOwner(key);
          for (CacheEntryListenerInvocation<K, V> listener : cacheEntryActivatedListeners) listener.invoke(e, isLocalNodePrimaryOwner);
       }
