@@ -1,20 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:8.0 http://www.infinispan.org/schemas/infinispan-config-8.0.xsd"
-      xmlns="urn:infinispan:config:8.0">
+      xsi:schemaLocation="urn:infinispan:config:8.1 http://www.infinispan.org/schemas/infinispan-config-8.1.xsd"
+      xmlns="urn:infinispan:config:8.1">
 
    <cache-container name="QueryEnabledGrid-Local-NRTIndexing" default-cache="default" statistics="false">
       <jmx duplicate-domains="true" />
       <local-cache name="default" statistics="false">
-         <indexing index="NONE"/>
-         <eviction max-entries="-1" strategy="NONE"/>
+         <eviction size="-1" strategy="NONE"/>
          <expiration max-idle="-1"/>
+         <indexing index="NONE"/>
       </local-cache>
       <!-- *************************************** -->
       <!--  Tested Cache: indexing enabled         -->
       <!-- *************************************** -->
       <local-cache name="Indexed">
+         <!--  For our test we don't want to keep all data in memory: throw some away -->
+         <eviction size="200" strategy="LIRS" />
          <indexing index="ALL">
             <!-- Enabled fastest writer: NRT backend -->
             <property name="default.indexmanager">near-real-time</property>
@@ -36,8 +38,6 @@
             <property name="error_handler">org.infinispan.query.helper.StaticTestingErrorHandler</property>
             <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
-         <!--  For our test we don't want to keep all data in memory: throw some away -->
-         <eviction max-entries="200" strategy="LIRS" />
       </local-cache>
       <!-- *************************************** -->
       <!--  Cache to store Lucene's file metadata  -->

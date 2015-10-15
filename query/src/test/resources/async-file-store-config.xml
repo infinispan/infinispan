@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:8.0 http://www.infinispan.org/schemas/infinispan-config-8.0.xsd
+      xsi:schemaLocation="urn:infinispan:config:8.1 http://www.infinispan.org/schemas/infinispan-config-8.1.xsd
                           urn:infinispan:config:store:jdbc:8.0 http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config-8.0.xsd"
-      xmlns="urn:infinispan:config:8.0">
+      xmlns="urn:infinispan:config:8.1">
 
    <cache-container default-cache="default">
       <transport cluster="MyCluster"/>
@@ -48,13 +48,13 @@
       <!--  Cache to store Lucene locks  -->
       <!-- ***************************** -->
       <local-cache name="LuceneIndexesLocking_custom">
-         <indexing index="NONE" />
          <transaction mode="NON_XA" />
          <persistence passivation="false">
             <file-store preload="true" fetch-state="true" read-only="false" purge="false" path="${java.io.tmpdir}/asyncStore">
                <write-behind flush-lock-timeout="15000" thread-pool-size="5" />
             </file-store>
          </persistence>
+         <indexing index="NONE" />
       </local-cache>
    </cache-container>
 

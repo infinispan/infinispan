@@ -1,19 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:8.0 http://www.infinispan.org/schemas/infinispan-config-8.0.xsd"
-      xmlns="urn:infinispan:config:8.0">
+      xsi:schemaLocation="urn:infinispan:config:8.1 http://www.infinispan.org/schemas/infinispan-config-8.1.xsd"
+      xmlns="urn:infinispan:config:8.1">
 
    <cache-container name="QueryEnabledGrid-Manual-Dist" default-cache="default" statistics="true">
-      <jmx duplicate-domains="true" />
       <transport cluster="Infinispan-Query-Cluster"/>
+      <jmx duplicate-domains="true" />
       <!-- *************************************** -->
       <!--  Default Cache, with indexing enabled.  -->
       <!-- *************************************** -->
       <distributed-cache name="default" mode="SYNC" remote-timeout="20000" statistics="true">
          <locking acquire-timeout="20000" write-skew="false" concurrency-level="500" striping="false" />
-         <state-transfer timeout="480000" enabled="true" />
-         <eviction max-entries="-1" strategy="NONE" />
+         <eviction size="-1" strategy="NONE" />
          <expiration max-idle="-1" />
          <indexing index="ALL">
             <!-- Use our custom IndexManager; TODO autoinject by default? -->
@@ -22,6 +21,7 @@
             <!-- Use latest Lucene version -->
             <property name="lucene_version">LUCENE_CURRENT</property>
          </indexing>
+         <state-transfer timeout="480000" enabled="true" />
       </distributed-cache>
       <!-- ******************************************************************************* -->
       <!-- Individually configured "named" caches.                                         -->
@@ -37,22 +37,22 @@
       <!--  Cache to store Lucene's file metadata  -->
       <!-- *************************************** -->
       <replicated-cache name="LuceneIndexesMetadata" mode="SYNC" remote-timeout="25000">
-         <state-transfer enabled="true" />
          <indexing index="NONE" />
+         <state-transfer enabled="true" />
       </replicated-cache>
       <!-- **************************** -->
       <!--  Cache to store Lucene data  -->
       <!-- **************************** -->
       <distributed-cache name="LuceneIndexesData" mode="SYNC" remote-timeout="25000">
-         <state-transfer enabled="true" />
          <indexing index="NONE" />
+         <state-transfer enabled="true" />
       </distributed-cache>
       <!-- ***************************** -->
       <!--  Cache to store Lucene locks  -->
       <!-- ***************************** -->
       <replicated-cache name="LuceneIndexesLocking" mode="SYNC" remote-timeout="25000">
-         <state-transfer enabled="true" />
          <indexing index="NONE" />
+         <state-transfer enabled="true" />
       </replicated-cache>
    </cache-container>
 

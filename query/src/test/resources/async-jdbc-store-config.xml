@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <infinispan
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="urn:infinispan:config:8.0 http://www.infinispan.org/schemas/infinispan-config-8.0.xsd
+      xsi:schemaLocation="urn:infinispan:config:8.1 http://www.infinispan.org/schemas/infinispan-config-8.1.xsd
                           urn:infinispan:config:store:jdbc:8.0 http://docs.jboss.org/infinispan/schemas/infinispan-cachestore-jdbc-config-8.0.xsd"
       xmlns="urn:infinispan:config:8.0">
 
-   <cache-container>
+   <cache-container default-cache="default">
       <transport cluster="MyCluster"/>
       <replicated-cache name="JDBCBased_LocalIndex" mode="SYNC" remote-timeout="20000">
          <transaction mode="NON_XA" />
@@ -21,7 +21,6 @@
       </replicated-cache>
       <replicated-cache name="LuceneIndexesMetadata_custom1">
          <transaction mode="NON_XA" />
-         <indexing index="NONE" />
          <persistence>
             <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:8.0"
                                   key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
@@ -37,13 +36,13 @@
                <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
+         <indexing index="NONE" />
       </replicated-cache>
       <!-- **************************** -->
       <!--  Cache to store Lucene data  -->
       <!-- **************************** -->
       <replicated-cache name="LuceneIndexesData_custom1">
          <transaction mode="NON_XA" />
-         <indexing index="NONE" />
          <persistence>
             <string-keyed-jdbc-store xmlns="urn:infinispan:config:store:jdbc:8.0"
                                      key-to-string-mapper="org.infinispan.lucene.LuceneKey2StringMapper"
@@ -56,9 +55,9 @@
                   <data-column name="DATA_COLUMN" type="BINARY" />
                   <timestamp-column name="TIMESTAMP_COLUMN" type="BIGINT" />
                </string-keyed-table>
-               <write-behind flush-lock-timeout="5000" modification-queue-size="1024" shutdown-timeout="25000" thread-pool-size="1"/>
             </string-keyed-jdbc-store>
          </persistence>
+         <indexing index="NONE" />
       </replicated-cache>
       <!-- ***************************** -->
       <!--  Cache to store Lucene locks  -->
