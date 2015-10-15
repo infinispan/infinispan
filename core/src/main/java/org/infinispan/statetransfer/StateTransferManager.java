@@ -67,4 +67,7 @@ public interface StateTransferManager {
     *    (even if it didn't own any data).
     */
    int getFirstTopologyAsMember();
+
+   @ManagedAttribute(description = "Retrieves the rebalancing status for this cache. Possible values are PENDING, SUSPENDED, IN_PROGRESS, BALANCED", displayName = "Rebalancing progress", dataType = DataType.TRAIT)
+   String getRebalancingStatus() throws Exception;
 }

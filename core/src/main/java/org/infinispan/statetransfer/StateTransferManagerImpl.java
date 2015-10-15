@@ -20,7 +20,6 @@ import org.infinispan.notifications.cachelistener.CacheNotifier;
 import org.infinispan.partitionhandling.impl.PartitionHandlingManager;
 import org.infinispan.remoting.inboundhandler.DeliverOrder;
 import org.infinispan.remoting.responses.Response;
-import org.infinispan.remoting.rpc.ResponseMode;
 import org.infinispan.remoting.rpc.RpcManager;
 import org.infinispan.remoting.rpc.RpcOptions;
 import org.infinispan.remoting.transport.Address;
@@ -241,6 +240,11 @@ public class StateTransferManagerImpl implements StateTransferManager {
    @Override
    public boolean isJoinComplete() {
       return stateConsumer.getCacheTopology() != null; // TODO [anistor] this does not mean we have received a topology update or a rebalance yet
+   }
+
+   @Override
+   public String getRebalancingStatus() throws Exception {
+      return localTopologyManager.getRebalancingStatus(cacheName).toString();
    }
 
    @Override

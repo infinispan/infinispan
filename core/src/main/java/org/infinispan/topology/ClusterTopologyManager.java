@@ -45,13 +45,28 @@ public interface ClusterTopologyManager {
 
    boolean isRebalancingEnabled();
 
+   /**
+    * Returns whether rebalancing is enabled or disabled for this container.
+    */
    boolean isRebalancingEnabled(String cacheName);
 
+   /**
+    * Globally enables or disables whether automatic rebalancing should occur.
+    */
    void setRebalancingEnabled(boolean enabled);
 
+   /**
+    * Enables or disables rebalancing for the specified cache
+    */
    void setRebalancingEnabled(String cacheName, boolean enabled);
+
+   /**
+    * Retrieves the rebalancing status of a cache
+    */
+   RebalancingStatus getRebalancingStatus(String cacheName);
 
    void forceRebalance(String cacheName);
 
    void forceAvailabilityMode(String cacheName, AvailabilityMode availabilityMode);
+
 }

@@ -15,6 +15,7 @@ import org.infinispan.topology.CacheJoinInfo;
 import org.infinispan.topology.CacheStatusResponse;
 import org.infinispan.topology.CacheTopology;
 import org.infinispan.topology.ClusterTopologyManager;
+import org.infinispan.topology.RebalancingStatus;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
 import org.testng.annotations.Test;
@@ -333,6 +334,11 @@ public class StateTransferReplicationQueueTest extends MultipleCacheManagersTest
       @Override
       public void setRebalancingEnabled(String cacheName, boolean enabled) {
          instance.setRebalancingEnabled(cacheName, enabled);
+      }
+
+      @Override
+      public RebalancingStatus getRebalancingStatus(String cacheName) {
+         return instance.getRebalancingStatus(cacheName);
       }
 
       @Override

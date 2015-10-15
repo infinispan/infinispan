@@ -52,6 +52,8 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
       POLICY_GET_STATUS,
       // Change the availability
       AVAILABILITY_MODE_CHANGE,
+      // Query the rebalancing progress
+      REBALANCING_GET_STATUS
    }
 
    private static final Log log = LogFactory.getLog(CacheTopologyControlCommand.class);
@@ -198,6 +200,9 @@ public class CacheTopologyControlCommand implements ReplicableCommand {
             clusterTopologyManager.forceAvailabilityMode(cacheName, availabilityMode);
             return true;
 
+         // rebalancing status
+         case REBALANCING_GET_STATUS:
+            return clusterTopologyManager.getRebalancingStatus(cacheName);
          default:
             throw new CacheException("Unknown cache topology control command type " + type);
       }

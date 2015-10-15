@@ -164,6 +164,7 @@ public class InfinispanResourceDescriptionResolver extends SubsystemResourceDesc
         sharedAttributeResolver.put(ModelKeys.ASYNC_MARSHALLING, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.CACHE_AVAILABILITY, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.CACHE_REBALANCE, "clustered-cache");
+        sharedAttributeResolver.put(ModelKeys.CACHE_REBALANCING_STATUS, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.MODE, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.QUEUE_FLUSH_INTERVAL, "clustered-cache");
         sharedAttributeResolver.put(ModelKeys.QUEUE_SIZE, "clustered-cache");

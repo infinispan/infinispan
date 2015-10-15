@@ -269,6 +269,18 @@ public class ClusterCacheStatus implements AvailabilityStrategyContext {
       return rebalanceConfirmationCollector != null;
    }
 
+   public RebalancingStatus getRebalancingStatus() {
+      if (!isRebalanceEnabled()) {
+         return RebalancingStatus.SUSPENDED;
+      } else if (isRebalanceInProgress()) {
+         return RebalancingStatus.IN_PROGRESS;
+      } else if (queuedRebalanceMembers != null) {
+         return RebalancingStatus.PENDING;
+      } else {
+         return RebalancingStatus.COMPLETE;
+      }
+   }
+
    /**
     * @return {@code true} if a rebalance was started, {@code false} if a rebalance was already in progress
     */
