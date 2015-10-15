@@ -11,16 +11,12 @@ import org.infinispan.Cache;
 import org.infinispan.atomic.AtomicMap;
 import org.infinispan.atomic.AtomicMapLookup;
 import org.infinispan.commons.equivalence.ByteArrayEquivalence;
-import org.infinispan.commons.util.ByRef;
 import org.infinispan.configuration.cache.Configuration;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.PersistenceConfigurationBuilder;
 import org.infinispan.container.DataContainer;
 import org.infinispan.container.entries.InternalCacheEntry;
 import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.marshall.core.MarshalledEntry;
-import org.infinispan.persistence.manager.PersistenceManager;
-import org.infinispan.persistence.manager.PersistenceManagerStub;
 import org.infinispan.persistence.spi.PersistenceException;
 import org.infinispan.test.SingleCacheManagerTest;
 import org.infinispan.test.TestingUtil;
@@ -202,40 +198,6 @@ public abstract class BaseStoreFunctionalTest extends SingleCacheManagerTest {
          assertCacheEntry(cache, "1", "v1", -1, -1);
          local.removeCache(cacheName);
          assertFalse(local.isRunning(cacheName));
-      } finally {
-         TestingUtil.killCacheManagers(local);
-      }
-   }
-
-   public void testRemoveCacheWithPassivation() {
-      ConfigurationBuilder cb = TestCacheManagerFactory.getDefaultCacheConfiguration(false);
-      createCacheStoreConfig(cb.persistence().passivation(true), true);
-      EmbeddedCacheManager local = TestCacheManagerFactory.createCacheManager(cb);
-      try {
-         final String cacheName = "to-be-removed";
-         Cache<String, Object> cache = local.getCache(cacheName);
-         assertTrue(local.isRunning(cacheName));
-         cache.put("1", wrap("1", "v1"));
-         assertCacheEntry(cache, "1", "v1", -1, -1);
-         ByRef<Boolean> passivate = new ByRef<>(false);
-         PersistenceManager actual = cache.getAdvancedCache().getComponentRegistry().getComponent(PersistenceManager.class);
-         PersistenceManager stub = new PersistenceManagerStub() {
-            @Override
-            public void stop() {
-               actual.stop();
-            }
-
-            @Override
-            public void writeToAllStores(MarshalledEntry marshalledEntry, AccessMode modes) {
-               passivate.set(true);
-            }
-         };
-         cache.getAdvancedCache().getComponentRegistry().registerComponent(stub, PersistenceManager.class);
-         cache.getAdvancedCache().getComponentRegistry().rewire();
-         local.removeCache(cacheName);
-         assertFalse(local.isRunning(cacheName));
-         assertFalse(passivate.get());
-         assertEquals(0, actual.size());
       } finally {
          TestingUtil.killCacheManagers(local);
       }

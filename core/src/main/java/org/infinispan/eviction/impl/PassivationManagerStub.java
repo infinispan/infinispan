@@ -23,12 +23,7 @@ public class PassivationManagerStub implements PassivationManager {
    public void passivateAll() throws PersistenceException {
    }
 
-   @Override
-   public void skipPassivationOnStop(boolean skip) {
-      /*no-op*/
-   }
-
-   @Override
+	@Override
    public long getPassivations() {
       return 0;
    }
