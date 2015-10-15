@@ -59,6 +59,7 @@ public class ModelKeys {
     // static final String CACHE_MODE = "cache-mode";
     static final String CACHE_CONTAINER = "cache-container";
     static final String CACHE_REBALANCE = "cache-rebalance";
+    static final String CACHE_REBALANCING_STATUS = "cache-rebalancing-status";
     static final String CHANNEL = "channel";
     static final String CHUNK_SIZE = "chunk-size";
     static final String CLASS = "class";

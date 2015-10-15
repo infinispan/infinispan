@@ -104,6 +104,11 @@ public interface LocalTopologyManager {
    void setCacheRebalancingEnabled(String cacheName, boolean enabled) throws Exception;
 
    /**
+    * Retrieve the rebalancing status for the specified cache
+    */
+   RebalancingStatus getRebalancingStatus(String cacheName) throws Exception;
+
+   /**
     * Retrieves the availability state of a cache.
     */
    AvailabilityMode getCacheAvailability(String cacheName);

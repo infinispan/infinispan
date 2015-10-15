@@ -9,6 +9,7 @@ import org.infinispan.test.MultipleCacheManagersTest;
 import org.infinispan.test.TestingUtil;
 import org.infinispan.test.fwk.CleanupAfterMethod;
 import org.infinispan.topology.ClusterTopologyManager;
+import org.infinispan.topology.RebalancingStatus;
 import org.testng.annotations.Test;
 
 import javax.management.Attribute;
@@ -17,7 +18,7 @@ import javax.management.ObjectName;
 import java.util.Arrays;
 
 import static org.infinispan.test.TestingUtil.killCacheManagers;
-import static org.testng.Assert.assertEquals;
+import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertTrue;
@@ -95,6 +96,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       assertFalse(ctm2.isRebalancingEnabled());
       ClusterTopologyManager ctm3 = TestingUtil.extractGlobalComponent(manager(3), ClusterTopologyManager.class);
       assertFalse(ctm3.isRebalancingEnabled());
+      assertEquals(RebalancingStatus.SUSPENDED.toString(), stm0.getRebalancingStatus());
 
       // Check that no rebalance happened after 1 second
       Thread.sleep(1000);
@@ -106,12 +108,14 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       log.debugf("Rebalancing with nodes %s %s %s %s", address(0), address(1), address(2), address(3));
       mBeanServer.setAttribute(ltmName0, new Attribute(REBALANCING_ENABLED, true));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName0, REBALANCING_ENABLED));
+      assertEquals(RebalancingStatus.IN_PROGRESS.toString(), stm0.getRebalancingStatus());
       // Duplicate request to enable rebalancing - should be ignored
       mBeanServer.setAttribute(ltmName0, new Attribute(REBALANCING_ENABLED, true));
 
       // Check that the cache now has 4 nodes, and the CH is balanced
       TestingUtil.waitForRehashToComplete(cache(0), cache(1), cache(2), cache(3));
       assertNull(stm0.getCacheTopology().getPendingCH());
+      assertEquals(RebalancingStatus.COMPLETE.toString(), stm0.getRebalancingStatus());
       ConsistentHash ch = stm0.getCacheTopology().getCurrentCH();
       assertEquals(Arrays.asList(address(0), address(1), address(2), address(3)), ch.getMembers());
       for (int i = 0; i < ch.getNumSegments(); i++) {
@@ -140,6 +144,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       for (int i = 0; i < ch.getNumSegments(); i++) {
          assertEquals(1, ch.locateOwnersForSegment(i).size());
       }
+      assertEquals(RebalancingStatus.SUSPENDED.toString(), stm2.getRebalancingStatus());
 
       // Enable rebalancing again
       log.debugf("Rebalancing with nodes %s %s", address(2), address(3));
@@ -148,6 +153,7 @@ public class RebalancePolicyJmxTest extends MultipleCacheManagersTest {
       String domain3 = manager(2).getCacheManagerConfiguration().globalJmxStatistics().domain();
       ObjectName ltmName3 = TestingUtil.getCacheManagerObjectName(domain3, "DefaultCacheManager", "LocalTopologyManager");
       mBeanServer.setAttribute(ltmName2, new Attribute(REBALANCING_ENABLED, true));
+      assertEquals(RebalancingStatus.IN_PROGRESS.toString(), stm2.getRebalancingStatus());
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName2, REBALANCING_ENABLED));
       assertTrue((Boolean) mBeanServer.getAttribute(ltmName3, REBALANCING_ENABLED));
 

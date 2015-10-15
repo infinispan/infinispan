@@ -53,6 +53,11 @@ public class SharedCacheResource extends ClusteredCacheResource {
                    .setFlags(AttributeAccess.Flag.STORAGE_RUNTIME)
                    .build();
 
+   static final SimpleAttributeDefinition CACHE_REBALANCING_STATUS =
+           new SimpleAttributeDefinitionBuilder(ModelKeys.CACHE_REBALANCING_STATUS, ModelType.STRING, false)
+                   .setFlags(AttributeAccess.Flag.STORAGE_RUNTIME)
+                   .build();
+
     public SharedCacheResource(PathElement pathElement, ResourceDescriptionResolver descriptionResolver, CacheAdd addHandler, OperationStepHandler removeHandler, ResolvePathHandler resolvePathHandler, boolean runtimeRegistration) {
         super(pathElement, descriptionResolver, addHandler, removeHandler, resolvePathHandler, runtimeRegistration);
     }
@@ -64,6 +69,7 @@ public class SharedCacheResource extends ClusteredCacheResource {
             CacheMetricsHandler.INSTANCE.registerCommonMetrics(resourceRegistration);
             resourceRegistration.registerReadWriteAttribute(CACHE_AVAILABILITY, CacheAvailabilityAttributeHandler.INSTANCE, CacheAvailabilityAttributeHandler.INSTANCE);
             resourceRegistration.registerReadWriteAttribute(CACHE_REBALANCE, CacheRebalanceAttributeHandler.INSTANCE, CacheRebalanceAttributeHandler.INSTANCE);
+            resourceRegistration.registerReadWriteAttribute(CACHE_REBALANCING_STATUS, CacheRebalancingStatusAttributeHandler.INSTANCE, CacheRebalancingStatusAttributeHandler.INSTANCE);
         }
     }
 }

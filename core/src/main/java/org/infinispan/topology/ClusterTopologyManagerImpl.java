@@ -594,6 +594,16 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       }
    }
 
+   @Override
+   public RebalancingStatus getRebalancingStatus(String cacheName) {
+      ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
+      if (cacheStatus != null) {
+         return cacheStatus.getRebalancingStatus();
+      } else {
+         return RebalancingStatus.PENDING;
+      }
+   }
+
    @Listener(sync = true)
    public class ClusterViewListener {
       @Merged

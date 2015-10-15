@@ -484,6 +484,21 @@ public class LocalTopologyManagerImpl implements LocalTopologyManager {
       executeOnClusterSync(command, getGlobalTimeout(), false, false);
    }
 
+   @Override
+   public RebalancingStatus getRebalancingStatus(String cacheName) throws Exception {
+      ReplicableCommand command = new CacheTopologyControlCommand(cacheName,
+            CacheTopologyControlCommand.Type.REBALANCING_GET_STATUS, transport.getAddress(), transport.getViewId());
+      while (true) {
+         int nextViewId = transport.getViewId() + 1;
+         try {
+            return (RebalancingStatus) executeOnCoordinator(command, getGlobalTimeout());
+         } catch (SuspectException e) {
+            if (trace) log.tracef("Coordinator left the cluster while querying rebalancing progress, retrying");
+            transport.waitForView(nextViewId);
+         }
+      }
+   }
+
    @ManagedAttribute(description = "Cluster availability", displayName = "Cluster availability",
          dataType = DataType.TRAIT, writable = false)
    public String getClusterAvailability() {

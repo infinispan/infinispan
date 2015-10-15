@@ -11,6 +11,7 @@ import org.infinispan.topology.CacheTopologyHandler;
 import org.infinispan.topology.LocalTopologyManager;
 import org.infinispan.topology.LocalTopologyManagerImpl;
 import org.infinispan.topology.ManagerStatusResponse;
+import org.infinispan.topology.RebalancingStatus;
 
 /**
  * Class to be extended to allow some control over the local topology manager when testing Infinispan.
@@ -96,6 +97,11 @@ public abstract class AbstractControlledLocalTopologyManager implements LocalTop
    @Override
    public void setCacheRebalancingEnabled(String cacheName, boolean enabled) throws Exception {
       setCacheRebalancingEnabled(cacheName, enabled);
+   }
+
+   @Override
+   public RebalancingStatus getRebalancingStatus(String cacheName) throws Exception {
+      return delegate.getRebalancingStatus(cacheName);
    }
 
    @Override

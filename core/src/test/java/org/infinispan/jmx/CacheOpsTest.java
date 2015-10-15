@@ -1,7 +1,6 @@
 package org.infinispan.jmx;
 
 import static org.infinispan.test.TestingUtil.getCacheObjectName;
-import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 
@@ -10,7 +9,6 @@ import javax.management.ObjectName;
 
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.container.DefaultDataContainer;
 import org.infinispan.eviction.EvictionType;
 import org.infinispan.manager.DefaultCacheManager;
 import org.infinispan.manager.EmbeddedCacheManager;
