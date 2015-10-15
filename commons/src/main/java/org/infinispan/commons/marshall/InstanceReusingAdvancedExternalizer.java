@@ -113,7 +113,7 @@ public abstract class InstanceReusingAdvancedExternalizer<T> extends AbstractExt
          case ID_REPEAT_OBJECT_FAR:
             return getFromCache(data, input.readInt());
          default:
-            throw new IllegalStateException("Unexpected byte encountered" + type);
+            throw new IllegalStateException("Unexpected byte encountered: " + type);
          }
       } finally {
          if (shouldRemove) {
