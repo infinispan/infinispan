@@ -1471,7 +1471,7 @@
     </xs:attribute>
     <xs:attribute name="failure-policy" type="tns:backup-failure-policy" default="WARN">
       <xs:annotation>
-        <xs:documentation>Decides what the system would do in case of failure during backup. Defaults to "FAIL"</xs:documentation>
+        <xs:documentation>Decides what the system would do in case of failure during backup. Defaults to "WARN"</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="timeout" type="xs:long" default="10000">
