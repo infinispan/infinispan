@@ -178,7 +178,7 @@ public class ClusterTopologyManagerImpl implements ClusterTopologyManager {
       ClusterCacheStatus cacheStatus = cacheStatusMap.get(cacheName);
       if (cacheStatus == null) {
          // This can happen if we've just become coordinator
-         log.tracef("Ignoring leave request from %s for cache %s because it doesn't have a cache status entry");
+         log.tracef("Ignoring leave request from %s for cache %s because it doesn't have a cache status entry", leaver, cacheName);
          return;
       }
       cacheStatus.doLeave(leaver);
