@@ -56,7 +56,6 @@ public class NonTxFlagsEnabledTest extends FlagsEnabledTest {
    protected void createCacheManagers() throws Throwable {
       ConfigurationBuilder builder = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
       builder
-            .persistence().addStore(UnnecessaryLoadingTest.CountingStoreConfigurationBuilder.class)
             .persistence().addStore(DummyInMemoryStoreConfigurationBuilder.class)
             .clustering().hash().numSegments(2);
       createClusteredCaches(2, cacheName, builder);
