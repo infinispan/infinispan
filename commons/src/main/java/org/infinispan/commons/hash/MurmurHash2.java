@@ -24,9 +24,11 @@ import java.util.Set;
  * @see MurmurHash2Compat
  * @author Manik Surtani
  * @version 4.1
+ * @deprecated Since 8.2, should always use {@link MurmurHash3} instead.
  */
 @ThreadSafe
 @Immutable
+@Deprecated
 public class MurmurHash2 implements Hash {
    private static final int M = 0x5bd1e995;
    private static final int R = 24;

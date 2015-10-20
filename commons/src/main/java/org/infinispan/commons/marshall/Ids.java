@@ -8,7 +8,7 @@ package org.infinispan.commons.marshall;
  */
 public interface Ids {
    int MURMURHASH_2 = 71;
-   int MURMURHASH_2_COMPAT = 72;
+   // 72 used to be MURMURHASH_2_COMPAT
    int MURMURHASH_3 = 73;
 
    int EMPTY_SET = 88;
