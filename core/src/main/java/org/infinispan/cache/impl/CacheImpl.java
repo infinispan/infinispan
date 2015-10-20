@@ -1155,7 +1155,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    private V putIfAbsentInternal(K key, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       Set<Flag> flags = addUnsafeFlags(explicitFlags);
-      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, metadata, flags);
+      Metadata merged = applyDefaultMetadata(metadata);
+      PutKeyValueCommand command = commandsFactory.buildPutKeyValueCommand(key, value, merged, flags);
       command.setPutIfAbsent(true);
       command.setValueMatcher(ValueMatcher.MATCH_EXPECTED);
       ctx.setLockOwner(command.getKeyLockOwner());
@@ -1178,7 +1179,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private void putAllInternal(Map<? extends K, ? extends V> map, Metadata metadata, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       InfinispanCollections.assertNotNullEntries(map, "map");
-      PutMapCommand command = commandsFactory.buildPutMapCommand(map, metadata, explicitFlags);
+      Metadata merged = applyDefaultMetadata(metadata);
+      PutMapCommand command = commandsFactory.buildPutMapCommand(map, merged, explicitFlags);
       ctx.setLockOwner(command.getKeyLockOwner());
       executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -1201,7 +1203,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
    @SuppressWarnings("unchecked")
    private V replaceInternal(K key, V value, Metadata metadata, EnumSet<Flag> explicitFlags, InvocationContext ctx) {
       Set<Flag> flags = addUnsafeFlags(explicitFlags);
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, metadata, flags);
+      Metadata merged = applyDefaultMetadata(metadata);
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, null, value, merged, flags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (V) executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -1224,7 +1227,8 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    private boolean replaceInternal(K key, V oldValue, V value, Metadata metadata,
          EnumSet<Flag> explicitFlags, InvocationContext ctx) {
-      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, metadata, explicitFlags);
+      Metadata merged = applyDefaultMetadata(metadata);
+      ReplaceCommand command = commandsFactory.buildReplaceCommand(key, oldValue, value, merged, explicitFlags);
       ctx.setLockOwner(command.getKeyLockOwner());
       return (Boolean) executeCommandAndCommitIfNeeded(ctx, command);
    }
@@ -1740,8 +1744,7 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public void putAll(Map<? extends K, ? extends V> map, Metadata metadata) {
-      Metadata merged = applyDefaultMetadata(metadata);
-      putAll(map, merged, null, null);
+      putAll(map, metadata, null, null);
    }
 
    private Metadata applyDefaultMetadata(Metadata metadata) {
@@ -1754,20 +1757,17 @@ public class CacheImpl<K, V> implements AdvancedCache<K, V> {
 
    @Override
    public V replace(K key, V value, Metadata metadata) {
-      Metadata merged = applyDefaultMetadata(metadata);
-      return replace(key, value, merged, null, null);
+      return replace(key, value, metadata, null, null);
    }
 
    @Override
    public boolean replace(K key, V oldValue, V value, Metadata metadata) {
-      Metadata merged = applyDefaultMetadata(metadata);
-      return replace(key, oldValue, value, merged, null, null);
+      return replace(key, oldValue, value, metadata, null, null);
    }
 
    @Override
    public V putIfAbsent(K key, V value, Metadata metadata) {
-      Metadata merged = applyDefaultMetadata(metadata);
-      return putIfAbsent(key, value, merged, null, null);
+      return putIfAbsent(key, value, metadata, null, null);
    }
 
    @Override

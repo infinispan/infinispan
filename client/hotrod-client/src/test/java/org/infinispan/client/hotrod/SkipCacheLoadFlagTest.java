@@ -43,59 +43,46 @@ public class SkipCacheLoadFlagTest extends SingleCacheManagerTest {
    private HotRodServer hotRodServer;
 
    public void testPut() {
-      //PutRequest
       performTest(RequestType.PUT);
    }
 
    public void testReplace() {
-      //ReplaceRequest
       performTest(RequestType.REPLACE);
-
    }
 
    public void testPutIfAbsent() {
-      //PutIfAbsentRequest
       performTest(RequestType.PUT_IF_ABSENT);
    }
 
    public void testReplaceIfUnmodified() {
-      //ReplaceIfUnmodifiedRequest
       performTest(RequestType.REPLACE_IF_UNMODIFIED);
    }
 
    public void testGet() {
-      //GetRequest
       performTest(RequestType.GET);
    }
 
    public void testGetWithVersion() {
-      //GetWithVersionRequest
       performTest(RequestType.GET_WITH_VERSION);
-
    }
 
    public void testGetWithMetadata() {
-      //GetWithMetadataRequest
       performTest(RequestType.GET_WITH_METADATA);
    }
 
    public void testRemove() {
-      //RemoveRequest
       performTest(RequestType.REMOVE);
    }
 
    public void testRemoveIfUnmodified() {
-      //RemoveIfUnmodifiedRequest
       performTest(RequestType.REMOVE_IF_UNMODIFIED);
    }
 
    public void testContainsKey() {
-      //ContainsKeyRequest
       performTest(RequestType.CONTAINS);
    }
 
    public void testPutAll() {
-      //ContainsKeyRequest
       performTest(RequestType.PUT_ALL);
    }
 
