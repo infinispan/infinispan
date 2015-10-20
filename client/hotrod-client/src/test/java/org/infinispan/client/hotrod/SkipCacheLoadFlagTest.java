@@ -17,6 +17,8 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import static org.infinispan.client.hotrod.Flag.FORCE_RETURN_VALUE;
@@ -90,6 +92,11 @@ public class SkipCacheLoadFlagTest extends SingleCacheManagerTest {
    public void testContainsKey() {
       //ContainsKeyRequest
       performTest(RequestType.CONTAINS);
+   }
+
+   public void testPutAll() {
+      //ContainsKeyRequest
+      performTest(RequestType.PUT_ALL);
    }
 
    @Override
@@ -205,7 +212,16 @@ public class SkipCacheLoadFlagTest extends SingleCacheManagerTest {
          void execute(RemoteCache<String, String> cache) {
             cache.containsKey(KEY);
          }
-      };
+      },
+      PUT_ALL {
+         @Override
+         void execute(RemoteCache<String, String> cache) {
+            Map<String, String> data = new HashMap<String, String>();
+            data.put(KEY, VALUE);
+            cache.putAll(data);
+         }
+      },
+      ;
 
       private static boolean expectsFlag(RequestType type) {
          return type != PUT_IF_ABSENT && type != REMOVE_IF_UNMODIFIED && type != REPLACE && type != REPLACE_IF_UNMODIFIED;

@@ -1,5 +1,7 @@
 package org.infinispan.server.hotrod
 
+import org.infinispan.server.core.Operation._
+
 /**
  * Hot Rod specific operations. Enumeration starts at a number other that 0 not to clash with common operations.
  *
@@ -8,6 +10,9 @@ package org.infinispan.server.hotrod
  */
 object HotRodOperation extends Enumeration(20) {
    type HotRodOperation = Value
+
+   // NOTE: If adding new operation, make sure operation characteristic
+   // methods below are updated accordingly!
 
    val RemoveIfUnmodifiedRequest = Value
    val ContainsKeyRequest = Value
@@ -29,4 +34,62 @@ object HotRodOperation extends Enumeration(20) {
    val IterationStartRequest = Value
    val IterationNextRequest = Value
    val IterationEndRequest = Value
+
+   def canSkipIndexing(op: Enumeration#Value): Boolean = {
+      op match {
+         case PutRequest
+              | RemoveRequest
+              | PutIfAbsentRequest
+              | RemoveIfUnmodifiedRequest
+              | ReplaceRequest
+              | ReplaceIfUnmodifiedRequest
+              | PutAllRequest => true
+         case _ => false
+      }
+   }
+
+   def canSkipCacheLoading(op: Enumeration#Value): Boolean = {
+      op match {
+         case PutRequest
+              | GetRequest
+              | GetWithVersionRequest
+              | RemoveRequest
+              | ContainsKeyRequest
+              | BulkGetRequest
+              | GetWithMetadataRequest
+              | BulkGetKeysRequest
+              | PutAllRequest => true
+         case _ => false
+      }
+   }
+
+   def isNotConditionalAndCanReturnPrevious(op: Enumeration#Value): Boolean = {
+      op match {
+         case PutRequest => true
+         case _ => false
+      }
+   }
+
+   def canReturnPreviousValue(op: Enumeration#Value): Boolean = {
+      op match {
+         case PutRequest
+              | RemoveRequest
+              | PutIfAbsentRequest
+              | ReplaceRequest
+              | ReplaceIfUnmodifiedRequest
+              | RemoveIfUnmodifiedRequest => true
+         case _ => false
+      }
+   }
+
+   def isConditional(op: Enumeration#Value): Boolean = {
+      op match {
+         case PutIfAbsentRequest
+              | ReplaceRequest
+              | ReplaceIfUnmodifiedRequest
+              | RemoveIfUnmodifiedRequest => true
+         case _ => false
+      }
+   }
+
 }
