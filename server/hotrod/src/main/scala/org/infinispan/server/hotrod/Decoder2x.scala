@@ -559,49 +559,34 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
 
       var optCache = c
       h.op match {
-         case PutIfAbsentRequest | ReplaceRequest | ReplaceIfUnmodifiedRequest
-              | RemoveIfUnmodifiedRequest if isClustered && !isTransactional =>
+         case op if HotRodOperation.isConditional(op) && isClustered && !isTransactional =>
             warnConditionalOperationNonTransactional(h.op.toString)
          case _ => // no-op
       }
 
       if (hasFlag(h, SkipCacheLoader)) {
          h.op match {
-            case PutRequest
-                 | GetRequest
-                 | GetWithVersionRequest
-                 | RemoveRequest
-                 | ContainsKeyRequest
-                 | BulkGetRequest
-                 | GetWithMetadataRequest
-                 | BulkGetKeysRequest =>
+            case op if HotRodOperation.canSkipCacheLoading(op) =>
                optCache = optCache.withFlags(SKIP_CACHE_LOAD)
             case _ =>
          }
       }
       if (hasFlag(h, SkipIndexing)) {
          h.op match {
-            case PutRequest
-                 | PutIfAbsentRequest
-                 | RemoveRequest
-                 | RemoveIfUnmodifiedRequest
-                 | ReplaceRequest
-                 | ReplaceIfUnmodifiedRequest =>
+            case op if HotRodOperation.canSkipIndexing(op) =>
                optCache = optCache.withFlags(SKIP_INDEXING)
             case _ =>
          }
       }
       if (!hasFlag(h, ForceReturnPreviousValue)) {
          h.op match {
-            case PutRequest
-                 | PutIfAbsentRequest =>
+            case op if HotRodOperation.isNotConditionalAndCanReturnPrevious(op) =>
                optCache = optCache.withFlags(IGNORE_RETURN_VALUES)
             case _ =>
          }
       } else {
          h.op match {
-            case PutRequest | RemoveRequest | PutIfAbsentRequest | ReplaceRequest
-                 | ReplaceIfUnmodifiedRequest | RemoveIfUnmodifiedRequest if !isTransactional =>
+            case op if HotRodOperation.canReturnPreviousValue(op) && !isTransactional =>
                warnForceReturnPreviousNonTransactional(h.op.toString)
             case _ => // no-op
          }
