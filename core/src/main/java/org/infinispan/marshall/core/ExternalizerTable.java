@@ -11,7 +11,6 @@ import org.infinispan.commands.RemoteCommandsFactory;
 import org.infinispan.commands.write.ValueMatcher;
 import org.infinispan.commons.CacheConfigurationException;
 import org.infinispan.commons.hash.MurmurHash2;
-import org.infinispan.commons.hash.MurmurHash2Compat;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.commons.io.ByteBufferImpl;
 import org.infinispan.commons.io.UnsignedNumeric;
@@ -310,7 +309,6 @@ public class ExternalizerTable implements ObjectTable {
       addInternalExternalizer(new InDoubtTxInfoImpl.Externalizer());
 
       addInternalExternalizer(new MurmurHash2.Externalizer());
-      addInternalExternalizer(new MurmurHash2Compat.Externalizer());
       addInternalExternalizer(new MurmurHash3.Externalizer());
 
       addInternalExternalizer(new DefaultConsistentHash.Externalizer());

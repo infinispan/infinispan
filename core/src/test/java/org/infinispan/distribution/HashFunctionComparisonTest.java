@@ -35,7 +35,6 @@ public class HashFunctionComparisonTest {
    private static List<HashFunction> getHashFunctions() {
       List<HashFunction> functions = new LinkedList<HashFunction>();
       functions.add(new MurmurHash2());
-      functions.add(new MurmurHash2Compat());
       functions.add(new MurmurHash3());
       functions.add(new SuperFastHash());
       return functions;
@@ -306,18 +305,6 @@ class MurmurHash2 extends HashFunction {
    org.infinispan.commons.hash.MurmurHash2 h = new org.infinispan.commons.hash.MurmurHash2();
    public String functionName() {
       return "MurmurHash2 (neutral)";
-   }
-
-   @Override
-   public int hash(byte[] payload) {
-      return h.hash(payload);
-   }
-}
-
-class MurmurHash2Compat extends HashFunction {
-   org.infinispan.commons.hash.MurmurHash2Compat h = new org.infinispan.commons.hash.MurmurHash2Compat();
-   public String functionName() {
-      return "MurmurHash2Compat (neutral)";
    }
 
    @Override

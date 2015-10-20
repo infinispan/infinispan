@@ -2,7 +2,6 @@ package org.infinispan.util;
 
 import org.infinispan.commons.hash.Hash;
 import org.infinispan.commons.hash.MurmurHash2;
-import org.infinispan.commons.hash.MurmurHash2Compat;
 import org.infinispan.commons.hash.MurmurHash3;
 import org.infinispan.test.AbstractInfinispanTest;
 import org.testng.annotations.Test;
@@ -12,10 +11,6 @@ public class HashFunctionTest extends AbstractInfinispanTest {
 
    public void testMurmurHash2Consistency() {
       testHashConsistency(new MurmurHash2());
-   }
-
-   public void testMurmurHash2CompatConsistency() {
-      testHashConsistency(new MurmurHash2Compat());
    }
 
    public void testMurmurHash3Consistency() {
