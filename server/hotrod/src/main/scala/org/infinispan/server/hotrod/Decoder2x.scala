@@ -25,11 +25,10 @@ import scala.collection.JavaConverters._
 import javax.security.sasl.Sasl
 import io.netty.channel.ChannelHandlerContext
 import javax.security.auth.Subject
-import java.security.PrivilegedAction
+import java.security.{PrivilegedActionException, PrivilegedAction, Principal}
 import javax.security.sasl.SaslServer
 import io.netty.handler.ssl.SslHandler
 import java.util.ArrayList
-import java.security.Principal
 import org.infinispan.server.core.security.InetAddressPrincipal
 import java.net.InetSocketAddress
 import org.infinispan.server.core.security.simple.SimpleUserPrincipal
@@ -524,6 +523,7 @@ object Decoder2x extends AbstractVersionedDecoder with ServerConstants with Log 
             case _ : IllegalLifecycleStateException => createIllegalLifecycleStateErrorResponse(h, t)
             case _ => createServerErrorResponse(h, t)
          }
+         case p: PrivilegedActionException => createErrorResponse(h, p.getCause)
          case t: Throwable => createServerErrorResponse(h, t)
       }
    }
