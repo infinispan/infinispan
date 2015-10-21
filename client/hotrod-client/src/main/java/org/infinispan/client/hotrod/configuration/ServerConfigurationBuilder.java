@@ -1,5 +1,7 @@
 package org.infinispan.client.hotrod.configuration;
 
+import org.infinispan.client.hotrod.logging.Log;
+import org.infinispan.client.hotrod.logging.LogFactory;
 import org.infinispan.commons.configuration.Builder;
 
 /**
@@ -9,6 +11,9 @@ import org.infinispan.commons.configuration.Builder;
  * @since 5.3
  */
 public class ServerConfigurationBuilder extends AbstractConfigurationChildBuilder implements Builder<ServerConfiguration> {
+
+   private static final Log log = LogFactory.getLog(ServerConfigurationBuilder.class);
+
    private String host;
    private int port = 11222;
 
@@ -28,6 +33,9 @@ public class ServerConfigurationBuilder extends AbstractConfigurationChildBuilde
 
    @Override
    public void validate() {
+      if (host == null || host.isEmpty()) {
+         throw log.missingHostDefinition();
+      }
    }
 
    @Override

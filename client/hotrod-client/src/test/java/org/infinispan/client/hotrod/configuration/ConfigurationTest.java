@@ -90,6 +90,35 @@ public class ConfigurationTest {
    }
 
    @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testMissingClusterNameDefinition() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addCluster(null);
+      builder.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testMissingHostDefinition() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addCluster("test").addClusterNode(null, 1234);
+      builder.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testMissingClusterServersDefinition() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addCluster("test");
+      builder.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
+   public void testDuplicateClusterDefinition() {
+      ConfigurationBuilder builder = new ConfigurationBuilder();
+      builder.addCluster("test").addClusterNode("host1", 1234);
+      builder.addCluster("test").addClusterNode("host1", 5678);
+      builder.build();
+   }
+
+   @Test(expectedExceptions = CacheConfigurationException.class)
    public void testInvalidAuthenticationConfig() {
       ConfigurationBuilder builder = new ConfigurationBuilder();
       builder.security().authentication().enable().saslMechanism("PLAIN");
