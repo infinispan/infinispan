@@ -16,7 +16,6 @@ import org.infinispan.test.fwk.TestCacheManagerFactory;
 import org.testng.annotations.AfterMethod;
 
 import java.net.SocketAddress;
-import java.util.Properties;
 
 import static org.infinispan.client.hotrod.test.HotRodClientTestingUtil.getLoadBalancer;
 import static org.infinispan.server.hotrod.test.HotRodTestingUtil.hotRodCacheConfiguration;
@@ -57,28 +56,37 @@ public abstract class AbstractRetryTest extends HitsAwareCacheManagersTest {
       registerCacheManager(cm2);
       registerCacheManager(cm3);
 
-      hotRodServer1 = HotRodClientTestingUtil.startHotRodServer(manager(0));
+      hotRodServer1 = createStartHotRodServer(manager(0));
       addr2hrServer.put(getAddress(hotRodServer1), hotRodServer1);
-      hotRodServer2 = HotRodClientTestingUtil.startHotRodServer(manager(1));
+      hotRodServer2 = createStartHotRodServer(manager(1));
       addr2hrServer.put(getAddress(hotRodServer2), hotRodServer2);
-      hotRodServer3 = HotRodClientTestingUtil.startHotRodServer(manager(2));
+      hotRodServer3 = createStartHotRodServer(manager(2));
       addr2hrServer.put(getAddress(hotRodServer3), hotRodServer3);
 
       waitForClusterToForm();
 
-      Properties clientConfig = new Properties();
-      clientConfig.put("infinispan.client.hotrod.server_list", "localhost:" + hotRodServer1.getPort());
-      clientConfig.put("infinispan.client.hotrod.force_return_values", "true");
-      clientConfig.put("infinispan.client.hotrod.connect_timeout", "5");
-      clientConfig.put("maxActive",1); //this ensures that only one server is active at a time
-
-      remoteCacheManager = new InternalRemoteCacheManager(clientConfig);
+      remoteCacheManager = createRemoteCacheManager(hotRodServer1.getPort());
       remoteCache = (RemoteCacheImpl) remoteCacheManager.getCache();
       tcpTransportFactory = (TcpTransportFactory) ((InternalRemoteCacheManager) remoteCacheManager).getTransportFactory();
       strategy = getLoadBalancer(remoteCacheManager);
       addInterceptors();
 
       assert super.cacheManagers.size() == 3;
+   }
+
+   protected RemoteCacheManager createRemoteCacheManager(int port) {
+      org.infinispan.client.hotrod.configuration.ConfigurationBuilder builder =
+         new org.infinispan.client.hotrod.configuration.ConfigurationBuilder();
+      builder
+         .forceReturnValues(true)
+         .connectionTimeout(5)
+         .connectionPool().maxActive(1) //this ensures that only one server is active at a time
+         .addServer().host("127.0.0.1").port(port);
+      return new InternalRemoteCacheManager(builder.build());
+   }
+
+   protected HotRodServer createStartHotRodServer(EmbeddedCacheManager manager) {
+      return HotRodClientTestingUtil.startHotRodServer(manager);
    }
 
    @AfterMethod(alwaysRun = true)
