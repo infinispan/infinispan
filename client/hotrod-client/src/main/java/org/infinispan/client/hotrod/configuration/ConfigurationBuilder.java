@@ -2,8 +2,10 @@ package org.infinispan.client.hotrod.configuration;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -312,6 +314,13 @@ public class ConfigurationBuilder implements ConfigurationChildBuilder, Builder<
       nearCache.validate();
       if (maxRetries < 0) {
          throw log.invalidMaxRetries(maxRetries);
+      }
+      Set<String> clusterNameSet = new HashSet<String>(clusters.size());
+      for (ClusterConfigurationBuilder clusterConfigBuilder : clusters) {
+         if (!clusterNameSet.add(clusterConfigBuilder.getClusterName())) {
+            throw log.duplicateClusterDefinition(clusterConfigBuilder.getClusterName());
+         }
+         clusterConfigBuilder.validate();
       }
    }
 
