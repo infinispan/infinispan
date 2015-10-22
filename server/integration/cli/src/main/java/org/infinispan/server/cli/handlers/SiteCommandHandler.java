@@ -1,6 +1,5 @@
 package org.infinispan.server.cli.handlers;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -37,7 +36,11 @@ public class SiteCommandHandler extends NoArgumentsCliCommandHandler {
             new ArgumentWithoutValue(this, -1, "--cancelreceive"),
             new ArgumentWithoutValue(this, -1, "--pushstatus"),
             new ArgumentWithoutValue(this, -1, "--clearpushstatus"),
-            new ArgumentWithoutValue(this, -1, "--sendingsite")
+            new ArgumentWithoutValue(this, -1, "--sendingsite"),
+            new ArgumentWithoutValue(this, -1, "--onlineall"),
+            new ArgumentWithoutValue(this, -1, "--offlineall"),
+            new ArgumentWithoutValue(this, -1, "--pushall"),
+            new ArgumentWithoutValue(this, -1, "--cancelpushall")
       );
       new ArgumentWithValue(this, null, 0, "--site-name");
    }

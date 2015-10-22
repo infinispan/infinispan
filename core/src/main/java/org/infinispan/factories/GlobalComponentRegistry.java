@@ -32,6 +32,7 @@ import org.infinispan.util.ModuleProperties;
 import org.infinispan.util.TimeService;
 import org.infinispan.util.logging.Log;
 import org.infinispan.util.logging.LogFactory;
+import org.infinispan.xsite.GlobalXSiteAdminOperations;
 
 import javax.management.MBeanServer;
 import javax.management.MBeanServerFactory;
@@ -115,6 +116,7 @@ public class GlobalComponentRegistry extends AbstractComponentRegistry {
          registerComponent(new InternalCacheRegistryImpl(), InternalCacheRegistry.class);
          registerComponent(new ClusterRegistryImpl(), ClusterRegistry.class);
          registerComponent(new CacheStoreFactoryRegistry(), CacheStoreFactoryRegistry.class);
+         registerComponent(new GlobalXSiteAdminOperations(), GlobalXSiteAdminOperations.class);
 
          moduleProperties.loadModuleCommandHandlers(configuredClassLoader);
          Map<Byte, ModuleCommandFactory> factories = moduleProperties.moduleCommandFactories();
