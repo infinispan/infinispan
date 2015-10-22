@@ -13,7 +13,7 @@
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
         <module name="org.infinispan"/>
-        <module name="org.apache.httpcomponents" />
+        <module name="io.netty" />
         <module name="org.infinispan.server"/>
         <module name="org.infinispan.server.rest"/>
         <module name="org.jboss.logging"/>
